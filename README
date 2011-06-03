@@ -1,0 +1,35 @@
+Created: Fri Jun  3 16:38:31 2011
+
+    o To build the default program (BasicLoopCU) do
+
+	  make
+
+    o To build another program in this directory do
+
+	  make program=<program-name>
+
+    example:
+
+	  make program=findSUSYalready
+
+
+    o To run the program, first create a text file (default name=filelist.txt)
+	containing a list of the ntuples to be analyzed, one filename per line.
+	Then do
+
+	  ./BasicLoopCU
+
+	If you wish to specify a different file list, say datafile.list, do
+
+	  ./BasicLoopCU datafile.list
+
+	If you wish to change the name of the root output file, say
+	datahist.root, do
+
+	   ./BasicLoopCU datafile.list datahist.root
+
+
+For details, please refer to the documentation at:
+
+	https://twiki.cern.ch/twiki/bin/viewauth/CMS/TheNtupleMaker
+	
