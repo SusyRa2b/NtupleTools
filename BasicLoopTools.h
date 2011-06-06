@@ -16,11 +16,28 @@
 //enum JERType {kJER0=0,kJERbias,kJERup,kJERbias6};
 //JERType theJERType_;
 
-
 const double mW_ = 80.399;
 const double mtop_ = 172.0;
 
 using namespace std;
+
+//-Define some pointers so we can use more intuitive names.
+//-This also isolates some of the dependency on the configuration of the ntuple.
+//--These should be checked each time we make new ntuples.
+std::vector<jet3_s> * myJetsPF;
+std::vector<electron3_s> * myElectronsPF;
+std::vector<muon3_s> * myMuonsPF;
+std::vector<tau1_s> * myTausPF;
+
+void InitializeStuff(){
+  //If we resurrect the class structure, this will go into the constructor.
+
+  myJetsPF = &jet3;
+  myElectronsPF = &electron3;
+  myMuonsPF = &muon3;
+  myTausPF = &tau1;
+
+}
 
 bool passHLT() { 
 
@@ -57,21 +74,21 @@ bool passPV() {
 }
 
 float getJetPt( unsigned int ijet ) {
-  
-  return jet3.at(ijet).pt;
+
+  return myJetsPF->at(ijet).pt;
 }
 
 bool jetPassLooseID( unsigned int ijet ) {
 
-  if(jet3.at(ijet).neutralHadronEnergyFraction < 0.99
-     && jet3.at(ijet).neutralEmEnergyFraction < 0.99
-     && jet3.at(ijet).numberOfDaughters > 1
-     && ( fabs(jet3.at(ijet).uncor_eta)>=2.4 
-	  || (fabs(jet3.at(ijet).uncor_eta)<2.4 && jet3.at(ijet).chargedHadronEnergyFraction>0))
-     && ( fabs(jet3.at(ijet).uncor_eta)>=2.4 
-	  || (fabs(jet3.at(ijet).uncor_eta)<2.4 && jet3.at(ijet).chargedEmEnergyFraction<0.99))
-     && ( fabs(jet3.at(ijet).uncor_eta)>=2.4 
-	  || (fabs(jet3.at(ijet).uncor_eta)<2.4 && jet3.at(ijet).chargedMultiplicity>0))    
+  if(myJetsPF->at(ijet).neutralHadronEnergyFraction < 0.99
+     && myJetsPF->at(ijet).neutralEmEnergyFraction < 0.99
+     && myJetsPF->at(ijet).numberOfDaughters > 1
+     && ( fabs(myJetsPF->at(ijet).uncor_eta)>=2.4 
+	  || (fabs(myJetsPF->at(ijet).uncor_eta)<2.4 && myJetsPF->at(ijet).chargedHadronEnergyFraction>0))
+     && ( fabs(myJetsPF->at(ijet).uncor_eta)>=2.4 
+	  || (fabs(myJetsPF->at(ijet).uncor_eta)<2.4 && myJetsPF->at(ijet).chargedEmEnergyFraction<0.99))
+     && ( fabs(myJetsPF->at(ijet).uncor_eta)>=2.4 
+	  || (fabs(myJetsPF->at(ijet).uncor_eta)<2.4 && myJetsPF->at(ijet).chargedMultiplicity>0))    
      ){
     return true;
   }
@@ -83,7 +100,7 @@ bool jetPassLooseID( unsigned int ijet ) {
 bool isGoodJet(unsigned int ijet) {
 
   if ( getJetPt(ijet) <50) return false;
-  if ( fabs(jet3.at(ijet).eta) > 2.4) return false;
+  if ( fabs(myJetsPF->at(ijet).eta) > 2.4) return false;
   if ( !jetPassLooseID(ijet) ) return false;
 
   return true;
@@ -92,7 +109,7 @@ bool isGoodJet(unsigned int ijet) {
 bool isGoodJet10(unsigned int ijet) {
 
   if ( getJetPt(ijet) <10) return false;
-  if ( fabs(jet3.at(ijet).eta) > 2.4) return false;
+  if ( fabs(myJetsPF->at(ijet).eta) > 2.4) return false;
   if ( !jetPassLooseID(ijet) ) return false;
 
   return true;
@@ -101,7 +118,7 @@ bool isGoodJet10(unsigned int ijet) {
 bool isGoodJet30(unsigned int ijet) {
 
   if ( getJetPt(ijet) <30) return false;
-  if ( fabs(jet3.at(ijet).eta) > 2.4) return false;
+  if ( fabs(myJetsPF->at(ijet).eta) > 2.4) return false;
   if ( !jetPassLooseID(ijet) ) return false;
 
 
@@ -111,7 +128,7 @@ bool isGoodJet30(unsigned int ijet) {
 bool isGoodJetMHT(unsigned int ijet) {
 
   if ( getJetPt(ijet) <30) return false;
-  if ( fabs(jet3.at(ijet).eta) > 5) return false;
+  if ( fabs(myJetsPF->at(ijet).eta) > 5) return false;
   //no jet id for MHT
 
   return true;
@@ -119,15 +136,15 @@ bool isGoodJetMHT(unsigned int ijet) {
 
 
 bool passSSVM(int ijet) {
-  return ( jet3.at(ijet).simpleSecondaryVertexBJetTags >= 1.74 
-	   || jet3.at(ijet).simpleSecondaryVertexHighEffBJetTags >= 1.74);
+  return ( myJetsPF->at(ijet).simpleSecondaryVertexBJetTags >= 1.74 
+	   || myJetsPF->at(ijet).simpleSecondaryVertexHighEffBJetTags >= 1.74);
 }
 
 
 uint nGoodJets() {
   
   uint njets=0;
-  for (unsigned int i=0; i < jet3.size(); ++i) {
+  for (unsigned int i=0; i < myJetsPF->size(); ++i) {
     if (isGoodJet(i) )   njets++;
   }
   return njets;
@@ -136,7 +153,7 @@ uint nGoodJets() {
 
 uint nGoodBJets() {
   uint nb=0;
-  for (uint i = 0; i < jet3.size(); ++i) {
+  for (uint i = 0; i < myJetsPF->size(); ++i) {
     if (isGoodJet30(i) ) {
       if ( passSSVM(i) ) nb++;
     }
@@ -147,7 +164,7 @@ uint nGoodBJets() {
 float jetPtOfN(unsigned int n) {
 
   unsigned int ngood=0;
-  for (unsigned int i=0; i<jet3.size(); i++) {
+  for (unsigned int i=0; i<myJetsPF->size(); i++) {
 
     bool pass=false;
     pass = isGoodJet(i);
@@ -163,14 +180,14 @@ float jetPtOfN(unsigned int n) {
 float jetPhiOfN(unsigned int n) {
 
   unsigned int ngood=0;
-  for (unsigned int i=0; i<jet3.size(); i++) {
+  for (unsigned int i=0; i<myJetsPF->size(); i++) {
 
     bool pass=false;
     pass = isGoodJet(i);
 
     if (pass ) {
       ngood++;
-      if (ngood==n) return  jet3.at(i).phi;
+      if (ngood==n) return  myJetsPF->at(i).phi;
     }
   }
   return 0;
@@ -179,14 +196,14 @@ float jetPhiOfN(unsigned int n) {
 float jetEtaOfN(unsigned int n) {
 
   unsigned int ngood=0;
-  for (unsigned int i=0; i<jet3.size(); i++) {
+  for (unsigned int i=0; i<myJetsPF->size(); i++) {
 
     bool pass=false;
     pass = isGoodJet(i);
 
     if (pass ) {
       ngood++;
-      if (ngood==n) return  jet3.at(i).eta;
+      if (ngood==n) return  myJetsPF->at(i).eta;
     }
   }
   return 0;
@@ -196,7 +213,7 @@ float jetEtaOfN(unsigned int n) {
 float bjetPtOfN(unsigned int n) {
 
   unsigned int ngood=0;
-  for (unsigned int i=0; i<jet3.size(); i++) {
+  for (unsigned int i=0; i<myJetsPF->size(); i++) {
 
     bool pass=false;
     pass = (isGoodJet30(i) && passSSVM(i));
@@ -212,14 +229,14 @@ float bjetPtOfN(unsigned int n) {
 float bjetPhiOfN(unsigned int n) {
 
   unsigned int ngood=0;
-  for (unsigned int i=0; i<jet3.size(); i++) {
+  for (unsigned int i=0; i<myJetsPF->size(); i++) {
 
     bool pass=false;
     pass = (isGoodJet30(i) && passSSVM(i));
 
     if (pass ) {
       ngood++;
-      if (ngood==n) return  jet3.at(i).phi;
+      if (ngood==n) return  myJetsPF->at(i).phi;
     }
   }
   return 0;
@@ -228,14 +245,14 @@ float bjetPhiOfN(unsigned int n) {
 float bjetEtaOfN(unsigned int n) {
 
   unsigned int ngood=0;
-  for (unsigned int i=0; i<jet3.size(); i++) {
+  for (unsigned int i=0; i<myJetsPF->size(); i++) {
 
     bool pass=false;
     pass = (isGoodJet30(i) && passSSVM(i));
 
     if (pass ) {
       ngood++;
-      if (ngood==n) return  jet3.at(i).eta;
+      if (ngood==n) return  myJetsPF->at(i).eta;
     }
   }
   return 0;
@@ -243,7 +260,7 @@ float bjetEtaOfN(unsigned int n) {
 
 float getHT() {
   float ht=0;
-  for (unsigned int i=0; i<jet3.size(); i++) {
+  for (unsigned int i=0; i<myJetsPF->size(); i++) {
     if (isGoodJet( i ) ) ht+= getJetPt(i);
   }
   return ht;
@@ -275,11 +292,11 @@ double getMinDeltaPhiMET(unsigned int maxjets) {
 
   unsigned int ngood=0;
   //get the minimum angle between the first n jets and MET
-  for (unsigned int i=0; i< jet3.size(); i++) {
+  for (unsigned int i=0; i< myJetsPF->size(); i++) {
     
     if (isGoodJet(i)) {
       ++ngood;
-      double dp =  getDeltaPhi( jet3.at(i).phi , getMETphi());
+      double dp =  getDeltaPhi( myJetsPF->at(i).phi , getMETphi());
       if (dp<mindp) mindp=dp;
       if (ngood >= maxjets) break;
     }
@@ -294,11 +311,11 @@ double getMinDeltaPhiMET30(unsigned int maxjets) {
 
   unsigned int ngood=0;
   //get the minimum angle between the first n jets and MET
-  for (unsigned int i=0; i< jet3.size(); i++) {
+  for (unsigned int i=0; i< myJetsPF->size(); i++) {
     
     if (isGoodJet30(i)) {
       ++ngood;
-      double dp =  getDeltaPhi( jet3.at(i).phi , getMETphi());
+      double dp =  getDeltaPhi( myJetsPF->at(i).phi , getMETphi());
       if (dp<mindp) mindp=dp;
       if (ngood >= maxjets) break;
     }
@@ -313,11 +330,11 @@ double getMinDeltaPhiMET30_eta5(unsigned int maxjets) {
 
   unsigned int ngood=0;
   //get the minimum angle between the first n jets and MET
-  for (unsigned int i=0; i< jet3.size(); i++) {
+  for (unsigned int i=0; i< myJetsPF->size(); i++) {
     
-    if (getJetPt(i) > 30 && fabs(jet3.at(i).eta) < 5 && jetPassLooseID(i)) {
+    if (getJetPt(i) > 30 && fabs(myJetsPF->at(i).eta) < 5 && jetPassLooseID(i)) {
       ++ngood;
-      double dp =  getDeltaPhi( jet3.at(i).phi , getMETphi());
+      double dp =  getDeltaPhi( myJetsPF->at(i).phi , getMETphi());
       if (dp<mindp) mindp=dp;
       if (ngood >= maxjets) break;
     }
@@ -332,11 +349,11 @@ double getMinDeltaPhiMET30_eta5_noId(unsigned int maxjets) {
 
   unsigned int ngood=0;
   //get the minimum angle between the first n jets and MET
-  for (unsigned int i=0; i< jet3.size(); i++) {
+  for (unsigned int i=0; i< myJetsPF->size(); i++) {
     
-    if (getJetPt(i) > 30 && fabs(jet3.at(i).eta) < 5) {
+    if (getJetPt(i) > 30 && fabs(myJetsPF->at(i).eta) < 5) {
       ++ngood;
-      double dp =  getDeltaPhi( jet3.at(i).phi , getMETphi());
+      double dp =  getDeltaPhi( myJetsPF->at(i).phi , getMETphi());
       if (dp<mindp) mindp=dp;
       if (ngood >= maxjets) break;
     }
@@ -351,11 +368,11 @@ double getMaxDeltaPhiMET(unsigned int maxjets) {
 
   unsigned int ngood=0;
   //get the minimum angle between the first n jets and MET
-  for (unsigned int i=0; i< jet3.size(); i++) {
+  for (unsigned int i=0; i< myJetsPF->size(); i++) {
     
     if (isGoodJet(i)) {
       ++ngood;
-      double dp =  getDeltaPhi( jet3.at(i).phi , getMETphi());
+      double dp =  getDeltaPhi( myJetsPF->at(i).phi , getMETphi());
       if (dp>maxdp) maxdp=dp;
       if (ngood >= maxjets) break;
     }
@@ -369,11 +386,11 @@ double getMaxDeltaPhiMET30(unsigned int maxjets) {
 
   unsigned int ngood=0;
   //get the minimum angle between the first n jets and MET
-  for (unsigned int i=0; i< jet3.size(); i++) {
+  for (unsigned int i=0; i< myJetsPF->size(); i++) {
     
     if (isGoodJet30(i)) {
       ++ngood;
-      double dp =  getDeltaPhi( jet3.at(i).phi , getMETphi());
+      double dp =  getDeltaPhi( myJetsPF->at(i).phi , getMETphi());
       if (dp>maxdp) maxdp=dp;
       if (ngood >= maxjets) break;
     }
@@ -388,11 +405,11 @@ double getMaxDeltaPhiMET30_eta5(unsigned int maxjets) {
 
   unsigned int ngood=0;
   //get the minimum angle between the first n jets and MET
-  for (unsigned int i=0; i< jet3.size(); i++) {
+  for (unsigned int i=0; i< myJetsPF->size(); i++) {
     
-    if (getJetPt(i) > 30 && fabs(jet3.at(i).eta) < 5 && jetPassLooseID(i)) {
+    if (getJetPt(i) > 30 && fabs(myJetsPF->at(i).eta) < 5 && jetPassLooseID(i)) {
       ++ngood;
-      double dp =  getDeltaPhi( jet3.at(i).phi , getMETphi());
+      double dp =  getDeltaPhi( myJetsPF->at(i).phi , getMETphi());
       if (dp>maxdp) maxdp=dp;
       if (ngood >= maxjets) break;
     }
@@ -406,11 +423,11 @@ double getMaxDeltaPhiMET30_eta5_noId(unsigned int maxjets) {
 
   unsigned int ngood=0;
   //get the minimum angle between the first n jets and MET
-  for (unsigned int i=0; i< jet3.size(); i++) {
+  for (unsigned int i=0; i< myJetsPF->size(); i++) {
     
-    if (getJetPt(i) > 30 && fabs(jet3.at(i).eta) < 5) {
+    if (getJetPt(i) > 30 && fabs(myJetsPF->at(i).eta) < 5) {
       ++ngood;
-      double dp =  getDeltaPhi( jet3.at(i).phi , getMETphi());
+      double dp =  getDeltaPhi( myJetsPF->at(i).phi , getMETphi());
       if (dp>maxdp) maxdp=dp;
       if (ngood >= maxjets) break;
     }
@@ -421,13 +438,13 @@ double getMaxDeltaPhiMET30_eta5_noId(unsigned int maxjets) {
 
 
 float getJetPx( unsigned int ijet ) {
-  return getJetPt(ijet) * cos(jet3.at(ijet).phi);
+  return getJetPt(ijet) * cos(myJetsPF->at(ijet).phi);
 }
 float getJetPy( unsigned int ijet ) {
-  return getJetPt(ijet) * sin(jet3.at(ijet).phi);
+  return getJetPt(ijet) * sin(myJetsPF->at(ijet).phi);
 }
 float getJetPz( unsigned int ijet ) {
-  return getJetPt(ijet) * sinh(jet3.at(ijet).eta);
+  return getJetPt(ijet) * sinh(myJetsPF->at(ijet).eta);
 
 }
 
@@ -437,7 +454,7 @@ std::pair<float,float> getJERAdjustedMHTxy() {
   float mhtx=0;
   float mhty=0;
 
-  for (unsigned int i=0; i<jet3.size(); i++) {
+  for (unsigned int i=0; i<myJetsPF->size(); i++) {
     if (isGoodJetMHT( i ) ) {
 
       mhtx -= getJetPx(i);
@@ -448,12 +465,12 @@ std::pair<float,float> getJERAdjustedMHTxy() {
   //this is an experiment! add taus in!
   //-->experiment successful! leave taus in.
   //FIXME hard-coded for PF
-  for (unsigned int i=0; i<tau1.size(); i++) {
+  for (unsigned int i=0; i<myTausPF->size(); i++) {
     //start by using same pT threshold as jets
-    if ( tau1.at(i).pt > 30 && fabs(tau1.at(i).eta)<5 ) {
+    if ( myTausPF->at(i).pt > 30 && fabs(myTausPF->at(i).eta)<5 ) {
 
-      mhtx -= tau1.at(i).pt * cos(tau1.at(i).phi);
-      mhty -= tau1.at(i).pt * sin(tau1.at(i).phi);
+      mhtx -= myTausPF->at(i).pt * cos(myTausPF->at(i).phi);
+      mhty -= myTausPF->at(i).pt * sin(myTausPF->at(i).phi);
     }
   }
   
@@ -489,9 +506,9 @@ float getMHTphi() {
 //  if (theJESType_ != kJES0){
 //  
 //    //loop over all jets
-//    for (unsigned int ijet=0; ijet<jet3.size(); ++ijet) {
-//      float jetUx = jet3.at(ijet).uncor_pt * cos(jet3.at(ijet).uncor_phi);
-//      float jetUy = jet3.at(ijet).uncor_pt * sin(jet3.at(ijet).uncor_phi);
+//    for (unsigned int ijet=0; ijet<myJetsPF->size(); ++ijet) {
+//      float jetUx = myJetsPF->at(ijet).uncor_pt * cos(myJetsPF->at(ijet).uncor_phi);
+//      float jetUy = myJetsPF->at(ijet).uncor_pt * sin(myJetsPF->at(ijet).uncor_phi);
 //
 //      myMETx += jetUx;
 //      myMETy += jetUy;
@@ -556,7 +573,7 @@ double calc_mNj( std::vector<unsigned int> jNi ) {
 
   for (unsigned int i=0; i<jNi.size(); i++) {
     unsigned int j1i = jNi.at(i);
-    sumE += jet3.at( j1i ).energy; 
+    sumE += myJetsPF->at( j1i ).energy; 
 
     sumPx += getJetPx(j1i);
     sumPy += getJetPy(j1i);
@@ -689,7 +706,7 @@ void fillWTop() {
   double bestM3j=-9999;//, bestM3j_j3pt=0;
 
   //adopting this code from Owen -- note the loop goes to the second to last jet only
-  for (unsigned int j1i = 0; j1i < jet3.size() -1; j1i++) {
+  for (unsigned int j1i = 0; j1i < myJetsPF->size() -1; j1i++) {
 
     if ( isGoodJet30(j1i)) { //owen is using pT>30 cut
 
@@ -697,7 +714,7 @@ void fillWTop() {
       if (passSSVM(j1i) ) continue; //veto b jets
 
       //note how owen does the loop indexing here
-      for (unsigned int j2i =j1i+1; j2i<jet3.size(); j2i++) {
+      for (unsigned int j2i =j1i+1; j2i<myJetsPF->size(); j2i++) {
 	if ( isGoodJet10(j2i)) { //owen is using a pT>10 cut here!
 
 	  if (isGoodJet30(j2i) && passSSVM(j2i)) continue; //veto b jets with >30 gev
@@ -709,7 +726,7 @@ void fillWTop() {
 	    // bestM2j_j1pt = getLooseJetPt(j1i);
 	    //bestM2j_j2pt = getLooseJetPt(j2i);
 
-	    for ( unsigned int j3i=0; j3i<jet3.size(); j3i++) {
+	    for ( unsigned int j3i=0; j3i<myJetsPF->size(); j3i++) {
 
 	      if (j3i==j1i || j3i==j2i) continue;
 
@@ -750,28 +767,28 @@ uint countMu() {
   int ngoodmu=0;
 
   unsigned int nmu = 0;
-  nmu = muon3.size();
+  nmu = myMuonsPF->size();
 
   for ( unsigned int i = 0; i< nmu; i++) {
 
-    if(muon3.at(i).pt > 10
-       && fabs(muon3.at(i).eta)<2.4
-       && muon3.at(i).GlobalMuonPromptTight == 1
-       && muon3.at(i).innerTrack_numberOfValidHits >=11
-       && muon3.at(i).track_hitPattern_numberOfValidPixelHits >= 1
-       && fabs(muon3.at(i).dB) < 0.02
-       && fabs(muon3.at(i).vz - vertex.at(0).z ) <1
-       && (muon3.at(i).chargedHadronIso 
-	   + muon3.at(i).photonIso 
-	   + muon3.at(i).neutralHadronIso)/muon3.at(i).pt <0.2 
+    if(myMuonsPF->at(i).pt > 10
+       && fabs(myMuonsPF->at(i).eta)<2.4
+       && myMuonsPF->at(i).GlobalMuonPromptTight == 1
+       && myMuonsPF->at(i).innerTrack_numberOfValidHits >=11
+       && myMuonsPF->at(i).track_hitPattern_numberOfValidPixelHits >= 1
+       && fabs(myMuonsPF->at(i).dB) < 0.02
+       && fabs(myMuonsPF->at(i).vz - vertex.at(0).z ) <1
+       && (myMuonsPF->at(i).chargedHadronIso 
+	   + myMuonsPF->at(i).photonIso 
+	   + myMuonsPF->at(i).neutralHadronIso)/myMuonsPF->at(i).pt <0.2 
        ){
 
 
       //once we reach here we've got a good muon in hand
       //FIXME adding this as a hack...i would like to do this more elegantly, but for now this will work
       if (ngoodmu==0){
-	muonpt1_ = muon3.at(i).pt;
-	muonphi1_ = muon3.at(i).phi;
+	muonpt1_ = myMuonsPF->at(i).pt;
+	muonphi1_ = myMuonsPF->at(i).phi;
       }
 
 
@@ -797,7 +814,7 @@ bool passBadPFMuonFilter(){
   bool hasBadMuon = false;
 
   unsigned int nmu = 0;
-  nmu = muon3.size();
+  nmu = myMuonsPF->size();
 
   for (unsigned int i=0; i < nmu; i++) {
     //if(muonhelper.at(i).badPFmuon) hasBadMuon = true; NEED TO GET THIS BACK IN BEN FIXME
@@ -812,12 +829,12 @@ bool passInconsistentMuonFilter(){
   bool hasInconsistentMuon = false;
 
   unsigned int nmu = 0;
-  nmu = muon3.size();
+  nmu = myMuonsPF->size();
 
   for (unsigned int i=0; i < nmu; i++) {
-    if(muon3.at(i).pt > 100){
-      if(muon3.at(i).isTrackerMuon &&  muon3.at(i).isGlobalMuon){
-	if( fabs( muon3.at(i).innerTrack_pt/muon3.at(i).globalTrack_pt - 1 ) > 0.1 )
+    if(myMuonsPF->at(i).pt > 100){
+      if(myMuonsPF->at(i).isTrackerMuon &&  myMuonsPF->at(i).isGlobalMuon){
+	if( fabs( myMuonsPF->at(i).innerTrack_pt/myMuonsPF->at(i).globalTrack_pt - 1 ) > 0.1 )
 	  hasInconsistentMuon = true;
       }
     }
@@ -835,27 +852,27 @@ uint countEle() {
   int ngoodele=0;
 
   unsigned int nele = 0;
-  nele = electron3.size();
+  nele = myElectronsPF->size();
 
   for (unsigned int i=0; i < nele; i++) {
 
-    if(electron3.at(i).pt > 10
-       && fabs(electron3.at(i).superCluster_eta) < 2.5 
-       && !(fabs(electron3.at(i).superCluster_eta) > 1.4442 
-	    && fabs(electron3.at(i).superCluster_eta) < 1.566)
-       && electron3.at(i).gsfTrack_trackerExpectedHitsInner_numberOfLostHits <= 1
-       && fabs(electron3.at(i).dB) < 0.02
-       && fabs(electron3.at(i).vz - vertex.at(0).z ) <1
-       && (electron3.at(i).chargedHadronIso 
-	   + electron3.at(i).photonIso 
-	   + electron3.at(i).neutralHadronIso)/electron3.at(i).pt <0.2 
+    if(myElectronsPF->at(i).pt > 10
+       && fabs(myElectronsPF->at(i).superCluster_eta) < 2.5 
+       && !(fabs(myElectronsPF->at(i).superCluster_eta) > 1.4442 
+	    && fabs(myElectronsPF->at(i).superCluster_eta) < 1.566)
+       && myElectronsPF->at(i).gsfTrack_trackerExpectedHitsInner_numberOfLostHits <= 1
+       && fabs(myElectronsPF->at(i).dB) < 0.02
+       && fabs(myElectronsPF->at(i).vz - vertex.at(0).z ) <1
+       && (myElectronsPF->at(i).chargedHadronIso 
+	   + myElectronsPF->at(i).photonIso 
+	   + myElectronsPF->at(i).neutralHadronIso)/myElectronsPF->at(i).pt <0.2 
        ){
 
 
       //FIXME adding this as a hack...i would like to do this more elegantly, but for now this will work
       if (ngoodele==0){
-	eleet1_ = electron3.at(i).et;
-	elephi1_ = electron3.at(i).phi;
+	eleet1_ = myElectronsPF->at(i).et;
+	elephi1_ = myElectronsPF->at(i).phi;
       }
 
 
@@ -960,12 +977,12 @@ void getSphericityJetMET(float & lambda1, float & lambda2, float & det,
   TMatrixD top3Jets(2,2);
   double top3JetsScale = 0;
   
-  unsigned int njets=  jet3.size();
+  unsigned int njets=  myJetsPF->size();
   int ngoodj=0;
   for (unsigned int i=0; i<njets ; i++) {
     if ( isGoodJet(i) ) {
       ++ngoodj;
-      double phi = jet3.at(i).phi;
+      double phi = myJetsPF->at(i).phi;
       double eT = getJetPt(i);
       double eX = eT*cos(phi);
       double eY = eT*sin(phi);
@@ -1208,6 +1225,8 @@ void cutflow(itreestream& stream){
 
   cout<<"Running..."<<endl;  
 
+  InitializeStuff();//BEN
+
   startTimer();
   for(int entry=0; entry < nevents; ++entry){
     // Read event into memory
@@ -1419,6 +1438,8 @@ void reducedTree(TString outputpath, itreestream& stream)
 
 
   int nevents = stream.size();
+
+  InitializeStuff();//BEN
 
   startTimer();
   for(int entry=0; entry < nevents; ++entry){
