@@ -1593,7 +1593,7 @@ void reducedTree(TString outputpath, itreestream& stream)
 
 
 void makeReducedTrees(int argc, char** argv){
-  TString dir1 = "rfio:/castor/cern.ch/user/s/ssekmen/RA2b2011v1/";  
+  TString dir1 = "/cu3/kreis/Ftuples/";
   TString version = "V00-01-03";
   
   dir1+=version;
@@ -1605,41 +1605,32 @@ void makeReducedTrees(int argc, char** argv){
 
   for (int ifile1=0; ifile1<nfiles1; ifile1++) {
     TString samplefiles1 = dir1list->At(ifile1)->GetTitle();
+    sampleName_ =  samplefiles1( samplefiles1.Last('/')+1, samplefiles1.Length() );
+    
+    ofstream filelist;
+    filelist.open("filelist.txt", ios::trunc);
+    
     TString dir2 = samplefiles1;
     dir2+="/*";
-    TChain dummy2("dummy2");
+    TChain dummy2("dummy3");
     dummy2.Add(dir2);
     TObjArray* dir2list = dummy2.GetListOfFiles();
     int nfiles2=dir2list->GetEntries();
-  
     for (int ifile2=0; ifile2<nfiles2; ifile2++) {
+      
       TString samplefiles2 = dir2list->At(ifile2)->GetTitle();
-      sampleName_ =  samplefiles2( samplefiles2.Last('/')+1, samplefiles2.Length() );
-
-      ofstream filelist;
-      filelist.open("filelist.txt", ios::trunc);
-     
-      TString dir3 = samplefiles2;
-      dir3+="/*";
-      TChain dummy3("dummy3");
-      dummy3.Add(dir3);
-      TObjArray* dir3list = dummy3.GetListOfFiles();
-      int nfiles3=dir3list->GetEntries();
-      for (int ifile3=0; ifile3<nfiles3; ifile3++) {
-	
-	TString samplefiles3 = dir3list->At(ifile3)->GetTitle();
-	filelist << samplefiles3 << endl;
-
-	// here is where would execute reducedTree() from
-
-      }
-      filelist.close();
+      filelist << samplefiles2 << endl;
+      
+      // here is where would execute reducedTree() from
+      
     }
+      filelist.close();
   }
-
+  
+  
   commandLine cmdline;
   decodeCommandLine(argc, argv, cmdline);
-
+  
   vector<string> filenames = getFilenames(cmdline.filelist);
   itreestream stream(filenames, "Events");
   if ( !stream.good() ) error("unable to open ntuple file(s)");
