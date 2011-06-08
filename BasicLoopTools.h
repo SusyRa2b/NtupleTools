@@ -6,7 +6,7 @@
 #include <TVector3.h>
 #include "TMatrixT.h"
 #include "TMatrixDEigen.h"
-
+#include <cassert>
 
 //const char *jesTypeNames_[] = {"JES0","JESup","JESdown"};
 //const char *jerTypeNames_[] = {"JER0","JERbias","JERup","JERbias6"};
@@ -18,6 +18,9 @@
 
 const double mW_ = 80.399;
 const double mtop_ = 172.0;
+const bool isData_ = false;
+const double lumi_ = 36;
+TString sampleName_ = ""; //horrible coding
 
 using namespace std;
 
@@ -1167,11 +1170,53 @@ bool cutRequired(const TString cutTag) { //should put an & in here to improve pe
 
 
 
-double getWeight(Long64_t nentries) {
-
-  return  1;
+double getCrossSection(TString inname){
+  //from https://twiki.cern.ch/twiki/bin/view/CMS/SusyRA2BJets2011?rev=36
+  if (inname.Contains("DYJetsToLL_TuneD6T_M-10To50_7TeV-madgraph-tauola") )     return 310;
+  if (inname.Contains("DYJetsToLL_TuneD6T_M-50_7TeV-madgraph-tauola") )         return 3048;
+  if (inname.Contains("LM13_SUSY_sftsht_7TeV-pythia6") )                        return 6.899;
+  if (inname.Contains("LM9_SUSY_sftsht_7TeV-pythia6_2") )                       return 7.134; //from ProductionSpring2011 twiki
+  if (inname.Contains("QCD_Pt_0to5_TuneZ2_7TeV_pythia6_3") )                    return 4.844e10;
+  if (inname.Contains("QCD_Pt_1000to1400_TuneZ2_7TeV_pythia6") )               return .3321;
+  if (inname.Contains("QCD_Pt_120to170_TuneZ2_7TeV_pythia6") )                  return 1.151e5;
+  if (inname.Contains("QCD_Pt_1400to1800_TuneZ2_7TeV_pythia6_3") )              return .01087;
+  if (inname.Contains("QCD_Pt_15to3000_TuneZ2_Flat_7TeV_pythia6") )             return 2.213e10;
+  if (inname.Contains("QCD_Pt_15to30_TuneZ2_7TeV_pythia6") )                    return 8.159e8;
+  if (inname.Contains("QCD_Pt_170to300_TuneZ2_7TeV_pythia6") )                  return 2.426e4;
+  if (inname.Contains("QCD_Pt_1800_TuneZ2_7TeV_pythia6") )                      return .0003575;
+  if (inname.Contains("QCD_Pt_300to470_TuneZ2_7TeV_pythia6") )                  return 1.168e3;
+  if (inname.Contains("QCD_Pt_30to50_TuneZ2_7TeV_pythia6") )                    return 5.312e7;
+  if (inname.Contains("QCD_Pt_470to600_TuneZ2_7TeV_pythia6") )                  return 7.022e1;
+  if (inname.Contains("QCD_Pt_50to80_TuneZ2_7TeV_pythia6") )                    return 6.359e6;
+  if (inname.Contains("QCD_Pt_5to15_TuneZ2_7TeV_pythia6") )                     return 3.675e10;
+  if (inname.Contains("QCD_Pt_600to800_TuneZ2_7TeV_pythia6") )                  return 1.555e1;
+  if (inname.Contains("QCD_Pt_800to1000_TuneZ2_7TeV_pythia6") )                 return 1.844;
+  if (inname.Contains("QCD_Pt_80to120_TuneZ2_7TeV_pythia6_3") )                 return 7.843e5;
+  if (inname.Contains("TTJets_TuneD6T_7TeV-madgraph-tauola") )                  return 165;
+  if (inname.Contains("TToBLNu_TuneZ2_s-channel_7TeV-madgraph") )               return 4.6;
+  if (inname.Contains("TToBLNu_TuneZ2_t-channel_7TeV-madgraph") )               return 64.6;
+  if (inname.Contains("TToBLNu_TuneZ2_tW-channel_7TeV-madgraph") )              return 10.6;
+  if (inname.Contains("WJetsToLNu_TuneZ2_7TeV-madgraph-tauola") )               return 31314;
+  if (inname.Contains("WWtoAnything_TuneZ2_7TeV-pythia6-tauola") )              return 43;
+  if (inname.Contains("WZtoAnything_TuneZ2_7TeV-pythia6-tauola") )              return 10.4;
+  if (inname.Contains("ZinvisibleJets_7TeV-madgraph") )                         return 4500;
+  if (inname.Contains("ZZtoAnything_TuneZ2_7TeV-pythia6-tauola") )              return 4.297;
+    
+  std::cout<<"Cannot find cross section for this sample!"<<std::endl;
+  assert(0); 
+  return -1;
 }
 
+
+
+double getWeight(Long64_t nentries) {
+  if(isData_) return 1;
+
+  double sigma = getCrossSection(sampleName_);
+  double w = lumi_ * sigma / double(nentries);
+
+  return  w;
+}
 
 
 
@@ -1545,3 +1590,66 @@ void reducedTree(TString outputpath, itreestream& stream)
   return;
 }
 
+
+
+void makeReducedTrees(int argc, char** argv){
+  TString dir1 = "rfio:/castor/cern.ch/user/s/ssekmen/RA2b2011v1/";  
+  TString version = "V00-01-03";
+  
+  dir1+=version;
+  dir1+="/*";
+  TChain dummy1("dummy1");
+  dummy1.Add(dir1);
+  TObjArray* dir1list = dummy1.GetListOfFiles();
+  int nfiles1=dir1list->GetEntries();
+
+  for (int ifile1=0; ifile1<nfiles1; ifile1++) {
+    TString samplefiles1 = dir1list->At(ifile1)->GetTitle();
+    TString dir2 = samplefiles1;
+    dir2+="/*";
+    TChain dummy2("dummy2");
+    dummy2.Add(dir2);
+    TObjArray* dir2list = dummy2.GetListOfFiles();
+    int nfiles2=dir2list->GetEntries();
+  
+    for (int ifile2=0; ifile2<nfiles2; ifile2++) {
+      TString samplefiles2 = dir2list->At(ifile2)->GetTitle();
+      sampleName_ =  samplefiles2( samplefiles2.Last('/')+1, samplefiles2.Length() );
+
+      ofstream filelist;
+      filelist.open("filelist.txt", ios::trunc);
+     
+      TString dir3 = samplefiles2;
+      dir3+="/*";
+      TChain dummy3("dummy3");
+      dummy3.Add(dir3);
+      TObjArray* dir3list = dummy3.GetListOfFiles();
+      int nfiles3=dir3list->GetEntries();
+      for (int ifile3=0; ifile3<nfiles3; ifile3++) {
+	
+	TString samplefiles3 = dir3list->At(ifile3)->GetTitle();
+	filelist << samplefiles3 << endl;
+
+	// here is where would execute reducedTree() from
+
+      }
+      filelist.close();
+    }
+  }
+
+  commandLine cmdline;
+  decodeCommandLine(argc, argv, cmdline);
+
+  vector<string> filenames = getFilenames(cmdline.filelist);
+  itreestream stream(filenames, "Events");
+  if ( !stream.good() ) error("unable to open ntuple file(s)");
+
+  int nevents = stream.size();
+  cout << "Number of events: " << nevents << endl;
+
+  reducedTree(".", stream);
+
+
+  stream.close();
+
+}

@@ -7,6 +7,7 @@
 //#include "BasicLoopCU.h"
 #include "BasicLoopTools.h"
 
+
 #ifdef PROJECT_NAME
 #include "PhysicsTools/TheNtupleMaker/interface/pdg.h"
 #else
@@ -17,34 +18,32 @@ using namespace std;
 //-----------------------------------------------------------------------------
 int main(int argc, char** argv)
 {
+  /*
   // Get file list and histogram filename from command line
-
   commandLine cmdline;
   decodeCommandLine(argc, argv, cmdline);
 
   // Get names of ntuple files to be processed and open chain of ntuples
-
   vector<string> filenames = getFilenames(cmdline.filelist);
   itreestream stream(filenames, "Events");
   if ( !stream.good() ) error("unable to open ntuple file(s)");
 
   // Get number of events to be read
-
   int nevents = stream.size();
   cout << "Number of events: " << nevents << endl;
 
   // Select variables to be read
-
   selectVariables(stream);
   cutflow(stream);
   reducedTree(".", stream);
-
+  */
+  makeReducedTrees(argc, argv);
 
   // The root application is needed to make canvases visible during
   // program execution. If this is not needed, just comment out the following
   // line
 
-  TApplication app("analyzer", &argc, argv);
+  //TApplication app("analyzer", &argc, argv);
 
   /*
 	 Notes:
@@ -74,7 +73,7 @@ int main(int argc, char** argv)
 		ofile.count("MET", 0)
   */
   
-  outputFile ofile(cmdline.outputfilename);
+  //outputFile ofile(cmdline.outputfilename);
 
   //---------------------------------------------------------------------------
   // Declare histograms
@@ -86,6 +85,7 @@ int main(int argc, char** argv)
   // Loop over events
   //---------------------------------------------------------------------------
 
+  /*
   for(int entry=0; entry < nevents; ++entry)
 	{
 	  // Read event into memory
@@ -106,8 +106,8 @@ int main(int argc, char** argv)
 	  // ---------------------	  
 
 	}
-
-  stream.close();
-  ofile.close();
+  */
+  //stream.close();
+  //ofile.close();
   return 0;
 }
