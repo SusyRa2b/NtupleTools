@@ -1044,6 +1044,7 @@ bool passCut(const TString cutTag) {
   if (cutTag=="cut3Jets") return (nGoodJets() >= 3);
   
   if (cutTag=="cutMuVeto") return passMuVeto();
+  if (cutTag=="cutEleVeto") return passEleVeto();
 
   if (cutTag == "cutMET") {
     float mymet = getMET();
@@ -1357,7 +1358,7 @@ void reducedTree(TString outputpath, itreestream& stream)
 
   //we're making an ntuple, so size matters -- use float not double
   double weight; //one exception to the float rule
-  int runNumber, lumiSection, eventNumber;
+  ULong64_t lumiSection, eventNumber, runNumber;
   float HT, MHT, MET, METphi, minDeltaPhi, minDeltaPhiAll, minDeltaPhiAll30,minDeltaPhi30_eta5_noIdAll;
   float maxDeltaPhi, maxDeltaPhiAll, maxDeltaPhiAll30, maxDeltaPhi30_eta5_noIdAll;
   float sumDeltaPhi, diffDeltaPhi;
@@ -1508,9 +1509,10 @@ void reducedTree(TString outputpath, itreestream& stream)
       //if (entry%1000000==0) checkTimer(entry,nevents);
       weight = getWeight(nevents);
       
-      runNumber = edmevent_run;
-      lumiSection = edmevent_luminosityBlock;
-      eventNumber = edmevent_event;
+      // cast these as long ints, with rounding, assumes they are positive to begin with 
+      runNumber = (ULong64_t)(edmevent_run+0.5);
+      lumiSection = (ULong64_t)(edmevent_luminosityBlock+0.5);
+      eventNumber = (ULong64_t)(edmevent_event+0.5);
       
       cutHT = true; cutTrigger = true;      
       cutPV = passCut("cutPV");
