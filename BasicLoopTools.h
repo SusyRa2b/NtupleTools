@@ -30,6 +30,8 @@ std::vector<jet3_s> * myJetsPF;
 std::vector<electron3_s> * myElectronsPF;
 std::vector<muon3_s> * myMuonsPF;
 std::vector<tau1_s> * myTausPF;
+std::vector<met1_s> * myMETPF;
+std::vector<vertex_s> * myVertex;
 
 void InitializeStuff(){
   //If we resurrect the class structure, this will go into the constructor.
@@ -38,6 +40,8 @@ void InitializeStuff(){
   myElectronsPF = &electron3;
   myMuonsPF = &muon3;
   myTausPF = &tau1;
+  myMETPF = &met1;
+  myVertex = &vertex;
 
 }
 
@@ -59,11 +63,11 @@ bool passHLT() {
 bool passPV() {
   
   bool npass=false;
-  //for (unsigned int ipv = 0; ipv<vertex.size(); ipv++) {
-  if ( !vertex.at(0).isFake ){
-    if ( fabs(vertex.at(0).z) < 24 ){
-      if ( fabs(vertex.at(0).position_Rho) < 2 ){
-	if ( vertex.at(0).ndof > 4 ){
+  //for (unsigned int ipv = 0; ipv<myVertex->size(); ipv++) {
+  if ( !myVertex->at(0).isFake ){
+    if ( fabs(myVertex->at(0).z) < 24 ){
+      if ( fabs(myVertex->at(0).position_Rho) < 2 ){
+	if ( myVertex->at(0).ndof > 4 ){
 	  npass = true;
 	}
       }
@@ -268,7 +272,7 @@ float getHT() {
 float getMET() {
   float myMET=-1;
 
-  myMET = met.at(0).pt;
+  myMET = myMETPF->at(0).pt;
 
   return myMET;
 }
@@ -276,7 +280,7 @@ float getMET() {
 float getMETphi() {
   float myMETphi=-99;
 
-  myMETphi = met.at(0).phi;
+  myMETphi = myMETPF->at(0).phi;
 
   return myMETphi;
 }
@@ -496,8 +500,8 @@ float getMHTphi() {
 //  float myMET=-1;
 //  float myMETphi=-99;
 //
-//  myMET    = met.at(0).pt;
-//  myMETphi = met.at(0).phi;
+//  myMET    = myMETPF->at(0).pt;
+//  myMETphi = myMETPF->at(0).phi;
 //
 //  float myMETx = myMET * cos(myMETphi);
 //  float myMETy = myMET * sin(myMETphi);
@@ -776,7 +780,7 @@ uint countMu() {
        && myMuonsPF->at(i).innerTrack_numberOfValidHits >=11
        && myMuonsPF->at(i).track_hitPattern_numberOfValidPixelHits >= 1
        && fabs(myMuonsPF->at(i).dB) < 0.02
-       && fabs(myMuonsPF->at(i).vz - vertex.at(0).z ) <1
+       && fabs(myMuonsPF->at(i).vz - myVertex->at(0).z ) <1
        && (myMuonsPF->at(i).chargedHadronIso 
 	   + myMuonsPF->at(i).photonIso 
 	   + myMuonsPF->at(i).neutralHadronIso)/myMuonsPF->at(i).pt <0.2 
@@ -861,7 +865,7 @@ uint countEle() {
 	    && fabs(myElectronsPF->at(i).superCluster_eta) < 1.566)
        && myElectronsPF->at(i).gsfTrack_trackerExpectedHitsInner_numberOfLostHits <= 1
        && fabs(myElectronsPF->at(i).dB) < 0.02
-       && fabs(myElectronsPF->at(i).vz - vertex.at(0).z ) <1
+       && fabs(myElectronsPF->at(i).vz - myVertex->at(0).z ) <1
        && (myElectronsPF->at(i).chargedHadronIso 
 	   + myElectronsPF->at(i).photonIso 
 	   + myElectronsPF->at(i).neutralHadronIso)/myElectronsPF->at(i).pt <0.2 
