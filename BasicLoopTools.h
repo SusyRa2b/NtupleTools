@@ -18,8 +18,7 @@
 
 const double mW_ = 80.399;
 const double mtop_ = 172.0;
-const bool isData_ = false;
-const double lumi_ = 36;
+const double lumi_ = 190.5;
 TString sampleName_ = ""; //horrible coding
 
 using namespace std;
@@ -42,20 +41,18 @@ void InitializeStuff(){
 
 }
 
-bool passHLT() { 
+void setSampleName_(TString name){
+  sampleName_ = name;
+}
 
-  //std::cout << "triggerresultshelper_HLT_HT260_MHT60_v2  = " << triggerresultshelper_HLT_HT260_MHT60_v2  << std::endl;
-  //std::cout << "triggerresultshelper_HLT_HT300_MHT60_v4  = " <<triggerresultshelper_HLT_HT300_MHT60_v4  << std::endl;
-  //std::cout << "triggerresultshelper_HLT_HT300_v2  = " <<triggerresultshelper_HLT_HT300_v2  << std::endl;
-  //std::cout << "triggerresultshelper_HLT_HT300_v3  = " <<triggerresultshelper_HLT_HT300_v3  << std::endl;
+bool passHLT() { 
 
   //use no trigger for MC   
   if ( edmtriggerresults_HLT_HT250_MHT60_v3 || !edmevent_isRealData ){
-  //     || triggerresultshelper_HLT_HT300_MHT60_v4) {
-  //if ( triggerresultshelper_HLT_HT140U ){
     return true;
   }  
   return false;
+
 }
 
 
@@ -77,7 +74,6 @@ bool passPV() {
 }
 
 float getJetPt( unsigned int ijet ) {
-
   return myJetsPF->at(ijet).pt;
 }
 
@@ -1210,7 +1206,7 @@ double getCrossSection(TString inname){
 
 
 double getWeight(Long64_t nentries) {
-  if(isData_) return 1;
+  if(edmevent_isRealData) return 1;
 
   double sigma = getCrossSection(sampleName_);
   double w = lumi_ * sigma / double(nentries);
@@ -1277,7 +1273,7 @@ void cutflow(itreestream& stream){
     // Read event into memory
     stream.read(entry);
     fillObjects();
-    
+
     //if (entry%1000000==0) checkTimer(entry,nevents);
     
     const double weight = getWeight(nevents); //calculate weight
@@ -1341,9 +1337,11 @@ void cutflow(itreestream& stream){
 
 void reducedTree(TString outputpath, itreestream& stream)
 {
-
+  
   //open output file
   TString outfilename="reducedTree";
+  outfilename += "_";
+  outfilename += sampleName_;
   outfilename+=".root";
   if (outputpath[outputpath.Length()-1] != '/') outputpath += "/";
   outfilename.Prepend(outputpath);
@@ -1485,130 +1483,153 @@ void reducedTree(TString outputpath, itreestream& stream)
   int nevents = stream.size();
 
   InitializeStuff();//BEN
-
+   
   startTimer();
   for(int entry=0; entry < nevents; ++entry){
     // Read event into memory
     stream.read(entry);
     fillObjects();
-    
+
+    //some output to watch while it's running
+    if(entry==0){
+      if(!edmevent_isRealData){
+	cout << "MC xsec: " << getCrossSection(sampleName_) << endl;
+      }
+      else{
+	cout << "This is data!"<< endl;
+      }
+      cout << "weight: "<< getWeight(nevents) << endl;
+    }
+    if(entry%100000==0) cout << "  entry: " << entry << ", percent done=" << (int)(entry/(double)nevents*100.)<<  endl;
+      
+
     if (passCut("cutTrigger") && passCut("cutHT") ) {
-
-    //if (entry%1000000==0) checkTimer(entry,nevents);
-    weight = getWeight(nevents);
-    
-    runNumber = edmevent_run;
-    lumiSection = edmevent_luminosityBlock;
-    eventNumber = edmevent_event;
-
-    cutHT = true; cutTrigger = true;      
-    cutPV = passCut("cutPV");
-    cut3Jets = passCut("cut3Jets");
-    cutEleVeto = passCut("cutEleVeto");
-    cutMuVeto = passCut("cutMuVeto");
-    cutMET = passCut("cutMET");
-    cutDeltaPhi = passCut("cutDeltaPhi");
-    cutCleaning = passCut("cutCleaning");
-
-    passBadPFMuon = passBadPFMuonFilter();
-    passInconsistentMuon = passInconsistentMuonFilter();
-
-
-    njets = nGoodJets();
-    nbjets = nGoodBJets();
-    nElectrons = countEle();
-    nMuons = countMu();
-    HT=getHT();
-    MET=getMET();
-    MHT=getMHT();
-    METphi = getMETphi();
-    minDeltaPhi = getMinDeltaPhiMET(3);
-    minDeltaPhiAll = getMinDeltaPhiMET(99);
-    minDeltaPhiAll30 = getMinDeltaPhiMET30(99);
-    minDeltaPhi30_eta5_noIdAll = getMinDeltaPhiMET30_eta5_noId(99);
-    maxDeltaPhi = getMaxDeltaPhiMET(3);
-    maxDeltaPhiAll = getMaxDeltaPhiMET(99);
-    maxDeltaPhiAll30 = getMaxDeltaPhiMET30(99);
-    maxDeltaPhi30_eta5_noIdAll = getMaxDeltaPhiMET30_eta5_noId(99);
-
-    sumDeltaPhi = maxDeltaPhi + minDeltaPhi;
-    diffDeltaPhi = maxDeltaPhi - minDeltaPhi;
-
-    MT_Wlep = getMT_Wlep();
-
-    jetpt1 = jetPtOfN(1);
-    jetphi1 = jetPhiOfN(1);
-    jeteta1 = jetEtaOfN(1);
-
-    jetpt2 = jetPtOfN(2);
-    jetphi2 = jetPhiOfN(2);
-    jeteta2 = jetEtaOfN(2);
-
-    jetpt3 = jetPtOfN(3);
-    jetphi3 = jetPhiOfN(3);
-    jeteta3 = jetEtaOfN(3);
-
-    bjetpt1 = bjetPtOfN(1);
-    bjetphi1 = bjetPhiOfN(1);
-    bjeteta1 = bjetEtaOfN(1);
-    
-    bjetpt2 = bjetPtOfN(2);
-    bjetphi2 = bjetPhiOfN(2);
-    bjeteta2 = bjetEtaOfN(2);
-    
-    bjetpt3 = bjetPtOfN(3);
-    bjetphi3 = bjetPhiOfN(3);
-    bjeteta3 = bjetEtaOfN(3);
-
-    if (nElectrons>=1) {
-      eleet1 = eleet1_; //this is filled when i call countEle(). a hack to be cleaned up later
-    }
-    else {eleet1=-1;}
-    if (nMuons>=1) {
-      muonpt1 = muonpt1_; //this is filled when i call countMu(). a hack to be cleaned up later
-    }
-    else {muonpt1=-1;}
-
-
-    fillWTop(); //fill W,top masses and helicity angles
-
-    //fill new variables from Luke
-    getSphericityJetMET(lambda1_allJets,lambda2_allJets,determinant_allJets,99,false);
-    getSphericityJetMET(lambda1_allJetsPlusMET,lambda2_allJetsPlusMET,determinant_allJetsPlusMET,99,true);
-    getSphericityJetMET(lambda1_topThreeJets,lambda2_topThreeJets,determinant_topThreeJets,3,false);
-    getSphericityJetMET(lambda1_topThreeJetsPlusMET,lambda2_topThreeJetsPlusMET,determinant_topThreeJetsPlusMET,3,true);
-
-    reducedTree.Fill();
-
+           
+      //if (entry%1000000==0) checkTimer(entry,nevents);
+      weight = getWeight(nevents);
+      
+      runNumber = edmevent_run;
+      lumiSection = edmevent_luminosityBlock;
+      eventNumber = edmevent_event;
+      
+      cutHT = true; cutTrigger = true;      
+      cutPV = passCut("cutPV");
+      cut3Jets = passCut("cut3Jets");
+      cutEleVeto = passCut("cutEleVeto");
+      cutMuVeto = passCut("cutMuVeto");
+      cutMET = passCut("cutMET");
+      cutDeltaPhi = passCut("cutDeltaPhi");
+      cutCleaning = passCut("cutCleaning");
+      
+      passBadPFMuon = passBadPFMuonFilter();
+      passInconsistentMuon = passInconsistentMuonFilter();
+      
+      
+      njets = nGoodJets();
+      nbjets = nGoodBJets();
+      nElectrons = countEle();
+      nMuons = countMu();
+      HT=getHT();
+      MET=getMET();
+      MHT=getMHT();
+      METphi = getMETphi();
+      minDeltaPhi = getMinDeltaPhiMET(3);
+      minDeltaPhiAll = getMinDeltaPhiMET(99);
+      minDeltaPhiAll30 = getMinDeltaPhiMET30(99);
+      minDeltaPhi30_eta5_noIdAll = getMinDeltaPhiMET30_eta5_noId(99);
+      maxDeltaPhi = getMaxDeltaPhiMET(3);
+      maxDeltaPhiAll = getMaxDeltaPhiMET(99);
+      maxDeltaPhiAll30 = getMaxDeltaPhiMET30(99);
+      maxDeltaPhi30_eta5_noIdAll = getMaxDeltaPhiMET30_eta5_noId(99);
+      
+      sumDeltaPhi = maxDeltaPhi + minDeltaPhi;
+      diffDeltaPhi = maxDeltaPhi - minDeltaPhi;
+      
+      MT_Wlep = getMT_Wlep();
+      
+      jetpt1 = jetPtOfN(1);
+      jetphi1 = jetPhiOfN(1);
+      jeteta1 = jetEtaOfN(1);
+      
+      jetpt2 = jetPtOfN(2);
+      jetphi2 = jetPhiOfN(2);
+      jeteta2 = jetEtaOfN(2);
+      
+      jetpt3 = jetPtOfN(3);
+      jetphi3 = jetPhiOfN(3);
+      jeteta3 = jetEtaOfN(3);
+      
+      bjetpt1 = bjetPtOfN(1);
+      bjetphi1 = bjetPhiOfN(1);
+      bjeteta1 = bjetEtaOfN(1);
+      
+      bjetpt2 = bjetPtOfN(2);
+      bjetphi2 = bjetPhiOfN(2);
+      bjeteta2 = bjetEtaOfN(2);
+      
+      bjetpt3 = bjetPtOfN(3);
+      bjetphi3 = bjetPhiOfN(3);
+      bjeteta3 = bjetEtaOfN(3);
+      
+      if (nElectrons>=1) {
+	eleet1 = eleet1_; //this is filled when i call countEle(). a hack to be cleaned up later
+      }
+      else {eleet1=-1;}
+      if (nMuons>=1) {
+	muonpt1 = muonpt1_; //this is filled when i call countMu(). a hack to be cleaned up later
+      }
+      else {muonpt1=-1;}
+      
+      
+      fillWTop(); //fill W,top masses and helicity angles
+      
+      //fill new variables from Luke
+      getSphericityJetMET(lambda1_allJets,lambda2_allJets,determinant_allJets,99,false);
+      getSphericityJetMET(lambda1_allJetsPlusMET,lambda2_allJetsPlusMET,determinant_allJetsPlusMET,99,true);
+      getSphericityJetMET(lambda1_topThreeJets,lambda2_topThreeJets,determinant_topThreeJets,3,false);
+      getSphericityJetMET(lambda1_topThreeJetsPlusMET,lambda2_topThreeJetsPlusMET,determinant_topThreeJetsPlusMET,3,true);
+      
+      reducedTree.Fill();
+      
     }
   }
 
   stopTimer(nevents);
   fout.Write();
   fout.Close();
-
+  
   return;
 }
 
 
 
-void makeReducedTrees(int argc, char** argv){
+void makeReducedTrees(int argc, char** argv){ 
+  //THIS FUNCTION ISN"T READY YET - Problem in treestream when used a second time
+  //would run on all samples by just doing "./BasicLoopCU filelist.txt"
+
+  //input ntuple parameters
   TString dir1 = "/cu3/kreis/Ftuples/";
-  TString version = "V00-01-03";
-  
-  dir1+=version;
+  TString inputVersion = "V00-01-03";
+
+  //output reducedTree parameters
+  TString baseOutDir = "/cu2/kreis/reducedTrees/";
+  TString outputVersion = "V00-00-00";
+  TString outDir = baseOutDir+outputVersion+"/";
+
+  dir1+=inputVersion;
   dir1+="/*";
   TChain dummy1("dummy1");
   dummy1.Add(dir1);
   TObjArray* dir1list = dummy1.GetListOfFiles();
   int nfiles1=dir1list->GetEntries();
-
+  
   for (int ifile1=0; ifile1<nfiles1; ifile1++) {
     TString samplefiles1 = dir1list->At(ifile1)->GetTitle();
-    sampleName_ =  samplefiles1( samplefiles1.Last('/')+1, samplefiles1.Length() );
-    
-    ofstream filelist;
-    filelist.open("filelist.txt", ios::trunc);
+    TString sampleName =  samplefiles1( samplefiles1.Last('/')+1, samplefiles1.Length() );
+    if(!sampleName.Contains("QCD_Pt_1000")) continue;
+
+    ofstream fileliststream;
+    fileliststream.open("filelist.txt", ios::trunc);
     
     TString dir2 = samplefiles1;
     dir2+="/*";
@@ -1617,30 +1638,27 @@ void makeReducedTrees(int argc, char** argv){
     TObjArray* dir2list = dummy2.GetListOfFiles();
     int nfiles2=dir2list->GetEntries();
     for (int ifile2=0; ifile2<nfiles2; ifile2++) {
-      
       TString samplefiles2 = dir2list->At(ifile2)->GetTitle();
-      filelist << samplefiles2 << endl;
-      
-      // here is where would execute reducedTree() from
-      
+      fileliststream << samplefiles2 << endl;
     }
-      filelist.close();
+    fileliststream.close();
+    
+    /*
+    commandLine cmdline;
+    decodeCommandLine(argc, argv, cmdline);
+    
+    vector<string> filenames = getFilenames(cmdline.filelist);
+    itreestream stream(filenames, "Events");
+    if ( !stream.good() ) error("unable to open ntuple file(s)");
+    
+    int nevents = stream.size();
+    cout << "Number of events: " << nevents << endl;
+    
+    selectVariables(stream);
+    reducedTree(outDir, stream);
+    
+    stream.close();
+    */
+    
   }
-  
-  
-  commandLine cmdline;
-  decodeCommandLine(argc, argv, cmdline);
-  
-  vector<string> filenames = getFilenames(cmdline.filelist);
-  itreestream stream(filenames, "Events");
-  if ( !stream.good() ) error("unable to open ntuple file(s)");
-
-  int nevents = stream.size();
-  cout << "Number of events: " << nevents << endl;
-
-  reducedTree(".", stream);
-
-
-  stream.close();
-
 }

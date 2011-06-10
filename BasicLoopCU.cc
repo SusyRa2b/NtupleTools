@@ -18,7 +18,19 @@ using namespace std;
 //-----------------------------------------------------------------------------
 int main(int argc, char** argv)
 {
-  /*
+ 
+  //code for sampleName_ and output path
+  //this will deleted when makeReducedTrees() is working
+  TString outputDir = "/cu2/kreis/reducedTrees/V00-00-00/";
+  stringstream ss;
+  TString fileArg;
+  *argv++;
+  ss<<*argv;
+  ss>>fileArg;
+  setSampleName_(fileArg.Remove(fileArg.Last('.')));
+  cout << fileArg << endl;
+  *argv--;
+  
   // Get file list and histogram filename from command line
   commandLine cmdline;
   decodeCommandLine(argc, argv, cmdline);
@@ -34,10 +46,10 @@ int main(int argc, char** argv)
 
   // Select variables to be read
   selectVariables(stream);
-  cutflow(stream);
-  reducedTree(".", stream);
-  */
-  makeReducedTrees(argc, argv);
+  //cutflow(stream);
+  reducedTree(outputDir, stream);
+
+  //makeReducedTrees(argc, argv); // currently not working with multiple files (problem with treestream?)
 
   // The root application is needed to make canvases visible during
   // program execution. If this is not needed, just comment out the following
