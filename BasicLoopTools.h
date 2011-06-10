@@ -19,7 +19,7 @@
 const double mW_ = 80.399;
 const double mtop_ = 172.0;
 const double lumi_ = 190.5;
-TString sampleName_ = ""; //horrible coding
+TString sampleName_ = ""; //should really make this a class so we don't have to do this...
 
 using namespace std;
 
@@ -35,14 +35,12 @@ std::vector<vertex_s> * myVertex;
 
 void InitializeStuff(){
   //If we resurrect the class structure, this will go into the constructor.
-
   myJetsPF = &jet3;
   myElectronsPF = &electron3;
   myMuonsPF = &muon3;
   myTausPF = &tau1;
   myMETPF = &met1;
   myVertex = &vertex;
-
 }
 
 void setSampleName_(TString name){
@@ -51,7 +49,7 @@ void setSampleName_(TString name){
 
 bool passHLT() { 
 
-  long runnumber = (long) floor(edmevent_run +0.5); //just in case some crazy thing happens to edmevent_run being saved as a double
+  long runnumber = (long)(edmevent_run +0.5); //just in case some crazy thing happens to edmevent_run being saved as a double
 
   //RA2b - 2011 Triggers
   bool passTrig = false;
@@ -66,11 +64,7 @@ bool passHLT() {
   }
   else passTrig = true;   //use no trigger for MC   
 
-  if ( passTrig ){
-    return true;
-  }  
-  return false;
-
+  return passTrig;
 }
 
 
