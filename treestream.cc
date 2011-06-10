@@ -41,7 +41,7 @@
 //          02-Oct-2010 HBP minor change to itreestream to handle vector types
 //                      directly.
 //          22-Nov-2010 HBP allow reading of multiple trees
-//$Revision: 1.2 $
+//$Revision: 1.1 $
 //----------------------------------------------------------------------------
 #ifdef PROJECT_NAME
 #include <boost/regex.hpp>
@@ -814,7 +814,9 @@ itreestream::_open(vector<string>& fname, vector<string>& tname)
       // ----------------------------------------
       // Open first file
       // ----------------------------------------
-      TFile* file_ = new TFile(filepath[0].c_str());
+      //TFile* file_ = new TFile(filepath[0].c_str());
+      TFile* file_ = TFile::Open(filepath[0].c_str());
+
       if ( ! file_ || (file_ != 0 && ! file_->IsOpen()) )
         fatal("itreestream - unable to open file " + filepath[0]);
       file_->cd();
