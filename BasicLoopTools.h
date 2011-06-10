@@ -54,10 +54,12 @@ bool passHLT() {
   //RA2b - 2011 Triggers
   bool passTrig = false;
 
+
   if(edmevent_isRealData){
-    if(runnumber >= 160431 && runnumber < 161205) passTrig = edmtriggerresults_HLT_HT260_MHT60_v2;
-    else if (runnumber >= 161205 && runnumber < 163269) passTrig = edmtriggerresults_HLT_HT250_MHT60_v2;
-    else if (runnumber >= 163269 && runnumber < 164924) passTrig = edmtriggerresults_HLT_HT250_MHT60_v3;
+    //edmtriggerresults is a double - possible values are 0 (failed trigger), 1 (passed trigger), -9999 (trig result not available)
+    if(runnumber >= 160431 && runnumber < 161205) passTrig = (edmtriggerresults_HLT_HT260_MHT60_v2 > 0);
+    else if (runnumber >= 161205 && runnumber < 163269) passTrig = (edmtriggerresults_HLT_HT250_MHT60_v2 > 0);
+    else if (runnumber >= 163269 && runnumber < 164924) passTrig = (edmtriggerresults_HLT_HT250_MHT60_v3 > 0);
     //Not available yet - to be included in next version of ntuple
     //else if (runnumber >= 164924 && runnumber < 165922) passTrig = edmtriggerresults_HLT_HT300_CentralJet30_BTagIP_PFMHT55_v2;
     //else if (runnumber >= 165922) passTrig = edmtriggerresults_HLT_HT300_CentralJet30_BTagIP_PFMHT55_v3;
