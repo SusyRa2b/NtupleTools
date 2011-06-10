@@ -51,8 +51,22 @@ void setSampleName_(TString name){
 
 bool passHLT() { 
 
-  //use no trigger for MC   
-  if ( edmtriggerresults_HLT_HT250_MHT60_v3 || !edmevent_isRealData ){
+  long runnumber = (long) floor(edmevent_run +0.5); //just in case some crazy thing happens to edmevent_run being saved as a double
+
+  //RA2b - 2011 Triggers
+  bool passTrig = false;
+
+  if(edmevent_isRealData){
+    if(runnumber >= 160431 && runnumber < 161205) passTrig = edmtriggerresults_HLT_HT260_MHT60_v2;
+    else if (runnumber >= 161205 && runnumber < 163269) passTrig = edmtriggerresults_HLT_HT250_MHT60_v2;
+    else if (runnumber >= 163269 && runnumber < 164924) passTrig = edmtriggerresults_HLT_HT250_MHT60_v3;
+    //Not available yet - to be included in next version of ntuple
+    //else if (runnumber >= 164924 && runnumber < 165922) passTrig = edmtriggerresults_HLT_HT300_CentralJet30_BTagIP_PFMHT55_v2;
+    //else if (runnumber >= 165922) passTrig = edmtriggerresults_HLT_HT300_CentralJet30_BTagIP_PFMHT55_v3;
+  }
+  else passTrig = true;   //use no trigger for MC   
+
+  if ( passTrig ){
     return true;
   }  
   return false;
