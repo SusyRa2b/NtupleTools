@@ -24,7 +24,7 @@ void prepare_run_reduced(){
   for (int ifile1=0; ifile1<nfiles1; ifile1++) {
     TString samplefiles1 = dir1list->At(ifile1)->GetTitle();
     TString sampleName =  samplefiles1( samplefiles1.Last('/')+1, samplefiles1.Length() );
-    if(!sampleName.Contains("QCD")) continue;
+    //if(!sampleName.Contains("QCD")) continue;
 
     cout << sampleName << endl;
     ofstream fileliststream;
