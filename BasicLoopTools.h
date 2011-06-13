@@ -7,21 +7,39 @@
 #include "TMatrixT.h"
 #include "TMatrixDEigen.h"
 #include <cassert>
-
-//const char *jesTypeNames_[] = {"JES0","JESup","JESdown"};
-//const char *jerTypeNames_[] = {"JER0","JERbias","JERup","JERbias6"};
-//
-//enum JESType {kJES0=0,kJESup,kJESdown};
-//JESType theJESType_;
-//enum JERType {kJER0=0,kJERbias,kJERup,kJERbias6};
-//JERType theJERType_;
+using namespace std;
 
 const double mW_ = 80.399;
 const double mtop_ = 172.0;
 const double lumi_ = 190.5;
 TString sampleName_ = ""; //should really make this a class so we don't have to do this...
 
-using namespace std;
+enum CutScheme {kBaseline2010};
+CutScheme theCutScheme_;
+enum METType {kMHT=0, kMET, ktcMET, kpfMET};
+METType theMETType_;
+enum METRange {kMedium=0, kHigh, kWide, kMedhigh, kLSB};
+METRange theMETRange_;
+enum jetType {kCalo=0, kPF, kJPT};
+jetType theJetType_;
+enum leptonType {kNormal=0, kPFLeptons, kPFLeptonsRA2};
+leptonType theLeptonType_;
+enum dpType {kDeltaPhi=0, kminDP, kMPT, kDPSync1, kminDPinv, kminDPAll30};
+dpType theDPType_;
+enum JESType {kJES0=0,kJESup,kJESdown};
+JESType theJESType_;
+enum JERType {kJER0=0,kJERbias,kJERup,kJERbias6};
+JERType theJERType_;
+enum METuncType {kMETunc0=0,kMETuncDown,kMETuncUp};
+METuncType theMETuncType_;
+enum BTagEffType {kBTagEff0=0,kBTagEffup,kBTagEffdown};
+BTagEffType theBTagEffType_;
+enum tailCleaningType {kNoCleaning=0, kMuonCleaning, kMuonEcalCleaning};
+tailCleaningType theCleaningType_;
+enum flavorHistoryType {kNoFlvHist=0, kFlvHist};
+flavorHistoryType theFlavorHistoryType_;
+enum BTaggerType {kSSVM=0, kTCHET};
+BTaggerType theBTaggerType_;
 
 //-Define some pointers so we can use more intuitive names.
 //-This also isolates some of the dependency on the configuration of the ntuple.
@@ -43,8 +61,21 @@ void InitializeStuff(){
   myVertex = &vertex;
 }
 
+TString getCutDescriptionString(){
+  
+  TString cut = "";
+  if(theBTaggerType_==kTCHET){
+    cut+="TCHET";
+  }  
+  return cut;
+}
+
 void setSampleName_(TString name){
   sampleName_ = name;
+}
+
+void setBTaggerType(BTaggerType btaggertype){
+  theBTaggerType_ = btaggertype;
 }
 
 bool passHLT() { 
@@ -148,11 +179,21 @@ bool isGoodJetMHT(unsigned int ijet) {
 }
 
 
-bool passSSVM(int ijet) {
-  return ( myJetsPF->at(ijet).simpleSecondaryVertexBJetTags >= 1.74 
-	   || myJetsPF->at(ijet).simpleSecondaryVertexHighEffBJetTags >= 1.74);
-}
+bool passBTagger(int ijet) {
 
+  if(theBTaggerType_==kSSVM){
+    return ( myJetsPF->at(ijet).simpleSecondaryVertexBJetTags >= 1.74 
+	     || myJetsPF->at(ijet).simpleSecondaryVertexHighEffBJetTags >= 1.74);
+  }
+  else if(theBTaggerType_==kTCHET){
+    return (myJetsPF->at(ijet).trackCountingHighEffBJetTags >= 10.2);
+  }
+  else{
+    cout << "Invalid b tagger!" << endl;
+    assert(0);
+    return false;
+  }
+}
 
 uint nGoodJets() {
   
@@ -168,7 +209,7 @@ uint nGoodBJets() {
   uint nb=0;
   for (uint i = 0; i < myJetsPF->size(); ++i) {
     if (isGoodJet30(i) ) {
-      if ( passSSVM(i) ) nb++;
+      if ( passBTagger(i) ) nb++;
     }
   }
   return nb;
@@ -229,7 +270,7 @@ float bjetPtOfN(unsigned int n) {
   for (unsigned int i=0; i<myJetsPF->size(); i++) {
 
     bool pass=false;
-    pass = (isGoodJet30(i) && passSSVM(i));
+    pass = (isGoodJet30(i) && passBTagger(i));
 
     if (pass ) {
       ngood++;
@@ -245,7 +286,7 @@ float bjetPhiOfN(unsigned int n) {
   for (unsigned int i=0; i<myJetsPF->size(); i++) {
 
     bool pass=false;
-    pass = (isGoodJet30(i) && passSSVM(i));
+    pass = (isGoodJet30(i) && passBTagger(i));
 
     if (pass ) {
       ngood++;
@@ -261,7 +302,7 @@ float bjetEtaOfN(unsigned int n) {
   for (unsigned int i=0; i<myJetsPF->size(); i++) {
 
     bool pass=false;
-    pass = (isGoodJet30(i) && passSSVM(i));
+    pass = (isGoodJet30(i) && passBTagger(i));
 
     if (pass ) {
       ngood++;
@@ -724,13 +765,13 @@ void fillWTop() {
     if ( isGoodJet30(j1i)) { //owen is using pT>30 cut
 
       //use exactly the same logic as Owen, to avoid bugs
-      if (passSSVM(j1i) ) continue; //veto b jets
+      if (passBTagger(j1i) ) continue; //veto b jets
 
       //note how owen does the loop indexing here
       for (unsigned int j2i =j1i+1; j2i<myJetsPF->size(); j2i++) {
 	if ( isGoodJet10(j2i)) { //owen is using a pT>10 cut here!
 
-	  if (isGoodJet30(j2i) && passSSVM(j2i)) continue; //veto b jets with >30 gev
+	  if (isGoodJet30(j2i) && passBTagger(j2i)) continue; //veto b jets with >30 gev
 
 	  double m2j = calc_mNj(j1i,j2i);
 	  if ( fabs(m2j- mW_) < fabs(bestM2j - mW_) ) {
@@ -743,7 +784,7 @@ void fillWTop() {
 
 	      if (j3i==j1i || j3i==j2i) continue;
 
-	      if ( isGoodJet30(j3i) && passSSVM(j3i)) { //owen uses 30 GeV pT cut
+	      if ( isGoodJet30(j3i) && passBTagger(j3i)) { //owen uses 30 GeV pT cut
 
 		double m3j = calc_mNj(j1i,j2i,j3i);
 
@@ -1032,28 +1073,13 @@ void getSphericityJetMET(float & lambda1, float & lambda2, float & det,
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 bool passCut(const TString cutTag) {
 
   if (cutTag=="cutTrigger" ) return passHLT();
 
   if (cutTag=="cutPV") return passPV();
   
-  if (cutTag=="cutHT") return getHT()>300;
+  if (cutTag=="cutHT") return getHT()>350;
   
   if (cutTag=="cut3Jets") return (nGoodJets() >= 3);
   
@@ -1069,11 +1095,11 @@ bool passCut(const TString cutTag) {
     return ( getMinDeltaPhiMET(3) >= 0.3 );
   }
 
-  int nbSSVM = nGoodBJets();
-  if (cutTag == "cut1b") return nbSSVM >=1;
-  if (cutTag == "cut2b") return nbSSVM >=2;
-  if (cutTag == "cut3b") return nbSSVM >=3;
-  if (cutTag == "cutEq1b") return nbSSVM == 1;
+  int nbtags = nGoodBJets();
+  if (cutTag == "cut1b") return nbtags >=1;
+  if (cutTag == "cut2b") return nbtags >=2;
+  if (cutTag == "cut3b") return nbtags >=3;
+  if (cutTag == "cutEq1b") return nbtags == 1;
   
   if (cutTag == "cutCleaning") return passCleaning();
 
@@ -1355,7 +1381,9 @@ void reducedTree(TString outputpath, itreestream& stream)
   
   //open output file
   TString outfilename="reducedTree";
-  outfilename += "_";
+  outfilename += ".";
+  outfilename += getCutDescriptionString();
+  outfilename += ".";
   outfilename += sampleName_;
   outfilename+=".root";
   if (outputpath[outputpath.Length()-1] != '/') outputpath += "/";
