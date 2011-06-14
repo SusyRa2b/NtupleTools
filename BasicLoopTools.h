@@ -1245,6 +1245,47 @@ double getCrossSection(TString inname){
 }
 
 
+TString getSampleNameOutputString(TString inname){
+
+  //strategy: as much as possible, give the name that drawReducedTrees expects,
+  //and return sampleName for samples that have to be 'hadd'ed afterwards anyway
+
+  if (inname.Contains("DYJetsToLL_TuneD6T_M-10To50_7TeV-madgraph-tauola") )     return inname;
+  if (inname.Contains("DYJetsToLL_TuneD6T_M-50_7TeV-madgraph-tauola") )         return inname;
+  if (inname.Contains("LM13_SUSY_sftsht_7TeV-pythia6") )                        return "LM13";
+  if (inname.Contains("LM9_SUSY_sftsht_7TeV-pythia6_2") )                       return "LM9";
+  if (inname.Contains("QCD_Pt_0to5_TuneZ2_7TeV_pythia6_3") )                    return inname;
+  if (inname.Contains("QCD_Pt_1000to1400_TuneZ2_7TeV_pythia6") )                return inname;
+  if (inname.Contains("QCD_Pt_120to170_TuneZ2_7TeV_pythia6") )                  return inname;
+  if (inname.Contains("QCD_Pt_1400to1800_TuneZ2_7TeV_pythia6_3") )              return inname;
+  if (inname.Contains("QCD_Pt_15to3000_TuneZ2_Flat_7TeV_pythia6") )             return inname;
+  if (inname.Contains("QCD_Pt_15to30_TuneZ2_7TeV_pythia6") )                    return inname;
+  if (inname.Contains("QCD_Pt_170to300_TuneZ2_7TeV_pythia6") )                  return inname;
+  if (inname.Contains("QCD_Pt_1800_TuneZ2_7TeV_pythia6") )                      return inname;
+  if (inname.Contains("QCD_Pt_300to470_TuneZ2_7TeV_pythia6") )                  return inname;
+  if (inname.Contains("QCD_Pt_30to50_TuneZ2_7TeV_pythia6") )                    return inname;
+  if (inname.Contains("QCD_Pt_470to600_TuneZ2_7TeV_pythia6") )                  return inname;
+  if (inname.Contains("QCD_Pt_50to80_TuneZ2_7TeV_pythia6") )                    return inname;
+  if (inname.Contains("QCD_Pt_5to15_TuneZ2_7TeV_pythia6") )                     return inname;
+  if (inname.Contains("QCD_Pt_600to800_TuneZ2_7TeV_pythia6") )                  return inname;
+  if (inname.Contains("QCD_Pt_800to1000_TuneZ2_7TeV_pythia6") )                 return inname;
+  if (inname.Contains("QCD_Pt_80to120_TuneZ2_7TeV_pythia6_3") )                 return inname;
+  if (inname.Contains("TTJets_TuneD6T_7TeV-madgraph-tauola") )                  return "TTbarJets";
+  if (inname.Contains("TToBLNu_TuneZ2_s-channel_7TeV-madgraph") )               return "SingleTop-sChannel";
+  if (inname.Contains("TToBLNu_TuneZ2_t-channel_7TeV-madgraph") )               return "SingleTop-tChannel";
+  if (inname.Contains("TToBLNu_TuneZ2_tW-channel_7TeV-madgraph") )              return "SingleTop-tWChannel";
+  if (inname.Contains("WJetsToLNu_TuneZ2_7TeV-madgraph-tauola") )               return "WJets";
+  if (inname.Contains("WWtoAnything_TuneZ2_7TeV-pythia6-tauola") )              return "WW";
+  if (inname.Contains("WZtoAnything_TuneZ2_7TeV-pythia6-tauola") )              return "WZ";
+  if (inname.Contains("ZinvisibleJets_7TeV-madgraph") )                         return "Zinvisible";
+  if (inname.Contains("ZZtoAnything_TuneZ2_7TeV-pythia6-tauola") )              return "ZZ";
+
+  //if it isn't found, just use the full name 
+  //  -- data will fall into this category, which is fine because we have to hadd the files after anyway
+  return inname;
+
+}
+
 
 double getWeight(Long64_t nentries) {
   if(edmevent_isRealData) return 1;
@@ -1315,6 +1356,17 @@ void cutflow(itreestream& stream){
     stream.read(entry);
     fillObjects();
 
+    //some output to watch while it's running
+    if(entry==0){
+      if(!edmevent_isRealData){
+        cout << "MC xsec: " << getCrossSection(sampleName_) << endl;
+      }
+      else{
+        cout << "This is data!"<< endl;
+      }
+      cout << "weight: "<< getWeight(nevents) << endl;
+    }
+    if(entry%100000==0) cout << "  entry: " << entry << ", percent done=" << (int)(entry/(double)nevents*100.)<<  endl;
     //if (entry%1000000==0) checkTimer(entry,nevents);
     
     const double weight = getWeight(nevents); //calculate weight
@@ -1384,7 +1436,7 @@ void reducedTree(TString outputpath, itreestream& stream)
   outfilename += ".";
   outfilename += getCutDescriptionString();
   outfilename += ".";
-  outfilename += sampleName_;
+  outfilename += getSampleNameOutputString(sampleName_);
   outfilename+=".root";
   if (outputpath[outputpath.Length()-1] != '/') outputpath += "/";
   outfilename.Prepend(outputpath);
