@@ -21,7 +21,7 @@ TH1D* hdata=0;
 TString selection_ ="cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && cutMET==1 && cutDeltaPhi==1 && cutCleaning==1";
 
 float leg_x1 = 0.696, leg_x2=0.94, leg_y1=0.5, leg_y2=0.92;
-double lumiScale_ = 1.;
+
 
 bool quiet_=false;
 bool doRatio_=false;
@@ -564,7 +564,7 @@ void loadSamples(bool joinSingleTop=true) {
   TString dname="reducedTree.";
   dname+=cutdesc;
   dname+=".data.root";
-  dname.Prepend(inputPath);
+  dname.Prepend(dataInputPath);
   if (dname.Contains("JERbias")) {
     dname.ReplaceAll("JERbias_",""); //JERbias not relevant for data
     dname.ReplaceAll("JERbias6_",""); //JERbias not relevant for data

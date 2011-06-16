@@ -70,11 +70,13 @@ functionality for TH1F and TH1D e.g. the case of addOverflowBin()
 #include <iostream>
 #include <map>
 #include <set>
-
-
-TString inputPath = "/cu2/kreis/reducedTrees/V00-01-02/";
-//TString cutdesc = "Baseline0_PF_JERbias_pfMEThigh_PFLep0e0mu_minDP_MuonEcalCleaning";
+													     
+													     
+TString inputPath = "/cu2/kreis/reducedTrees/V00-01-02/";//path for MC													     
+TString dataInputPath = "/cu2/kreis/reducedTrees/42june14/";//path for data
 TString cutdesc = "TCHET";
+double lumiScale_ = 348.644/190.5; //data lumi / lumi of MC
+//TString cutdesc = "Baseline0_PF_JERbias_pfMEThigh_PFLep0e0mu_minDP_MuonEcalCleaning";
 //TString cutdesc = "Baseline0_PF_pfMEThigh_PFLepRA20e0mu_minDP_MuonEcalCleaning";
 //TString cutdesc = "Baseline0_PF_pfMEThigh_PFLep0e0mu_minDP_MuonEcalCleaning";
 
@@ -1155,9 +1157,9 @@ void drawMETPlots() {
   */
 
   setLogY(false);
-  setPlotMaximum(100);
+  //setPlotMaximum(100);
   selection_ ="nbjets==0 && cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && cutDeltaPhi==1 && passInconsistentMuon==1 && passBadPFMuon==1 && MET>=150.";
-  resetPlotMaximum();
+  //resetPlotMaximum();
   drawPlots(var,10,150,high,xtitle,"Events", "H_MET_antib");
 }
 
