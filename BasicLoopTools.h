@@ -9,10 +9,11 @@
 #include <cassert>
 using namespace std;
 
+//should really make this a class so we don't have to do this...
 const double mW_ = 80.399;
 const double mtop_ = 172.0;
-const double lumi_ = 190.5;
-TString sampleName_ = ""; //should really make this a class so we don't have to do this...
+const double lumi_ = 348.644;
+TString sampleName_ = ""; 
 
 enum CutScheme {kBaseline2010};
 CutScheme theCutScheme_;
@@ -44,21 +45,20 @@ BTaggerType theBTaggerType_;
 //-Define some pointers so we can use more intuitive names.
 //-This also isolates some of the dependency on the configuration of the ntuple.
 //--These should be checked each time we make new ntuples.
-std::vector<jet3_s> * myJetsPF;
-std::vector<electron3_s> * myElectronsPF;
-std::vector<muon3_s> * myMuonsPF;
-std::vector<tau1_s> * myTausPF;
-std::vector<met1_s> * myMETPF;
+std::vector<jet_s> * myJetsPF;
+std::vector<electron_s> * myElectronsPF;
+std::vector<muon_s> * myMuonsPF;
+std::vector<tau_s> * myTausPF;
+std::vector<met_s> * myMETPF;
 std::vector<vertex_s> * myVertex;
 
-void InitializeStuff(){
-  //If we resurrect the class structure, this will go into the constructor.
-  myJetsPF = &jet3;
-  myElectronsPF = &electron3;
-  myMuonsPF = &muon3;
-  myTausPF = &tau1;
-  myMETPF = &met1;
-  myVertex = &vertex;
+void InitializeStuff(){       //If we resurrect the class structure, this will go into the constructor.
+  myJetsPF = &jet;            //selectedPatJetsPF
+  myElectronsPF = &electron;  //selectedPatElectronsPF
+  myMuonsPF = &muon;          //selectedPatMuonsPF
+  myTausPF = &tau;            //selectedPatTausPF
+  myMETPF = &met;             //patMETsPF
+  myVertex = &vertex;         //offlinePrimaryVertices
 }
 
 TString getCutDescriptionString(){
@@ -80,20 +80,18 @@ void setBTaggerType(BTaggerType btaggertype){
 
 bool passHLT() { 
 
-  long runnumber = (long)(edmevent_run +0.5); //just in case some crazy thing happens to edmevent_run being saved as a double
+  long runnumber = (long)(eventhelper_run +0.5); //just in case some crazy thing happens to eventhelper_run being saved as a double
 
   //RA2b - 2011 Triggers
   bool passTrig = false;
 
-
-  if(edmevent_isRealData){
-    //edmtriggerresults is a double - possible values are 0 (failed trigger), 1 (passed trigger), -9999 (trig result not available)
-    if(runnumber >= 160431 && runnumber < 161205) passTrig = (edmtriggerresults_HLT_HT260_MHT60_v2 > 0);
-    else if (runnumber >= 161205 && runnumber < 163269) passTrig = (edmtriggerresults_HLT_HT250_MHT60_v2 > 0);
-    else if (runnumber >= 163269 && runnumber < 164924) passTrig = (edmtriggerresults_HLT_HT250_MHT60_v3 > 0);
-    //Not available yet - to be included in next version of ntuple
-    //else if (runnumber >= 164924 && runnumber < 165922) passTrig = edmtriggerresults_HLT_HT300_CentralJet30_BTagIP_PFMHT55_v2;
-    //else if (runnumber >= 165922) passTrig = edmtriggerresults_HLT_HT300_CentralJet30_BTagIP_PFMHT55_v3;
+  if(eventhelper_isRealData){
+    //triggerresultshelper is a double - possible values are 0 (failed trigger), 1 (passed trigger), -9999 (trig result not available)
+    if(runnumber >= 160431 && runnumber < 161205) passTrig = (triggerresultshelper_HLT_HT260_MHT60_v2 > 0);
+    else if (runnumber >= 161205 && runnumber < 163269) passTrig = (triggerresultshelper_HLT_HT250_MHT60_v2 > 0);
+    else if (runnumber >= 163269 && runnumber < 164924) passTrig = (triggerresultshelper_HLT_HT250_MHT60_v3 > 0);
+    else if (runnumber >= 164924 && runnumber < 165922) passTrig = triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_PFMHT55_v2;
+    else if (runnumber >= 165922) passTrig = triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_PFMHT55_v3;
   }
   else passTrig = true;   //use no trigger for MC   
 
@@ -1288,7 +1286,7 @@ TString getSampleNameOutputString(TString inname){
 
 
 double getWeight(Long64_t nentries) {
-  if(edmevent_isRealData) return 1;
+  if(eventhelper_isRealData) return 1;
 
   double sigma = getCrossSection(sampleName_);
   double w = lumi_ * sigma / double(nentries);
@@ -1358,7 +1356,7 @@ void cutflow(itreestream& stream){
 
     //some output to watch while it's running
     if(entry==0){
-      if(!edmevent_isRealData){
+      if(!eventhelper_isRealData){
         cout << "MC xsec: " << getCrossSection(sampleName_) << endl;
       }
       else{
@@ -1587,7 +1585,7 @@ void reducedTree(TString outputpath, itreestream& stream)
 
     //some output to watch while it's running
     if(entry==0){
-      if(!edmevent_isRealData){
+      if(!eventhelper_isRealData){
 	cout << "MC xsec: " << getCrossSection(sampleName_) << endl;
       }
       else{
@@ -1604,9 +1602,9 @@ void reducedTree(TString outputpath, itreestream& stream)
       weight = getWeight(nevents);
       
       // cast these as long ints, with rounding, assumes they are positive to begin with 
-      runNumber = (ULong64_t)(edmevent_run+0.5);
-      lumiSection = (ULong64_t)(edmevent_luminosityBlock+0.5);
-      eventNumber = (ULong64_t)(edmevent_event+0.5);
+      runNumber = (ULong64_t)(eventhelper_run+0.5);
+      lumiSection = (ULong64_t)(eventhelper_luminosityBlock+0.5);
+      eventNumber = (ULong64_t)(eventhelper_event+0.5);
       
       cutHT = true; cutTrigger = true;      
       cutPV = passCut("cutPV");
@@ -1698,63 +1696,3 @@ void reducedTree(TString outputpath, itreestream& stream)
 }
 
 
-
-void makeReducedTrees(int argc, char** argv){ 
-  //THIS FUNCTION ISN"T READY YET - Problem in treestream when used a second time
-  //would run on all samples by just doing "./BasicLoopCU filelist.txt"
-
-  //input ntuple parameters
-  TString dir1 = "/cu3/kreis/Ftuples/";
-  TString inputVersion = "V00-01-03";
-
-  //output reducedTree parameters
-  TString baseOutDir = "/cu2/kreis/reducedTrees/";
-  TString outputVersion = "V00-00-00";
-  TString outDir = baseOutDir+outputVersion+"/";
-
-  dir1+=inputVersion;
-  dir1+="/*";
-  TChain dummy1("dummy1");
-  dummy1.Add(dir1);
-  TObjArray* dir1list = dummy1.GetListOfFiles();
-  int nfiles1=dir1list->GetEntries();
-  
-  for (int ifile1=0; ifile1<nfiles1; ifile1++) {
-    TString samplefiles1 = dir1list->At(ifile1)->GetTitle();
-    TString sampleName =  samplefiles1( samplefiles1.Last('/')+1, samplefiles1.Length() );
-    if(!sampleName.Contains("QCD_Pt_1000")) continue;
-
-    ofstream fileliststream;
-    fileliststream.open("filelist.txt", ios::trunc);
-    
-    TString dir2 = samplefiles1;
-    dir2+="/*";
-    TChain dummy2("dummy3");
-    dummy2.Add(dir2);
-    TObjArray* dir2list = dummy2.GetListOfFiles();
-    int nfiles2=dir2list->GetEntries();
-    for (int ifile2=0; ifile2<nfiles2; ifile2++) {
-      TString samplefiles2 = dir2list->At(ifile2)->GetTitle();
-      fileliststream << samplefiles2 << endl;
-    }
-    fileliststream.close();
-    
-    /*
-    commandLine cmdline;
-    decodeCommandLine(argc, argv, cmdline);
-    
-    vector<string> filenames = getFilenames(cmdline.filelist);
-    itreestream stream(filenames, "Events");
-    if ( !stream.good() ) error("unable to open ntuple file(s)");
-    
-    int nevents = stream.size();
-    cout << "Number of events: " << nevents << endl;
-    
-    selectVariables(stream);
-    reducedTree(outDir, stream);
-    
-    stream.close();
-    */
-    
-  }
-}
