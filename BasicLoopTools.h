@@ -101,6 +101,24 @@ bool passHLT() {
 }
 
 
+int countGoodPV() {
+  
+  int ngood=0;
+  for (unsigned int ipv = 0; ipv<myVertex->size(); ipv++) {
+    if ( !myVertex->at(ipv).isFake ) {
+      if ( fabs(myVertex->at(ipv).z) < 24 ){
+	if ( fabs(myVertex->at(ipv).position_Rho) < 2 ){
+	  if ( myVertex->at(ipv).ndof > 4 ){
+	    ++ngood;
+	  }
+	}
+      }
+    }
+  }
+
+  return ngood; 
+}
+
 bool passPV() {
   
   bool npass=false;
@@ -1472,6 +1490,8 @@ void reducedTree(TString outputpath, itreestream& stream)
 
   float MT_Wlep;
 
+  int nGoodPV;
+
   //new variables from Luke
   float lambda1_allJets;
   float lambda2_allJets;
@@ -1500,6 +1520,8 @@ void reducedTree(TString outputpath, itreestream& stream)
   reducedTree.Branch("cutMET",&cutMET,"cutMET/O");
   reducedTree.Branch("cutDeltaPhi",&cutDeltaPhi,"cutDeltaPhi/O");
   reducedTree.Branch("cutCleaning",&cutCleaning,"cutCleaning/O");
+
+  reducedTree.Branch("nGoodPV",&nGoodPV,"nGoodPV/I");
 
   reducedTree.Branch("passBadPFMuon",&passBadPFMuon,"passBadPFMuon/O");
   reducedTree.Branch("passInconsistentMuon",&passInconsistentMuon,"passInconsistentMuon/O");
@@ -1620,7 +1642,8 @@ void reducedTree(TString outputpath, itreestream& stream)
       passBadPFMuon = passBadPFMuonFilter();
       passInconsistentMuon = passInconsistentMuonFilter();
       
-      
+      nGoodPV = countGoodPV();
+
       njets = nGoodJets();
       nbjets = nGoodBJets();
       nElectrons = countEle();
