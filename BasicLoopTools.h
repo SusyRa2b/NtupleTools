@@ -1,6 +1,8 @@
-///////////////////////////////////////////////////////////
-//CODE PORTED FROM JOSH'S basicLoop.h FILE
-///////////////////////////////////////////////////////////
+//
+// Cornell University
+//
+
+
 #include "BasicLoopCU.h"
 #include <TLorentzVector.h>
 #include <TVector3.h>
@@ -12,7 +14,7 @@ using namespace std;
 //should really make this a class so we don't have to do this...
 const double mW_ = 80.399;
 const double mtop_ = 172.0;
-const double lumi_ = 348.644;
+const double lumi_ = 1.; //fix to 1/pb and scale MC later (e.g. in drawReducedTrees)
 TString sampleName_ = ""; 
 
 enum CutScheme {kBaseline2010};
