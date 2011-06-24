@@ -102,6 +102,29 @@ bool passHLT() {
   return passTrig;
 }
 
+unsigned int utilityHLT_HT300(){
+  //this function will return 0 if the utility trigger was not passed
+  //and the prescale value if it was passed
+  
+  unsigned int myPrescale = 0;
+  if(triggerresultshelper_HLT_HT300_v1>0) myPrescale = triggerresultshelper_HLT_HT300_v1_prs;
+  if(triggerresultshelper_HLT_HT300_v2>0) myPrescale = triggerresultshelper_HLT_HT300_v2_prs;
+  if(triggerresultshelper_HLT_HT300_v3>0) myPrescale = triggerresultshelper_HLT_HT300_v3_prs;
+  if(triggerresultshelper_HLT_HT300_v4>0) myPrescale = triggerresultshelper_HLT_HT300_v4_prs;
+  if(triggerresultshelper_HLT_HT300_v5>0) myPrescale = triggerresultshelper_HLT_HT300_v5_prs;
+  return myPrescale;
+}
+
+unsigned int utilityHLT_HT300_CentralJet30_BTagIP(){
+  //this function will return 0 if the utility trigger was not passed
+  //and the prescale value if it was passed
+  
+  unsigned int myPrescale = 0;
+  if(triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_v2>0) myPrescale = triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_v2_prs;
+  if(triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_v3>0) myPrescale = triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_v3_prs;
+  return myPrescale;
+}
+
 
 int countGoodPV() {
   
@@ -1096,6 +1119,7 @@ void getSphericityJetMET(float & lambda1, float & lambda2, float & det,
 bool passCut(const TString cutTag) {
 
   if (cutTag=="cutTrigger" ) return passHLT();
+  if (cutTag=="cutUtilityTrigger" ) return ( utilityHLT_HT300()>0 || utilityHLT_HT300_CentralJet30_BTagIP()>0 );
 
   if (cutTag=="cutPV") return passPV();
   
@@ -1477,10 +1501,15 @@ void reducedTree(TString outputpath, itreestream& stream)
   float maxDeltaPhi, maxDeltaPhiAll, maxDeltaPhiAll30, maxDeltaPhi30_eta5_noIdAll;
   float sumDeltaPhi, diffDeltaPhi;
 
-  bool cutHT,cutPV,cutTrigger; //these will always be true
+  bool cutHT,cutPV,cutTrigger;
   bool cut3Jets,cutEleVeto,cutMuVeto,cutMET,cutDeltaPhi, cutCleaning;
 
   bool passBadPFMuon, passInconsistentMuon;
+
+  bool pass_utilityHLT_HT300;
+  UInt_t prescale_utilityHLT_HT300;
+  bool pass_utilityHLT_HT300_CentralJet30_BTagIP;
+  UInt_t prescale_utilityHLT_HT300_CentralJet30_BTagIP;
 
   int njets, nbjets, nElectrons, nMuons;
 
@@ -1533,6 +1562,10 @@ void reducedTree(TString outputpath, itreestream& stream)
   reducedTree.Branch("nElectrons",&nElectrons,"nElectrons/I");
   reducedTree.Branch("nMuons",&nMuons,"nMuons/I");
 
+  reducedTree.Branch("pass_utilityHLT_HT300",&pass_utilityHLT_HT300,"pass_utilityHLT_HT300/O");
+  reducedTree.Branch("prescale_utilityHLT_HT300", &prescale_utilityHLT_HT300, "prescale_utilityHLT_HT300/i");
+  reducedTree.Branch("pass_utilityHLT_HT300_CentralJet30_BTagIP",&pass_utilityHLT_HT300_CentralJet30_BTagIP,"pass_utilityHLT_HT300_CentralJet30_BTagIP/O");
+  reducedTree.Branch("prescale_utilityHLT_HT300_CentralJet30_BTagIP", &prescale_utilityHLT_HT300_CentralJet30_BTagIP, "prescale_utilityHLT_HT300_CentralJet30_BTagIP/i");  
 
   reducedTree.Branch("HT",&HT,"HT/F");
   reducedTree.Branch("MET",&MET,"MET/F");
@@ -1622,7 +1655,7 @@ void reducedTree(TString outputpath, itreestream& stream)
     if(entry%100000==0) cout << "  entry: " << entry << ", percent done=" << (int)(entry/(double)nevents*100.)<<  endl;
       
 
-    if (passCut("cutTrigger") && passCut("cutHT") ) {
+    if ((passCut("cutTrigger") || passCut("cutUtilityTrigger")) && passCut("cutHT") ) {
            
       //if (entry%1000000==0) checkTimer(entry,nevents);
       weight = getWeight(nevents);
@@ -1632,7 +1665,8 @@ void reducedTree(TString outputpath, itreestream& stream)
       lumiSection = (ULong64_t)(eventhelper_luminosityBlock+0.5);
       eventNumber = (ULong64_t)(eventhelper_event+0.5);
       
-      cutHT = true; cutTrigger = true;      
+      cutHT = true; 
+      cutTrigger = passCut("cutTrigger");
       cutPV = passCut("cutPV");
       cut3Jets = passCut("cut3Jets");
       cutEleVeto = passCut("cutEleVeto");
@@ -1644,6 +1678,11 @@ void reducedTree(TString outputpath, itreestream& stream)
       passBadPFMuon = passBadPFMuonFilter();
       passInconsistentMuon = passInconsistentMuonFilter();
       
+      pass_utilityHLT_HT300 = (utilityHLT_HT300()>0);
+      prescale_utilityHLT_HT300 = (UInt_t)utilityHLT_HT300();
+      pass_utilityHLT_HT300_CentralJet30_BTagIP = (utilityHLT_HT300_CentralJet30_BTagIP()>0);
+      prescale_utilityHLT_HT300_CentralJet30_BTagIP = (UInt_t)utilityHLT_HT300_CentralJet30_BTagIP();
+
       nGoodPV = countGoodPV();
 
       njets = nGoodJets();
