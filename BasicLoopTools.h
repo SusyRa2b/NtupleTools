@@ -94,7 +94,8 @@ bool passHLT() {
     else if (runnumber >= 163269 && runnumber < 164924) passTrig = (triggerresultshelper_HLT_HT250_MHT60_v3 > 0);
     else if (runnumber >= 164924 && runnumber < 165922) passTrig = triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_PFMHT55_v2;
     else if (runnumber >= 165922 && runnumber < 167078) passTrig = triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_PFMHT55_v3;
-    //uncomment this when these runs are certified (NB: there is no v4 of these paths)
+    //starting V00-02-02 uncomment these!
+    //else if (runnumber >= XX && runnumber < XX ) pasTrig = passTrig = triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_PFMHT55_v4; //numbers are in my notebook - to be filled
     //else if (runnumber >= 167078) passTrig = triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_PFMHT55_v5; 
   }
   else passTrig = true;   //use no trigger for MC   
@@ -162,7 +163,12 @@ bool passPV() {
 }
 
 float getJetPt( unsigned int ijet ) {
+  //need to move to using jecFactor 
   return myJetsPF->at(ijet).pt;
+}
+float getJetEnergy( unsigned int ijet ) {
+  //need to move to using jecFactor 
+  return myJetsPF->at(ijet).energy;
 }
 
 bool jetPassLooseID( unsigned int ijet ) {
@@ -306,6 +312,22 @@ float jetEtaOfN(unsigned int n) {
   return 0;
 }
 
+float jetEnergyOfN(unsigned int n) {
+
+  unsigned int ngood=0;
+  for (unsigned int i=0; i<myJetsPF->size(); i++) {
+
+    bool pass=false;
+    pass = isGoodJet(i);
+
+    if (pass ) {
+      ngood++;
+      if (ngood==n) return  getJetEnergy(i);
+    }
+  }
+  return 0;
+}
+
 
 float bjetPtOfN(unsigned int n) {
 
@@ -350,6 +372,22 @@ float bjetEtaOfN(unsigned int n) {
     if (pass ) {
       ngood++;
       if (ngood==n) return  myJetsPF->at(i).eta;
+    }
+  }
+  return 0;
+}
+
+float bjetEnergyOfN(unsigned int n) {
+
+  unsigned int ngood=0;
+  for (unsigned int i=0; i<myJetsPF->size(); i++) {
+
+    bool pass=false;
+    pass = (isGoodJet30(i) && passBTagger(i));
+
+    if (pass ) {
+      ngood++;
+      if (ngood==n) return  getJetEnergy(i);
     }
   }
   return 0;
@@ -1559,9 +1597,9 @@ void reducedTree(TString outputpath, itreestream& stream)
 
   int njets, nbjets, nElectrons, nMuons;
 
-  float jetpt1,jetphi1, jeteta1, bjetpt1, bjetphi1, bjeteta1;
-  float jetpt2,jetphi2, jeteta2, bjetpt2, bjetphi2, bjeteta2;
-  float jetpt3,jetphi3, jeteta3, bjetpt3, bjetphi3, bjeteta3;
+  float jetpt1,jetphi1, jeteta1, jetenergy1, bjetpt1, bjetphi1, bjeteta1, bjetenergy1;
+  float jetpt2,jetphi2, jeteta2, jetenergy2, bjetpt2, bjetphi2, bjeteta2, bjetenergy2;
+  float jetpt3,jetphi3, jeteta3, jetenergy3, bjetpt3, bjetphi3, bjeteta3, bjetenergy3;
   float eleet1;
   float muonpt1;
 
@@ -1640,26 +1678,32 @@ void reducedTree(TString outputpath, itreestream& stream)
   reducedTree.Branch("jetpt1",&jetpt1,"jetpt1/F");
   reducedTree.Branch("jeteta1",&jeteta1,"jeteta1/F");
   reducedTree.Branch("jetphi1",&jetphi1,"jetphi1/F");
+  reducedTree.Branch("jetenergy1",&jetenergy1,"jetenergy1/F");
 
   reducedTree.Branch("jetpt2",&jetpt2,"jetpt2/F");
   reducedTree.Branch("jeteta2",&jeteta2,"jeteta2/F");
   reducedTree.Branch("jetphi2",&jetphi2,"jetphi2/F");
+  reducedTree.Branch("jetenergy2",&jetenergy2,"jetenergy2/F");
 
   reducedTree.Branch("jetpt3",&jetpt3,"jetpt3/F");
   reducedTree.Branch("jeteta3",&jeteta3,"jeteta3/F");
   reducedTree.Branch("jetphi3",&jetphi3,"jetphi3/F");
+  reducedTree.Branch("jetenergy3",&jetenergy3,"jetenergy3/F");
 
   reducedTree.Branch("bjetpt1",&bjetpt1,"bjetpt1/F");
   reducedTree.Branch("bjeteta1",&bjeteta1,"bjeteta1/F");
   reducedTree.Branch("bjetphi1",&bjetphi1,"bjetphi1/F");
-  
+  reducedTree.Branch("bjetenergy1",&bjetenergy1,"bjetenergy1/F");  
+
   reducedTree.Branch("bjetpt2",&bjetpt2,"bjetpt2/F");
   reducedTree.Branch("bjeteta2",&bjeteta2,"bjeteta2/F");
   reducedTree.Branch("bjetphi2",&bjetphi2,"bjetphi2/F");
+  reducedTree.Branch("bjetenergy2",&bjetenergy2,"bjetenergy2/F");  
   
   reducedTree.Branch("bjetpt3",&bjetpt3,"bjetpt3/F");
   reducedTree.Branch("bjeteta3",&bjeteta3,"bjeteta3/F");
   reducedTree.Branch("bjetphi3",&bjetphi3,"bjetphi3/F");
+  reducedTree.Branch("bjetenergy3",&bjetenergy3,"bjetenergy3/F");  
 
   reducedTree.Branch("eleet1",&eleet1,"eleet1/F");
   reducedTree.Branch("muonpt1",&muonpt1,"muonpt1/F");
@@ -1756,27 +1800,33 @@ void reducedTree(TString outputpath, itreestream& stream)
       jetpt1 = jetPtOfN(1);
       jetphi1 = jetPhiOfN(1);
       jeteta1 = jetEtaOfN(1);
-      
+      jetenergy1 = jetEnergyOfN(1);
+
       jetpt2 = jetPtOfN(2);
       jetphi2 = jetPhiOfN(2);
       jeteta2 = jetEtaOfN(2);
+      jetenergy2 = jetEnergyOfN(2);
       
       jetpt3 = jetPtOfN(3);
       jetphi3 = jetPhiOfN(3);
       jeteta3 = jetEtaOfN(3);
-      
+      jetenergy3 = jetEnergyOfN(3);      
+
       bjetpt1 = bjetPtOfN(1);
       bjetphi1 = bjetPhiOfN(1);
       bjeteta1 = bjetEtaOfN(1);
+      bjetenergy1 = bjetEnergyOfN(1); 
       
       bjetpt2 = bjetPtOfN(2);
       bjetphi2 = bjetPhiOfN(2);
       bjeteta2 = bjetEtaOfN(2);
+      bjetenergy2 = bjetEnergyOfN(2); 
       
       bjetpt3 = bjetPtOfN(3);
       bjetphi3 = bjetPhiOfN(3);
       bjeteta3 = bjetEtaOfN(3);
-      
+      bjetenergy3 = bjetEnergyOfN(3);       
+
       if (nElectrons>=1) {
 	eleet1 = eleet1_; //this is filled when i call countEle(). a hack to be cleaned up later
       }
