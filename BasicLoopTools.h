@@ -94,8 +94,8 @@ bool passHLT() {
     else if (runnumber >= 163269 && runnumber < 164924) passTrig = (triggerresultshelper_HLT_HT250_MHT60_v3 > 0);
     else if (runnumber >= 164924 && runnumber < 165922) passTrig = triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_PFMHT55_v2;
     else if (runnumber >= 165922 && runnumber < 167078) passTrig = triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_PFMHT55_v3;
-    //starting V00-02-02 uncomment these!
-    //else if (runnumber >= XX && runnumber < XX ) pasTrig = passTrig = triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_PFMHT55_v4; //numbers are in my notebook - to be filled
+    //else if (runnumber >= 166301 && runnumber < 166374 ) pasTrig = passTrig = triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_PFMHT55_v4; 
+    else if (runnumber >= 166374 && runnumber < 167078) passTrig = triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_PFMHT55_v3;
     //else if (runnumber >= 167078) passTrig = triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_PFMHT55_v5; 
   }
   else passTrig = true;   //use no trigger for MC   
@@ -1866,6 +1866,7 @@ void sampleAnalyzer(itreestream& stream){
   setEleReq(0);
   setCutScheme();
   InitializeStuff();//BEN
+  setBCut(2);
 
   int count = 0;
   startTimer();
@@ -1874,7 +1875,7 @@ void sampleAnalyzer(itreestream& stream){
     stream.read(entry);
     fillObjects();
 
-    setBCut(0);
+    
     if (Cut(entry) < 0) continue;
     count++;
 
