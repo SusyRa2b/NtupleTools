@@ -1201,6 +1201,39 @@ void setBCut(unsigned int nb) {
   nBcut_=nb;
 }
 
+void setIgnoredCut(const TString cutTag) {
+
+  bool ok=false;
+  for (unsigned int i=0; i<cutTags_.size() ; i++) {
+    if (cutTags_[i] == cutTag) {ok=true; break;}
+  }
+  if (!ok) {cout<<"Invalid cutIndex"<<endl; return;}
+
+  ignoredCut_.push_back(cutTag);
+
+}
+
+void setRequiredCut(const TString cutTag) {
+
+  bool ok=false;
+  for (unsigned int i=0; i<cutTags_.size() ; i++) {
+    if (cutTags_[i] == cutTag) {ok=true; break;}
+  }
+  if (!ok) {cout<<"Invalid cutIndex"<<endl; return;}
+
+  requiredCut_.push_back(cutTag);
+
+}
+
+void resetIgnoredCut() {
+  ignoredCut_.clear();
+}
+
+void resetRequiredCut() {
+  requiredCut_.clear();
+}
+
+
 
 
 bool cutRequired(const TString cutTag) { //should put an & in here to improve performance
@@ -1247,6 +1280,19 @@ bool cutRequired(const TString cutTag) { //should put an & in here to improve pe
   //else assert(0);
 
   return cutIsRequired;
+}
+
+
+int Cut(unsigned int entry)
+{
+  //be careful...not every function that makes cuts uses this! e.g. ::cutflow()
+
+  for (unsigned int i=0; i< cutTags_.size(); i++) {
+    if (cutRequired( cutTags_[i] ) && !passCut( cutTags_[i]) ) return -1;
+  }
+  
+  return 1;
+  
 }
 
 
@@ -1762,3 +1808,29 @@ void reducedTree(TString outputpath, itreestream& stream)
 }
 
 
+void sampleAnalyzer(itreestream& stream){
+
+  int nevents = stream.size();
+
+  setMuonReq(0);
+  setEleReq(0);
+  setCutScheme();
+  InitializeStuff();//BEN
+
+  int count = 0;
+  startTimer();
+  for(int entry=0; entry < nevents; ++entry){
+    // Read event into memory
+    stream.read(entry);
+    fillObjects();
+
+    setBCut(0);
+    if (Cut(entry) < 0) continue;
+    count++;
+
+  }
+  stopTimer(nevents);
+  std::cout << "count = " << count << std::endl;
+
+  return;
+}
