@@ -67,6 +67,7 @@ TH1D* totalewk=0;
 TH1D* totalqcdttbar=0;
 TH1D* totalnonttbar=0;
 TH1D* totalnonqcd=0;
+TH1D* totalqcd=0; //ben - just for ease of doing event counts with drawPlots
 TH1D* ratio=0; float ratioMin=0; float ratioMax=2;
 TGraphErrors* qcderrors=0;
 bool loaded_=false; //bookkeeping
@@ -676,6 +677,10 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
   if (totalnonqcd!=0) delete totalnonqcd;
   totalnonqcd = (varbins==0) ? new TH1D("totalnonqcd","",nbins,low,high) : new TH1D("totalnonqcd","",nbins,varbins);
   totalnonqcd->Sumw2();
+  if (totalqcd!=0) delete totalqcd;
+  totalqcd = (varbins==0) ? new TH1D("totalqcd","",nbins,low,high) : new TH1D("totalqcd","",nbins,varbins);
+  totalqcd->Sumw2();
+  
 
   totalsm->SetMarkerColor(sampleColor_["TotalSM"]);
   totalsm->SetLineColor(sampleColor_["TotalSM"]);
@@ -742,6 +747,10 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
     if (!samples_[isample].Contains("QCD") && !samples_[isample].Contains("LM")){
        totalnonqcd->Add(histos_[samples_[isample]]);
       if (!quiet_) cout << "totalnonqcd: " << samples_[isample] << endl;
+    }
+    if (samples_[isample].Contains("QCD")){
+       totalqcd->Add(histos_[samples_[isample]]);
+      if (!quiet_) cout << "totalqcd: " << samples_[isample] << endl;
     }
     totalsmsusy->Add(histos_[samples_[isample]]); //add everything!
 
