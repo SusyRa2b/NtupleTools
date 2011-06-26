@@ -75,7 +75,7 @@ functionality for TH1F and TH1D e.g. the case of addOverflowBin()
 TString inputPath = "/cu2/kreis/reducedTrees/V00-01-02/";//path for MC													     
 TString dataInputPath = "/cu2/kreis/reducedTrees/42june14/";//path for data
 TString cutdesc = "TCHET";
-double lumiScale_ = 348.644/190.5; //data lumi / lumi of MC
+double lumiScale_ = 1.; //348.644/190.5; //data lumi / lumi of MC
 //TString cutdesc = "Baseline0_PF_JERbias_pfMEThigh_PFLep0e0mu_minDP_MuonEcalCleaning";
 //TString cutdesc = "Baseline0_PF_pfMEThigh_PFLepRA20e0mu_minDP_MuonEcalCleaning";
 //TString cutdesc = "Baseline0_PF_pfMEThigh_PFLep0e0mu_minDP_MuonEcalCleaning";
@@ -1128,6 +1128,7 @@ void drawMETPlots() {
   doData(true);
   doRatioPlot(true);
   setQuiet(false);
+  doOverflowAddition(true);
 
   int nbins;
   float low,high;
@@ -1569,6 +1570,113 @@ void pdfUncertainties() {
   cout<<" w/pdf   = "<<HpdfUnc.GetMean()<<" +/- "<<HpdfUnc.GetRMS()<<endl;
 
 }
+
+void countQCDMC(){
+  useFlavorHistoryWeights_=false;
+  setStackMode(true);
+  doData(true);
+  doRatioPlot(true);
+  setQuiet(false);
+  doOverflowAddition(true);
+
+  loadSamples();
+ 
+  const TCut myBase ="cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && passInconsistentMuon==1 && passBadPFMuon==1"; //no MET, no mdp, no b-tag
+
+  const TCut mdpCut = "cutDeltaPhi==1";
+  const TCut invertedmdpCut = "cutDeltaPhi==0";
+
+  const  TCut ge1b =  "nbjets >= 1";
+  const  TCut ge2b =  "nbjets >= 2";
+  const  TCut eq1b =  "nbjets == 1";
+  const  TCut pretag =  "1";
+  const  TCut antitag = "nbjets == 0";
+
+  //now for a flexible MET region
+  for (int metCutLow = 100; metCutLow <=250; metCutLow+=25) {
+    int metCutHigh=metCutLow+50;
+    TString SBmetCutString; 
+    SBmetCutString.Form("MET >= %d && MET < %d",metCutLow,metCutHigh);
+    TCut SBMETselection(SBmetCutString.Data());
+    TString SIGmetCutString; 
+    SIGmetCutString.Form("MET >= %d",metCutHigh);
+    TCut SIGMETselection(SIGmetCutString.Data());
+    
+    for (int ibtag = 0; ibtag<3; ibtag++) { //for now, skip pre and antib
+      TCut theBTaggingCut = ge1b; TString btagstring = "ge1b";
+      if (ibtag==0) { //nothing to do
+      }
+      else if (ibtag==1) {
+	theBTaggingCut = eq1b; 
+	btagstring = "eq1b";
+      }
+      else if (ibtag==2) {
+	theBTaggingCut = ge2b; 
+	btagstring = "ge2b";
+      }
+      else if (ibtag==3) {
+	theBTaggingCut = pretag;
+	btagstring = "pre";
+      }
+      else if (ibtag==4) {
+	theBTaggingCut = antitag;
+	btagstring = "antib";
+      }
+      else assert(0);
+
+      double nA, nD, nSB, nSIG, nABCD, c_bias;
+      double nA_err, nD_err, nSB_err, nSIG_err, nABCD_err, c_bias_err;
+      TCut Aselection = myBase && theBTaggingCut && invertedmdpCut && SBMETselection;
+      TCut Dselection = myBase && theBTaggingCut && invertedmdpCut && SIGMETselection;
+      TCut SBselection = myBase && theBTaggingCut && mdpCut && SBMETselection;    
+      TCut SIGselection = myBase && theBTaggingCut && mdpCut && SIGMETselection;
+      
+      selection_=Aselection.GetTitle();
+      drawPlots("HT",1,0,10000,"","","deleteme");
+      nA = totalqcd->GetBinContent(1);
+      nA_err = totalqcd->GetBinError(1);
+
+      selection_=Dselection.GetTitle();
+      drawPlots("HT",1,0,10000,"","","deleteme");
+      nD = totalqcd->GetBinContent(1);
+      nD_err = totalqcd->GetBinError(1);
+      
+      selection_=SBselection.GetTitle();
+      drawPlots("HT",1,0,10000,"","","deleteme");
+      nSB = totalqcd->GetBinContent(1);
+      nSB_err = totalqcd->GetBinError(1);
+      
+      selection_=SIGselection.GetTitle();
+      drawPlots("HT",1,0,10000,"","","deleteme");
+      nSIG = totalqcd->GetBinContent(1);
+      nSIG_err = totalqcd->GetBinError(1);
+
+
+      double up, down, up_err, down_err;
+      nABCD = nD*nSB/nA;
+      up = nD*nSIG;
+      up_err = jmt::errAtimesB(nD, nD_err, nSB, nSB_err);
+      down = nA;
+      down_err = nA_err;
+      nABCD_err = jmt::errAoverB(up, up_err, down, down_err);
+
+      c_bias = nSIG*nA/(nSB*nD);
+      up = nSIG*nA;
+      up_err = jmt::errAtimesB(nSIG, nSIG_err, nA, nA_err);
+      down = nSB*nD;
+      down_err = jmt::errAtimesB(nSB, nSB_err, nD, nD_err);
+      c_bias_err = jmt::errAoverB(up, up_err, down, down_err);
+
+      cout << "countQCDMC: ******************************************" << endl;
+      cout << "countQCDMC: SB is " << metCutLow << " GeV <= MET < " << metCutHigh << " GeV, and SIG is MET >= " << metCutHigh << " GeV" << endl;
+      cout << "countQCDMC: " << theBTaggingCut.GetTitle() << endl;
+      cout << "countQCDMC: " << nA << " " << nA_err << " " << nD << " " << nD_err << " " << nSB << " " << nSB_err << " " << nSIG << " " << nSIG_err << " " << nABCD << " " << nABCD_err << " " << c_bias << " " << c_bias_err << endl;
+      cout << "countQCDMC: ******************************************" << endl;
+
+    }//end b-tag loop
+  }//end met loop
+}// end countQCDMC()
+
 
 void countILV() {
   setQuiet(true);
