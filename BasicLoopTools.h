@@ -9,6 +9,13 @@
 #include "TMatrixT.h"
 #include "TMatrixDEigen.h"
 #include <cassert>
+
+// Declare the BNN functions:
+double pfmht_efficiency(std::vector<double>& inputvars,
+			int first=0,
+			int last=99);
+
+
 using namespace std;
 
 //should really make this a class so we don't have to do this...
@@ -731,6 +738,19 @@ float getMHTphi() {
 }
 
 
+double getPFMHTWeight() {
+  double pfmhtweight = 1;
+
+  // BNNs:
+  std::vector<double> pfmet;
+  pfmet.push_back( (double) getMET() );
+
+  // Get the efficiency value from the BNNs:
+  pfmhtweight = pfmht_efficiency( pfmet ); 
+
+
+  return pfmhtweight;
+}
 
 
 //std::pair<float,float> getJESAdjustedMETxy() {
@@ -1686,7 +1706,7 @@ void reducedTree(TString outputpath, itreestream& stream)
 
   //we're making an ntuple, so size matters -- use float not double
   double weight; //one exception to the float rule
-  float btagIPweight;
+  float btagIPweight, pfmhtweight;
   ULong64_t lumiSection, eventNumber, runNumber;
   float HT, MHT, MET, METphi, minDeltaPhi, minDeltaPhiAll, minDeltaPhiAll30,minDeltaPhi30_eta5_noIdAll;
   float maxDeltaPhi, maxDeltaPhiAll, maxDeltaPhiAll30, maxDeltaPhi30_eta5_noIdAll;
@@ -1734,6 +1754,7 @@ void reducedTree(TString outputpath, itreestream& stream)
   reducedTree.Branch("eventNumber",&eventNumber,"eventNumber/l");
 
   reducedTree.Branch("btagIPweight",&btagIPweight,"btagIPweight/F");
+  reducedTree.Branch("pfmhtweight",&pfmhtweight,"pfmhtweight/F");
 
   reducedTree.Branch("cutHT",&cutHT,"cutHT/O");
   reducedTree.Branch("cutPV",&cutPV,"cutPV/O");
@@ -1865,6 +1886,7 @@ void reducedTree(TString outputpath, itreestream& stream)
       eventNumber = (ULong64_t)(eventhelper_event+0.5);
       
       btagIPweight = getBTagIPWeight();
+      pfmhtweight = getPFMHTWeight();
 
       cutHT = true; 
       cutTrigger = passCut("cutTrigger");
@@ -1991,6 +2013,7 @@ void sampleAnalyzer(itreestream& stream){
     count++;
 
     //std::cout << "btagIP weight = " << getBTagIPWeight() << std::endl;
+    //std::cout << "PFMHT weight = " << getPFMHTWeight() << std::endl;
 
   }
   stopTimer(nevents);
