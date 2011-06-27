@@ -274,6 +274,9 @@ uint nGoodBJets() {
 float getBTagIPWeight() {//this function should be called *after* offline tagging 
   float w_event = 1;
 
+  float ProbGEQ1 = 1, Prob0 = 1;
+  //float Prob1 = 0;
+
   //From TTbarMC, the BTagIP efficiency on offline tagged b-jets (non b-jets) 
   //is roughly constant and equal to:
   float w_bjet = 0.88;
@@ -283,24 +286,54 @@ float getBTagIPWeight() {//this function should be called *after* offline taggin
   uint nb=0, nnonb=0;
   for (uint i = 0; i < myJetsPF->size(); ++i) {
     if (isGoodJet(i) ) {
+
+      float effi  = 0;
+
       int flavor = myJetsPF->at(i).partonFlavour;
-      if ( passBTagger(i) && abs(flavor)==5) nb++;
+      if ( passBTagger(i) && abs(flavor)==5){
+	nb++;
+	effi = w_bjet;
+      }
       else if ( passBTagger(i) && 
-		(abs(flavor)==4 
-		 || abs(flavor)==3 
-		 || abs(flavor)==2 
-		 || abs(flavor)==1 
-		 || abs(flavor)==21)) nnonb++;
+		(abs(flavor)==4 || abs(flavor)==3 || abs(flavor)==2 
+		 || abs(flavor)==1 || abs(flavor)==21)){
+	nnonb++;
+	effi = w_nonbjet;
+      }
+
+      Prob0 = Prob0* ( 1 - effi);
+      
+      //double product = 1;
+      //for (uint j=0; j<myJetsPF->size(); ++j) {
+      //	if(isGoodJet(j)){
+      //	  float effj = 0;
+      //	  int flavorj = myJetsPF->at(j).partonFlavour;
+      //	  if ( passBTagger(j) && abs(flavor)==5){
+      //	    effj = w_bjet;
+      //	  }
+      //	  else if ( passBTagger(j) && 
+      //		    (abs(flavor)==4 || abs(flavor)==3 || abs(flavor)==2 
+      //		     || abs(flavor)==1 || abs(flavor)==21)){
+      //	    effj = w_nonbjet;
+      //	  }
+      //	  if(j != i) product = product*(1-effj);	  
+      //	}
+      //}
+      //Prob1 += effi*product;
     }
   }
+
+  ProbGEQ1 = 1 - Prob0;
+  w_event = ProbGEQ1;
 
   if(nb==0 && nnonb==0){
     return 0; //this event is not even offline tagged
   }
 
+  /*
   //weight = Prob( >=1 HLT Tag | m offline true tags and n offline fake tags)
 
-  //should find a more elegant way to do this...
+  //should find a more elegant way to do this... (implemented above)
 
   //weight for offline-tagged b-jets
   if(nb==1 && nnonb==0) 
@@ -372,6 +405,7 @@ float getBTagIPWeight() {//this function should be called *after* offline taggin
     std::cout << "WARNING, BTagIP weight was not computed!" << std::endl;
     std::cout << "\t This event has " << nb << " true tags and " << nnonb << " mistags." << std::endl;
   }
+  */
 
   return w_event;
 }
@@ -2012,7 +2046,7 @@ void sampleAnalyzer(itreestream& stream){
     if (Cut(entry) < 0) continue;
     count++;
 
-    //std::cout << "btagIP weight = " << getBTagIPWeight() << std::endl;
+    std::cout << "btagIP weight = " << getBTagIPWeight() << std::endl;
     //std::cout << "PFMHT weight = " << getPFMHTWeight() << std::endl;
 
   }
