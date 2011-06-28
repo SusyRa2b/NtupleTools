@@ -101,7 +101,7 @@ bool passHLT() {
     else if (runnumber >= 163269 && runnumber < 164924) passTrig = (triggerresultshelper_HLT_HT250_MHT60_v3 > 0);
     else if (runnumber >= 164924 && runnumber < 165922) passTrig = triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_PFMHT55_v2;
     else if (runnumber >= 165922 && runnumber < 166301) passTrig = triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_PFMHT55_v3;
-    //else if (runnumber >= 166301 && runnumber < 166374 ) pasTrig = passTrig = triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_PFMHT55_v4; 
+    //else if (runnumber >= 166301 && runnumber < 166374 ) passTrig = triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_PFMHT55_v4; 
     else if (runnumber >= 166374 && runnumber < 167078) passTrig = triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_PFMHT55_v3;
     //else if (runnumber >= 167078) passTrig = triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_PFMHT55_v5; 
   }
