@@ -1,9 +1,9 @@
 #ifndef BASICLOOPCU_H
 #define BASICLOOPCU_H
 //-----------------------------------------------------------------------------
-// File:        BasicLoopCU.h -- for 42X samples and TheNtupleMaker v5_1_5
+// File:        ra2banalyzer.h
 // Description: Analyzer header for ntuples created by TheNtupleMaker
-// Created:     Tue Jun 14 05:08:32 2011 by mkntanalyzer.py
+// Created:     Wed Jun 29 04:27:16 2011 by mkntanalyzer.py
 // Author:      Wee Teo
 //-----------------------------------------------------------------------------
 
@@ -206,11 +206,15 @@ getFilenames(std::string filelist)
 //-----------------------------------------------------------------------------
 // -- Declare variables to be read
 //-----------------------------------------------------------------------------
+//double	basictype<double>2_value;
+//double	basictype<double>_value;
+//int	basictype<unsigned int>_value;
+double	sigma;
+double	rho;
+int	flavorhistorypath;
 double	beamspot_x0;
 double	beamspot_y0;
 double	beamspot_z0;
-double	doublehelper2_value;
-double	doublehelper_value;
 std::vector<float>	electron_caloIso(50,0);
 std::vector<int>	electron_charge(50,0);
 std::vector<float>	electron_chargedHadronIso(50,0);
@@ -251,6 +255,16 @@ int	eventhelper_event;
 int	eventhelper_isRealData;
 int	eventhelper_luminosityBlock;
 int	eventhelper_run;
+double	geneventinfoproduct_pdf1;
+double	geneventinfoproduct_pdf2;
+double	geneventinfoproduct_scalePDF;
+double	geneventinfoproduct_weight;
+double	geneventinfoproduct_x1;
+double	geneventinfoproduct_x2;
+std::vector<double>	geneventinfoproducthelper_pdf1(50,0);
+std::vector<double>	geneventinfoproducthelper_pdf2(50,0);
+std::vector<double>	geneventinfoproducthelper_pdfweight(50,0);
+std::vector<double>	geneventinfoproducthelper_pdfweightsum(50,0);
 std::vector<int>	genparticlehelperra2b_charge(200,0);
 std::vector<double>	genparticlehelperra2b_eta(200,0);
 std::vector<int>	genparticlehelperra2b_firstDaughter(200,0);
@@ -328,6 +342,7 @@ std::vector<double>	jet_uncor_eta(500,0);
 std::vector<double>	jet_uncor_phi(500,0);
 std::vector<double>	jet_uncor_pt(500,0);
 std::vector<double>	jethelper_jecFactor(500,0);
+std::vector<double>	jethelper_jecFactorNoL1Fast(500,0);
 std::vector<double>	jethelper_jetUncMinus(500,0);
 std::vector<double>	jethelper_jetUncPlus(500,0);
 std::vector<double>	met2_energy(10,0);
@@ -336,6 +351,12 @@ std::vector<double>	met2_mEtSig(10,0);
 std::vector<double>	met2_phi(10,0);
 std::vector<double>	met2_pt(10,0);
 std::vector<double>	met2_sumEt(10,0);
+std::vector<double>	met3_energy(10,0);
+std::vector<double>	met3_et(10,0);
+std::vector<double>	met3_mEtSig(10,0);
+std::vector<double>	met3_phi(10,0);
+std::vector<double>	met3_pt(10,0);
+std::vector<double>	met3_sumEt(10,0);
 std::vector<double>	met_energy(10,0);
 std::vector<double>	met_et(10,0);
 std::vector<double>	met_mEtSig(10,0);
@@ -380,12 +401,14 @@ std::vector<double>	muonhelper_dxywrtBeamSpot(50,0);
 std::vector<double>	muonhelper_muonPFcandptdiff(50,0);
 int	nelectron;
 int	nelectronhelper;
+int	ngeneventinfoproducthelper;
 int	ngenparticlehelperra2b;
 int	njet;
 int	njet2;
 int	njethelper;
 int	nmet;
 int	nmet2;
+int	nmet3;
 int	nmuon;
 int	nmuonhelper;
 int	ntau;
@@ -444,18 +467,34 @@ int	triggerresultshelper_HLT_HT250_v5;
 unsigned int	triggerresultshelper_HLT_HT250_v5_prs;
 int	triggerresultshelper_HLT_HT260_MHT60_v2;
 unsigned int	triggerresultshelper_HLT_HT260_MHT60_v2_prs;
+int	triggerresultshelper_HLT_HT260_v2;
+unsigned int	triggerresultshelper_HLT_HT260_v2_prs;
+int	triggerresultshelper_HLT_HT260_v3;
+unsigned int	triggerresultshelper_HLT_HT260_v3_prs;
 int	triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_PFMHT55_v2;
 unsigned int	triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_PFMHT55_v2_prs;
 int	triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_PFMHT55_v3;
 unsigned int	triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_PFMHT55_v3_prs;
+int	triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_PFMHT55_v4;
+unsigned int	triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_PFMHT55_v4_prs;
+int	triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_PFMHT55_v5;
+unsigned int	triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_PFMHT55_v5_prs;
 int	triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_PFMHT75_v2;
 unsigned int	triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_PFMHT75_v2_prs;
 int	triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_PFMHT75_v3;
 unsigned int	triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_PFMHT75_v3_prs;
+int	triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_PFMHT75_v4;
+unsigned int	triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_PFMHT75_v4_prs;
+int	triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_PFMHT75_v5;
+unsigned int	triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_PFMHT75_v5_prs;
 int	triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_v2;
 unsigned int	triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_v2_prs;
 int	triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_v3;
 unsigned int	triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_v3_prs;
+int	triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_v4;
+unsigned int	triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_v4_prs;
+int	triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_v5;
+unsigned int	triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_v5_prs;
 int	triggerresultshelper_HLT_HT300_MHT75_v2;
 unsigned int	triggerresultshelper_HLT_HT300_MHT75_v2_prs;
 int	triggerresultshelper_HLT_HT300_MHT75_v3;
@@ -466,6 +505,10 @@ int	triggerresultshelper_HLT_HT300_PFMHT55_v2;
 unsigned int	triggerresultshelper_HLT_HT300_PFMHT55_v2_prs;
 int	triggerresultshelper_HLT_HT300_PFMHT55_v3;
 unsigned int	triggerresultshelper_HLT_HT300_PFMHT55_v3_prs;
+int	triggerresultshelper_HLT_HT300_PFMHT55_v4;
+unsigned int	triggerresultshelper_HLT_HT300_PFMHT55_v4_prs;
+int	triggerresultshelper_HLT_HT300_PFMHT55_v5;
+unsigned int	triggerresultshelper_HLT_HT300_PFMHT55_v5_prs;
 int	triggerresultshelper_HLT_HT300_v1;
 unsigned int	triggerresultshelper_HLT_HT300_v1_prs;
 int	triggerresultshelper_HLT_HT300_v2;
@@ -476,7 +519,10 @@ int	triggerresultshelper_HLT_HT300_v4;
 unsigned int	triggerresultshelper_HLT_HT300_v4_prs;
 int	triggerresultshelper_HLT_HT300_v5;
 unsigned int	triggerresultshelper_HLT_HT300_v5_prs;
-int	uinthelper_value;
+int	triggerresultshelper_HLT_HT300_v6;
+unsigned int	triggerresultshelper_HLT_HT300_v6_prs;
+int	triggerresultshelper_HLT_HT300_v7;
+unsigned int	triggerresultshelper_HLT_HT300_v7_prs;
 std::vector<int>	vertex_isFake(50,0);
 std::vector<int>	vertex_isValid(50,0);
 std::vector<double>	vertex_ndof(50,0);
@@ -496,11 +542,12 @@ std::vector<double>	vertex_zError(50,0);
 //-----------------------------------------------------------------------------
 void selectVariables(itreestream& stream)
 {
+  stream.select("sdouble_kt6PFJets_sigma.value", sigma);
+  stream.select("sdouble_kt6PFJets_rho.value", rho);
+  stream.select("suint_flavorHistoryFilter.value", flavorhistorypath);
   stream.select("recoBeamSpot_offlineBeamSpot.x0", beamspot_x0);
   stream.select("recoBeamSpot_offlineBeamSpot.y0", beamspot_y0);
   stream.select("recoBeamSpot_offlineBeamSpot.z0", beamspot_z0);
-  stream.select("sdouble_kt6PFJets_sigma.value", doublehelper2_value);
-  stream.select("sdouble_kt6PFJets_rho.value", doublehelper_value);
   stream.select("patElectron_selectedPatElectronsPF.caloIso", electron_caloIso);
   stream.select("patElectron_selectedPatElectronsPF.charge", electron_charge);
   stream.select("patElectron_selectedPatElectronsPF.chargedHadronIso", electron_chargedHadronIso);
@@ -541,6 +588,16 @@ void selectVariables(itreestream& stream)
   stream.select("edmEventHelper_info.isRealData", eventhelper_isRealData);
   stream.select("edmEventHelper_info.luminosityBlock", eventhelper_luminosityBlock);
   stream.select("edmEventHelper_info.run", eventhelper_run);
+  stream.select("GenEventInfoProduct_generator.pdf1", geneventinfoproduct_pdf1);
+  stream.select("GenEventInfoProduct_generator.pdf2", geneventinfoproduct_pdf2);
+  stream.select("GenEventInfoProduct_generator.scalePDF", geneventinfoproduct_scalePDF);
+  stream.select("GenEventInfoProduct_generator.weight", geneventinfoproduct_weight);
+  stream.select("GenEventInfoProduct_generator.x1", geneventinfoproduct_x1);
+  stream.select("GenEventInfoProduct_generator.x2", geneventinfoproduct_x2);
+  stream.select("GenEventInfoProductHelper_generator.pdf1", geneventinfoproducthelper_pdf1);
+  stream.select("GenEventInfoProductHelper_generator.pdf2", geneventinfoproducthelper_pdf2);
+  stream.select("GenEventInfoProductHelper_generator.pdfweight", geneventinfoproducthelper_pdfweight);
+  stream.select("GenEventInfoProductHelper_generator.pdfweightsum", geneventinfoproducthelper_pdfweightsum);
   stream.select("recoGenParticleHelperRA2b_genParticles.charge", genparticlehelperra2b_charge);
   stream.select("recoGenParticleHelperRA2b_genParticles.eta", genparticlehelperra2b_eta);
   stream.select("recoGenParticleHelperRA2b_genParticles.firstDaughter", genparticlehelperra2b_firstDaughter);
@@ -618,14 +675,21 @@ void selectVariables(itreestream& stream)
   stream.select("patJet_selectedPatJetsPF.uncor_phi", jet_uncor_phi);
   stream.select("patJet_selectedPatJetsPF.uncor_pt", jet_uncor_pt);
   stream.select("patJetHelper_selectedPatJetsPF.jecFactor", jethelper_jecFactor);
+  stream.select("patJetHelper_selectedPatJetsPF.jecFactorNoL1Fast", jethelper_jecFactorNoL1Fast);
   stream.select("patJetHelper_selectedPatJetsPF.jetUncMinus", jethelper_jetUncMinus);
   stream.select("patJetHelper_selectedPatJetsPF.jetUncPlus", jethelper_jetUncPlus);
-  stream.select("patMET_patMETsAK5Calo.energy", met2_energy);
-  stream.select("patMET_patMETsAK5Calo.et", met2_et);
-  stream.select("patMET_patMETsAK5Calo.mEtSig", met2_mEtSig);
-  stream.select("patMET_patMETsAK5Calo.phi", met2_phi);
-  stream.select("patMET_patMETsAK5Calo.pt", met2_pt);
-  stream.select("patMET_patMETsAK5Calo.sumEt", met2_sumEt);
+  stream.select("patMET_patMETsTypeIPF.energy", met2_energy);
+  stream.select("patMET_patMETsTypeIPF.et", met2_et);
+  stream.select("patMET_patMETsTypeIPF.mEtSig", met2_mEtSig);
+  stream.select("patMET_patMETsTypeIPF.phi", met2_phi);
+  stream.select("patMET_patMETsTypeIPF.pt", met2_pt);
+  stream.select("patMET_patMETsTypeIPF.sumEt", met2_sumEt);
+  stream.select("patMET_patMETsAK5Calo.energy", met3_energy);
+  stream.select("patMET_patMETsAK5Calo.et", met3_et);
+  stream.select("patMET_patMETsAK5Calo.mEtSig", met3_mEtSig);
+  stream.select("patMET_patMETsAK5Calo.phi", met3_phi);
+  stream.select("patMET_patMETsAK5Calo.pt", met3_pt);
+  stream.select("patMET_patMETsAK5Calo.sumEt", met3_sumEt);
   stream.select("patMET_patMETsPF.energy", met_energy);
   stream.select("patMET_patMETsPF.et", met_et);
   stream.select("patMET_patMETsPF.mEtSig", met_mEtSig);
@@ -670,12 +734,14 @@ void selectVariables(itreestream& stream)
   stream.select("patMuonHelper_selectedPatMuonsPF.muonPFcandptdiff", muonhelper_muonPFcandptdiff);
   stream.select("npatElectron_selectedPatElectronsPF", nelectron);
   stream.select("npatElectronHelper_selectedPatElectronsPF", nelectronhelper);
+  stream.select("nGenEventInfoProductHelper_generator", ngeneventinfoproducthelper);
   stream.select("nrecoGenParticleHelperRA2b_genParticles", ngenparticlehelperra2b);
   stream.select("npatJet_selectedPatJetsPF", njet);
   stream.select("npatJet_cleanPatJetsAK5Calo", njet2);
   stream.select("npatJetHelper_selectedPatJetsPF", njethelper);
   stream.select("npatMET_patMETsPF", nmet);
-  stream.select("npatMET_patMETsAK5Calo", nmet2);
+  stream.select("npatMET_patMETsTypeIPF", nmet2);
+  stream.select("npatMET_patMETsAK5Calo", nmet3);
   stream.select("npatMuon_selectedPatMuonsPF", nmuon);
   stream.select("npatMuonHelper_selectedPatMuonsPF", nmuonhelper);
   stream.select("npatTau_selectedPatTausPF", ntau);
@@ -734,18 +800,34 @@ void selectVariables(itreestream& stream)
   stream.select("edmTriggerResultsHelper_TriggerResults_HLT.HLT_HT250_v5_prs", triggerresultshelper_HLT_HT250_v5_prs);
   stream.select("edmTriggerResultsHelper_TriggerResults_HLT.HLT_HT260_MHT60_v2", triggerresultshelper_HLT_HT260_MHT60_v2);
   stream.select("edmTriggerResultsHelper_TriggerResults_HLT.HLT_HT260_MHT60_v2_prs", triggerresultshelper_HLT_HT260_MHT60_v2_prs);
+  stream.select("edmTriggerResultsHelper_TriggerResults_HLT.HLT_HT260_v2", triggerresultshelper_HLT_HT260_v2);
+  stream.select("edmTriggerResultsHelper_TriggerResults_HLT.HLT_HT260_v2_prs", triggerresultshelper_HLT_HT260_v2_prs);
+  stream.select("edmTriggerResultsHelper_TriggerResults_HLT.HLT_HT260_v3", triggerresultshelper_HLT_HT260_v3);
+  stream.select("edmTriggerResultsHelper_TriggerResults_HLT.HLT_HT260_v3_prs", triggerresultshelper_HLT_HT260_v3_prs);
   stream.select("edmTriggerResultsHelper_TriggerResults_HLT.HLT_HT300_CentralJet30_BTagIP_PFMHT55_v2", triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_PFMHT55_v2);
   stream.select("edmTriggerResultsHelper_TriggerResults_HLT.HLT_HT300_CentralJet30_BTagIP_PFMHT55_v2_prs", triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_PFMHT55_v2_prs);
   stream.select("edmTriggerResultsHelper_TriggerResults_HLT.HLT_HT300_CentralJet30_BTagIP_PFMHT55_v3", triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_PFMHT55_v3);
   stream.select("edmTriggerResultsHelper_TriggerResults_HLT.HLT_HT300_CentralJet30_BTagIP_PFMHT55_v3_prs", triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_PFMHT55_v3_prs);
+  stream.select("edmTriggerResultsHelper_TriggerResults_HLT.HLT_HT300_CentralJet30_BTagIP_PFMHT55_v4", triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_PFMHT55_v4);
+  stream.select("edmTriggerResultsHelper_TriggerResults_HLT.HLT_HT300_CentralJet30_BTagIP_PFMHT55_v4_prs", triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_PFMHT55_v4_prs);
+  stream.select("edmTriggerResultsHelper_TriggerResults_HLT.HLT_HT300_CentralJet30_BTagIP_PFMHT55_v5", triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_PFMHT55_v5);
+  stream.select("edmTriggerResultsHelper_TriggerResults_HLT.HLT_HT300_CentralJet30_BTagIP_PFMHT55_v5_prs", triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_PFMHT55_v5_prs);
   stream.select("edmTriggerResultsHelper_TriggerResults_HLT.HLT_HT300_CentralJet30_BTagIP_PFMHT75_v2", triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_PFMHT75_v2);
   stream.select("edmTriggerResultsHelper_TriggerResults_HLT.HLT_HT300_CentralJet30_BTagIP_PFMHT75_v2_prs", triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_PFMHT75_v2_prs);
   stream.select("edmTriggerResultsHelper_TriggerResults_HLT.HLT_HT300_CentralJet30_BTagIP_PFMHT75_v3", triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_PFMHT75_v3);
   stream.select("edmTriggerResultsHelper_TriggerResults_HLT.HLT_HT300_CentralJet30_BTagIP_PFMHT75_v3_prs", triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_PFMHT75_v3_prs);
+  stream.select("edmTriggerResultsHelper_TriggerResults_HLT.HLT_HT300_CentralJet30_BTagIP_PFMHT75_v4", triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_PFMHT75_v4);
+  stream.select("edmTriggerResultsHelper_TriggerResults_HLT.HLT_HT300_CentralJet30_BTagIP_PFMHT75_v4_prs", triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_PFMHT75_v4_prs);
+  stream.select("edmTriggerResultsHelper_TriggerResults_HLT.HLT_HT300_CentralJet30_BTagIP_PFMHT75_v5", triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_PFMHT75_v5);
+  stream.select("edmTriggerResultsHelper_TriggerResults_HLT.HLT_HT300_CentralJet30_BTagIP_PFMHT75_v5_prs", triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_PFMHT75_v5_prs);
   stream.select("edmTriggerResultsHelper_TriggerResults_HLT.HLT_HT300_CentralJet30_BTagIP_v2", triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_v2);
   stream.select("edmTriggerResultsHelper_TriggerResults_HLT.HLT_HT300_CentralJet30_BTagIP_v2_prs", triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_v2_prs);
   stream.select("edmTriggerResultsHelper_TriggerResults_HLT.HLT_HT300_CentralJet30_BTagIP_v3", triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_v3);
   stream.select("edmTriggerResultsHelper_TriggerResults_HLT.HLT_HT300_CentralJet30_BTagIP_v3_prs", triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_v3_prs);
+  stream.select("edmTriggerResultsHelper_TriggerResults_HLT.HLT_HT300_CentralJet30_BTagIP_v4", triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_v4);
+  stream.select("edmTriggerResultsHelper_TriggerResults_HLT.HLT_HT300_CentralJet30_BTagIP_v4_prs", triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_v4_prs);
+  stream.select("edmTriggerResultsHelper_TriggerResults_HLT.HLT_HT300_CentralJet30_BTagIP_v5", triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_v5);
+  stream.select("edmTriggerResultsHelper_TriggerResults_HLT.HLT_HT300_CentralJet30_BTagIP_v5_prs", triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_v5_prs);
   stream.select("edmTriggerResultsHelper_TriggerResults_HLT.HLT_HT300_MHT75_v2", triggerresultshelper_HLT_HT300_MHT75_v2);
   stream.select("edmTriggerResultsHelper_TriggerResults_HLT.HLT_HT300_MHT75_v2_prs", triggerresultshelper_HLT_HT300_MHT75_v2_prs);
   stream.select("edmTriggerResultsHelper_TriggerResults_HLT.HLT_HT300_MHT75_v3", triggerresultshelper_HLT_HT300_MHT75_v3);
@@ -756,6 +838,10 @@ void selectVariables(itreestream& stream)
   stream.select("edmTriggerResultsHelper_TriggerResults_HLT.HLT_HT300_PFMHT55_v2_prs", triggerresultshelper_HLT_HT300_PFMHT55_v2_prs);
   stream.select("edmTriggerResultsHelper_TriggerResults_HLT.HLT_HT300_PFMHT55_v3", triggerresultshelper_HLT_HT300_PFMHT55_v3);
   stream.select("edmTriggerResultsHelper_TriggerResults_HLT.HLT_HT300_PFMHT55_v3_prs", triggerresultshelper_HLT_HT300_PFMHT55_v3_prs);
+  stream.select("edmTriggerResultsHelper_TriggerResults_HLT.HLT_HT300_PFMHT55_v4", triggerresultshelper_HLT_HT300_PFMHT55_v4);
+  stream.select("edmTriggerResultsHelper_TriggerResults_HLT.HLT_HT300_PFMHT55_v4_prs", triggerresultshelper_HLT_HT300_PFMHT55_v4_prs);
+  stream.select("edmTriggerResultsHelper_TriggerResults_HLT.HLT_HT300_PFMHT55_v5", triggerresultshelper_HLT_HT300_PFMHT55_v5);
+  stream.select("edmTriggerResultsHelper_TriggerResults_HLT.HLT_HT300_PFMHT55_v5_prs", triggerresultshelper_HLT_HT300_PFMHT55_v5_prs);
   stream.select("edmTriggerResultsHelper_TriggerResults_HLT.HLT_HT300_v1", triggerresultshelper_HLT_HT300_v1);
   stream.select("edmTriggerResultsHelper_TriggerResults_HLT.HLT_HT300_v1_prs", triggerresultshelper_HLT_HT300_v1_prs);
   stream.select("edmTriggerResultsHelper_TriggerResults_HLT.HLT_HT300_v2", triggerresultshelper_HLT_HT300_v2);
@@ -766,7 +852,10 @@ void selectVariables(itreestream& stream)
   stream.select("edmTriggerResultsHelper_TriggerResults_HLT.HLT_HT300_v4_prs", triggerresultshelper_HLT_HT300_v4_prs);
   stream.select("edmTriggerResultsHelper_TriggerResults_HLT.HLT_HT300_v5", triggerresultshelper_HLT_HT300_v5);
   stream.select("edmTriggerResultsHelper_TriggerResults_HLT.HLT_HT300_v5_prs", triggerresultshelper_HLT_HT300_v5_prs);
-  stream.select("suint_flavorHistoryFilter.value", uinthelper_value);
+  stream.select("edmTriggerResultsHelper_TriggerResults_HLT.HLT_HT300_v6", triggerresultshelper_HLT_HT300_v6);
+  stream.select("edmTriggerResultsHelper_TriggerResults_HLT.HLT_HT300_v6_prs", triggerresultshelper_HLT_HT300_v6_prs);
+  stream.select("edmTriggerResultsHelper_TriggerResults_HLT.HLT_HT300_v7", triggerresultshelper_HLT_HT300_v7);
+  stream.select("edmTriggerResultsHelper_TriggerResults_HLT.HLT_HT300_v7_prs", triggerresultshelper_HLT_HT300_v7_prs);
   stream.select("recoVertex_offlinePrimaryVertices.isFake", vertex_isFake);
   stream.select("recoVertex_offlinePrimaryVertices.isValid", vertex_isValid);
   stream.select("recoVertex_offlinePrimaryVertices.ndof", vertex_ndof);
@@ -877,6 +966,26 @@ std::ostream& operator<<(std::ostream& os, const electronhelper_s& o)
   char r[1024];
   os << "electronhelper" << std::endl;
   sprintf(r, "  %-32s: %f\n", "dxywrtBeamSpot", (double)o.dxywrtBeamSpot); os << r;
+  return os;
+}
+//-----------------------------------------------------------------------------
+struct geneventinfoproducthelper_s
+{
+  double	pdf1;
+  double	pdf2;
+  double	pdfweight;
+  double	pdfweightsum;
+};
+std::vector<geneventinfoproducthelper_s> geneventinfoproducthelper(50);
+
+std::ostream& operator<<(std::ostream& os, const geneventinfoproducthelper_s& o)
+{
+  char r[1024];
+  os << "geneventinfoproducthelper" << std::endl;
+  sprintf(r, "  %-32s: %f\n", "pdf1", (double)o.pdf1); os << r;
+  sprintf(r, "  %-32s: %f\n", "pdf2", (double)o.pdf2); os << r;
+  sprintf(r, "  %-32s: %f\n", "pdfweight", (double)o.pdfweight); os << r;
+  sprintf(r, "  %-32s: %f\n", "pdfweightsum", (double)o.pdfweightsum); os << r;
   return os;
 }
 //-----------------------------------------------------------------------------
@@ -1063,6 +1172,7 @@ struct jethelper_s
   double	jetUncPlus;
   double	jetUncMinus;
   double	jecFactor;
+  double	jecFactorNoL1Fast;
 };
 std::vector<jethelper_s> jethelper(500);
 
@@ -1073,6 +1183,7 @@ std::ostream& operator<<(std::ostream& os, const jethelper_s& o)
   sprintf(r, "  %-32s: %f\n", "jetUncPlus", (double)o.jetUncPlus); os << r;
   sprintf(r, "  %-32s: %f\n", "jetUncMinus", (double)o.jetUncMinus); os << r;
   sprintf(r, "  %-32s: %f\n", "jecFactor", (double)o.jecFactor); os << r;
+  sprintf(r, "  %-32s: %f\n", "jecFactorNoL1Fast", (double)o.jecFactorNoL1Fast); os << r;
   return os;
 }
 //-----------------------------------------------------------------------------
@@ -1115,6 +1226,30 @@ std::ostream& operator<<(std::ostream& os, const met2_s& o)
 {
   char r[1024];
   os << "met2" << std::endl;
+  sprintf(r, "  %-32s: %f\n", "energy", (double)o.energy); os << r;
+  sprintf(r, "  %-32s: %f\n", "et", (double)o.et); os << r;
+  sprintf(r, "  %-32s: %f\n", "pt", (double)o.pt); os << r;
+  sprintf(r, "  %-32s: %f\n", "phi", (double)o.phi); os << r;
+  sprintf(r, "  %-32s: %f\n", "sumEt", (double)o.sumEt); os << r;
+  sprintf(r, "  %-32s: %f\n", "mEtSig", (double)o.mEtSig); os << r;
+  return os;
+}
+//-----------------------------------------------------------------------------
+struct met3_s
+{
+  double	energy;
+  double	et;
+  double	pt;
+  double	phi;
+  double	sumEt;
+  double	mEtSig;
+};
+std::vector<met3_s> met3(10);
+
+std::ostream& operator<<(std::ostream& os, const met3_s& o)
+{
+  char r[1024];
+  os << "met3" << std::endl;
   sprintf(r, "  %-32s: %f\n", "energy", (double)o.energy); os << r;
   sprintf(r, "  %-32s: %f\n", "et", (double)o.et); os << r;
   sprintf(r, "  %-32s: %f\n", "pt", (double)o.pt); os << r;
@@ -1367,6 +1502,15 @@ void fillObjects()
       electronhelper[i].dxywrtBeamSpot	= electronhelper_dxywrtBeamSpot[i];
     }
 
+  geneventinfoproducthelper.resize(geneventinfoproducthelper_pdf1.size());
+  for(unsigned int i=0; i < geneventinfoproducthelper_pdf1.size(); ++i)
+    {
+      geneventinfoproducthelper[i].pdf1	= geneventinfoproducthelper_pdf1[i];
+      geneventinfoproducthelper[i].pdf2	= geneventinfoproducthelper_pdf2[i];
+      geneventinfoproducthelper[i].pdfweight	= geneventinfoproducthelper_pdfweight[i];
+      geneventinfoproducthelper[i].pdfweightsum	= geneventinfoproducthelper_pdfweightsum[i];
+    }
+
   genparticlehelperra2b.resize(genparticlehelperra2b_firstMother.size());
   for(unsigned int i=0; i < genparticlehelperra2b_firstMother.size(); ++i)
     {
@@ -1459,6 +1603,7 @@ void fillObjects()
       jethelper[i].jetUncPlus	= jethelper_jetUncPlus[i];
       jethelper[i].jetUncMinus	= jethelper_jetUncMinus[i];
       jethelper[i].jecFactor	= jethelper_jecFactor[i];
+      jethelper[i].jecFactorNoL1Fast	= jethelper_jecFactorNoL1Fast[i];
     }
 
   met.resize(met_energy.size());
@@ -1481,6 +1626,17 @@ void fillObjects()
       met2[i].phi	= met2_phi[i];
       met2[i].sumEt	= met2_sumEt[i];
       met2[i].mEtSig	= met2_mEtSig[i];
+    }
+
+  met3.resize(met3_energy.size());
+  for(unsigned int i=0; i < met3_energy.size(); ++i)
+    {
+      met3[i].energy	= met3_energy[i];
+      met3[i].et	= met3_et[i];
+      met3[i].pt	= met3_pt[i];
+      met3[i].phi	= met3_phi[i];
+      met3[i].sumEt	= met3_sumEt[i];
+      met3[i].mEtSig	= met3_mEtSig[i];
     }
 
   muon.resize(muon_energy.size());
