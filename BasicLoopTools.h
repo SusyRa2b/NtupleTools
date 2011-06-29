@@ -2045,7 +2045,7 @@ void sampleAnalyzer(itreestream& stream){
     
     if (Cut(entry) < 0) continue;
     count++;
-
+    std::cout << "genweight = " << geneventinfoproduct_weight << std::endl;
     std::cout << "btagIP weight = " << getBTagIPWeight() << std::endl;
     //std::cout << "PFMHT weight = " << getPFMHTWeight() << std::endl;
 
