@@ -20,8 +20,7 @@ int main(int argc, char** argv)
 {
  
   //code for sampleName_ and output path
-  //this will deleted when makeReducedTrees() is working
-  TString outputDir = "/cu2/kreis/reducedTrees/V00-00-00/";
+  TString outputDir = "/cu2/kreis/reducedTrees/V00-02-02/"; //this is where reducedTrees will go
   stringstream ss;
   TString fileArg;
   *argv++;

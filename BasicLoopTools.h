@@ -54,19 +54,19 @@ BTaggerType theBTaggerType_;
 //-Define some pointers so we can use more intuitive names.
 //-This also isolates some of the dependency on the configuration of the ntuple.
 //--These should be checked each time we make new ntuples.
-std::vector<jet_s> * myJetsPF;
-std::vector<electron_s> * myElectronsPF;
-std::vector<muon_s> * myMuonsPF;
-std::vector<tau_s> * myTausPF;
-std::vector<met_s> * myMETPF;
+std::vector<jet2_s> * myJetsPF; 
+std::vector<electron1_s> * myElectronsPF;
+std::vector<muon1_s> * myMuonsPF;
+std::vector<tau1_s> * myTausPF;
+std::vector<met1_s> * myMETPF;
 std::vector<vertex_s> * myVertex;
 
 void InitializeStuff(){       //If we resurrect the class structure, this will go into the constructor.
-  myJetsPF = &jet;            //selectedPatJetsPF
-  myElectronsPF = &electron;  //selectedPatElectronsPF
-  myMuonsPF = &muon;          //selectedPatMuonsPF
-  myTausPF = &tau;            //selectedPatTausPF
-  myMETPF = &met;             //patMETsPF
+  myJetsPF = &jet2;            //selectedPatJetsPF
+  myElectronsPF = &electron1;  //selectedPatElectronsPF
+  myMuonsPF = &muon1;          //selectedPatMuonsPF
+  myTausPF = &tau1;            //selectedPatTausPF
+  myMETPF = &met1;             //patMETsPF
   myVertex = &vertex;         //offlinePrimaryVertices
 }
 
@@ -89,21 +89,22 @@ void setBTaggerType(BTaggerType btaggertype){
 
 bool passHLT() { 
 
-  long runnumber = (long)(eventhelper_run +0.5); //just in case some crazy thing happens to eventhelper_run being saved as a double
+  long runnumber = (long)(edmevent_run +0.5); //just in case some crazy thing happens to edmevent_run being saved as a double
 
   //RA2b - 2011 Triggers
   bool passTrig = false;
 
-  if(eventhelper_isRealData){
-    //triggerresultshelper is a double - possible values are 0 (failed trigger), 1 (passed trigger), -9999 (trig result not available)
-    if(runnumber >= 160431 && runnumber < 161205) passTrig = (triggerresultshelper_HLT_HT260_MHT60_v2 > 0);
-    else if (runnumber >= 161205 && runnumber < 163269) passTrig = (triggerresultshelper_HLT_HT250_MHT60_v2 > 0);
-    else if (runnumber >= 163269 && runnumber < 164924) passTrig = (triggerresultshelper_HLT_HT250_MHT60_v3 > 0);
-    else if (runnumber >= 164924 && runnumber < 165922) passTrig = triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_PFMHT55_v2;
-    else if (runnumber >= 165922 && runnumber < 166301) passTrig = triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_PFMHT55_v3;
-    //else if (runnumber >= 166301 && runnumber < 166374 ) passTrig = triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_PFMHT55_v4; 
-    else if (runnumber >= 166374 && runnumber < 167078) passTrig = triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_PFMHT55_v3;
-    //else if (runnumber >= 167078) passTrig = triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_PFMHT55_v5; 
+  if(edmevent_isRealData){
+    //edmtriggerresults is a double - possible values are 0 (failed trigger), 1 (passed trigger), -9999 (trig result not available)
+    if(runnumber >= 160431 && runnumber < 161205) passTrig = (edmtriggerresults_HLT_HT260_MHT60_v2 > 0);
+    else if (runnumber >= 161205 && runnumber < 163269) passTrig = (edmtriggerresults_HLT_HT250_MHT60_v2 > 0);
+    else if (runnumber >= 163269 && runnumber < 164924) passTrig = (edmtriggerresults_HLT_HT250_MHT60_v3 > 0);
+    else if (runnumber >= 164924 && runnumber < 165922) passTrig = edmtriggerresults_HLT_HT300_CentralJet30_BTagIP_PFMHT55_v2;
+    else if (runnumber >= 165922 && runnumber < 166301) passTrig = edmtriggerresults_HLT_HT300_CentralJet30_BTagIP_PFMHT55_v3;
+    //else if (runnumber >= 166301 && runnumber < 166374 ) passTrig = edmtriggerresults_HLT_HT300_CentralJet30_BTagIP_PFMHT55_v4; 
+    else if (runnumber >= 166374 && runnumber < 167078) passTrig = edmtriggerresults_HLT_HT300_CentralJet30_BTagIP_PFMHT55_v3;
+    //else if (runnumber >= 167078) passTrig = edmtriggerresults_HLT_HT300_CentralJet30_BTagIP_PFMHT55_v5; 
+
   }
   else passTrig = true;   //use no trigger for MC   
 
@@ -115,11 +116,11 @@ unsigned int utilityHLT_HT300(){
   //and the prescale value if it was passed
   
   unsigned int myPrescale = 0;
-  if(triggerresultshelper_HLT_HT300_v1>0) myPrescale = triggerresultshelper_HLT_HT300_v1_prs;
-  if(triggerresultshelper_HLT_HT300_v2>0) myPrescale = triggerresultshelper_HLT_HT300_v2_prs;
-  if(triggerresultshelper_HLT_HT300_v3>0) myPrescale = triggerresultshelper_HLT_HT300_v3_prs;
-  if(triggerresultshelper_HLT_HT300_v4>0) myPrescale = triggerresultshelper_HLT_HT300_v4_prs;
-  if(triggerresultshelper_HLT_HT300_v5>0) myPrescale = triggerresultshelper_HLT_HT300_v5_prs;
+  if(edmtriggerresults_HLT_HT300_v1>0) myPrescale = edmtriggerresults_HLT_HT300_v1_prs;
+  if(edmtriggerresults_HLT_HT300_v2>0) myPrescale = edmtriggerresults_HLT_HT300_v2_prs;
+  if(edmtriggerresults_HLT_HT300_v3>0) myPrescale = edmtriggerresults_HLT_HT300_v3_prs;
+  if(edmtriggerresults_HLT_HT300_v4>0) myPrescale = edmtriggerresults_HLT_HT300_v4_prs;
+  if(edmtriggerresults_HLT_HT300_v5>0) myPrescale = edmtriggerresults_HLT_HT300_v5_prs;
   return myPrescale;
 }
 
@@ -128,8 +129,8 @@ unsigned int utilityHLT_HT300_CentralJet30_BTagIP(){
   //and the prescale value if it was passed
   
   unsigned int myPrescale = 0;
-  if(triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_v2>0) myPrescale = triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_v2_prs;
-  if(triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_v3>0) myPrescale = triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_v3_prs;
+  if(edmtriggerresults_HLT_HT300_CentralJet30_BTagIP_v2>0) myPrescale = edmtriggerresults_HLT_HT300_CentralJet30_BTagIP_v2_prs;
+  if(edmtriggerresults_HLT_HT300_CentralJet30_BTagIP_v3>0) myPrescale = edmtriggerresults_HLT_HT300_CentralJet30_BTagIP_v3_prs;
   return myPrescale;
 }
 
@@ -1576,7 +1577,7 @@ TString getSampleNameOutputString(TString inname){
 
 
 double getWeight(Long64_t nentries) {
-  if(eventhelper_isRealData) return 1;
+  if(edmevent_isRealData) return 1;
 
   double sigma = getCrossSection(sampleName_);
   double w = lumi_ * sigma / double(nentries);
@@ -1646,7 +1647,7 @@ void cutflow(itreestream& stream){
 
     //some output to watch while it's running
     if(entry==0){
-      if(!eventhelper_isRealData){
+      if(!edmevent_isRealData){
         cout << "MC xsec: " << getCrossSection(sampleName_) << endl;
       }
       else{
@@ -1898,7 +1899,7 @@ void reducedTree(TString outputpath, itreestream& stream)
 
     //some output to watch while it's running
     if(entry==0){
-      if(!eventhelper_isRealData){
+      if(!edmevent_isRealData){
 	cout << "MC xsec: " << getCrossSection(sampleName_) << endl;
       }
       else{
@@ -1915,9 +1916,9 @@ void reducedTree(TString outputpath, itreestream& stream)
       weight = getWeight(nevents);
       
       // cast these as long ints, with rounding, assumes they are positive to begin with 
-      runNumber = (ULong64_t)(eventhelper_run+0.5);
-      lumiSection = (ULong64_t)(eventhelper_luminosityBlock+0.5);
-      eventNumber = (ULong64_t)(eventhelper_event+0.5);
+      runNumber = (ULong64_t)(edmevent_run+0.5);
+      lumiSection = (ULong64_t)(edmevent_luminosityBlock+0.5);
+      eventNumber = (ULong64_t)(edmevent_event+0.5);
       
       btagIPweight = getBTagIPWeight();
       pfmhtweight = getPFMHTWeight();
