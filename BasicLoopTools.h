@@ -112,9 +112,11 @@ bool passHLT() {
 }
 
 unsigned int utilityHLT_HT300(){
-  //this function will return 0 if the utility trigger was not passed
-  //and the prescale value if it was passed
+  //for data, this function will return 0 if the utility trigger was not passed
+  //and the prescale value if it was passed. For MC, it returns 1.
   
+  if(edmevent_isRealData) return 1;
+ 
   unsigned int myPrescale = 0;
   if(edmtriggerresults_HLT_HT300_v1>0) myPrescale = edmtriggerresults_HLT_HT300_v1_prs;
   if(edmtriggerresults_HLT_HT300_v2>0) myPrescale = edmtriggerresults_HLT_HT300_v2_prs;
@@ -128,6 +130,8 @@ unsigned int utilityHLT_HT300_CentralJet30_BTagIP(){
   //this function will return 0 if the utility trigger was not passed
   //and the prescale value if it was passed
   
+  if(edmevent_isRealData) return 1;
+
   unsigned int myPrescale = 0;
   if(edmtriggerresults_HLT_HT300_CentralJet30_BTagIP_v2>0) myPrescale = edmtriggerresults_HLT_HT300_CentralJet30_BTagIP_v2_prs;
   if(edmtriggerresults_HLT_HT300_CentralJet30_BTagIP_v3>0) myPrescale = edmtriggerresults_HLT_HT300_CentralJet30_BTagIP_v3_prs;
