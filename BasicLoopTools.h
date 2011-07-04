@@ -1547,7 +1547,7 @@ TString getSampleNameOutputString(TString inname){
   if (inname.Contains("QCD_Pt_1000to1400_TuneZ2_7TeV_pythia6") )                return inname;
   if (inname.Contains("QCD_Pt_120to170_TuneZ2_7TeV_pythia6") )                  return inname;
   if (inname.Contains("QCD_Pt_1400to1800_TuneZ2_7TeV_pythia6_3") )              return inname;
-  if (inname.Contains("QCD_Pt_15to3000_TuneZ2_Flat_7TeV_pythia6") )             return inname;
+  if (inname.Contains("QCD_Pt_15to3000_TuneZ2_Flat_7TeV_pythia6") )             return "PythiaPUQCDFlat";
   if (inname.Contains("QCD_Pt_15to30_TuneZ2_7TeV_pythia6") )                    return inname;
   if (inname.Contains("QCD_Pt_170to300_TuneZ2_7TeV_pythia6") )                  return inname;
   if (inname.Contains("QCD_Pt_1800_TuneZ2_7TeV_pythia6") )                      return inname;
@@ -1581,6 +1581,8 @@ double getWeight(Long64_t nentries) {
 
   double sigma = getCrossSection(sampleName_);
   double w = lumi_ * sigma / double(nentries);
+
+  if (sampleName_.Contains("QCD_Pt_15to3000_TuneZ2_Flat_7TeV_pythia6")) w *=  geneventinfoproduct_weight;
 
   return  w;
 }
