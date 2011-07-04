@@ -425,7 +425,8 @@ void loadSamples(bool joinSingleTop=true) {
   //samples_.push_back("QCD"); //madgraph
   //samples_.push_back("PythiaQCD");
 
-  samples_.push_back("PythiaPUQCD");
+  //samples_.push_back("PythiaPUQCD");
+  samples_.push_back("PythiaPUQCDFlat");
   samples_.push_back("TTbarJets");
 
   //flip this bool to control whether SingleTop is loaded as one piece or 3
@@ -445,7 +446,7 @@ void loadSamples(bool joinSingleTop=true) {
   //samplesAll_.insert("QCD");
   //samplesAll_.insert("PythiaQCD");
   samplesAll_.insert("PythiaPUQCD");
-  //samplesAll_.insert("PythiaPUQCDFlat");
+  samplesAll_.insert("PythiaPUQCDFlat");
   samplesAll_.insert("TTbarJets");
   samplesAll_.insert("WJets");
   samplesAll_.insert("ZJets");
@@ -613,7 +614,8 @@ float drawSimple(const TString var, const int nbins, const float low, const floa
   hh->Sumw2();
    
   TString optfh= useFlavorHistoryWeights_ && samplename.Contains("WJets") ? "flavorHistoryWeight" : "";
-  tree->Project(histname,var,getCutString(lumiScale_,optfh,selection_,"",0).Data());
+  if(samplename=="data") tree->Project(histname,var,getCutString(1.,optfh,selection_,"",0).Data());
+  else tree->Project(histname,var,getCutString(lumiScale_,optfh,selection_,"",0).Data());
   float theIntegral = hh->Integral(0,nbins+1);
 
   if (addOverflow_)  addOverflowBin( hh ); //manipulates the TH1F
