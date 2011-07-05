@@ -1760,6 +1760,7 @@ void reducedTree(TString outputpath, itreestream& stream)
 
   bool passBadPFMuon, passInconsistentMuon;
 
+  bool isRealData;
   bool pass_utilityHLT_HT300;
   UInt_t prescale_utilityHLT_HT300;
   bool pass_utilityHLT_HT300_CentralJet30_BTagIP;
@@ -1799,6 +1800,7 @@ void reducedTree(TString outputpath, itreestream& stream)
   reducedTree.Branch("btagIPweight",&btagIPweight,"btagIPweight/F");
   reducedTree.Branch("pfmhtweight",&pfmhtweight,"pfmhtweight/F");
 
+
   reducedTree.Branch("cutHT",&cutHT,"cutHT/O");
   reducedTree.Branch("cutPV",&cutPV,"cutPV/O");
   reducedTree.Branch("cutTrigger",&cutTrigger,"cutTrigger/O");
@@ -1819,6 +1821,7 @@ void reducedTree(TString outputpath, itreestream& stream)
   reducedTree.Branch("nElectrons",&nElectrons,"nElectrons/I");
   reducedTree.Branch("nMuons",&nMuons,"nMuons/I");
 
+  reducedTree.Branch("isRealData",&isRealData,"isRealData/O");
   reducedTree.Branch("pass_utilityHLT_HT300",&pass_utilityHLT_HT300,"pass_utilityHLT_HT300/O");
   reducedTree.Branch("prescale_utilityHLT_HT300", &prescale_utilityHLT_HT300, "prescale_utilityHLT_HT300/i");
   reducedTree.Branch("pass_utilityHLT_HT300_CentralJet30_BTagIP",&pass_utilityHLT_HT300_CentralJet30_BTagIP,"pass_utilityHLT_HT300_CentralJet30_BTagIP/O");
@@ -1944,6 +1947,7 @@ void reducedTree(TString outputpath, itreestream& stream)
       passBadPFMuon = passBadPFMuonFilter();
       passInconsistentMuon = passInconsistentMuonFilter();
       
+      isRealData = edmevent_isRealData;
       pass_utilityHLT_HT300 = (utilityHLT_HT300()>0);
       prescale_utilityHLT_HT300 = (UInt_t)utilityHLT_HT300();
       pass_utilityHLT_HT300_CentralJet30_BTagIP = (utilityHLT_HT300_CentralJet30_BTagIP()>0);
