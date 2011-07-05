@@ -877,7 +877,7 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
     }
   }
 
-    if(!quiet_ && dostack_ && nbins<11){//BEN - 11 is an arbitrary number that isn't too big so we don't print out too much stuff.
+  if(!quiet_ && dostack_ && dodata_ && nbins<11){//BEN - 11 is an arbitrary number that isn't too big so we don't print out too much stuff.
       for(int i=1; i<=nbins; i++){
 	cout << "data: " << hdata->GetBinContent(i) << " +- " << hdata->GetBinError(i) << ", totalsm: " << totalsm->GetBinContent(i) << " +- " << totalsm->GetBinError(i) << ", ratio: " << ratio->GetBinContent(i) << " +- " << ratio->GetBinError(i) << endl;
       }
