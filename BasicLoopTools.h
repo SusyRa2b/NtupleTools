@@ -123,6 +123,8 @@ unsigned int utilityHLT_HT300(){
   if(edmtriggerresults_HLT_HT300_v3>0) myPrescale = edmtriggerresults_HLT_HT300_v3_prs;
   if(edmtriggerresults_HLT_HT300_v4>0) myPrescale = edmtriggerresults_HLT_HT300_v4_prs;
   if(edmtriggerresults_HLT_HT300_v5>0) myPrescale = edmtriggerresults_HLT_HT300_v5_prs;
+  if(edmtriggerresults_HLT_HT300_v6>0) myPrescale = edmtriggerresults_HLT_HT300_v6_prs;
+  if(edmtriggerresults_HLT_HT300_v7>0) myPrescale = edmtriggerresults_HLT_HT300_v7_prs;
   return myPrescale;
 }
 
