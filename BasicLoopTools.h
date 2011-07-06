@@ -96,6 +96,7 @@ bool passHLT() {
 
   if(edmevent_isRealData){
     //edmtriggerresults is a double - possible values are 0 (failed trigger), 1 (passed trigger), -9999 (trig result not available)
+    /* using BTagIP triggers
     if(runnumber >= 160431 && runnumber < 161205) passTrig = (edmtriggerresults_HLT_HT260_MHT60_v2 > 0);
     else if (runnumber >= 161205 && runnumber < 163269) passTrig = (edmtriggerresults_HLT_HT250_MHT60_v2 > 0);
     else if (runnumber >= 163269 && runnumber < 164924) passTrig = (edmtriggerresults_HLT_HT250_MHT60_v3 > 0);
@@ -104,7 +105,17 @@ bool passHLT() {
     //else if (runnumber >= 166301 && runnumber < 166374 ) passTrig = edmtriggerresults_HLT_HT300_CentralJet30_BTagIP_PFMHT55_v4; 
     else if (runnumber >= 166374 && runnumber < 167078) passTrig = edmtriggerresults_HLT_HT300_CentralJet30_BTagIP_PFMHT55_v3;
     //else if (runnumber >= 167078) passTrig = edmtriggerresults_HLT_HT300_CentralJet30_BTagIP_PFMHT55_v5; 
-
+    */
+    //jmt -- 6 July 2011 -- use agreed RA2b triggers for Summer 2011
+    if      (runnumber >= 160431 && runnumber <= 161204)  passTrig = (edmtriggerresults_HLT_HT260_MHT60_v2 > 0);
+    else if (runnumber >= 161205 && runnumber <= 163268)  passTrig = (edmtriggerresults_HLT_HT250_MHT60_v2 > 0);
+    else if (runnumber >= 163269 && runnumber <= 164923)  passTrig = (edmtriggerresults_HLT_HT250_MHT60_v3 > 0);
+    else if (runnumber >= 164924 && runnumber <= 165921)  passTrig = (edmtriggerresults_HLT_HT250_MHT70_v1 > 0);
+    else if (runnumber >= 165922 && runnumber <= 166300)  passTrig = (edmtriggerresults_HLT_HT300_MHT75_v7 > 0);
+    else if (runnumber >= 166374 && runnumber <= 166978)  passTrig = (edmtriggerresults_HLT_HT300_MHT75_v7 > 0);
+      //168941 is an arbitrary run during July Tech Stop
+    else if (runnumber >= 166979 && runnumber <= 168941)  passTrig = (edmtriggerresults_HLT_HT300_MHT80_v1 > 0);
+    else {cout<<"No trigger assigned for run = "<<runnumber<<endl; assert(0);}
   }
   else passTrig = true;   //use no trigger for MC   
 
@@ -115,7 +126,7 @@ unsigned int utilityHLT_HT300(){
   //for data, this function will return 0 if the utility trigger was not passed
   //and the prescale value if it was passed. For MC, it returns 1.
   
-  if(edmevent_isRealData) return 1;
+  if (!edmevent_isRealData) return 1;
  
   unsigned int myPrescale = 0;
   if(edmtriggerresults_HLT_HT300_v1>0) myPrescale = edmtriggerresults_HLT_HT300_v1_prs;
@@ -132,7 +143,7 @@ unsigned int utilityHLT_HT300_CentralJet30_BTagIP(){
   //this function will return 0 if the utility trigger was not passed
   //and the prescale value if it was passed
   
-  if(edmevent_isRealData) return 1;
+  if (!edmevent_isRealData) return 1;
 
   unsigned int myPrescale = 0;
   if(edmtriggerresults_HLT_HT300_CentralJet30_BTagIP_v2>0) myPrescale = edmtriggerresults_HLT_HT300_CentralJet30_BTagIP_v2_prs;
@@ -161,19 +172,8 @@ int countGoodPV() {
 
 bool passPV() {
   
-  bool npass=false;
-  //for (unsigned int ipv = 0; ipv<myVertex->size(); ipv++) {
-  if ( !myVertex->at(0).isFake ){
-    if ( fabs(myVertex->at(0).z) < 24 ){
-      if ( fabs(myVertex->at(0).position_Rho) < 2 ){
-	if ( myVertex->at(0).ndof > 4 ){
-	  npass = true;
-	}
-      }
-    }
-  }
-  
-  return npass; 
+  //jmt -- 6 July 2011 -- switch to the more standard practice of taking at least one good PV
+  return (countGoodPV() >= 1);
 }
 
 float getJetPt( unsigned int ijet ) {
@@ -1337,7 +1337,7 @@ bool passCut(const TString cutTag) {
 
   if (cutTag == "cutMET") {
     float mymet = getMET();
-    return mymet >= 150;
+    return mymet >= 200;
   }
 
   if (cutTag == "cutDeltaPhi") {
