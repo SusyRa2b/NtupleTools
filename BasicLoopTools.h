@@ -48,7 +48,7 @@ enum tailCleaningType {kNoCleaning=0, kMuonCleaning, kMuonEcalCleaning};
 tailCleaningType theCleaningType_;
 enum flavorHistoryType {kNoFlvHist=0, kFlvHist};
 flavorHistoryType theFlavorHistoryType_;
-enum BTaggerType {kSSVM=0, kTCHET};
+enum BTaggerType {kSSVM=0, kTCHET, kSSVHPT, kTCHPT, kTCHPM, Nbtaggers};
 BTaggerType theBTaggerType_;
 
 //-Define some pointers so we can use more intuitive names.
@@ -110,11 +110,14 @@ bool passHLT() {
     if      (runnumber >= 160431 && runnumber <= 161204)  passTrig = (edmtriggerresults_HLT_HT260_MHT60_v2 > 0);
     else if (runnumber >= 161205 && runnumber <= 163268)  passTrig = (edmtriggerresults_HLT_HT250_MHT60_v2 > 0);
     else if (runnumber >= 163269 && runnumber <= 164923)  passTrig = (edmtriggerresults_HLT_HT250_MHT60_v3 > 0);
-    else if (runnumber >= 164924 && runnumber <= 165921)  passTrig = (edmtriggerresults_HLT_HT250_MHT70_v1 > 0);
-    else if (runnumber >= 165922 && runnumber <= 166300)  passTrig = (edmtriggerresults_HLT_HT300_MHT75_v7 > 0);
-    else if (runnumber >= 166374 && runnumber <= 166978)  passTrig = (edmtriggerresults_HLT_HT300_MHT75_v7 > 0);
+    
+    //these aren't yet in the header file
+    //    else if (runnumber >= 164924 && runnumber <= 165921)  passTrig = (edmtriggerresults_HLT_HT250_MHT70_v1 > 0);
+    //    else if (runnumber >= 165922 && runnumber <= 166300)  passTrig = (edmtriggerresults_HLT_HT300_MHT75_v7 > 0);
+    //    else if (runnumber >= 166374 && runnumber <= 166978)  passTrig = (edmtriggerresults_HLT_HT300_MHT75_v7 > 0);
       //168941 is an arbitrary run during July Tech Stop
-    else if (runnumber >= 166979 && runnumber <= 168941)  passTrig = (edmtriggerresults_HLT_HT300_MHT80_v1 > 0);
+    //    else if (runnumber >= 166979 && runnumber <= 168941)  passTrig = (edmtriggerresults_HLT_HT300_MHT80_v1 > 0);
+
     else {cout<<"No trigger assigned for run = "<<runnumber<<endl; assert(0);}
   }
   else passTrig = true;   //use no trigger for MC   
@@ -204,10 +207,10 @@ bool jetPassLooseID( unsigned int ijet ) {
 }
 
 
-bool isGoodJet(unsigned int ijet) {
+bool isGoodJet(const unsigned int ijet, const float pTthreshold=50, const float etaMax=2.4) {
 
-  if ( getJetPt(ijet) <50) return false;
-  if ( fabs(myJetsPF->at(ijet).eta) > 2.4) return false;
+  if ( getJetPt(ijet) <pTthreshold) return false;
+  if ( fabs(myJetsPF->at(ijet).eta) > etaMax) return false;
   if ( !jetPassLooseID(ijet) ) return false;
 
   return true;
@@ -215,21 +218,11 @@ bool isGoodJet(unsigned int ijet) {
 
 bool isGoodJet10(unsigned int ijet) {
 
-  if ( getJetPt(ijet) <10) return false;
-  if ( fabs(myJetsPF->at(ijet).eta) > 2.4) return false;
-  if ( !jetPassLooseID(ijet) ) return false;
-
-  return true;
+  return isGoodJet(ijet,10,2.4);
 }
 
 bool isGoodJet30(unsigned int ijet) {
-
-  if ( getJetPt(ijet) <30) return false;
-  if ( fabs(myJetsPF->at(ijet).eta) > 2.4) return false;
-  if ( !jetPassLooseID(ijet) ) return false;
-
-
-  return true;
+  return isGoodJet(ijet,30,2.4);
 }
 
 bool isGoodJetMHT(unsigned int ijet) {
@@ -242,15 +235,21 @@ bool isGoodJetMHT(unsigned int ijet) {
 }
 
 
-bool passBTagger(int ijet) {
+bool passBTagger(int ijet, BTaggerType btagger=Nbtaggers ) {
 
-  if(theBTaggerType_==kSSVM){
+  //if we are passed the dummy value, then set to the default type
+  if (btagger==Nbtaggers) btagger = theBTaggerType_;
+
+  if (btagger==kSSVM){
     return ( myJetsPF->at(ijet).simpleSecondaryVertexBJetTags >= 1.74 
 	     || myJetsPF->at(ijet).simpleSecondaryVertexHighEffBJetTags >= 1.74);
   }
-  else if(theBTaggerType_==kTCHET){
+  else if (btagger==kTCHET){
     return (myJetsPF->at(ijet).trackCountingHighEffBJetTags >= 10.2);
   }
+  else if (btagger==kSSVHPT) return myJetsPF->at(ijet).simpleSecondaryVertexHighPurBJetTags >= 2;
+  else if (btagger==kTCHPT ) return myJetsPF->at(ijet).trackCountingHighPurBJetTags >= 3.41;
+  else if (btagger==kTCHPM ) return myJetsPF->at(ijet).trackCountingHighPurBJetTags >= 1.93;
   else{
     cout << "Invalid b tagger!" << endl;
     assert(0);
@@ -268,11 +267,11 @@ uint nGoodJets() {
 }
 
 
-uint nGoodBJets() {
+uint nGoodBJets( BTaggerType btagger=Nbtaggers) {
   uint nb=0;
   for (uint i = 0; i < myJetsPF->size(); ++i) {
-    if (isGoodJet(i) ) {
-      if ( passBTagger(i) ) nb++;
+    if (isGoodJet(i,30) ) {
+      if ( passBTagger(i,btagger) ) nb++;
     }
   }
   return nb;
@@ -1588,7 +1587,7 @@ double getWeight(Long64_t nentries) {
   double sigma = getCrossSection(sampleName_);
   double w = lumi_ * sigma / double(nentries);
 
-  if (sampleName_.Contains("QCD_Pt_15to3000_TuneZ2_Flat_7TeV_pythia6")) w *=  geneventinfoproduct_weight;
+  if (sampleName_.Contains("QCD_Pt_15to3000_TuneZ2_Flat_7TeV_pythia6")) w *=  geneventinfoproduct1_weight;
 
   return  w;
 }
@@ -1751,6 +1750,7 @@ void reducedTree(TString outputpath, itreestream& stream)
   double weight; //one exception to the float rule
   float btagIPweight, pfmhtweight;
   ULong64_t lumiSection, eventNumber, runNumber;
+  float METsig;
   float HT, MHT, MET, METphi, minDeltaPhi, minDeltaPhiAll, minDeltaPhiAll30,minDeltaPhi30_eta5_noIdAll;
   float maxDeltaPhi, maxDeltaPhiAll, maxDeltaPhiAll30, maxDeltaPhi30_eta5_noIdAll;
   float sumDeltaPhi, diffDeltaPhi;
@@ -1767,6 +1767,7 @@ void reducedTree(TString outputpath, itreestream& stream)
   UInt_t prescale_utilityHLT_HT300_CentralJet30_BTagIP;
 
   int njets, nbjets, nElectrons, nMuons;
+  int nbjetsSSVM,nbjetsTCHET,nbjetsSSVHPT,nbjetsTCHPT,nbjetsTCHPM;
 
   float jetpt1,jetphi1, jeteta1, jetenergy1, bjetpt1, bjetphi1, bjeteta1, bjetenergy1;
   float jetpt2,jetphi2, jeteta2, jetenergy2, bjetpt2, bjetphi2, bjeteta2, bjetenergy2;
@@ -1821,6 +1822,12 @@ void reducedTree(TString outputpath, itreestream& stream)
   reducedTree.Branch("nElectrons",&nElectrons,"nElectrons/I");
   reducedTree.Branch("nMuons",&nMuons,"nMuons/I");
 
+  reducedTree.Branch("nbjetsSSVM",&nbjetsSSVM,"nbjetsSSVM/I");
+  reducedTree.Branch("nbjetsSSVHPT",&nbjetsSSVHPT,"nbjetsSSVHPT/I");
+  reducedTree.Branch("nbjetsTCHPT",&nbjetsTCHPT,"nbjetsTCHPT/I");
+  reducedTree.Branch("nbjetsTCHET",&nbjetsTCHET,"nbjetsTCHET/I");
+  reducedTree.Branch("nbjetsTCHPM",&nbjetsTCHPM,"nbjetsTCHPM/I");
+
   reducedTree.Branch("isRealData",&isRealData,"isRealData/O");
   reducedTree.Branch("pass_utilityHLT_HT300",&pass_utilityHLT_HT300,"pass_utilityHLT_HT300/O");
   reducedTree.Branch("prescale_utilityHLT_HT300", &prescale_utilityHLT_HT300, "prescale_utilityHLT_HT300/i");
@@ -1829,6 +1836,7 @@ void reducedTree(TString outputpath, itreestream& stream)
 
   reducedTree.Branch("HT",&HT,"HT/F");
   reducedTree.Branch("MET",&MET,"MET/F");
+  reducedTree.Branch("METsig",&METsig,"METsig/F");
   reducedTree.Branch("METphi",&METphi,"METphi/F");
   reducedTree.Branch("MHT",&MHT,"MHT/F");
 
@@ -1957,10 +1965,19 @@ void reducedTree(TString outputpath, itreestream& stream)
 
       njets = nGoodJets();
       nbjets = nGoodBJets();
+
+  //  int nbjetsSSVM,nbjetsTCHET,nbjetsSSVHPT,nbjetsTCHPT,nbjetsTCHPM;
+      nbjetsSSVM = nGoodBJets( kSSVM);
+      nbjetsSSVHPT = nGoodBJets( kSSVHPT);
+      nbjetsTCHET = nGoodBJets( kTCHET);
+      nbjetsTCHPT = nGoodBJets( kTCHPT);
+      nbjetsTCHPM = nGoodBJets( kTCHPM);
+
       nElectrons = countEle();
       nMuons = countMu();
       HT=getHT();
       MET=getMET();
+      METsig = myMETPF->at(0).mEtSig; //FIXME hard coded for PF
       MHT=getMHT();
       METphi = getMETphi();
       minDeltaPhi = getMinDeltaPhiMET(3);
@@ -2058,7 +2075,7 @@ void sampleAnalyzer(itreestream& stream){
     
     if (Cut(entry) < 0) continue;
     count++;
-    std::cout << "genweight = " << geneventinfoproduct_weight << std::endl;
+    std::cout << "genweight = " << geneventinfoproduct1_weight << std::endl;
     std::cout << "btagIP weight = " << getBTagIPWeight() << std::endl;
     //std::cout << "PFMHT weight = " << getPFMHTWeight() << std::endl;
 
