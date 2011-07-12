@@ -70,12 +70,16 @@ functionality for TH1F and TH1D e.g. the case of addOverflowBin()
 #include <iostream>
 #include <map>
 #include <set>
-													     
-													     
-TString inputPath = "/cu2/kreis/reducedTrees/V00-01-02/";//path for MC													     
-TString dataInputPath = "/cu2/kreis/reducedTrees/42june14/";//path for data
+
+TString inputPath = "/cu2/kreis/reducedTrees/V00-01-02/benHack/";//path for MC
+//TString inputPath = "/cu2/kreis/reducedTrees/V00-01-02/";//path for MC
+TString dataInputPath = "/cu2/kreis/reducedTrees/V00-02-03/";//path for data
+//TString dataInputPath = "/cu2/ra2b/reducedTrees/V00-02-02/";
 TString cutdesc = "TCHET";
-double lumiScale_ = 1000./190.5; //348.644/190.5; //data lumi / lumi of MC
+double lumiScale_ = 4.17935645/190.5; // //data lumi / lumi of MC
+//double lumiScale_ = (94.432+166.732+216.430+154.830+84.698+57.994+2.101)/190.5;
+//double lumiScale_ = 777./190.5;
+//double lumiScale_ = (0.694037787)/190.5; // //data lumi / lumi of MC
 //TString cutdesc = "Baseline0_PF_JERbias_pfMEThigh_PFLep0e0mu_minDP_MuonEcalCleaning";
 //TString cutdesc = "Baseline0_PF_pfMEThigh_PFLepRA20e0mu_minDP_MuonEcalCleaning";
 //TString cutdesc = "Baseline0_PF_pfMEThigh_PFLep0e0mu_minDP_MuonEcalCleaning";
@@ -1129,6 +1133,7 @@ void drawMETPlots() {
   doRatioPlot(true);
   setQuiet(false);
   doOverflowAddition(true);
+  loadSamples();
 
   int nbins;
   float low,high;
@@ -1136,7 +1141,7 @@ void drawMETPlots() {
 
   // ==== MET plots ====
   setLogY(true);   setPlotMinimum(1e-1);
-  nbins=25; low= 0; high=500;
+  nbins=10; low= 0.; high=150.;
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
   ratioMin = 0; ratioMax = 3;
 
@@ -1155,18 +1160,126 @@ void drawMETPlots() {
 
   selection_ ="nbjets==0 && cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && cutDeltaPhi==1 && passInconsistentMuon==1 && passBadPFMuon==1";
   drawPlots(var,nbins,low,high,xtitle,"Events", "H_MET_antib");
-  */
+  */ 
 
-  setLogY(false);
-  //setPlotMaximum(100);
-  selection_ ="nbjets==0 && cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && cutDeltaPhi==1 && passInconsistentMuon==1 && passBadPFMuon==1 && MET>=150.";
-  //resetPlotMaximum();
-  drawPlots(var,10,150,high,xtitle,"Events", "H_MET_antib");
+
+  nbins=20; low=0; high=400;
+  //double tempLumiScale =  lumiScale_;
+  //double thisLumi = 94.432+166.732+216.430+154.830+84.698+57.994+2.101;
+  //cout << "thisLumi: " << thisLumi << endl;
+  //lumiScale_ = thisLumi/190.5;
+  selection_ ="cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && cutDeltaPhi==1 && passInconsistentMuon==1 && passBadPFMuon==1";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "H_MET_test");
+  //lumiScale_= tempLumiScale;
+}
+
+
+void drawMETPlots_utility(){
+  useFlavorHistoryWeights_=false;
+  setStackMode(true);
+  doData(true);
+  doRatioPlot(true);
+  setQuiet(false);
+  doOverflowAddition(true);
+  loadSamples();
+  ratioMin = 0; ratioMax = 3;
+
+  int nbins;
+  float low,high;
+  TString var,xtitle;
+  bool doVB=false;
+
+  TCut baseSelection = "cutHT==1 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && passInconsistentMuon==1 && passBadPFMuon==1"; //cuts not present: trigger, MET, mdp, bjets
+  TCut utilSelection = "pass_utilityHLT_HT300";
+  TCut nominalTrigger = "cutTrigger==1";
+  TCut mdpCut = "cutDeltaPhi==1";
+  TCut invertMdpCut = "cutDeltaPhi==0";
+
+  const  TCut ge1b =  "nbjets >= 1";
+  const  TCut ge2b =  "nbjets >= 2";
+  const  TCut eq1b =  "nbjets == 1";
+  const  TCut pretag =  "1";
+  const  TCut antitag = "nbjets == 0";
+  for (int ibtag = 0; ibtag<5; ibtag++) { 
+    TCut theBTaggingCut = ge1b; TString btagstring = "ge1b";
+    if (ibtag==0) { //nothing to do
+    }
+    else if (ibtag==1) {
+      theBTaggingCut = eq1b; 
+      btagstring = "eq1b";
+    }
+    else if (ibtag==2) {
+      theBTaggingCut = ge2b; 
+      btagstring = "ge2b";
+    }
+    else if (ibtag==3) {
+      theBTaggingCut = pretag;
+      btagstring = "pre";
+    }
+    else if (ibtag==4) {
+      theBTaggingCut = antitag;
+      btagstring = "antib";
+    }
+    else assert(0);
+    
+    TString extraName = "_nominal";
+    
+    // ==== MET plots ====
+    setLogY(true);   setPlotMinimum(1e-1);
+    nbins=10; low= 0.; high=150.;
+    var="MET"; xtitle="E_{T}^{miss} [GeV]";
+    selection_ = baseSelection && utilSelection && mdpCut && theBTaggingCut; //no MET cut
+    drawPlots(var,nbins,low,high,xtitle,"Events", btagstring+extraName+"_METstack");
+    setLogY(false); resetPlotMinimum();
+    //high MET
+    nbins=1; low=150.; high=200.;
+    selection_ = baseSelection && utilSelection && invertMdpCut && theBTaggingCut; //no MET cut, inverted mdp
+    drawPlots(var,nbins,low,high,xtitle,"Events", btagstring+extraName+"_imdp_METstack");
+    //cross check hack
+    double tempLumiScale =  lumiScale_;
+    double thisLumi = 94.432+166.732+216.430+154.830+84.698+57.994+2.101;
+    cout << "thisLumi: " << thisLumi << endl;
+    lumiScale_ = thisLumi/190.5;
+    selection_ = baseSelection && nominalTrigger && invertMdpCut && theBTaggingCut; //no MET cut, inverted mdp
+    drawPlots(var,nbins,low,high,xtitle,"Events", btagstring+extraName+"_imdp_METstack_full");
+    lumiScale_= tempLumiScale;
+    
+
+    if(0){
+      // ==== MinDeltaPhi in MET slices ====
+      setLogY(false); resetPlotMinimum();
+      nbins=7;  low = 0; high = TMath::Pi() + 0.001;
+      var="minDeltaPhi"; xtitle="min(#Delta#phi[ jets 1..3, E_{T}^{miss} ] )";
+      const int nvarbins=2;
+      const float varbins[]={0.,0.3,high};
+      TCut theseCuts;
+      //MET < 50
+      theseCuts = "MET<50.";
+      selection_ = baseSelection && utilSelection && theBTaggingCut && theseCuts;
+      drawPlots(var,nbins,low,high,xtitle,"Events", btagstring+extraName+"_MinDeltaPhi_MET_0_50");
+      if(doVB) drawPlots(var,nvarbins,varbins,xtitle,"Events", btagstring+extraName+"_MinDeltaPhi_MET_0_50_vb");
+      //50 < MET < 100 
+      theseCuts = "MET<100. && MET>=50.";
+      selection_ = baseSelection && utilSelection && theBTaggingCut && theseCuts;
+      drawPlots(var,nbins,low,high,xtitle,"Events", btagstring+extraName+"_MinDeltaPhi_MET_50_100");
+      if(doVB) drawPlots(var,nvarbins,varbins,xtitle,"Events", btagstring+extraName+"_MinDeltaPhi_MET_50_100_vb");
+      //100 < MET < 150
+      theseCuts = "MET<150. && MET>=100.";
+      selection_ = baseSelection && utilSelection && theBTaggingCut && theseCuts;
+      drawPlots(var,nbins,low,high,xtitle,"Events", btagstring+extraName+"_MinDeltaPhi_MET_100_150");
+      if(doVB) drawPlots(var,nvarbins,varbins,xtitle,"Events", btagstring+extraName+"_MinDeltaPhi_MET_100_150_vb");
+      //MET < 150
+      theseCuts = "MET>=150.";
+      selection_ = baseSelection && utilSelection && theBTaggingCut && theseCuts;
+      drawPlots(var,nbins,low,high,xtitle,"Events", btagstring+extraName+"_MinDeltaPhi_MET_150_inf"); 
+      if(doVB) drawPlots(var,nvarbins,varbins,xtitle,"Events", btagstring+extraName+"_MinDeltaPhi_MET_150_inf_vb");
+    }
+  }//end loop over b-tag selection
 }
 
 
 void drawVJets() {
-
+  
   useFlavorHistoryWeights_=true;
 
   doOverflowAddition(true);

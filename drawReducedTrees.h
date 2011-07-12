@@ -440,12 +440,12 @@ void loadSamples(bool joinSingleTop=true) {
 
   samples_.push_back("ZJets");
   samples_.push_back("Zinvisible");
-  samples_.push_back("LM13");
+  //samples_.push_back("LM13");
 
   //samplesAll_ should have *every* available sample
   //samplesAll_.insert("QCD");
   //samplesAll_.insert("PythiaQCD");
-  samplesAll_.insert("PythiaPUQCD");
+  //samplesAll_.insert("PythiaPUQCD");
   samplesAll_.insert("PythiaPUQCDFlat");
   samplesAll_.insert("TTbarJets");
   samplesAll_.insert("WJets");
@@ -457,8 +457,8 @@ void loadSamples(bool joinSingleTop=true) {
   samplesAll_.insert("SingleTop-sChannel");
   samplesAll_.insert("SingleTop-tChannel");
   samplesAll_.insert("SingleTop-tWChannel");
-  samplesAll_.insert("LM13");
-  samplesAll_.insert("LM9");
+  //samplesAll_.insert("LM13");
+  //samplesAll_.insert("LM9");
 
   //these blocks are just a "dictionary"
   //no need to ever comment these out
@@ -565,7 +565,10 @@ void loadSamples(bool joinSingleTop=true) {
   //load data file too
   TString dname="reducedTree.";
   dname+=cutdesc;
-  dname+=".data.root";
+  //dname+=".data.root";
+  //dname+=".ht_run2011a_SUM_promptrecov4only_uptojun24.root";
+  dname+=".data_promptrecoThroughJul1.root";
+  //dname+=".ht_run2011a_SUM_promptrecov4only_uptojul1.root";
   dname.Prepend(dataInputPath);
   if (dname.Contains("JERbias")) {
     dname.ReplaceAll("JERbias_",""); //JERbias not relevant for data
