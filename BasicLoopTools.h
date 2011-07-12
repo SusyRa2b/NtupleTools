@@ -129,8 +129,8 @@ unsigned int utilityHLT_HT300(){
   //for data, this function will return 0 if the utility trigger was not passed
   //and the prescale value if it was passed. For MC, it returns 1.
   
-  if (!edmevent_isRealData) return 1;
- 
+  if(!edmevent_isRealData) return 1;
+
   unsigned int myPrescale = 0;
   if(edmtriggerresults_HLT_HT300_v1>0) myPrescale = edmtriggerresults_HLT_HT300_v1_prs;
   if(edmtriggerresults_HLT_HT300_v2>0) myPrescale = edmtriggerresults_HLT_HT300_v2_prs;
@@ -146,7 +146,7 @@ unsigned int utilityHLT_HT300_CentralJet30_BTagIP(){
   //this function will return 0 if the utility trigger was not passed
   //and the prescale value if it was passed
   
-  if (!edmevent_isRealData) return 1;
+  if(!edmevent_isRealData) return 1;
 
   unsigned int myPrescale = 0;
   if(edmtriggerresults_HLT_HT300_CentralJet30_BTagIP_v2>0) myPrescale = edmtriggerresults_HLT_HT300_CentralJet30_BTagIP_v2_prs;
@@ -183,6 +183,19 @@ float getJetPt( unsigned int ijet ) {
   //need to move to using jecFactor 
   return myJetsPF->at(ijet).pt;
 }
+
+float getJetPx( unsigned int ijet ) {
+  return getJetPt(ijet) * cos(myJetsPF->at(ijet).phi);
+}
+
+float getJetPy( unsigned int ijet ) {
+  return getJetPt(ijet) * sin(myJetsPF->at(ijet).phi);
+}
+
+float getJetPz( unsigned int ijet ) {
+  return getJetPt(ijet) * sinh(myJetsPF->at(ijet).eta);
+}
+
 float getJetEnergy( unsigned int ijet ) {
   //need to move to using jecFactor 
   return myJetsPF->at(ijet).energy;
@@ -725,15 +738,47 @@ double getMaxDeltaPhiMET30_eta5_noId(unsigned int maxjets) {
 }
 
 
-float getJetPx( unsigned int ijet ) {
-  return getJetPt(ijet) * cos(myJetsPF->at(ijet).phi);
-}
-float getJetPy( unsigned int ijet ) {
-  return getJetPt(ijet) * sin(myJetsPF->at(ijet).phi);
-}
-float getJetPz( unsigned int ijet ) {
-  return getJetPt(ijet) * sinh(myJetsPF->at(ijet).eta);
+double getDeltaPhiMETN( unsigned int ijet ){
 
+  if(!(ijet<myJetsPF->size())) return -99;
+
+  //get sum for deltaT
+  double sum = 0;
+  for (unsigned int i=0; i< myJetsPF->size(); i++) {
+    if(i==ijet) continue; //not really needed since it adds zero to the sum
+    if(isGoodJet30(i)){
+      sum += pow( (getJetPx(ijet)*getJetPy(i) - getJetPy(ijet)*getJetPx(i)), 2);      
+    }//is good jet
+  }//i
+  
+  //get deltaT
+  double deltaT = (0.1 / getJetPt(ijet))*sqrt(sum);
+  
+  //calculate deltaPhiMETN
+  double dp =  getDeltaPhi( myJetsPF->at(ijet).phi , getMETphi());
+  double dpN = dp / atan2(deltaT, getMET());
+  
+  return dpN;
+}
+
+
+
+double getMinDeltaPhiMETN(unsigned int maxjets){
+
+  double mdpN=-99.;
+
+  unsigned int ngood=0;
+  //get the minimum angle between the first n jets and MET
+  for (unsigned int i=0; i< myJetsPF->size(); i++) {
+
+    if (isGoodJet(i)) {
+      ++ngood;
+      double dpN =  getDeltaPhiMETN(i);
+      if (dpN<mdpN) mdpN=dpN;
+      if (ngood >= maxjets) break;
+    }
+  }
+  return mdpN;
 }
 
 
@@ -1342,7 +1387,7 @@ bool passCut(const TString cutTag) {
   if (cutTag == "cutDeltaPhi") {
     return ( getMinDeltaPhiMET(3) >= 0.3 );
   }
-
+  
   int nbtags = nGoodBJets();
   if (cutTag == "cut1b") return nbtags >=1;
   if (cutTag == "cut2b") return nbtags >=2;
@@ -1754,6 +1799,7 @@ void reducedTree(TString outputpath, itreestream& stream)
   float HT, MHT, MET, METphi, minDeltaPhi, minDeltaPhiAll, minDeltaPhiAll30,minDeltaPhi30_eta5_noIdAll;
   float maxDeltaPhi, maxDeltaPhiAll, maxDeltaPhiAll30, maxDeltaPhi30_eta5_noIdAll;
   float sumDeltaPhi, diffDeltaPhi;
+  float minDeltaPhiN, deltaPhiN1, deltaPhiN2, deltaPhiN3;
 
   bool cutHT,cutPV,cutTrigger;
   bool cut3Jets,cutEleVeto,cutMuVeto,cutMET,cutDeltaPhi, cutCleaning;
@@ -1858,6 +1904,11 @@ void reducedTree(TString outputpath, itreestream& stream)
 
   reducedTree.Branch("sumDeltaPhi",&sumDeltaPhi,"sumDeltaPhi/F");
   reducedTree.Branch("diffDeltaPhi",&diffDeltaPhi,"diffDeltaPhi/F");
+
+  reducedTree.Branch("minDeltaPhiN", &minDeltaPhiN, "minDeltaPhiN/F");
+  reducedTree.Branch("deltaPhiN1", &deltaPhiN1, "deltaPhiN1/F");
+  reducedTree.Branch("deltaPhiN2", &deltaPhiN2, "deltaPhiN2/F");
+  reducedTree.Branch("deltaPhiN3", &deltaPhiN3, "deltaPhiN3/F");
 
   reducedTree.Branch("jetpt1",&jetpt1,"jetpt1/F");
   reducedTree.Branch("jeteta1",&jeteta1,"jeteta1/F");
@@ -1966,7 +2017,7 @@ void reducedTree(TString outputpath, itreestream& stream)
       njets = nGoodJets();
       nbjets = nGoodBJets();
 
-  //  int nbjetsSSVM,nbjetsTCHET,nbjetsSSVHPT,nbjetsTCHPT,nbjetsTCHPM;
+      //  int nbjetsSSVM,nbjetsTCHET,nbjetsSSVHPT,nbjetsTCHPT,nbjetsTCHPM;
       nbjetsSSVM = nGoodBJets( kSSVM);
       nbjetsSSVHPT = nGoodBJets( kSSVHPT);
       nbjetsTCHET = nGoodBJets( kTCHET);
@@ -1992,6 +2043,11 @@ void reducedTree(TString outputpath, itreestream& stream)
       sumDeltaPhi = maxDeltaPhi + minDeltaPhi;
       diffDeltaPhi = maxDeltaPhi - minDeltaPhi;
       
+      minDeltaPhiN = getMinDeltaPhiMETN(3);
+      deltaPhiN1 = getDeltaPhiMETN(1);
+      deltaPhiN2 = getDeltaPhiMETN(2);
+      deltaPhiN3 = getDeltaPhiMETN(3);
+
       MT_Wlep = getMT_Wlep();
       
       jetpt1 = jetPtOfN(1);
