@@ -76,6 +76,10 @@ TString getCutDescriptionString(){
   if(theBTaggerType_==kTCHET){
     cut+="TCHET";
   }  
+  else if(theBTaggerType_==kSSVHPT){
+    cut+="SSVHPT";
+  }
+
   return cut;
 }
 
@@ -88,7 +92,7 @@ void setBTaggerType(BTaggerType btaggertype){
 }
 
 bool passHLT() { 
-
+  return false; //just want utility triggers
   long runnumber = (long)(edmevent_run +0.5); //just in case some crazy thing happens to edmevent_run being saved as a double
 
   //RA2b - 2011 Triggers
@@ -765,11 +769,11 @@ double getDeltaPhiMETN( unsigned int ijet ){
 
 double getMinDeltaPhiMETN(unsigned int maxjets){
 
-  double mdpN=-99.;
+  double mdpN=getDeltaPhiMETN(0);
 
   unsigned int ngood=0;
   //get the minimum angle between the first n jets and MET
-  for (unsigned int i=0; i< myJetsPF->size(); i++) {
+  for (unsigned int i=0; i< myJetsPF->size(); i++) {//could really start at 1
 
     if (isGoodJet(i)) {
       ++ngood;
@@ -2044,9 +2048,9 @@ void reducedTree(TString outputpath, itreestream& stream)
       diffDeltaPhi = maxDeltaPhi - minDeltaPhi;
       
       minDeltaPhiN = getMinDeltaPhiMETN(3);
-      deltaPhiN1 = getDeltaPhiMETN(1);
-      deltaPhiN2 = getDeltaPhiMETN(2);
-      deltaPhiN3 = getDeltaPhiMETN(3);
+      deltaPhiN1 = getDeltaPhiMETN(0);
+      deltaPhiN2 = getDeltaPhiMETN(1);
+      deltaPhiN3 = getDeltaPhiMETN(2);
 
       MT_Wlep = getMT_Wlep();
       
