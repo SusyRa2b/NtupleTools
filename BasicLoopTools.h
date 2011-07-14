@@ -2,7 +2,7 @@
 // Cornell University
 //
 
-#define isMC //comment out this line to run on data
+//#define isMC //comment out this line to run on data
 #ifdef isMC
 #include "BasicLoopCU_MC.h"
 #else
@@ -819,10 +819,22 @@ double getMaxDeltaPhiMET30_eta5_noId(unsigned int maxjets) {
 }
 
 
-double getDeltaPhiMETN( unsigned int ijet ){
-
-  if(!(ijet<myJetsPF->size())) return -99;
-
+double getDeltaPhiMETN( unsigned int goodJetN ){
+  
+  //find the goodJetN-th good jet -- this is the jet deltaPhiN will be calculated for
+  unsigned int ijet = 999999;
+  unsigned int goodJetI=0;
+  for (unsigned int i=0; i< myJetsPF->size(); i++) {
+    if (isGoodJet(i)) {
+      if(goodJetI == goodJetN){
+	ijet = i;
+	break;
+      }
+      goodJetI++;
+    }
+  }
+  if(ijet == 999999) return -99;
+  
   //get sum for deltaT
   double sum = 0;
   for (unsigned int i=0; i< myJetsPF->size(); i++) {
@@ -845,19 +857,12 @@ double getDeltaPhiMETN( unsigned int ijet ){
 
 
 double getMinDeltaPhiMETN(unsigned int maxjets){
-
-  double mdpN=getDeltaPhiMETN(0);
-
-  unsigned int ngood=0;
-  //get the minimum angle between the first n jets and MET
-  for (unsigned int i=0; i< myJetsPF->size(); i++) {//could really start at 1
-
-    if (isGoodJet(i)) {
-      ++ngood;
-      double dpN =  getDeltaPhiMETN(i);
-      if (dpN<mdpN) mdpN=dpN;
-      if (ngood >= maxjets) break;
-    }
+  
+  double mdpN = getDeltaPhiMETN(0);
+  
+  for (unsigned int i=0; i<maxjets; i++) {//could really start at i=1
+    double dpN =  getDeltaPhiMETN(i);//don't need to check if jet is good because the function does
+    if (dpN<mdpN) mdpN=dpN;
   }
   return mdpN;
 }
