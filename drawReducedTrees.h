@@ -2,6 +2,7 @@
 
 //useful for playing around with plots in interactive ROOT
 TH1D* hinteractive=0;
+TH2D* h2d=0;
 
 //holds a list of the *active* samples (to be plotted)
 std::vector<TString> samples_;
@@ -262,7 +263,7 @@ void fillFlavorHistoryScaling() {
 
 }
 
-TString getCutString(double lumiscale= 1., TString extraWeight="", TString thisSelection="", TString extraSelection="", int pdfWeightIndex=0) {
+TString getCutString(double lumiscale, TString extraWeight="", TString thisSelection="", TString extraSelection="", int pdfWeightIndex=0) {
   TString weightedcut="weight"; 
   
   weightedcut += "*(";
@@ -303,6 +304,13 @@ TString getCutString(double lumiscale= 1., TString extraWeight="", TString thisS
   return weightedcut;
 }
 
+//add an interface more like the old one, but with an addition for the data/MC lumi scaling
+TString getCutString(bool isData, TString extraSelection="",TString extraWeight="",int pdfWeightIndex=0) {
+
+  double ls = isData ? 1 : lumiScale_;
+  return    getCutString(ls, extraWeight, selection_,extraSelection, pdfWeightIndex) ;
+}
+
 void addOverflowBin(TH1D* theHist) {
   //this code was written for when there was a customizable plot range (post-histo creation)
   //it could be made a lot simpler now
@@ -325,8 +333,8 @@ void addOverflowBin(TH1D* theHist) {
 
   theHist->SetBinContent(lastVisibleBin,lastBinContent);
   theHist->SetBinError(lastVisibleBin,lastBinError);
-  if (!quiet_)  cout<<lastBinContent<<" +/- "<<lastBinError<<endl;
 }
+
 
 void addOverflowBin(TH1F* theHist) {
   //this code was written for when there was a customizable plot range (post-histo creation)
@@ -351,7 +359,6 @@ void addOverflowBin(TH1F* theHist) {
 
   theHist->SetBinContent(lastVisibleBin,lastBinContent);
   theHist->SetBinError(lastVisibleBin,lastBinError);
-  if (!quiet_)  cout<<lastBinContent<<" +/- "<<lastBinError<<endl;
 }
 
 void drawVerticalLine() {
@@ -412,6 +419,52 @@ void removeSample(const TString & sample) {
   cout<<sample<<" could not be found on the plotting list, so I did not remove it!"<<endl;
 }
 
+void setColorScheme(const TString & name) {
+  if (name == "stack") {
+    sampleColor_["LM13"] = kRed-9;//kGray;
+    sampleColor_["LM9"] = kMagenta-9;
+    sampleColor_["QCD"] = kYellow;
+    sampleColor_["PythiaQCD"] = kYellow;
+    sampleColor_["PythiaPUQCD"] = kYellow;
+    sampleColor_["PythiaPUQCDFlat"] = kYellow;
+    sampleColor_["TTbarJets"]=kRed+1;
+    sampleColor_["SingleTop"] = kMagenta;
+    sampleColor_["WJets"] = kGreen-3;
+    sampleColor_["WJetsZ2"] = kGreen-3;
+    sampleColor_["ZJets"] = kAzure-2;
+    sampleColor_["Zinvisible"] = kOrange-3;
+    sampleColor_["SingleTop-sChannel"] = kMagenta+1; //for special cases
+    sampleColor_["SingleTop-tChannel"] = kMagenta+2; //for special cases
+    sampleColor_["SingleTop-tWChannel"] = kMagenta+3; //for special cases
+    sampleColor_["TotalSM"] = kBlue+2;
+    sampleColor_["Total"] = kGreen+3;
+
+  }
+  else if (name == "nostack" || name=="owen") {
+    sampleColor_["LM13"] = kBlue+2;
+    sampleColor_["LM9"] = kCyan+2;
+    sampleColor_["QCD"] = 2;
+    sampleColor_["PythiaQCD"] = 2;
+    sampleColor_["PythiaPUQCD"] =2;
+    sampleColor_["PythiaPUQCDFlat"] =2;
+    sampleColor_["TTbarJets"]=4;
+    sampleColor_["SingleTop"] = kMagenta;
+    sampleColor_["WJets"] = kOrange;
+    sampleColor_["WJetsZ2"] = kOrange;
+    sampleColor_["ZJets"] = 7;
+    sampleColor_["Zinvisible"] = kOrange+7;
+    sampleColor_["SingleTop-sChannel"] = kMagenta+1; //for special cases
+    sampleColor_["SingleTop-tChannel"] = kMagenta+2; //for special cases
+    sampleColor_["SingleTop-tWChannel"] = kMagenta+3; //for special cases
+    sampleColor_["TotalSM"] =kGreen+2; //owen requested 3
+    sampleColor_["Total"] = 6;
+  }
+  else {
+    cout<<"Sorry, color scheme "<<name<<" is not known!"<<endl;
+  }
+
+}
+
 void loadSamples(bool joinSingleTop=true) {
   if (loaded_) return;
   loaded_=true;
@@ -440,9 +493,12 @@ void loadSamples(bool joinSingleTop=true) {
 
   samples_.push_back("ZJets");
   samples_.push_back("Zinvisible");
-  //samples_.push_back("LM13");
+  //  samples_.push_back("LM9");
 
   //samplesAll_ should have *every* available sample
+  //also note that there's no harm in failing to load one of these samples, 
+  //as long as you don't actually try to draw it
+
   //samplesAll_.insert("QCD");
   //samplesAll_.insert("PythiaQCD");
   //samplesAll_.insert("PythiaPUQCD");
@@ -462,44 +518,10 @@ void loadSamples(bool joinSingleTop=true) {
 
   //these blocks are just a "dictionary"
   //no need to ever comment these out
-  if (!owenColor_) {
-    sampleColor_["LM13"] = kRed-9;//kGray;
-    sampleColor_["QCD"] = kYellow;
-    sampleColor_["PythiaQCD"] = kYellow;
-    sampleColor_["PythiaPUQCD"] = kYellow;
-    sampleColor_["PythiaPUQCDFlat"] = kYellow;
-    sampleColor_["TTbarJets"]=kRed+1;
-    sampleColor_["SingleTop"] = kMagenta;
-    sampleColor_["WJets"] = kGreen-3;
-    sampleColor_["WJetsZ2"] = kGreen-3;
-    sampleColor_["ZJets"] = kAzure-2;
-    sampleColor_["Zinvisible"] = kOrange-3;
-    sampleColor_["SingleTop-sChannel"] = kMagenta+1; //for special cases
-    sampleColor_["SingleTop-tChannel"] = kMagenta+2; //for special cases
-    sampleColor_["SingleTop-tWChannel"] = kMagenta+3; //for special cases
-    sampleColor_["TotalSM"] = kBlue+2;
-    sampleColor_["Total"] = kGreen+3;
-  }
-  else { //alternate color scheme requested by Owen
-    sampleColor_["LM13"] = kBlue+2;
-    sampleColor_["QCD"] = 2;
-    sampleColor_["PythiaQCD"] = 2;
-    sampleColor_["PythiaPUQCD"] =2;
-    sampleColor_["PythiaPUQCDFlat"] =2;
-    sampleColor_["TTbarJets"]=4;
-    sampleColor_["SingleTop"] = kMagenta;
-    sampleColor_["WJets"] = kOrange;
-    sampleColor_["WJetsZ2"] = kOrange;
-    sampleColor_["ZJets"] = 7;
-    sampleColor_["Zinvisible"] = kOrange+7;
-    sampleColor_["SingleTop-sChannel"] = kMagenta+1; //for special cases
-    sampleColor_["SingleTop-tChannel"] = kMagenta+2; //for special cases
-    sampleColor_["SingleTop-tWChannel"] = kMagenta+3; //for special cases
-    sampleColor_["TotalSM"] =kGreen+2; //owen requested 3
-    sampleColor_["Total"] = 6;
-  }
+  setColorScheme("stack");
 
   sampleLabel_["LM13"] = "LM13";
+  sampleLabel_["LM9"] = "LM9";
   sampleLabel_["QCD"] = "QCD";
   sampleLabel_["PythiaQCD"] = "QCD (Z2)";
   sampleLabel_["PythiaPUQCDFlat"] = "QCD (Z2+PU)"; 
@@ -517,6 +539,7 @@ void loadSamples(bool joinSingleTop=true) {
   sampleLabel_["Total"] = "SM + LM13"; //again, this is a hack
 
   sampleMarkerStyle_["LM13"] = kFullStar;
+  sampleMarkerStyle_["LM9"] = kFullStar;
   sampleMarkerStyle_["QCD"] = kFullCircle;
   sampleMarkerStyle_["PythiaQCD"] = kOpenCircle;
   sampleMarkerStyle_["PythiaPUQCDFlat"] = kOpenCircle;  
@@ -534,6 +557,7 @@ void loadSamples(bool joinSingleTop=true) {
   sampleMarkerStyle_["Total"] = kDot; //FIXME?
 
   sampleOwenName_["LM13"] = "lm13";
+  sampleOwenName_["LM9"] = "lm9";
   sampleOwenName_["QCD"] = "qcd";
   sampleOwenName_["PythiaQCD"] = "qcd";
   sampleOwenName_["PythiaPUQCDFlat"] = "qcd"; 
@@ -636,6 +660,54 @@ float drawSimple(const TString var, const int nbins, const float* varbins, const
   return drawSimple(var, nbins, 0, 1, filename, histname, samplename, varbins);
 }
 
+
+void draw2d(const TString var, const int nbins, const float low, const float high, 
+	    const TString vary, const int nbinsy, const float lowy, const float highy,
+	    const TString xtitle, TString ytitle, TString filename="") {
+
+  //for now hard-code this to plot only the first sample and only COLZ!
+
+  loadSamples();
+  if (filename=="") filename=var;
+  gROOT->SetStyle("CMS");
+
+  renewCanvas();
+  if (h2d!=0) delete h2d;
+  const TString hname="h2d";
+  h2d = new TH2D(hname,"",nbins,low,high,nbinsy,lowy,highy);
+  h2d->Sumw2();
+  TString opt="colz";
+  for (unsigned int isample=0; isample<1 ; isample++) { //plot only the first sample!
+    gROOT->cd();
+    TTree* tree = (TTree*) files_[samples_[isample]]->Get("reducedTree");
+    gROOT->cd();
+    TString weightopt= useFlavorHistoryWeights_ && samples_[isample].Contains("WJets") ? "flavorHistoryWeight" : "";
+    TString drawstring=vary;
+    drawstring+=":";
+    drawstring+=var;
+    tree->Project(hname,drawstring,getCutString(false,"",weightopt).Data());
+    //now the histo is filled
+    
+    h2d->SetXTitle(xtitle);
+    h2d->SetYTitle(ytitle);
+  }
+  h2d->Draw(opt);
+
+  TString savename = filename;
+  if (logy_) savename += "-logY";
+
+  savename += "-draw2d";
+
+  //amazingly, \includegraphics cannot handle an extra dot in the filename. so avoid it.
+  if (savePlots_) {
+    thecanvas->SaveAs(savename+".eps"); //for me
+    //  thecanvas->Print(savename+".C");    //for formal purposes
+    thecanvas->SaveAs(savename+".pdf"); //for pdftex
+    thecanvas->SaveAs(savename+".png"); //for twiki
+  }
+
+}
+
 void drawPlots(const TString var, const int nbins, const float low, const float high, const TString xtitle, TString ytitle, TString filename="", const float* varbins=0) {
   //  cout<<"[drawPlots] var = "<<var<<endl;
 
@@ -713,8 +785,6 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
     histos_[samples_[isample]] = (varbins==0) ? new TH1D(hname,"",nbins,low,high) : new TH1D(hname,"",nbins,varbins);
     histos_[samples_[isample]]->Sumw2();
 
-    //qcd reweighting not implemented yet
-
     TTree* tree = (TTree*) files_[samples_[isample]]->Get("reducedTree");
     gROOT->cd();
     TString weightopt= useFlavorHistoryWeights_ && samples_[isample].Contains("WJets") ? "flavorHistoryWeight" : "";
@@ -735,27 +805,27 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
     }
     if (!samples_[isample].Contains("LM")) {
       totalsm->Add(histos_[samples_[isample]]);
-      if (!quiet_)    cout << "totalsm: " << samples_[isample] << endl;
+      //      if (!quiet_)    cout << "totalsm: " << samples_[isample] << endl;
     }
     if (!samples_[isample].Contains("LM") && !samples_[isample].Contains("QCD") && !samples_[isample].Contains("TTbar")) {
       totalewk->Add(histos_[samples_[isample]]);
-      if (!quiet_) cout << "totalewk: " << samples_[isample] << endl;
+      //      if (!quiet_) cout << "totalewk: " << samples_[isample] << endl;
     }
     if (samples_[isample].Contains("QCD") || samples_[isample].Contains("TTbar")){
       totalqcdttbar->Add(histos_[samples_[isample]]);
-      if (!quiet_) cout << "totalqcdttbar: " << samples_[isample] << endl;
+      //      if (!quiet_) cout << "totalqcdttbar: " << samples_[isample] << endl;
     }
     if (!samples_[isample].Contains("TTbar") && !samples_[isample].Contains("LM")){
       totalnonttbar->Add(histos_[samples_[isample]]);
-      if (!quiet_) cout << "totalnonttbar: " << samples_[isample] << endl;
+      //      if (!quiet_) cout << "totalnonttbar: " << samples_[isample] << endl;
     }
     if (!samples_[isample].Contains("QCD") && !samples_[isample].Contains("LM")){
        totalnonqcd->Add(histos_[samples_[isample]]);
-      if (!quiet_) cout << "totalnonqcd: " << samples_[isample] << endl;
+       //      if (!quiet_) cout << "totalnonqcd: " << samples_[isample] << endl;
     }
     if (samples_[isample].Contains("QCD")){
        totalqcd->Add(histos_[samples_[isample]]);
-      if (!quiet_) cout << "totalqcd: " << samples_[isample] << endl;
+       //      if (!quiet_) cout << "totalqcd: " << samples_[isample] << endl;
     }
     totalsmsusy->Add(histos_[samples_[isample]]); //add everything!
 
@@ -831,7 +901,7 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
 
   if (dodata_) {
     gROOT->cd();
-    if (!quiet_)     cout<<"Drawing data!"<<endl;
+    //    if (!quiet_)     cout<<"Drawing data!"<<endl;
     if (hdata != 0) delete hdata;
     TString hname = jmt::fortranize(var); hname += "_"; hname += "data";
     hdata = (varbins==0) ? new TH1D(hname,"",nbins,low,high) : new TH1D(hname,"",nbins,varbins);
@@ -879,13 +949,13 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
       thecanvas->GetPad(2)->SetTopMargin(0.1);
     }
   }
-
-  if(!quiet_ && dostack_ && dodata_ && nbins<11){//BEN - 11 is an arbitrary number that isn't too big so we don't print out too much stuff.
-      for(int i=1; i<=nbins; i++){
-	cout << "data: " << hdata->GetBinContent(i) << " +- " << hdata->GetBinError(i) << ", totalsm: " << totalsm->GetBinContent(i) << " +- " << totalsm->GetBinError(i) << ", ratio: " << ratio->GetBinContent(i) << " +- " << ratio->GetBinError(i) << endl;
-      }
+  
+  if (!quiet_ && dostack_ && dodata_ && nbins<11 && doRatio_) {//BEN - 11 is an arbitrary number that isn't too big so we don't print out too much stuff.
+    for(int i=1; i<=nbins; i++){
+      cout << "data: " << hdata->GetBinContent(i) << " +- " << hdata->GetBinError(i) << ", totalsm: " << totalsm->GetBinContent(i) << " +- " << totalsm->GetBinError(i) << ", ratio: " << ratio->GetBinContent(i) << " +- " << ratio->GetBinError(i) << endl;
     }
-
+  }
+  
 
   thecanvas->cd(mainPadIndex);
   if (doleg_)  leg->Draw();
@@ -907,11 +977,35 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
     thecanvas->SaveAs(savename+".png"); //for twiki
   }
 
+  //dump some event counts to the screen
+  if (!quiet_) {
+    for (unsigned int isample=0; isample<samples_.size(); isample++) {
+      cout<<samples_[isample]<<" =\t "<<histos_[samples_[isample]]->Integral()<<" +/- "<<jmt::errOnIntegral(histos_[samples_[isample]])<<endl;
+    }
+    cout<<"total SM =\t "<<totalsm->Integral()<<" +/- "<<jmt::errOnIntegral(totalsm)<<endl;
+  }
+  
 }
 
 void drawPlots(const TString var, const int nbins, const float* varbins, const TString xtitle, const TString ytitle, TString filename="") {
   //provide a more natural modification to the argument list....
   drawPlots( var, nbins, 0, 1, xtitle,ytitle, filename,  varbins);
+}
+
+TH1D* getHist(const TString & sample) {
+  TH1D* h=0;
+  if (sample=="totalsm") h=totalsm;
+  else h = histos_[sample];
+
+  return h;
+}
+
+double getIntegral(const TString & sample) {
+  return getHist(sample)->Integral();
+}
+
+double getIntegralErr(const TString & sample) {
+  return jmt::errOnIntegral(getHist(sample));
 }
 
 void drawSignificance(const TString & var, const int nbins, const float low, const float high, const TString & savename) {
