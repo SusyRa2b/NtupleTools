@@ -45,9 +45,9 @@ int main(int argc, char** argv)
 
   // Select variables to be read
   selectVariables(stream);
-  //cutflow(stream);
-  setBTaggerType(kTCHET);
-  reducedTree(outputDir, stream);
+  setBTaggerType(kSSVHPT);  
+  cutflow(stream);
+  //reducedTree(outputDir, stream);
 
   //makeReducedTrees(argc, argv); // currently not working with multiple files (problem with treestream?)
 

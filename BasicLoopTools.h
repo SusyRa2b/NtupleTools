@@ -2,8 +2,13 @@
 // Cornell University
 //
 
-
+#define isMC //comment out this line to run on data
+#ifdef isMC
+#include "BasicLoopCU_MC.h"
+#else
 #include "BasicLoopCU.h"
+#endif
+
 #include <TLorentzVector.h>
 #include <TVector3.h>
 #include "TMatrixT.h"
@@ -54,22 +59,72 @@ BTaggerType theBTaggerType_;
 //-Define some pointers so we can use more intuitive names.
 //-This also isolates some of the dependency on the configuration of the ntuple.
 //--These should be checked each time we make new ntuples.
-std::vector<jet2_s> * myJetsPF; 
+#ifdef isMC
+std::vector<jet3_s> * myJetsPF;
+std::vector<electron3_s> * myElectronsPF;
+std::vector<muon3_s> * myMuonsPF;
+std::vector<tau1_s> * myTausPF;
+std::vector<met1_s> * myMETPF;
+std::vector<vertex_s> * myVertex;
+double* myGenWeight;
+double* myEDM_bunchCrossing;
+double* myEDM_event;
+double* myEDM_isRealData;
+double* myEDM_luminosityBlock;
+double* myEDM_run;
+
+void InitializeStuff(){
+  myJetsPF = &jet3;
+  myElectronsPF = &electron3;
+  myMuonsPF = &muon3;
+  myTausPF = &tau1;
+  myMETPF = &met1;
+  myVertex = &vertex;
+  myGenWeight = &geneventinfoproduct1_weight;
+  myEDM_bunchCrossing = &edmevent_bunchCrossing;
+  myEDM_event = &edmevent_event;
+  myEDM_isRealData = &edmevent_isRealData;
+  myEDM_luminosityBlock = &edmevent_luminosityBlock;
+  myEDM_run = &edmevent_run;
+}
+#else
+std::vector<jet2_s> * myJetsPF;
 std::vector<electron1_s> * myElectronsPF;
 std::vector<muon1_s> * myMuonsPF;
 std::vector<tau1_s> * myTausPF;
 std::vector<met1_s> * myMETPF;
 std::vector<vertex_s> * myVertex;
+double * myGenWeight;
+double* myEDM_bunchCrossing;
+double* myEDM_event;
+double* myEDM_isRealData;
+double* myEDM_luminosityBlock;
+double* myEDM_run;
 
-void InitializeStuff(){       //If we resurrect the class structure, this will go into the constructor.
+void InitializeStuff(){
   myJetsPF = &jet2;            //selectedPatJetsPF
   myElectronsPF = &electron1;  //selectedPatElectronsPF
   myMuonsPF = &muon1;          //selectedPatMuonsPF
   myTausPF = &tau1;            //selectedPatTausPF
   myMETPF = &met1;             //patMETsPF
   myVertex = &vertex;         //offlinePrimaryVertices
+  myGenWeight = &geneventinfoproduct1_weight;
+  myEDM_bunchCrossing = &edmevent_bunchCrossing;
+  myEDM_event = &edmevent_event;
+  myEDM_isRealData = &edmevent_isRealData;
+  myEDM_luminosityBlock = &edmevent_luminosityBlock;
+  myEDM_run = &edmevent_run;
 }
+#endif
 
+
+
+
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 TString getCutDescriptionString(){
   
   TString cut = "";
@@ -91,14 +146,19 @@ void setBTaggerType(BTaggerType btaggertype){
   theBTaggerType_ = btaggertype;
 }
 
+int isRealDataInt(double * isRealDataDouble){
+  return ((int)((*isRealDataDouble)+0.5));
+}
+
 bool passHLT() { 
-  return false; //just want utility triggers
-  long runnumber = (long)(edmevent_run +0.5); //just in case some crazy thing happens to edmevent_run being saved as a double
+
+  long runnumber = (long)((*myEDM_run) +0.5); //just in case some crazy thing happens to myEDM_run being saved as a double
 
   //RA2b - 2011 Triggers
   bool passTrig = false;
 
-  if(edmevent_isRealData){
+  if(isRealDataInt(myEDM_isRealData)){
+    #ifndef isMC
     //edmtriggerresults is a double - possible values are 0 (failed trigger), 1 (passed trigger), -9999 (trig result not available)
     /* using BTagIP triggers
     if(runnumber >= 160431 && runnumber < 161205) passTrig = (edmtriggerresults_HLT_HT260_MHT60_v2 > 0);
@@ -121,8 +181,9 @@ bool passHLT() {
     //    else if (runnumber >= 166374 && runnumber <= 166978)  passTrig = (edmtriggerresults_HLT_HT300_MHT75_v7 > 0);
       //168941 is an arbitrary run during July Tech Stop
     //    else if (runnumber >= 166979 && runnumber <= 168941)  passTrig = (edmtriggerresults_HLT_HT300_MHT80_v1 > 0);
-
+    
     else {cout<<"No trigger assigned for run = "<<runnumber<<endl; assert(0);}
+    #endif
   }
   else passTrig = true;   //use no trigger for MC   
 
@@ -133,9 +194,10 @@ unsigned int utilityHLT_HT300(){
   //for data, this function will return 0 if the utility trigger was not passed
   //and the prescale value if it was passed. For MC, it returns 1.
   
-  if(!edmevent_isRealData) return 1;
+  if(!isRealDataInt(myEDM_isRealData)) return 1;
 
   unsigned int myPrescale = 0;
+  #ifndef isMC
   if(edmtriggerresults_HLT_HT300_v1>0) myPrescale = edmtriggerresults_HLT_HT300_v1_prs;
   if(edmtriggerresults_HLT_HT300_v2>0) myPrescale = edmtriggerresults_HLT_HT300_v2_prs;
   if(edmtriggerresults_HLT_HT300_v3>0) myPrescale = edmtriggerresults_HLT_HT300_v3_prs;
@@ -143,6 +205,7 @@ unsigned int utilityHLT_HT300(){
   if(edmtriggerresults_HLT_HT300_v5>0) myPrescale = edmtriggerresults_HLT_HT300_v5_prs;
   if(edmtriggerresults_HLT_HT300_v6>0) myPrescale = edmtriggerresults_HLT_HT300_v6_prs;
   if(edmtriggerresults_HLT_HT300_v7>0) myPrescale = edmtriggerresults_HLT_HT300_v7_prs;
+  #endif
   return myPrescale;
 }
 
@@ -150,11 +213,13 @@ unsigned int utilityHLT_HT300_CentralJet30_BTagIP(){
   //this function will return 0 if the utility trigger was not passed
   //and the prescale value if it was passed
   
-  if(!edmevent_isRealData) return 1;
+  if(!isRealDataInt(myEDM_isRealData)) return 1;
 
   unsigned int myPrescale = 0;
+  #ifndef isMC
   if(edmtriggerresults_HLT_HT300_CentralJet30_BTagIP_v2>0) myPrescale = edmtriggerresults_HLT_HT300_CentralJet30_BTagIP_v2_prs;
   if(edmtriggerresults_HLT_HT300_CentralJet30_BTagIP_v3>0) myPrescale = edmtriggerresults_HLT_HT300_CentralJet30_BTagIP_v3_prs;
+  #endif
   return myPrescale;
 }
 
@@ -179,8 +244,20 @@ int countGoodPV() {
 
 bool passPV() {
   
-  //jmt -- 6 July 2011 -- switch to the more standard practice of taking at least one good PV
-  return (countGoodPV() >= 1);
+  bool npass=false;
+  //for (unsigned int ipv = 0; ipv<myVertex->size(); ipv++) {
+  if ( !myVertex->at(0).isFake ){
+    if ( fabs(myVertex->at(0).z) < 24 ){
+      if ( fabs(myVertex->at(0).position_Rho) < 2 ){
+	if ( myVertex->at(0).ndof > 4 ){
+	  npass = true;
+	}
+      }
+    }
+  }
+  
+  return npass; 
+
 }
 
 float getJetPt( unsigned int ijet ) {
@@ -1391,6 +1468,9 @@ bool passCut(const TString cutTag) {
   if (cutTag == "cutDeltaPhi") {
     return ( getMinDeltaPhiMET(3) >= 0.3 );
   }
+  if (cutTag== "cutDeltaPhiN"){
+    return ( getMinDeltaPhiMETN(3) >= 4.0 );
+  }
   
   int nbtags = nGoodBJets();
   if (cutTag == "cut1b") return nbtags >=1;
@@ -1436,7 +1516,8 @@ bool setCutScheme() {
   
   cutTags_.push_back("cutMET");  cutNames_[cutTags_.back()]="MET";
   
-  cutTags_.push_back("cutDeltaPhi"); cutNames_[cutTags_.back()]="DeltaPhi";
+  //cutTags_.push_back("cutDeltaPhi"); cutNames_[cutTags_.back()]="DeltaPhi";
+  cutTags_.push_back("cutDeltaPhiN"); cutNames_[cutTags_.back()]="DeltaPhiN";
   //cutTags_.push_back("cutCleaning"); cutNames_[cutTags_.back()]="TailCleaning";
   
   cutTags_.push_back("cut1b"); cutNames_[cutTags_.back()]=">=1b";
@@ -1525,7 +1606,8 @@ bool cutRequired(const TString cutTag) { //should put an & in here to improve pe
   else if (cutTag == "cutMuVeto") cutIsRequired =  true;
   else if (cutTag == "cutEleVeto") cutIsRequired =  true;
   //else if (cutTag == "cutTauVeto") cutIsRequired =  false; //not required for now
-  else if (cutTag == "cutDeltaPhi") cutIsRequired =  true;
+  //else if (cutTag == "cutDeltaPhi") cutIsRequired =  true;
+  else if (cutTag == "cutDeltaPhiN") cutIsRequired =  true;
   else if (cutTag == "cut1b") cutIsRequired =  nBcut_ >=1;
   else if (cutTag == "cut2b") cutIsRequired =  nBcut_ >=2;
   else if (cutTag == "cut3b") cutIsRequired =  nBcut_ >=3;
@@ -1631,12 +1713,12 @@ TString getSampleNameOutputString(TString inname){
 
 
 double getWeight(Long64_t nentries) {
-  if(edmevent_isRealData) return 1;
+  if(isRealDataInt(myEDM_isRealData)) return 1;
 
   double sigma = getCrossSection(sampleName_);
   double w = lumi_ * sigma / double(nentries);
 
-  if (sampleName_.Contains("QCD_Pt_15to3000_TuneZ2_Flat_7TeV_pythia6")) w *=  geneventinfoproduct1_weight;
+  if (sampleName_.Contains("QCD_Pt_15to3000_TuneZ2_Flat_7TeV_pythia6")) w *= (*myGenWeight);
 
   return  w;
 }
@@ -1703,7 +1785,7 @@ void cutflow(itreestream& stream){
 
     //some output to watch while it's running
     if(entry==0){
-      if(!edmevent_isRealData){
+      if(!isRealDataInt(myEDM_isRealData)){
         cout << "MC xsec: " << getCrossSection(sampleName_) << endl;
       }
       else{
@@ -1973,7 +2055,7 @@ void reducedTree(TString outputpath, itreestream& stream)
 
     //some output to watch while it's running
     if(entry==0){
-      if(!edmevent_isRealData){
+      if(!isRealDataInt(myEDM_isRealData)){
 	cout << "MC xsec: " << getCrossSection(sampleName_) << endl;
       }
       else{
@@ -1990,9 +2072,9 @@ void reducedTree(TString outputpath, itreestream& stream)
       weight = getWeight(nevents);
       
       // cast these as long ints, with rounding, assumes they are positive to begin with 
-      runNumber = (ULong64_t)(edmevent_run+0.5);
-      lumiSection = (ULong64_t)(edmevent_luminosityBlock+0.5);
-      eventNumber = (ULong64_t)(edmevent_event+0.5);
+      runNumber = (ULong64_t)((*myEDM_run)+0.5);
+      lumiSection = (ULong64_t)((*myEDM_luminosityBlock)+0.5);
+      eventNumber = (ULong64_t)((*myEDM_event)+0.5);
       
       btagIPweight = getBTagIPWeight();
       pfmhtweight = getPFMHTWeight();
@@ -2010,7 +2092,7 @@ void reducedTree(TString outputpath, itreestream& stream)
       passBadPFMuon = passBadPFMuonFilter();
       passInconsistentMuon = passInconsistentMuonFilter();
       
-      isRealData = edmevent_isRealData;
+      isRealData = isRealDataInt(myEDM_isRealData);
       pass_utilityHLT_HT300 = (utilityHLT_HT300()>0);
       prescale_utilityHLT_HT300 = (UInt_t)utilityHLT_HT300();
       pass_utilityHLT_HT300_CentralJet30_BTagIP = (utilityHLT_HT300_CentralJet30_BTagIP()>0);
@@ -2135,7 +2217,7 @@ void sampleAnalyzer(itreestream& stream){
     
     if (Cut(entry) < 0) continue;
     count++;
-    std::cout << "genweight = " << geneventinfoproduct1_weight << std::endl;
+    std::cout << "genweight = " << (*myGenWeight) << std::endl;
     std::cout << "btagIP weight = " << getBTagIPWeight() << std::endl;
     //std::cout << "PFMHT weight = " << getPFMHTWeight() << std::endl;
 
