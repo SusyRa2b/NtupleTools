@@ -20,7 +20,7 @@ int main(int argc, char** argv)
 {
  
   //code for sampleName_ and output path
-  TString outputDir = "/cu2/kreis/reducedTrees/V00-02-02/"; //this is where reducedTrees will go
+  TString outputDir = "/cu2/kreis/reducedTrees/V00-02-05/"; //this is where reducedTrees will go
   stringstream ss;
   TString fileArg;
   *argv++;
@@ -46,8 +46,8 @@ int main(int argc, char** argv)
   // Select variables to be read
   selectVariables(stream);
   setBTaggerType(kSSVHPT);  
-  cutflow(stream);
-  //reducedTree(outputDir, stream);
+  //cutflow(stream);
+  reducedTree(outputDir, stream);
 
   //makeReducedTrees(argc, argv); // currently not working with multiple files (problem with treestream?)
 
