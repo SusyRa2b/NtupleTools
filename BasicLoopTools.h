@@ -868,6 +868,18 @@ double getMinDeltaPhiMETN(unsigned int maxjets){
 }
 
 
+double getMinDeltaPhiMETTaus() {
+  double mindp=99;
+  for (unsigned int i=0; i< myTausPF->size(); i++) {
+    if (myTausPF->at(i).pt > 30) {
+      double dp =  getDeltaPhi( myTausPF->at(i).phi , getMETphi());
+      if (dp<mindp) mindp=dp;
+    }
+  }
+  return mindp;
+}
+
+
 std::pair<float,float> getJERAdjustedMHTxy() {
   //no difference from MHT calculation -- just return both pieces
   float mhtx=0;
@@ -1476,7 +1488,10 @@ bool passCut(const TString cutTag) {
   if (cutTag== "cutDeltaPhiN"){
     return ( getMinDeltaPhiMETN(3) >= 4.0 );
   }
-  
+  if (cutTag=="cutDeltaPhiTaus"){
+    return ( getMinDeltaPhiMETTaus() > 0.3 );
+  }
+
   int nbtags = nGoodBJets();
   if (cutTag == "cut1b") return nbtags >=1;
   if (cutTag == "cut2b") return nbtags >=2;
@@ -1523,6 +1538,7 @@ bool setCutScheme() {
   
   //cutTags_.push_back("cutDeltaPhi"); cutNames_[cutTags_.back()]="DeltaPhi";
   cutTags_.push_back("cutDeltaPhiN"); cutNames_[cutTags_.back()]="DeltaPhiN";
+  cutTags_.push_back("cutDeltaPhiTaus"); cutNames_[cutTags_.back()]="DeltaPhiMETTaus";
   //cutTags_.push_back("cutCleaning"); cutNames_[cutTags_.back()]="TailCleaning";
   
   cutTags_.push_back("cut1b"); cutNames_[cutTags_.back()]=">=1b";
@@ -1613,6 +1629,7 @@ bool cutRequired(const TString cutTag) { //should put an & in here to improve pe
   //else if (cutTag == "cutTauVeto") cutIsRequired =  false; //not required for now
   //else if (cutTag == "cutDeltaPhi") cutIsRequired =  true;
   else if (cutTag == "cutDeltaPhiN") cutIsRequired =  true;
+  else if (cutTag == "cutDeltaPhiTaus") cutIsRequired =  true;
   else if (cutTag == "cut1b") cutIsRequired =  nBcut_ >=1;
   else if (cutTag == "cut2b") cutIsRequired =  nBcut_ >=2;
   else if (cutTag == "cut3b") cutIsRequired =  nBcut_ >=3;
