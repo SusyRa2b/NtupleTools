@@ -2,7 +2,7 @@
 // Cornell University
 //
 
-//#define isMC //comment out this line to run on data
+//#define isMC //uncomment to run on V00-01-03 (spring11) MC
 #ifdef isMC
 #include "BasicLoopCU_MC.h"
 #else
@@ -173,14 +173,13 @@ bool passHLT() {
     //jmt -- 6 July 2011 -- use agreed RA2b triggers for Summer 2011
     if      (runnumber >= 160431 && runnumber <= 161204)  passTrig = (edmtriggerresults_HLT_HT260_MHT60_v2 > 0);
     else if (runnumber >= 161205 && runnumber <= 163268)  passTrig = (edmtriggerresults_HLT_HT250_MHT60_v2 > 0);
-    else if (runnumber >= 163269 && runnumber <= 164923)  passTrig = (edmtriggerresults_HLT_HT250_MHT60_v3 > 0);
-    
-    //these aren't yet in the header file
-    //    else if (runnumber >= 164924 && runnumber <= 165921)  passTrig = (edmtriggerresults_HLT_HT250_MHT70_v1 > 0);
-    //    else if (runnumber >= 165922 && runnumber <= 166300)  passTrig = (edmtriggerresults_HLT_HT300_MHT75_v7 > 0);
-    //    else if (runnumber >= 166374 && runnumber <= 166978)  passTrig = (edmtriggerresults_HLT_HT300_MHT75_v7 > 0);
-      //168941 is an arbitrary run during July Tech Stop
-    //    else if (runnumber >= 166979 && runnumber <= 168941)  passTrig = (edmtriggerresults_HLT_HT300_MHT80_v1 > 0);
+    else if (runnumber >= 163269 && runnumber <= 164923)  passTrig = (edmtriggerresults_HLT_HT250_MHT60_v3 > 0);   
+    else if (runnumber >= 164924 && runnumber <= 165921)  passTrig = (edmtriggerresults_HLT_HT250_MHT70_v1 > 0);
+    else if (runnumber >= 165922 && runnumber <= 166300)  passTrig = (edmtriggerresults_HLT_HT300_MHT75_v7 > 0);
+    else if (runnumber >= 166301 && runnumber <= 166373)  passTrig = (edmtriggerresults_HLT_HT300_MHT75_v8 > 0);
+    else if (runnumber >= 166374 && runnumber <= 166978)  passTrig = (edmtriggerresults_HLT_HT300_MHT75_v7 > 0);
+    //168941 is an arbitrary run during July Tech Stop
+    else if (runnumber >= 166979 && runnumber <= 168941)  passTrig = (edmtriggerresults_HLT_HT300_MHT80_v1 > 0);
     
     else {cout<<"No trigger assigned for run = "<<runnumber<<endl; assert(0);}
     #endif
@@ -205,6 +204,7 @@ unsigned int utilityHLT_HT300(){
   if(edmtriggerresults_HLT_HT300_v5>0) myPrescale = edmtriggerresults_HLT_HT300_v5_prs;
   if(edmtriggerresults_HLT_HT300_v6>0) myPrescale = edmtriggerresults_HLT_HT300_v6_prs;
   if(edmtriggerresults_HLT_HT300_v7>0) myPrescale = edmtriggerresults_HLT_HT300_v7_prs;
+  if(edmtriggerresults_HLT_HT300_v8>0) myPrescale = edmtriggerresults_HLT_HT300_v8_prs;
   #endif
   return myPrescale;
 }
@@ -219,6 +219,8 @@ unsigned int utilityHLT_HT300_CentralJet30_BTagIP(){
   #ifndef isMC
   if(edmtriggerresults_HLT_HT300_CentralJet30_BTagIP_v2>0) myPrescale = edmtriggerresults_HLT_HT300_CentralJet30_BTagIP_v2_prs;
   if(edmtriggerresults_HLT_HT300_CentralJet30_BTagIP_v3>0) myPrescale = edmtriggerresults_HLT_HT300_CentralJet30_BTagIP_v3_prs;
+  if(edmtriggerresults_HLT_HT300_CentralJet30_BTagIP_v4>0) myPrescale = edmtriggerresults_HLT_HT300_CentralJet30_BTagIP_v4_prs;
+  if(edmtriggerresults_HLT_HT300_CentralJet30_BTagIP_v5>0) myPrescale = edmtriggerresults_HLT_HT300_CentralJet30_BTagIP_v5_prs;
   #endif
   return myPrescale;
 }
@@ -1656,6 +1658,7 @@ int Cut(unsigned int entry)
 
 double getCrossSection(TString inname){
   //from https://twiki.cern.ch/twiki/bin/view/CMS/SusyRA2BJets2011?rev=36
+
   if (inname.Contains("DYJetsToLL_TuneD6T_M-10To50_7TeV-madgraph-tauola") )     return 310;
   if (inname.Contains("DYJetsToLL_TuneD6T_M-50_7TeV-madgraph-tauola") )         return 3048;
   if (inname.Contains("LM13_SUSY_sftsht_7TeV-pythia6") )                        return 6.899;
@@ -1685,6 +1688,26 @@ double getCrossSection(TString inname){
   if (inname.Contains("WZtoAnything_TuneZ2_7TeV-pythia6-tauola") )              return 10.4;
   if (inname.Contains("ZinvisibleJets_7TeV-madgraph") )                         return 4500;
   if (inname.Contains("ZZtoAnything_TuneZ2_7TeV-pythia6-tauola") )              return 4.297;
+
+  //Summer11 samples
+  if (inname.Contains("qcd_tunez2_pt0to5_summer11") )                           return 4.844e10;
+  if (inname.Contains("qcd_tunez2_pt1000to1400_summer11") )                     return .3321;
+  if (inname.Contains("qcd_tunez2_pt120to170_summer11") )                       return 1.151e5;
+  if (inname.Contains("qcd_tunez2_pt1400to1800_summer11") )                     return .01087;
+  if (inname.Contains("qcd_tunez2_pt15to3000_summer11") )                       return 2.213e10;
+  if (inname.Contains("qcd_tunez2_pt15to30_summer11") )                         return 8.159e8;
+  if (inname.Contains("qcd_tunez2_pt170to300_summer11") )                       return 2.426e4;
+  if (inname.Contains("qcd_tunez2_pt1800_summer11") )                           return .0003575;
+  if (inname.Contains("qcd_tunez2_pt300to470_summer11") )                       return 1.168e3;
+  if (inname.Contains("qcd_tunez2_pt30to50_summer11") )                         return 5.312e7;
+  if (inname.Contains("qcd_tunez2_pt470to600_summer11") )                       return 7.022e1;
+  if (inname.Contains("qcd_tunez2_pt50to80_summer11") )                         return 6.359e6;
+  if (inname.Contains("qcd_tunez2_pt5to15_summer11") )                          return 3.675e10;
+  if (inname.Contains("qcd_tunez2_pt600to800_summer11") )                       return 1.555e1;
+  if (inname.Contains("qcd_tunez2_pt800to1000_summer11") )                      return 1.844;
+  if (inname.Contains("qcd_tunez2_pt80to120_summer11") )                        return 7.843e5;
+  if (inname.Contains("ttjets_tunez2_madgraph_tauola_summer11") )               return 165;
+
     
   std::cout<<"Cannot find cross section for this sample!"<<std::endl;
   assert(0); 
@@ -1726,6 +1749,27 @@ TString getSampleNameOutputString(TString inname){
   if (inname.Contains("WZtoAnything_TuneZ2_7TeV-pythia6-tauola") )              return "WZ";
   if (inname.Contains("ZinvisibleJets_7TeV-madgraph") )                         return "Zinvisible";
   if (inname.Contains("ZZtoAnything_TuneZ2_7TeV-pythia6-tauola") )              return "ZZ";
+
+
+  //Summer11 samples
+  if (inname.Contains("qcd_tunez2_pt0to5_summer11") )                           return inname;
+  if (inname.Contains("qcd_tunez2_pt1000to1400_summer11") )                     return inname;
+  if (inname.Contains("qcd_tunez2_pt120to170_summer11") )                       return inname;
+  if (inname.Contains("qcd_tunez2_pt1400to1800_summer11") )                     return inname;
+  if (inname.Contains("qcd_tunez2_pt15to3000_summer11") )                       return inname;
+  if (inname.Contains("qcd_tunez2_pt15to30_summer11") )                         return inname;
+  if (inname.Contains("qcd_tunez2_pt170to300_summer11") )                       return inname;
+  if (inname.Contains("qcd_tunez2_pt1800_summer11") )                           return inname;
+  if (inname.Contains("qcd_tunez2_pt300to470_summer11") )                       return inname;
+  if (inname.Contains("qcd_tunez2_pt30to50_summer11") )                         return inname;
+  if (inname.Contains("qcd_tunez2_pt470to600_summer11") )                       return inname;
+  if (inname.Contains("qcd_tunez2_pt50to80_summer11") )                         return inname;
+  if (inname.Contains("qcd_tunez2_pt5to15_summer11") )                          return inname;
+  if (inname.Contains("qcd_tunez2_pt600to800_summer11") )                       return inname;
+  if (inname.Contains("qcd_tunez2_pt800to1000_summer11") )                      return inname;
+  if (inname.Contains("qcd_tunez2_pt80to120_summer11") )                        return inname;
+  if (inname.Contains("ttjets_tunez2_madgraph_tauola_summer11") )               return "TTbarJets";
+
 
   //if it isn't found, just use the full name 
   //  -- data will fall into this category, which is fine because we have to hadd the files after anyway
