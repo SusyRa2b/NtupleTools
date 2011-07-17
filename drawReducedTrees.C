@@ -70,16 +70,24 @@ functionality for TH1F and TH1D e.g. the case of addOverflowBin()
 #include <iostream>
 #include <map>
 #include <set>
-
-TString inputPath = "/cu2/kreis/reducedTrees/V00-01-02/benHack/";//path for MC
+													     
+//TString inputPath = "/cu2/kreis/reducedTrees/V00-01-02/benHack/";//path for MC
 //TString inputPath = "/cu2/kreis/reducedTrees/V00-01-02/";//path for MC
-TString dataInputPath = "/cu2/kreis/reducedTrees/V00-02-03/";//path for data
-//TString dataInputPath = "/cu2/ra2b/reducedTrees/V00-02-02/";
-TString cutdesc = "TCHET";
-double lumiScale_ = 4.17935645/190.5; // //data lumi / lumi of MC
+TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-05/";//path for MC
+//TString dataInputPath = "/cu2/kreis/reducedTrees/V00-02-03/";//path for data
+TString dataInputPath = "/cu2/ra2b/reducedTrees/V00-02-05/";
+
+TString cutdesc = "SSVHPT";
+//TString cutdesc = "TCHET";
+
+//double lumiScale_ = 4.17935645/190.5; // //data lumi / lumi of MC
 //double lumiScale_ = (94.432+166.732+216.430+154.830+84.698+57.994+2.101)/190.5;
 //double lumiScale_ = 777./190.5;
 //double lumiScale_ = (0.694037787)/190.5; // //data lumi / lumi of MC
+
+//double lumiScale_ = 1096.441 / 190.5;
+double lumiScale_ = 1096.441 / 1.0;
+
 //TString cutdesc = "Baseline0_PF_JERbias_pfMEThigh_PFLep0e0mu_minDP_MuonEcalCleaning";
 //TString cutdesc = "Baseline0_PF_pfMEThigh_PFLepRA20e0mu_minDP_MuonEcalCleaning";
 //TString cutdesc = "Baseline0_PF_pfMEThigh_PFLep0e0mu_minDP_MuonEcalCleaning";
@@ -2107,3 +2115,5 @@ void drawOwen(TCut extracut="") {
   ofile.close();
 
 }
+
+

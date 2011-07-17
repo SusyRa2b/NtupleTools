@@ -478,8 +478,8 @@ void loadSamples(bool joinSingleTop=true) {
   //samples_.push_back("QCD"); //madgraph
   //samples_.push_back("PythiaQCD");
 
-  //samples_.push_back("PythiaPUQCD");
-  samples_.push_back("PythiaPUQCDFlat");
+  samples_.push_back("PythiaPUQCD");
+  //samples_.push_back("PythiaPUQCDFlat");
   samples_.push_back("TTbarJets");
 
   //flip this bool to control whether SingleTop is loaded as one piece or 3
@@ -501,8 +501,8 @@ void loadSamples(bool joinSingleTop=true) {
 
   //samplesAll_.insert("QCD");
   //samplesAll_.insert("PythiaQCD");
-  //samplesAll_.insert("PythiaPUQCD");
-  samplesAll_.insert("PythiaPUQCDFlat");
+  samplesAll_.insert("PythiaPUQCD");
+  //samplesAll_.insert("PythiaPUQCDFlat");
   samplesAll_.insert("TTbarJets");
   samplesAll_.insert("WJets");
   samplesAll_.insert("ZJets");
@@ -591,7 +591,8 @@ void loadSamples(bool joinSingleTop=true) {
   dname+=cutdesc;
   //dname+=".data.root";
   //dname+=".ht_run2011a_SUM_promptrecov4only_uptojun24.root";
-  dname+=".data_promptrecoThroughJul1.root";
+  //dname+=".data_promptrecoThroughJul1.root";
+  dname+=".ht_run2011a_uptojul6.root";
   //dname+=".ht_run2011a_SUM_promptrecov4only_uptojul1.root";
   dname.Prepend(dataInputPath);
   if (dname.Contains("JERbias")) {
