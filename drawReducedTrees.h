@@ -438,6 +438,7 @@ void setColorScheme(const TString & name) {
     sampleColor_["SingleTop-tWChannel"] = kMagenta+3; //for special cases
     sampleColor_["TotalSM"] = kBlue+2;
     sampleColor_["Total"] = kGreen+3;
+    sampleColor_["VV"] = kCyan+1;
 
   }
   else if (name == "nostack" || name=="owen") {
@@ -458,10 +459,39 @@ void setColorScheme(const TString & name) {
     sampleColor_["SingleTop-tWChannel"] = kMagenta+3; //for special cases
     sampleColor_["TotalSM"] =kGreen+2; //owen requested 3
     sampleColor_["Total"] = 6;
+    sampleColor_["VV"] = kOrange-3;
   }
   else {
     cout<<"Sorry, color scheme "<<name<<" is not known!"<<endl;
   }
+
+}
+
+void resetSamples(bool joinSingleTop=true) {
+
+  samples_.clear();
+  //this block controls what samples will enter your plot
+  //order of this vector controls order of samples in stack
+
+  //careful -- QCD must have 'QCD' in its name somewhere.
+  //samples_.push_back("QCD"); //madgraph
+  //samples_.push_back("PythiaQCD");
+  samples_.push_back("PythiaPUQCD");
+  //samples_.push_back("PythiaPUQCDFlat");
+
+  samples_.push_back("TTbarJets");
+  //flip this bool to control whether SingleTop is loaded as one piece or 3
+  if (joinSingleTop) samples_.push_back("SingleTop");
+  else {
+    samples_.push_back("SingleTop-sChannel");
+    samples_.push_back("SingleTop-tChannel");
+    samples_.push_back("SingleTop-tWChannel");
+  }
+  samples_.push_back("WJets");
+  samples_.push_back("ZJets");
+  samples_.push_back("VV");
+  samples_.push_back("Zinvisible");
+  samples_.push_back("LM9");
 
 }
 
@@ -471,30 +501,7 @@ void loadSamples(bool joinSingleTop=true) {
 
   resetPadDimensions();
 
-  //this block controls what samples will enter your plot
-  //order of this vector controls order of samples in stack
-
-  //careful -- QCD must have 'QCD' in its name somewhere.
-  //samples_.push_back("QCD"); //madgraph
-  //samples_.push_back("PythiaQCD");
-
-  samples_.push_back("PythiaPUQCD");
-  //samples_.push_back("PythiaPUQCDFlat");
-  samples_.push_back("TTbarJets");
-
-  //flip this bool to control whether SingleTop is loaded as one piece or 3
-  if (joinSingleTop) samples_.push_back("SingleTop");
-  else {
-    samples_.push_back("SingleTop-sChannel");
-    samples_.push_back("SingleTop-tChannel");
-    samples_.push_back("SingleTop-tWChannel");
-  }
-  samples_.push_back("WJets");
-
-  samples_.push_back("ZJets");
-  samples_.push_back("Zinvisible");
-  //  samples_.push_back("LM9");
-
+  resetSamples(joinSingleTop);
   //samplesAll_ should have *every* available sample
   //also note that there's no harm in failing to load one of these samples, 
   //as long as you don't actually try to draw it
@@ -506,15 +513,21 @@ void loadSamples(bool joinSingleTop=true) {
   samplesAll_.insert("TTbarJets");
   samplesAll_.insert("WJets");
   samplesAll_.insert("ZJets");
-  //samplesAll_.insert("WJetsZ2");
-  //samplesAll_.insert("ZJetsZ2");
   samplesAll_.insert("Zinvisible");
   samplesAll_.insert("SingleTop");
   samplesAll_.insert("SingleTop-sChannel");
   samplesAll_.insert("SingleTop-tChannel");
   samplesAll_.insert("SingleTop-tWChannel");
-  //samplesAll_.insert("LM13");
-  //samplesAll_.insert("LM9");
+
+  //  samplesAll_.insert("WJetsZ2");
+  //  samplesAll_.insert("ZJetsZ2");
+  samplesAll_.insert("VV");
+
+
+  samplesAll_.insert("LM13");
+  samplesAll_.insert("LM9");
+
+
 
   //these blocks are just a "dictionary"
   //no need to ever comment these out
@@ -535,6 +548,7 @@ void loadSamples(bool joinSingleTop=true) {
   sampleLabel_["SingleTop-sChannel"] = "Single-Top (s)";
   sampleLabel_["SingleTop-tChannel"] = "Single-Top (t)";
   sampleLabel_["SingleTop-tWChannel"] = "Single-Top (tW)";
+  sampleLabel_["VV"] = "Diboson";
   sampleLabel_["TotalSM"] = "SM";
   sampleLabel_["Total"] = "SM + LM13"; //again, this is a hack
 
@@ -550,6 +564,7 @@ void loadSamples(bool joinSingleTop=true) {
   sampleMarkerStyle_["WJetsZ2"] = kMultiply;
   sampleMarkerStyle_["ZJets"] = kFullTriangleUp;
   sampleMarkerStyle_["Zinvisible"] = kFullTriangleDown;
+  sampleMarkerStyle_["VV"] = kOpenCross;
   sampleMarkerStyle_["SingleTop-sChannel"] = kOpenSquare;
   sampleMarkerStyle_["SingleTop-tChannel"] = kOpenSquare;
   sampleMarkerStyle_["SingleTop-tWChannel"] = kOpenSquare;
@@ -568,6 +583,7 @@ void loadSamples(bool joinSingleTop=true) {
   sampleOwenName_["WJetsZ2"] = "wjets";
   sampleOwenName_["ZJets"] = "zjets";
   sampleOwenName_["Zinvisible"] = "zinvis";
+  sampleOwenName_["VV"] = "vv";
   sampleOwenName_["SingleTop-sChannel"] = "singletops";
   sampleOwenName_["SingleTop-tChannel"] = "singletopt";
   sampleOwenName_["SingleTop-tWChannel"] = "singletoptw";

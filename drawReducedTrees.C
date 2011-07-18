@@ -94,6 +94,48 @@ double lumiScale_ = 1096.441 / 1.0;
 
 #include "drawReducedTrees.h"
 
+void AN2011() {
+  /*
+.L drawReducedTrees.C++
+  */
+
+  loadSamples();
+
+  int nbins;
+  float low,high;
+  TString var,xtitle;
+  
+  doOverflowAddition(true);
+
+  setStackMode(false,true); //normalized
+  setColorScheme("nostack");
+  clearSamples();
+  addSample("PythiaPUQCD");
+  addSample("TTbarJets");
+  addSample("LM9");
+
+  doData(false);
+
+  var="minDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}";
+  nbins = 40; low=0; high=40;
+  //no delta phi cut, loose MET window (only good for MC)
+  selection_ ="nbjetsSSVHPT>=1 && cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=100";
+  drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "minDeltaPhiN_looseMET_MConly");
+
+  resetSamples(); //use all samples
+  setStackMode(true); //normalized
+  setColorScheme("stack");
+  doData(true);
+
+  var="minDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}";
+  nbins = 40; low=0; high=40;
+  //no delta phi cut, loose MET window (only good for MC)
+  selection_ ="nbjetsSSVHPT>=1 && cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=100";
+  drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "minDeltaPhiN_looseMET");
+
+
+}
+
 void morerstuff() {
   /*
 .L drawReducedTrees.C++
