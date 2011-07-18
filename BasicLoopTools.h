@@ -1274,6 +1274,9 @@ bool passInconsistentMuonFilter(){
 
   bool hasInconsistentMuon = false;
 
+  //this should not be looping over selectedPatMuonsPF (which has some cuts applied), it should be looping over all PFCandidate muons
+  //use the ra2 code
+  /*
   unsigned int nmu = 0;
   nmu = myMuonsPF->size();
 
@@ -1285,6 +1288,7 @@ bool passInconsistentMuonFilter(){
       }
     }
   }
+  */
 
   if(hasInconsistentMuon) return false;
   return true;
