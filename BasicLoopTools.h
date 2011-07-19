@@ -1951,6 +1951,7 @@ void reducedTree(TString outputpath, itreestream& stream)
   float maxDeltaPhi, maxDeltaPhiAll, maxDeltaPhiAll30, maxDeltaPhi30_eta5_noIdAll;
   float sumDeltaPhi, diffDeltaPhi;
   float minDeltaPhiN, deltaPhiN1, deltaPhiN2, deltaPhiN3;
+  float minDeltaPhiMetTau;
 
   bool cutHT,cutPV,cutTrigger;
   bool cut3Jets,cutEleVeto,cutMuVeto,cutMET,cutDeltaPhi, cutCleaning;
@@ -2047,6 +2048,8 @@ void reducedTree(TString outputpath, itreestream& stream)
   reducedTree.Branch("minDeltaPhiAll",&minDeltaPhiAll,"minDeltaPhiAll/F");
   reducedTree.Branch("minDeltaPhiAll30",&minDeltaPhiAll30,"minDeltaPhiAll30/F");
   reducedTree.Branch("minDeltaPhi30_eta5_noIdAll",&minDeltaPhi30_eta5_noIdAll,"minDeltaPhi30_eta5_noIdAll/F");
+
+  reducedTree.Branch("minDeltaPhiMetTau",&minDeltaPhiMetTau,"minDeltaPhiMetTau/F");
 
   reducedTree.Branch("maxDeltaPhi",&maxDeltaPhi,"maxDeltaPhi/F");
   reducedTree.Branch("maxDeltaPhiAll",&maxDeltaPhiAll,"maxDeltaPhiAll/F");
@@ -2191,6 +2194,8 @@ void reducedTree(TString outputpath, itreestream& stream)
       maxDeltaPhiAll30 = getMaxDeltaPhiMET30(99);
       maxDeltaPhi30_eta5_noIdAll = getMaxDeltaPhiMET30_eta5_noId(99);
       
+      minDeltaPhiMetTau = getMinDeltaPhiMETTaus();
+
       sumDeltaPhi = maxDeltaPhi + minDeltaPhi;
       diffDeltaPhi = maxDeltaPhi - minDeltaPhi;
       
