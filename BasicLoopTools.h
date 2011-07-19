@@ -835,7 +835,7 @@ double getDeltaPhiMETN( unsigned int goodJetN ){
       goodJetI++;
     }
   }
-  if(ijet == 999999) return -99;
+  if(ijet == 999999) return 99;
   
   //get sum for deltaT
   double sum = 0;
