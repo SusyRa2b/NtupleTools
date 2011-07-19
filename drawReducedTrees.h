@@ -4,6 +4,9 @@
 TH1D* hinteractive=0;
 TH2D* h2d=0;
 
+TLatex* text1=0;
+TLatex* text2=0;
+
 //holds a list of the *active* samples (to be plotted)
 std::vector<TString> samples_;
 //hold a list of all samples
@@ -144,6 +147,38 @@ void setLumiScale(double lumiscale){
   lumiScale_ = lumiscale;
 }
 
+void drawPlotHeader() {
+
+  const float ypos = 0.97;
+
+  // i'm gonna leave this out for now
+  if (text1 != 0 ) delete text1;
+  text1 = new TLatex(3.570061,23.08044,"CMS Preliminary");
+  text1->SetNDC();
+  text1->SetTextAlign(13);
+  text1->SetX(0.68);
+  text1->SetY(ypos);
+  text1->SetTextFont(42);
+  text1->SetTextSizePixels(24);
+  text1->Draw();
+
+
+  if (normalized_ == false) {
+    TString astring;
+    astring.Form("%.0f pb^{-1} at #sqrt{s} = 7 TeV",lumiScale_);
+    if (text2 != 0 ) delete text2;
+    text2 = new TLatex(3.570061,23.08044,astring);
+    text2->SetNDC();
+    text2->SetTextAlign(13);
+    text2->SetX(0.17);
+    text2->SetY(ypos+0.005);//0.88); //0.005 is a kluge to make things look right. i don't get it
+    text2->SetTextFont(42);
+    text2->SetTextSizePixels(24);
+    text2->Draw();
+  }
+
+}
+
 
 int mainpadWidth; int mainpadHeight;
 int ratiopadHeight = 250;
@@ -157,6 +192,7 @@ void renewCanvas(const TString opt="") {
 
   thecanvas= new TCanvas("thecanvas","the canvas",canvasWidth,canvasHeight);
   thecanvas->cd()->SetRightMargin(0.04);
+  thecanvas->cd()->SetTopMargin(0.07); //test
 
   if (opt.Contains("ratio")) {
     thecanvas->Divide(1,2);
@@ -535,10 +571,10 @@ void loadSamples(bool joinSingleTop=true) {
 
   sampleLabel_["LM13"] = "LM13";
   sampleLabel_["LM9"] = "LM9";
-  sampleLabel_["QCD"] = "QCD";
-  sampleLabel_["PythiaQCD"] = "QCD (Z2)";
-  sampleLabel_["PythiaPUQCDFlat"] = "QCD (Z2+PU)"; 
-  sampleLabel_["PythiaPUQCD"] = "QCD (Z2+PU)";
+  sampleLabel_["QCD"] = "QCD (madgraph)";
+  sampleLabel_["PythiaQCD"] = "QCD (no PU)";
+  sampleLabel_["PythiaPUQCDFlat"] = "QCD"; 
+  sampleLabel_["PythiaPUQCD"] = "QCD";
   sampleLabel_["TTbarJets"]="t#bar{t}";
   sampleLabel_["SingleTop"] = "Single-Top";
   sampleLabel_["WJets"] = "W#rightarrowl#nu";
@@ -976,6 +1012,7 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
 
   thecanvas->cd(mainPadIndex);
   if (doleg_)  leg->Draw();
+  drawPlotHeader();
 
   //  if (doSubtraction_) savename+="-MCSub";
   TString savename = filename;

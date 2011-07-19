@@ -61,6 +61,7 @@ functionality for TH1F and TH1D e.g. the case of addOverflowBin()
 #include "TH2.h"
 #include "TLine.h"
 #include "TCut.h"
+#include "TLatex.h"
 
 // can be checked out of UserCode/joshmt
 #include "MiscUtil.cxx"
@@ -122,16 +123,37 @@ void AN2011() {
   selection_ ="nbjetsSSVHPT>=1 && cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=100";
   drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "minDeltaPhiN_looseMET_MConly");
 
+  // ========= regular N-1 plots
+
   resetSamples(); //use all samples
-  setStackMode(true); //normalized
+  setStackMode(true); //regular stack
   setColorScheme("stack");
   doData(true);
 
   var="minDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}";
-  nbins = 40; low=0; high=40;
-  //no delta phi cut, loose MET window (only good for MC)
-  selection_ ="nbjetsSSVHPT>=1 && cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=100";
-  drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "minDeltaPhiN_looseMET");
+  nbins = 20; low=0; high=40;
+  //no delta phi cut
+  selection_ ="nbjetsSSVHPT>=1 && cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=150";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_minDeltaPhiN_ge1b");
+
+  // n Jets
+  selection_ ="nbjetsSSVHPT>=1 && cutHT==1 && cutPV==1 && cutTrigger==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=150 && minDeltaPhiN >= 4";
+  var="njets"; xtitle="Jet multiplicity";
+  nbins = 6; low=1; high=7;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_njets_ge1b");
+
+  //HT
+  selection_ ="nbjetsSSVHPT>=1 && cutHT==1 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=150 && minDeltaPhiN >= 4";
+  var="HT"; xtitle="HT (GeV)";
+  nbins = 20; low=350; high=1050;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_HT_ge1b");
+
+  //MET
+  selection_ ="nbjetsSSVHPT>=1 && cutHT==1 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4";
+  var="MET"; xtitle="E_{T}^{miss} [GeV]";
+  nbins = 30; low=150; high=450;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_ge1b");
+
 
 
 }
