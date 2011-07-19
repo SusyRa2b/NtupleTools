@@ -189,40 +189,34 @@ bool passHLT() {
   return passTrig;
 }
 
-unsigned int utilityHLT_HT300(){
-  //for data, this function will return 0 if the utility trigger was not passed
-  //and the prescale value if it was passed. For MC, it returns 1.
-  
-  if(!isRealDataInt(myEDM_isRealData)) return 1;
+bool utilityHLT_HT300(){
+  if(!isRealDataInt(myEDM_isRealData)) return true;
 
-  unsigned int myPrescale = 0;
+  bool passTrig = false;
   #ifndef isMC
-  if(edmtriggerresults_HLT_HT300_v1>0) myPrescale = edmtriggerresults_HLT_HT300_v1_prs;
-  if(edmtriggerresults_HLT_HT300_v2>0) myPrescale = edmtriggerresults_HLT_HT300_v2_prs;
-  if(edmtriggerresults_HLT_HT300_v3>0) myPrescale = edmtriggerresults_HLT_HT300_v3_prs;
-  if(edmtriggerresults_HLT_HT300_v4>0) myPrescale = edmtriggerresults_HLT_HT300_v4_prs;
-  if(edmtriggerresults_HLT_HT300_v5>0) myPrescale = edmtriggerresults_HLT_HT300_v5_prs;
-  if(edmtriggerresults_HLT_HT300_v6>0) myPrescale = edmtriggerresults_HLT_HT300_v6_prs;
-  if(edmtriggerresults_HLT_HT300_v7>0) myPrescale = edmtriggerresults_HLT_HT300_v7_prs;
-  if(edmtriggerresults_HLT_HT300_v8>0) myPrescale = edmtriggerresults_HLT_HT300_v8_prs;
+  if(edmtriggerresults_HLT_HT300_v1>0) passTrig = true;
+  if(edmtriggerresults_HLT_HT300_v2>0) passTrig = true;
+  if(edmtriggerresults_HLT_HT300_v3>0) passTrig = true;
+  if(edmtriggerresults_HLT_HT300_v4>0) passTrig = true;
+  if(edmtriggerresults_HLT_HT300_v5>0) passTrig = true;
+  if(edmtriggerresults_HLT_HT300_v6>0) passTrig = true;
+  if(edmtriggerresults_HLT_HT300_v7>0) passTrig = true;
+  if(edmtriggerresults_HLT_HT300_v8>0) passTrig = true;
   #endif
-  return myPrescale;
+  return passTrig;
 }
 
-unsigned int utilityHLT_HT300_CentralJet30_BTagIP(){
-  //this function will return 0 if the utility trigger was not passed
-  //and the prescale value if it was passed
-  
+bool utilityHLT_HT300_CentralJet30_BTagIP(){
   if(!isRealDataInt(myEDM_isRealData)) return 1;
 
-  unsigned int myPrescale = 0;
+  bool passTrig = false;
   #ifndef isMC
-  if(edmtriggerresults_HLT_HT300_CentralJet30_BTagIP_v2>0) myPrescale = edmtriggerresults_HLT_HT300_CentralJet30_BTagIP_v2_prs;
-  if(edmtriggerresults_HLT_HT300_CentralJet30_BTagIP_v3>0) myPrescale = edmtriggerresults_HLT_HT300_CentralJet30_BTagIP_v3_prs;
-  if(edmtriggerresults_HLT_HT300_CentralJet30_BTagIP_v4>0) myPrescale = edmtriggerresults_HLT_HT300_CentralJet30_BTagIP_v4_prs;
-  if(edmtriggerresults_HLT_HT300_CentralJet30_BTagIP_v5>0) myPrescale = edmtriggerresults_HLT_HT300_CentralJet30_BTagIP_v5_prs;
+  if(edmtriggerresults_HLT_HT300_CentralJet30_BTagIP_v2>0) passTrig = true;
+  if(edmtriggerresults_HLT_HT300_CentralJet30_BTagIP_v3>0) passTrig = true; 
+  if(edmtriggerresults_HLT_HT300_CentralJet30_BTagIP_v4>0) passTrig = true; 
+  if(edmtriggerresults_HLT_HT300_CentralJet30_BTagIP_v5>0) passTrig = true; 
   #endif
-  return myPrescale;
+  return passTrig;
 }
 
 
@@ -835,7 +829,7 @@ double getDeltaPhiMETN( unsigned int goodJetN ){
       goodJetI++;
     }
   }
-  if(ijet == 999999) return 99;
+  if(ijet == 999999) return -99;
   
   //get sum for deltaT
   double sum = 0;
@@ -863,8 +857,9 @@ double getMinDeltaPhiMETN(unsigned int maxjets){
   double mdpN = getDeltaPhiMETN(0);
   
   for (unsigned int i=0; i<maxjets; i++) {//could really start at i=1
-    double dpN =  getDeltaPhiMETN(i);//don't need to check if jet is good because the function does
-    if (dpN<mdpN) mdpN=dpN;
+    if(i>=nGoodJets()) break;
+    double dpN =  getDeltaPhiMETN(i);//i is for i'th *good* jet, starting at i=0. returns -99 if bad jet.
+    if (dpN>=0 && dpN<mdpN) mdpN=dpN;//checking that dpN>=0 shouldn't be necessary after break statement above, but add it anyway 
   }
   return mdpN;
 }
@@ -1472,7 +1467,7 @@ void getSphericityJetMET(float & lambda1, float & lambda2, float & det,
 bool passCut(const TString cutTag) {
 
   if (cutTag=="cutTrigger" ) return passHLT();
-  if (cutTag=="cutUtilityTrigger" ) return ( utilityHLT_HT300()>0 || utilityHLT_HT300_CentralJet30_BTagIP()>0 );
+  if (cutTag=="cutUtilityTrigger" ) return ( utilityHLT_HT300()==1 || utilityHLT_HT300_CentralJet30_BTagIP()==1 );
 
   if (cutTag=="cutPV") return passPV();
   
@@ -2163,10 +2158,10 @@ void reducedTree(TString outputpath, itreestream& stream)
       passInconsistentMuon = passInconsistentMuonFilter();
       
       isRealData = isRealDataInt(myEDM_isRealData);
-      pass_utilityHLT_HT300 = (utilityHLT_HT300()>0);
-      prescale_utilityHLT_HT300 = (UInt_t)utilityHLT_HT300();
-      pass_utilityHLT_HT300_CentralJet30_BTagIP = (utilityHLT_HT300_CentralJet30_BTagIP()>0);
-      prescale_utilityHLT_HT300_CentralJet30_BTagIP = (UInt_t)utilityHLT_HT300_CentralJet30_BTagIP();
+      pass_utilityHLT_HT300 = utilityHLT_HT300();
+      prescale_utilityHLT_HT300 = 0;
+      pass_utilityHLT_HT300_CentralJet30_BTagIP = utilityHLT_HT300_CentralJet30_BTagIP();
+      prescale_utilityHLT_HT300_CentralJet30_BTagIP = 0;
 
       nGoodPV = countGoodPV();
 
