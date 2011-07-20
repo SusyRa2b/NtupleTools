@@ -18,7 +18,8 @@ std::map<TString, UInt_t> sampleColor_;
 std::map<TString, TString> sampleOwenName_;
 std::map<TString, TString> sampleLabel_;
 std::map<TString, UInt_t> sampleMarkerStyle_;
-TFile* fdata=0;
+//TFile* fdata=0;
+TChain* dtree=0;
 TH1D* hdata=0;
 
 //default selection
@@ -644,7 +645,7 @@ void loadSamples(bool joinSingleTop=true) {
   //dname+=".data.root";
   //dname+=".ht_run2011a_SUM_promptrecov4only_uptojun24.root";
   //dname+=".data_promptrecoThroughJul1.root";
-  dname+=".ht_run2011a_uptojul6.root";
+  dname+=".ht_*.root";
   //dname+=".ht_run2011a_SUM_promptrecov4only_uptojul1.root";
   dname.Prepend(dataInputPath);
   if (dname.Contains("JERbias")) {
@@ -652,8 +653,10 @@ void loadSamples(bool joinSingleTop=true) {
     dname.ReplaceAll("JERbias6_",""); //JERbias not relevant for data
   }
   if ( dodata_) {
-    fdata = new TFile(dname);
-    if (fdata->IsZombie()) cout<<"Problem with data file! "<<dname<<endl; 
+    //    fdata = new TFile(dname);
+    //    if (fdata->IsZombie()) cout<<"Problem with data file! "<<dname<<endl; 
+    dtree = new TChain("reducedTree");
+    dtree->Add(dname);
   }
 
 }
@@ -670,7 +673,7 @@ float drawSimple(const TString var, const int nbins, const float low, const floa
 //no presentation, just fill the histogram and save
   TTree* tree=0;
   if (samplename=="data") {
-    tree = (TTree*) fdata->Get("reducedTree");
+    tree = dtree;
   }
   else {
     for (unsigned int isample=0; isample<samples_.size(); isample++) {
@@ -959,7 +962,7 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
     TString hname = jmt::fortranize(var); hname += "_"; hname += "data";
     hdata = (varbins==0) ? new TH1D(hname,"",nbins,low,high) : new TH1D(hname,"",nbins,varbins);
     hdata->Sumw2();
-    TTree* dtree = (TTree*) fdata->Get("reducedTree");
+    //    TTree* dtree = (TTree*) fdata->Get("reducedTree");
     gROOT->cd();
     dtree->Project(hname,var,selection_.Data());
     //now the histo is filled
@@ -1279,7 +1282,7 @@ void drawR(const TString vary, const float cutVal, const int nbins, const float 
     histos_[hnameF] = new TH1D(hnameF,"",nbins,low,high);
     histos_[hnameF]->Sumw2();
 
-    TTree* dtree = (TTree*) fdata->Get("reducedTree");
+    //    TTree* dtree = (TTree*) fdata->Get("reducedTree");
     gROOT->cd();
     dtree->Project(hnameP,var,getCutString(1.,"",selection_,cstring1,0).Data());
     dtree->Project(hnameF,var,getCutString(1.,"",selection_,cstring2,0).Data());

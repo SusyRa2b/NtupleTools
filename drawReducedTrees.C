@@ -62,6 +62,7 @@ functionality for TH1F and TH1D e.g. the case of addOverflowBin()
 #include "TLine.h"
 #include "TCut.h"
 #include "TLatex.h"
+#include "TChain.h"
 
 // can be checked out of UserCode/joshmt
 #include "MiscUtil.cxx"
@@ -74,9 +75,9 @@ functionality for TH1F and TH1D e.g. the case of addOverflowBin()
 													     
 //TString inputPath = "/cu2/kreis/reducedTrees/V00-01-02/benHack/";//path for MC
 //TString inputPath = "/cu2/kreis/reducedTrees/V00-01-02/";//path for MC
-TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-05/";//path for MC
+TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-05_v2/";//path for MC
 //TString dataInputPath = "/cu2/kreis/reducedTrees/V00-02-03/";//path for data
-TString dataInputPath = "/cu2/ra2b/reducedTrees/V00-02-05/";
+TString dataInputPath = "/cu2/ra2b/reducedTrees/V00-02-05_v2/";
 
 TString cutdesc = "SSVHPT";
 //TString cutdesc = "TCHET";
@@ -95,10 +96,22 @@ double lumiScale_ = 1096.441 / 1.0;
 
 #include "drawReducedTrees.h"
 
-void AN2011() {
+void AN2011( TString btagselection="ge1b" ) {
   /*
 .L drawReducedTrees.C++
   */
+
+
+  TCut btagcut = "nbjetsSSVHPT>=1";
+  if ( btagselection=="ge2b" ) {
+    btagcut = "nbjetsSSVHPT>=2";
+  }
+  else if ( btagselection=="eq1b" ) {
+    btagcut = "nbjetsSSVHPT==1";
+  }
+  else {
+    assert(0);
+  }
 
   loadSamples();
 
@@ -120,8 +133,8 @@ void AN2011() {
   var="minDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}";
   nbins = 40; low=0; high=40;
   //no delta phi cut, loose MET window (only good for MC)
-  selection_ ="nbjetsSSVHPT>=1 && cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=100";
-  drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "minDeltaPhiN_looseMET_MConly");
+  selection_ =TCut("cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=100")&&btagcut;
+  drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "minDeltaPhiN_looseMET_MConly_"+btagselection);
 
   // ========= regular N-1 plots
 
@@ -133,28 +146,53 @@ void AN2011() {
   var="minDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}";
   nbins = 20; low=0; high=40;
   //no delta phi cut
-  selection_ ="nbjetsSSVHPT>=1 && cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=150";
-  drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_minDeltaPhiN_ge1b");
+  selection_ =TCut("cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=150")&&btagcut;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_minDeltaPhiN_"+btagselection);
 
   // n Jets
-  selection_ ="nbjetsSSVHPT>=1 && cutHT==1 && cutPV==1 && cutTrigger==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=150 && minDeltaPhiN >= 4";
+  selection_ =TCut("cutHT==1 && cutPV==1 && cutTrigger==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=150 && minDeltaPhiN >= 4")&&btagcut;
   var="njets"; xtitle="Jet multiplicity";
-  nbins = 6; low=1; high=7;
-  drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_njets_ge1b");
+  nbins = 8; low=1; high=9;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_njets_"+btagselection);
 
   //HT
-  selection_ ="nbjetsSSVHPT>=1 && cutHT==1 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=150 && minDeltaPhiN >= 4";
-  var="HT"; xtitle="HT (GeV)";
+  selection_ =TCut("cutHT==1 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=150 && minDeltaPhiN >= 4")&&btagcut;
+  var="HT"; xtitle="H_{T} (GeV)";
   nbins = 20; low=350; high=1050;
-  drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_HT_ge1b");
+  drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_HT_"+btagselection);
 
   //MET
-  selection_ ="nbjetsSSVHPT>=1 && cutHT==1 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4";
+  selection_ =TCut("cutHT==1 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4")&&btagcut;
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
   nbins = 30; low=150; high=450;
-  drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_ge1b");
+  drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_"+btagselection);
 
+  //MET distribution with tighter HT cut
+  selection_ =TCut("HT>500 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4")&&btagcut;
+  var="MET"; xtitle="E_{T}^{miss} [GeV]";
+  nbins = 15; low=150; high=450;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_HT500_"+btagselection);
 
+  // ===== single lepton selection
+
+  // == MET for the electron sample
+  selection_ =TCut("cutHT==1 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && nElectrons==1 && nMuons==0 && minDeltaPhiN >= 4")&&btagcut;
+  var="MET"; xtitle="E_{T}^{miss} [GeV]";
+  nbins = 15; low=150; high=450;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_1e0mu_"+btagselection);
+
+  // == MET for the muon sample
+  selection_ =TCut("cutHT==1 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && nElectrons==0 && nMuons==1 && minDeltaPhiN >= 4")&&btagcut;
+  var="MET"; xtitle="E_{T}^{miss} [GeV]";
+  nbins = 15; low=150; high=450;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_0e1mu_"+btagselection);
+
+  // == MET for the combined sample
+  selection_ =TCut("cutHT==1 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && minDeltaPhiN >= 4")&&btagcut;
+  var="MET"; xtitle="E_{T}^{miss} [GeV]";
+  nbins = 15; low=150; high=450;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_SL_"+btagselection);
+  // to do -- figure out how to make MC uncertainties visible
 
 }
 
@@ -1578,7 +1616,7 @@ void countABCD() {
     }
     else assert(0);
 
-    TTree* tree= (TTree*) fdata->Get("reducedTree");
+    TTree* tree= dtree;//(TTree*) fdata->Get("reducedTree");
     TH1D dummyhist("dummyhist","",1,0,1e9); //kludge!
     dummyhist.Sumw2(); //not really needed for data
 
@@ -1633,7 +1671,7 @@ void flvHistReweighting() {
 
   TTree* tree=0;
   if (samplename=="data") {
-    tree = (TTree*) fdata->Get("reducedTree");
+    tree = dtree;//(TTree*) fdata->Get("reducedTree");
   }
   else {
     for (unsigned int isample=0; isample<samples_.size(); isample++) {
@@ -1723,7 +1761,7 @@ void pdfUncertainties() {
 
   TTree* tree=0;
   if (samplename=="data") {
-    tree = (TTree*) fdata->Get("reducedTree");
+    tree = dtree;//(TTree*) fdata->Get("reducedTree");
   }
   else {
     for (unsigned int isample=0; isample<samples_.size(); isample++) {
