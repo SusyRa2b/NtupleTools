@@ -941,8 +941,14 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
     if (drawMCErrors_) {
       if (mcerrors!=0) delete mcerrors;
       mcerrors = new TGraphErrors(totalsm);
-      mcerrors->SetFillStyle(3353);
+      mcerrors->SetFillStyle(3353); //3353 3544
       mcerrors->SetFillColor(1);
+      //ack. TGraphs and TH1s use different conventions for numbering.
+      for ( int ibin=1; ibin<=totalsm->GetNbinsX(); ibin++) {
+	double yerr = mcerrors->GetErrorY(ibin-1);
+	double xerr = totalsm->GetBinCenter(ibin) - totalsm->GetBinLowEdge(ibin);
+	mcerrors->SetPointError(ibin-1,xerr,yerr);
+      }
       mcerrors->Draw("2 same");
     }
 
