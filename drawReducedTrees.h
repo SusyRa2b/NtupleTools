@@ -36,7 +36,7 @@ bool doleg_=true;
 bool dodata_=true;
 bool addOverflow_=true;
 //bool doSubtraction_=false;
-bool drawQCDErrors_=false;
+bool drawMCErrors_=false;
 bool renormalizeBins_=false;//no setter function
 bool owenColor_ = false;
 
@@ -74,16 +74,12 @@ TH1D* totalnonttbar=0;
 TH1D* totalnonqcd=0;
 TH1D* totalqcd=0; //ben - just for ease of doing event counts with drawPlots
 TH1D* ratio=0; float ratioMin=0; float ratioMax=2;
-TGraphErrors* qcderrors=0;
+TGraphErrors* mcerrors=0;
 bool loaded_=false; //bookkeeping
 
 // == set configuration options ==
 void setQuiet(bool q) {
   quiet_ = q;
-}
-
-void setQCDErrorMode(bool drawErrors) {
-  drawQCDErrors_=drawErrors;
 }
 
 void doRatioPlot(bool doIt) {
@@ -813,7 +809,6 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
   if (totalqcd!=0) delete totalqcd;
   totalqcd = (varbins==0) ? new TH1D("totalqcd","",nbins,low,high) : new TH1D("totalqcd","",nbins,varbins);
   totalqcd->Sumw2();
-  
 
   totalsm->SetMarkerColor(sampleColor_["TotalSM"]);
   totalsm->SetLineColor(sampleColor_["TotalSM"]);
@@ -852,14 +847,8 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
     histos_[samples_[isample]]->SetXTitle(xtitle);
     histos_[samples_[isample]]->SetYTitle(ytitle);
 
-    //if we're going to draw QCD errors, create a TGraphErrors from the QCD histogram
-    if (drawQCDErrors_ && samples_[isample].Contains("QCD")) {
-      if (qcderrors!=0) delete qcderrors;
-      qcderrors = new TGraphErrors(histos_[samples_[isample]]);
-      qcderrors->SetFillStyle(3353);
-      qcderrors->SetFillColor(1);
-    }
-    if (!samples_[isample].Contains("LM")) {
+
+   if (!samples_[isample].Contains("LM")) {
       totalsm->Add(histos_[samples_[isample]]);
       //      if (!quiet_)    cout << "totalsm: " << samples_[isample] << endl;
     }
@@ -949,7 +938,13 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
 
     if (doVerticalLine_) drawVerticalLine(); //i want to draw the data last
 
-    if (drawQCDErrors_) qcderrors->Draw("2 same");
+    if (drawMCErrors_) {
+      if (mcerrors!=0) delete mcerrors;
+      mcerrors = new TGraphErrors(totalsm);
+      mcerrors->SetFillStyle(3353);
+      mcerrors->SetFillColor(1);
+      mcerrors->Draw("2 same");
+    }
 
     if (doCustomPlotMax_) thestack->SetMaximum(customPlotMax_);
     if (doCustomPlotMin_) thestack->SetMinimum(customPlotMin_);

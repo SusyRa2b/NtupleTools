@@ -142,6 +142,7 @@ void AN2011( TString btagselection="ge1b" ) {
   setStackMode(true); //regular stack
   setColorScheme("stack");
   doData(true);
+  drawMCErrors_=true;
 
   var="minDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}";
   nbins = 20; low=0; high=40;
