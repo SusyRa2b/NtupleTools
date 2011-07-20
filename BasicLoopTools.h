@@ -2,7 +2,7 @@
 // Cornell University
 //
 
-//#define isMC //uncomment to run on V00-01-03 (spring11) MC
+#define isMC //uncomment to run on V00-01-03 (spring11) MC
 #ifdef isMC
 #include "BasicLoopCU_MC.h"
 #else
@@ -66,6 +66,7 @@ std::vector<muon3_s> * myMuonsPF;
 std::vector<tau1_s> * myTausPF;
 std::vector<met1_s> * myMETPF;
 std::vector<vertex_s> * myVertex;
+std::vector<genparticlera2_s> * myGenParticles; //jmt
 double* myGenWeight;
 double* myEDM_bunchCrossing;
 double* myEDM_event;
@@ -80,6 +81,7 @@ void InitializeStuff(){
   myTausPF = &tau1;
   myMETPF = &met1;
   myVertex = &vertex;
+  myGenParticles = &genparticlera2; //jmt
   myGenWeight = &geneventinfoproduct1_weight;
   myEDM_bunchCrossing = &edmevent_bunchCrossing;
   myEDM_event = &edmevent_event;
@@ -125,6 +127,57 @@ void InitializeStuff(){
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+unsigned int findSUSYMaternity( unsigned int k ) {
+
+  int numSUSY=0;
+  //cout<<"[findSUSYMaternity]"<<endl;
+  //  if  (TMath::Nint(myGenParticles->at(k).firstMother) != TMath::Nint(myGenParticles->at(k).lastMother )) cout<<"Multiple mothers!"<<endl;
+
+  if (TMath::Nint(myGenParticles->at(k).firstMother) <0) {/*cout<<"got no mother!"<<endl;*/ return numSUSY;}
+
+  int motherId = abs(TMath::Nint( myGenParticles->at(  TMath::Nint(myGenParticles->at(k).firstMother)).pdgId )); //get rid of minus signs!
+  if ( (motherId>= 1000001 && motherId <=1000037) || (motherId>= 2000001 && motherId <=2000015)) {numSUSY++;}
+  else if (motherId == 21) {/*cout<<"Found gluon splitting!"<<endl;*/}
+  else { numSUSY+= findSUSYMaternity(TMath::Nint(myGenParticles->at(k).firstMother)  ); }
+
+  return numSUSY;
+
+}
+
+unsigned int getSUSYnb() {
+
+  unsigned int SUSY_nb=0;
+  for (unsigned int k = 0; k<myGenParticles->size(); k++) {
+    //         cout<<k<<"\t"<<TMath::Nint(myGenParticles->at(k).pdgId )<<"\t"<< TMath::Nint(myGenParticles->at(k).firstMother)<<"\t"<<TMath::Nint(myGenParticles->at(k).lastMother)<<"\t"<<TMath::Nint(myGenParticles->at(k).status ) <<endl;
+
+    if ( abs(TMath::Nint(myGenParticles->at(k).pdgId )) == 5 ) { //find b quark
+      unsigned int nSUSY = findSUSYMaternity( k );      
+      if (nSUSY>0) SUSY_nb++;
+    }
+  }
+  
+  return SUSY_nb;
+
+}
+
+/*
+void testLoop(itreestream& stream) {
+  InitializeStuff();//required!
+
+
+  int nevents = stream.size();
+
+  for(int entry=0; entry < nevents; ++entry){
+    // Read event into memory
+    stream.read(entry);
+    fillObjects();
+
+    cout<<" ==== "<<endl;
+//    analyzeDecayTree();
+  }
+}
+*/
+
 TString getCutDescriptionString(){
   
   TString cut = "";
@@ -1922,7 +1975,7 @@ void cutflow(itreestream& stream){
 
 void reducedTree(TString outputpath, itreestream& stream)
 {
-  
+
   //open output file
   TString outfilename="reducedTree";
   outfilename += ".";
@@ -1977,6 +2030,8 @@ void reducedTree(TString outputpath, itreestream& stream)
 
   int nGoodPV;
 
+  int SUSY_nb;
+
   //new variables from Luke
   float lambda1_allJets;
   float lambda2_allJets;
@@ -2011,6 +2066,8 @@ void reducedTree(TString outputpath, itreestream& stream)
   reducedTree.Branch("cutCleaning",&cutCleaning,"cutCleaning/O");
 
   reducedTree.Branch("nGoodPV",&nGoodPV,"nGoodPV/I");
+
+  reducedTree.Branch("SUSY_nb",&SUSY_nb,"SUSY_nb/I");
 
   reducedTree.Branch("passBadPFMuon",&passBadPFMuon,"passBadPFMuon/O");
   reducedTree.Branch("passInconsistentMuon",&passInconsistentMuon,"passInconsistentMuon/O");
@@ -2167,6 +2224,8 @@ void reducedTree(TString outputpath, itreestream& stream)
       prescale_utilityHLT_HT300_CentralJet30_BTagIP = 0;
 
       nGoodPV = countGoodPV();
+
+      SUSY_nb = getSUSYnb();
 
       njets = nGoodJets();
       nbjets = nGoodBJets();
