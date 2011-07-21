@@ -19,7 +19,7 @@ withroot:=1
 #------------------------------------------------------------------------------
 ifndef program
 # default program name
-program := BasicLoopCU_MC
+program := BasicLoopCU
 endif
 
 cppsrcs	:= $(wildcard *.cpp)
