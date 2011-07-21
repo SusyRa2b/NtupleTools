@@ -20,7 +20,9 @@ int main(int argc, char** argv)
 {
  
   //code for sampleName_ and output path
-  TString outputDir = "/cu2/ra2b/reducedTrees/V00-02-05/"; //this is where reducedTrees will go
+
+  TString outputDir = "/cu2/winstrom/reducedTrees/V00-02-02/"; //this is where reducedTrees will go
+
   stringstream ss;
   TString fileArg;
   *argv++;

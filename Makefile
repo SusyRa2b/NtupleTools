@@ -19,26 +19,34 @@ withroot:=1
 #------------------------------------------------------------------------------
 ifndef program
 # default program name
-program := BasicLoopCU
+program := BasicLoopCU_MC
 endif
 
 cppsrcs	:= $(wildcard *.cpp)
+
+cxxsrcs	:= $(wildcard *.cxx)
+
+cxxhead	:= $(patsubst %.cxx,%.h,$(cxxsrcs))
+
 ccsrcs  := $(wildcard *.cc)
 
 # filter out all main programs except the one to be built
 # 1. search files for main(...) and write list of files to .main
-$(shell grep -H "main[(].*[)]" $(cppsrcs) $(ccsrcs)|cut -f1 -d: > .main)
+$(shell grep -H "main[(].*[)]" $(cxxsrcs) $(cppsrcs) $(ccsrcs)|cut -f1 -d: > .main)
 # 2. send list back to Makefile
 main	:= $(shell cat .main)
 # 3. remove subset of files (including the file to be built) from main
-main	:= $(filter-out $(program).cc $(program).cpp treestream.cc,$(main))
+main	:= $(filter-out $(program).cc $(program).cpp $(program).cxx treestream.cc,$(main))
 # 4. remove the set main from the set of all files in the directory
+cxxsrcs	:= $(filter-out $(main),$(cxxsrcs))
 cppsrcs	:= $(filter-out $(main),$(cppsrcs))
 ccsrcs	:= $(filter-out $(main),$(ccsrcs))
 
+cxxobjs	:= $(patsubst %.cxx,tmp/%.o,$(cxxsrcs))
 cppobjs	:= $(patsubst %.cpp,tmp/%.o,$(cppsrcs))
 ccobjs	:= $(patsubst %.cc,tmp/%.o,$(ccsrcs))
-objects	:= $(ccobjs) $(cppobjs)
+
+objects	:= $(ccobjs) $(cppobjs) $(cxxobjs) tmp/cxxDict.o
 say     := $(shell echo "Program: $(program)" >& 2)
 #------------------------------------------------------------------------------
 ifdef GCC_DIR
@@ -73,9 +81,14 @@ ifdef withcern
 	cernlib	:= -L$(CERN_LIB) -lpacklib -lmathlib -lkernlib
 endif
 
+roofitsys = $(shell echo $(ROOFITSYS))
+rootsys = $(shell echo $(ROOTSYS))
+
+cmssw_base = $(CMSSW_BASE)
+
 ifdef withroot
 	rootcpp	:= $(shell root-config --cflags)
-	rootlib	:= $(shell root-config --glibs) -lTreePlayer
+	rootlib	:= $(shell root-config --glibs) -L $(rootsys)/lib -lTreePlayer -lMinuit -L $(roofitsys)/lib -lRooFitCore 
 endif
 #------------------------------------------------------------------------------
 # Switches/includes
@@ -87,10 +100,10 @@ ifndef optflag
 	optflag:=-O2
 endif
 
-CPPFLAGS:= -I. $(rootcpp) $(cppflags)
+CPPFLAGS:= -I. $(rootcpp) $(cppflags) -I$(roofitsys)include 
 CXXFLAGS:= -c -pipe $(optflag) -fPIC -Wall $(cxxflags) $(debugflag)
 LDFLAGS	:= $(ldflags) $(debugflag)
-LIBS	:= $(libs) $(rootlib) $(cernlib)
+LIBS	:= $(libs) $(rootlib) $(cernlib) 
 #------------------------------------------------------------------------------
 # Rules
 #------------------------------------------------------------------------------
@@ -101,15 +114,26 @@ $(program)	: $(objects)
 	$(AT)$(LDSHARED) $(LDFLAGS) $(objects) $(LIBS) -o $@
 	@echo ""
 
+$(cxxobjs)	: tmp/%.o : %.cxx
+	@echo "---> Compiling $<" 
+	$(AT)$(CXX)	$(CXXFLAGS) $(CPPFLAGS) $< -o $@
+
 $(cppobjs)	: tmp/%.o : %.cpp
 	@echo "---> Compiling $<" 
 	$(AT)$(CXX)	$(CXXFLAGS) $(CPPFLAGS) $< -o $@
 
 $(ccobjs)	: tmp/%.o : %.cc
 	@echo "---> Compiling $<" 
-
 	$(AT)$(CXX)	$(CXXFLAGS) $(CPPFLAGS) $< -o $@
+
+tmp/cxxDict.o   : tmp/cxxDict.cc
+	@echo "---> Compiling $<" 
+	$(AT)$(CXX)	$(CXXFLAGS) $(CPPFLAGS) $< -o $@
+
+tmp/cxxDict.cc  : $(cxxhead)
+	@echo "---> Creating $@" 
+	$(AT)rootcint -f $@ -c $(CXXFLAGS) $(CPPFLAGS) -p $^
 
 # Define clean up rule
 clean   	:
-	rm -rf tmp/*.o $(program)
+	rm -rf tmp/*.o tmp/cxxDict.* $(program)

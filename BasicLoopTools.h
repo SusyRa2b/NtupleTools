@@ -2,7 +2,7 @@
 // Cornell University
 //
 
-#define isMC //uncomment to run on V00-01-03 (spring11) MC
+//#define isMC //uncomment to run on V00-01-03 (spring11) MC
 #ifdef isMC
 #include "BasicLoopCU_MC.h"
 #else
@@ -12,8 +12,16 @@
 #include <TLorentzVector.h>
 #include <TVector3.h>
 #include "TMatrixT.h"
+#include "TRandom3.h"
 #include "TMatrixDEigen.h"
+#include <RooRealVar.h>
+#include <RooMinuit.h>
+#include <RooTransverseThrustVar.h>
 #include <cassert>
+
+//#include <string>
+//#include <sys/stat.h>
+//#include "CondFormats/JetMETObjects/interface/JetResolution.h"
 
 // Declare the BNN functions:
 double pfmht_efficiency(std::vector<double>& inputvars,
@@ -55,6 +63,8 @@ enum flavorHistoryType {kNoFlvHist=0, kFlvHist};
 flavorHistoryType theFlavorHistoryType_;
 enum BTaggerType {kSSVM=0, kTCHET, kSSVHPT, kTCHPT, kTCHPM, Nbtaggers};
 BTaggerType theBTaggerType_;
+
+bool recalculatedVariables = false;
 
 //-Define some pointers so we can use more intuitive names.
 //-This also isolates some of the dependency on the configuration of the ntuple.
@@ -119,7 +129,166 @@ void InitializeStuff(){
 }
 #endif
 
+#ifdef isMC
+std::vector<jet3_s> * myJetsPF_temp;
+//std::vector<electron3_s> * myElectronsPF_temp;
+//std::vector<muon3_s> * myMuonsPF_temp;
+//std::vector<tau1_s> * myTausPF_temp;
+std::vector<met1_s> * myMETPF_temp;
+//std::vector<vertex_s> * myVertex_temp;
+//double* myGenWeight_temp;
+//double* myEDM_bunchCrossing_temp;
+//double* myEDM_event_temp;
+//double* myEDM_isRealData_temp;
+//double* myEDM_luminosityBlock_temp;
+//double* myEDM_run_temp;
 
+void changeVariables(TRandom* random, double jetLossProbability, int& nLostJets)
+{
+  if(recalculatedVariables) return;
+  recalculatedVariables=true;
+  myJetsPF_temp                   = myJetsPF;		  
+  //myElectronsPF_temp	          = myElectronsPF;	  
+  //myMuonsPF_temp		  = myMuonsPF;		  
+  //myTausPF_temp		          = myTausPF;		  
+  myMETPF_temp		          = myMETPF;		  
+  //myVertex_temp		          = myVertex;		  
+  //myGenWeight_temp	          = myGenWeight;	  
+  //myEDM_bunchCrossing_temp        = myEDM_bunchCrossing;  
+  //myEDM_event_temp	          = myEDM_event;	  
+  //myEDM_isRealData_temp	          = myEDM_isRealData;	  
+  //myEDM_luminosityBlock_temp      = myEDM_luminosityBlock;
+  //myEDM_run_temp                  = myEDM_run;      
+
+  myJetsPF                = new std::vector<jet3_s>;	  
+  //myElectronsPF	          = new std::vector<electron3_s>;	  
+  //myMuonsPF		  = new std::vector<muon3_s>;	  
+  //myTausPF		  = new std::vector<tau1_s>;	  
+  myMETPF		  = new std::vector<met1_s>(*myMETPF_temp);;	  
+  //myVertex		  = new std::vector<vertex_s>;	  
+  //myGenWeight	          = new double;	  
+  //myEDM_bunchCrossing     = new double;
+  //myEDM_event	          = new double;	  
+  //myEDM_isRealData	  = new double;
+  //myEDM_luminosityBlock   = new double;
+  //myEDM_run               = new double;
+
+  for(vector<jet3_s>::iterator thisJet = myJetsPF_temp->begin(); thisJet != myJetsPF_temp->end(); thisJet++)
+    {
+      if(random->Rndm() > jetLossProbability)
+	{
+	  myJetsPF->push_back(*thisJet);
+	}
+      else
+	{
+	  double jetPx = thisJet->uncor_pt * cos(thisJet->uncor_phi);
+	  double jetPy = thisJet->uncor_pt * sin(thisJet->uncor_phi);
+	  double METx = myMETPF->at(0).pt * cos(myMETPF->at(0).phi) - jetPx;
+	  double METy = myMETPF->at(0).pt * sin(myMETPF->at(0).phi) - jetPy;
+	  myMETPF->at(0).pt = sqrt(METx*METx + METy*METy);
+	  myMETPF->at(0).phi = atan2(METy,METx);
+	}
+    }
+  nLostJets = myJetsPF_temp->size() - myJetsPF->size();
+}
+
+#else
+std::vector<jet2_s> * myJetsPF_temp;
+//std::vector<electron1_s> * myElectronsPF_temp;
+//std::vector<muon1_s> * myMuonsPF_temp;
+//std::vector<tau1_s> * myTausPF_temp;
+std::vector<met1_s> * myMETPF_temp;
+//std::vector<vertex_s> * myVertex_temp;
+//double* myGenWeight_temp;
+//double* myEDM_bunchCrossing_temp;
+//double* myEDM_event_temp;
+//double* myEDM_isRealData_temp;
+//double* myEDM_luminosityBlock_temp;
+//double* myEDM_run_temp;
+
+void changeVariables(TRandom* random, double jetLossProbability, int& nLostJets)
+{
+  if(recalculatedVariables) return;
+  recalculatedVariables=true;
+  myJetsPF_temp                   = myJetsPF;		  
+  //myElectronsPF_temp	          = myElectronsPF;	  
+  //myMuonsPF_temp		  = myMuonsPF;		  
+  //myTausPF_temp		          = myTausPF;		  
+  myMETPF_temp		          = myMETPF;		  
+  //myVertex_temp		          = myVertex;		  
+  //myGenWeight_temp	          = myGenWeight;	  
+  //myEDM_bunchCrossing_temp        = myEDM_bunchCrossing;  
+  //myEDM_event_temp	          = myEDM_event;	  
+  //myEDM_isRealData_temp	          = myEDM_isRealData;	  
+  //myEDM_luminosityBlock_temp      = myEDM_luminosityBlock;
+  //myEDM_run_temp                  = myEDM_run;         
+
+  myJetsPF                = new std::vector<jet2_s>;	  
+  //myElectronsPF	          = new std::vector<electron1_s>;	  
+  //myMuonsPF		  = new std::vector<muon1_s>;	  
+  //myTausPF		  = new std::vector<tau1_s>;	  
+  myMETPF		  = new std::vector<met1_s>(*myMETPF_temp);	  
+  //myVertex		  = new std::vector<vertex_s>;	  
+  //myGenWeight	          = new double;	  
+  //myEDM_bunchCrossing     = new double;
+  //myEDM_event	          = new double;	  
+  //myEDM_isRealData	  = new double;
+  //myEDM_luminosityBlock   = new double;
+  //myEDM_run               = new double;
+  for(vector<jet2_s>::iterator thisJet = myJetsPF_temp->begin(); thisJet != myJetsPF_temp->end(); thisJet++)
+    {
+      if(random->Rndm() > jetLossProbability)
+	{
+	  myJetsPF->push_back(*thisJet);
+	}
+      else
+	{
+	  double jetPx = thisJet->uncor_pt * cos(thisJet->uncor_phi);
+	  double jetPy = thisJet->uncor_pt * sin(thisJet->uncor_phi);
+	  double METx = myMETPF->at(0).pt * cos(myMETPF->at(0).phi) - jetPx;
+	  double METy = myMETPF->at(0).pt * sin(myMETPF->at(0).phi) - jetPy;
+	  myMETPF->at(0).pt = sqrt(METx*METx + METy*METy);
+	  myMETPF->at(0).phi = atan2(METy,METx);
+	}
+    }
+  nLostJets = myJetsPF_temp->size() - myJetsPF->size();
+}
+
+#endif
+
+void resetVariables()
+{
+  if(!recalculatedVariables) return;
+  recalculatedVariables = false;
+  if(myJetsPF != 0) delete myJetsPF;
+  else cout << "you've done something wrong!" << endl;
+  //delete myElectronsPF;	
+  //delete myMuonsPF;		
+  //delete myTausPF;		
+  if(myMETPF != 0)delete myMETPF;		
+  else cout << "you've done something wrong!" << endl;
+  //delete myVertex;		
+  //delete myGenWeight;	  	
+  //delete myEDM_bunchCrossing;  
+  //delete myEDM_event;	  	
+  //delete myEDM_isRealData;	
+  //delete myEDM_luminosityBlock;
+  //delete myEDM_run;        
+
+  myJetsPF                = myJetsPF_temp;		  
+  //myElectronsPF	          = myElectronsPF_temp;	  
+  //myMuonsPF		  = myMuonsPF_temp;		  
+  //myTausPF		  = myTausPF_temp;		  
+  myMETPF		  = myMETPF_temp;		  
+  //myVertex		  = myVertex_temp;		  
+  //myGenWeight	          = myGenWeight_temp;	  
+  //myEDM_bunchCrossing     = myEDM_bunchCrossing_temp;  
+  //myEDM_event	          = myEDM_event_temp;	  
+  //myEDM_isRealData	  = myEDM_isRealData_temp;	  
+  //myEDM_luminosityBlock   = myEDM_luminosityBlock_temp;
+  //myEDM_run               = myEDM_run_temp;      
+    
+}
 
 
 
@@ -127,6 +296,8 @@ void InitializeStuff(){
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#ifdef isMC
 unsigned int findSUSYMaternity( unsigned int k ) {
 
   int numSUSY=0;
@@ -160,6 +331,17 @@ unsigned int getSUSYnb() {
 
 }
 
+#else
+
+unsigned int findSUSYMaternity( unsigned int k ) {
+  return 0;
+}
+
+unsigned int getSUSYnb() {
+  return 0;
+}
+
+#endif
 /*
 void testLoop(itreestream& stream) {
   InitializeStuff();//required!
@@ -713,6 +895,22 @@ float getMETphi() {
   return myMETphi;
 }
 
+void getCorrectedMET(float& correctedMET, float& correctedMETPhi) {
+
+  double METx = myMETPF->at(0).pt * cos(myMETPF->at(0).phi);
+  double METy = myMETPF->at(0).pt * sin(myMETPF->at(0).phi);
+
+  for(unsigned int thisJet = 0; thisJet < myJetsPF->size(); thisJet++)
+    {
+      METx -= myJetsPF->at(thisJet).uncor_pt * cos(myJetsPF->at(thisJet).uncor_phi);
+      METx += myJetsPF->at(thisJet).pt * cos(myJetsPF->at(thisJet).phi);
+      METy -= myJetsPF->at(thisJet).uncor_pt * sin(myJetsPF->at(thisJet).uncor_phi);
+      METy += myJetsPF->at(thisJet).pt * sin(myJetsPF->at(thisJet).phi);
+    }
+  correctedMET = sqrt(METx*METx + METy*METy);
+  correctedMETPhi = atan2(METy,METx);
+}
+
 double getDeltaPhi(double phi1, double phi2) {
   return acos(cos(phi1-phi2));
 }
@@ -735,6 +933,151 @@ double getMinDeltaPhiMET(unsigned int maxjets) {
   
   return mindp;
 }
+
+double getTransverseMETError(unsigned int thisJet){
+
+  if(!(thisJet<myJetsPF->size())) return -99;
+
+  double deltaT=0;
+
+  for (unsigned int i=0; i< myJetsPF->size(); i++) {
+    
+    if (isGoodJet30(i) && i!=thisJet) {
+      double dp = getDeltaPhi( myJetsPF->at(i).phi , myJetsPF->at(thisJet).phi );
+      deltaT+=pow(getJetPt(i)*sin(dp),2);
+    }
+  }
+  return 0.1*sqrt(deltaT);
+}
+
+//double getTransverseMETErrorWithCorrections(unsigned int thisJet){
+//
+//  double deltaT=0;
+//
+//  string   era("Spring10");
+//  string   alg("AK5PF");
+//  bool     doGaussian(true);
+//
+//  string cmssw_base(getenv("CMSSW_BASE"));
+//  string cmssw_release_base(getenv("CMSSW_RELEASE_BASE"));
+//  string path = cmssw_base + "/src/CondFormats/JetMETObjects/data";
+//  struct stat st;
+//  if (stat(path.c_str(),&st)!=0)
+//    path = cmssw_release_base + "/src/CondFormats/JetMETObjects/data";
+//  if (stat(path.c_str(),&st)!=0) {
+//    cerr<<"ERROR: tried to set path but failed, abort."<<endl;
+//    return 0;
+//  }
+//  
+//  string ptFileName  = path + "/" + era + "_PtResolution_" +alg+".txt";
+//
+//  JetResolution ptResol(ptFileName,doGaussian);
+//
+//  for (unsigned int i=0; i< myJetsPF->size(); i++) {
+//    
+//    if (isGoodJet(i) && i!=thisJet) {
+//      double dp = getDeltaPhi( myJetsPF->at(i).phi , myJetsPF->at(thisJet).phi );
+//      //Put in the correct energy corrections!
+//      double ptResolution = ptResol.parameterEta( "sigma", myJetsPF->at(i).eta )->Eval( getJetPt(i) );
+//      deltaT+=pow(ptResolution*getJetPt(i)*sin(dp),2);
+//    }
+//  }
+//  return sqrt(deltaT);
+//}
+
+double getDeltaPhiNMET(unsigned int thisJet){
+
+  if(!(thisJet<myJetsPF->size())) return 1E12;
+
+  double dp =  getDeltaPhi( myJetsPF->at(thisJet).phi , getMETphi() );
+  double deltaT = getTransverseMETError(thisJet);
+  return dp/atan2(deltaT,getMET());
+
+}
+
+double getMinDeltaPhiNMET(unsigned int maxjets){
+  
+  double mindpn=1E12;
+
+  unsigned int ngood=0;
+  //get the minimum angle between the first n jets and MET
+  for (unsigned int i=0; i< myJetsPF->size(); i++) {
+    
+    if (isGoodJet(i)) {
+      ++ngood;
+      double dpn =  getDeltaPhiNMET( i );
+      if (dpn<mindpn) mindpn=dpn;
+      if (ngood >= maxjets) break;
+    }
+  }
+  return mindpn;
+}
+
+double getMaxDeltaPhiNMET(unsigned int maxjets){
+  
+  double maxdpn=-99.;
+
+  unsigned int ngood=0;
+  //get the maximum angle between the first n jets and MET
+  for (unsigned int i=0; i< myJetsPF->size(); i++) {
+    
+    if (isGoodJet(i)) {
+      ++ngood;
+      double dpn =  getDeltaPhiNMET( i );
+      if (dpn>maxdpn) maxdpn=dpn;
+      if (ngood >= maxjets) break;
+    }
+  }
+  return maxdpn;
+}
+
+double getTransverseMETSignificance(unsigned int thisJet){
+
+  if(!(thisJet<myJetsPF->size())) return -99;
+
+  double deltaT=getTransverseMETError(thisJet);
+  double dp = getDeltaPhi( myJetsPF->at(thisJet).phi , getMETphi() );
+  return getMET()*sin(dp)/deltaT;
+}
+
+double getMaxTransverseMETSignificance(unsigned int maxjets){
+
+  double maxTransverseMETSignificance=-100;
+
+  unsigned int ngood=0;
+  //get the maximum Transverse MET Significance
+  for (unsigned int i=0; i< myJetsPF->size(); i++) {
+    
+    if (isGoodJet(i)) {
+      ++ngood;
+      double transverseMETSignificance = getTransverseMETSignificance(i);
+      if (transverseMETSignificance>maxTransverseMETSignificance) maxTransverseMETSignificance=transverseMETSignificance;
+      if (ngood >= maxjets) break;
+    }
+  }
+  
+  return maxTransverseMETSignificance;
+}
+
+double getMinTransverseMETSignificance(unsigned int maxjets){
+
+  double minTransverseMETSignificance=1E12;
+
+  unsigned int ngood=0;
+  //get the minimum Transverse MET Significance
+  for (unsigned int i=0; i< myJetsPF->size(); i++) {
+    
+    if (isGoodJet(i)) {
+      ++ngood;
+      double transverseMETSignificance = getTransverseMETSignificance(i);
+      if (transverseMETSignificance<minTransverseMETSignificance) minTransverseMETSignificance=transverseMETSignificance;
+      if (ngood >= maxjets) break;
+    }
+  }
+  
+  return minTransverseMETSignificance;
+}
+
 
 double getMinDeltaPhiMET30(unsigned int maxjets) {
 
@@ -907,7 +1250,7 @@ double getDeltaPhiMETN( unsigned int goodJetN ){
 
 double getMinDeltaPhiMETN(unsigned int maxjets){
   
-  double mdpN = getDeltaPhiMETN(0);
+  double mdpN=1E12;
   
   for (unsigned int i=0; i<maxjets; i++) {//could really start at i=1
     if(i>=nGoodJets()) break;
@@ -916,7 +1259,6 @@ double getMinDeltaPhiMETN(unsigned int maxjets){
   }
   return mdpN;
 }
-
 
 double getMinDeltaPhiMETTaus() {
   double mindp=99;
@@ -1465,7 +1807,46 @@ float getMT_Wlep() {
 
 
 
+void getTransverseThrustVariables(float & thrust, float & thrustPhi, bool addMET)
+{
+    //Begin Thrust Calculations
+    //Copy Formula from http://home.thep.lu.se/~torbjorn/pythia/lutp0613man2.pdf 
 
+    unsigned int njets = myJetsPF->size();
+     
+    vector<double> goodJetPx;
+    vector<double> goodJetPy;
+
+
+    for (unsigned int i = 0; i<njets; i++) {
+      if ( !isGoodJet(i) ) continue;
+      //ngoodjets++;
+      double phi = myJetsPF->at(i).phi;
+      double pT = getJetPt(i);
+      double pX = pT*cos(phi);
+      double pY = pT*sin(phi);
+      goodJetPx.push_back(pX);
+      goodJetPy.push_back(pY);
+    }
+
+    if(addMET)
+      {
+	double metPhi = getMETphi();
+	double eT = getMET();
+	double eX = eT*cos(metPhi);
+	double eY = eT*sin(metPhi);
+	goodJetPx.push_back(eX);
+	goodJetPy.push_back(eY);
+      }
+
+    double phiGuess = myJetsPF->at(0).phi;
+    RooRealVar phi("phi","phi",phiGuess,-1.0*TMath::Pi(),TMath::Pi());
+    RooTransverseThrustVar negThrustValue("negThrustValue","negThrustValue",phi,goodJetPx,goodJetPy);
+    RooMinuit rm(negThrustValue);
+    rm.migrad();
+    thrust = -1*negThrustValue.getVal();
+    thrustPhi = (phi.getVal()>0) ? phi.getVal()-TMath::Pi() : phi.getVal()+TMath::Pi();
+}
 
 //event shape variables from Luke
 void getSphericityJetMET(float & lambda1, float & lambda2, float & det,
@@ -1995,12 +2376,77 @@ void reducedTree(TString outputpath, itreestream& stream)
   //if more variables keep getting added, I will have to split the reduced trees into pieces
   //hopefully that can be avoided
 
-  //we're making an ntuple, so size matters -- use float not double
-  double weight; //one exception to the float rule
+  unsigned int seed = 4357;
+
+  if (sampleName_.Contains("DYJetsToLL_TuneD6T_M-10To50_7TeV-madgraph-tauola") )     seed = 4357;
+  if (sampleName_.Contains("DYJetsToLL_TuneD6T_M-50_7TeV-madgraph-tauola") )         seed = 4358;
+  if (sampleName_.Contains("LM13_SUSY_sftsht_7TeV-pythia6") )                        seed = 4359;
+  if (sampleName_.Contains("LM9_SUSY_sftsht_7TeV-pythia6_2") )                       seed = 4360;
+  if (sampleName_.Contains("QCD_Pt_0to5_TuneZ2_7TeV_pythia6_3") )                    seed = 4361;
+  if (sampleName_.Contains("QCD_Pt_1000to1400_TuneZ2_7TeV_pythia6") )                seed = 4362;
+  if (sampleName_.Contains("QCD_Pt_120to170_TuneZ2_7TeV_pythia6") )                  seed = 4363;
+  if (sampleName_.Contains("QCD_Pt_1400to1800_TuneZ2_7TeV_pythia6_3") )              seed = 4364;
+  if (sampleName_.Contains("QCD_Pt_15to3000_TuneZ2_Flat_7TeV_pythia6") )             seed = 4365;
+  if (sampleName_.Contains("QCD_Pt_15to30_TuneZ2_7TeV_pythia6") )                    seed = 4366;
+  if (sampleName_.Contains("QCD_Pt_170to300_TuneZ2_7TeV_pythia6") )                  seed = 4367;
+  if (sampleName_.Contains("QCD_Pt_1800_TuneZ2_7TeV_pythia6") )                      seed = 4368;
+  if (sampleName_.Contains("QCD_Pt_300to470_TuneZ2_7TeV_pythia6") )                  seed = 4369;
+  if (sampleName_.Contains("QCD_Pt_30to50_TuneZ2_7TeV_pythia6") )                    seed = 4370;
+  if (sampleName_.Contains("QCD_Pt_470to600_TuneZ2_7TeV_pythia6") )                  seed = 4371;
+  if (sampleName_.Contains("QCD_Pt_50to80_TuneZ2_7TeV_pythia6") )                    seed = 4372;
+  if (sampleName_.Contains("QCD_Pt_5to15_TuneZ2_7TeV_pythia6") )                     seed = 4373;
+  if (sampleName_.Contains("QCD_Pt_600to800_TuneZ2_7TeV_pythia6") )                  seed = 4374;
+  if (sampleName_.Contains("QCD_Pt_800to1000_TuneZ2_7TeV_pythia6") )                 seed = 4375;
+  if (sampleName_.Contains("QCD_Pt_80to120_TuneZ2_7TeV_pythia6_3") )                 seed = 4376;
+  if (sampleName_.Contains("TTJets_TuneD6T_7TeV-madgraph-tauola") )                  seed = 4377;
+  if (sampleName_.Contains("TToBLNu_TuneZ2_s-channel_7TeV-madgraph") )               seed = 4378;
+  if (sampleName_.Contains("TToBLNu_TuneZ2_t-channel_7TeV-madgraph") )               seed = 4379;
+  if (sampleName_.Contains("TToBLNu_TuneZ2_tW-channel_7TeV-madgraph") )              seed = 4380;
+  if (sampleName_.Contains("WJetsToLNu_TuneZ2_7TeV-madgraph-tauola") )               seed = 4381;
+  if (sampleName_.Contains("WWtoAnything_TuneZ2_7TeV-pythia6-tauola") )              seed = 4382;
+  if (sampleName_.Contains("WZtoAnything_TuneZ2_7TeV-pythia6-tauola") )              seed = 4383;
+  if (sampleName_.Contains("ZinvisibleJets_7TeV-madgraph") )                         seed = 4384;
+  if (sampleName_.Contains("ZZtoAnything_TuneZ2_7TeV-pythia6-tauola") )              seed = 4385;  
+
+  if (sampleName_.Contains("qcd_tunez2_pt0to5_summer11") )                           seed = 4384;
+  if (sampleName_.Contains("qcd_tunez2_pt1000to1400_summer11") )                     seed = 4385;
+  if (sampleName_.Contains("qcd_tunez2_pt120to170_summer11") )                       seed = 4386;
+  if (sampleName_.Contains("qcd_tunez2_pt1400to1800_summer11") )                     seed = 4387;
+  if (sampleName_.Contains("qcd_tunez2_pt15to3000_summer11") )                       seed = 4388;
+  if (sampleName_.Contains("qcd_tunez2_pt15to30_summer11") )                         seed = 4389;
+  if (sampleName_.Contains("qcd_tunez2_pt170to300_summer11") )                       seed = 4390;
+  if (sampleName_.Contains("qcd_tunez2_pt1800_summer11") )                           seed = 4391;
+  if (sampleName_.Contains("qcd_tunez2_pt300to470_summer11") )                       seed = 4392;
+  if (sampleName_.Contains("qcd_tunez2_pt30to50_summer11") )                         seed = 4393;
+  if (sampleName_.Contains("qcd_tunez2_pt470to600_summer11") )                       seed = 4394;
+  if (sampleName_.Contains("qcd_tunez2_pt50to80_summer11") )                         seed = 4395;
+  if (sampleName_.Contains("qcd_tunez2_pt5to15_summer11") )                          seed = 4396;
+  if (sampleName_.Contains("qcd_tunez2_pt600to800_summer11") )                       seed = 4397;
+  if (sampleName_.Contains("qcd_tunez2_pt800to1000_summer11") )                      seed = 4398;
+  if (sampleName_.Contains("qcd_tunez2_pt80to120_summer11") )                        seed = 4399;
+  if (sampleName_.Contains("ttjets_tunez2_madgraph_tauola_summer11") )               seed = 4400;
+
+  if (sampleName_.Contains("ht_run2011a_423_jul1.txt") )                             seed = 4401;
+  if (sampleName_.Contains("ht_run2011a_423_jul6.txt") )                             seed = 4402;
+  if (sampleName_.Contains("ht_run2011a_423_jun10.txt") )                            seed = 4403;
+  if (sampleName_.Contains("ht_run2011a_423_jun17.txt") )                            seed = 4404;
+  if (sampleName_.Contains("ht_run2011a_423_jun24.txt") )                            seed = 4405;
+  if (sampleName_.Contains("ht_run2011a_423_jun3.txt") )                             seed = 4406;
+  if (sampleName_.Contains("ht_run2011a_423_may10rereco.txt") )                      seed = 4407;
+  if (sampleName_.Contains("ht_run2011a_423_may10rereco_added.txt") )                seed = 4408;
+  if (sampleName_.Contains("ht_run2011a_423_may10rereco_added_b.txt") )              seed = 4409;
+  if (sampleName_.Contains("ht_run2011a_423_may24.txt") )                            seed = 4410;
+  if (sampleName_.Contains("ht_run2011a_423_may27.txt") )                            seed = 4411;
+										     
+  TRandom3 random(seed);							     
+										     
+  //we're making an ntuple, so size matters -- use float not double		     
+  double weight; //one exception to the float rule				     
   float btagIPweight, pfmhtweight;
   ULong64_t lumiSection, eventNumber, runNumber;
   float METsig;
   float HT, MHT, MET, METphi, minDeltaPhi, minDeltaPhiAll, minDeltaPhiAll30,minDeltaPhi30_eta5_noIdAll;
+  float correctedMET, correctedMETphi;
   float maxDeltaPhi, maxDeltaPhiAll, maxDeltaPhiAll30, maxDeltaPhi30_eta5_noIdAll;
   float sumDeltaPhi, diffDeltaPhi;
   float minDeltaPhiN, deltaPhiN1, deltaPhiN2, deltaPhiN3;
@@ -2045,6 +2491,18 @@ void reducedTree(TString outputpath, itreestream& stream)
   float lambda1_topThreeJetsPlusMET;
   float lambda2_topThreeJetsPlusMET;
   float determinant_topThreeJetsPlusMET;
+
+  float transverseThrust,transverseThrustPhi;
+  float transverseThrustWithMET,transverseThrustWithMETPhi;
+
+  float minDeltaPhiN_Luke, maxDeltaPhiN_Luke, deltaPhiN1_Luke, deltaPhiN2_Luke, deltaPhiN3_Luke;
+  float minTransverseMETSignificance, maxTransverseMETSignificance, transverseMETSignificance1, transverseMETSignificance2, transverseMETSignificance3;
+
+  int nLostJet;
+  int njets_lostJet, nbjets_lostJet;
+  float minDeltaPhiN_lostJet, deltaPhiN1_lostJet, deltaPhiN2_lostJet, deltaPhiN3_lostJet;
+  float minDeltaPhiN_Luke_lostJet, maxDeltaPhiN_Luke_lostJet, deltaPhiN1_Luke_lostJet, deltaPhiN2_Luke_lostJet, deltaPhiN3_Luke_lostJet;
+  float minTransverseMETSignificance_lostJet, maxTransverseMETSignificance_lostJet, transverseMETSignificance1_lostJet, transverseMETSignificance2_lostJet, transverseMETSignificance3_lostJet;
 
   reducedTree.Branch("weight",&weight,"weight/D");
   reducedTree.Branch("runNumber",&runNumber,"runNumber/l");
@@ -2095,6 +2553,9 @@ void reducedTree(TString outputpath, itreestream& stream)
   reducedTree.Branch("METphi",&METphi,"METphi/F");
   reducedTree.Branch("MHT",&MHT,"MHT/F");
 
+  reducedTree.Branch("correctedMET",&correctedMET,"correctedMET/F");
+  reducedTree.Branch("correctedMETphi",&correctedMETphi,"correctedMETphi/F");
+
   reducedTree.Branch("bestWMass",&bestWMass_,"bestWMass/F");
   reducedTree.Branch("bestTopMass",&bestTopMass_,"bestTopMass/F");
   reducedTree.Branch("topCosHel",&topCosHel_,"topCosHel/F");
@@ -2120,6 +2581,11 @@ void reducedTree(TString outputpath, itreestream& stream)
   reducedTree.Branch("deltaPhiN1", &deltaPhiN1, "deltaPhiN1/F");
   reducedTree.Branch("deltaPhiN2", &deltaPhiN2, "deltaPhiN2/F");
   reducedTree.Branch("deltaPhiN3", &deltaPhiN3, "deltaPhiN3/F");
+
+  reducedTree.Branch("minDeltaPhiN_lostJet", &minDeltaPhiN_lostJet, "minDeltaPhiN_lostJet/F");
+  reducedTree.Branch("deltaPhiN1_lostJet", &deltaPhiN1_lostJet, "deltaPhiN1_lostJet/F");
+  reducedTree.Branch("deltaPhiN2_lostJet", &deltaPhiN2_lostJet, "deltaPhiN2_lostJet/F");
+  reducedTree.Branch("deltaPhiN3_lostJet", &deltaPhiN3_lostJet, "deltaPhiN3_lostJet/F");
 
   reducedTree.Branch("jetpt1",&jetpt1,"jetpt1/F");
   reducedTree.Branch("jeteta1",&jeteta1,"jeteta1/F");
@@ -2167,6 +2633,40 @@ void reducedTree(TString outputpath, itreestream& stream)
   reducedTree.Branch("lambda2_topThreeJetsPlusMET",&lambda2_topThreeJetsPlusMET,"lambda2_topThreeJetsPlusMET/F");
   reducedTree.Branch("determinant_topThreeJetsPlusMET",&determinant_topThreeJetsPlusMET,"determinant_topThreeJetsPlusMET/F");
 
+  reducedTree.Branch("transverseThrust",&transverseThrust,"transverseThrust/F");
+  reducedTree.Branch("transverseThrustPhi",&transverseThrustPhi,"transverseThrustPhi/F");
+
+  reducedTree.Branch("transverseThrustWithMET",&transverseThrustWithMET,"transverseThrustWithMET/F");
+  reducedTree.Branch("transverseThrustWithMETPhi",&transverseThrustWithMETPhi,"transverseThrustWithMETPhi/F");
+
+  reducedTree.Branch("minDeltaPhiN_Luke", &minDeltaPhiN_Luke, "minDeltaPhiN_Luke/F");
+  reducedTree.Branch("maxDeltaPhiN_Luke", &maxDeltaPhiN_Luke, "maxDeltaPhiN_Luke/F");
+  reducedTree.Branch("deltaPhiN1_Luke", &deltaPhiN1_Luke, "deltaPhiN1_Luke/F");
+  reducedTree.Branch("deltaPhiN2_Luke", &deltaPhiN2_Luke, "deltaPhiN2_Luke/F");
+  reducedTree.Branch("deltaPhiN3_Luke", &deltaPhiN3_Luke, "deltaPhiN3_Luke/F");
+
+  reducedTree.Branch("minTransverseMETSignificance", &minTransverseMETSignificance, "minTransverseMETSignificance/F");
+  reducedTree.Branch("maxTransverseMETSignificance", &maxTransverseMETSignificance, "maxTransverseMETSignificance/F");
+  reducedTree.Branch("transverseMETSignificance1", &transverseMETSignificance1, "transverseMETSignificance1/F");
+  reducedTree.Branch("transverseMETSignificance2", &transverseMETSignificance2, "transverseMETSignificance2/F");
+  reducedTree.Branch("transverseMETSignificance3", &transverseMETSignificance3, "transverseMETSignificance3/F");
+
+  reducedTree.Branch("njets_lostJet",&njets_lostJet,"njets_lostJet/I");
+  reducedTree.Branch("nbjets_lostJet",&nbjets_lostJet,"nbjets_lostJet/I");
+
+  reducedTree.Branch("minDeltaPhiN_Luke_lostJet", &minDeltaPhiN_Luke_lostJet, "minDeltaPhiN_Luke_lostJet/F");
+  reducedTree.Branch("maxDeltaPhiN_Luke_lostJet", &maxDeltaPhiN_Luke_lostJet, "maxDeltaPhiN_Luke_lostJet/F");
+  reducedTree.Branch("deltaPhiN1_Luke_lostJet", &deltaPhiN1_Luke_lostJet, "deltaPhiN1_Luke_lostJet/F");
+  reducedTree.Branch("deltaPhiN2_Luke_lostJet", &deltaPhiN2_Luke_lostJet, "deltaPhiN2_Luke_lostJet/F");
+  reducedTree.Branch("deltaPhiN3_Luke_lostJet", &deltaPhiN3_Luke_lostJet, "deltaPhiN3_Luke_lostJet/F");
+
+  reducedTree.Branch("minTransverseMETSignificance_lostJet", &minTransverseMETSignificance_lostJet, "minTransverseMETSignificance_lostJet/F");
+  reducedTree.Branch("maxTransverseMETSignificance_lostJet", &maxTransverseMETSignificance_lostJet, "maxTransverseMETSignificance_lostJet/F");
+  reducedTree.Branch("transverseMETSignificance1_lostJet", &transverseMETSignificance1_lostJet, "transverseMETSignificance1_lostJet/F");
+  reducedTree.Branch("transverseMETSignificance2_lostJet", &transverseMETSignificance2_lostJet, "transverseMETSignificance2_lostJet/F");
+  reducedTree.Branch("transverseMETSignificance3_lostJet", &transverseMETSignificance3_lostJet, "transverseMETSignificance3_lostJet/F");
+
+  reducedTree.Branch("nLostJet", &nLostJet, "nLostJet/F");
 
   int nevents = stream.size();
 
@@ -2244,6 +2744,9 @@ void reducedTree(TString outputpath, itreestream& stream)
       METsig = myMETPF->at(0).mEtSig; //FIXME hard coded for PF
       MHT=getMHT();
       METphi = getMETphi();
+
+      getCorrectedMET(correctedMET, correctedMETphi);
+
       minDeltaPhi = getMinDeltaPhiMET(3);
       minDeltaPhiAll = getMinDeltaPhiMET(99);
       minDeltaPhiAll30 = getMinDeltaPhiMET30(99);
@@ -2262,6 +2765,18 @@ void reducedTree(TString outputpath, itreestream& stream)
       deltaPhiN1 = getDeltaPhiMETN(0);
       deltaPhiN2 = getDeltaPhiMETN(1);
       deltaPhiN3 = getDeltaPhiMETN(2);
+
+      minDeltaPhiN_Luke = getMinDeltaPhiNMET(3);
+      maxDeltaPhiN_Luke = getMaxDeltaPhiNMET(3);
+      deltaPhiN1_Luke = getDeltaPhiNMET(0);
+      deltaPhiN2_Luke = getDeltaPhiNMET(1);
+      deltaPhiN3_Luke = getDeltaPhiNMET(2);
+
+      minTransverseMETSignificance = getMinTransverseMETSignificance(3);
+      maxTransverseMETSignificance = getMaxTransverseMETSignificance(3);
+      transverseMETSignificance1 = getTransverseMETSignificance(0);
+      transverseMETSignificance2 = getTransverseMETSignificance(1);
+      transverseMETSignificance3 = getTransverseMETSignificance(2);
 
       MT_Wlep = getMT_Wlep();
       
@@ -2313,6 +2828,33 @@ void reducedTree(TString outputpath, itreestream& stream)
       getSphericityJetMET(lambda1_topThreeJets,lambda2_topThreeJets,determinant_topThreeJets,3,false);
       getSphericityJetMET(lambda1_topThreeJetsPlusMET,lambda2_topThreeJetsPlusMET,determinant_topThreeJetsPlusMET,3,true);
       
+      //Uncomment next two lines to do thrust calculations
+      //getTransverseThrustVariables(transverseThrust, transverseThrustPhi, false);
+      //getTransverseThrustVariables(transverseThrustWithMET, transverseThrustWithMETPhi, true);
+
+      changeVariables(&random,0.05,nLostJet);
+
+      njets_lostJet = nGoodJets();
+      nbjets_lostJet = nGoodBJets();
+
+      minDeltaPhiN_lostJet = getMinDeltaPhiMETN(3);
+      deltaPhiN1_lostJet = getDeltaPhiMETN(0);
+      deltaPhiN2_lostJet = getDeltaPhiMETN(1);
+      deltaPhiN3_lostJet = getDeltaPhiMETN(2);
+
+      minDeltaPhiN_Luke_lostJet = getMinDeltaPhiNMET(3);
+      maxDeltaPhiN_Luke_lostJet = getMaxDeltaPhiNMET(3);
+      deltaPhiN1_Luke_lostJet = getDeltaPhiNMET(0);
+      deltaPhiN2_Luke_lostJet = getDeltaPhiNMET(1);
+      deltaPhiN3_Luke_lostJet = getDeltaPhiNMET(2);
+
+      minTransverseMETSignificance_lostJet = getMinTransverseMETSignificance(3);
+      maxTransverseMETSignificance_lostJet = getMaxTransverseMETSignificance(3);
+      transverseMETSignificance1_lostJet = getTransverseMETSignificance(0);
+      transverseMETSignificance2_lostJet = getTransverseMETSignificance(1);
+      transverseMETSignificance3_lostJet = getTransverseMETSignificance(2);
+      resetVariables();
+      
       reducedTree.Fill();
       
     }
@@ -2346,6 +2888,7 @@ void sampleAnalyzer(itreestream& stream){
     
     if (Cut(entry) < 0) continue;
     count++;
+
     std::cout << "genweight = " << (*myGenWeight) << std::endl;
     std::cout << "btagIP weight = " << getBTagIPWeight() << std::endl;
     //std::cout << "PFMHT weight = " << getPFMHTWeight() << std::endl;
