@@ -385,6 +385,22 @@ int isRealDataInt(double * isRealDataDouble){
   return ((int)((*isRealDataDouble)+0.5));
 }
 
+
+//This is a function which is temporarily hard-coded to remove data that has become uncertified
+bool passLumiMask(){
+
+  int lumi =  TMath::Nint( *myEDM_luminosityBlock );
+  int run = TMath::Nint( *myEDM_run );
+
+  if(run == 165525 && lumi>=1 && lumi<=31) return false;
+  if(run == 165537 && lumi>=1 && lumi<=20) return false;
+  if(run == 165537 && lumi>=22 && lumi<295) return false;
+
+  return true;
+
+}
+
+
 bool passHLT() { 
 
   long runnumber = (long)((*myEDM_run) +0.5); //just in case some crazy thing happens to myEDM_run being saved as a double
@@ -1900,6 +1916,7 @@ void getSphericityJetMET(float & lambda1, float & lambda2, float & det,
 
 bool passCut(const TString cutTag) {
 
+  if (cutTag=="cutLumiMask" ) return passLumiMask();
   if (cutTag=="cutTrigger" ) return passHLT();
   if (cutTag=="cutUtilityTrigger" ) return ( utilityHLT_HT300()==1 || utilityHLT_HT300_CentralJet30_BTagIP()==1 );
 
@@ -1957,6 +1974,7 @@ bool setCutScheme() {
   //cutTags_.push_back("cut2SUSYb"); cutNames_[ cutTags_.back()] = "==2SUSYb";
   //cutTags_.push_back("cut4SUSYb"); cutNames_[ cutTags_.back()] = "==4SUSYb";
   
+  cutTags_.push_back("cutLumiMask"); cutNames_[cutTags_.back()]="LumiMask";
   cutTags_.push_back("cutTrigger"); cutNames_[cutTags_.back()]="Trigger";
   cutTags_.push_back("cutPV"); cutNames_[cutTags_.back()]="PV";
   cutTags_.push_back("cutHT"); cutNames_[cutTags_.back()]="HT";
@@ -2046,6 +2064,7 @@ bool cutRequired(const TString cutTag) { //should put an & in here to improve pe
   //else if (cutTag == "cut2SUSYb")  cutIsRequired = false;
   //else if (cutTag == "cut4SUSYb")  cutIsRequired = false;
 
+  else if (cutTag == "cutLumiMask")  cutIsRequired = true;
   else if (cutTag == "cutTrigger")  cutIsRequired = true;
   else if (cutTag == "cutPV")  cutIsRequired =  true;
   else if (cutTag == "cutHT")  cutIsRequired =  true;
@@ -2691,7 +2710,7 @@ void reducedTree(TString outputpath, itreestream& stream)
     if(entry%100000==0) cout << "  entry: " << entry << ", percent done=" << (int)(entry/(double)nevents*100.)<<  endl;
       
 
-    if ((passCut("cutTrigger") || passCut("cutUtilityTrigger")) && passCut("cutHT") ) {
+    if ( passCut("cutLumiMask") && (passCut("cutTrigger") || passCut("cutUtilityTrigger")) && passCut("cutHT") ) {
            
       //if (entry%1000000==0) checkTimer(entry,nevents);
       weight = getWeight(nevents);
@@ -2872,11 +2891,23 @@ void sampleAnalyzer(itreestream& stream){
 
   int nevents = stream.size();
 
-  setMuonReq(0);
-  setEleReq(0);
-  setCutScheme();
   InitializeStuff();//BEN
-  setBCut(2);
+
+  //setMuonReq(0);
+  //setEleReq(0);
+  setCutScheme();
+  //setBCut(2);
+
+  setIgnoredCut("cutTrigger");
+  setIgnoredCut("cutPV");
+  setIgnoredCut("cutHT");
+  setIgnoredCut("cut3Jets");
+  setIgnoredCut("cutEleVeto");
+  setIgnoredCut("cutMuVeto");
+  setIgnoredCut("cutMET");
+  setIgnoredCut("cutDeltaPhiN");
+  setIgnoredCut("cutDeltaPhiTaus");
+  setBCut(0);
 
   int count = 0;
   startTimer();
@@ -2884,13 +2915,14 @@ void sampleAnalyzer(itreestream& stream){
     // Read event into memory
     stream.read(entry);
     fillObjects();
+    if(entry%100000==0) cout << "  entry: " << entry << ", percent done=" << (int)(entry/(double)nevents*100.)<<  endl;
 
     
     if (Cut(entry) < 0) continue;
     count++;
 
-    std::cout << "genweight = " << (*myGenWeight) << std::endl;
-    std::cout << "btagIP weight = " << getBTagIPWeight() << std::endl;
+    //std::cout << "genweight = " << (*myGenWeight) << std::endl;
+    //std::cout << "btagIP weight = " << getBTagIPWeight() << std::endl;
     //std::cout << "PFMHT weight = " << getPFMHTWeight() << std::endl;
 
   }
