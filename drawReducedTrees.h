@@ -980,12 +980,13 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
     if (!quiet_)    cout<<"Data underflow: " <<hdata->GetBinContent(0)<<endl;//BEN
     hdata->Draw("SAME");
     if (!doCustomPlotMax_) {
-      double mymax = dostack_ ? thestack->GetMaximum() : findOverallMax(totalsm); //these probably return near-identical values, in fact
-      if (findOverallMax(hdata) > mymax) {
-	if (dostack_) thestack->SetMaximum( maxScaleFactor_*findOverallMax(hdata));
-	else { //i don't like repeating this loop constantly; at a minimum it should be abstracted
-	  for (unsigned int isample=0; isample<samples_.size(); isample++)  histos_[samples_[isample]]->SetMaximum(maxScaleFactor_*findOverallMax(hdata));
-	}
+      double mymax=-1e9;
+      if (dostack_) mymax = thestack->GetMaximum();
+      if ( findOverallMax(totalsm) >mymax) mymax = findOverallMax(totalsm);
+      if (findOverallMax(hdata) > mymax) mymax = findOverallMax(hdata);
+      if (dostack_) thestack->SetMaximum( maxScaleFactor_*mymax);
+      else { //i don't like repeating this loop constantly; at a minimum it should be abstracted
+	for (unsigned int isample=0; isample<samples_.size(); isample++)  histos_[samples_[isample]]->SetMaximum(maxScaleFactor_*mymax);
       }
     }
 
