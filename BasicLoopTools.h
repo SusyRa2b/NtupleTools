@@ -1003,10 +1003,100 @@ float getHT() {
   return ht;
 }
 
+std::pair<float,float> getJEAdjustedMETxy() {
+  //this function will only return correct results for Type I-corrected PF MET!
+  float myMET = myMETPF->at(0).pt;
+  float myMETphi = myMETPF->at(0).phi;
+
+  float myMETx = myMET * cos(myMETphi);
+  float myMETy = myMET * sin(myMETphi);
+ 
+  //loop over all jets
+  for (unsigned int i=0; i<myJetsPF->size(); i++) {
+    
+    //first remove the corrected jet pT from MET
+    myMETx += myJetsPF->at(i).pt * cos(myJetsPF->at(i).phi);
+    myMETy += myJetsPF->at(i).pt * sin(myJetsPF->at(i).phi);
+
+    //now add back in the adjusted jet
+    //using getJetPt() will automatically take into account the JES and JER settings
+    myMETx -= getJetPt(i) * cos(myJetsPF->at(i).phi);
+    myMETy -= getJetPt(i) * sin(myJetsPF->at(i).phi);
+  }
+
+  return make_pair(myMETx,myMETy);
+}
+
+std::pair<float,float> getSmearedUnclusteredMETxy() {
+  //assumes type I corrected MET!
+
+  float myMET = myMETPF->at(0).pt;
+  float myMETphi = myMETPF->at(0).phi;
+
+  float myMETx = myMET * cos(myMETphi);
+  float myMETy = myMET * sin(myMETphi);
+ 
+  //first remove jets from MET
+  for (unsigned int i=0; i<myJetsPF->size(); i++) {
+    //remove the corrected jet pT from MET
+    myMETx += myJetsPF->at(i).pt * cos(myJetsPF->at(i).phi);
+    myMETy += myJetsPF->at(i).pt * sin(myJetsPF->at(i).phi);
+  }
+  //then muons
+  for ( unsigned int i = 0; i<myMuonsPF->size() ; i++) {
+    myMETx += myMuonsPF->at(i).pt * cos(myMuonsPF->at(i).phi);
+    myMETy += myMuonsPF->at(i).pt * sin(myMuonsPF->at(i).phi);
+  }
+  //electrons
+  for ( unsigned int i = 0; i<myElectronsPF->size() ; i++) {
+    myMETx += myElectronsPF->at(i).pt * cos(myElectronsPF->at(i).phi);
+    myMETy += myElectronsPF->at(i).pt * sin(myElectronsPF->at(i).phi);
+  }
+
+  //now we've got the unclustered component only in myMETxy
+  float factor=1;
+  if (theMETuncType_ ==kMETuncDown) factor=0.9;
+  else if (theMETuncType_ ==kMETuncUp) factor=1.1;
+  else {assert(0);}
+  myMETx *= factor;
+  myMETy *= factor;
+
+  //now repeat everything but change all += to -=
+  //jets
+  for (unsigned int i=0; i<myJetsPF->size(); i++) {
+    //remove the corrected jet pT from MET
+    myMETx -= myJetsPF->at(i).pt * cos(myJetsPF->at(i).phi);
+    myMETy -= myJetsPF->at(i).pt * sin(myJetsPF->at(i).phi);
+  }
+  //muons
+  for ( unsigned int i = 0; i<myMuonsPF->size() ; i++) {
+    myMETx -= myMuonsPF->at(i).pt * cos(myMuonsPF->at(i).phi);
+    myMETy -= myMuonsPF->at(i).pt * sin(myMuonsPF->at(i).phi);
+  }
+  //electrons
+  for ( unsigned int i = 0; i<myElectronsPF->size() ; i++) {
+    myMETx -= myElectronsPF->at(i).pt * cos(myElectronsPF->at(i).phi);
+    myMETy -= myElectronsPF->at(i).pt * sin(myElectronsPF->at(i).phi);
+  }
+
+  return make_pair(myMETx,myMETy);
+}
+
 float getMET() {
   float myMET=-1;
 
   myMET = myMETPF->at(0).pt;
+
+  //first adjust for JER and JES
+  if (theJESType_ != kJES0 || theJERType_ != kJER0 ) {
+    std::pair<float, float> metxy = getJEAdjustedMETxy();
+    myMET = sqrt( metxy.first*metxy.first + metxy.second*metxy.second);
+  }
+  else if (theMETuncType_!=kMETunc0) {
+    std::pair<float, float> metxy = getSmearedUnclusteredMETxy();
+    myMET = sqrt( metxy.first*metxy.first + metxy.second*metxy.second);
+  }
+
 
   return myMET;
 }
@@ -1015,6 +1105,15 @@ float getMETphi() {
   float myMETphi=-99;
 
   myMETphi = myMETPF->at(0).phi;
+
+  if (theJESType_ != kJES0 || theJERType_ != kJER0) {
+    std::pair<float, float> metxy = getJEAdjustedMETxy();
+    myMETphi = atan2( metxy.second, metxy.first);
+  }
+  else if (theMETuncType_!=kMETunc0) {
+    std::pair<float, float> metxy = getSmearedUnclusteredMETxy();
+    myMETphi = atan2( metxy.second, metxy.first);
+  }
 
   return myMETphi;
 }
