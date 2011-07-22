@@ -37,30 +37,31 @@ const double mtop_ = 172.0;
 const double lumi_ = 1.; //fix to 1/pb and scale MC later (e.g. in drawReducedTrees)
 TString sampleName_ = ""; 
 
-enum CutScheme {kBaseline2010};
-CutScheme theCutScheme_;
-enum METType {kMHT=0, kMET, ktcMET, kpfMET};
-METType theMETType_;
-enum METRange {kMedium=0, kHigh, kWide, kMedhigh, kLSB};
-METRange theMETRange_;
-enum jetType {kCalo=0, kPF, kJPT};
-jetType theJetType_;
-enum leptonType {kNormal=0, kPFLeptons, kPFLeptonsRA2};
-leptonType theLeptonType_;
-enum dpType {kDeltaPhi=0, kminDP, kMPT, kDPSync1, kminDPinv, kminDPAll30};
-dpType theDPType_;
+//jmt -- commenting out the ones that are not currently used
+//enum CutScheme {kBaseline2010};
+//CutScheme theCutScheme_;
+//enum METType {kMHT=0, kMET, ktcMET, kpfMET};
+//METType theMETType_;
+//enum METRange {kMedium=0, kHigh, kWide, kMedhigh, kLSB};
+//METRange theMETRange_;
+//enum jetType {kCalo=0, kPF, kJPT};
+//jetType theJetType_;
+//enum leptonType {kNormal=0, kPFLeptons, kPFLeptonsRA2};
+//leptonType theLeptonType_;
+//enum dpType {kDeltaPhi=0, kminDP, kMPT, kDPSync1, kminDPinv, kminDPAll30};
+//dpType theDPType_;
 enum JESType {kJES0=0,kJESup,kJESdown};
 JESType theJESType_;
-enum JERType {kJER0=0,kJERbias,kJERup,kJERbias6};
+enum JERType {kJER0=0,kJERbias,kJERup,kJERdown,kJERra2};
 JERType theJERType_;
 enum METuncType {kMETunc0=0,kMETuncDown,kMETuncUp};
 METuncType theMETuncType_;
-enum BTagEffType {kBTagEff0=0,kBTagEffup,kBTagEffdown};
-BTagEffType theBTagEffType_;
-enum tailCleaningType {kNoCleaning=0, kMuonCleaning, kMuonEcalCleaning};
-tailCleaningType theCleaningType_;
-enum flavorHistoryType {kNoFlvHist=0, kFlvHist};
-flavorHistoryType theFlavorHistoryType_;
+//enum BTagEffType {kBTagEff0=0,kBTagEffup,kBTagEffdown};
+//BTagEffType theBTagEffType_;
+//enum tailCleaningType {kNoCleaning=0, kMuonCleaning, kMuonEcalCleaning};
+//tailCleaningType theCleaningType_;
+//enum flavorHistoryType {kNoFlvHist=0, kFlvHist};
+//flavorHistoryType theFlavorHistoryType_;
 enum BTaggerType {kSSVM=0, kTCHET, kSSVHPT, kTCHPT, kTCHPM, Nbtaggers};
 BTaggerType theBTaggerType_;
 
@@ -71,6 +72,7 @@ bool recalculatedVariables = false;
 //--These should be checked each time we make new ntuples.
 #ifdef isMC
 std::vector<jet3_s> * myJetsPF;
+std::vector<jet1_s> * myJetsPFhelper;
 std::vector<electron3_s> * myElectronsPF;
 std::vector<muon3_s> * myMuonsPF;
 std::vector<tau1_s> * myTausPF;
@@ -86,6 +88,7 @@ double* myEDM_run;
 
 void InitializeStuff(){
   myJetsPF = &jet3;
+  myJetsPFhelper = &jet1;
   myElectronsPF = &electron3;
   myMuonsPF = &muon3;
   myTausPF = &tau1;
@@ -100,7 +103,9 @@ void InitializeStuff(){
   myEDM_run = &edmevent_run;
 }
 #else
+//data
 std::vector<jet2_s> * myJetsPF;
+std::vector<jet_s> * myJetsPFhelper;
 std::vector<electron1_s> * myElectronsPF;
 std::vector<muon1_s> * myMuonsPF;
 std::vector<tau1_s> * myTausPF;
@@ -115,6 +120,7 @@ double* myEDM_run;
 
 void InitializeStuff(){
   myJetsPF = &jet2;            //selectedPatJetsPF
+  myJetsPFhelper = &jet;       //selectedPatJetsPF helper
   myElectronsPF = &electron1;  //selectedPatElectronsPF
   myMuonsPF = &muon1;          //selectedPatMuonsPF
   myTausPF = &tau1;            //selectedPatTausPF
@@ -291,7 +297,22 @@ void resetVariables()
 }
 
 
+void PseudoConstructor() {
+  //  theCutScheme_ = kBaseline2010;
+  //  theMETType_=kpfMET;
+  //  theMETRange_=kHigh;
+  //  theJetType_=kPF;
+  //  theLeptonType_=kPFLeptonsRA2;
+  //  theDPType_=kminDP;
+  theJESType_=kJES0;
+  theJERType_=kJER0;
+  theMETuncType_=kMETunc0;
+  //  theBTagEffType_=kBTagErr0;
+  //  theCleaningType_=kNoCleaning;
+  //  theFlavorHistoryType_=kNoFlvHist;
+  theBTaggerType_=kSSVHPT;
 
+}
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -507,9 +528,96 @@ bool passPV() {
 
 }
 
+float getJERbiasFactor(unsigned int ijet) {
+  float abseta = fabs(myJetsPF->at(ijet).eta);
+
+ 
+  if (theJERType_ == kJERup || theJERType_ ==kJERbias ||theJERType_ ==kJERdown) {
+    //numbers from JME-10-014-pas
+    //i have done my own averaging of Table 1
+    //these numbers are only valid for PF Jets
+    float m = 0;
+    if (theJERType_ == kJERup) m=1;
+    else if (theJERType_==kJERdown) m=-1;
+
+    if (abseta < 1.1) {
+      return 0.06303 + m*0.02478;
+    }
+    else if (abseta <1.7 && abseta>=1.1) {
+      return 0.08467 + m*0.033169;
+    }
+    else if (abseta <2.3 && abseta>=1.7) {
+      return  0.02557 + m*0.049505;
+    }
+    else if (abseta<=5 && abseta>= 2.3) {
+      return 0.15819 + m*0.0663391;
+    }
+    else { //eta>5 not given
+      return 0;
+    }
+  }
+  else if (theJERType_ == kJERra2) {
+    //from the RA2 AN 2011/247
+    float m = 0;
+
+    if (abseta < 0.5) {
+      return 0.052 + m*0.065;
+    }
+    else if (abseta <1.1 && abseta>=0.5) {
+      return 0.057 + m*0.06;
+    }
+    else if (abseta <1.7 && abseta>=1.1) {
+      return  0.096 + m*0.07;
+    }
+    else if (abseta <2.3 && abseta>=1.7) {
+      return  0.134 + m*0.1;
+    }
+    else if (abseta<=5 && abseta>= 2.3) {
+      return 0.288 + m*0.222;
+    }
+    else { //eta>5 not given
+      return 0;
+    }
+  }
+
+  assert(0);
+  return 0;
+}
+
 float getJetPt( unsigned int ijet ) {
-  //need to move to using jecFactor 
-  return myJetsPF->at(ijet).pt;
+
+  //i am going to write this to allow simultaneous use of JER and JES
+  //(hence use if repeated 'if' instead of 'else if')
+  //I hope this is sensible!
+
+  float pt = myJetsPF->at(ijet).pt;
+  //  if ( theJESType_ == kJES0 && theJERType_ == kJER0) return pt;
+
+  //first JER
+  if ( theJERType_ != kJER0 ) {
+    assert(0); //not ready yet until gen jet info is available
+    float genpt = 0;//myJetsPF->at(ijet). //not sure what it will be called
+    if (genpt > 15) {
+      float factor = getJERbiasFactor(ijet);
+      float deltapt = (pt - genpt) * factor;
+      float frac = (pt+deltapt)/pt;
+      float ptscale = frac>0 ? frac : 0;
+      pt *= ptscale;
+    }
+
+  }  
+  //then JES
+  if ( theJESType_ == kJESup ) {
+    //in 2010 there was an extra term added in quadrature. 
+    //i will not implement that because i don't know if that term should exist in 2011
+    pt *= (1+myJetsPFhelper->at(ijet).jetUncPlus);
+  }
+  else if (theJESType_ == kJESdown) {
+    pt *= (1-myJetsPFhelper->at(ijet).jetUncMinus);
+  }
+
+  return pt;
+
 }
 
 float getJetPx( unsigned int ijet ) {

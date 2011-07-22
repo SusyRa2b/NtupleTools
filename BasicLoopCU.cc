@@ -47,6 +47,7 @@ int main(int argc, char** argv)
 
   // Select variables to be read
   selectVariables(stream);
+  PseudoConstructor();
   setBTaggerType(kSSVHPT);  
   //cutflow(stream);
   reducedTree(outputDir, stream);

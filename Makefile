@@ -25,6 +25,7 @@ endif
 cppsrcs	:= $(wildcard *.cpp)
 
 cxxsrcs	:= $(wildcard *.cxx)
+cxxsrcs	:= $(filter-out MiscUtil.cxx,$(cxxsrcs))
 
 cxxhead	:= $(patsubst %.cxx,%.h,$(cxxsrcs))
 
