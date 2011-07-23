@@ -8,10 +8,10 @@ using namespace std;
 
 void makeLowMETTree(){
 
-  TFile fout("/cu2/kreis/reducedTrees/V00-02-05/lowMETTree.ht_run2011a_promptrecov4_throughJun24_v2.root","RECREATE");
+  TFile fout("/cu2/kreis/reducedTrees/lowMETTree.V00_02_05_v2_highStat.root","RECREATE");
 
   TChain* myChain = new TChain("reducedTree");
-  myChain->Add("/cu2/kreis/reducedTrees/V00-02-05/reducedTree.SSVHPT.ht_run2011a_promptrecov4_throughJune24.root");
+  myChain->Add("/cu2/ra2b/reducedTrees/V00-02-05_v2/reducedTree.SSVHPT.ht_*.root");
 
   bool cutHT, cutPV, cut3Jets, cutEleVeto, cutMuVeto, pass_utilityHLT_HT300;
   float HT, MET, minDeltaPhiN, deltaPhiN1, deltaPhiN2, deltaPhiN3;
