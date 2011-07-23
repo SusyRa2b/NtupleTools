@@ -461,32 +461,32 @@ bool passHLT() {
   return passTrig;
 }
 
-bool utilityHLT_HT300(){
-  if(!isRealDataInt(myEDM_isRealData)) return true;
-
-  bool passTrig = false;
+unsigned int utilityHLT_HT300(){
+  if(!isRealDataInt(myEDM_isRealData)) return 999;
+  
+  unsigned int passTrig = 0;
   #ifndef isMC
-  if(edmtriggerresults_HLT_HT300_v1>0) passTrig = true;
-  if(edmtriggerresults_HLT_HT300_v2>0) passTrig = true;
-  if(edmtriggerresults_HLT_HT300_v3>0) passTrig = true;
-  if(edmtriggerresults_HLT_HT300_v4>0) passTrig = true;
-  if(edmtriggerresults_HLT_HT300_v5>0) passTrig = true;
-  if(edmtriggerresults_HLT_HT300_v6>0) passTrig = true;
-  if(edmtriggerresults_HLT_HT300_v7>0) passTrig = true;
-  if(edmtriggerresults_HLT_HT300_v8>0) passTrig = true;
+  if(edmtriggerresults_HLT_HT300_v1>0) passTrig = 1;
+  if(edmtriggerresults_HLT_HT300_v2>0) passTrig = 2;
+  if(edmtriggerresults_HLT_HT300_v3>0) passTrig = 3;
+  if(edmtriggerresults_HLT_HT300_v4>0) passTrig = 4;
+  if(edmtriggerresults_HLT_HT300_v5>0) passTrig = 5;
+  if(edmtriggerresults_HLT_HT300_v6>0) passTrig = 6;
+  if(edmtriggerresults_HLT_HT300_v7>0) passTrig = 7;
+  if(edmtriggerresults_HLT_HT300_v8>0) passTrig = 8;
   #endif
   return passTrig;
 }
 
-bool utilityHLT_HT300_CentralJet30_BTagIP(){
-  if(!isRealDataInt(myEDM_isRealData)) return 1;
+unsigned int utilityHLT_HT300_CentralJet30_BTagIP(){
+  if(!isRealDataInt(myEDM_isRealData)) return 999;
 
-  bool passTrig = false;
+  unsigned int passTrig = 0;
   #ifndef isMC
-  if(edmtriggerresults_HLT_HT300_CentralJet30_BTagIP_v2>0) passTrig = true;
-  if(edmtriggerresults_HLT_HT300_CentralJet30_BTagIP_v3>0) passTrig = true; 
-  if(edmtriggerresults_HLT_HT300_CentralJet30_BTagIP_v4>0) passTrig = true; 
-  if(edmtriggerresults_HLT_HT300_CentralJet30_BTagIP_v5>0) passTrig = true; 
+  if(edmtriggerresults_HLT_HT300_CentralJet30_BTagIP_v2>0) passTrig = 2;
+  if(edmtriggerresults_HLT_HT300_CentralJet30_BTagIP_v3>0) passTrig = 3; 
+  if(edmtriggerresults_HLT_HT300_CentralJet30_BTagIP_v4>0) passTrig = 4; 
+  if(edmtriggerresults_HLT_HT300_CentralJet30_BTagIP_v5>0) passTrig = 5; 
   #endif
   return passTrig;
 }
@@ -2125,7 +2125,7 @@ bool passCut(const TString cutTag) {
 
   if (cutTag=="cutLumiMask" ) return passLumiMask();
   if (cutTag=="cutTrigger" ) return passHLT();
-  if (cutTag=="cutUtilityTrigger" ) return ( utilityHLT_HT300()==1 || utilityHLT_HT300_CentralJet30_BTagIP()==1 );
+  if (cutTag=="cutUtilityTrigger" ) return ( utilityHLT_HT300()>0 || utilityHLT_HT300_CentralJet30_BTagIP()>0 );
 
   if (cutTag=="cutPV") return passPV();
   
@@ -2684,9 +2684,9 @@ void reducedTree(TString outputpath, itreestream& stream)
   bool passBadPFMuon, passInconsistentMuon;
 
   bool isRealData;
-  bool pass_utilityHLT_HT300;
+  UInt_t pass_utilityHLT_HT300;
   UInt_t prescale_utilityHLT_HT300;
-  bool pass_utilityHLT_HT300_CentralJet30_BTagIP;
+  UInt_t pass_utilityHLT_HT300_CentralJet30_BTagIP;
   UInt_t prescale_utilityHLT_HT300_CentralJet30_BTagIP;
 
   int njets, nbjets, nElectrons, nMuons;
@@ -2768,9 +2768,9 @@ void reducedTree(TString outputpath, itreestream& stream)
   reducedTree.Branch("nbjetsTCHPM",&nbjetsTCHPM,"nbjetsTCHPM/I");
 
   reducedTree.Branch("isRealData",&isRealData,"isRealData/O");
-  reducedTree.Branch("pass_utilityHLT_HT300",&pass_utilityHLT_HT300,"pass_utilityHLT_HT300/O");
+  reducedTree.Branch("pass_utilityHLT_HT300",&pass_utilityHLT_HT300,"pass_utilityHLT_HT300/i");
   reducedTree.Branch("prescale_utilityHLT_HT300", &prescale_utilityHLT_HT300, "prescale_utilityHLT_HT300/i");
-  reducedTree.Branch("pass_utilityHLT_HT300_CentralJet30_BTagIP",&pass_utilityHLT_HT300_CentralJet30_BTagIP,"pass_utilityHLT_HT300_CentralJet30_BTagIP/O");
+  reducedTree.Branch("pass_utilityHLT_HT300_CentralJet30_BTagIP",&pass_utilityHLT_HT300_CentralJet30_BTagIP,"pass_utilityHLT_HT300_CentralJet30_BTagIP/i");
   reducedTree.Branch("prescale_utilityHLT_HT300_CentralJet30_BTagIP", &prescale_utilityHLT_HT300_CentralJet30_BTagIP, "prescale_utilityHLT_HT300_CentralJet30_BTagIP/i");  
 
   reducedTree.Branch("HT",&HT,"HT/F");
