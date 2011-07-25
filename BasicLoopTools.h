@@ -2318,6 +2318,8 @@ int Cut(unsigned int entry)
 double getCrossSection(TString inname){
   //from https://twiki.cern.ch/twiki/bin/view/CMS/SusyRA2BJets2011?rev=36
 
+  const double bf = 0.32442;
+
   if (inname.Contains("DYJetsToLL_TuneD6T_M-10To50_7TeV-madgraph-tauola") )     return 310;
   if (inname.Contains("DYJetsToLL_TuneD6T_M-50_7TeV-madgraph-tauola") )         return 3048;
   if (inname.Contains("LM13_SUSY_sftsht_7TeV-pythia6") )                        return 6.899;
@@ -2338,14 +2340,14 @@ double getCrossSection(TString inname){
   if (inname.Contains("QCD_Pt_600to800_TuneZ2_7TeV_pythia6") )                  return 1.555e1;
   if (inname.Contains("QCD_Pt_800to1000_TuneZ2_7TeV_pythia6") )                 return 1.844;
   if (inname.Contains("QCD_Pt_80to120_TuneZ2_7TeV_pythia6_3") )                 return 7.843e5;
-  if (inname.Contains("TTJets_TuneD6T_7TeV-madgraph-tauola") )                  return 165;
-  if (inname.Contains("TToBLNu_TuneZ2_s-channel_7TeV-madgraph") )               return 4.6;
-  if (inname.Contains("TToBLNu_TuneZ2_t-channel_7TeV-madgraph") )               return 64.6;
+  if (inname.Contains("TTJets_TuneD6T_7TeV-madgraph-tauola") )                  return 158; // +/- 10 +/- 15 //CMS PAS TOP-11-001
+  if (inname.Contains("TToBLNu_TuneZ2_s-channel_7TeV-madgraph") )               return bf*4.6; //note BF factor
+  if (inname.Contains("TToBLNu_TuneZ2_t-channel_7TeV-madgraph") )               return bf*64.6; //note BF factor
   if (inname.Contains("TToBLNu_TuneZ2_tW-channel_7TeV-madgraph") )              return 10.6;
   if (inname.Contains("WJetsToLNu_TuneZ2_7TeV-madgraph-tauola") )               return 31314;
   if (inname.Contains("WWtoAnything_TuneZ2_7TeV-pythia6-tauola") )              return 43;
   if (inname.Contains("WZtoAnything_TuneZ2_7TeV-pythia6-tauola") )              return 10.4;
-  if (inname.Contains("ZinvisibleJets_7TeV-madgraph") )                         return 4500;
+  if (inname.Contains("ZinvisibleJets_7TeV-madgraph") )                         return 5760; //NNLO, taken from RA2 note //RA1 uses 5715
   if (inname.Contains("ZZtoAnything_TuneZ2_7TeV-pythia6-tauola") )              return 4.297;
 
   //Summer11 samples
@@ -2365,7 +2367,7 @@ double getCrossSection(TString inname){
   if (inname.Contains("qcd_tunez2_pt600to800_summer11") )                       return 1.555e1;
   if (inname.Contains("qcd_tunez2_pt800to1000_summer11") )                      return 1.844;
   if (inname.Contains("qcd_tunez2_pt80to120_summer11") )                        return 7.843e5;
-  if (inname.Contains("ttjets_tunez2_madgraph_tauola_summer11") )               return 165;
+  if (inname.Contains("ttjets_tunez2_madgraph_tauola_summer11") )               return 158; // +/- 10 +/- 15 //CMS PAS TOP-11-001
 
     
   std::cout<<"Cannot find cross section for this sample!"<<std::endl;
