@@ -649,8 +649,6 @@ void loadSamples(bool joinSingleTop=true) {
     dname.ReplaceAll("JERbias6_",""); //JERbias not relevant for data
   }
   if ( dodata_) {
-    //    fdata = new TFile(dname);
-    //    if (fdata->IsZombie()) cout<<"Problem with data file! "<<dname<<endl; 
     dtree = new TChain("reducedTree");
     dtree->Add(dname);
   }
@@ -847,6 +845,7 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
     histos_[samples_[isample]]->SetXTitle(xtitle);
     histos_[samples_[isample]]->SetYTitle(ytitle);
 
+    hinteractive = histos_[samples_[isample]];// hinteractive will point to the last sample's histo
 
    if (!samples_[isample].Contains("LM")) {
       totalsm->Add(histos_[samples_[isample]]);
@@ -1054,6 +1053,7 @@ void drawPlots(const TString var, const int nbins, const float* varbins, const T
 TH1D* getHist(const TString & sample) {
   TH1D* h=0;
   if (sample=="totalsm") h=totalsm;
+  else if (sample=="data") h=hdata;
   else h = histos_[sample];
 
   return h;
@@ -1117,7 +1117,8 @@ void drawR(const TString vary, const float cutVal, const int nbins, const float 
 
   gROOT->SetStyle("CMS");
 
-  renewCanvas("ratio");
+  TString opt=doRatio_? "ratio":"";
+  renewCanvas(opt);
 
   //in first incarnation, make a separate r(MET) plot for each sample in the list
 
@@ -1193,6 +1194,12 @@ void drawR(const TString vary, const float cutVal, const int nbins, const float 
     if (addOverflow_)  addOverflowBin( histos_[hnameP] );
     if (addOverflow_)  addOverflowBin( histos_[hnameF] );
 
+    cout<<"Bug check!"<<endl;
+    for (int ib=1; ib<3; ib++) {
+      cout<<histos_[hnameP]->GetBinContent(ib)<<"\t";
+      cout<<histos_[hnameF]->GetBinContent(ib)<<"\t";
+      cout<<histos_[hnameR]->GetBinContent(ib)<<endl;
+    }
     //compute ratio
     histos_[hnameR]->Divide(histos_[hnameP], histos_[hnameF]);
 
@@ -1218,6 +1225,7 @@ void drawR(const TString vary, const float cutVal, const int nbins, const float 
     histos_[hnameR]->SetMarkerStyle(sampleMarkerStyle_[samples_[isample]]);
     histos_[hnameR]->SetMarkerColor(sampleColor_[samples_[isample]]);
     histos_[hnameR]->SetYTitle(ytitle);
+    histos_[hnameR]->SetXTitle(var);
 
     //ad hoc additions
     histos_[hnameR]->SetLineWidth(2);
@@ -1337,8 +1345,18 @@ void drawR(const TString vary, const float cutVal, const int nbins, const float 
       cb_data_err = jmt::errAoverB(hdata->GetBinContent(4),hdata->GetBinError(4),hdata->GetBinContent(3),hdata->GetBinError(3)); 
     }
   }
+  else {
+    if (doCustomPlotMax_) {
+      histos_[firsthist]->SetMaximum( customPlotMax_);
+      totalsm->SetMaximum(customPlotMax_);
+    }
+    if (doCustomPlotMin_) {
+      histos_[firsthist]->SetMinimum( customPlotMin_);
+      totalsm->SetMinimum(customPlotMin_);
+    }
+  }
   thecanvas->cd(1);
-  leg->Draw();
+   if (doleg_)  leg->Draw();
 
   thecanvas->SaveAs("mindpPassOverFail-"+savename+".eps");
   thecanvas->SaveAs("mindpPassOverFail-"+savename+".pdf");
