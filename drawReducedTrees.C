@@ -96,13 +96,13 @@ double lumiScale_ = 1096.441 / 1.0;
 
 #include "drawReducedTrees.h"
 
-void anotherABCD( TString btagselection, bool tight, bool isSIG ) {
+void anotherABCD( TString btagselection, bool tight, bool isSIG, bool datamode=false ) {
   /*
 .L drawReducedTrees.C++
   */
 
   setStackMode(false);
-  doData(false);
+  doData(datamode);
  setQuiet(true);
 
   useFlavorHistoryWeights_=false;
@@ -111,8 +111,17 @@ void anotherABCD( TString btagselection, bool tight, bool isSIG ) {
 //   clearSamples();
 //   addSample("PythiaPUQCD");
 
-//  TString sampleOfInterest = "totalsm";//"PythiaPUQCD";
   TString sampleOfInterest = "PythiaPUQCD";
+  if (datamode) {
+    sampleOfInterest = "data";//"PythiaPUQCD";
+    clearSamples();
+    addSample("TTbarJets");
+    addSample("WJets");
+    addSample("ZJets");
+    addSample("Zinvisible");
+    addSample("VV");
+    //    addSample("SingleTop"); //not now because it is broken
+  }
 
   savePlots_=false;
 
@@ -122,6 +131,13 @@ void anotherABCD( TString btagselection, bool tight, bool isSIG ) {
   float low,high;
 
  // --  count events
+  TCut triggerCutLSB = "1";
+  TCut triggerCut = "1";
+  if (datamode) {
+    triggerCutLSB = "pass_utilityHLT_HT300==1";
+    triggerCut = "cutTrigger==1";
+  }
+
   TCut HTcut,SRMET;
   TCut ge1b = "nbjetsSSVHPT>=1";
   if (btagselection=="ge2b") {
@@ -140,12 +156,12 @@ void anotherABCD( TString btagselection, bool tight, bool isSIG ) {
     if (isSIG)  SRMET = "MET >= 200";
     else SRMET = "MET>=150 && MET<200";
   }
-  SRMET = SRMET && ge1b;
+  SRMET = SRMET && ge1b && triggerCut;
 
   TCut baseline = "cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1";
   baseline = baseline&&HTcut;
   TCut cleaning = "weight<1000";
-  TCut SBMET = "MET>=50 && MET<100 && nbjetsSSVHPT==0";
+  TCut SBMET = TCut("MET>=50 && MET<100 && nbjetsSSVHPT==0")&&triggerCutLSB;
   TCut dpcut = "1";//"minDeltaPhiN>=4";
   //  TCut passOther = "deltaPhiMPTcaloMET<2";
   //  TCut failOther = "deltaPhiMPTcaloMET>=2";
@@ -172,6 +188,12 @@ void anotherABCD( TString btagselection, bool tight, bool isSIG ) {
   D=getIntegral(sampleOfInterest);
   Derr=getIntegralErr(sampleOfInterest);
 
+  double Dsub = 0,Dsuberr=0;
+  if (datamode) {
+    Dsub = getIntegral("totalsm");
+    Dsuberr = getIntegralErr("totalsm");
+  }
+
   //SIG
   selection_ = baseline && cleaning && dpcut  && SRMET && passOther; //auto cast to TString seems to work
   drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_C");
@@ -179,8 +201,8 @@ void anotherABCD( TString btagselection, bool tight, bool isSIG ) {
   SIGerr=getIntegralErr(sampleOfInterest);
 
   //now calculate B*D/A
-  double numerr=jmt::errAtimesB(B,Berr,D,Derr);
-  double num = B*D;
+  double numerr=jmt::errAtimesB(B,Berr,D-Dsub,sqrt(Derr*Derr+Dsuberr*Dsuberr));
+  double num = B*(D-Dsub);
   double estimate = num / A;
   double estimateerr= jmt::errAoverB(num,numerr,A,Aerr);
 //   cout<<" ==== "<<endl
@@ -189,10 +211,18 @@ void anotherABCD( TString btagselection, bool tight, bool isSIG ) {
   btagselection += tight ? " Tight " : " Loose ";
   btagselection += isSIG ? "SIG":"SB";
   char output[500];
+  if (!datamode) {
   sprintf(output,"%s & %s & %s & %s & %s & %s \\\\",btagselection.Data(),
 	  jmt::format_nevents(B,Berr).Data(),jmt::format_nevents(A,Aerr).Data(),
 	  jmt::format_nevents(D,Derr).Data(),jmt::format_nevents(estimate,estimateerr).Data(),
-	  jmt::format_nevents(SIG,SIGerr).Data());
+	  jmt::format_nevents(SIG,SIGerr).Data());}
+  else {
+    sprintf(output,"%s & %d & %d & %d & %s & %s   \\\\",btagselection.Data(),
+	    TMath::Nint(B),TMath::Nint(A),
+	    TMath::Nint(D), jmt::format_nevents(Dsub,Dsuberr).Data(),
+	    jmt::format_nevents(estimate,estimateerr).Data());
+    cout<<"DATA\t";
+  }
   cout<<output<<endl;
 }
 
@@ -207,6 +237,18 @@ void runClosureTest2011() {
   anotherABCD("ge2b", false, true);
   anotherABCD("ge2b", true, false);
   anotherABCD("ge2b", true, true);
+}
+
+void runDataQCD2011() {
+  anotherABCD("ge1b", false, false,true);
+  anotherABCD("ge1b", false, true,true);
+  anotherABCD("ge1b", true, false,true);
+  anotherABCD("ge1b", true, true,true);
+
+  anotherABCD("ge2b", false, false,true);
+  anotherABCD("ge2b", false, true,true);
+  anotherABCD("ge2b", true, false,true);
+  anotherABCD("ge2b", true, true,true);
 }
 
 void slABCD( TString btagselection, bool tight ) {
