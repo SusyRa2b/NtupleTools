@@ -96,7 +96,250 @@ double lumiScale_ = 1096.441 / 1.0;
 
 #include "drawReducedTrees.h"
 
-void AN2011_prescale( TString btagselection="ge2b" ) {
+void anotherABCD( TString btagselection, bool tight, bool isSIG ) {
+  /*
+.L drawReducedTrees.C++
+  */
+
+  setStackMode(false);
+  doData(false);
+ setQuiet(true);
+
+  useFlavorHistoryWeights_=false;
+  loadSamples(); //needs to come first! this is why this should be turned into a class, with this guy in the ctor
+  setColorScheme("nostack");
+//   clearSamples();
+//   addSample("PythiaPUQCD");
+
+//  TString sampleOfInterest = "totalsm";//"PythiaPUQCD";
+  TString sampleOfInterest = "PythiaPUQCD";
+
+  savePlots_=false;
+
+  setLogY(false);
+  TString var,xtitle;
+  int nbins;
+  float low,high;
+
+ // --  count events
+  TCut HTcut,SRMET;
+  TCut ge1b = "nbjetsSSVHPT>=1";
+  if (btagselection=="ge2b") {
+    ge1b="nbjetsSSVHPT>=2";
+  }
+  else if (btagselection=="ge1b") {}
+  else {assert(0);}
+
+  if (tight) {
+    HTcut = "HT>=500";
+    if (isSIG)  SRMET = "MET >= 300";
+    else SRMET = "MET>=150 && MET<200";
+  }
+  else {
+    HTcut = "HT>=350";
+    if (isSIG)  SRMET = "MET >= 200";
+    else SRMET = "MET>=150 && MET<200";
+  }
+  SRMET = SRMET && ge1b;
+
+  TCut baseline = "cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1";
+  baseline = baseline&&HTcut;
+  TCut cleaning = "weight<1000";
+  TCut SBMET = "MET>=50 && MET<100 && nbjetsSSVHPT==0";
+  TCut dpcut = "1";//"minDeltaPhiN>=4";
+  //  TCut passOther = "deltaPhiMPTcaloMET<2";
+  //  TCut failOther = "deltaPhiMPTcaloMET>=2";
+  TCut passOther = "minDeltaPhiN>=4";
+  TCut failOther = "minDeltaPhiN<4";
+
+  double A,B,D,SIG,Aerr,Berr,Derr,SIGerr;
+  //50 - 100 and high MPT,MET ("A")
+  selection_ = baseline && cleaning && dpcut  && SBMET && failOther; //auto cast to TString seems to work
+
+  var="HT"; xtitle=var;
+  nbins=10; low=0; high=2000;
+  drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_A");
+  A=getIntegral(sampleOfInterest);
+  Aerr=getIntegralErr(sampleOfInterest);
+  //B
+  selection_ = baseline && cleaning && dpcut  && SBMET && passOther; //auto cast to TString seems to work
+  drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_B");
+  B=getIntegral(sampleOfInterest);
+  Berr=getIntegralErr(sampleOfInterest);
+  //D
+  selection_ = baseline && cleaning && dpcut  && SRMET && failOther; //auto cast to TString seems to work
+  drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_D");
+  D=getIntegral(sampleOfInterest);
+  Derr=getIntegralErr(sampleOfInterest);
+
+  //SIG
+  selection_ = baseline && cleaning && dpcut  && SRMET && passOther; //auto cast to TString seems to work
+  drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_C");
+  SIG=getIntegral(sampleOfInterest);
+  SIGerr=getIntegralErr(sampleOfInterest);
+
+  //now calculate B*D/A
+  double numerr=jmt::errAtimesB(B,Berr,D,Derr);
+  double num = B*D;
+  double estimate = num / A;
+  double estimateerr= jmt::errAoverB(num,numerr,A,Aerr);
+//   cout<<" ==== "<<endl
+//       <<"Estimate = "<<estimate<<" +/- "<<estimateerr<<endl
+//       <<" truth   = "<<SIG     <<" +/- "<<SIGerr<<endl;
+  btagselection += tight ? " Tight " : " Loose ";
+  btagselection += isSIG ? "SIG":"SB";
+  char output[500];
+  sprintf(output,"%s & %s & %s & %s & %s & %s \\\\",btagselection.Data(),
+	  jmt::format_nevents(B,Berr).Data(),jmt::format_nevents(A,Aerr).Data(),
+	  jmt::format_nevents(D,Derr).Data(),jmt::format_nevents(estimate,estimateerr).Data(),
+	  jmt::format_nevents(SIG,SIGerr).Data());
+  cout<<output<<endl;
+}
+
+void runClosureTest2011() {
+
+  anotherABCD("ge1b", false, false);
+  anotherABCD("ge1b", false, true);
+  anotherABCD("ge1b", true, false);
+  anotherABCD("ge1b", true, true);
+
+  anotherABCD("ge2b", false, false);
+  anotherABCD("ge2b", false, true);
+  anotherABCD("ge2b", true, false);
+  anotherABCD("ge2b", true, true);
+}
+
+void slABCD( TString btagselection, bool tight ) {
+  /*
+.L drawReducedTrees.C++
+  */
+
+  setStackMode(false);
+  doData(true);
+  setQuiet(true);
+
+  useFlavorHistoryWeights_=false;
+  loadSamples(); //needs to come first! this is why this should be turned into a class, with this guy in the ctor
+  setColorScheme("nostack");
+  clearSamples();
+  addSample("TTbarJets");
+  addSample("WJets");
+
+  TString sampleOfInterest = "totalsm";//"PythiaPUQCD";
+  //  TString sampleOfInterest = "PythiaPUQCD";
+
+  savePlots_=false;
+
+  setLogY(false);
+  TString var,xtitle;
+  int nbins;
+  float low,high;
+
+ // --  count events
+  TCut HTcut,SRMET;
+  TCut ge1b = "nbjetsSSVHPT>=1";
+  if (btagselection=="ge2b") {
+    ge1b="nbjetsSSVHPT>=2";
+  }
+  else if (btagselection=="ge1b") {}
+  else {assert(0);}
+
+  if (tight) {
+    HTcut = "HT>=500";
+    SRMET = "MET >= 300";
+  }
+  else {
+    HTcut = "HT>=350";
+    SRMET = "MET >= 200";
+  }
+
+  TCut baseline = "cutPV==1 && cut3Jets==1";
+  baseline = baseline&&HTcut&&ge1b;
+  TCut cleaning = "weight<1000";
+  TCut SBMET = "MET>=150 && MET<200";
+  TCut dpcut = "minDeltaPhiN>=4";
+  //  TCut passOther = "deltaPhiMPTcaloMET<2";
+  //  TCut failOther = "deltaPhiMPTcaloMET>=2";
+  TCut failOther = "((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0))";
+  TCut passOther = "nElectrons==0 && nMuons==0";
+
+  double A,B,D,SIG,Aerr,Berr,Derr,SIGerr;
+  double dA,dB,dD,dSIG,dAerr,dBerr,dDerr,dSIGerr;
+  //A = SB, SL
+  selection_ = baseline && cleaning && dpcut  && SBMET && failOther; //auto cast to TString seems to work
+  var="HT"; xtitle=var;
+  nbins=10; low=0; high=2000;
+  drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_A");
+  A=getIntegral(sampleOfInterest);
+  Aerr=getIntegralErr(sampleOfInterest);
+  dA=getIntegral("data");
+  dAerr=getIntegralErr("data");
+  //B = SB
+  selection_ = baseline && cleaning && dpcut  && SBMET && passOther; //auto cast to TString seems to work
+  drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_B");
+  B=getIntegral(sampleOfInterest);
+  Berr=getIntegralErr(sampleOfInterest);
+  dB=getIntegral("data");
+  dBerr=getIntegralErr("data");
+  //D = SIG,SL
+  selection_ = baseline && cleaning && dpcut  && SRMET && failOther; //auto cast to TString seems to work
+  drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_D");
+  D=getIntegral(sampleOfInterest);
+  Derr=getIntegralErr(sampleOfInterest);
+  dD=getIntegral("data");
+  dDerr=getIntegralErr("data");
+
+  //SIG
+  selection_ = baseline && cleaning && dpcut  && SRMET && passOther; //auto cast to TString seems to work
+  drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_C");
+  SIG=getIntegral(sampleOfInterest);
+  SIGerr=getIntegralErr(sampleOfInterest);
+  dSIG=getIntegral("data");
+  dSIGerr=getIntegralErr("data");
+
+  //now calculate B*D/A
+  double numerr=jmt::errAtimesB(B,Berr,D,Derr);
+  double num = B*D;
+  double estimate = num / A;
+  double estimateerr= jmt::errAoverB(num,numerr,A,Aerr);
+
+
+//   cout<<" ==== "<<endl
+//       <<"Estimate = "<<estimate<<" +/- "<<estimateerr<<endl
+//       <<" truth   = "<<SIG     <<" +/- "<<SIGerr<<endl;
+  btagselection += tight ? " Tight " : " Loose ";
+ 
+  char output[500];
+  cout<<" -- closure test in MC -- "<<endl;
+  sprintf(output,"%s & %s & %s & %s & %s & %s \\\\",btagselection.Data(),
+	  jmt::format_nevents(D,Derr).Data(),jmt::format_nevents(A,Aerr).Data(),
+	  jmt::format_nevents(B,Berr).Data(),jmt::format_nevents(estimate,estimateerr).Data(),
+	  jmt::format_nevents(SIG,SIGerr).Data());
+  cout<<output<<endl;
+  cout<<" -- data -- "<<endl;
+
+  numerr=jmt::errAtimesB(dB,dBerr,dD,dDerr);
+  num = dB*dD;
+  estimate = num / dA;
+  estimateerr= jmt::errAoverB(num,numerr,dA,dAerr);
+  sprintf(output,"%s & %s & %s & %s & %s & %s \\\\",btagselection.Data(),
+	  jmt::format_nevents(dD,dDerr).Data(),jmt::format_nevents(dA,dAerr).Data(),
+	  jmt::format_nevents(dB,dBerr).Data(),jmt::format_nevents(estimate,estimateerr).Data(),
+	  jmt::format_nevents(SIG,SIGerr).Data());
+  cout<<output<<endl;
+}
+
+void runSLClosureTest2011() {
+
+  slABCD("ge1b", false);
+  slABCD("ge1b", true);
+
+  slABCD("ge2b", false);
+  slABCD("ge2b", true);
+
+}
+
+void AN2011_prescale( TString btagselection="ge1b" ) {
   /*
 .L drawReducedTrees.C++
   */
@@ -109,7 +352,7 @@ void AN2011_prescale( TString btagselection="ge2b" ) {
     btagcut = "nbjetsSSVHPT==1";
   }
   else if ( btagselection=="eq0b" ) {
-    btagcut = "nbjetsSSVHPT==0 && weight<10000";
+    btagcut = "nbjetsSSVHPT==0";
   }
   else {
     assert(0);
@@ -125,8 +368,8 @@ void AN2011_prescale( TString btagselection="ge2b" ) {
 
   // ==========================
 
-  TCut util = "pass_utilityHLT_HT300==1";
-  lumiScale_ = 5*4.17935645; //customize lumiScale_ //NEEDS update to actual correct value!
+  TCut util = "pass_utilityHLT_HT300==1 && weight<1000";
+  lumiScale_ = 16.3030312; //customize lumiScale_
 
   // ========= regular N-1 plots
 
@@ -140,18 +383,135 @@ void AN2011_prescale( TString btagselection="ge2b" ) {
   selection_ =TCut("cutHT==1 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4")&&util&&btagcut;
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
   nbins = 20; low=0; high=200;
+  setLogY(false); resetPlotMinimum();
+  drawPlots(var,nbins,low,high,xtitle,"Events", "prescaled_MET_"+btagselection);
+  setLogY(true);  setPlotMinimum(1e-1);
   drawPlots(var,nbins,low,high,xtitle,"Events", "prescaled_MET_"+btagselection);
 
   //njets in 50 < MET < 100 region
   selection_ =TCut("cutHT==1 && cutPV==1 && MET>=50 && MET<100 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4")&&util&&btagcut;
   var="njets"; xtitle="Jet multiplicity";
   nbins = 8; low=1; high=9;
+  setLogY(false); resetPlotMinimum();
   drawPlots(var,nbins,low,high,xtitle,"Events", "prescaled_njets_LSB_"+btagselection);
 
   selection_ =TCut("cutHT==1 && cutPV==1 && MET>=50 && MET<100 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && weight<10000")&&util&&btagcut;
   var="minDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}";
   nbins = 20; low=0; high=40;
+  setLogY(false); resetPlotMinimum();
   drawPlots(var,nbins,low,high,xtitle,"Events", "prescaled_minDeltaPhiN_LSB_"+btagselection);
+  setLogY(true);  setPlotMinimum(1e-1);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "prescaled_minDeltaPhiN_LSB_"+btagselection);
+
+  //sanity check
+  doRatioPlot(true);
+  ratioMin=0; ratioMax=3;
+  selection_ =TCut("MET>150 && cutHT==1 && cutPV==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN < 4")&&util;
+  var="MET"; xtitle="E_{T}^{miss} [GeV]";
+  nbins = 10; low=150; high=250;
+  setLogY(false); resetPlotMinimum();
+  drawPlots(var,nbins,low,high,xtitle,"Events", "prescaled_METhigh_lowDP");
+
+  lumiScale_ = 1096.441;
+  ratioMin=1; ratioMax=1.5;
+  selection_ ="cutTrigger==1 && MET>150 && cutHT==1 && cutPV==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN < 4";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "unprescaled_METhigh_lowDP");
+
+
+}
+
+void AN2011_ttbarw( TString btagselection="ge1b", TString HTselection="Loose" ) {
+
+  /*
+goal:
+
+show MET distributions for w+jets, ttbar
+in both the SL and nominal samples
+
+this is going to require some serious kludgey stuff because this code has
+never been used to plot the sample sample with different cuts on top of each 
+other.
+  */
+
+  /*
+.L drawReducedTrees.C++
+  */
+
+  TCut btagcut = "nbjetsSSVHPT>=1";
+  if ( btagselection=="ge1b") {} //do nothing
+  else  if ( btagselection=="ge2b" ) {
+    btagcut = "nbjetsSSVHPT>=2";
+  }
+  else if ( btagselection=="eq1b" ) {
+    btagcut = "nbjetsSSVHPT==1";
+  }
+  else {
+    assert(0);
+  }
+
+
+  TCut HTcut="HT>=350";
+  if (HTselection=="Tight")  HTcut="HT>=500";
+
+  loadSamples();
+
+  int nbins;
+  float low,high;
+  TString var,xtitle;
+  
+  doOverflowAddition(true);
+
+  setStackMode(false,true); //normalized
+  setColorScheme("nostack");
+  clearSamples();
+  addSample("TTbarJets");
+  drawLegend(false);
+  doRatioPlot(false);
+
+  doData(false);
+
+  selection_ =TCut("MET>=150 && cutPV==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && minDeltaPhiN >= 4")&&btagcut&&HTcut;
+  var="MET"; xtitle="E_{T}^{miss} [GeV]";
+  nbins = 40; low=150; high=550;
+  drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "SBandSIG_MET_SL_ttbar_"+btagselection+"_"+HTselection);
+
+  TH1D* SLttbar = (TH1D*)hinteractive->Clone("SLttbar");
+  //now switch to the normal selection
+  selection_ =TCut("MET>=150 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4")&&btagcut&&HTcut;
+  drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "SBandSIG_MET_normal_ttbar_"+btagselection+"_"+HTselection);
+  SLttbar->SetLineColor(kRed);
+  SLttbar->SetMarkerColor(kRed);
+  SLttbar->Draw("SAME");
+
+  thecanvas->SaveAs("METshape_ttbar_SLandStandard_"+btagselection+"_"+HTselection+".pdf");
+  //not enough stats in WJets to really show anything
+
+}
+
+void AN2011_r() {
+  TString btagselection="ge1b";
+  TCut btagcut = "nbjetsSSVHPT>=1";
+  loadSamples();
+
+  // == draw r(MET)
+  clearSamples();
+  addSample("PythiaPUQCD");
+  setColorScheme("nostack");
+
+  drawLegend(false);
+  doRatioPlot(false);
+  doData(false);
+  setStackMode(false);
+  doOverflowAddition(true);
+
+  selection_ =TCut("cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1&&weight<1000")&&btagcut;
+  setPlotMaximum(0.7); setPlotMinimum(0);
+  drawR("minDeltaPhi",0.3,15,50,350,"old_"+btagselection);
+  drawR("minDeltaPhiN",4,15,50,350,btagselection);
+
+  selection_ ="cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && nbjetsSSVHPT==0&&weight<1000";
+  drawR("minDeltaPhiN",4,15,50,350,"eq0b");
+
 
 }
 
@@ -195,6 +555,7 @@ void AN2011( TString btagselection="ge1b" ) {
   //no delta phi cut, loose MET window (only good for MC)
   selection_ =TCut("cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=100")&&btagcut;
   drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "minDeltaPhiN_looseMET_MConly_"+btagselection);
+
 
   // ========= regular N-1 plots
 
@@ -287,6 +648,7 @@ void AN2011( TString btagselection="ge1b" ) {
   var="MT_Wlep"; xtitle="M_{T} [GeV]";
   nbins = 20; low=0; high=200;
   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MT_0e1mu_0b");
+
 
 
 }
