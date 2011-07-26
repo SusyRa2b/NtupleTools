@@ -739,16 +739,25 @@ void AN2011( TString btagselection="ge1b" ) {
   nbins = 15; low=150; high=450;
   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_HT500_"+btagselection);
 
+
   // == finally, draw the signal region only!
   selection_ =TCut("cutHT==1 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=200 && minDeltaPhiN >= 4")&&btagcut;
   var="HT"; xtitle="H_{T} (GeV)";
   nbins = 20; low=350; high=1050;
   drawPlots(var,nbins,low,high,xtitle,"Events", "SIG_HT_"+btagselection);
 
+  var="MET+HT"; xtitle="M_{eff} [GeV]";
+  nbins = 20; low=550; high=1550;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "SIG_Meff__"+btagselection);
+
   selection_ =TCut("HT>=500 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=300 && minDeltaPhiN >= 4")&&btagcut;
   var="HT"; xtitle="H_{T} (GeV)";
   nbins = 20; low=500; high=1050;
   drawPlots(var,nbins,low,high,xtitle,"Events", "SIGtight_HTtight_"+btagselection);
+
+  var="MET+HT"; xtitle="M_{eff} [GeV]";
+  nbins = 10; low=800; high=1600;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "SIGtight_Meff__"+btagselection);
 
   // ===== single lepton selection
 
