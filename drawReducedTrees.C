@@ -96,7 +96,7 @@ double lumiScale_ = 1096.441 / 1.0;
 
 #include "drawReducedTrees.h"
 
-void anotherABCD( TString btagselection, bool tight, bool isSIG, bool datamode=false ) {
+std::pair<double,double> anotherABCD( TString btagselection, bool tight, bool isSIG, bool datamode=false, float subscale=1 ) {
   /*
 .L drawReducedTrees.C++
   */
@@ -162,6 +162,7 @@ void anotherABCD( TString btagselection, bool tight, bool isSIG, bool datamode=f
   baseline = baseline&&HTcut;
   TCut cleaning = "weight<1000";
   TCut SBMET = TCut("MET>=50 && MET<100 && nbjetsSSVHPT==0")&&triggerCutLSB;
+  //TCut SBMET = TCut("MET>=50 && MET<100 && nbjetsSSVHPT>=1")&&triggerCutLSB; //careful!
   TCut dpcut = "1";//"minDeltaPhiN>=4";
   //  TCut passOther = "deltaPhiMPTcaloMET<2";
   //  TCut failOther = "deltaPhiMPTcaloMET>=2";
@@ -190,9 +191,10 @@ void anotherABCD( TString btagselection, bool tight, bool isSIG, bool datamode=f
 
   double Dsub = 0,Dsuberr=0;
   if (datamode) {
-    Dsub = getIntegral("totalsm");
-    Dsuberr = getIntegralErr("totalsm");
+    Dsub = subscale*getIntegral("totalsm");
+    Dsuberr = subscale*getIntegralErr("totalsm");
   }
+  if (Dsub>D) {Dsub=D-0.00001; cout<<"Subtraction in D is as big as D!"<<endl;}
 
   //SIG
   selection_ = baseline && cleaning && dpcut  && SRMET && passOther; //auto cast to TString seems to work
@@ -212,10 +214,10 @@ void anotherABCD( TString btagselection, bool tight, bool isSIG, bool datamode=f
   btagselection += isSIG ? "SIG":"SB";
   char output[500];
   if (!datamode) {
-  sprintf(output,"%s & %s & %s & %s & %s & %s \\\\",btagselection.Data(),
+  sprintf(output,"%s & %s & %s & %s & %s & %s \\\\ %% %f",btagselection.Data(),
 	  jmt::format_nevents(B,Berr).Data(),jmt::format_nevents(A,Aerr).Data(),
 	  jmt::format_nevents(D,Derr).Data(),jmt::format_nevents(estimate,estimateerr).Data(),
-	  jmt::format_nevents(SIG,SIGerr).Data());}
+	  jmt::format_nevents(SIG,SIGerr).Data(),(SIG-estimate)/SIG);}
   else {
     sprintf(output,"%s & %d & %d & %d & %s & %s   \\\\",btagselection.Data(),
 	    TMath::Nint(B),TMath::Nint(A),
@@ -224,6 +226,7 @@ void anotherABCD( TString btagselection, bool tight, bool isSIG, bool datamode=f
     cout<<"DATA\t";
   }
   cout<<output<<endl;
+  return make_pair(estimate,estimateerr);
 }
 
 void runClosureTest2011() {
@@ -240,15 +243,54 @@ void runClosureTest2011() {
 }
 
 void runDataQCD2011() {
-  anotherABCD("ge1b", false, false,true);
-  anotherABCD("ge1b", false, true,true);
-  anotherABCD("ge1b", true, false,true);
-  anotherABCD("ge1b", true, true,true);
 
-  anotherABCD("ge2b", false, false,true);
-  anotherABCD("ge2b", false, true,true);
-  anotherABCD("ge2b", true, false,true);
-  anotherABCD("ge2b", true, true,true);
+  std::pair<double,double> n[8];
+  std::pair<double,double> p[8];
+  std::pair<double,double> m[8];
+
+  int i=0;
+  n[i++]=anotherABCD("ge1b", false, false,true);
+  n[i++]=anotherABCD("ge1b", false, true,true);
+  n[i++]=anotherABCD("ge1b", true, false,true);
+  n[i++]=anotherABCD("ge1b", true, true,true);
+  
+  n[i++]=anotherABCD("ge2b", false, false,true);
+  n[i++]=anotherABCD("ge2b", false, true,true);
+  n[i++]=anotherABCD("ge2b", true, false,true);
+  n[i++]=anotherABCD("ge2b", true, true,true);
+  
+  return;
+
+  //now do it again with +50% subtraction
+  i=0;
+  cout<<" subtraction +50% "<<endl;
+  p[i++]=anotherABCD("ge1b", false, false,true,1.5);
+  p[i++]=anotherABCD("ge1b", false, true,true,1.5);
+  p[i++]=anotherABCD("ge1b", true, false,true,1.5);
+  p[i++]=anotherABCD("ge1b", true, true,true,1.5);
+  
+  p[i++]=anotherABCD("ge2b", false, false,true,1.5);
+  p[i++]=anotherABCD("ge2b", false, true,true,1.5);
+  p[i++]=anotherABCD("ge2b", true, false,true,1.5);
+  p[i++]= anotherABCD("ge2b", true, true,true,1.5);
+
+  //now do it again with -50% subtraction
+  i=0;
+  cout<<" subtraction -50% "<<endl;
+  m[i++]=anotherABCD("ge1b", false, false,true,0.5);
+  m[i++]=anotherABCD("ge1b", false, true,true,0.5);
+  m[i++]=anotherABCD("ge1b", true, false,true,0.5);
+  m[i++]=anotherABCD("ge1b", true, true,true,0.5);
+  
+  m[i++]=anotherABCD("ge2b", false, false,true,0.5);
+  m[i++]=anotherABCD("ge2b", false, true,true,0.5);
+  m[i++]=anotherABCD("ge2b", true, false,true,0.5);
+  m[i++]=anotherABCD("ge2b", true, true,true,0.5);
+
+  for (int j=0; j<8;j++) {
+    cout<<100*(n[j].first  -p[j].first)/n[j].first<<"\t"<<100*(n[j].first -m[j].first)/n[j].first<<endl;
+  }
+
 }
 
 void slABCD( TString btagselection, bool tight ) {
@@ -651,6 +693,17 @@ void AN2011( TString btagselection="ge1b" ) {
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
   nbins = 15; low=150; high=450;
   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_HT500_"+btagselection);
+
+  // == finally, draw the signal region only!
+  selection_ =TCut("cutHT==1 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=200 && minDeltaPhiN >= 4")&&btagcut;
+  var="HT"; xtitle="H_{T} (GeV)";
+  nbins = 20; low=350; high=1050;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "SIG_HT_"+btagselection);
+
+  selection_ =TCut("HT>=500 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=300 && minDeltaPhiN >= 4")&&btagcut;
+  var="HT"; xtitle="H_{T} (GeV)";
+  nbins = 20; low=500; high=1050;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "SIGtight_HTtight_"+btagselection);
 
   // ===== single lepton selection
 
