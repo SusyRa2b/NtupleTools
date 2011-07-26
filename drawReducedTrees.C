@@ -445,6 +445,7 @@ void AN2011_prescale( TString btagselection="ge1b" ) {
   setLogY(true);  setPlotMinimum(1e-1);
   drawPlots(var,nbins,low,high,xtitle,"Events", "prescaled_minDeltaPhiN_LSB_"+btagselection);
 
+
   //sanity check
   doRatioPlot(true);
   ratioMin=0; ratioMax=3;
@@ -553,6 +554,20 @@ void AN2011_r() {
 
   selection_ ="cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && nbjetsSSVHPT==0&&weight<1000";
   drawR("minDeltaPhiN",4,15,50,350,"eq0b");
+
+  //now try drawing it in data
+  //careful -- there is a bug in the drawR() implementation
+  //it doesn't work right unless you turn on doRatioPlot
+  drawTotalSM_=true;
+  doRatioPlot(true);
+  drawLegend(true);
+  setPlotMinimum(0); setPlotMaximum(0.5);
+  lumiScale_ = 16.3030312; //customize lumiScale_
+  resetSamples();
+  doData(true);
+  TCut util = "pass_utilityHLT_HT300==1 && weight<1000";
+  selection_ =TCut("HT>=350 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && nbjetsSSVHPT==0")&&util;
+  drawR("minDeltaPhiN",4,10,50,150,"Data_eq0b");
 
 
 }
