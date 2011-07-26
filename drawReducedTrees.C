@@ -293,23 +293,63 @@ void runDataQCD2011() {
 
 }
 
-void slABCD( TString btagselection, bool tight ) {
+void slABCD( TString btagselection, bool tight, bool datamode=false ) {
   /*
 .L drawReducedTrees.C++
   */
+
+  //we have to be careful. because of all of the global variables used in this code, we have to call
+  //this other guy before we do anything else (should make it a class!)
+
+  double SBsubQCD =0,SBsubQCDerr=0,SBsubZ=0,SBsubZerr=0,SBsubMisc=0,SBsubMiscerr=0;
+  std::pair<double,double> SBsubQCDp;
+  if (datamode)  {
+    SBsubQCDp = anotherABCD( btagselection, tight, false, datamode, 1 ) ;
+    SBsubQCD=SBsubQCDp.first;
+    SBsubQCDerr=SBsubQCDp.second;
+
+    //now hard-coded Z->nunu
+    double zv[2];
+    double ze[2];
+    if (tight) { //need to average mu mu and ee estimates
+      zv[0] = 5.8; ze[0]=3.8;
+      zv[1] = 6.1; ze[1]=3.9;
+    }
+    else {
+      zv[0] = 11.4; ze[0]=8.1;
+      zv[1] = 23.3; ze[1]=12.1;
+    }
+    SBsubZ = jmt::weightedMean(2,zv,ze);
+    SBsubZerr = jmt::weightedMean(2,zv,ze,true);
+    if ( btagselection=="ge1b") {    } //do nothing
+    else if (btagselection=="ge2b") {
+      //approximation to be dealt with later
+      SBsubZ *= 0.1;
+      SBsubZerr *= 0.1;
+    }
+    else {assert(0);}
+  }
 
   setStackMode(false);
   doData(true);
   setQuiet(true);
 
+  TString sampleOfInterest = "totalsm";//"PythiaPUQCD";
   useFlavorHistoryWeights_=false;
   loadSamples(); //needs to come first! this is why this should be turned into a class, with this guy in the ctor
   setColorScheme("nostack");
   clearSamples();
-  addSample("TTbarJets");
-  addSample("WJets");
+  if (datamode) {
+    //    addSample("SingleTop");
+    addSample("ZJets");
+    addSample("VV");
+    sampleOfInterest="data";
+  }
+  else {
+    addSample("TTbarJets");
+    addSample("WJets");
+  }
 
-  TString sampleOfInterest = "totalsm";//"PythiaPUQCD";
   //  TString sampleOfInterest = "PythiaPUQCD";
 
   savePlots_=false;
@@ -337,7 +377,7 @@ void slABCD( TString btagselection, bool tight ) {
     SRMET = "MET >= 200";
   }
 
-  TCut baseline = "cutPV==1 && cut3Jets==1";
+  TCut baseline = "cutPV==1 && cut3Jets==1 && cutTrigger==1";
   baseline = baseline&&HTcut&&ge1b;
   TCut cleaning = "weight<1000";
   TCut SBMET = "MET>=150 && MET<200";
@@ -348,7 +388,7 @@ void slABCD( TString btagselection, bool tight ) {
   TCut passOther = "nElectrons==0 && nMuons==0";
 
   double A,B,D,SIG,Aerr,Berr,Derr,SIGerr;
-  double dA,dB,dD,dSIG,dAerr,dBerr,dDerr,dSIGerr;
+  //  double dA,dB,dD,dSIG,dAerr,dBerr,dDerr,dSIGerr;
   //A = SB, SL
   selection_ = baseline && cleaning && dpcut  && SBMET && failOther; //auto cast to TString seems to work
   var="HT"; xtitle=var;
@@ -356,34 +396,33 @@ void slABCD( TString btagselection, bool tight ) {
   drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_A");
   A=getIntegral(sampleOfInterest);
   Aerr=getIntegralErr(sampleOfInterest);
-  dA=getIntegral("data");
-  dAerr=getIntegralErr("data");
   //B = SB
   selection_ = baseline && cleaning && dpcut  && SBMET && passOther; //auto cast to TString seems to work
   drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_B");
   B=getIntegral(sampleOfInterest);
   Berr=getIntegralErr(sampleOfInterest);
-  dB=getIntegral("data");
-  dBerr=getIntegralErr("data");
+  if (datamode) {
+    SBsubMisc=getIntegral("totalsm");
+    SBsubMiscerr=getIntegralErr("totalsm");
+  }
   //D = SIG,SL
   selection_ = baseline && cleaning && dpcut  && SRMET && failOther; //auto cast to TString seems to work
   drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_D");
   D=getIntegral(sampleOfInterest);
   Derr=getIntegralErr(sampleOfInterest);
-  dD=getIntegral("data");
-  dDerr=getIntegralErr("data");
 
   //SIG
   selection_ = baseline && cleaning && dpcut  && SRMET && passOther; //auto cast to TString seems to work
   drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_C");
   SIG=getIntegral(sampleOfInterest);
   SIGerr=getIntegralErr(sampleOfInterest);
-  dSIG=getIntegral("data");
-  dSIGerr=getIntegralErr("data");
 
   //now calculate B*D/A
-  double numerr=jmt::errAtimesB(B,Berr,D,Derr);
-  double num = B*D;
+  double suberr = sqrt(SBsubMiscerr*SBsubMiscerr + SBsubQCDerr*SBsubQCDerr + SBsubZerr*SBsubZerr);
+
+  double numerr=jmt::errAtimesB(B-SBsubMisc-SBsubQCD-SBsubZ,sqrt(suberr*suberr + Berr*Berr),
+				D,Derr);
+  double num = (B-SBsubMisc-SBsubQCD-SBsubZ)*D;
   double estimate = num / A;
   double estimateerr= jmt::errAoverB(num,numerr,A,Aerr);
 
@@ -394,22 +433,18 @@ void slABCD( TString btagselection, bool tight ) {
   btagselection += tight ? " Tight " : " Loose ";
  
   char output[500];
-  cout<<" -- closure test in MC -- "<<endl;
-  sprintf(output,"%s & %s & %s & %s & %s & %s \\\\",btagselection.Data(),
-	  jmt::format_nevents(D,Derr).Data(),jmt::format_nevents(A,Aerr).Data(),
-	  jmt::format_nevents(B,Berr).Data(),jmt::format_nevents(estimate,estimateerr).Data(),
-	  jmt::format_nevents(SIG,SIGerr).Data());
-  cout<<output<<endl;
-  cout<<" -- data -- "<<endl;
-
-  numerr=jmt::errAtimesB(dB,dBerr,dD,dDerr);
-  num = dB*dD;
-  estimate = num / dA;
-  estimateerr= jmt::errAoverB(num,numerr,dA,dAerr);
-  sprintf(output,"%s & %s & %s & %s & %s & %s \\\\",btagselection.Data(),
-	  jmt::format_nevents(dD,dDerr).Data(),jmt::format_nevents(dA,dAerr).Data(),
-	  jmt::format_nevents(dB,dBerr).Data(),jmt::format_nevents(estimate,estimateerr).Data(),
-	  jmt::format_nevents(SIG,SIGerr).Data());
+  if (!datamode) {
+    sprintf(output,"%s & %s & %s & %s & %s & %s \\\\",btagselection.Data(),
+	    jmt::format_nevents(D,Derr).Data(),jmt::format_nevents(A,Aerr).Data(),
+	    jmt::format_nevents(B,Berr).Data(),jmt::format_nevents(estimate,estimateerr).Data(),
+	    jmt::format_nevents(SIG,SIGerr).Data());
+  }
+  else {
+    sprintf(output,"%s & %d & %d & %d & %s & %s  \\\\",btagselection.Data(),
+	    TMath::Nint(D),TMath::Nint(A),
+	    TMath::Nint(B), jmt::format_nevents(SBsubMisc+SBsubQCD+SBsubZ,suberr).Data(),
+	    jmt::format_nevents(estimate,estimateerr).Data());
+  }
   cout<<output<<endl;
 }
 
@@ -420,6 +455,16 @@ void runSLClosureTest2011() {
 
   slABCD("ge2b", false);
   slABCD("ge2b", true);
+
+}
+
+void runTtbarEstimate2011() {
+
+  slABCD("ge1b", false,true);
+  slABCD("ge1b", true,true);
+
+  slABCD("ge2b", false,true);
+  slABCD("ge2b", true,true);
 
 }
 
