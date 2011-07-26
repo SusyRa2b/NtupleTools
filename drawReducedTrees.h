@@ -1067,6 +1067,22 @@ double getIntegralErr(const TString & sample) {
   return jmt::errOnIntegral(getHist(sample));
 }
 
+double getSumOfIntegrals(const std::vector<TString> & samples) {
+  double sum=0;
+  for (unsigned int j= 0; j<samples.size(); j++) {
+    sum += getIntegral(samples.at(j));
+  }
+  return sum;
+}
+
+double getSumOfIntegralsErr(const std::vector<TString> & samples) {
+  double sum=0;
+  for (unsigned int j= 0; j<samples.size(); j++) {
+    sum += pow(getIntegralErr(samples.at(j)),2);
+  }
+  return sqrt(sum);
+}
+
 void drawSignificance(const TString & var, const int nbins, const float low, const float high, const TString & savename) {
 
   bool oldSaveSetting = savePlots_;
