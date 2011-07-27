@@ -550,7 +550,7 @@ void AN2011_prescale( TString btagselection="ge1b" ) {
 
 }
 
-void AN2011_ttbarw( TString btagselection="ge1b", TString HTselection="Loose" ) {
+void AN2011_ttbarw( TString btagselection="ge1b", TString HTselection="Loose" , TString samplename="TTbarJets") {
 
   /*
 goal:
@@ -575,6 +575,9 @@ other.
   else if ( btagselection=="eq1b" ) {
     btagcut = "nbjetsSSVHPT==1";
   }
+  else if ( btagselection=="ge0b" ) {
+    btagcut = "nbjetsSSVHPT>=0";
+  }
   else {
     assert(0);
   }
@@ -594,26 +597,32 @@ other.
   setStackMode(false,true); //normalized
   setColorScheme("nostack");
   clearSamples();
-  addSample("TTbarJets");
+  addSample(samplename);
   drawLegend(false);
   doRatioPlot(false);
 
   doData(false);
 
+  TString sample;
+  if(samplename=="TTbarJets") sample = "ttbar";
+  else if(samplename=="WJets") sample = "wjets";
+
   selection_ =TCut("MET>=150 && cutPV==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && minDeltaPhiN >= 4")&&btagcut&&HTcut;
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
-  nbins = 40; low=150; high=550;
-  drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "SBandSIG_MET_SL_ttbar_"+btagselection+"_"+HTselection);
+  //nbins = 40; low=150; high=550;
+  //nbins = 20; low=150; high=550;
+  nbins = 16; low=150; high=550;
+  drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "SBandSIG_MET_SL_"+sample+"_"+btagselection+"_"+HTselection);
 
-  TH1D* SLttbar = (TH1D*)hinteractive->Clone("SLttbar");
+  TH1D* SLplot = (TH1D*)hinteractive->Clone("SLplot");
   //now switch to the normal selection
   selection_ =TCut("MET>=150 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4")&&btagcut&&HTcut;
-  drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "SBandSIG_MET_normal_ttbar_"+btagselection+"_"+HTselection);
-  SLttbar->SetLineColor(kRed);
-  SLttbar->SetMarkerColor(kRed);
-  SLttbar->Draw("SAME");
+  drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "SBandSIG_MET_normal_"+sample+"_"+btagselection+"_"+HTselection);
+  SLplot->SetLineColor(kRed);
+  SLplot->SetMarkerColor(kRed);
+  SLplot->Draw("SAME");
 
-  thecanvas->SaveAs("METshape_ttbar_SLandStandard_"+btagselection+"_"+HTselection+".pdf");
+  thecanvas->SaveAs("METshape_"+sample+"_SLandStandard_"+btagselection+"_"+HTselection+".pdf");
   //not enough stats in WJets to really show anything
 
 }
@@ -2838,5 +2847,4 @@ void drawOwen(TCut extracut="") {
   ofile.close();
 
 }
-
 
