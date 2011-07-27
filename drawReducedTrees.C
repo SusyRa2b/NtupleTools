@@ -609,9 +609,9 @@ other.
 
   selection_ =TCut("MET>=150 && cutPV==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && minDeltaPhiN >= 4")&&btagcut&&HTcut;
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
-  //nbins = 40; low=150; high=550;
+  nbins = 40; low=150; high=550;
   //nbins = 20; low=150; high=550;
-  nbins = 16; low=150; high=550;
+  //nbins = 16; low=150; high=550;
   drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "SBandSIG_MET_SL_"+sample+"_"+btagselection+"_"+HTselection);
 
   TH1D* SLplot = (TH1D*)hinteractive->Clone("SLplot");
