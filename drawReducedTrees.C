@@ -754,6 +754,7 @@ void AN2011_prescale( TString btagselection="ge1b" ) {
   
 }
 
+
 void AN2011_ttbarw( TString btagselection="ge1b", TString HTselection="Loose" , TString samplename="TTbarJets") {
 
   /*
@@ -798,7 +799,7 @@ other.
   
   doOverflowAddition(true);
 
-  setStackMode(false,true); //normalized
+  setStackMode(false,false); //normalized
   setColorScheme("nostack");
   clearSamples();
   addSample(samplename);
@@ -818,6 +819,29 @@ other.
   //nbins = 16; low=150; high=550;
   drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "SBandSIG_MET_SL_"+sample+"_"+btagselection+"_"+HTselection);
 
+  int lowbin = hinteractive->FindBin(low);
+  int boundarybin_sb = 0, boundarybin_sig=0;
+
+  boundarybin_sb = hinteractive->FindBin(200);
+
+  //MET Signal region depends on "Loose" or "Tight" selection
+  if (HTselection=="Tight")  boundarybin_sig = hinteractive->FindBin(300);
+  else boundarybin_sig = hinteractive->FindBin(200);
+
+  int highbin = hinteractive->FindBin(high);
+
+  //get the SIG/SB Ratio
+  double sl_sb_err=0, sl_sig_err=0;
+  double sl_sb = hinteractive->IntegralAndError(lowbin,boundarybin_sb-1,sl_sb_err);
+  double sl_sig = hinteractive->IntegralAndError(boundarybin_sig,highbin-1,sl_sig_err);
+  double r_sl_sigoversb = sl_sig/sl_sb;
+  double r_sl_sigoversb_err = jmt::errAoverB(sl_sig,sl_sig_err,sl_sb,sl_sb_err);
+
+  std::cout << "SL: SB content= " << sl_sb << " +/- " << sl_sb_err << std::endl;
+  std::cout << "SL: SIG content= " << sl_sig << " +/- " << sl_sig_err << std::endl;
+  std::cout << "SL: SIG/SB ratio = " << r_sl_sigoversb << " +/- " << r_sl_sigoversb_err << std::endl;
+
+
   TH1D* SLplot = (TH1D*)hinteractive->Clone("SLplot");
   //now switch to the normal selection
   selection_ =TCut("MET>=150 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4")&&btagcut&&HTcut;
@@ -825,9 +849,21 @@ other.
   SLplot->SetLineColor(kRed);
   SLplot->SetMarkerColor(kRed);
   SLplot->Draw("SAME");
-
+  
   thecanvas->SaveAs("METshape_"+sample+"_SLandStandard_"+btagselection+"_"+HTselection+".pdf");
   //not enough stats in WJets to really show anything
+
+  //get the SIG/SB Ratio
+  double lv_sb_err=0, lv_sig_err=0;
+  double lv_sb = hinteractive->IntegralAndError(lowbin,boundarybin_sb-1,lv_sb_err);
+  double lv_sig = hinteractive->IntegralAndError(boundarybin_sig,highbin-1,lv_sig_err);
+  double r_lv_sigoversb = lv_sig/lv_sb;
+  double r_lv_sigoversb_err = jmt::errAoverB(lv_sig,lv_sig_err,lv_sb,lv_sb_err);
+
+  std::cout << "LV: SB content= " << lv_sb << " +/- " << lv_sb_err << std::endl;
+  std::cout << "LV: SIG content= " << lv_sig << " +/- " << lv_sig_err << std::endl;
+  std::cout << "LV: SIG/SB ratio = " << r_lv_sigoversb << " +/- " << r_lv_sigoversb_err << std::endl;
+
 
 }
 
