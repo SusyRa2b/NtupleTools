@@ -799,7 +799,7 @@ other.
   
   doOverflowAddition(true);
 
-  setStackMode(false,false); //normalized
+  setStackMode(false,true); //normalized
   setColorScheme("nostack");
   clearSamples();
   addSample(samplename);
