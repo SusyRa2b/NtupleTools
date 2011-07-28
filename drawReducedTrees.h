@@ -28,8 +28,69 @@ TString selection_ ="cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cut
 float leg_x1 = 0.696, leg_x2=0.94, leg_y1=0.5, leg_y2=0.92;
 
 
-//bool quiet_=false;
-bool quiet_=true;
+struct OwenData {
+  double Nsig; //number in signal region , data //done
+  double Nsb; // number in SB, data             //done
+  double Nsig_sl; //number in SL SIG, data  //done
+  double Nsb_sl; // number in SL SB, data   //done
+  double Nsig_ldp; //number in SIG, fail DP //done
+  double Nsb_ldp;   // number in SB, fail DP //done
+
+  //owen didn't ask for these
+  //  double  Nlsb ;
+  //  double  Nlsb_ldp;
+  double  Nlsb_0b ;      // done
+  double  Nlsb_0b_ldp;   // done
+
+  double Nttbarmc_sig_ldp; //done
+  double Nttbarmc_sb_ldp; //done
+
+  double lsf_WJmc; //done
+  double NWJmc_sig_ldp; //done
+  double NWJmc_sb_ldp; //done
+
+  double lsf_Znnmc; //done
+  double NZnnmc_sig_ldp; //done
+  double NZnnmc_sb_ldp; //done
+
+  //don't need DataLumi...that's just lumiScale_
+} ;
+
+std::map<TString, OwenData> owenMap_;
+
+void printOwen(const TString& owenKey) {
+
+  cout<< " === "<<owenKey<<" === "<<endl;
+
+  cout<<"Nsig              "<<  owenMap_[owenKey].Nsig<<endl;
+  cout<<"Nsb               "<<  owenMap_[owenKey].Nsb<<endl;
+
+  cout<<"Nsig_sl           "<<  owenMap_[owenKey].Nsig_sl<<endl;
+  cout<<"Nsb_sl            "<<  owenMap_[owenKey].Nsb_sl<<endl;
+
+  cout<<"Nsig_ldp          "<<  owenMap_[owenKey].Nsig_ldp<<endl;
+  cout<<"Nsb_ldp           "<<  owenMap_[owenKey].Nsb_ldp<<endl;
+
+  cout<<"Nlsb_0b           "<<  owenMap_[owenKey].Nlsb_0b<<endl;
+  cout<<"Nlsb_0b_ldp       "<<  owenMap_[owenKey].Nlsb_0b_ldp<<endl;
+
+  cout<<"Nttbarmc_sig_ldp  "<<  owenMap_[owenKey].Nttbarmc_sig_ldp<<endl;
+  cout<<"Nttbarmc_sb_ldp   "<<  owenMap_[owenKey].Nttbarmc_sb_ldp<<endl;
+
+  cout<<"lsf_WJmc          "<<  owenMap_[owenKey].lsf_WJmc<<endl;
+  cout<<"NWJmc_sig_ldp     "<<  owenMap_[owenKey].NWJmc_sig_ldp<<endl;
+  cout<<"NWJmc_sb_ldp      "<<  owenMap_[owenKey].NWJmc_sb_ldp<<endl;
+
+  cout<<"lsf_Znnmc         "<<  owenMap_[owenKey].lsf_Znnmc<<endl;
+  cout<<"NZnnmc_sig_ldp    "<<  owenMap_[owenKey].NZnnmc_sig_ldp<<endl;
+  cout<<"NZnnmc_sb_ldp     "<<  owenMap_[owenKey].NZnnmc_sb_ldp<<endl;
+
+
+}
+
+
+bool quiet_=false;
+//bool quiet_=true;
 bool doRatio_=false;
 bool logy_=false;
 bool dostack_=true;

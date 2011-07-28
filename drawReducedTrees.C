@@ -96,10 +96,29 @@ double lumiScale_ = 1096.441 / 1.0;
 
 #include "drawReducedTrees.h"
 
-std::pair<double,double> anotherABCD( TString btagselection, bool tight, bool isSIG, bool datamode=false, float subscale=1 ) {
+void averageZ() {
+  cout<<"Loose SIG ge1b"<<endl;
+  double zn[]={22.8,17.9};
+  double ze[]={11.6,10.6};
+  jmt::weightedMean(2,zn,ze);
+
+  cout<<"Tight SIG ge1b"<<endl;
+  double zn2[]={3.4,3.6};
+  double ze2[]={2.2,2.3};
+  jmt::weightedMean(2,zn2,ze2);
+
+
+
+}
+
+std::pair<double,double> anotherABCD( TString btagselection, bool tight, bool isSIG, bool datamode=false, float subscale=1,float SBshift=0 ) {
   /*
 .L drawReducedTrees.C++
   */
+
+  TString owenKey = btagselection;
+  owenKey+= tight ? "Tight":"Loose";
+  OwenData * myOwen = &(owenMap_[owenKey]);
 
   setStackMode(false);
   doData(datamode);
@@ -138,6 +157,7 @@ std::pair<double,double> anotherABCD( TString btagselection, bool tight, bool is
     triggerCut = "cutTrigger==1";
   }
 
+
   TCut HTcut,SRMET;
   TCut ge1b = "nbjetsSSVHPT>=1";
   if (btagselection=="ge2b") {
@@ -161,8 +181,11 @@ std::pair<double,double> anotherABCD( TString btagselection, bool tight, bool is
   TCut baseline = "cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1";
   baseline = baseline&&HTcut;
   TCut cleaning = "weight<1000";
-  TCut SBMET = TCut("MET>=50 && MET<100 && nbjetsSSVHPT==0")&&triggerCutLSB;
-  //TCut SBMET = TCut("MET>=50 && MET<100 && nbjetsSSVHPT>=1")&&triggerCutLSB; //careful!
+
+  char cutstring1[100];
+  sprintf(cutstring1,"MET>= %.0f && MET < %.0f && nbjetsSSVHPT==0", 50+SBshift,100+SBshift);
+  cout<<"*** SB cut is "<<cutstring1<<endl<<endl;
+  TCut SBMET = TCut(cutstring1)&&triggerCutLSB;
   TCut dpcut = "1";//"minDeltaPhiN>=4";
   //  TCut passOther = "deltaPhiMPTcaloMET<2";
   //  TCut failOther = "deltaPhiMPTcaloMET>=2";
@@ -193,6 +216,37 @@ std::pair<double,double> anotherABCD( TString btagselection, bool tight, bool is
   if (datamode) {
     Dsub = subscale*getIntegral("totalsm");
     Dsuberr = subscale*getIntegralErr("totalsm");
+
+    //special stuff for owen
+    myOwen->Nlsb_0b_ldp = A;
+    myOwen->Nlsb_0b     = B;
+    if (isSIG) myOwen->Nsig_ldp = D;
+    else       myOwen->Nsb_ldp = D;
+
+    if (isSIG) {
+      myOwen->Nttbarmc_sig_ldp = getIntegral("TTbarJets");
+      double lsfw = getIntegral("WJets") > 0 ?  pow(getIntegralErr("WJets"),2)/getIntegral("WJets"): -1;
+      double lsfz = getIntegral("Zinvisible") > 0 ?  pow(getIntegralErr("Zinvisible"),2)/getIntegral("Zinvisible"): -1;
+
+      if (lsfw>0) myOwen->lsf_WJmc=lsfw;
+      if (lsfz>0) myOwen->lsf_Znnmc=lsfz;
+
+      myOwen->NWJmc_sig_ldp = getIntegral("WJets")/lsfw;
+      myOwen->NZnnmc_sig_ldp = getIntegral("Zinvisible")/lsfz;
+
+    }
+    else {
+      myOwen->Nttbarmc_sb_ldp = getIntegral("TTbarJets");
+
+      double lsfw = getIntegral("WJets") > 0 ?  pow(getIntegralErr("WJets"),2)/getIntegral("WJets"): -1;
+      double lsfz = getIntegral("Zinvisible") > 0 ?  pow(getIntegralErr("Zinvisible"),2)/getIntegral("Zinvisible"): -1;
+
+      if (lsfw>0) myOwen->lsf_WJmc=lsfw;
+      if (lsfz>0) myOwen->lsf_Znnmc=lsfz;
+
+      myOwen->NWJmc_sb_ldp = getIntegral("WJets")/lsfw;
+      myOwen->NZnnmc_sb_ldp = getIntegral("Zinvisible")/lsfz;
+    }
   }
   if (Dsub>D) {Dsub=D-0.00001; cout<<"Subtraction in D is as big as D!"<<endl;}
 
@@ -201,6 +255,11 @@ std::pair<double,double> anotherABCD( TString btagselection, bool tight, bool is
   drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_C");
   SIG=getIntegral(sampleOfInterest);
   SIGerr=getIntegralErr(sampleOfInterest);
+
+  if (datamode) { //for owen
+    if (isSIG)  myOwen->Nsig = SIG;
+    else        myOwen->Nsb  = SIG;
+  }
 
   //now calculate B*D/A
   double numerr=jmt::errAtimesB(B,Berr,D-Dsub,sqrt(Derr*Derr+Dsuberr*Dsuberr));
@@ -259,8 +318,7 @@ void runDataQCD2011() {
   n[i++]=anotherABCD("ge2b", true, false,true);
   n[i++]=anotherABCD("ge2b", true, true,true);
   
-  return;
-
+/*
   //now do it again with +50% subtraction
   i=0;
   cout<<" subtraction +50% "<<endl;
@@ -286,17 +344,48 @@ void runDataQCD2011() {
   m[i++]=anotherABCD("ge2b", false, true,true,0.5);
   m[i++]=anotherABCD("ge2b", true, false,true,0.5);
   m[i++]=anotherABCD("ge2b", true, true,true,0.5);
+*/
+/*
+  //alternately, do it with shifted SB
+  i=0;
+  cout<<" SB +10 GeV"<<endl;
+  p[i++]=anotherABCD("ge1b", false, false,true,1,10);
+  p[i++]=anotherABCD("ge1b", false, true,true,1,10);
+  p[i++]=anotherABCD("ge1b", true, false,true,1,10);
+  p[i++]=anotherABCD("ge1b", true, true,true,1,10);
+  
+  p[i++]=anotherABCD("ge2b", false, false,true,1,10);
+  p[i++]=anotherABCD("ge2b", false, true,true,1,10);
+  p[i++]=anotherABCD("ge2b", true, false,true,1,10);
+  p[i++]= anotherABCD("ge2b", true, true,true,1,10);
+
+  //now do it again with -50% subtraction
+  i=0;
+  cout<<" SB -10 GeV "<<endl;
+  m[i++]=anotherABCD("ge1b", false, false,true,1,-10);
+  m[i++]=anotherABCD("ge1b", false, true,true,1,-10);
+  m[i++]=anotherABCD("ge1b", true, false,true,1,-10);
+  m[i++]=anotherABCD("ge1b", true, true,true,1,-10);
+  
+  m[i++]=anotherABCD("ge2b", false, false,true,1,-10);
+  m[i++]=anotherABCD("ge2b", false, true,true,1,-10);
+  m[i++]=anotherABCD("ge2b", true, false,true,1,-10);
+  m[i++]=anotherABCD("ge2b", true, true,true,1,-10);
 
   for (int j=0; j<8;j++) {
     cout<<100*(n[j].first  -p[j].first)/n[j].first<<"\t"<<100*(n[j].first -m[j].first)/n[j].first<<endl;
   }
-
+*/
 }
 
-void slABCD( TString btagselection, bool tight, bool datamode=false ) {
+double slABCD( TString btagselection, bool tight, bool datamode=false, const TString & mode="" ) {
   /*
 .L drawReducedTrees.C++
   */
+
+  TString owenKey = btagselection;
+  owenKey+= tight ? "Tight":"Loose";
+  OwenData * myOwen = &(owenMap_[owenKey]);
 
   //we have to be careful. because of all of the global variables used in this code, we have to call
   //this other guy before we do anything else (should make it a class!)
@@ -307,6 +396,24 @@ void slABCD( TString btagselection, bool tight, bool datamode=false ) {
     SBsubQCDp = anotherABCD( btagselection, tight, false, datamode, 1 ) ;
     SBsubQCD=SBsubQCDp.first;
     SBsubQCDerr=SBsubQCDp.second;
+
+    if (mode.Contains("QCD")) {
+      //SBsubQCDerr is the statistical error on the QCD in SB.
+      //but the systematic is hard-coded here:
+      double qcdsbsyst=0; // percent
+      if (tight) {
+	if ( btagselection=="ge1b")     qcdsbsyst=0.37;
+	else if (btagselection=="ge2b") qcdsbsyst=0.54;
+      }
+      else {
+	if ( btagselection=="ge1b")     qcdsbsyst=0.16;
+	else if (btagselection=="ge2b") qcdsbsyst=0.20;
+      }
+      SBsubQCDerr = sqrt( SBsubQCDerr*SBsubQCDerr + pow(qcdsbsyst*SBsubQCD,2));
+      
+      if (mode=="QCDup") SBsubQCD += SBsubQCDerr;
+      if (mode=="QCDdown") SBsubQCD -= SBsubQCDerr;
+    }
 
     //now hard-coded Z->nunu
     double zv[2];
@@ -325,9 +432,17 @@ void slABCD( TString btagselection, bool tight, bool datamode=false ) {
     else if (btagselection=="ge2b") {
       //approximation to be dealt with later
       SBsubZ *= 0.1;
-      SBsubZerr *= 0.1;
+      SBsubZerr *= 0.1;//might be wrong. should talk to colorado
     }
     else {assert(0);}
+
+    if (mode.Contains("Z")) {
+      double zsbsyst=0.17; //use 17 percent for now
+      SBsubZerr = sqrt( SBsubZerr*SBsubZerr + pow(zsbsyst*SBsubZ,2));
+      
+      if (mode=="Zup") SBsubZ += SBsubZerr;
+      if (mode=="Zdown") SBsubZ -= SBsubZerr;
+    }
   }
 
   setStackMode(false);
@@ -404,12 +519,25 @@ void slABCD( TString btagselection, bool tight, bool datamode=false ) {
   if (datamode) {
     SBsubMisc=getIntegral("totalsm");
     SBsubMiscerr=getIntegralErr("totalsm");
+
+    if (mode.Contains("MC")) {
+      double mcsyst = 1; //100% uncertainty
+      SBsubMiscerr = sqrt( SBsubMiscerr*SBsubMiscerr + pow(mcsyst*SBsubMisc,2));
+
+      if (mode=="MCup") SBsubMisc += SBsubMiscerr;
+      else if (mode=="MCdown") SBsubMisc -= SBsubMiscerr;
+    }
   }
   //D = SIG,SL
   selection_ = baseline && cleaning && dpcut  && SRMET && failOther; //auto cast to TString seems to work
   drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_D");
   D=getIntegral(sampleOfInterest);
   Derr=getIntegralErr(sampleOfInterest);
+
+  if (datamode) { //for owen
+    myOwen->Nsig_sl = D;
+    myOwen->Nsb_sl = A;
+  }
 
   //SIG
   selection_ = baseline && cleaning && dpcut  && SRMET && passOther; //auto cast to TString seems to work
@@ -434,10 +562,10 @@ void slABCD( TString btagselection, bool tight, bool datamode=false ) {
  
   char output[500];
   if (!datamode) {
-    sprintf(output,"%s & %s & %s & %s & %s & %s \\\\",btagselection.Data(),
+    sprintf(output,"%s & %s & %s & %s & %s & %s \\\\ %% %f",btagselection.Data(),
 	    jmt::format_nevents(D,Derr).Data(),jmt::format_nevents(A,Aerr).Data(),
 	    jmt::format_nevents(B,Berr).Data(),jmt::format_nevents(estimate,estimateerr).Data(),
-	    jmt::format_nevents(SIG,SIGerr).Data());
+	    jmt::format_nevents(SIG,SIGerr).Data(),100*(estimate-SIG)/SIG);
   }
   else {
     sprintf(output,"%s & %d & %d & %d & %s & %s  \\\\",btagselection.Data(),
@@ -446,6 +574,8 @@ void slABCD( TString btagselection, bool tight, bool datamode=false ) {
 	    jmt::format_nevents(estimate,estimateerr).Data());
   }
   cout<<output<<endl;
+
+  return estimate;
 }
 
 void runSLClosureTest2011() {
@@ -460,12 +590,75 @@ void runSLClosureTest2011() {
 
 void runTtbarEstimate2011() {
 
-  slABCD("ge1b", false,true);
-  slABCD("ge1b", true,true);
+  double ttw[4];
+  double p[4];
+  double m[4];
+  int i=0;
+  ttw[i++]=  slABCD("ge1b", false,true);
+  ttw[i++]=  slABCD("ge1b", true,true);
+  ttw[i++]=  slABCD("ge2b", false,true);
+  ttw[i++]=  slABCD("ge2b", true,true);
+ 
+  /* for systematics due to QCD subtraction
+  i=0;
+  p[i++]=  slABCD("ge1b", false,true,"QCDup");
+  p[i++]=  slABCD("ge1b", true,true,"QCDup");
+  p[i++]=  slABCD("ge2b", false,true,"QCDup");
+  p[i++]=  slABCD("ge2b", true,true,"QCDup");
 
-  slABCD("ge2b", false,true);
-  slABCD("ge2b", true,true);
 
+  i=0;
+  m[i++]=  slABCD("ge1b", false,true,"QCDdown");
+  m[i++]=  slABCD("ge1b", true,true,"QCDdown");
+  m[i++]=  slABCD("ge2b", false,true,"QCDdown");
+  m[i++]=  slABCD("ge2b", true,true,"QCDdown");
+*/
+
+/*
+  //for Znunu subtraction systematics
+  i=0;
+  p[i++]=  slABCD("ge1b", false,true,"Zup");
+  p[i++]=  slABCD("ge1b", true,true,"Zup");
+  p[i++]=  slABCD("ge2b", false,true,"Zup");
+  p[i++]=  slABCD("ge2b", true,true,"Zup");
+
+
+  i=0;
+  m[i++]=  slABCD("ge1b", false,true,"Zdown");
+  m[i++]=  slABCD("ge1b", true,true,"Zdown");
+  m[i++]=  slABCD("ge2b", false,true,"Zdown");
+  m[i++]=  slABCD("ge2b", true,true,"Zdown");
+*/
+/*
+  //for MC subtraction systematics
+  i=0;
+  p[i++]=  slABCD("ge1b", false,true,"MCup");
+  p[i++]=  slABCD("ge1b", true,true,"MCup");
+  p[i++]=  slABCD("ge2b", false,true,"MCup");
+  p[i++]=  slABCD("ge2b", true,true,"MCup");
+
+
+  i=0;
+  m[i++]=  slABCD("ge1b", false,true,"MCdown");
+  m[i++]=  slABCD("ge1b", true,true,"MCdown");
+  m[i++]=  slABCD("ge2b", false,true,"MCdown");
+  m[i++]=  slABCD("ge2b", true,true,"MCdown");
+
+  cout<<" == summary (%) == "<<endl;
+  for (int j=0;j<4;j++) {
+    cout<< 100* (p[j]-ttw[j])/ttw[j]<<"\t"<< 100* (m[j]-ttw[j])/ttw[j]<<endl;
+  }
+*/
+}
+
+void printOwenAll() {
+
+  runDataQCD2011();
+  runTtbarEstimate2011();
+
+  for (std::map<TString,OwenData>::iterator i=owenMap_.begin(); i!=owenMap_.end(); ++i) {
+    printOwen( i->first);
+  }
 }
 
 void AN2011_prescale( TString btagselection="ge1b" ) {
@@ -494,6 +687,8 @@ void AN2011_prescale( TString btagselection="ge1b" ) {
   TString var,xtitle;
   
   doOverflowAddition(true);
+
+  setQuiet(false);
 
   // ==========================
 
@@ -533,6 +728,14 @@ void AN2011_prescale( TString btagselection="ge1b" ) {
   drawPlots(var,nbins,low,high,xtitle,"Events", "prescaled_minDeltaPhiN_LSB_"+btagselection);
 
 
+  //look again at MET
+  selection_ =TCut("MET>=50 && MET<100 && cutHT==1 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4")&&util&&btagcut;
+  var="MET"; xtitle="E_{T}^{miss} [GeV]";
+  nbins = 10; low=50; high=100;
+  setLogY(false); resetPlotMinimum();
+  drawPlots(var,nbins,low,high,xtitle,"Events", "prescaled_METlimited_"+btagselection);
+
+
   //sanity check
   doRatioPlot(true);
   ratioMin=0; ratioMax=3;
@@ -548,6 +751,7 @@ void AN2011_prescale( TString btagselection="ge1b" ) {
   drawPlots(var,nbins,low,high,xtitle,"Events", "unprescaled_METhigh_lowDP");
 
 
+  
 }
 
 void AN2011_ttbarw( TString btagselection="ge1b", TString HTselection="Loose" , TString samplename="TTbarJets") {
@@ -822,6 +1026,11 @@ void AN2011( TString btagselection="ge1b" ) {
   nbins = 20; low=0; high=200;
   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MT_0e1mu_0b");
 
+  //MET
+  selection_ =TCut("cutHT==1 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN < 4")&&btagcut;
+  var="MET"; xtitle="E_{T}^{miss} [GeV]";
+  nbins = 30; low=150; high=450;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_ldp_"+btagselection);
 
 
 }
