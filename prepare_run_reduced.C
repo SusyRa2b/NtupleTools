@@ -9,13 +9,17 @@ using namespace std;
 void prepare_run_reduced(){
   //specify where the ntuples are
 
+  //NEW 42X data and MC
+  TString dir1 = "/cu2/ra2b/Ftuples/";
+  TString inputVersion = "V00-02-24";
+
   ////42X data and MC
   //TString dir1 = "/cu1/kreis/Ftuples/";
   //TString inputVersion = "V00-02-05";
 
-  //41X MC
-  TString dir1 = "/cu3/kreis/Ftuples/";
-  TString inputVersion = "V00-01-03";
+  ////41X MC
+  //TString dir1 = "/cu3/kreis/Ftuples/";
+  //TString inputVersion = "V00-01-03";
 
   ofstream runstream;
   runstream.open("run_reducedTrees.sh", ios::trunc);

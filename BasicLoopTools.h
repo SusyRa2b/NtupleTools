@@ -104,11 +104,11 @@ void InitializeStuff(){
 }
 #else
 //data
-std::vector<jet2_s> * myJetsPF;
-std::vector<jet_s> * myJetsPFhelper;
+std::vector<jet1_s> * myJetsPF;
+std::vector<jethelper_s> * myJetsPFhelper;
 std::vector<electron1_s> * myElectronsPF;
 std::vector<muon1_s> * myMuonsPF;
-std::vector<tau1_s> * myTausPF;
+std::vector<tau_s> * myTausPF;
 std::vector<met1_s> * myMETPF;
 std::vector<vertex_s> * myVertex;
 double * myGenWeight;
@@ -119,19 +119,19 @@ double* myEDM_luminosityBlock;
 double* myEDM_run;
 
 void InitializeStuff(){
-  myJetsPF = &jet2;            //selectedPatJetsPF
-  myJetsPFhelper = &jet;       //selectedPatJetsPF helper
+  myJetsPF = &jet1;            //selectedPatJetsPF
+  myJetsPFhelper = &jethelper; //selectedPatJetsPF helper
   myElectronsPF = &electron1;  //selectedPatElectronsPF
   myMuonsPF = &muon1;          //selectedPatMuonsPF
-  myTausPF = &tau1;            //selectedPatTausPF
+  myTausPF = &tau;            //selectedPatTausPF
   myMETPF = &met1;             //patMETsPF
   myVertex = &vertex;         //offlinePrimaryVertices
-  myGenWeight = &geneventinfoproduct1_weight;
-  myEDM_bunchCrossing = &edmevent_bunchCrossing;
-  myEDM_event = &edmevent_event;
-  myEDM_isRealData = &edmevent_isRealData;
-  myEDM_luminosityBlock = &edmevent_luminosityBlock;
-  myEDM_run = &edmevent_run;
+  myGenWeight = &geneventinfoproduct_weight;
+  myEDM_bunchCrossing = &eventhelper_bunchCrossing;
+  myEDM_event = &eventhelper_event;
+  myEDM_isRealData = &eventhelper_isRealData;
+  myEDM_luminosityBlock = &eventhelper_luminosityBlock;
+  myEDM_run = &eventhelper_run;
 }
 #endif
 
@@ -199,7 +199,7 @@ void changeVariables(TRandom* random, double jetLossProbability, int& nLostJets)
 }
 
 #else
-std::vector<jet2_s> * myJetsPF_temp;
+std::vector<jet1_s> * myJetsPF_temp;
 //std::vector<electron1_s> * myElectronsPF_temp;
 //std::vector<muon1_s> * myMuonsPF_temp;
 //std::vector<tau1_s> * myTausPF_temp;
@@ -229,7 +229,7 @@ void changeVariables(TRandom* random, double jetLossProbability, int& nLostJets)
   //myEDM_luminosityBlock_temp      = myEDM_luminosityBlock;
   //myEDM_run_temp                  = myEDM_run;         
 
-  myJetsPF                = new std::vector<jet2_s>;	  
+  myJetsPF                = new std::vector<jet1_s>;	  
   //myElectronsPF	          = new std::vector<electron1_s>;	  
   //myMuonsPF		  = new std::vector<muon1_s>;	  
   //myTausPF		  = new std::vector<tau1_s>;	  
@@ -241,7 +241,7 @@ void changeVariables(TRandom* random, double jetLossProbability, int& nLostJets)
   //myEDM_isRealData	  = new double;
   //myEDM_luminosityBlock   = new double;
   //myEDM_run               = new double;
-  for(vector<jet2_s>::iterator thisJet = myJetsPF_temp->begin(); thisJet != myJetsPF_temp->end(); thisJet++)
+  for(vector<jet1_s>::iterator thisJet = myJetsPF_temp->begin(); thisJet != myJetsPF_temp->end(); thisJet++)
     {
       if(random->Rndm() > jetLossProbability)
 	{
@@ -443,15 +443,15 @@ bool passHLT() {
     //else if (runnumber >= 167078) passTrig = edmtriggerresults_HLT_HT300_CentralJet30_BTagIP_PFMHT55_v5; 
     */
     //jmt -- 6 July 2011 -- use agreed RA2b triggers for Summer 2011
-    if      (runnumber >= 160431 && runnumber <= 161204)  passTrig = (edmtriggerresults_HLT_HT260_MHT60_v2 > 0);
-    else if (runnumber >= 161205 && runnumber <= 163268)  passTrig = (edmtriggerresults_HLT_HT250_MHT60_v2 > 0);
-    else if (runnumber >= 163269 && runnumber <= 164923)  passTrig = (edmtriggerresults_HLT_HT250_MHT60_v3 > 0);   
-    else if (runnumber >= 164924 && runnumber <= 165921)  passTrig = (edmtriggerresults_HLT_HT250_MHT70_v1 > 0);
-    else if (runnumber >= 165922 && runnumber <= 166300)  passTrig = (edmtriggerresults_HLT_HT300_MHT75_v7 > 0);
-    else if (runnumber >= 166301 && runnumber <= 166373)  passTrig = (edmtriggerresults_HLT_HT300_MHT75_v8 > 0);
-    else if (runnumber >= 166374 && runnumber <= 166978)  passTrig = (edmtriggerresults_HLT_HT300_MHT75_v7 > 0);
-    //168941 is an arbitrary run during July Tech Stop
-    else if (runnumber >= 166979 && runnumber <= 168941)  passTrig = (edmtriggerresults_HLT_HT300_MHT80_v1 > 0);
+    if      (runnumber >= 160431 && runnumber <= 161204)  passTrig = (triggerresultshelper_HLT_HT260_MHT60_v2 > 0);
+    else if (runnumber >= 161205 && runnumber <= 163268)  passTrig = (triggerresultshelper_HLT_HT250_MHT60_v2 > 0);
+    else if (runnumber >= 163269 && runnumber <= 164923)  passTrig = (triggerresultshelper_HLT_HT250_MHT60_v3 > 0);   
+    else if (runnumber >= 164924 && runnumber <= 165921)  passTrig = (triggerresultshelper_HLT_HT250_MHT70_v1 > 0);
+    else if (runnumber >= 165922 && runnumber <= 166300)  passTrig = (triggerresultshelper_HLT_HT300_MHT75_v7 > 0);
+    else if (runnumber >= 166301 && runnumber <= 166373)  passTrig = (triggerresultshelper_HLT_HT300_MHT75_v8 > 0);
+    else if (runnumber >= 166374 && runnumber <= 166978)  passTrig = (triggerresultshelper_HLT_HT300_MHT75_v7 > 0);
+    //168941 is an arbitrary run during July Tech Stop		      
+    else if (runnumber >= 166979 && runnumber <= 168941)  passTrig = (triggerresultshelper_HLT_HT300_MHT80_v1 > 0);
     
     else {cout<<"No trigger assigned for run = "<<runnumber<<endl; assert(0);}
     #endif
@@ -466,14 +466,14 @@ unsigned int utilityHLT_HT300(){
   
   unsigned int passTrig = 0;
   #ifndef isMC
-  if(edmtriggerresults_HLT_HT300_v1>0) passTrig = 1;
-  if(edmtriggerresults_HLT_HT300_v2>0) passTrig = 2;
-  if(edmtriggerresults_HLT_HT300_v3>0) passTrig = 3;
-  if(edmtriggerresults_HLT_HT300_v4>0) passTrig = 4;
-  if(edmtriggerresults_HLT_HT300_v5>0) passTrig = 5;
-  if(edmtriggerresults_HLT_HT300_v6>0) passTrig = 6;
-  if(edmtriggerresults_HLT_HT300_v7>0) passTrig = 7;
-  if(edmtriggerresults_HLT_HT300_v8>0) passTrig = 8;
+  if(triggerresultshelper_HLT_HT300_v1>0) passTrig = 1;
+  if(triggerresultshelper_HLT_HT300_v2>0) passTrig = 2;
+  if(triggerresultshelper_HLT_HT300_v3>0) passTrig = 3;
+  if(triggerresultshelper_HLT_HT300_v4>0) passTrig = 4;
+  if(triggerresultshelper_HLT_HT300_v5>0) passTrig = 5;
+  if(triggerresultshelper_HLT_HT300_v6>0) passTrig = 6;
+  if(triggerresultshelper_HLT_HT300_v7>0) passTrig = 7;
+  if(triggerresultshelper_HLT_HT300_v8>0) passTrig = 8;
   #endif
   return passTrig;
 }
@@ -483,10 +483,10 @@ unsigned int utilityHLT_HT300_CentralJet30_BTagIP(){
 
   unsigned int passTrig = 0;
   #ifndef isMC
-  if(edmtriggerresults_HLT_HT300_CentralJet30_BTagIP_v2>0) passTrig = 2;
-  if(edmtriggerresults_HLT_HT300_CentralJet30_BTagIP_v3>0) passTrig = 3; 
-  if(edmtriggerresults_HLT_HT300_CentralJet30_BTagIP_v4>0) passTrig = 4; 
-  if(edmtriggerresults_HLT_HT300_CentralJet30_BTagIP_v5>0) passTrig = 5; 
+  if(triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_v2>0) passTrig = 2;
+  if(triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_v3>0) passTrig = 3; 
+  if(triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_v4>0) passTrig = 4; 
+  if(triggerresultshelper_HLT_HT300_CentralJet30_BTagIP_v5>0) passTrig = 5; 
   #endif
   return passTrig;
 }
@@ -2369,6 +2369,7 @@ double getCrossSection(TString inname){
   if (inname.Contains("qcd_tunez2_pt80to120_summer11") )                        return 7.843e5;
   if (inname.Contains("ttjets_tunez2_madgraph_tauola_summer11") )               return 158; // +/- 10 +/- 15 //CMS PAS TOP-11-001
 
+  if (inname.Contains("LM9_SUSY_sftsht_7TeV-pythia6") )                         return 7.134; //from ProductionSpring2011 twiki
     
   std::cout<<"Cannot find cross section for this sample!"<<std::endl;
   assert(0); 
@@ -2492,6 +2493,7 @@ void cutflow(itreestream& stream){
   setEleReq(0);
   setBCut(3);
   setCutScheme();
+  setIgnoredCut("cutDeltaPhiTaus");
 
   for (unsigned int i=0 ; i<cutTags_.size(); i++) {
     //std::cout << "cutTags_["<< i<< "]=" << cutTags_.at(i) << std::endl;
