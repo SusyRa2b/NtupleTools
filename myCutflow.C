@@ -51,6 +51,9 @@ void myCutflow::Loop(bool isTightSelection, bool writeFiles)//:Event_(sampleName
    int nGe2b=0;
    int nGe3b=0;
 
+   vector<double> highestMETevent; 
+   vector<double> highestHTevent; 
+
 //   vector<TString> textfilenames = getFileNames(sampleName,isTightSelection);
 //   vector<ofstream*> textfiles = getFiles(sampleName,isTightSelection);
    vector<TString> textfilenames = getFileNames(Event_,isTightSelection);
@@ -64,6 +67,13 @@ void myCutflow::Loop(bool isTightSelection, bool writeFiles)//:Event_(sampleName
       if (ientry < 0) break;
       nb = fChain->GetEntry(jentry);   nbytes += nb;
       // if (Cut(ientry) < 0) continue;
+
+      /*
+      //highest HT, MET events
+      if ( (runNumber==166033 && lumiSection==511 && eventNumber==716123203) || (runNumber==167676 && lumiSection==307&& eventNumber==275233701)){
+	cout<<HT<<" "<<MET<<" "<<MHT<<" "<<njets<<" "<<nbjetsSSVHPT<<" "<<minDeltaPhiN<<" "<<jetpt1<<" "<<jetpt2<<" "<<jetpt3<<" "<<bjetpt1<<" " <<bjeteta1<<" "<<bjetphi1<<" "<<bjetpt2<<" "<<bjeteta2<<" "<<bjetphi2<<" "<<bjetpt3<<" "<<bjeteta3<<" "<<bjetphi3<<" "<<nMuons<<" "<<passBadPFMuon<<" "<<passInconsistentMuon<<endl;
+      }
+      */
 
       int istage=0;
 
@@ -106,7 +116,7 @@ void myCutflow::Loop(bool isTightSelection, bool writeFiles)//:Event_(sampleName
 
       /*______________________________________________________ min dPhi / min dPhiN __________________________*/
 
-//		if (cutDeltaPhiN){
+//		if (cutDeltaPhi){
 		if (minDeltaPhiN>=4){
 		  nPassDPhi++;
 		  if (writeFiles) *textfiles[istage]<<runNumber<<" "<<lumiSection<<" "<<eventNumber<<endl;
@@ -121,20 +131,20 @@ void myCutflow::Loop(bool isTightSelection, bool writeFiles)//:Event_(sampleName
 
       /*______________________________________________________ nB ____________________________________________*/
 
-		    if (nbjets>=1) {
+		    if (nbjetsSSVHPT>=1) {
 		      nGe1b++;
 		      if (writeFiles) *textfiles[istage]<<runNumber<<" "<<lumiSection<<" "<<eventNumber<<endl;
 		      istage++;
-		      if (nbjets==1) {
+		      if (nbjetsSSVHPT==1) {
 			nEq1b++;
 			if (writeFiles) *textfiles[istage]<<runNumber<<" "<<lumiSection<<" "<<eventNumber<<endl;
 			istage++;
 		      }
-		      else if (nbjets>=2){
+		      else if (nbjetsSSVHPT>=2){
 			nGe2b++;
 			if (writeFiles) *textfiles[istage]<<runNumber<<" "<<lumiSection<<" "<<eventNumber<<endl;
 			istage++;
-			if (nbjets>=3) {
+			if (nbjetsSSVHPT>=3) {
 			  nGe3b++;
 			  if (writeFiles) *textfiles[istage]<<runNumber<<" "<<lumiSection<<" "<<eventNumber<<endl;
 			  istage++;
@@ -150,9 +160,9 @@ void myCutflow::Loop(bool isTightSelection, bool writeFiles)//:Event_(sampleName
       }//HT
    }
 
-   /*  
-       this doesn't weigh the events at all!!!
-   
+     
+   //   this doesn't weigh the events at all!!!
+
    //print cutflow table
    cout<<"unweighted cutflow table"<<endl;
    cout<<"HT | "         <<nPassHT       <<" +/- "<<sqrt(nPassHT)<<endl;
@@ -167,7 +177,7 @@ void myCutflow::Loop(bool isTightSelection, bool writeFiles)//:Event_(sampleName
    cout<<">= 2 b | "     <<nGe2b         <<" +/- "<<sqrt(nGe2b)<<endl;
    cout<<">= 3 b | "     <<nGe3b         <<" +/- "<<sqrt(nGe3b)<<endl;
 
-   */
+   
 
 }
 
@@ -175,9 +185,9 @@ void myCutflow::Loop(bool isTightSelection, bool writeFiles)//:Event_(sampleName
 vector<TString> myCutflow::getFileNames(TString sampleName, bool isTightSelection)//, vector<TString> &fileNames)
 {
   vector<TString> fileNames;
-//  TString file = "/cu3/galank/SUSY/2011/EventCount/"; //name of directory to dump files in
+//  TString file = "/cu3/galank/SUSY/2011/EventCount/"; file += sampleName; file += "/"; //name of directory to dump files in
   TString file = "";
-  file += sampleName; file +="/cutflow.";
+  file +="cutflow.";
   file += isTightSelection ? "TightSelection." : "BaselineSelection.";
   file += sampleName; file += ".";
 

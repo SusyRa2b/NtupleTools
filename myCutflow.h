@@ -23,6 +23,8 @@ public :
    ULong64_t       runNumber;
    ULong64_t       lumiSection;
    ULong64_t       eventNumber;
+   Float_t         btagIPweight;
+   Float_t         pfmhtweight;
    Bool_t          cutHT;
    Bool_t          cutPV;
    Bool_t          cutTrigger;
@@ -32,14 +34,26 @@ public :
    Bool_t          cutMET;
    Bool_t          cutDeltaPhi;
    Bool_t          cutCleaning;
+   Int_t           nGoodPV;
    Bool_t          passBadPFMuon;
    Bool_t          passInconsistentMuon;
    Int_t           njets;
    Int_t           nbjets;
    Int_t           nElectrons;
    Int_t           nMuons;
+   Int_t           nbjetsSSVM;
+   Int_t           nbjetsSSVHPT;
+   Int_t           nbjetsTCHPT;
+   Int_t           nbjetsTCHET;
+   Int_t           nbjetsTCHPM;
+   Bool_t          isRealData;
+   Bool_t          pass_utilityHLT_HT300;
+   UInt_t          prescale_utilityHLT_HT300;
+   Bool_t          pass_utilityHLT_HT300_CentralJet30_BTagIP;
+   UInt_t          prescale_utilityHLT_HT300_CentralJet30_BTagIP;
    Float_t         HT;
    Float_t         MET;
+   Float_t         METsig;
    Float_t         METphi;
    Float_t         MHT;
    Float_t         bestWMass;
@@ -51,6 +65,7 @@ public :
    Float_t         minDeltaPhiAll;
    Float_t         minDeltaPhiAll30;
    Float_t         minDeltaPhi30_eta5_noIdAll;
+   Float_t         minDeltaPhiMetTau;
    Float_t         maxDeltaPhi;
    Float_t         maxDeltaPhiAll;
    Float_t         maxDeltaPhiAll30;
@@ -58,24 +73,33 @@ public :
    Float_t         sumDeltaPhi;
    Float_t         diffDeltaPhi;
    Float_t         minDeltaPhiN;
+   Float_t         deltaPhiN1;
+   Float_t         deltaPhiN2;
+   Float_t         deltaPhiN3;
    Float_t         jetpt1;
    Float_t         jeteta1;
    Float_t         jetphi1;
+   Float_t         jetenergy1;
    Float_t         jetpt2;
    Float_t         jeteta2;
    Float_t         jetphi2;
+   Float_t         jetenergy2;
    Float_t         jetpt3;
    Float_t         jeteta3;
    Float_t         jetphi3;
+   Float_t         jetenergy3;
    Float_t         bjetpt1;
    Float_t         bjeteta1;
    Float_t         bjetphi1;
+   Float_t         bjetenergy1;
    Float_t         bjetpt2;
    Float_t         bjeteta2;
    Float_t         bjetphi2;
+   Float_t         bjetenergy2;
    Float_t         bjetpt3;
    Float_t         bjeteta3;
    Float_t         bjetphi3;
+   Float_t         bjetenergy3;
    Float_t         eleet1;
    Float_t         muonpt1;
    Float_t         lambda1_allJets;
@@ -96,6 +120,8 @@ public :
    TBranch        *b_runNumber;   //!
    TBranch        *b_lumiSection;   //!
    TBranch        *b_eventNumber;   //!
+   TBranch        *b_btagIPweight;   //!
+   TBranch        *b_pfmhtweight;   //!
    TBranch        *b_cutHT;   //!
    TBranch        *b_cutPV;   //!
    TBranch        *b_cutTrigger;   //!
@@ -105,14 +131,26 @@ public :
    TBranch        *b_cutMET;   //!
    TBranch        *b_cutDeltaPhi;   //!
    TBranch        *b_cutCleaning;   //!
+   TBranch        *b_nGoodPV;   //!
    TBranch        *b_passBadPFMuon;   //!
    TBranch        *b_passInconsistentMuon;   //!
    TBranch        *b_njets;   //!
    TBranch        *b_nbjets;   //!
    TBranch        *b_nElectrons;   //!
    TBranch        *b_nMuons;   //!
+   TBranch        *b_nbjetsSSVM;   //!
+   TBranch        *b_nbjetsSSVHPT;   //!
+   TBranch        *b_nbjetsTCHPT;   //!
+   TBranch        *b_nbjetsTCHET;   //!
+   TBranch        *b_nbjetsTCHPM;   //!
+   TBranch        *b_isRealData;   //!
+   TBranch        *b_pass_utilityHLT_HT300;   //!
+   TBranch        *b_prescale_utilityHLT_HT300;   //!
+   TBranch        *b_pass_utilityHLT_HT300_CentralJet30_BTagIP;   //!
+   TBranch        *b_prescale_utilityHLT_HT300_CentralJet30_BTagIP;   //!
    TBranch        *b_HT;   //!
    TBranch        *b_MET;   //!
+   TBranch        *b_METsig;   //!
    TBranch        *b_METphi;   //!
    TBranch        *b_MHT;   //!
    TBranch        *b_bestWMass;   //!
@@ -124,6 +162,7 @@ public :
    TBranch        *b_minDeltaPhiAll;   //!
    TBranch        *b_minDeltaPhiAll30;   //!
    TBranch        *b_minDeltaPhi30_eta5_noIdAll;   //!
+   TBranch        *b_minDeltaPhiMetTau;   //!
    TBranch        *b_maxDeltaPhi;   //!
    TBranch        *b_maxDeltaPhiAll;   //!
    TBranch        *b_maxDeltaPhiAll30;   //!
@@ -131,24 +170,33 @@ public :
    TBranch        *b_sumDeltaPhi;   //!
    TBranch        *b_diffDeltaPhi;   //!
    TBranch        *b_minDeltaPhiN;   //!
+   TBranch        *b_deltaPhiN1;   //!
+   TBranch        *b_deltaPhiN2;   //!
+   TBranch        *b_deltaPhiN3;   //!
    TBranch        *b_jetpt1;   //!
    TBranch        *b_jeteta1;   //!
    TBranch        *b_jetphi1;   //!
+   TBranch        *b_jetenergy1;   //!
    TBranch        *b_jetpt2;   //!
    TBranch        *b_jeteta2;   //!
    TBranch        *b_jetphi2;   //!
+   TBranch        *b_jetenergy2;   //!
    TBranch        *b_jetpt3;   //!
    TBranch        *b_jeteta3;   //!
    TBranch        *b_jetphi3;   //!
+   TBranch        *b_jetenergy3;   //!
    TBranch        *b_bjetpt1;   //!
    TBranch        *b_bjeteta1;   //!
    TBranch        *b_bjetphi1;   //!
+   TBranch        *b_bjetenergy1;   //!
    TBranch        *b_bjetpt2;   //!
    TBranch        *b_bjeteta2;   //!
    TBranch        *b_bjetphi2;   //!
+   TBranch        *b_bjetenergy2;   //!
    TBranch        *b_bjetpt3;   //!
    TBranch        *b_bjeteta3;   //!
    TBranch        *b_bjetphi3;   //!
+   TBranch        *b_bjetenergy3;   //!
    TBranch        *b_eleet1;   //!
    TBranch        *b_muonpt1;   //!
    TBranch        *b_lambda1_allJets;   //!
@@ -211,39 +259,43 @@ myCutflow::myCutflow(TString sampleName, TTree *tree):Event_(sampleName)
       TChain * chain = new TChain("reducedTree","");
 
       if (sampleName=="TTbarJets"){
-	chain->Add("/cu2/ra2b/reducedTrees/V00-02-05/reducedTree.SSVHPT.TTbarJets.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-05_v2/reducedTree.SSVHPT.TTbarJets.root/reducedTree");
       }
 
       else if (sampleName=="SingleTop"){
-	chain->Add("/cu2/ra2b/reducedTrees/V00-02-05/reducedTree.SSVHPT.SingleTop.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-05_v2/reducedTree.SSVHPT.SingleTop.root/reducedTree");
       }
 
       else if (sampleName=="WJets"){
-	chain->Add("/cu2/ra2b/reducedTrees/V00-02-05/reducedTree.SSVHPT.WJets.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-05_v2/reducedTree.SSVHPT.WJets.root/reducedTree");
       }
 
       else if (sampleName=="ZJets"){
-	chain->Add("/cu2/ra2b/reducedTrees/V00-02-05/reducedTree.SSVHPT.ZJets.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-05_v2/reducedTree.SSVHPT.ZJets.root/reducedTree");
       }
 
       else if (sampleName=="Zinvisible"){
-	chain->Add("/cu2/ra2b/reducedTrees/V00-02-05/reducedTree.SSVHPT.Zinvisible.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-05_v2/reducedTree.SSVHPT.Zinvisible.root/reducedTree");
+      }
+
+      else if (sampleName=="VV"){
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-05_v2/reducedTree.SSVHPT.VV.root/reducedTree");
       }
 
       else if (sampleName=="PythiaPUQCD"){
-	chain->Add("/cu2/ra2b/reducedTrees/V00-02-05/reducedTree.SSVHPT.PythiaPUQCD.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-05_v2/reducedTree.SSVHPT.PythiaPUQCD.root/reducedTree");
       }
 
       else if (sampleName=="LM9"){
-	chain->Add("/cu2/ra2b/reducedTrees/V00-02-05/reducedTree.SSVHPT.LM9.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-05_v2/reducedTree.SSVHPT.LM9.root/reducedTree");
       }
 
       else if (sampleName=="LM13"){
-	chain->Add("/cu2/ra2b/reducedTrees/V00-02-05/reducedTree.SSVHPT.LM13.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-05_v2/reducedTree.SSVHPT.LM13.root/reducedTree");
       }
 
       else if (sampleName=="Data"){
-	chain->Add("/cu2/ra2b/reducedTrees/V00-02-05/reducedTree.SSVHPT.ht_run2011a_uptojul6.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-05_v2/reducedTree.SSVHPT.ht_run2011a_423_may10rereco.root/reducedTree");
       }
 
       else cout<<"I couldn't find the sample you asked for"<<endl;
@@ -301,6 +353,8 @@ void myCutflow::Init(TTree *tree)
    fChain->SetBranchAddress("runNumber", &runNumber, &b_runNumber);
    fChain->SetBranchAddress("lumiSection", &lumiSection, &b_lumiSection);
    fChain->SetBranchAddress("eventNumber", &eventNumber, &b_eventNumber);
+   fChain->SetBranchAddress("btagIPweight", &btagIPweight, &b_btagIPweight);
+   fChain->SetBranchAddress("pfmhtweight", &pfmhtweight, &b_pfmhtweight);
    fChain->SetBranchAddress("cutHT", &cutHT, &b_cutHT);
    fChain->SetBranchAddress("cutPV", &cutPV, &b_cutPV);
    fChain->SetBranchAddress("cutTrigger", &cutTrigger, &b_cutTrigger);
@@ -310,14 +364,26 @@ void myCutflow::Init(TTree *tree)
    fChain->SetBranchAddress("cutMET", &cutMET, &b_cutMET);
    fChain->SetBranchAddress("cutDeltaPhi", &cutDeltaPhi, &b_cutDeltaPhi);
    fChain->SetBranchAddress("cutCleaning", &cutCleaning, &b_cutCleaning);
+   fChain->SetBranchAddress("nGoodPV", &nGoodPV, &b_nGoodPV);
    fChain->SetBranchAddress("passBadPFMuon", &passBadPFMuon, &b_passBadPFMuon);
    fChain->SetBranchAddress("passInconsistentMuon", &passInconsistentMuon, &b_passInconsistentMuon);
    fChain->SetBranchAddress("njets", &njets, &b_njets);
    fChain->SetBranchAddress("nbjets", &nbjets, &b_nbjets);
    fChain->SetBranchAddress("nElectrons", &nElectrons, &b_nElectrons);
    fChain->SetBranchAddress("nMuons", &nMuons, &b_nMuons);
+   fChain->SetBranchAddress("nbjetsSSVM", &nbjetsSSVM, &b_nbjetsSSVM);
+   fChain->SetBranchAddress("nbjetsSSVHPT", &nbjetsSSVHPT, &b_nbjetsSSVHPT);
+   fChain->SetBranchAddress("nbjetsTCHPT", &nbjetsTCHPT, &b_nbjetsTCHPT);
+   fChain->SetBranchAddress("nbjetsTCHET", &nbjetsTCHET, &b_nbjetsTCHET);
+   fChain->SetBranchAddress("nbjetsTCHPM", &nbjetsTCHPM, &b_nbjetsTCHPM);
+   fChain->SetBranchAddress("isRealData", &isRealData, &b_isRealData);
+   fChain->SetBranchAddress("pass_utilityHLT_HT300", &pass_utilityHLT_HT300, &b_pass_utilityHLT_HT300);
+   fChain->SetBranchAddress("prescale_utilityHLT_HT300", &prescale_utilityHLT_HT300, &b_prescale_utilityHLT_HT300);
+   fChain->SetBranchAddress("pass_utilityHLT_HT300_CentralJet30_BTagIP", &pass_utilityHLT_HT300_CentralJet30_BTagIP, &b_pass_utilityHLT_HT300_CentralJet30_BTagIP);
+   fChain->SetBranchAddress("prescale_utilityHLT_HT300_CentralJet30_BTagIP", &prescale_utilityHLT_HT300_CentralJet30_BTagIP, &b_prescale_utilityHLT_HT300_CentralJet30_BTagIP);
    fChain->SetBranchAddress("HT", &HT, &b_HT);
    fChain->SetBranchAddress("MET", &MET, &b_MET);
+   fChain->SetBranchAddress("METsig", &METsig, &b_METsig);
    fChain->SetBranchAddress("METphi", &METphi, &b_METphi);
    fChain->SetBranchAddress("MHT", &MHT, &b_MHT);
    fChain->SetBranchAddress("bestWMass", &bestWMass, &b_bestWMass);
@@ -329,6 +395,7 @@ void myCutflow::Init(TTree *tree)
    fChain->SetBranchAddress("minDeltaPhiAll", &minDeltaPhiAll, &b_minDeltaPhiAll);
    fChain->SetBranchAddress("minDeltaPhiAll30", &minDeltaPhiAll30, &b_minDeltaPhiAll30);
    fChain->SetBranchAddress("minDeltaPhi30_eta5_noIdAll", &minDeltaPhi30_eta5_noIdAll, &b_minDeltaPhi30_eta5_noIdAll);
+   fChain->SetBranchAddress("minDeltaPhiMetTau", &minDeltaPhiMetTau, &b_minDeltaPhiMetTau);
    fChain->SetBranchAddress("maxDeltaPhi", &maxDeltaPhi, &b_maxDeltaPhi);
    fChain->SetBranchAddress("maxDeltaPhiAll", &maxDeltaPhiAll, &b_maxDeltaPhiAll);
    fChain->SetBranchAddress("maxDeltaPhiAll30", &maxDeltaPhiAll30, &b_maxDeltaPhiAll30);
@@ -336,24 +403,33 @@ void myCutflow::Init(TTree *tree)
    fChain->SetBranchAddress("sumDeltaPhi", &sumDeltaPhi, &b_sumDeltaPhi);
    fChain->SetBranchAddress("diffDeltaPhi", &diffDeltaPhi, &b_diffDeltaPhi);
    fChain->SetBranchAddress("minDeltaPhiN", &minDeltaPhiN, &b_minDeltaPhiN);
+   fChain->SetBranchAddress("deltaPhiN1", &deltaPhiN1, &b_deltaPhiN1);
+   fChain->SetBranchAddress("deltaPhiN2", &deltaPhiN2, &b_deltaPhiN2);
+   fChain->SetBranchAddress("deltaPhiN3", &deltaPhiN3, &b_deltaPhiN3);
    fChain->SetBranchAddress("jetpt1", &jetpt1, &b_jetpt1);
    fChain->SetBranchAddress("jeteta1", &jeteta1, &b_jeteta1);
    fChain->SetBranchAddress("jetphi1", &jetphi1, &b_jetphi1);
+   fChain->SetBranchAddress("jetenergy1", &jetenergy1, &b_jetenergy1);
    fChain->SetBranchAddress("jetpt2", &jetpt2, &b_jetpt2);
    fChain->SetBranchAddress("jeteta2", &jeteta2, &b_jeteta2);
    fChain->SetBranchAddress("jetphi2", &jetphi2, &b_jetphi2);
+   fChain->SetBranchAddress("jetenergy2", &jetenergy2, &b_jetenergy2);
    fChain->SetBranchAddress("jetpt3", &jetpt3, &b_jetpt3);
    fChain->SetBranchAddress("jeteta3", &jeteta3, &b_jeteta3);
    fChain->SetBranchAddress("jetphi3", &jetphi3, &b_jetphi3);
+   fChain->SetBranchAddress("jetenergy3", &jetenergy3, &b_jetenergy3);
    fChain->SetBranchAddress("bjetpt1", &bjetpt1, &b_bjetpt1);
    fChain->SetBranchAddress("bjeteta1", &bjeteta1, &b_bjeteta1);
    fChain->SetBranchAddress("bjetphi1", &bjetphi1, &b_bjetphi1);
+   fChain->SetBranchAddress("bjetenergy1", &bjetenergy1, &b_bjetenergy1);
    fChain->SetBranchAddress("bjetpt2", &bjetpt2, &b_bjetpt2);
    fChain->SetBranchAddress("bjeteta2", &bjeteta2, &b_bjeteta2);
    fChain->SetBranchAddress("bjetphi2", &bjetphi2, &b_bjetphi2);
+   fChain->SetBranchAddress("bjetenergy2", &bjetenergy2, &b_bjetenergy2);
    fChain->SetBranchAddress("bjetpt3", &bjetpt3, &b_bjetpt3);
    fChain->SetBranchAddress("bjeteta3", &bjeteta3, &b_bjeteta3);
    fChain->SetBranchAddress("bjetphi3", &bjetphi3, &b_bjetphi3);
+   fChain->SetBranchAddress("bjetenergy3", &bjetenergy3, &b_bjetenergy3);
    fChain->SetBranchAddress("eleet1", &eleet1, &b_eleet1);
    fChain->SetBranchAddress("muonpt1", &muonpt1, &b_muonpt1);
    fChain->SetBranchAddress("lambda1_allJets", &lambda1_allJets, &b_lambda1_allJets);
