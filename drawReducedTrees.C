@@ -111,7 +111,9 @@ void averageZ() {
 
 }
 
-std::pair<double,double> anotherABCD( TString btagselection, bool tight, bool isSIG, bool datamode=false, float subscale=1,float SBshift=0 ) {
+std::pair<double,double> anotherABCD( TString btagselection, bool tight, bool isSIG, bool datamode=false, float subscale=1,float SBshift=0, const TString LSBbsel="==0") {
+  //kind of awful, but we'll return the estimate for datamode=true but the closure test bias for datamode=false
+
   /*
 .L drawReducedTrees.C++
   */
@@ -140,6 +142,9 @@ std::pair<double,double> anotherABCD( TString btagselection, bool tight, bool is
     addSample("Zinvisible");
     addSample("VV");
     //    addSample("SingleTop"); //not now because it is broken
+  }
+  else {
+    resetSamples();
   }
 
   savePlots_=false;
@@ -183,7 +188,7 @@ std::pair<double,double> anotherABCD( TString btagselection, bool tight, bool is
   TCut cleaning = "weight<1000";
 
   char cutstring1[100];
-  sprintf(cutstring1,"MET>= %.0f && MET < %.0f && nbjetsSSVHPT==0", 50+SBshift,100+SBshift);
+  sprintf(cutstring1,"MET>= %.0f && MET < %.0f && nbjetsSSVHPT%s", 50+SBshift,100+SBshift,LSBbsel.Data());
   cout<<"*** SB cut is "<<cutstring1<<endl<<endl;
   TCut SBMET = TCut(cutstring1)&&triggerCutLSB;
   TCut dpcut = "1";//"minDeltaPhiN>=4";
@@ -276,7 +281,7 @@ std::pair<double,double> anotherABCD( TString btagselection, bool tight, bool is
   sprintf(output,"%s & %s & %s & %s & %s & %s \\\\ %% %f",btagselection.Data(),
 	  jmt::format_nevents(B,Berr).Data(),jmt::format_nevents(A,Aerr).Data(),
 	  jmt::format_nevents(D,Derr).Data(),jmt::format_nevents(estimate,estimateerr).Data(),
-	  jmt::format_nevents(SIG,SIGerr).Data(),(SIG-estimate)/SIG);}
+	  jmt::format_nevents(SIG,SIGerr).Data(),100*(SIG-estimate)/SIG);}
   else {
     sprintf(output,"%s & %d & %d & %d & %s & %s   \\\\",btagselection.Data(),
 	    TMath::Nint(B),TMath::Nint(A),
@@ -285,27 +290,41 @@ std::pair<double,double> anotherABCD( TString btagselection, bool tight, bool is
     cout<<"DATA\t";
   }
   cout<<output<<endl;
-  return make_pair(estimate,estimateerr);
+  if (datamode)  return make_pair(estimate,estimateerr);
+  return make_pair(100*(SIG-estimate)/SIG, 0);
 }
 
-void runClosureTest2011() {
+void runClosureTest2011(std::map<TString, std::vector<double> > & syst)  {
 
-  anotherABCD("ge1b", false, false);
-  anotherABCD("ge1b", false, true);
-  anotherABCD("ge1b", true, false);
-  anotherABCD("ge1b", true, true);
+  syst["Closure"].push_back(  anotherABCD("ge1b", false, false).first);
+  syst["Closure"].push_back(  anotherABCD("ge1b", false, true).first);
+  syst["Closure"].push_back(  anotherABCD("ge1b", true, false).first);
+  syst["Closure"].push_back(  anotherABCD("ge1b", true, true).first);
 
-  anotherABCD("ge2b", false, false);
-  anotherABCD("ge2b", false, true);
-  anotherABCD("ge2b", true, false);
-  anotherABCD("ge2b", true, true);
+  syst["Closure"].push_back(  anotherABCD("ge2b", false, false).first);
+  syst["Closure"].push_back(  anotherABCD("ge2b", false, true).first);
+  syst["Closure"].push_back(  anotherABCD("ge2b", true, false).first);
+  syst["Closure"].push_back(  anotherABCD("ge2b", true, true).first);
 }
 
-void runDataQCD2011() {
+void runClosureTest2011()  {
+  std::map<TString, std::vector<double> > dummy;
+  runClosureTest2011(dummy);
 
+}
+
+void runDataQCD2011(const bool forOwen=false) {
+
+  //data structures to hold results
   std::pair<double,double> n[8];
-  std::pair<double,double> p[8];
-  std::pair<double,double> m[8];
+  std::pair<double,double> subp[8];
+  std::pair<double,double> subm[8];
+
+  std::pair<double,double> sbp[8];
+  std::pair<double,double> sbm[8];
+
+  //to hold systematics
+  std::map<TString, std::vector<double> > syst;
 
   int i=0;
   n[i++]=anotherABCD("ge1b", false, false,true);
@@ -318,64 +337,106 @@ void runDataQCD2011() {
   n[i++]=anotherABCD("ge2b", true, false,true);
   n[i++]=anotherABCD("ge2b", true, true,true);
   
-/*
+  /*
+    the "owen mode" is collecting in global data structures the quantities that owen needs
+    If we run the systematics then we will clobber the regular numbers. So quit now with just the nominal
+    values.
+  */
+  if (forOwen) return;
+
   //now do it again with +50% subtraction
   i=0;
   cout<<" subtraction +50% "<<endl;
-  p[i++]=anotherABCD("ge1b", false, false,true,1.5);
-  p[i++]=anotherABCD("ge1b", false, true,true,1.5);
-  p[i++]=anotherABCD("ge1b", true, false,true,1.5);
-  p[i++]=anotherABCD("ge1b", true, true,true,1.5);
+  subp[i++]=anotherABCD("ge1b", false, false,true,1.5);
+  subp[i++]=anotherABCD("ge1b", false, true,true,1.5);
+  subp[i++]=anotherABCD("ge1b", true, false,true,1.5);
+  subp[i++]=anotherABCD("ge1b", true, true,true,1.5);
   
-  p[i++]=anotherABCD("ge2b", false, false,true,1.5);
-  p[i++]=anotherABCD("ge2b", false, true,true,1.5);
-  p[i++]=anotherABCD("ge2b", true, false,true,1.5);
-  p[i++]= anotherABCD("ge2b", true, true,true,1.5);
+  subp[i++]=anotherABCD("ge2b", false, false,true,1.5);
+  subp[i++]=anotherABCD("ge2b", false, true,true,1.5);
+  subp[i++]=anotherABCD("ge2b", true, false,true,1.5);
+  subp[i++]=anotherABCD("ge2b", true, true,true,1.5);
 
   //now do it again with -50% subtraction
   i=0;
   cout<<" subtraction -50% "<<endl;
-  m[i++]=anotherABCD("ge1b", false, false,true,0.5);
-  m[i++]=anotherABCD("ge1b", false, true,true,0.5);
-  m[i++]=anotherABCD("ge1b", true, false,true,0.5);
-  m[i++]=anotherABCD("ge1b", true, true,true,0.5);
+  subm[i++]=anotherABCD("ge1b", false, false,true,0.5);
+  subm[i++]=anotherABCD("ge1b", false, true,true,0.5);
+  subm[i++]=anotherABCD("ge1b", true, false,true,0.5);
+  subm[i++]=anotherABCD("ge1b", true, true,true,0.5);
   
-  m[i++]=anotherABCD("ge2b", false, false,true,0.5);
-  m[i++]=anotherABCD("ge2b", false, true,true,0.5);
-  m[i++]=anotherABCD("ge2b", true, false,true,0.5);
-  m[i++]=anotherABCD("ge2b", true, true,true,0.5);
-*/
-/*
-  //alternately, do it with shifted SB
+  subm[i++]=anotherABCD("ge2b", false, false,true,0.5);
+  subm[i++]=anotherABCD("ge2b", false, true,true,0.5);
+  subm[i++]=anotherABCD("ge2b", true, false,true,0.5);
+  subm[i++]=anotherABCD("ge2b", true, true,true,0.5);
+
+  cout<<" ==== systematics for MC subtraction ==== "<<endl;
+  for (int j=0; j<8;j++) {
+    double var1 = 100*(n[j].first  -subp[j].first)/n[j].first;
+    double var2 = 100*(n[j].first -subm[j].first)/n[j].first;
+    //expect these to be equal and opposite
+    if ( fabs(var1)-fabs(var2) > 0.1 ) cout<<j<<" found MC subtraction systematic size discrepancy"<<endl;
+    cout<<var1<<"\t"<<var2<<endl;
+
+    syst["MCsub"].push_back( fabs(var1)>fabs(var2) ? fabs(var1) : fabs(var2));
+  }
+  cout<<" =END systematics for MC subtraction ==== "<<endl;
+
+
+  //do it with shifted SB
   i=0;
   cout<<" SB +10 GeV"<<endl;
-  p[i++]=anotherABCD("ge1b", false, false,true,1,10);
-  p[i++]=anotherABCD("ge1b", false, true,true,1,10);
-  p[i++]=anotherABCD("ge1b", true, false,true,1,10);
-  p[i++]=anotherABCD("ge1b", true, true,true,1,10);
+  sbp[i++]=anotherABCD("ge1b", false, false,true,1,10);
+  sbp[i++]=anotherABCD("ge1b", false, true,true,1,10);
+  sbp[i++]=anotherABCD("ge1b", true, false,true,1,10);
+  sbp[i++]=anotherABCD("ge1b", true, true,true,1,10);
   
-  p[i++]=anotherABCD("ge2b", false, false,true,1,10);
-  p[i++]=anotherABCD("ge2b", false, true,true,1,10);
-  p[i++]=anotherABCD("ge2b", true, false,true,1,10);
-  p[i++]= anotherABCD("ge2b", true, true,true,1,10);
+  sbp[i++]=anotherABCD("ge2b", false, false,true,1,10);
+  sbp[i++]=anotherABCD("ge2b", false, true,true,1,10);
+  sbp[i++]=anotherABCD("ge2b", true, false,true,1,10);
+  sbp[i++]= anotherABCD("ge2b", true, true,true,1,10);
 
   //now do it again with -50% subtraction
   i=0;
   cout<<" SB -10 GeV "<<endl;
-  m[i++]=anotherABCD("ge1b", false, false,true,1,-10);
-  m[i++]=anotherABCD("ge1b", false, true,true,1,-10);
-  m[i++]=anotherABCD("ge1b", true, false,true,1,-10);
-  m[i++]=anotherABCD("ge1b", true, true,true,1,-10);
+  sbm[i++]=anotherABCD("ge1b", false, false,true,1,-10);
+  sbm[i++]=anotherABCD("ge1b", false, true,true,1,-10);
+  sbm[i++]=anotherABCD("ge1b", true, false,true,1,-10);
+  sbm[i++]=anotherABCD("ge1b", true, true,true,1,-10);
   
-  m[i++]=anotherABCD("ge2b", false, false,true,1,-10);
-  m[i++]=anotherABCD("ge2b", false, true,true,1,-10);
-  m[i++]=anotherABCD("ge2b", true, false,true,1,-10);
-  m[i++]=anotherABCD("ge2b", true, true,true,1,-10);
+  sbm[i++]=anotherABCD("ge2b", false, false,true,1,-10);
+  sbm[i++]=anotherABCD("ge2b", false, true,true,1,-10);
+  sbm[i++]=anotherABCD("ge2b", true, false,true,1,-10);
+  sbm[i++]=anotherABCD("ge2b", true, true,true,1,-10);
+
+  cout<<" ==== systematics for SB shift ==== "<<endl;
+  for (int j=0; j<8;j++) {
+    double var1 = 100*(n[j].first  -sbp[j].first)/n[j].first;
+    double var2 = 100*(n[j].first -sbm[j].first)/n[j].first;
+    cout<<var1<<"\t"<<var2<<endl;
+    //expect these to be different...no sanity check is warranted
+    syst["SBshift"].push_back( fabs(var1)>fabs(var2) ? fabs(var1) : fabs(var2));
+  }
+  cout<<" =END systematics for SB shift ==== "<<endl;
+
+  cout<<"== Cross check with >=1 b instead of exactly 0 b =="<<endl;
+  i=0;
+  anotherABCD("ge1b", false, false,true,1,0,">=1");
+  anotherABCD("ge1b", false, true,true,1,0,">=1");
+  anotherABCD("ge1b", true, false,true,1,0,">=1");
+  anotherABCD("ge1b", true, true,true,1,0,">=1");
+  
+  anotherABCD("ge2b", false, false,true,1,0,">=1");
+  anotherABCD("ge2b", false, true,true,1,0,">=1");
+  anotherABCD("ge2b", true, false,true,1,0,">=1");
+  anotherABCD("ge2b", true, true,true,1,0,">=1");
+
+  runClosureTest2011(syst);
 
   for (int j=0; j<8;j++) {
-    cout<<100*(n[j].first  -p[j].first)/n[j].first<<"\t"<<100*(n[j].first -m[j].first)/n[j].first<<endl;
+    cout<<j<<"\t&"<<syst["MCsub"].at(j)<<" & "<<syst["Closure"].at(j)<<" & "<<syst["SBshift"].at(j)<<endl;
   }
-*/
+
 }
 
 double slABCD( TString btagselection, bool tight, bool datamode=false, const TString & mode="" ) {
@@ -653,7 +714,7 @@ void runTtbarEstimate2011() {
 
 void printOwenAll() {
 
-  runDataQCD2011();
+  runDataQCD2011(true);
   runTtbarEstimate2011();
 
   for (std::map<TString,OwenData>::iterator i=owenMap_.begin(); i!=owenMap_.end(); ++i) {
@@ -1054,6 +1115,12 @@ void AN2011( TString btagselection="ge1b" ) {
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
   nbins = 15; low=150; high=450;
   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_SL_HT500_"+btagselection);
+
+  //different scale to compare to Kristen
+  selection_ =TCut("MET>=150 && HT>500 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && minDeltaPhiN >= 4")&&btagcut;
+  var="MET"; xtitle="E_{T}^{miss} [GeV]";
+  nbins = 35; low=150; high=500;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_SL_HT500_morebins_"+btagselection);
 
 
   // == take a look at WJets
