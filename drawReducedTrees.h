@@ -27,6 +27,44 @@ TString selection_ ="cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cut
 
 float leg_x1 = 0.696, leg_x2=0.94, leg_y1=0.5, leg_y2=0.92;
 
+//special containers for holding the "search regions of interest"
+class SearchRegion {
+public:
+  SearchRegion(TString btagSel,TString htSel,TString metSel,TString oId,bool isSig=true);
+  ~SearchRegion();
+
+  TString htSelection;
+  TString metSelection;
+  TString btagSelection;
+
+  TString owenId;
+  bool isSIG;
+};
+SearchRegion::SearchRegion(TString btagSel,TString htSel,TString metSel,TString oId,bool isSig) : 
+  htSelection(htSel),metSelection(metSel),btagSelection(btagSel),owenId(oId),isSIG(isSig) {}
+SearchRegion::~SearchRegion() {}
+
+std::vector<SearchRegion > searchRegions_;
+std::vector<SearchRegion > sbRegions_;
+bool searchRegionsSet_=false;
+void setSearchRegions() {
+  if (searchRegionsSet_) return;
+
+  //nb: some of the code *depends* on the fact that for there are equal numbers of corresponding
+  //sbRegions and searchRegions, with the only difference being the MET selection!
+
+  sbRegions_.push_back( SearchRegion( "ge1b","HT>=350","MET>=150&&MET<200","Loose",false)); //loose SB
+  searchRegions_.push_back( SearchRegion( "ge1b","HT>=350","MET>=200","Loose")); //loose Sig
+  sbRegions_.push_back( SearchRegion( "ge1b","HT>=500","MET>=150&&MET<200","Tight",false)); //tight SB
+  searchRegions_.push_back( SearchRegion( "ge1b","HT>=500","MET>=300","Tight")); //tight Sig
+
+  sbRegions_.push_back( SearchRegion( "ge2b","HT>=350","MET>=150&&MET<200","Loose",false)); //loose SB
+  searchRegions_.push_back( SearchRegion( "ge2b","HT>=350","MET>=200","Loose")); //loose Sig
+  sbRegions_.push_back( SearchRegion( "ge2b","HT>=500","MET>=150&&MET<200","Tight",false)); //tight SB
+  searchRegions_.push_back( SearchRegion( "ge2b","HT>=500","MET>=300","Tight")); //tight Sig
+
+  searchRegionsSet_=true;
+}
 
 struct OwenData {
   double Nsig; //number in signal region , data //done

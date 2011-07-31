@@ -1,5 +1,8 @@
 /*
 ====== this is the nominal code for drawing RA2b data/MC comparison plots =======
+2011 updates -- runDataQCD2011() computes all numbers needed for QCD estimate including systematics
+
+
 -- drawPlots() -- main plotting routine to draw pretty stacks of MC with data on top
 -- drawSimple() -- very simple function to draw exactly one sample and put it in a file
 -- drawR() -- draws r(MET). a bit more kludgely, but works.
@@ -111,20 +114,23 @@ void averageZ() {
 
 }
 
-std::pair<double,double> anotherABCD( TString btagselection, bool tight, bool isSIG, bool datamode=false, float subscale=1,float SBshift=0, const TString LSBbsel="==0") {
+std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode=false, float subscale=1,float SBshift=0, const TString LSBbsel="==0") {
   //kind of awful, but we'll return the estimate for datamode=true but the closure test bias for datamode=false
 
   /*
 .L drawReducedTrees.C++
   */
 
+  TString btagselection = region.btagSelection;
+
   TString owenKey = btagselection;
-  owenKey+= tight ? "Tight":"Loose";
+  owenKey += region.owenId;
   OwenData * myOwen = &(owenMap_[owenKey]);
+  const  bool isSIG = region.isSIG;
 
   setStackMode(false);
   doData(datamode);
- setQuiet(true);
+  setQuiet(true);
 
   useFlavorHistoryWeights_=false;
   loadSamples(); //needs to come first! this is why this should be turned into a class, with this guy in the ctor
@@ -163,7 +169,8 @@ std::pair<double,double> anotherABCD( TString btagselection, bool tight, bool is
   }
 
 
-  TCut HTcut,SRMET;
+  TCut HTcut=region.htSelection.Data(); 
+  TCut SRMET = region.metSelection.Data();
   TCut ge1b = "nbjetsSSVHPT>=1";
   if (btagselection=="ge2b") {
     ge1b="nbjetsSSVHPT>=2";
@@ -171,17 +178,7 @@ std::pair<double,double> anotherABCD( TString btagselection, bool tight, bool is
   else if (btagselection=="ge1b") {}
   else {assert(0);}
 
-  if (tight) {
-    HTcut = "HT>=500";
-    if (isSIG)  SRMET = "MET >= 300";
-    else SRMET = "MET>=150 && MET<200";
-  }
-  else {
-    HTcut = "HT>=350";
-    if (isSIG)  SRMET = "MET >= 200";
-    else SRMET = "MET>=150 && MET<200";
-  }
-  SRMET = SRMET && ge1b && triggerCut;
+  SRMET = SRMET && ge1b && triggerCut; //apply physics trigger and physics b cut in high MET region
 
   TCut baseline = "cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1";
   baseline = baseline&&HTcut;
@@ -202,7 +199,7 @@ std::pair<double,double> anotherABCD( TString btagselection, bool tight, bool is
   selection_ = baseline && cleaning && dpcut  && SBMET && failOther; //auto cast to TString seems to work
 
   var="HT"; xtitle=var;
-  nbins=10; low=0; high=2000;
+  nbins=10; low=0; high=5000;
   drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_A");
   A=getIntegral(sampleOfInterest);
   Aerr=getIntegralErr(sampleOfInterest);
@@ -252,6 +249,7 @@ std::pair<double,double> anotherABCD( TString btagselection, bool tight, bool is
       myOwen->NWJmc_sb_ldp = getIntegral("WJets")/lsfw;
       myOwen->NZnnmc_sb_ldp = getIntegral("Zinvisible")/lsfz;
     }
+    //end of special stuff for owen
   }
   if (Dsub>D) {Dsub=D-0.00001; cout<<"Subtraction in D is as big as D!"<<endl;}
 
@@ -274,7 +272,7 @@ std::pair<double,double> anotherABCD( TString btagselection, bool tight, bool is
 //   cout<<" ==== "<<endl
 //       <<"Estimate = "<<estimate<<" +/- "<<estimateerr<<endl
 //       <<" truth   = "<<SIG     <<" +/- "<<SIGerr<<endl;
-  btagselection += tight ? " Tight " : " Loose ";
+  btagselection += region.owenId;
   btagselection += isSIG ? "SIG":"SB";
   char output[500];
   if (!datamode) {
@@ -287,7 +285,7 @@ std::pair<double,double> anotherABCD( TString btagselection, bool tight, bool is
 	    TMath::Nint(B),TMath::Nint(A),
 	    TMath::Nint(D), jmt::format_nevents(Dsub,Dsuberr).Data(),
 	    jmt::format_nevents(estimate,estimateerr).Data());
-    cout<<"DATA\t";
+    cout<<"(qcd) DATA\t";
   }
   cout<<output<<endl;
   if (datamode)  return make_pair(estimate,estimateerr);
@@ -296,15 +294,14 @@ std::pair<double,double> anotherABCD( TString btagselection, bool tight, bool is
 
 void runClosureTest2011(std::map<TString, std::vector<double> > & syst)  {
 
-  syst["Closure"].push_back(  anotherABCD("ge1b", false, false).first);
-  syst["Closure"].push_back(  anotherABCD("ge1b", false, true).first);
-  syst["Closure"].push_back(  anotherABCD("ge1b", true, false).first);
-  syst["Closure"].push_back(  anotherABCD("ge1b", true, true).first);
+  setSearchRegions();
+  assert(sbRegions_.size() == searchRegions_.size());
 
-  syst["Closure"].push_back(  anotherABCD("ge2b", false, false).first);
-  syst["Closure"].push_back(  anotherABCD("ge2b", false, true).first);
-  syst["Closure"].push_back(  anotherABCD("ge2b", true, false).first);
-  syst["Closure"].push_back(  anotherABCD("ge2b", true, true).first);
+  for (unsigned int i=0; i<sbRegions_.size(); i++) {
+    syst["Closure"].push_back( anotherABCD(sbRegions_[i]).first);
+    syst["Closure"].push_back( anotherABCD(searchRegions_[i]).first);
+  }
+
 }
 
 void runClosureTest2011()  {
@@ -313,139 +310,115 @@ void runClosureTest2011()  {
 
 }
 
+
+//to hold systematics
+//making this global because I'm lazy...
+std::map<TString, std::vector<double> > qcdSystErrors;
 void runDataQCD2011(const bool forOwen=false) {
 
+  setSearchRegions();
+  assert(sbRegions_.size() == searchRegions_.size());
+
   //data structures to hold results
-  std::pair<double,double> n[8];
-  std::pair<double,double> subp[8];
-  std::pair<double,double> subm[8];
+  vector<std::pair<double,double> > n;
+  vector<std::pair<double,double> > subp;
+  vector<std::pair<double,double> > subm;
 
-  std::pair<double,double> sbp[8];
-  std::pair<double,double> sbm[8];
+  vector<std::pair<double,double> > sbp;
+  vector<std::pair<double,double> > sbm;
 
-  //to hold systematics
-  std::map<TString, std::vector<double> > syst;
 
-  int i=0;
-  n[i++]=anotherABCD("ge1b", false, false,true);
-  n[i++]=anotherABCD("ge1b", false, true,true);
-  n[i++]=anotherABCD("ge1b", true, false,true);
-  n[i++]=anotherABCD("ge1b", true, true,true);
-  
-  n[i++]=anotherABCD("ge2b", false, false,true);
-  n[i++]=anotherABCD("ge2b", false, true,true);
-  n[i++]=anotherABCD("ge2b", true, false,true);
-  n[i++]=anotherABCD("ge2b", true, true,true);
-  
+  for (unsigned int i=0; i<sbRegions_.size(); i++) {
+    n.push_back( anotherABCD(sbRegions_[i],true));
+    n.push_back( anotherABCD(searchRegions_[i],true));
+  }
+
   /*
     the "owen mode" is collecting in global data structures the quantities that owen needs
     If we run the systematics then we will clobber the regular numbers. So quit now with just the nominal
     values.
   */
   if (forOwen) return;
-
-  //now do it again with +50% subtraction
-  i=0;
-  cout<<" subtraction +50% "<<endl;
-  subp[i++]=anotherABCD("ge1b", false, false,true,1.5);
-  subp[i++]=anotherABCD("ge1b", false, true,true,1.5);
-  subp[i++]=anotherABCD("ge1b", true, false,true,1.5);
-  subp[i++]=anotherABCD("ge1b", true, true,true,1.5);
   
-  subp[i++]=anotherABCD("ge2b", false, false,true,1.5);
-  subp[i++]=anotherABCD("ge2b", false, true,true,1.5);
-  subp[i++]=anotherABCD("ge2b", true, false,true,1.5);
-  subp[i++]=anotherABCD("ge2b", true, true,true,1.5);
+  //now do it again with +50% subtraction
+  cout<<" subtraction +50% "<<endl;
+  for (unsigned int i=0; i<sbRegions_.size(); i++) {
+    subp.push_back( anotherABCD(sbRegions_[i],true,1.5));
+    subp.push_back( anotherABCD(searchRegions_[i],true,1.5));
+  }
 
   //now do it again with -50% subtraction
-  i=0;
   cout<<" subtraction -50% "<<endl;
-  subm[i++]=anotherABCD("ge1b", false, false,true,0.5);
-  subm[i++]=anotherABCD("ge1b", false, true,true,0.5);
-  subm[i++]=anotherABCD("ge1b", true, false,true,0.5);
-  subm[i++]=anotherABCD("ge1b", true, true,true,0.5);
-  
-  subm[i++]=anotherABCD("ge2b", false, false,true,0.5);
-  subm[i++]=anotherABCD("ge2b", false, true,true,0.5);
-  subm[i++]=anotherABCD("ge2b", true, false,true,0.5);
-  subm[i++]=anotherABCD("ge2b", true, true,true,0.5);
+  for (unsigned int i=0; i<sbRegions_.size(); i++) {
+    subm.push_back( anotherABCD(sbRegions_[i],true,0.5));
+    subm.push_back( anotherABCD(searchRegions_[i],true,0.5));
+  }
 
   cout<<" ==== systematics for MC subtraction ==== "<<endl;
-  for (int j=0; j<8;j++) {
+  for (unsigned int j=0; j<n.size(); j++) {
     double var1 = 100*(n[j].first  -subp[j].first)/n[j].first;
     double var2 = 100*(n[j].first -subm[j].first)/n[j].first;
     //expect these to be equal and opposite
     if ( fabs(var1)-fabs(var2) > 0.1 ) cout<<j<<" found MC subtraction systematic size discrepancy"<<endl;
     cout<<var1<<"\t"<<var2<<endl;
 
-    syst["MCsub"].push_back( fabs(var1)>fabs(var2) ? fabs(var1) : fabs(var2));
+    qcdSystErrors["MCsub"].push_back( fabs(var1)>fabs(var2) ? fabs(var1) : fabs(var2));
   }
   cout<<" =END systematics for MC subtraction ==== "<<endl;
 
 
   //do it with shifted SB
-  i=0;
   cout<<" SB +10 GeV"<<endl;
-  sbp[i++]=anotherABCD("ge1b", false, false,true,1,10);
-  sbp[i++]=anotherABCD("ge1b", false, true,true,1,10);
-  sbp[i++]=anotherABCD("ge1b", true, false,true,1,10);
-  sbp[i++]=anotherABCD("ge1b", true, true,true,1,10);
-  
-  sbp[i++]=anotherABCD("ge2b", false, false,true,1,10);
-  sbp[i++]=anotherABCD("ge2b", false, true,true,1,10);
-  sbp[i++]=anotherABCD("ge2b", true, false,true,1,10);
-  sbp[i++]= anotherABCD("ge2b", true, true,true,1,10);
+  for (unsigned int i=0; i<sbRegions_.size(); i++) {
+    sbp.push_back( anotherABCD(sbRegions_[i],true,1,10));
+    sbp.push_back( anotherABCD(searchRegions_[i],true,1,10));
+  }
 
   //now do it again with -50% subtraction
-  i=0;
   cout<<" SB -10 GeV "<<endl;
-  sbm[i++]=anotherABCD("ge1b", false, false,true,1,-10);
-  sbm[i++]=anotherABCD("ge1b", false, true,true,1,-10);
-  sbm[i++]=anotherABCD("ge1b", true, false,true,1,-10);
-  sbm[i++]=anotherABCD("ge1b", true, true,true,1,-10);
-  
-  sbm[i++]=anotherABCD("ge2b", false, false,true,1,-10);
-  sbm[i++]=anotherABCD("ge2b", false, true,true,1,-10);
-  sbm[i++]=anotherABCD("ge2b", true, false,true,1,-10);
-  sbm[i++]=anotherABCD("ge2b", true, true,true,1,-10);
+  for (unsigned int i=0; i<sbRegions_.size(); i++) {
+    sbm.push_back( anotherABCD(sbRegions_[i],true,1,-10));
+    sbm.push_back( anotherABCD(searchRegions_[i],true,1,-10));
+  }
 
   cout<<" ==== systematics for SB shift ==== "<<endl;
-  for (int j=0; j<8;j++) {
+  for (unsigned int j=0; j<n.size(); j++) {
     double var1 = 100*(n[j].first  -sbp[j].first)/n[j].first;
     double var2 = 100*(n[j].first -sbm[j].first)/n[j].first;
     cout<<var1<<"\t"<<var2<<endl;
     //expect these to be different...no sanity check is warranted
-    syst["SBshift"].push_back( fabs(var1)>fabs(var2) ? fabs(var1) : fabs(var2));
+    qcdSystErrors["SBshift"].push_back( fabs(var1)>fabs(var2) ? fabs(var1) : fabs(var2));
   }
   cout<<" =END systematics for SB shift ==== "<<endl;
 
   cout<<"== Cross check with >=1 b instead of exactly 0 b =="<<endl;
-  i=0;
-  anotherABCD("ge1b", false, false,true,1,0,">=1");
-  anotherABCD("ge1b", false, true,true,1,0,">=1");
-  anotherABCD("ge1b", true, false,true,1,0,">=1");
-  anotherABCD("ge1b", true, true,true,1,0,">=1");
-  
-  anotherABCD("ge2b", false, false,true,1,0,">=1");
-  anotherABCD("ge2b", false, true,true,1,0,">=1");
-  anotherABCD("ge2b", true, false,true,1,0,">=1");
-  anotherABCD("ge2b", true, true,true,1,0,">=1");
-
-  runClosureTest2011(syst);
-
-  for (int j=0; j<8;j++) {
-    cout<<j<<"\t&"<<syst["MCsub"].at(j)<<" & "<<syst["Closure"].at(j)<<" & "<<syst["SBshift"].at(j)<<endl;
+  for (unsigned int i=0; i<sbRegions_.size(); i++) {
+    anotherABCD(sbRegions_[i],true,1,0,">=1");
+    anotherABCD(searchRegions_[i],true,1,0,">=1");
   }
 
+  runClosureTest2011(qcdSystErrors);
+
+  for (unsigned int j=0; j<n.size(); j++) {
+    qcdSystErrors["Total"].push_back( sqrt( pow(qcdSystErrors["MCsub"].at(j),2) +  pow(qcdSystErrors["Closure"].at(j),2)+ pow(qcdSystErrors["SBshift"].at(j),2)));
+    cout<<j<<"\t&"<<qcdSystErrors["MCsub"].at(j)<<" & "<<qcdSystErrors["Closure"].at(j)<<" & "<<qcdSystErrors["SBshift"].at(j)<<" & "<<qcdSystErrors["Total"].at(j)<<endl;
+  }
+  
 }
 
-double slABCD( TString btagselection, bool tight, bool datamode=false, const TString & mode="" ) {
+//i don't like passing the index instead of the region itself, but it makes some things easier.
+//this code is all around a big kludge...
+double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const TString & mode="" ) {
   /*
 .L drawReducedTrees.C++
   */
 
+  const SearchRegion region = searchRegions_[searchRegionIndex];
+  const SearchRegion qcdsubregion = sbRegions_[searchRegionIndex];
+
+  TString btagselection = region.btagSelection;
   TString owenKey = btagselection;
-  owenKey+= tight ? "Tight":"Loose";
+  owenKey += region.owenId;
   OwenData * myOwen = &(owenMap_[owenKey]);
 
   //we have to be careful. because of all of the global variables used in this code, we have to call
@@ -454,22 +427,28 @@ double slABCD( TString btagselection, bool tight, bool datamode=false, const TSt
   double SBsubQCD =0,SBsubQCDerr=0,SBsubZ=0,SBsubZerr=0,SBsubMisc=0,SBsubMiscerr=0;
   std::pair<double,double> SBsubQCDp;
   if (datamode)  {
-    SBsubQCDp = anotherABCD( btagselection, tight, false, datamode, 1 ) ;
+    //regions should only differ in the MET selection
+    assert ( region.btagSelection == qcdsubregion.btagSelection);
+    assert(region.htSelection == qcdsubregion.htSelection);
+    //get the QCD estimate for the SB region
+    SBsubQCDp = anotherABCD(qcdsubregion, datamode, 1 ) ;
     SBsubQCD=SBsubQCDp.first;
     SBsubQCDerr=SBsubQCDp.second;
 
     if (mode.Contains("QCD")) {
-      //SBsubQCDerr is the statistical error on the QCD in SB.
-      //but the systematic is hard-coded here:
-      double qcdsbsyst=0; // percent
-      if (tight) {
-	if ( btagselection=="ge1b")     qcdsbsyst=0.37;
-	else if (btagselection=="ge2b") qcdsbsyst=0.54;
-      }
-      else {
-	if ( btagselection=="ge1b")     qcdsbsyst=0.16;
-	else if (btagselection=="ge2b") qcdsbsyst=0.20;
-      }
+       //SBsubQCDerr is the statistical error on the QCD in SB.
+      //but the systematic is needed too
+      //factor 0.01 to convert from human-readable % to fractional
+      double qcdsbsyst=0.01*qcdSystErrors["Total"].at(2*searchRegionIndex);
+      cout<<"Found a QCD systematic of "<<100*qcdsbsyst<<endl;
+//       if (tight) {
+// 	if ( btagselection=="ge1b")     qcdsbsyst=0.37;
+// 	else if (btagselection=="ge2b") qcdsbsyst=0.54;
+//       }
+//       else {
+// 	if ( btagselection=="ge1b")     qcdsbsyst=0.16;
+// 	else if (btagselection=="ge2b") qcdsbsyst=0.20;
+//       }
       SBsubQCDerr = sqrt( SBsubQCDerr*SBsubQCDerr + pow(qcdsbsyst*SBsubQCD,2));
       
       if (mode=="QCDup") SBsubQCD += SBsubQCDerr;
@@ -479,14 +458,16 @@ double slABCD( TString btagselection, bool tight, bool datamode=false, const TSt
     //now hard-coded Z->nunu
     double zv[2];
     double ze[2];
-    if (tight) { //need to average mu mu and ee estimates
+    if ( qcdsubregion.owenId == "Tight") { //i think this should work for now...
+//    if (tight) { //need to average mu mu and ee estimates
       zv[0] = 5.8; ze[0]=3.8;
       zv[1] = 6.1; ze[1]=3.9;
     }
-    else {
+    else    if ( qcdsubregion.owenId == "Loose") {//    else {
       zv[0] = 11.4; ze[0]=8.1;
       zv[1] = 23.3; ze[1]=12.1;
     }
+    else {assert(0);}
     SBsubZ = jmt::weightedMean(2,zv,ze);
     SBsubZerr = jmt::weightedMean(2,zv,ze,true);
     if ( btagselection=="ge1b") {    } //do nothing
@@ -536,7 +517,6 @@ double slABCD( TString btagselection, bool tight, bool datamode=false, const TSt
   float low,high;
 
  // --  count events
-  TCut HTcut,SRMET;
   TCut ge1b = "nbjetsSSVHPT>=1";
   if (btagselection=="ge2b") {
     ge1b="nbjetsSSVHPT>=2";
@@ -544,19 +524,21 @@ double slABCD( TString btagselection, bool tight, bool datamode=false, const TSt
   else if (btagselection=="ge1b") {}
   else {assert(0);}
 
-  if (tight) {
-    HTcut = "HT>=500";
-    SRMET = "MET >= 300";
-  }
-  else {
-    HTcut = "HT>=350";
-    SRMET = "MET >= 200";
-  }
+  TCut HTcut=region.htSelection.Data(); 
+  TCut SRMET = region.metSelection.Data();
+//   if (tight) {
+//     HTcut = "HT>=500";
+//     SRMET = "MET >= 300";
+//   }
+//   else {
+//     HTcut = "HT>=350";
+//     SRMET = "MET >= 200";
+//   }
 
   TCut baseline = "cutPV==1 && cut3Jets==1 && cutTrigger==1";
   baseline = baseline&&HTcut&&ge1b;
   TCut cleaning = "weight<1000";
-  TCut SBMET = "MET>=150 && MET<200";
+  TCut SBMET = qcdsubregion.metSelection.Data();//"MET>=150 && MET<200";
   TCut dpcut = "minDeltaPhiN>=4";
   //  TCut passOther = "deltaPhiMPTcaloMET<2";
   //  TCut failOther = "deltaPhiMPTcaloMET>=2";
@@ -568,7 +550,7 @@ double slABCD( TString btagselection, bool tight, bool datamode=false, const TSt
   //A = SB, SL
   selection_ = baseline && cleaning && dpcut  && SBMET && failOther; //auto cast to TString seems to work
   var="HT"; xtitle=var;
-  nbins=10; low=0; high=2000;
+  nbins=10; low=0; high=5000;
   drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_A");
   A=getIntegral(sampleOfInterest);
   Aerr=getIntegralErr(sampleOfInterest);
@@ -582,7 +564,7 @@ double slABCD( TString btagselection, bool tight, bool datamode=false, const TSt
     SBsubMiscerr=getIntegralErr("totalsm");
 
     if (mode.Contains("MC")) {
-      double mcsyst = 1; //100% uncertainty
+      const double mcsyst = 1; //100% uncertainty
       SBsubMiscerr = sqrt( SBsubMiscerr*SBsubMiscerr + pow(mcsyst*SBsubMisc,2));
 
       if (mode=="MCup") SBsubMisc += SBsubMiscerr;
@@ -619,8 +601,9 @@ double slABCD( TString btagselection, bool tight, bool datamode=false, const TSt
 //   cout<<" ==== "<<endl
 //       <<"Estimate = "<<estimate<<" +/- "<<estimateerr<<endl
 //       <<" truth   = "<<SIG     <<" +/- "<<SIGerr<<endl;
-  btagselection += tight ? " Tight " : " Loose ";
- 
+  // btagselection += tight ? " Tight " : " Loose ";
+  btagselection += region.owenId;
+
   char output[500];
   if (!datamode) {
     sprintf(output,"%s & %s & %s & %s & %s & %s \\\\ %% %f",btagselection.Data(),
@@ -629,7 +612,7 @@ double slABCD( TString btagselection, bool tight, bool datamode=false, const TSt
 	    jmt::format_nevents(SIG,SIGerr).Data(),100*(estimate-SIG)/SIG);
   }
   else {
-    sprintf(output,"%s & %d & %d & %d & %s & %s  \\\\",btagselection.Data(),
+    sprintf(output,"ttbar DATA %s & %d & %d & %d & %s & %s  \\\\",btagselection.Data(),
 	    TMath::Nint(D),TMath::Nint(A),
 	    TMath::Nint(B), jmt::format_nevents(SBsubMisc+SBsubQCD+SBsubZ,suberr).Data(),
 	    jmt::format_nevents(estimate,estimateerr).Data());
@@ -641,55 +624,58 @@ double slABCD( TString btagselection, bool tight, bool datamode=false, const TSt
 
 void runSLClosureTest2011() {
 
-  slABCD("ge1b", false);
-  slABCD("ge1b", true);
+  setSearchRegions();
 
-  slABCD("ge2b", false);
-  slABCD("ge2b", true);
+  for (unsigned int j=0; j<searchRegions_.size();j++) slABCD(j);
+
+//   slABCD("ge1b", false);
+//   slABCD("ge1b", true);
+
+//   slABCD("ge2b", false);
+//   slABCD("ge2b", true);
 
 }
 
 void runTtbarEstimate2011() {
+  //must do   runDataQCD2011(); first (in order to fill syst errors for qcd)
+  if (  qcdSystErrors.size()==0) {cout<<"Need to do runDataQCD2011() first!"<<endl; return;}
+  setSearchRegions();
 
   double ttw[4];
   double p[4];
   double m[4];
-  int i=0;
-  ttw[i++]=  slABCD("ge1b", false,true);
-  ttw[i++]=  slABCD("ge1b", true,true);
-  ttw[i++]=  slABCD("ge2b", false,true);
-  ttw[i++]=  slABCD("ge2b", true,true);
+
+  double qcd[4];
+  double znn[4];
+  double mc[4];
+  //  int i=0;
+  cout<<"nominal ttbar"<<endl;
+  for (unsigned int j=0; j<searchRegions_.size();j++) ttw[j]=slABCD(j,true);
  
-  /* for systematics due to QCD subtraction
-  i=0;
-  p[i++]=  slABCD("ge1b", false,true,"QCDup");
-  p[i++]=  slABCD("ge1b", true,true,"QCDup");
-  p[i++]=  slABCD("ge2b", false,true,"QCDup");
-  p[i++]=  slABCD("ge2b", true,true,"QCDup");
+  // for systematics due to QCD subtraction
+  for (unsigned int j=0; j<searchRegions_.size();j++) {
+    p[j]=slABCD(j,true,"QCDup");
+    m[j]=slABCD(j,true,"QCDdown");
+    if (fabs(p[j]-ttw[j])/ttw[j] - fabs(m[j]-ttw[j])/ttw[j] > 0.01) cout<<"** Difference in size of QCD sub syst!"<<endl;
+    qcd[j] = 100*fabs(p[j]-ttw[j])/ttw[j];
+  }
 
-
-  i=0;
-  m[i++]=  slABCD("ge1b", false,true,"QCDdown");
-  m[i++]=  slABCD("ge1b", true,true,"QCDdown");
-  m[i++]=  slABCD("ge2b", false,true,"QCDdown");
-  m[i++]=  slABCD("ge2b", true,true,"QCDdown");
-*/
-
-/*
   //for Znunu subtraction systematics
-  i=0;
-  p[i++]=  slABCD("ge1b", false,true,"Zup");
-  p[i++]=  slABCD("ge1b", true,true,"Zup");
-  p[i++]=  slABCD("ge2b", false,true,"Zup");
-  p[i++]=  slABCD("ge2b", true,true,"Zup");
+  for (unsigned int j=0; j<searchRegions_.size();j++) {
+    p[j]=slABCD(j,true,"Zup");
+    m[j]=slABCD(j,true,"Zdown");
+    if (fabs(p[j]-ttw[j])/ttw[j] - fabs(m[j]-ttw[j])/ttw[j] > 0.01) cout<<"** Difference in size of Znn sub syst!"<<endl;
+    znn[j] = 100*fabs(p[j]-ttw[j])/ttw[j];
+  }
 
 
-  i=0;
-  m[i++]=  slABCD("ge1b", false,true,"Zdown");
-  m[i++]=  slABCD("ge1b", true,true,"Zdown");
-  m[i++]=  slABCD("ge2b", false,true,"Zdown");
-  m[i++]=  slABCD("ge2b", true,true,"Zdown");
-*/
+  for (unsigned int j=0; j<searchRegions_.size();j++) {
+    p[j]=slABCD(j,true,"MCup");
+    m[j]=slABCD(j,true,"MCdown");
+    if (fabs(p[j]-ttw[j])/ttw[j] - fabs(m[j]-ttw[j])/ttw[j] > 0.01) cout<<"** Difference in size of MC sub syst!"<<endl;
+    mc[j] = 100*fabs(p[j]-ttw[j])/ttw[j];
+  }
+
 /*
   //for MC subtraction systematics
   i=0;
@@ -704,12 +690,14 @@ void runTtbarEstimate2011() {
   m[i++]=  slABCD("ge1b", true,true,"MCdown");
   m[i++]=  slABCD("ge2b", false,true,"MCdown");
   m[i++]=  slABCD("ge2b", true,true,"MCdown");
-
-  cout<<" == summary (%) == "<<endl;
-  for (int j=0;j<4;j++) {
-    cout<< 100* (p[j]-ttw[j])/ttw[j]<<"\t"<< 100* (m[j]-ttw[j])/ttw[j]<<endl;
-  }
 */
+  cout<<" == summary (%) == "<<endl;
+  cout<<"\tQCD\tZ\tMC"<<endl;
+  for (unsigned int j=0; j<searchRegions_.size();j++) {
+    cout<<j<<"\t"<<qcd[j]<<"\t"<<znn[j]<<"\t"<<mc[j]<<endl;
+  }
+
+
 }
 
 void printOwenAll() {
