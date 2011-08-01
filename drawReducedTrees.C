@@ -186,7 +186,7 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
 
   char cutstring1[100];
   sprintf(cutstring1,"MET>= %.0f && MET < %.0f && nbjetsSSVHPT%s", 50+SBshift,100+SBshift,LSBbsel.Data());
-  cout<<"*** SB cut is "<<cutstring1<<endl<<endl;
+  //  cout<<"*** SB cut is "<<cutstring1<<endl<<endl;
   TCut SBMET = TCut(cutstring1)&&triggerCutLSB;
   TCut dpcut = "1";//"minDeltaPhiN>=4";
   //  TCut passOther = "deltaPhiMPTcaloMET<2";
@@ -327,11 +327,12 @@ void runDataQCD2011(const bool forOwen=false) {
   vector<std::pair<double,double> > sbp;
   vector<std::pair<double,double> > sbm;
 
-
+  cout<<" ==== Nominal data results === "<<endl;
   for (unsigned int i=0; i<sbRegions_.size(); i++) {
     n.push_back( anotherABCD(sbRegions_[i],true));
     n.push_back( anotherABCD(searchRegions_[i],true));
   }
+  cout<<" =END Nominal data results === "<<endl;
 
   /*
     the "owen mode" is collecting in global data structures the quantities that owen needs
@@ -397,8 +398,10 @@ void runDataQCD2011(const bool forOwen=false) {
     anotherABCD(searchRegions_[i],true,1,0,">=1");
   }
 
+  cout<<" == Running QCD closure test =="<<endl;
   runClosureTest2011(qcdSystErrors);
 
+  cout<<" == QCD systeamtics summary =="<<endl;
   for (unsigned int j=0; j<n.size(); j++) {
     qcdSystErrors["Total"].push_back( sqrt( pow(qcdSystErrors["MCsub"].at(j),2) +  pow(qcdSystErrors["Closure"].at(j),2)+ pow(qcdSystErrors["SBshift"].at(j),2)));
     cout<<j<<"\t&"<<qcdSystErrors["MCsub"].at(j)<<" & "<<qcdSystErrors["Closure"].at(j)<<" & "<<qcdSystErrors["SBshift"].at(j)<<" & "<<qcdSystErrors["Total"].at(j)<<endl;
@@ -409,6 +412,8 @@ void runDataQCD2011(const bool forOwen=false) {
 //i don't like passing the index instead of the region itself, but it makes some things easier.
 //this code is all around a big kludge...
 double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const TString & mode="" ) {
+  //in datamode, return the estimate; in non-datamode, return the Closure Test results (true-pred)/true
+
   /*
 .L drawReducedTrees.C++
   */
@@ -619,7 +624,8 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
   }
   cout<<output<<endl;
 
-  return estimate;
+  if (datamode) return estimate;
+  return 100*(estimate-SIG)/SIG;
 }
 
 void runSLClosureTest2011() {
@@ -627,12 +633,6 @@ void runSLClosureTest2011() {
   setSearchRegions();
 
   for (unsigned int j=0; j<searchRegions_.size();j++) slABCD(j);
-
-//   slABCD("ge1b", false);
-//   slABCD("ge1b", true);
-
-//   slABCD("ge2b", false);
-//   slABCD("ge2b", true);
 
 }
 
@@ -653,6 +653,7 @@ void runTtbarEstimate2011() {
   for (unsigned int j=0; j<searchRegions_.size();j++) ttw[j]=slABCD(j,true);
  
   // for systematics due to QCD subtraction
+  cout<<"vary QCD subtraction"<<endl;
   for (unsigned int j=0; j<searchRegions_.size();j++) {
     p[j]=slABCD(j,true,"QCDup");
     m[j]=slABCD(j,true,"QCDdown");
@@ -661,6 +662,7 @@ void runTtbarEstimate2011() {
   }
 
   //for Znunu subtraction systematics
+  cout<<"vary Znn subtraction"<<endl;
   for (unsigned int j=0; j<searchRegions_.size();j++) {
     p[j]=slABCD(j,true,"Zup");
     m[j]=slABCD(j,true,"Zdown");
@@ -668,7 +670,8 @@ void runTtbarEstimate2011() {
     znn[j] = 100*fabs(p[j]-ttw[j])/ttw[j];
   }
 
-
+  //for MC subtraction systematics
+  cout<<"vary MC subtraction"<<endl;
   for (unsigned int j=0; j<searchRegions_.size();j++) {
     p[j]=slABCD(j,true,"MCup");
     m[j]=slABCD(j,true,"MCdown");
@@ -676,25 +679,15 @@ void runTtbarEstimate2011() {
     mc[j] = 100*fabs(p[j]-ttw[j])/ttw[j];
   }
 
-/*
-  //for MC subtraction systematics
-  i=0;
-  p[i++]=  slABCD("ge1b", false,true,"MCup");
-  p[i++]=  slABCD("ge1b", true,true,"MCup");
-  p[i++]=  slABCD("ge2b", false,true,"MCup");
-  p[i++]=  slABCD("ge2b", true,true,"MCup");
+  //finally, run the closure test
+  double closure[4];
+  cout<<"Running ttbar closure test"<<endl;
+  for (unsigned int j=0; j<searchRegions_.size();j++)   closure[j]=fabs(slABCD(j));
 
-
-  i=0;
-  m[i++]=  slABCD("ge1b", false,true,"MCdown");
-  m[i++]=  slABCD("ge1b", true,true,"MCdown");
-  m[i++]=  slABCD("ge2b", false,true,"MCdown");
-  m[i++]=  slABCD("ge2b", true,true,"MCdown");
-*/
   cout<<" == summary (%) == "<<endl;
-  cout<<"\tQCD\tZ\tMC"<<endl;
+  cout<<"\tClosure\tQCD\tZ\tMC"<<endl;
   for (unsigned int j=0; j<searchRegions_.size();j++) {
-    cout<<j<<"\t"<<qcd[j]<<"\t"<<znn[j]<<"\t"<<mc[j]<<endl;
+    cout<<j<<"\t"<<closure[j]<<"\t"<<qcd[j]<<"\t"<<znn[j]<<"\t"<<mc[j]<<endl;
   }
 
 
