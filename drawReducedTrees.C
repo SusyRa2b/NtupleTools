@@ -636,9 +636,7 @@ void runSLClosureTest2011() {
 
 }
 
-void runTtbarEstimate2011() {
-  //must do   runDataQCD2011(); first (in order to fill syst errors for qcd)
-  if (  qcdSystErrors.size()==0) {cout<<"Need to do runDataQCD2011() first!"<<endl; return;}
+void runTtbarEstimate2011(const bool forOwen=false) {
   setSearchRegions();
 
   double ttw[4];
@@ -652,7 +650,12 @@ void runTtbarEstimate2011() {
   cout<<"nominal ttbar"<<endl;
   for (unsigned int j=0; j<searchRegions_.size();j++) ttw[j]=slABCD(j,true);
  
+  if (forOwen) return;
+
   // for systematics due to QCD subtraction
+  //must do   runDataQCD2011(); first (in order to fill syst errors for qcd)
+  if (  qcdSystErrors.size()==0) {cout<<"Need to do runDataQCD2011() first!"<<endl; return;}
+
   cout<<"vary QCD subtraction"<<endl;
   for (unsigned int j=0; j<searchRegions_.size();j++) {
     p[j]=slABCD(j,true,"QCDup");
@@ -696,7 +699,7 @@ void runTtbarEstimate2011() {
 void printOwenAll() {
 
   runDataQCD2011(true);
-  runTtbarEstimate2011();
+  runTtbarEstimate2011(true);
 
   for (std::map<TString,OwenData>::iterator i=owenMap_.begin(); i!=owenMap_.end(); ++i) {
     printOwen( i->first);
