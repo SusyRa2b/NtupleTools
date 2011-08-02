@@ -49,8 +49,10 @@ int main(int argc, char** argv)
   selectVariables(stream);
   PseudoConstructor();
   setBTaggerType(kSSVHPT);  
-  //cutflow(stream);
-  reducedTree(outputDir, stream);
+  cutflow(stream,10000);
+  //reducedTree(outputDir, stream);
+
+  //sampleAnalyzer(stream);
 
   //makeReducedTrees(argc, argv); // currently not working with multiple files (problem with treestream?)
 
