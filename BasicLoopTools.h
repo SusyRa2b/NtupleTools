@@ -19,6 +19,9 @@
 #include <RooTransverseThrustVar.h>
 #include <cassert>
 
+#include <typeinfo>
+
+
 //#include <string>
 //#include <sys/stat.h>
 //#include "CondFormats/JetMETObjects/interface/JetResolution.h"
@@ -44,8 +47,8 @@ TString sampleName_ = "";
 //METType theMETType_;
 //enum METRange {kMedium=0, kHigh, kWide, kMedhigh, kLSB};
 //METRange theMETRange_;
-//enum jetType {kCalo=0, kPF, kJPT};
-//jetType theJetType_;
+enum jetType {kPF2PAT=0, kRECOPF};
+jetType theJetType_;
 //enum leptonType {kNormal=0, kPFLeptons, kPFLeptonsRA2};
 //leptonType theLeptonType_;
 //enum dpType {kDeltaPhi=0, kminDP, kMPT, kDPSync1, kminDPinv, kminDPAll30};
@@ -104,13 +107,18 @@ void InitializeStuff(){
 }
 #else
 //data
-std::vector<jet1_s> * myJetsPF;
-std::vector<jethelper_s> * myJetsPFhelper;
+//std::vector<jet1_s> * myJetsPF;
+//std::vector<jethelper_s> * myJetsPFhelper;
+std::vector<jet_s> * myJetsPF;
+std::vector<jetcleanhelper_s> * myJetsPFhelper;
+
 std::vector<electron1_s> * myElectronsPF;
 std::vector<muon1_s> * myMuonsPF;
 std::vector<tau_s> * myTausPF;
 std::vector<met1_s> * myMETPF;
+//std::vector<met2_s> * myMETPF;
 std::vector<vertex_s> * myVertex;
+std::vector<genparticlehelperra2_s> * myGenParticles; //jmt
 double * myGenWeight;
 double* myEDM_bunchCrossing;
 double* myEDM_event;
@@ -119,21 +127,144 @@ double* myEDM_luminosityBlock;
 double* myEDM_run;
 
 void InitializeStuff(){
-  myJetsPF = &jet1;            //selectedPatJetsPF
-  myJetsPFhelper = &jethelper; //selectedPatJetsPF helper
+  //myJetsPF = &jet1;            //selectedPatJetsPF
+  //myJetsPFhelper = &jethelper; //selectedPatJetsPF helper
+
+  myJetsPF = &jet;            //cleanPatJetsAK5PF
+  myJetsPFhelper = &jetcleanhelper; //cleanPatJetsAK5PF helper
+
   myElectronsPF = &electron1;  //selectedPatElectronsPF
   myMuonsPF = &muon1;          //selectedPatMuonsPF
   myTausPF = &tau;            //selectedPatTausPF
   myMETPF = &met1;             //patMETsPF
+  //myMETPF = &met2;             //patMETsTypeIPF
   myVertex = &vertex;         //offlinePrimaryVertices
+  myGenParticles = &genparticlehelperra2; //jmt
   myGenWeight = &geneventinfoproduct_weight;
   myEDM_bunchCrossing = &eventhelper_bunchCrossing;
   myEDM_event = &eventhelper_event;
   myEDM_isRealData = &eventhelper_isRealData;
   myEDM_luminosityBlock = &eventhelper_luminosityBlock;
   myEDM_run = &eventhelper_run;
+
+
 }
 #endif
+
+
+float eleet1_,muonpt1_,elephi1_,muonphi1_; //FIXME this is a hack that I don't like!
+bool isGoodMuon(const unsigned int imuon) {
+
+  if(myMuonsPF->at(imuon).pt > 10
+     && fabs(myMuonsPF->at(imuon).eta)<2.4
+     && myMuonsPF->at(imuon).GlobalMuonPromptTight == 1
+     && myMuonsPF->at(imuon).innerTrack_numberOfValidHits >=11
+     && myMuonsPF->at(imuon).track_hitPattern_numberOfValidPixelHits >= 1
+     && fabs(myMuonsPF->at(imuon).dB) < 0.02
+     && fabs(myMuonsPF->at(imuon).vz - myVertex->at(0).z ) <1
+     && (myMuonsPF->at(imuon).chargedHadronIso 
+	 + myMuonsPF->at(imuon).photonIso 
+	 + myMuonsPF->at(imuon).neutralHadronIso)/myMuonsPF->at(imuon).pt <0.2 
+     ){
+    return true;
+  }
+  
+  return false;
+}
+
+bool isGoodElectron(const unsigned int iele) {
+  
+  if(myElectronsPF->at(iele).pt > 10
+     && fabs(myElectronsPF->at(iele).superCluster_eta) < 2.5 
+     && !(fabs(myElectronsPF->at(iele).superCluster_eta) > 1.4442 
+	  && fabs(myElectronsPF->at(iele).superCluster_eta) < 1.566)
+     && myElectronsPF->at(iele).gsfTrack_trackerExpectedHitsInner_numberOfLostHits <= 1
+     && fabs(myElectronsPF->at(iele).dB) < 0.02
+     && fabs(myElectronsPF->at(iele).vz - myVertex->at(0).z ) <1
+     && (myElectronsPF->at(iele).chargedHadronIso 
+	 + myElectronsPF->at(iele).photonIso 
+	 + myElectronsPF->at(iele).neutralHadronIso)/myElectronsPF->at(iele).pt <0.2 
+       ){
+    return true;
+  }
+  
+  return false;
+}
+
+
+
+uint countEle() {
+
+  int ngoodele=0;
+  unsigned int nele = 0;
+  nele = myElectronsPF->size();
+  for (unsigned int i=0; i < nele; i++) {
+    if(isGoodElectron(i)){
+      //FIXME adding this as a hack...i would like to do this more elegantly, but for now this will work
+      if (ngoodele==0){
+	eleet1_ = myElectronsPF->at(i).et;
+	elephi1_ = myElectronsPF->at(i).phi;
+      }
+      ++ngoodele;
+    }
+  }
+  return ngoodele;
+}
+
+
+
+uint nElecut_;
+void setEleReq(unsigned int ne) {
+  nElecut_=ne;
+}
+
+bool passEleVeto() {
+  return (countEle() == nElecut_);
+}
+
+
+double deltaPhi(double phi1, double phi2) { 
+  double result = phi1 - phi2;
+  while (result > M_PI) result -= 2*M_PI;
+  while (result <= -M_PI) result += 2*M_PI;
+  return result;
+}
+
+double deltaR2(double eta1, double phi1, double eta2, double phi2) {
+  double deta = eta1 - eta2;
+  double dphi = deltaPhi(phi1, phi2);
+  return deta*deta + dphi*dphi;
+}
+double deltaR(double eta1, double phi1, double eta2, double phi2) {
+  return std::sqrt(deltaR2 (eta1, phi1, eta2, phi2));
+}
+
+bool isCleanJet(const unsigned int ijet){
+    
+  //if it's near a good muon, it's not clean
+  bool isNearMuon = false;
+  for ( unsigned int j = 0; j< myMuonsPF->size(); j++) {
+    if( isGoodMuon(j) && deltaR( myJetsPF->at(ijet).eta, myJetsPF->at(ijet).phi,myMuonsPF->at(j).eta, myMuonsPF->at(j).phi)<0.1 ){
+      isNearMuon = true; break;
+    }
+  }
+  
+  if(isNearMuon) return false;
+  
+  //if it's near a good electron, it's not clean
+  bool isNearElectron = false;
+  for ( unsigned int j = 0; j< myElectronsPF->size(); j++) {
+    if( isGoodElectron(j) && deltaR( myJetsPF->at(ijet).eta, myJetsPF->at(ijet).phi,myElectronsPF->at(j).eta, myElectronsPF->at(j).phi)<0.3 ){
+      isNearElectron = true; break;
+    }
+  }
+    
+  if(isNearElectron) return false;
+
+  return true;
+}
+
+
 
 #ifdef isMC
 std::vector<jet3_s> * myJetsPF_temp;
@@ -148,6 +279,7 @@ std::vector<met1_s> * myMETPF_temp;
 //double* myEDM_isRealData_temp;
 //double* myEDM_luminosityBlock_temp;
 //double* myEDM_run_temp;
+
 
 void changeVariables(TRandom* random, double jetLossProbability, int& nLostJets)
 {
@@ -199,7 +331,7 @@ void changeVariables(TRandom* random, double jetLossProbability, int& nLostJets)
 }
 
 #else
-std::vector<jet1_s> * myJetsPF_temp;
+std::vector<jet_s> * myJetsPF_temp;
 //std::vector<electron1_s> * myElectronsPF_temp;
 //std::vector<muon1_s> * myMuonsPF_temp;
 //std::vector<tau1_s> * myTausPF_temp;
@@ -229,7 +361,7 @@ void changeVariables(TRandom* random, double jetLossProbability, int& nLostJets)
   //myEDM_luminosityBlock_temp      = myEDM_luminosityBlock;
   //myEDM_run_temp                  = myEDM_run;         
 
-  myJetsPF                = new std::vector<jet1_s>;	  
+  myJetsPF                = new std::vector<jet_s>;	  
   //myElectronsPF	          = new std::vector<electron1_s>;	  
   //myMuonsPF		  = new std::vector<muon1_s>;	  
   //myTausPF		  = new std::vector<tau1_s>;	  
@@ -241,7 +373,7 @@ void changeVariables(TRandom* random, double jetLossProbability, int& nLostJets)
   //myEDM_isRealData	  = new double;
   //myEDM_luminosityBlock   = new double;
   //myEDM_run               = new double;
-  for(vector<jet1_s>::iterator thisJet = myJetsPF_temp->begin(); thisJet != myJetsPF_temp->end(); thisJet++)
+  for(vector<jet_s>::iterator thisJet = myJetsPF_temp->begin(); thisJet != myJetsPF_temp->end(); thisJet++)
     {
       if(random->Rndm() > jetLossProbability)
 	{
@@ -296,12 +428,35 @@ void resetVariables()
     
 }
 
+void checkConsistency() {
+ //this is probably bad coding, but the only thing I can think of for this already horribly-constructed code
+  std::string jettype = typeid( *myJetsPF ).name();
+  std::string recopfjet = "jet_s";
+  std::string pf2patjet = "jet1_s";
+  if( theJetType_==kPF2PAT && std::string::npos != jettype.find(recopfjet)){ 
+    //std::cout << "myJetsPF is pointing to recopfjet" << std::endl;
+    std::cout << "ERROR: theJetType_ is set to kPF2PAT jets, while myJetsPF is pointing to something else. "
+	      << "This will screw up (at least) the cleaning selection.  Aborting." << std::endl;
+    assert(0);
+  }
+  if( theJetType_==kRECOPF &&  std::string::npos != jettype.find(pf2patjet)){
+    //std::cout << "myJetsPF is pointing to pf2patjet" << std::endl;
+    std::cout << "ERROR: theJetType_ is set to kRECOPF jets, while myJetsPF is pointing to something else. "
+	      << "This will screw up (at least) the cleaning selection.  Aborting." << std::endl;
+    assert(0);
+  }
+}
+
 
 void PseudoConstructor() {
   //  theCutScheme_ = kBaseline2010;
   //  theMETType_=kpfMET;
   //  theMETRange_=kHigh;
-  //  theJetType_=kPF;
+  theJetType_=kRECOPF;
+  //theJetType_=kPF2PAT; 
+
+  checkConsistency();
+
   //  theLeptonType_=kPFLeptonsRA2;
   //  theDPType_=kminDP;
   theJESType_=kJES0;
@@ -318,7 +473,7 @@ void PseudoConstructor() {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifdef isMC
+//#ifdef isMC
 unsigned int findSUSYMaternity( unsigned int k ) {
 
   int numSUSY=0;
@@ -336,7 +491,7 @@ unsigned int findSUSYMaternity( unsigned int k ) {
 
 }
 
-unsigned int getSUSYnb() {
+unsigned int getSUSYnb(std::vector<uint> &susyb_index) {
 
   unsigned int SUSY_nb=0;
   for (unsigned int k = 0; k<myGenParticles->size(); k++) {
@@ -344,7 +499,7 @@ unsigned int getSUSYnb() {
 
     if ( abs(TMath::Nint(myGenParticles->at(k).pdgId )) == 5 ) { //find b quark
       unsigned int nSUSY = findSUSYMaternity( k );      
-      if (nSUSY>0) SUSY_nb++;
+      if (nSUSY>0) {SUSY_nb++; susyb_index.push_back(k);}
     }
   }
   
@@ -352,17 +507,17 @@ unsigned int getSUSYnb() {
 
 }
 
-#else
-
-unsigned int findSUSYMaternity( unsigned int k ) {
-  return 0;
-}
-
-unsigned int getSUSYnb() {
-  return 0;
-}
-
-#endif
+////#else
+//
+//unsigned int findSUSYMaternity( unsigned int k ) {
+//  return 0;
+//}
+//
+//unsigned int getSUSYnb() {
+//  return 0;
+//}
+//
+////#endif
 /*
 void testLoop(itreestream& stream) {
   InitializeStuff();//required!
@@ -662,6 +817,11 @@ bool isGoodJet(const unsigned int ijet, const float pTthreshold=50, const float 
   if ( fabs(myJetsPF->at(ijet).eta) > etaMax) return false;
   if ( !jetPassLooseID(ijet) ) return false;
 
+  //do manual cleaning for reco pfjets
+  if(theJetType_ == kRECOPF){
+    if ( !isCleanJet(ijet) ) return false;
+  }
+
   return true;
 }
 
@@ -725,6 +885,97 @@ uint nGoodBJets( BTaggerType btagger=Nbtaggers) {
   }
   return nb;
 }
+
+
+
+bool isCleanMuon(const unsigned int imuon){
+
+  if(!isGoodMuon(imuon)) return false;
+
+  //clean muons if using reco-pfjets
+  if(theJetType_ == kRECOPF){    
+    bool isNearJet = false;
+    for ( unsigned int j = 0; j< myJetsPF->size(); j++) {
+      if( isGoodJet(j) && deltaR( myJetsPF->at(j).eta, myJetsPF->at(j).phi,myMuonsPF->at(imuon).eta, myMuonsPF->at(imuon).phi)<0.3 ){
+	isNearJet = true ; break;
+      }
+    }
+    if(isNearJet) return false;
+  }
+
+  return true;
+
+}
+
+
+uint countMu() {
+
+  int ngoodmu=0;
+  unsigned int nmu = 0;
+  nmu = myMuonsPF->size();
+  for ( unsigned int i = 0; i< nmu; i++) {
+    if(isCleanMuon(i)){
+      //once we reach here we've got a good muon in hand
+      //FIXME adding this as a hack...i would like to do this more elegantly, but for now this will work
+      if (ngoodmu==0){
+	muonpt1_ = myMuonsPF->at(i).pt;
+	muonphi1_ = myMuonsPF->at(i).phi;
+      }
+      ++ngoodmu;   
+    }
+  }
+  
+  return ngoodmu;
+}
+
+uint nMucut_;
+void setMuonReq(unsigned int nmu) {
+  nMucut_=nmu;
+}
+
+bool passMuVeto() {
+  return (countMu() == nMucut_);
+}
+
+bool passBadPFMuonFilter(){
+  bool hasBadMuon = false;
+
+  //unsigned int nmu = 0;
+  //nmu = myMuonsPF->size();
+  //
+  //for (unsigned int i=0; i < nmu; i++) {
+  //  //if(muonhelper.at(i).badPFmuon) hasBadMuon = true; NEED TO GET THIS BACK IN BEN FIXME
+  //}
+
+  if(hasBadMuon) return false;
+  return true;
+}
+
+bool passInconsistentMuonFilter(){
+
+  bool hasInconsistentMuon = false;
+
+  //this should not be looping over selectedPatMuonsPF (which has some cuts applied), it should be looping over all PFCandidate muons
+  //use the ra2 code
+  /*
+  unsigned int nmu = 0;
+  nmu = myMuonsPF->size();
+
+  for (unsigned int i=0; i < nmu; i++) {
+    if(myMuonsPF->at(i).pt > 100){
+      if(myMuonsPF->at(i).isTrackerMuon &&  myMuonsPF->at(i).isGlobalMuon){
+	if( fabs( myMuonsPF->at(i).innerTrack_pt/myMuonsPF->at(i).globalTrack_pt - 1 ) > 0.1 )
+	  hasInconsistentMuon = true;
+      }
+    }
+  }
+  */
+
+  if(hasInconsistentMuon) return false;
+  return true;
+
+}
+
 
 float getBTagIPWeight() {//this function should be called *after* offline tagging 
   float w_event = 1;
@@ -1610,7 +1861,6 @@ double getPFMHTWeight() {
 //  return 2*atan(exp(-eta));
 //}
 float WCosHel_,topCosHel_,bestWMass_,bestTopMass_;
-float eleet1_,muonpt1_,elephi1_,muonphi1_; //FIXME this is a hack that I don't like!
 
 
 double calc_mNj( std::vector<unsigned int> jNi ) {
@@ -1820,144 +2070,6 @@ void fillWTop() {
 
 
 
-
-uint countMu() {
-
-  int ngoodmu=0;
-
-  unsigned int nmu = 0;
-  nmu = myMuonsPF->size();
-
-  for ( unsigned int i = 0; i< nmu; i++) {
-
-    if(myMuonsPF->at(i).pt > 10
-       && fabs(myMuonsPF->at(i).eta)<2.4
-       && myMuonsPF->at(i).GlobalMuonPromptTight == 1
-       && myMuonsPF->at(i).innerTrack_numberOfValidHits >=11
-       && myMuonsPF->at(i).track_hitPattern_numberOfValidPixelHits >= 1
-       && fabs(myMuonsPF->at(i).dB) < 0.02
-       && fabs(myMuonsPF->at(i).vz - myVertex->at(0).z ) <1
-       && (myMuonsPF->at(i).chargedHadronIso 
-	   + myMuonsPF->at(i).photonIso 
-	   + myMuonsPF->at(i).neutralHadronIso)/myMuonsPF->at(i).pt <0.2 
-       ){
-
-
-      //once we reach here we've got a good muon in hand
-      //FIXME adding this as a hack...i would like to do this more elegantly, but for now this will work
-      if (ngoodmu==0){
-	muonpt1_ = myMuonsPF->at(i).pt;
-	muonphi1_ = myMuonsPF->at(i).phi;
-      }
-
-
-      ++ngoodmu;   
-
-    }
-  
-  }
-  
-  return ngoodmu;
-}
-
-uint nMucut_;
-void setMuonReq(unsigned int nmu) {
-  nMucut_=nmu;
-}
-
-bool passMuVeto() {
-  return (countMu() == nMucut_);
-}
-
-bool passBadPFMuonFilter(){
-  bool hasBadMuon = false;
-
-  unsigned int nmu = 0;
-  nmu = myMuonsPF->size();
-
-  for (unsigned int i=0; i < nmu; i++) {
-    //if(muonhelper.at(i).badPFmuon) hasBadMuon = true; NEED TO GET THIS BACK IN BEN FIXME
-  }
-
-  if(hasBadMuon) return false;
-  return true;
-}
-
-bool passInconsistentMuonFilter(){
-
-  bool hasInconsistentMuon = false;
-
-  //this should not be looping over selectedPatMuonsPF (which has some cuts applied), it should be looping over all PFCandidate muons
-  //use the ra2 code
-  /*
-  unsigned int nmu = 0;
-  nmu = myMuonsPF->size();
-
-  for (unsigned int i=0; i < nmu; i++) {
-    if(myMuonsPF->at(i).pt > 100){
-      if(myMuonsPF->at(i).isTrackerMuon &&  myMuonsPF->at(i).isGlobalMuon){
-	if( fabs( myMuonsPF->at(i).innerTrack_pt/myMuonsPF->at(i).globalTrack_pt - 1 ) > 0.1 )
-	  hasInconsistentMuon = true;
-      }
-    }
-  }
-  */
-
-  if(hasInconsistentMuon) return false;
-  return true;
-
-}
-
-
-
-uint countEle() {
-
-  int ngoodele=0;
-
-  unsigned int nele = 0;
-  nele = myElectronsPF->size();
-
-  for (unsigned int i=0; i < nele; i++) {
-
-    if(myElectronsPF->at(i).pt > 10
-       && fabs(myElectronsPF->at(i).superCluster_eta) < 2.5 
-       && !(fabs(myElectronsPF->at(i).superCluster_eta) > 1.4442 
-	    && fabs(myElectronsPF->at(i).superCluster_eta) < 1.566)
-       && myElectronsPF->at(i).gsfTrack_trackerExpectedHitsInner_numberOfLostHits <= 1
-       && fabs(myElectronsPF->at(i).dB) < 0.02
-       && fabs(myElectronsPF->at(i).vz - myVertex->at(0).z ) <1
-       && (myElectronsPF->at(i).chargedHadronIso 
-	   + myElectronsPF->at(i).photonIso 
-	   + myElectronsPF->at(i).neutralHadronIso)/myElectronsPF->at(i).pt <0.2 
-       ){
-
-
-      //FIXME adding this as a hack...i would like to do this more elegantly, but for now this will work
-      if (ngoodele==0){
-	eleet1_ = myElectronsPF->at(i).et;
-	elephi1_ = myElectronsPF->at(i).phi;
-      }
-
-
-      ++ngoodele;
-
-    }
-  }
-
-  return ngoodele;
-
-}
-
-
-
-uint nElecut_;
-void setEleReq(unsigned int ne) {
-  nElecut_=ne;
-}
-
-bool passEleVeto() {
-  return (countEle() == nElecut_);
-}
 
 
 bool passCleaning() {
@@ -2370,6 +2482,7 @@ double getCrossSection(TString inname){
   if (inname.Contains("ttjets_tunez2_madgraph_tauola_summer11") )               return 158; // +/- 10 +/- 15 //CMS PAS TOP-11-001
 
   if (inname.Contains("LM9_SUSY_sftsht_7TeV-pythia6") )                         return 7.134; //from ProductionSpring2011 twiki
+  if (inname.Contains("TTJets_TuneZ2_7TeV-madgraph-tauola") )                   return 158; // +/- 10 +/- 15 //CMS PAS TOP-11-001
     
   std::cout<<"Cannot find cross section for this sample!"<<std::endl;
   assert(0); 
@@ -2479,7 +2592,7 @@ void stopTimer(const Long64_t ntotal) {
 }
 
 
-void cutflow(itreestream& stream){
+void cutflow(itreestream& stream, int maxevents=-1){
 
   std::vector<int> npass;
   std::vector<double> sumw; //sum of weights
@@ -2506,8 +2619,12 @@ void cutflow(itreestream& stream){
 
   InitializeStuff();//BEN
 
+
   startTimer();
   for(int entry=0; entry < nevents; ++entry){
+
+    if(maxevents>0 && entry>=maxevents) break;
+
     // Read event into memory
     stream.read(entry);
     fillObjects();
@@ -2592,6 +2709,7 @@ void reducedTree(TString outputpath, itreestream& stream)
   outfilename += ".";
   outfilename += getCutDescriptionString();
   outfilename += ".";
+
   outfilename += getSampleNameOutputString(sampleName_);
   outfilename+=".root";
   if (outputpath[outputpath.Length()-1] != '/') outputpath += "/";
@@ -2901,7 +3019,7 @@ void reducedTree(TString outputpath, itreestream& stream)
   int nevents = stream.size();
 
   InitializeStuff();//BEN
-   
+
   startTimer();
   for(int entry=0; entry < nevents; ++entry){
     // Read event into memory
@@ -2922,6 +3040,7 @@ void reducedTree(TString outputpath, itreestream& stream)
       
 
     if ( passCut("cutLumiMask") && (passCut("cutTrigger") || passCut("cutUtilityTrigger")) && passCut("cutHT") ) {
+    
            
       //if (entry%1000000==0) checkTimer(entry,nevents);
       weight = getWeight(nevents);
@@ -2935,6 +3054,8 @@ void reducedTree(TString outputpath, itreestream& stream)
       pfmhtweight = getPFMHTWeight();
 
       cutHT = true; 
+      //cutHT = passCut("cutHT");
+
       cutTrigger = passCut("cutTrigger");
       cutPV = passCut("cutPV");
       cut3Jets = passCut("cut3Jets");
@@ -2955,7 +3076,7 @@ void reducedTree(TString outputpath, itreestream& stream)
 
       nGoodPV = countGoodPV();
 
-      SUSY_nb = getSUSYnb();
+      //SUSY_nb = getSUSYnb();
 
       njets = nGoodJets();
       nbjets = nGoodBJets();
@@ -3052,6 +3173,7 @@ void reducedTree(TString outputpath, itreestream& stream)
       
       fillWTop(); //fill W,top masses and helicity angles
       
+      
       //fill new variables from Luke
       getSphericityJetMET(lambda1_allJets,lambda2_allJets,determinant_allJets,99,false);
       getSphericityJetMET(lambda1_allJetsPlusMET,lambda2_allJetsPlusMET,determinant_allJetsPlusMET,99,true);
@@ -3084,7 +3206,7 @@ void reducedTree(TString outputpath, itreestream& stream)
       transverseMETSignificance2_lostJet = getTransverseMETSignificance(1);
       transverseMETSignificance3_lostJet = getTransverseMETSignificance(2);
       resetVariables();
-      
+
       reducedTree.Fill();
       
     }
@@ -3101,6 +3223,9 @@ void reducedTree(TString outputpath, itreestream& stream)
 void sampleAnalyzer(itreestream& stream){
 
   int nevents = stream.size();
+
+  TFile fout("histos.root","RECREATE");
+  //TH1F * h_taupt = new TH1F("h_taupt","tau pt",200,0,200);
 
   InitializeStuff();//BEN
 
@@ -3128,7 +3253,6 @@ void sampleAnalyzer(itreestream& stream){
     fillObjects();
     if(entry%100000==0) cout << "  entry: " << entry << ", percent done=" << (int)(entry/(double)nevents*100.)<<  endl;
 
-    
     if (Cut(entry) < 0) continue;
     count++;
 
@@ -3138,7 +3262,9 @@ void sampleAnalyzer(itreestream& stream){
 
   }
   stopTimer(nevents);
-  std::cout << "count = " << count << std::endl;
+
+  fout.Write();
+  fout.Close();
 
   return;
 }
