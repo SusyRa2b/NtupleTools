@@ -259,43 +259,54 @@ myCutflow::myCutflow(TString sampleName, TTree *tree):Event_(sampleName)
       TChain * chain = new TChain("reducedTree","");
 
       if (sampleName=="TTbarJets"){
-	chain->Add("/cu2/ra2b/reducedTrees/V00-02-05_v2/reducedTree.SSVHPT.TTbarJets.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-05_v3/reducedTree.SSVHPT.TTbarJets.root/reducedTree");
       }
 
       else if (sampleName=="SingleTop"){
-	chain->Add("/cu2/ra2b/reducedTrees/V00-02-05_v2/reducedTree.SSVHPT.SingleTop.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-05_v3/reducedTree.SSVHPT.SingleTop.root/reducedTree");
       }
 
       else if (sampleName=="WJets"){
-	chain->Add("/cu2/ra2b/reducedTrees/V00-02-05_v2/reducedTree.SSVHPT.WJets.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-05_v3/reducedTree.SSVHPT.WJets.root/reducedTree");
       }
 
       else if (sampleName=="ZJets"){
-	chain->Add("/cu2/ra2b/reducedTrees/V00-02-05_v2/reducedTree.SSVHPT.ZJets.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-05_v3/reducedTree.SSVHPT.ZJets.root/reducedTree");
       }
 
       else if (sampleName=="Zinvisible"){
-	chain->Add("/cu2/ra2b/reducedTrees/V00-02-05_v2/reducedTree.SSVHPT.Zinvisible.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-05_v3/reducedTree.SSVHPT.Zinvisible.root/reducedTree");
       }
 
       else if (sampleName=="VV"){
-	chain->Add("/cu2/ra2b/reducedTrees/V00-02-05_v2/reducedTree.SSVHPT.VV.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-05_v3/reducedTree.SSVHPT.VV.root/reducedTree");
       }
 
       else if (sampleName=="PythiaPUQCD"){
-	chain->Add("/cu2/ra2b/reducedTrees/V00-02-05_v2/reducedTree.SSVHPT.PythiaPUQCD.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-05_v3/reducedTree.SSVHPT.PythiaPUQCD.root/reducedTree");
       }
 
       else if (sampleName=="LM9"){
-	chain->Add("/cu2/ra2b/reducedTrees/V00-02-05_v2/reducedTree.SSVHPT.LM9.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-05_v3/reducedTree.SSVHPT.LM9.root/reducedTree");
       }
 
       else if (sampleName=="LM13"){
-	chain->Add("/cu2/ra2b/reducedTrees/V00-02-05_v2/reducedTree.SSVHPT.LM13.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-05_v3/reducedTree.SSVHPT.LM13.root/reducedTree");
       }
 
       else if (sampleName=="Data"){
-	chain->Add("/cu2/ra2b/reducedTrees/V00-02-05_v2/reducedTree.SSVHPT.ht_run2011a_423_may10rereco.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-05_v3/reducedTree.SSVHPT.ht_run2011a_423_jul1.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-05_v3/reducedTree.SSVHPT.ht_run2011a_423_jul6.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-05_v3/reducedTree.SSVHPT.ht_run2011a_423_jun10.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-05_v3/reducedTree.SSVHPT.ht_run2011a_423_jun17.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-05_v3/reducedTree.SSVHPT.ht_run2011a_423_jun24.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-05_v3/reducedTree.SSVHPT.ht_run2011a_423_jun3.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-05_v3/reducedTree.SSVHPT.ht_run2011a_423_may10rereco.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-05_v3/reducedTree.SSVHPT.ht_run2011a_423_may10rereco_added.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-05_v3/reducedTree.SSVHPT.ht_run2011a_423_may10rereco_added_b.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-05_v3/reducedTree.SSVHPT.ht_run2011a_423_may10rereco_added_c.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-05_v3/reducedTree.SSVHPT.ht_run2011a_423_may24.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-05_v3/reducedTree.SSVHPT.ht_run2011a_423_may27.root/reducedTree");
       }
 
       else cout<<"I couldn't find the sample you asked for"<<endl;
