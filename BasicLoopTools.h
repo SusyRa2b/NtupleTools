@@ -43,8 +43,8 @@ TString sampleName_ = "";
 //jmt -- commenting out the ones that are not currently used
 //enum CutScheme {kBaseline2010};
 //CutScheme theCutScheme_;
-//enum METType {kMHT=0, kMET, ktcMET, kpfMET};
-//METType theMETType_;
+enum METType {kPFMET=0,kPFMETTypeI};
+METType theMETType_;
 //enum METRange {kMedium=0, kHigh, kWide, kMedhigh, kLSB};
 //METRange theMETRange_;
 enum jetType {kPF2PAT=0, kRECOPF};
@@ -241,6 +241,8 @@ double deltaR(double eta1, double phi1, double eta2, double phi2) {
 
 bool isCleanJet(const unsigned int ijet){
     
+  if(theJetType_ == kPF2PAT) return true; //pf2pat jets are clean by construction
+
   //if it's near a good muon, it's not clean
   bool isNearMuon = false;
   for ( unsigned int j = 0; j< myMuonsPF->size(); j++) {
@@ -445,12 +447,23 @@ void checkConsistency() {
 	      << "This will screw up (at least) the cleaning selection.  Aborting." << std::endl;
     assert(0);
   }
+
+  std::string mettype = typeid( *myMETPF ).name();
+  std::string rawpfmet = "met1_s";
+  std::string type1pfmet = "met2_s";
+  if( theMETType_ == kPFMETTypeI &&  std::string::npos != jettype.find(type1pfmet)){
+    std::cout << "ERROR: theMETType_ is set to PFMETTypeI, while myMETsPF is also pointing to type1pfmet.  "
+	      << "This will double-correct the MET!  Aborting." << std::endl;
+    assert(0);
+  }
+
 }
 
 
 void PseudoConstructor() {
   //  theCutScheme_ = kBaseline2010;
-  //  theMETType_=kpfMET;
+  theMETType_=kPFMETTypeI;
+  //  theMETType_=kPFMET;
   //  theMETRange_=kHigh;
   theJetType_=kRECOPF;
   //theJetType_=kPF2PAT; 
@@ -1254,44 +1267,82 @@ float getHT() {
   return ht;
 }
 
+void getCorrectedMET(float& correctedMET, float& correctedMETPhi) {
+
+  double METx = myMETPF->at(0).pt * cos(myMETPF->at(0).phi);
+  double METy = myMETPF->at(0).pt * sin(myMETPF->at(0).phi);
+
+  for(unsigned int thisJet = 0; thisJet < myJetsPF->size(); thisJet++)
+    {
+      if (isCleanJet(thisJet) ){//this only has an effect for recopfjets
+	METx -= myJetsPF->at(thisJet).uncor_pt * cos(myJetsPF->at(thisJet).uncor_phi);
+	METx += myJetsPF->at(thisJet).pt * cos(myJetsPF->at(thisJet).phi);
+	METy -= myJetsPF->at(thisJet).uncor_pt * sin(myJetsPF->at(thisJet).uncor_phi);
+	METy += myJetsPF->at(thisJet).pt * sin(myJetsPF->at(thisJet).phi);
+      }
+    }
+  correctedMET = sqrt(METx*METx + METy*METy);
+  correctedMETPhi = atan2(METy,METx);
+}
+
+
 std::pair<float,float> getJEAdjustedMETxy() {
-  //this function will only return correct results for Type I-corrected PF MET!
-  float myMET = myMETPF->at(0).pt;
-  float myMETphi = myMETPF->at(0).phi;
+
+  float myMET;
+  float myMETphi;
+
+  if(theMETType_== kPFMET){
+    myMET = myMETPF->at(0).pt;
+    myMETphi = myMETPF->at(0).phi;
+  }
+  else if(theMETType_ == kPFMETTypeI){
+    getCorrectedMET(myMET,myMETphi);
+  }
 
   float myMETx = myMET * cos(myMETphi);
   float myMETy = myMET * sin(myMETphi);
  
   //loop over all jets
   for (unsigned int i=0; i<myJetsPF->size(); i++) {
-    
-    //first remove the corrected jet pT from MET
-    myMETx += myJetsPF->at(i).pt * cos(myJetsPF->at(i).phi);
-    myMETy += myJetsPF->at(i).pt * sin(myJetsPF->at(i).phi);
-
-    //now add back in the adjusted jet
-    //using getJetPt() will automatically take into account the JES and JER settings
-    myMETx -= getJetPt(i) * cos(myJetsPF->at(i).phi);
-    myMETy -= getJetPt(i) * sin(myJetsPF->at(i).phi);
+    if (isCleanJet(i) ){//this only has an effect for recopfjets    
+      //first remove the corrected jet pT from MET
+      myMETx += myJetsPF->at(i).pt * cos(myJetsPF->at(i).phi);
+      myMETy += myJetsPF->at(i).pt * sin(myJetsPF->at(i).phi);
+      
+      //now add back in the adjusted jet
+      //using getJetPt() will automatically take into account the JES and JER settings
+      myMETx -= getJetPt(i) * cos(myJetsPF->at(i).phi);
+      myMETy -= getJetPt(i) * sin(myJetsPF->at(i).phi);
+    }
   }
 
   return make_pair(myMETx,myMETy);
 }
 
 std::pair<float,float> getSmearedUnclusteredMETxy() {
-  //assumes type I corrected MET!
 
-  float myMET = myMETPF->at(0).pt;
-  float myMETphi = myMETPF->at(0).phi;
+  float myMET;
+  float myMETphi;
+
+  if(theMETType_== kPFMET){
+    myMET = myMETPF->at(0).pt;
+    myMETphi = myMETPF->at(0).phi;
+  }
+  else if(theMETType_ == kPFMETTypeI){
+    getCorrectedMET(myMET,myMETphi);
+  }
+
 
   float myMETx = myMET * cos(myMETphi);
   float myMETy = myMET * sin(myMETphi);
  
   //first remove jets from MET
   for (unsigned int i=0; i<myJetsPF->size(); i++) {
-    //remove the corrected jet pT from MET
-    myMETx += myJetsPF->at(i).pt * cos(myJetsPF->at(i).phi);
-    myMETy += myJetsPF->at(i).pt * sin(myJetsPF->at(i).phi);
+    if (isCleanJet(i) ){//this only has an effect for recopfjets    
+      //remove the corrected jet pT from MET
+      myMETx += myJetsPF->at(i).pt * cos(myJetsPF->at(i).phi);
+      myMETy += myJetsPF->at(i).pt * sin(myJetsPF->at(i).phi);
+    }
   }
   //then muons
   for ( unsigned int i = 0; i<myMuonsPF->size() ; i++) {
@@ -1315,9 +1366,11 @@ std::pair<float,float> getSmearedUnclusteredMETxy() {
   //now repeat everything but change all += to -=
   //jets
   for (unsigned int i=0; i<myJetsPF->size(); i++) {
-    //remove the corrected jet pT from MET
-    myMETx -= myJetsPF->at(i).pt * cos(myJetsPF->at(i).phi);
-    myMETy -= myJetsPF->at(i).pt * sin(myJetsPF->at(i).phi);
+    if (isCleanJet(i) ){//this only has an effect for recopfjets    
+      //remove the corrected jet pT from MET
+      myMETx -= myJetsPF->at(i).pt * cos(myJetsPF->at(i).phi);
+      myMETy -= myJetsPF->at(i).pt * sin(myJetsPF->at(i).phi);
+    }
   }
   //muons
   for ( unsigned int i = 0; i<myMuonsPF->size() ; i++) {
@@ -1333,10 +1386,17 @@ std::pair<float,float> getSmearedUnclusteredMETxy() {
   return make_pair(myMETx,myMETy);
 }
 
+
 float getMET() {
   float myMET=-1;
+  float myMETphi =-1000;
 
-  myMET = myMETPF->at(0).pt;
+  if(theMETType_== kPFMET){
+    myMET = myMETPF->at(0).pt;
+  }
+  else if(theMETType_ == kPFMETTypeI){
+    getCorrectedMET(myMET,myMETphi);
+  }
 
   //first adjust for JER and JES
   if (theJESType_ != kJES0 || theJERType_ != kJER0 ) {
@@ -1353,9 +1413,16 @@ float getMET() {
 }
 
 float getMETphi() {
+  float myMET=-1;
   float myMETphi=-99;
 
-  myMETphi = myMETPF->at(0).phi;
+  if(theMETType_== kPFMET){
+    myMETphi = myMETPF->at(0).phi;
+  }
+  else if(theMETType_ == kPFMETTypeI){
+    getCorrectedMET(myMET,myMETphi);
+  }
+
 
   if (theJESType_ != kJES0 || theJERType_ != kJER0) {
     std::pair<float, float> metxy = getJEAdjustedMETxy();
@@ -1367,22 +1434,6 @@ float getMETphi() {
   }
 
   return myMETphi;
-}
-
-void getCorrectedMET(float& correctedMET, float& correctedMETPhi) {
-
-  double METx = myMETPF->at(0).pt * cos(myMETPF->at(0).phi);
-  double METy = myMETPF->at(0).pt * sin(myMETPF->at(0).phi);
-
-  for(unsigned int thisJet = 0; thisJet < myJetsPF->size(); thisJet++)
-    {
-      METx -= myJetsPF->at(thisJet).uncor_pt * cos(myJetsPF->at(thisJet).uncor_phi);
-      METx += myJetsPF->at(thisJet).pt * cos(myJetsPF->at(thisJet).phi);
-      METy -= myJetsPF->at(thisJet).uncor_pt * sin(myJetsPF->at(thisJet).uncor_phi);
-      METy += myJetsPF->at(thisJet).pt * sin(myJetsPF->at(thisJet).phi);
-    }
-  correctedMET = sqrt(METx*METx + METy*METy);
-  correctedMETPhi = atan2(METy,METx);
 }
 
 double getDeltaPhi(double phi1, double phi2) {
@@ -2241,7 +2292,7 @@ bool passCut(const TString cutTag) {
 
   if (cutTag=="cutPV") return passPV();
   
-  if (cutTag=="cutHT") return getHT()>350;
+  if (cutTag=="cutHT") return getHT()>400;
   
   if (cutTag=="cut3Jets") return (nGoodJets() >= 3);
   
