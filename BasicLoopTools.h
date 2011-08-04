@@ -41,24 +41,25 @@ const double lumi_ = 1.; //fix to 1/pb and scale MC later (e.g. in drawReducedTr
 TString sampleName_ = ""; 
 
 //jmt -- commenting out the ones that are not currently used
+// Note: when adding a new type type, make sure to give it a name is the PseudoConstructor
 //enum CutScheme {kBaseline2010};
 //CutScheme theCutScheme_;
 enum METType {kPFMET=0,kPFMETTypeI};
-METType theMETType_;
+METType theMETType_; std::map<METType, TString> theMETNames_;
 //enum METRange {kMedium=0, kHigh, kWide, kMedhigh, kLSB};
 //METRange theMETRange_;
 enum jetType {kPF2PAT=0, kRECOPF};
-jetType theJetType_;
+jetType theJetType_; std::map<jetType, TString> theJetNames_;
 //enum leptonType {kNormal=0, kPFLeptons, kPFLeptonsRA2};
 //leptonType theLeptonType_;
 //enum dpType {kDeltaPhi=0, kminDP, kMPT, kDPSync1, kminDPinv, kminDPAll30};
 //dpType theDPType_;
 enum JESType {kJES0=0,kJESup,kJESdown};
-JESType theJESType_;
+JESType theJESType_; std::map<JESType, TString> theJESNames_;
 enum JERType {kJER0=0,kJERbias,kJERup,kJERdown,kJERra2};
-JERType theJERType_;
+JERType theJERType_; std::map<JERType, TString> theJERNames_;
 enum METuncType {kMETunc0=0,kMETuncDown,kMETuncUp};
-METuncType theMETuncType_;
+METuncType theMETuncType_; std::map<METuncType, TString> theMETuncNames_;
 //enum BTagEffType {kBTagEff0=0,kBTagEffup,kBTagEffdown};
 //BTagEffType theBTagEffType_;
 //enum tailCleaningType {kNoCleaning=0, kMuonCleaning, kMuonEcalCleaning};
@@ -66,7 +67,7 @@ METuncType theMETuncType_;
 //enum flavorHistoryType {kNoFlvHist=0, kFlvHist};
 //flavorHistoryType theFlavorHistoryType_;
 enum BTaggerType {kSSVM=0, kTCHET, kSSVHPT, kTCHPT, kTCHPM, Nbtaggers};
-BTaggerType theBTaggerType_;
+BTaggerType theBTaggerType_; std::map<BTaggerType, TString> theBTaggerNames_;
 
 bool recalculatedVariables = false;
 
@@ -480,6 +481,32 @@ void PseudoConstructor() {
   //  theFlavorHistoryType_=kNoFlvHist;
   theBTaggerType_=kSSVHPT;
 
+  theBTaggerNames_[kSSVM]="SSVHEM";
+  theBTaggerNames_[kTCHET]="TCHET";
+  theBTaggerNames_[kSSVHPT]="SSVHPT";
+  theBTaggerNames_[kTCHPT]="TCHPT";
+  theBTaggerNames_[kTCHPM]="TCHPM";
+
+  theMETNames_[kPFMET] = "PFMET";
+  theMETNames_[kPFMETTypeI] = "PFMETTypeI";
+
+  theJetNames_[kPF2PAT]="PF2PATjets";
+  theJetNames_[kRECOPF]="RecoPFjets";
+
+  theJESNames_[kJES0]="JES0";
+  theJESNames_[kJESup]="JESup";
+  theJESNames_[kJESdown]="JESdown";
+
+  theMETuncNames_[kMETunc0]="METunc0";
+  theMETuncNames_[kMETuncUp]="METuncUp";
+  theMETuncNames_[kMETuncDown]="METuncDown";
+
+  theJERNames_[kJER0]="JER0";
+  theJERNames_[kJERup]="JERup";
+  theJERNames_[kJERbias]="JERbias";
+  theJERNames_[kJERra2]="JERra2";
+  theJERNames_[kJERdown]="JERdown";
+
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -552,12 +579,22 @@ void testLoop(itreestream& stream) {
 TString getCutDescriptionString(){
   
   TString cut = "";
-  if(theBTaggerType_==kTCHET){
-    cut+="TCHET";
-  }  
-  else if(theBTaggerType_==kSSVHPT){
-    cut+="SSVHPT";
-  }
+  cut += theBTaggerNames_[theBTaggerType_];
+  cut += "_";
+
+  cut += theJetNames_[theJetType_];
+  cut += "_";
+
+  cut += theJESNames_[theJESType_];
+  cut += "_";
+
+  cut += theJERNames_[theJERType_];
+  cut += "_";
+
+  cut += theMETNames_[theMETType_];
+  cut += "_";
+
+  cut += theMETuncNames_[theMETuncType_];
 
   return cut;
 }
@@ -2549,11 +2586,11 @@ TString getSampleNameOutputString(TString inname){
   if (inname.Contains("DYJetsToLL_TuneD6T_M-10To50_7TeV-madgraph-tauola") )     return inname;
   if (inname.Contains("DYJetsToLL_TuneD6T_M-50_7TeV-madgraph-tauola") )         return inname;
   if (inname.Contains("LM13_SUSY_sftsht_7TeV-pythia6") )                        return "LM13";
-  if (inname.Contains("LM9_SUSY_sftsht_7TeV-pythia6_2") )                       return "LM9";
-  if (inname.Contains("QCD_Pt_0to5_TuneZ2_7TeV_pythia6_3") )                    return inname;
+  if (inname.Contains("LM9_SUSY_sftsht_7TeV-pythia6") )                       return "LM9";
+  if (inname.Contains("QCD_Pt_0to5_TuneZ2_7TeV_pythia6") )                    return inname;
   if (inname.Contains("QCD_Pt_1000to1400_TuneZ2_7TeV_pythia6") )                return inname;
   if (inname.Contains("QCD_Pt_120to170_TuneZ2_7TeV_pythia6") )                  return inname;
-  if (inname.Contains("QCD_Pt_1400to1800_TuneZ2_7TeV_pythia6_3") )              return inname;
+  if (inname.Contains("QCD_Pt_1400to1800_TuneZ2_7TeV_pythia6") )              return inname;
   if (inname.Contains("QCD_Pt_15to3000_TuneZ2_Flat_7TeV_pythia6") )             return "PythiaPUQCDFlat";
   if (inname.Contains("QCD_Pt_15to30_TuneZ2_7TeV_pythia6") )                    return inname;
   if (inname.Contains("QCD_Pt_170to300_TuneZ2_7TeV_pythia6") )                  return inname;
@@ -2565,7 +2602,7 @@ TString getSampleNameOutputString(TString inname){
   if (inname.Contains("QCD_Pt_5to15_TuneZ2_7TeV_pythia6") )                     return inname;
   if (inname.Contains("QCD_Pt_600to800_TuneZ2_7TeV_pythia6") )                  return inname;
   if (inname.Contains("QCD_Pt_800to1000_TuneZ2_7TeV_pythia6") )                 return inname;
-  if (inname.Contains("QCD_Pt_80to120_TuneZ2_7TeV_pythia6_3") )                 return inname;
+  if (inname.Contains("QCD_Pt_80to120_TuneZ2_7TeV_pythia6") )                 return inname;
   if (inname.Contains("TTJets_TuneD6T_7TeV-madgraph-tauola") )                  return "TTbarJets";
   if (inname.Contains("TToBLNu_TuneZ2_s-channel_7TeV-madgraph") )               return "SingleTop-sChannel";
   if (inname.Contains("TToBLNu_TuneZ2_t-channel_7TeV-madgraph") )               return "SingleTop-tChannel";
