@@ -78,9 +78,9 @@ functionality for TH1F and TH1D e.g. the case of addOverflowBin()
 													     
 //TString inputPath = "/cu2/kreis/reducedTrees/V00-01-02/benHack/";//path for MC
 //TString inputPath = "/cu2/kreis/reducedTrees/V00-01-02/";//path for MC
-TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-05_v2/";//path for MC
+TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-05_v3/";//path for MC
 //TString dataInputPath = "/cu2/kreis/reducedTrees/V00-02-03/";//path for data
-TString dataInputPath = "/cu2/ra2b/reducedTrees/V00-02-05_v2/";
+TString dataInputPath = "/cu2/ra2b/reducedTrees/V00-02-05_v3/";
 
 TString cutdesc = "SSVHPT";
 //TString cutdesc = "TCHET";
@@ -90,8 +90,8 @@ TString cutdesc = "SSVHPT";
 //double lumiScale_ = 777./190.5;
 //double lumiScale_ = (0.694037787)/190.5; // //data lumi / lumi of MC
 
-//double lumiScale_ = 1096.441 / 190.5;
-double lumiScale_ = 1096.441 / 1.0;
+//double lumiScale_ = 1096.441;
+double lumiScale_ = 1091.891;
 
 //TString cutdesc = "Baseline0_PF_JERbias_pfMEThigh_PFLep0e0mu_minDP_MuonEcalCleaning";
 //TString cutdesc = "Baseline0_PF_pfMEThigh_PFLepRA20e0mu_minDP_MuonEcalCleaning";
@@ -147,7 +147,7 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
     addSample("ZJets");
     addSample("Zinvisible");
     addSample("VV");
-    //    addSample("SingleTop"); //not now because it is broken
+    addSample("SingleTop");
   }
   else {
     resetSamples();
@@ -164,7 +164,7 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
   TCut triggerCutLSB = "1";
   TCut triggerCut = "1";
   if (datamode) {
-    triggerCutLSB = "pass_utilityHLT_HT300==1";
+    triggerCutLSB = "pass_utilityHLT_HT300>=1";
     triggerCut = "cutTrigger==1";
   }
 
@@ -176,6 +176,9 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
     ge1b="nbjetsSSVHPT>=2";
   }
   else if (btagselection=="ge1b") {}
+  else if (btagselection=="ge3b") {
+    ge1b="nbjetsSSVHPT>=3";
+  }
   else {assert(0);}
 
   SRMET = SRMET && ge1b && triggerCut; //apply physics trigger and physics b cut in high MET region
@@ -463,28 +466,29 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
     //now hard-coded Z->nunu
     double zv[2];
     double ze[2];
-    if ( qcdsubregion.owenId == "Tight") { //i think this should work for now...
-//    if (tight) { //need to average mu mu and ee estimates
-      zv[0] = 5.8; ze[0]=3.8;
-      zv[1] = 6.1; ze[1]=3.9;
+ //need to average mu mu and ee estimates
+    if ( qcdsubregion.owenId == "Tight" && btagselection=="ge1b") { //i think this should work for now...
+      zv[0] = 5.0; ze[0]=3.3; //Tight SB ge1b mumu
+      zv[1] = 5.2; ze[1]=3.3; //Tight SB ge1b ee
     }
-    else    if ( qcdsubregion.owenId == "Loose") {//    else {
-      zv[0] = 11.4; ze[0]=8.1;
-      zv[1] = 23.3; ze[1]=12.1;
+    else    if ( qcdsubregion.owenId == "Loose"&&btagselection=="ge1b") {//    else {
+      zv[0] = 11.4; ze[0]=8.1; //Loose SB ge1b mumu
+      zv[1] = 23.3; ze[1]=12.1; //Loose SB ge1b ee
+    }
+    else if (qcdsubregion.owenId == "Tight" && btagselection=="ge2b") {
+      zv[0] = 1.5; ze[0]=0.7; //Tight SB ge2b mumu
+      zv[1] = 0; ze[1]=1; //Tight SB ge2b ee (I doubt 1 is right!)
+    }
+    else if (qcdsubregion.owenId == "Loose" && btagselection=="ge2b") {
+      zv[0] = 6.1; ze[0]=2.7; //Loose SB ge2b mumu
+      zv[1] = 0; ze[1]=1; //Loose SB ge2b ee (I doubt 1 is right!)
     }
     else {assert(0);}
     SBsubZ = jmt::weightedMean(2,zv,ze);
     SBsubZerr = jmt::weightedMean(2,zv,ze,true);
-    if ( btagselection=="ge1b") {    } //do nothing
-    else if (btagselection=="ge2b") {
-      //approximation to be dealt with later
-      SBsubZ *= 0.1;
-      SBsubZerr *= 0.1;//might be wrong. should talk to colorado
-    }
-    else {assert(0);}
 
     if (mode.Contains("Z")) {
-      double zsbsyst=0.17; //use 17 percent for now
+      double zsbsyst=0.40; //use 40 percent for now
       SBsubZerr = sqrt( SBsubZerr*SBsubZerr + pow(zsbsyst*SBsubZ,2));
       
       if (mode=="Zup") SBsubZ += SBsubZerr;
@@ -510,6 +514,7 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
   else {
     addSample("TTbarJets");
     addSample("WJets");
+    addSample("SingleTop");
   }
 
   //  TString sampleOfInterest = "PythiaPUQCD";
@@ -527,6 +532,9 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
     ge1b="nbjetsSSVHPT>=2";
   }
   else if (btagselection=="ge1b") {}
+  else if (btagselection=="ge3b") {
+    ge1b="nbjetsSSVHPT>=3";
+  }
   else {assert(0);}
 
   TCut HTcut=region.htSelection.Data(); 
@@ -737,7 +745,7 @@ void AN2011_prescale( TString btagselection="ge1b" ) {
 
   // ==========================
 
-  TCut util = "pass_utilityHLT_HT300==1 && weight<1000";
+  TCut util = "pass_utilityHLT_HT300>=1 && weight<1000";
   lumiScale_ = 16.3030312; //customize lumiScale_
 
   // ========= regular N-1 plots
@@ -946,10 +954,63 @@ void AN2011_r() {
   lumiScale_ = 16.3030312; //customize lumiScale_
   resetSamples();
   doData(true);
-  TCut util = "pass_utilityHLT_HT300==1 && weight<1000";
+  TCut util = "pass_utilityHLT_HT300>=1 && weight<1000";
   selection_ =TCut("HT>=350 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && nbjetsSSVHPT==0")&&util;
   drawR("minDeltaPhiN",4,10,50,150,"Data_eq0b");
 
+
+}
+
+void AN2011_opt() {
+
+  TCut ge1b = "nbjetsSSVHPT>=1";
+  TCut ge2b = "nbjetsSSVHPT>=2";
+  TCut ge3b = "nbjetsSSVHPT>=3";
+
+  lumiScale_=1800;
+
+  int nbins;
+  float low,high;
+  TString var,xtitle;
+  
+  resetSamples(); //use all samples
+  setStackMode(true); //regular stack
+  setColorScheme("stack");
+  doData(false);
+  drawMCErrors_=true;
+
+  selection_ =TCut("HT>=400 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=400 && minDeltaPhiN >= 4")&&ge1b;
+  var="HT"; xtitle="H_{T} (GeV)";
+  nbins = 10; low=400; high=1400;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "opt_HT_MET400_HT400_ge1b");
+
+
+  selection_ =TCut("HT>=500 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=300 && minDeltaPhiN >= 4")&&ge2b;
+  var="HT"; xtitle="H_{T} (GeV)";
+  nbins = 10; low=400; high=1400;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "opt_HT_MET300_HT500_ge2b");
+
+
+  selection_ =TCut("HT>=900 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=200 && minDeltaPhiN >= 4")&&ge1b;
+  var="HT"; xtitle="H_{T} (GeV)";
+  nbins = 10; low=400; high=1400;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "opt_HT_MET200_HT900_ge1b");
+
+
+
+  selection_ =TCut("HT>=400 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=200 && minDeltaPhiN >= 4")&&ge3b;
+  var="HT"; xtitle="H_{T} (GeV)";
+  nbins = 10; low=400; high=1400;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "opt_HT_MET200_HT400_ge3b");
+
+
+  //
+
+
+  selection_ =TCut("HT>=1000 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=200 && minDeltaPhiN >= 4")&&ge1b;
+  var="MET"; xtitle="MET (GeV)";
+  nbins = 10; low=200; high=600;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "opt_HT_MET200_HT1000_ge1b");
 
 }
 
@@ -1024,13 +1085,13 @@ void AN2011( TString btagselection="ge1b" ) {
   //MET
   selection_ =TCut("cutHT==1 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4")&&btagcut;
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
-  nbins = 30; low=150; high=450;
+  nbins = 35; low=150; high=500;
   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_"+btagselection);
 
   //MET distribution with tighter HT cut
   selection_ =TCut("HT>500 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4")&&btagcut;
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
-  nbins = 15; low=150; high=450;
+  nbins = 17; low=150; high=500;
   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_HT500_"+btagselection);
 
 
@@ -2226,7 +2287,7 @@ void drawMETPlots_utility(){
   bool doVB=false;
 
   TCut baseSelection = "cutHT==1 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && passInconsistentMuon==1 && passBadPFMuon==1"; //cuts not present: trigger, MET, mdp, bjets
-  TCut utilSelection = "pass_utilityHLT_HT300";
+  TCut utilSelection = "pass_utilityHLT_HT300>=1";
   TCut nominalTrigger = "cutTrigger==1";
   TCut mdpCut = "cutDeltaPhi==1";
   TCut invertMdpCut = "cutDeltaPhi==0";
