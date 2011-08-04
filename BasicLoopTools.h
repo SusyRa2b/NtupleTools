@@ -23,6 +23,7 @@
 
 
 //Pile-up reweighting stuff
+//NOTE: Grab this header from PhysicsTools/Utilities/interface/LumiReweightingStandAlone.h
 #include "LumiReweightingStandAlone.h"
 
 //the data histogram obtained from: 
