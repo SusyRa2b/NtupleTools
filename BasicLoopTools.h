@@ -154,6 +154,8 @@ enum JERType {kJER0=0,kJERbias,kJERup,kJERdown,kJERra2};
 JERType theJERType_; std::map<JERType, TString> theJERNames_;
 enum METuncType {kMETunc0=0,kMETuncDown,kMETuncUp};
 METuncType theMETuncType_; std::map<METuncType, TString> theMETuncNames_;
+enum PUuncType {kPUunc0=0,kPUuncDown,kPUuncUp};
+PUuncType thePUuncType_; std::map<PUuncType, TString> thePUuncNames_;
 //enum BTagEffType {kBTagEff0=0,kBTagEffup,kBTagEffdown};
 //BTagEffType theBTagEffType_;
 //enum tailCleaningType {kNoCleaning=0, kMuonCleaning, kMuonEcalCleaning};
@@ -570,6 +572,7 @@ void PseudoConstructor() {
   theJESType_=kJES0;
   theJERType_=kJER0;
   theMETuncType_=kMETunc0;
+  thePUuncType_=kPUunc0;
   //  theBTagEffType_=kBTagErr0;
   //  theCleaningType_=kNoCleaning;
   //  theFlavorHistoryType_=kNoFlvHist;
@@ -594,6 +597,10 @@ void PseudoConstructor() {
   theMETuncNames_[kMETunc0]="METunc0";
   theMETuncNames_[kMETuncUp]="METuncUp";
   theMETuncNames_[kMETuncDown]="METuncDown";
+
+  thePUuncNames_[kPUunc0]="PUunc0";
+  thePUuncNames_[kPUuncUp]="PUuncUp";
+  thePUuncNames_[kPUuncDown]="PUuncDown";
 
   theJERNames_[kJER0]="JER0";
   theJERNames_[kJERup]="JERup";
@@ -689,6 +696,9 @@ TString getCutDescriptionString(){
   cut += "_";
 
   cut += theMETuncNames_[theMETuncType_];
+  cut += "_";
+
+  cut += thePUuncNames_[thePUuncType_];
 
   return cut;
 }
@@ -2715,6 +2725,34 @@ double getWeight(Long64_t nentries) {
   return  w;
 }
 
+float getPUWeight(reweight::LumiReWeighting lumiWeights_){
+
+  float weight;
+  float sum_nvtx = 0;
+  int npv = 0;
+  for ( unsigned int i = 0; i<pileupsummaryinfo.size() ; i++) {
+    npv = pileupsummaryinfo.at(i).addpileupinfo_getPU_NumInteractions;
+    sum_nvtx += float(npv);
+  }
+      
+  float ave_nvtx = sum_nvtx/3.;
+  weight = lumiWeights_.ITweight3BX( ave_nvtx );
+
+
+  //following: https://twiki.cern.ch/twiki/bin/viewauth/CMS/PileupSystematicErrors
+  reweight::PoissonMeanShifter PShift_;
+  if(thePUuncType_ == kPUuncDown){
+    PShift_ = reweight::PoissonMeanShifter(-0.6);
+    weight = weight * PShift_.ShiftWeight( ave_nvtx );
+  }
+  else if(thePUuncType_ == kPUuncUp){
+    PShift_ = reweight::PoissonMeanShifter(0.6);
+    weight = weight * PShift_.ShiftWeight( ave_nvtx );
+  }
+
+  return weight;
+}
+
 
 
 TDatime* starttime_;
@@ -3214,16 +3252,8 @@ void reducedTree(TString outputpath, itreestream& stream)
       eventNumber = (ULong64_t)((*myEDM_event)+0.5);
       
       
-      float sum_nvtx = 0;
-      int npv = 0;
-      for ( unsigned int i = 0; i<pileupsummaryinfo.size() ; i++) {
-	npv = pileupsummaryinfo.at(i).addpileupinfo_getPU_NumInteractions;
-	sum_nvtx += float(npv);
-      }
-      
-      float ave_nvtx = sum_nvtx/3.;
-      PUweight = LumiWeights_.ITweight3BX( ave_nvtx );
 
+      PUweight = getPUWeight(LumiWeights_);
       btagIPweight = getBTagIPWeight();
       pfmhtweight = getPFMHTWeight();
 
