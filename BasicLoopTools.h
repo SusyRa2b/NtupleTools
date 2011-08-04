@@ -22,6 +22,99 @@
 #include <typeinfo>
 
 
+//Pile-up reweighting stuff
+#include "LumiReweightingStandAlone.h"
+
+//the data histogram obtained from: 
+// /afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions11/7TeV/PileUp/Pileup_2011_EPS_8_jul.root
+float TrueDist2011_f[25] = {
+  1.45417e+07,
+  3.47743e+07,
+  7.89247e+07,
+  1.26467e+08,
+  1.59329e+08,
+  1.67603e+08,
+  1.52684e+08,
+  1.23794e+08,
+  9.09462e+07,
+  6.13973e+07,
+  3.8505e+07,
+  2.2628e+07,
+  1.25503e+07,
+  6.61051e+06,
+  3.32403e+06,
+  1.60286e+06,
+  743920,
+  333477,
+  144861,
+  61112.7,
+  25110.2,
+  10065.1,
+  3943.98,
+  1513.54,
+  896.161
+};
+//Summer11 PU_S4 distribution
+//obtained from https://twiki.cern.ch/twiki/bin/viewauth/CMS/PileupMCReweightingUtilities
+Double_t PoissonIntDist_f[25] = {
+  0.104109,
+  0.0703573,
+  0.0698445,
+  0.0698254,
+  0.0697054,
+  0.0697907,
+  0.0696751,
+  0.0694486,
+  0.0680332,
+  0.0651044,
+  0.0598036,
+  0.0527395,
+  0.0439513,
+  0.0352202,
+  0.0266714,
+  0.019411,
+  0.0133974,
+  0.00898536,
+  0.0057516,
+  0.00351493,
+  0.00212087,
+  0.00122891,
+  0.00070592,
+  0.000384744,
+  0.000219377
+};
+
+
+////the LM9 PU histogram
+//float  LM9DistSummer2011_f[25] = {
+//  8374,
+//  5764,
+//  5861,
+//  4747,
+//  5519,
+//  5914,
+//  5848,
+//  4697,
+//  5198,
+//  5759,
+//  4821,
+//  4314,
+//  3746,
+//  2805,
+//  1953,
+//  1457,
+//  1124,
+//  721,
+//  443,
+//  242,
+//  180,
+//  96,
+//  48,
+//  9,
+//  9
+//}
+
+
 //#include <string>
 //#include <sys/stat.h>
 //#include "CondFormats/JetMETObjects/interface/JetResolution.h"
@@ -2848,6 +2941,7 @@ void reducedTree(TString outputpath, itreestream& stream)
   //we're making an ntuple, so size matters -- use float not double		     
   double weight; //one exception to the float rule				     
   float btagIPweight, pfmhtweight;
+  float PUweight;
   ULong64_t lumiSection, eventNumber, runNumber;
   float METsig;
   float HT, MHT, MET, METphi, minDeltaPhi, minDeltaPhiAll, minDeltaPhiAll30,minDeltaPhi30_eta5_noIdAll;
@@ -2909,6 +3003,17 @@ void reducedTree(TString outputpath, itreestream& stream)
   float minDeltaPhiN_Luke_lostJet, maxDeltaPhiN_Luke_lostJet, deltaPhiN1_Luke_lostJet, deltaPhiN2_Luke_lostJet, deltaPhiN3_Luke_lostJet;
   float minTransverseMETSignificance_lostJet, maxTransverseMETSignificance_lostJet, transverseMETSignificance1_lostJet, transverseMETSignificance2_lostJet, transverseMETSignificance3_lostJet;
 
+
+  //initialize PU things
+  std::vector< float > TrueDist2011;
+  std::vector< float > MCDist2011;
+  for( int i=0; i<25; ++i) {
+    TrueDist2011.push_back(TrueDist2011_f[i]);
+    MCDist2011.push_back(PoissonIntDist_f[i]);
+  }  
+  reweight::LumiReWeighting LumiWeights_ = reweight::LumiReWeighting( MCDist2011, TrueDist2011 );
+
+
   reducedTree.Branch("weight",&weight,"weight/D");
   reducedTree.Branch("runNumber",&runNumber,"runNumber/l");
   reducedTree.Branch("lumiSection",&lumiSection,"lumiSection/l");
@@ -2916,7 +3021,7 @@ void reducedTree(TString outputpath, itreestream& stream)
 
   reducedTree.Branch("btagIPweight",&btagIPweight,"btagIPweight/F");
   reducedTree.Branch("pfmhtweight",&pfmhtweight,"pfmhtweight/F");
-
+  reducedTree.Branch("PUweight",&PUweight,"PUweight/F");
 
   reducedTree.Branch("cutHT",&cutHT,"cutHT/O");
   reducedTree.Branch("cutPV",&cutPV,"cutPV/O");
@@ -3107,6 +3212,17 @@ void reducedTree(TString outputpath, itreestream& stream)
       lumiSection = (ULong64_t)((*myEDM_luminosityBlock)+0.5);
       eventNumber = (ULong64_t)((*myEDM_event)+0.5);
       
+      
+      float sum_nvtx = 0;
+      int npv = 0;
+      for ( unsigned int i = 0; i<pileupsummaryinfo.size() ; i++) {
+	npv = pileupsummaryinfo.at(i).addpileupinfo_getPU_NumInteractions;
+	sum_nvtx += float(npv);
+      }
+      
+      float ave_nvtx = sum_nvtx/3.;
+      PUweight = LumiWeights_.ITweight3BX( ave_nvtx );
+
       btagIPweight = getBTagIPWeight();
       pfmhtweight = getPFMHTWeight();
 
