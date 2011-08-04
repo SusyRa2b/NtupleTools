@@ -21,6 +21,7 @@
 
 #include <typeinfo>
 
+#include "TGraphAsymmErrors.h"
 
 //Pile-up reweighting stuff
 //NOTE: Grab this header from PhysicsTools/Utilities/interface/LumiReweightingStandAlone.h
@@ -801,6 +802,22 @@ unsigned int utilityHLT_HT300_CentralJet30_BTagIP(){
 }
 
 
+float getHLTHTeff(float offHT) {
+
+  float eff=100;
+  //get this file from ~/public/wteo/
+  TFile f_eff("ht300_out_166864_eff_histogram.root","READ");
+
+  char graphname[200];
+  std::string grname = "myeff";
+  sprintf(graphname,"%s",grname.c_str());   
+  TGraphAsymmErrors * htgraph  = (TGraphAsymmErrors *)f_eff.Get(graphname);
+
+  eff = htgraph->Eval(offHT);
+
+  return eff;
+}
+
 int countGoodPV() {
   
   int ngood=0;
@@ -1190,83 +1207,6 @@ float getBTagIPWeight() {//this function should be called *after* offline taggin
   if(nb==0 && nnonb==0){
     return 0; //this event is not even offline tagged
   }
-
-  /*
-  //weight = Prob( >=1 HLT Tag | m offline true tags and n offline fake tags)
-
-  //should find a more elegant way to do this... (implemented above)
-
-  //weight for offline-tagged b-jets
-  if(nb==1 && nnonb==0) 
-    w_event = w_bjet;
-  else if (nb==2 && nnonb==0) 
-    w_event = w_bjet*(1 - w_bjet)*2 + w_bjet*w_bjet;
-  else if (nb==3 && nnonb==0)
-    w_event = w_bjet*(1 - w_bjet)*(1 - w_bjet)*3
-      + w_bjet*w_bjet*(1 - w_bjet)*3 
-      + pow(w_bjet,3);
-  else if (nb==4 && nnonb==0)
-    w_event = w_bjet*pow( (1-w_bjet),3)*4 
-      + pow( w_bjet,2)*pow( (1-w_bjet),2)*6 
-      + pow(w_bjet,3)*(1-w_bjet)*4 
-      + pow(w_bjet,4);
-
-  //weight for offline-tagged nonb-jets
-  else if (nnonb==1 && nb==0) 
-    w_event = w_nonbjet;
-  else if (nnonb==2 && nb==0) 
-    w_event = w_nonbjet*(1 - w_nonbjet)*2 + w_nonbjet*w_nonbjet;
-  else if (nnonb==3 && nb==0)
-    w_event = w_nonbjet*(1 - w_nonbjet)*(1 - w_nonbjet)*3
-      + w_nonbjet*w_nonbjet*(1 - w_nonbjet)*3 
-      + pow(w_nonbjet,3);
-  else if (nnonb==4 && nb==0)
-    w_event = w_nonbjet*pow( (1-w_nonbjet),3)*4 
-      + pow( w_nonbjet,2)*pow( (1-w_nonbjet),2)*6 
-      + pow(w_nonbjet,3)*(1-w_nonbjet)*4 
-      + pow(w_nonbjet,4);
-
-  //what if there are mistags and real tags?
-  else if(nb==1 && nnonb==1)
-    w_event = w_bjet*(1-w_nonbjet) + w_nonbjet*(1-w_bjet) + w_bjet*w_nonbjet;
-  else if(nb==2 && nnonb==1)
-    w_event = w_bjet*(1-w_bjet)*(1-w_nonbjet)*2 
-      + w_bjet*w_bjet*(1-w_nonbjet) 
-      + w_nonbjet*(1-w_bjet)*(1-w_bjet) 
-      * w_nonbjet*w_bjet*(1-w_bjet)*2 
-      + w_bjet*w_bjet*w_nonbjet; 
-  else if (nb==1 && nnonb==2)
-    w_event = w_nonbjet*(1-w_nonbjet)*(1-w_bjet)*2 
-      + w_nonbjet*w_nonbjet*(1-w_bjet) 
-      + w_bjet*(1-w_nonbjet)*(1-w_nonbjet) 
-      * w_bjet*w_nonbjet*(1-w_nonbjet)*2 
-      + w_nonbjet*w_nonbjet*w_bjet; 
-  else if (nb==3 && nnonb==1)
-    w_event = w_bjet*pow((1-w_bjet),2)*(1-w_nonbjet)*3 + w_bjet*pow((1-w_bjet),2)*w_nonbjet*3
-      + w_bjet*w_bjet*(1-w_bjet)*(1-w_nonbjet)*3 + w_bjet*w_bjet*(1-w_bjet)*w_nonbjet*3
-      + pow(w_bjet,3)*(1-w_nonbjet) + pow(w_bjet,3)*w_nonbjet
-      + pow((1-w_bjet),3)*w_nonbjet;
-  else if (nb==1 && nnonb==3)
-    w_event = w_nonbjet*pow((1-w_nonbjet),2)*(1-w_bjet)*3 + w_nonbjet*pow((1-w_nonbjet),2)*w_bjet*3
-      + w_nonbjet*w_nonbjet*(1-w_nonbjet)*(1-w_bjet)*3 + w_nonbjet*w_nonbjet*(1-w_nonbjet)*w_bjet*3
-      + pow(w_nonbjet,3)*(1-w_bjet) + pow(w_nonbjet,3)*w_bjet
-      + pow((1-w_nonbjet),3)*w_bjet;
-  else if (nb==2 && nnonb==2)
-    w_event = w_bjet*(1-w_bjet)*pow( (1-w_nonbjet),2)*2 
-      + w_nonbjet*(1-w_nonbjet)*pow( (1- w_bjet),2)*2
-      + w_bjet*w_bjet*pow( (1-w_nonbjet),2)
-      + w_nonbjet*w_nonbjet*pow( (1-w_bjet),2)
-      + w_bjet*(1-w_bjet)*w_nonbjet*(1-w_nonbjet)*4
-      + w_bjet*w_bjet*w_nonbjet*(1-w_nonbjet)*2
-      + w_nonbjet*w_nonbjet*w_bjet*(1-w_bjet)*2
-      + w_bjet*w_bjet*w_nonbjet*w_nonbjet;
-
-  //more than 4 tags should be unlikely....
-  else{
-    std::cout << "WARNING, BTagIP weight was not computed!" << std::endl;
-    std::cout << "\t This event has " << nb << " true tags and " << nnonb << " mistags." << std::endl;
-  }
-  */
 
   return w_event;
 }
@@ -3007,6 +2947,7 @@ void reducedTree(TString outputpath, itreestream& stream)
   double weight; //one exception to the float rule				     
   float btagIPweight, pfmhtweight;
   float PUweight;
+  float hltHTeff;
   ULong64_t lumiSection, eventNumber, runNumber;
   float METsig;
   float HT, MHT, MET, METphi, minDeltaPhi, minDeltaPhiAll, minDeltaPhiAll30,minDeltaPhi30_eta5_noIdAll;
@@ -3087,6 +3028,7 @@ void reducedTree(TString outputpath, itreestream& stream)
   reducedTree.Branch("btagIPweight",&btagIPweight,"btagIPweight/F");
   reducedTree.Branch("pfmhtweight",&pfmhtweight,"pfmhtweight/F");
   reducedTree.Branch("PUweight",&PUweight,"PUweight/F");
+  reducedTree.Branch("hltHTeff",&hltHTeff,"hltHTeff/F");
 
   reducedTree.Branch("cutHT",&cutHT,"cutHT/O");
   reducedTree.Branch("cutPV",&cutPV,"cutPV/O");
@@ -3276,9 +3218,9 @@ void reducedTree(TString outputpath, itreestream& stream)
       runNumber = (ULong64_t)((*myEDM_run)+0.5);
       lumiSection = (ULong64_t)((*myEDM_luminosityBlock)+0.5);
       eventNumber = (ULong64_t)((*myEDM_event)+0.5);
-      
-      
-
+            
+      HT=getHT();
+      hltHTeff = getHLTHTeff(HT);
       PUweight = getPUWeight(LumiWeights_);
       btagIPweight = getBTagIPWeight();
       pfmhtweight = getPFMHTWeight();
@@ -3320,7 +3262,6 @@ void reducedTree(TString outputpath, itreestream& stream)
 
       nElectrons = countEle();
       nMuons = countMu();
-      HT=getHT();
       MET=getMET();
       METsig = myMETPF->at(0).mEtSig; //FIXME hard coded for PF
       MHT=getMHT();
