@@ -1237,10 +1237,11 @@ void drawSignificance(const TString & var, const int nbins, const float low, con
 }
 
 //could add xtitle and ytitle
-void drawR(const TString vary, const float cutVal, const int nbins, const float low, const float high, const TString& savename) {
+void drawR(const TString vary, const float cutVal, const TString var, const int nbins, const float low, const float high, const TString& savename, const float* varbins=0) {
   const TString ytitle="N pass / N fail";
 
-  const TString var = "MET"; //hardcoded for now
+  //const TString var = "MET"; //hardcoded for now
+  cout << "x axis: " << var << endl;
   TString cstring1 = vary, cstring2=vary;
   cstring1 += " >= ";
   cstring2 += " < ";
@@ -1294,7 +1295,7 @@ void drawR(const TString vary, const float cutVal, const int nbins, const float 
   totalsm_pass.Sumw2(); 
   totalsm_fail.Sumw2(); 
   if (totalsm!=0) delete totalsm;
-  totalsm =  new TH1D("totalsm","",nbins,low,high);
+  totalsm =  (varbins==0) ? new TH1D("totalsm","",nbins,low,high) : new TH1D("totalsm","",nbins,varbins);
   totalsm->Sumw2();
 
   totalsm->SetMarkerColor(sampleColor_["TotalSM"]);
@@ -1315,17 +1316,17 @@ void drawR(const TString vary, const float cutVal, const int nbins, const float 
     //need Pass, Fail, and Ratio for each sample
     TString hnameP = var; hnameP += "_"; hnameP += samples_[isample];
     hnameP += "_Pass";
-    histos_[hnameP] = new TH1D(hnameP,"",nbins,low,high);
+    histos_[hnameP] = (varbins==0) ? new TH1D(hnameP,"",nbins,low,high) : new TH1D(hnameP,"",nbins,varbins);
     histos_[hnameP]->Sumw2();
 
     TString hnameF = var; hnameF += "_"; hnameF += samples_[isample];
     hnameF += "_Fail";
-    histos_[hnameF] = new TH1D(hnameF,"",nbins,low,high);
+    histos_[hnameF] = (varbins==0) ? new TH1D(hnameF,"",nbins,low,high) : new TH1D(hnameF,"",nbins,varbins);
     histos_[hnameF]->Sumw2();
 
     TString hnameR = var; hnameR += "_"; hnameR += samples_[isample];
     hnameR += "_Ratio";
-    histos_[hnameR] = new TH1D(hnameR,"",nbins,low,high);
+    histos_[hnameR] = (varbins==0) ? new TH1D(hnameR,"",nbins,low,high) : new TH1D(hnameR,"",nbins,varbins);
     histos_[hnameR]->Sumw2();
 
     //Fill histos
@@ -1423,15 +1424,15 @@ void drawR(const TString vary, const float cutVal, const int nbins, const float 
     if (hdata != 0) delete hdata;
 
     TString hname = var; hname += "_"; hname += "data";
-    hdata = new TH1D(hname,"",nbins,low,high);
+    hdata = (varbins==0) ? new TH1D(hname,"",nbins,low,high) : new TH1D(hname,"",nbins,varbins);
     hdata->Sumw2();
 
     TString hnameP = var; hnameP += "_"; hnameP += "dataPass";
-    histos_[hnameP] = new TH1D(hnameP,"",nbins,low,high);
+    histos_[hnameP] = (varbins==0) ? new TH1D(hnameP,"",nbins,low,high) : new TH1D(hnameP,"",nbins,varbins);
     histos_[hnameP]->Sumw2();
 
     TString hnameF = var; hnameF += "_"; hnameF += "dataFail";
-    histos_[hnameF] = new TH1D(hnameF,"",nbins,low,high);
+    histos_[hnameF] = (varbins==0) ? new TH1D(hnameF,"",nbins,low,high) : new TH1D(hnameF,"",nbins,varbins);
     histos_[hnameF]->Sumw2();
 
     //    TTree* dtree = (TTree*) fdata->Get("reducedTree");
@@ -1472,7 +1473,7 @@ void drawR(const TString vary, const float cutVal, const int nbins, const float 
     //    cratio->cd();
     thecanvas->cd(2);
     if (ratio!=0) delete ratio;
-    ratio = new TH1D("ratio","data/(SM MC)",nbins,low,high);
+    ratio = (varbins==0) ? new TH1D("ratio","data/(SM MC)",nbins,low,high) : new TH1D("ratio","data/(SM MC)",nbins,varbins);
     ratio->Sumw2();
     ratio->Divide(hdata,totalsm); 
     ratio->SetMinimum(ratioMin);
@@ -1538,6 +1539,14 @@ void drawR(const TString vary, const float cutVal, const int nbins, const float 
     cout << endl;
   }
   cout<<"End of drawR()"<<endl;
+}
+
+void drawR(const TString vary, const float cutVal, const int nbins, const float low, const float high, const TString& savename) {//for backwards compatibility
+  drawR(vary, cutVal, "MET", nbins, low, high, savename, 0); 
+}
+
+void drawR(const TString vary, const float cutVal, const TString var, const int nbins, const float* varbins=0, const TString& savename="") {//more natural
+  drawR(vary, cutVal, var, nbins, 0, 1, savename, varbins);
 }
 
 //utility function for making output more readable

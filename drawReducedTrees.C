@@ -2374,6 +2374,56 @@ void drawMETPlots_utility(){
   }//end loop over b-tag selection
 }
 
+void studyPrescale_r() {
+  loadSamples();
+  drawTotalSM_=true;
+  drawLegend(true);
+  setColorScheme("nostack");
+  setStackMode(false);
+  doOverflowAddition(true);
+  doRatioPlot(true);
+  doData(true);
+
+  lumiScale_ = 16.3030312; //customize lumiScale_
+
+  TString btagselection="antib";
+  TCut btagcut = "nbjetsSSVHPT==0";
+  
+  TCut util = "pass_utilityHLT_HT300>=1 && weight<1000";
+  TCut LSB = "MET>=50 && MET<100";
+
+  //cross check with note
+  //selection_ =TCut("HT>=350 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && nbjetsSSVHPT==0")&&util&&LSB;
+  //drawR("minDeltaPhiN",4,10,50,150,"Data_eq0b");
+  //drawR("minDeltaPhiN",4,1,50,100,"Data_eq0b");
+
+  //trigger version
+  selection_ =TCut("HT>=350 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && nbjetsSSVHPT==0")&&util&&LSB;
+  doOverflowAddition(false);
+  //drawR("minDeltaPhiN", 4, "pass_utilityHLT_HT300", 7, 1.5, 8.5, "Data_eq0b");
+  //unexpected value for MC in last bin when adding overflow.
+
+  //nGoodPV
+  doOverflowAddition(true);
+  //drawR("minDeltaPhiN", 4, "nGoodPV", 20, 0.5, 20.5, "Data_eq0b");
+  const int nvarbins=10;
+  const float varbins[]={0,1,2,3,4,5,6,7,8,12,17};
+  drawR("minDeltaPhiN", 4, "nGoodPV", nvarbins, varbins, "Data_eq0b");
+  //dependence is seen here
+
+  //njets
+  //selection_ =TCut("HT>=350 && cutPV==1 && cutEleVeto==1 && cutMuVeto==1 && nbjetsSSVHPT==0")&&util&&LSB;
+  //drawR("minDeltaPhiN", 4, "njets", 20, 0.5, 20.5, "Data_eq0b");
+  //no strong dependence is seen for njets>=3
+
+  //runnumber
+  doOverflowAddition(false);
+  //drawR("minDeltaPhiN", 4, "runNumber", 10, 160603.5, 167913.5, "Data_eq0b");
+
+
+
+
+}
 
 void drawVJets() {
   
