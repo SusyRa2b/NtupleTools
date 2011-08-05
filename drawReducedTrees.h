@@ -53,22 +53,14 @@ void setSearchRegions() {
   //nb: some of the code *depends* on the fact that for there are equal numbers of corresponding
   //sbRegions and searchRegions, with the only difference being the MET selection!
 
-  /*
-Loose:       1          400          200
-Tight 1      1         1100          200
-Tight 2      1          400          400
-Tight 3      2          500          300
-Tight 4      3          400          200
-  */
-
-  sbRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=150&&MET<200","Loose",false)); //loose SB
-  searchRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=200","Loose")); //loose Sig
+  sbRegions_.push_back( SearchRegion( "ge1b","HT>=350","MET>=150&&MET<200","Loose",false)); //loose SB
+  searchRegions_.push_back( SearchRegion( "ge1b","HT>=350","MET>=200","Loose")); //loose Sig
 
   sbRegions_.push_back( SearchRegion( "ge1b","HT>=500","MET>=150&&MET<200","Tight",false)); //tight SB
   searchRegions_.push_back( SearchRegion( "ge1b","HT>=500","MET>=300","Tight")); //tight Sig
 
-  sbRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=150&&MET<200","Loose",false)); //loose SB
-  searchRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=200","Loose")); //loose Sig
+  sbRegions_.push_back( SearchRegion( "ge2b","HT>=350","MET>=150&&MET<200","Loose",false)); //loose SB
+  searchRegions_.push_back( SearchRegion( "ge2b","HT>=350","MET>=200","Loose")); //loose Sig
 
   sbRegions_.push_back( SearchRegion( "ge2b","HT>=500","MET>=150&&MET<200","Tight",false)); //tight SB
   searchRegions_.push_back( SearchRegion( "ge2b","HT>=500","MET>=300","Tight")); //tight Sig
