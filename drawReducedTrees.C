@@ -2444,7 +2444,7 @@ void drawMETPlots_utility(){
   }//end loop over b-tag selection
 }
 
-void studyPrescale_r() {
+void studyPrescale_r(int ibtag = 4) {
   loadSamples();
   drawTotalSM_=true;
   drawLegend(true);
@@ -2456,44 +2456,92 @@ void studyPrescale_r() {
 
   lumiScale_ = 16.3030312; //customize lumiScale_
 
-  TString btagselection="antib";
-  TCut btagcut = "nbjetsSSVHPT==0";
+  //TString btagselection="antib";
+  //TCut btagcut = "nbjetsSSVHPT==0";
   
   TCut util = "pass_utilityHLT_HT300>=1 && weight<1000";
   TCut LSB = "MET>=50 && MET<100";
 
+  const  TCut ge1b =  "nbjetsSSVHPT >= 1";
+  const  TCut ge2b =  "nbjetsSSVHPT >= 2";
+  const  TCut eq1b =  "nbjetsSSVHPT == 1";
+  const  TCut pretag =  "1";
+  const  TCut antitag = "nbjetsSSVHPT == 0";
+ 
+  //  for (int ibtag = 4; ibtag<5; ibtag++) { 
+  TCut theBTaggingCut = ge1b; TString btagstring = "ge1b";
+  if (ibtag==0) { //nothing to do
+  }
+  else if (ibtag==1) {
+    theBTaggingCut = eq1b; 
+    btagstring = "eq1b";
+  }
+  else if (ibtag==2) {
+    theBTaggingCut = ge2b; 
+    btagstring = "ge2b";
+  }
+  else if (ibtag==3) {
+    theBTaggingCut = pretag;
+    btagstring = "pre";
+  }
+  else if (ibtag==4) {
+    theBTaggingCut = antitag;
+    btagstring = "antib";
+  }
+  else assert(0);
+  
+  doOverflowAddition(false);
   //cross check with note
-  //selection_ =TCut("HT>=350 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && nbjetsSSVHPT==0")&&util&&LSB;
+  selection_ =TCut("HT>=350 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1")&&util&&LSB&&theBTaggingCut;
   //drawR("minDeltaPhiN",4,10,50,150,"Data_eq0b");
   //drawR("minDeltaPhiN",4,1,50,100,"Data_eq0b");
-
+  
   //trigger version
-  selection_ =TCut("HT>=350 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && nbjetsSSVHPT==0")&&util&&LSB;
+  selection_ =TCut("HT>=350 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1")&&util&&LSB&&theBTaggingCut;
   doOverflowAddition(false);
-  //drawR("minDeltaPhiN", 4, "pass_utilityHLT_HT300", 7, 1.5, 8.5, "Data_eq0b");
+  //drawR("minDeltaPhiN", 4, "pass_utilityHLT_HT300", 7, 1.5, 8.5, "triggerVersion_"+btagstring);
   //unexpected value for MC in last bin when adding overflow.
-
+  
   //nGoodPV
   doOverflowAddition(true);
-  //drawR("minDeltaPhiN", 4, "nGoodPV", 20, 0.5, 20.5, "Data_eq0b");
-  const int nvarbins=10;
-  const float varbins[]={0,1,2,3,4,5,6,7,8,12,17};
-  drawR("minDeltaPhiN", 4, "nGoodPV", nvarbins, varbins, "Data_eq0b");
+  selection_ =TCut("HT>=350 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1")&&util&&LSB&&theBTaggingCut;
+  //drawR("minDeltaPhiN", 4, "nGoodPV", 20, 0.5, 20.5, "nGoodPV_"+btagstring);
+  const int nvarbins=9;
+  const float varbins[]={1,2,3,4,5,6,7,8,12,17};
+  //drawR("minDeltaPhiN", 4, "nGoodPV", nvarbins, varbins, "nGoodPV_"+btagstring);
   //dependence is seen here
-
+  //
+  //prescale vs physics check
+  selection_ =TCut("HT>=350 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1")&&util&&LSB&&theBTaggingCut;
+  //drawSimple("nGoodPV",20,0,20,"nGoodPV.root", "nGoodPV_"+btagstring+"tag_prescale_data","data");
+  selection_ =TCut("HT>=350 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && cutTrigger==1 && MET>=150")&&theBTaggingCut;
+  //drawSimple("nGoodPV",20,0,20,"nGoodPV.root", "nGoodPV_"+btagstring+"tag_physics_data","data");
+  
   //njets
-  //selection_ =TCut("HT>=350 && cutPV==1 && cutEleVeto==1 && cutMuVeto==1 && nbjetsSSVHPT==0")&&util&&LSB;
-  //drawR("minDeltaPhiN", 4, "njets", 20, 0.5, 20.5, "Data_eq0b");
-  //no strong dependence is seen for njets>=3
-
+  doOverflowAddition(false);
+  selection_ =TCut("HT>=350 && cutPV==1 && cutEleVeto==1 && cutMuVeto==1")&&util&&LSB&&theBTaggingCut;
+  //drawR("minDeltaPhiN", 4, "njets", 7, 2.5, 10.5, "njets_"+btagstring);
+  selection_ =TCut("HT>=350 && cutPV==1 && cutEleVeto==1 && cutMuVeto==1 && cutTrigger==1 && MET>=150")&&theBTaggingCut;
+  //drawR("minDeltaPhiN", 4, "njets", 7, 2.5, 10.5, "njets_physics_"+btagstring);
+  
+  //nbjets -- does not depend on theBTaggingCut!!!
+  doOverflowAddition(false);
+  selection_ =TCut("HT>=350 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1")&&util&&LSB;
+  //drawR("minDeltaPhiN", 4, "nbjetsSSVHPT", 4, -0.5, 3.5, "nbjets_"+btagstring);
+  selection_ =TCut("HT>=350 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && cutTrigger==1 && MET>=150");
+  //drawR("minDeltaPhiN", 4, "nbjetsSSVHPT", 4, -0.5, 3.5, "nbjets_physics_"+btagstring);
+  
+  
   //runnumber
   doOverflowAddition(false);
-  //drawR("minDeltaPhiN", 4, "runNumber", 10, 160603.5, 167913.5, "Data_eq0b");
-
-
-
-
-}
+  selection_ =TCut("HT>=350 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1")&&util&&LSB&&theBTaggingCut;
+  //drawR("minDeltaPhiN", 4, "runNumber", 10, 160403.5, 167913.5, "runNumber_"+btagstring);
+  const int nvarbins2 = 7;
+  const float varbins2[] = {160403.5, 161000, 162000, 163500, 165000,166000,167000,168000};
+  //drawR("minDeltaPhiN", 4, "runNumber", nvarbins2, varbins2, "runNumber_"+btagstring);
+  
+  //  }//btag loop
+}//end of function
 
 void drawVJets() {
   
