@@ -1231,6 +1231,8 @@ void drawSignificance(const TString & var, const int nbins, const float low, con
 //could add xtitle and ytitle
 void drawR(const TString vary, const float cutVal, const TString var, const int nbins, const float low, const float high, const TString& savename, const float* varbins=0) {
   const TString ytitle="N pass / N fail";
+  bool dataOnly = false;
+
 
   //const TString var = "MET"; //hardcoded for now
   cout << "x axis: " << var << endl;
@@ -1367,7 +1369,7 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
 
     //draw
     thecanvas->cd(1);
-    if (hnameR.Contains("QCD")) { //HACK draw only qcd
+    if (hnameR.Contains("QCD") && !dataOnly) { //HACK draw only qcd
       histos_[hnameR]->Draw(drawopt);
       if (!drawopt.Contains("same")) drawopt+=" same";
       
@@ -1393,11 +1395,13 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
     
   }
 
-  histos_[firsthist]->SetMaximum( max*maxScaleFactor_);
-  hinteractive =  histos_[firsthist];
+  if(!dataOnly){
+    histos_[firsthist]->SetMaximum( max*maxScaleFactor_);
+    hinteractive =  histos_[firsthist];
+  }
 
   totalsm->Divide(&totalsm_pass,&totalsm_fail);
-  if (drawTotalSM_) {
+  if (drawTotalSM_ && !dataOnly) {
     totalsm->Draw("hist e same");
     //    leg->Clear();
     leg->AddEntry(totalsm,sampleLabel_["TotalSM"]);
@@ -1446,10 +1450,13 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
     hdata->SetMarkerSize(1);
 
     thecanvas->cd(1);
-    hdata->Draw("SAME");
+    hdata->SetYTitle(ytitle);
+    hdata->SetXTitle(var);
+    if(dataOnly) hdata->Draw();
+    else hdata->Draw("SAME");
     leg->AddEntry(hdata,"Data");
 
-    if (hdata->GetMaximum() > max)  {
+    if (hdata->GetMaximum() > max && !dataOnly)  {
       histos_[firsthist]->SetMaximum( maxScaleFactor_*hdata->GetMaximum());
       totalsm->SetMaximum(maxScaleFactor_*hdata->GetMaximum());
     }
@@ -1465,12 +1472,14 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
     //    cratio->cd();
     thecanvas->cd(2);
     if (ratio!=0) delete ratio;
-    ratio = (varbins==0) ? new TH1D("ratio","data/(SM MC)",nbins,low,high) : new TH1D("ratio","data/(SM MC)",nbins,varbins);
-    ratio->Sumw2();
-    ratio->Divide(hdata,totalsm); 
-    ratio->SetMinimum(ratioMin);
-    ratio->SetMaximum(ratioMax);
-    ratio->Draw();
+    if(!dataOnly){
+      ratio = (varbins==0) ? new TH1D("ratio","data/(SM MC)",nbins,low,high) : new TH1D("ratio","data/(SM MC)",nbins,varbins);
+      ratio->Sumw2();
+      ratio->Divide(hdata,totalsm); 
+      ratio->SetMinimum(ratioMin);
+      ratio->SetMaximum(ratioMax);
+      ratio->Draw();
+    }
     cout<<"KS Test results (shape only): "<<hdata->KolmogorovTest(totalsm)<<endl;;
 
     if(calcBiasCorr){
