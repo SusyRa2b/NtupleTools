@@ -2368,7 +2368,7 @@ bool passCut(const TString cutTag) {
 
   if (cutTag=="cutPV") return passPV();
   
-  if (cutTag=="cutHT") return getHT()>400;
+  if (cutTag=="cutHT") return getHT()>350;
   
   if (cutTag=="cut3Jets") return (nGoodJets() >= 3);
   
