@@ -809,11 +809,12 @@ unsigned int utilityHLT_HT300_CentralJet30_BTagIP(){
   return passTrig;
 }
 
-void getPdfWeights( Float_t * pdfWeights) {
+void getPdfWeights( Float_t * pdfWeights, TH1F * sumofweights) {
 
   const unsigned int s = geneventinfoproducthelper.size();
   for (unsigned int i=0; i<s ; i++) {
     pdfWeights[i]=isRealDataInt(myEDM_isRealData) ? 1 :  geneventinfoproducthelper.at(i).pdfweight;
+    sumofweights->SetBinContent(i+1, sumofweights->GetBinContent(i+1) + pdfWeights[i]);
   }
 }
 
@@ -3117,6 +3118,7 @@ void reducedTree(TString outputpath, itreestream& stream)
   float minTransverseMETSignificance_lostJet, maxTransverseMETSignificance_lostJet, transverseMETSignificance1_lostJet, transverseMETSignificance2_lostJet, transverseMETSignificance3_lostJet;
 
   Float_t pdfWeights[45];
+  TH1F pdfWeightSum("pdfWeightSum","pdfWeightSum",45,0,45);
 
   float prob0,probge1,prob1,probge2;
 
@@ -3323,7 +3325,9 @@ void reducedTree(TString outputpath, itreestream& stream)
       cout << "weight: "<< getWeight(nevents) << endl;
     }
     if(entry%100000==0) cout << "  entry: " << entry << ", percent done=" << (int)(entry/(double)nevents*100.)<<  endl;
-      
+    
+    //this must be done outside of the if statement...need to sum over all events!  
+    getPdfWeights(pdfWeights,&pdfWeightSum);
 
     if ( passCut("cutLumiMask") && (passCut("cutTrigger") || passCut("cutUtilityTrigger")) && passCut("cutHT") ) {
     
@@ -3344,8 +3348,6 @@ void reducedTree(TString outputpath, itreestream& stream)
 
       cutHT = true; 
       //cutHT = passCut("cutHT");
-      getPdfWeights(pdfWeights);
-
 
       cutTrigger = passCut("cutTrigger");
       cutPV = passCut("cutPV");
