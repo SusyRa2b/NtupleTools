@@ -921,8 +921,7 @@ float getJetPt( unsigned int ijet ) {
 
   //first JER
   if ( theJERType_ != kJER0 ) {
-    assert(0); //not ready yet until gen jet info is available
-    float genpt = 0;//myJetsPF->at(ijet). //not sure what it will be called
+    float genpt = myJetsPF->at(ijet).genJet_pt; //not sure what it will be called
     if (genpt > 15) {
       float factor = getJERbiasFactor(ijet);
       float deltapt = (pt - genpt) * factor;
@@ -931,7 +930,7 @@ float getJetPt( unsigned int ijet ) {
       pt *= ptscale;
     }
 
-  }  
+  } 
   //then JES
   if ( theJESType_ == kJESup ) {
     //in 2010 there was an extra term added in quadrature. 
