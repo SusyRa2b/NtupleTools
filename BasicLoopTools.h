@@ -22,6 +22,7 @@
 #include <typeinfo>
 
 #include "TGraphAsymmErrors.h"
+#include "TH1F.h"
 
 //Pile-up reweighting stuff
 //NOTE: Grab this header from PhysicsTools/Utilities/interface/LumiReweightingStandAlone.h
@@ -157,8 +158,8 @@ enum METuncType {kMETunc0=0,kMETuncDown,kMETuncUp};
 METuncType theMETuncType_; std::map<METuncType, TString> theMETuncNames_;
 enum PUuncType {kPUunc0=0,kPUuncDown,kPUuncUp};
 PUuncType thePUuncType_; std::map<PUuncType, TString> thePUuncNames_;
-//enum BTagEffType {kBTagEff0=0,kBTagEffup,kBTagEffdown};
-//BTagEffType theBTagEffType_;
+enum BTagEffType {kBTagEff0=0,kBTagEffup,kBTagEffdown};
+BTagEffType theBTagEffType_; std::map<BTagEffType, TString> theBTagEffNames_;
 //enum tailCleaningType {kNoCleaning=0, kMuonCleaning, kMuonEcalCleaning};
 //tailCleaningType theCleaningType_;
 //enum flavorHistoryType {kNoFlvHist=0, kFlvHist};
@@ -574,7 +575,7 @@ void PseudoConstructor() {
   theJERType_=kJER0;
   theMETuncType_=kMETunc0;
   thePUuncType_=kPUunc0;
-  //  theBTagEffType_=kBTagErr0;
+  theBTagEffType_=kBTagEff0;
   //  theCleaningType_=kNoCleaning;
   //  theFlavorHistoryType_=kNoFlvHist;
   theBTaggerType_=kSSVHPT;
@@ -602,6 +603,10 @@ void PseudoConstructor() {
   thePUuncNames_[kPUunc0]="PUunc0";
   thePUuncNames_[kPUuncUp]="PUuncUp";
   thePUuncNames_[kPUuncDown]="PUuncDown";
+
+  theBTagEffNames_[kBTagEff0]="BTagEff0";
+  theBTagEffNames_[kBTagEffup]="BTagEffup";
+  theBTagEffNames_[kBTagEffdown]="BTagEffdown";
 
   theJERNames_[kJER0]="JER0";
   theJERNames_[kJERup]="JERup";
@@ -700,6 +705,9 @@ TString getCutDescriptionString(){
   cut += "_";
 
   cut += thePUuncNames_[thePUuncType_];
+  cut += "_";
+
+  cut += theBTagEffNames_[theBTagEffType_];
 
   return cut;
 }
@@ -1209,6 +1217,98 @@ float getBTagIPWeight() {//this function should be called *after* offline taggin
 
   return w_event;
 }
+
+
+//get MC btag efficiency
+float jetTagEff(unsigned int ijet, TH1F* h_btageff, TH1F* h_ctageff, TH1F* h_ltageff) {
+
+  float tageff=0;
+  float pt = getJetPt(ijet);
+  //float eta = myJetsPF->at(ijet).eta;
+  int flavor = myJetsPF->at(ijet).partonFlavour;
+
+  if(isGoodJet30(ijet)){
+
+    float SF[2] = {0.9,0.9}; //2 bins of pT (<240 and > 240)
+    float SFU[2] = {1,1};
+
+    if (theBTagEffType_ == kBTagEffup) {
+      SFU[0] = 1.10; // 10% uncertainty on SF from BTV-11-001
+      SFU[1] = 1.20; // double the uncertainty for jets>240 GeV (need to check with B-POG)
+    }
+    else if (theBTagEffType_ == kBTagEffdown) {
+      SFU[0] = 0.9;
+      SFU[1] = 0.8;
+    }
+   
+    //check the MC efficiencies from Summer11 TTbar
+    //this histogram has bin edges {30,50,75,100,150,200,240,500,1000}
+    
+    if( abs(flavor) == 5){
+      tageff = h_btageff->GetBinContent( h_btageff->FindBin( pt ) );
+      
+      if(pt<240) tageff *= SF[0]*SFU[0];
+      else tageff *= SF[1]*SFU[1];
+
+      //std::cout << "b: tag eff = " << tageff << std::endl;
+    }
+    else if (abs(flavor) == 4){
+      tageff = h_ctageff->GetBinContent( h_ctageff->FindBin( pt ) );
+      //std::cout << "c: tag eff = " << tageff << std::endl;
+    }
+    else if (abs(flavor) == 1 || abs(flavor) == 2
+	     || abs(flavor) == 3 || abs(flavor) == 21){
+      tageff = h_ltageff->GetBinContent( h_ltageff->FindBin( pt ) );
+      //std::cout << "l: tag eff = " << tageff << std::endl;
+    }
+    
+    
+  }
+
+  return tageff;
+}
+
+
+void calculateTagProb(float &Prob0, float &ProbGEQ1, float &Prob1, float &ProbGEQ2) {
+
+  //load efficiency maps - get from ~wteo/public/
+  TFile f_tageff("histos_btageff.root","READ");
+  char btageffname[200], ctageffname[200], ltageffname[200];
+  std::string sbtageff = "h_btageff";  std::string sctageff = "h_ctageff";  std::string sltageff = "h_ltageff";
+  sprintf(btageffname,"%s",sbtageff.c_str());   
+  sprintf(ctageffname,"%s",sctageff.c_str());   
+  sprintf(ltageffname,"%s",sltageff.c_str());   
+  TH1F * h_btageff  = (TH1F *)f_tageff.Get(btageffname);
+  TH1F * h_ctageff  = (TH1F *)f_tageff.Get(ctageffname);
+  TH1F * h_ltageff  = (TH1F *)f_tageff.Get(ltageffname);
+
+  //must initialize correctly
+  Prob1 = 0; ProbGEQ1 = 1; Prob0 = 1; ProbGEQ2 = 0;
+
+  for (unsigned int ijet=0; ijet<myJetsPF->size(); ++ijet) {
+    
+    if(isGoodJet30(ijet)){
+      float effi = jetTagEff(ijet, h_btageff, h_ctageff, h_ltageff);
+      Prob0 = Prob0* ( 1 - effi);
+      
+      double product = 1;
+      for (unsigned int kjet=0; kjet<myJetsPF->size(); ++kjet) {
+	if(isGoodJet30(kjet)){
+	  float effk = jetTagEff(kjet, h_btageff, h_ctageff, h_ltageff);
+	  if(kjet != ijet) product = product*(1-effk);
+	}
+      }
+      
+      Prob1 += effi*product;
+      
+    }
+  }
+  
+  ProbGEQ1 = 1 - Prob0;
+  ProbGEQ2 = 1- Prob1 - Prob0;
+  
+}
+
 
 
 float jetPtOfN(unsigned int n) {
@@ -2528,7 +2628,7 @@ bool cutRequired(const TString cutTag) { //should put an & in here to improve pe
   //else if (cutTag == "cutTauVeto") cutIsRequired =  false; //not required for now
   //else if (cutTag == "cutDeltaPhi") cutIsRequired =  true;
   else if (cutTag == "cutDeltaPhiN") cutIsRequired =  true;
-  else if (cutTag == "cutDeltaPhiTaus") cutIsRequired =  true;
+  else if (cutTag == "cutDeltaPhiTaus") cutIsRequired =  false;
   else if (cutTag == "cut1b") cutIsRequired =  nBcut_ >=1;
   else if (cutTag == "cut2b") cutIsRequired =  nBcut_ >=2;
   else if (cutTag == "cut3b") cutIsRequired =  nBcut_ >=3;
@@ -3009,6 +3109,8 @@ void reducedTree(TString outputpath, itreestream& stream)
   float minTransverseMETSignificance_lostJet, maxTransverseMETSignificance_lostJet, transverseMETSignificance1_lostJet, transverseMETSignificance2_lostJet, transverseMETSignificance3_lostJet;
 
 
+  float prob0,probge1,prob1,probge2;
+
   //initialize PU things
   std::vector< float > TrueDist2011;
   std::vector< float > MCDist2011;
@@ -3028,6 +3130,11 @@ void reducedTree(TString outputpath, itreestream& stream)
   reducedTree.Branch("pfmhtweight",&pfmhtweight,"pfmhtweight/F");
   reducedTree.Branch("PUweight",&PUweight,"PUweight/F");
   reducedTree.Branch("hltHTeff",&hltHTeff,"hltHTeff/F");
+
+  reducedTree.Branch("prob0",&prob0,"prob0/F");
+  reducedTree.Branch("probge1",&probge1,"probge1/F");
+  reducedTree.Branch("prob1",&prob1,"prob1/F");
+  reducedTree.Branch("probge2",&probge2,"probge2/F");
 
   reducedTree.Branch("cutHT",&cutHT,"cutHT/O");
   reducedTree.Branch("cutPV",&cutPV,"cutPV/O");
@@ -3236,6 +3343,9 @@ void reducedTree(TString outputpath, itreestream& stream)
       cutDeltaPhi = passCut("cutDeltaPhi");
       cutCleaning = passCut("cutCleaning");
       
+
+      calculateTagProb(prob0,probge1,prob1,probge2);
+
       passBadPFMuon = passBadPFMuonFilter();
       passInconsistentMuon = passInconsistentMuonFilter();
       
