@@ -809,6 +809,14 @@ unsigned int utilityHLT_HT300_CentralJet30_BTagIP(){
   return passTrig;
 }
 
+void getPdfWeights( Float_t * pdfWeights) {
+
+  const unsigned int s = geneventinfoproducthelper.size();
+  for (unsigned int i=0; i<s ; i++) {
+    pdfWeights[i]=isRealDataInt(myEDM_isRealData) ? 1 :  geneventinfoproducthelper.at(i).pdfweight;
+  }
+}
+
 
 float getHLTHTeff(float offHT) {
 
@@ -3108,6 +3116,7 @@ void reducedTree(TString outputpath, itreestream& stream)
   float minDeltaPhiN_Luke_lostJet, maxDeltaPhiN_Luke_lostJet, deltaPhiN1_Luke_lostJet, deltaPhiN2_Luke_lostJet, deltaPhiN3_Luke_lostJet;
   float minTransverseMETSignificance_lostJet, maxTransverseMETSignificance_lostJet, transverseMETSignificance1_lostJet, transverseMETSignificance2_lostJet, transverseMETSignificance3_lostJet;
 
+  Float_t pdfWeights[45];
 
   float prob0,probge1,prob1,probge2;
 
@@ -3130,6 +3139,8 @@ void reducedTree(TString outputpath, itreestream& stream)
   reducedTree.Branch("pfmhtweight",&pfmhtweight,"pfmhtweight/F");
   reducedTree.Branch("PUweight",&PUweight,"PUweight/F");
   reducedTree.Branch("hltHTeff",&hltHTeff,"hltHTeff/F");
+
+  reducedTree.Branch("pdfWeights",&pdfWeights,"pdfWeights[45]/F"); //got to store the whole vector. very big, unfortunately
 
   reducedTree.Branch("prob0",&prob0,"prob0/F");
   reducedTree.Branch("probge1",&probge1,"probge1/F");
@@ -3333,6 +3344,8 @@ void reducedTree(TString outputpath, itreestream& stream)
 
       cutHT = true; 
       //cutHT = passCut("cutHT");
+      getPdfWeights(pdfWeights);
+
 
       cutTrigger = passCut("cutTrigger");
       cutPV = passCut("cutPV");
