@@ -21,7 +21,7 @@ int main(int argc, char** argv)
  
   //code for sampleName_ and output path
 
-  TString outputDir = "/cu2/ra2b/reducedTrees/V00-02-24/"; //this is where reducedTrees will go
+  TString outputDir = "/cu2/ra2b/reducedTrees/"; //this is where reducedTrees will go
 
   stringstream ss;
   TString fileArg;
@@ -48,9 +48,62 @@ int main(int argc, char** argv)
   // Select variables to be read
   selectVariables(stream);
   PseudoConstructor();
+
   setBTaggerType(kSSVHPT);  
-  cutflow(stream,10000);
-  //reducedTree(outputDir, stream);
+  reducedTree(outputDir, stream);
+
+  return 0;
+  //run with default settings == bias-corrected JER
+  theJERType_=kJERbias;
+  reducedTree(outputDir, stream);
+
+  // return 0;
+
+  //JER varations
+  theJERType_=kJERdown;
+  reducedTree(outputDir, stream);
+
+  theJERType_=kJERup;
+  reducedTree(outputDir, stream);
+
+  //put the default JER back
+  theJERType_=kJERbias;
+
+  //JES variations
+  theJESType_=kJESdown;
+  reducedTree(outputDir, stream);
+
+  theJESType_=kJESup;
+  reducedTree(outputDir, stream);
+
+  //put the default JES back
+  theJESType_=kJES0;
+
+  //unc MET variations
+  theMETuncType_=kMETuncUp;
+  reducedTree(outputDir, stream);
+
+  theMETuncType_=kMETuncDown;
+  reducedTree(outputDir, stream);
+
+  //put the default back
+  theMETuncType_=kMETunc0;
+
+  // == PU variations ==
+  thePUuncType_=kPUuncDown;
+  reducedTree(outputDir, stream);
+
+  thePUuncType_=kPUuncUp;
+  reducedTree(outputDir, stream);
+
+  //put back default
+  thePUuncType_=kPUunc0;
+
+  return 0;
+
+}
+
+
 
   //sampleAnalyzer(stream);
 
@@ -126,5 +179,3 @@ int main(int argc, char** argv)
   */
   //stream.close();
   //ofile.close();
-  return 0;
-}
