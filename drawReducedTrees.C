@@ -76,11 +76,12 @@ functionality for TH1F and TH1D e.g. the case of addOverflowBin()
 #include <map>
 #include <set>
 													     
-//TString inputPath = "/cu2/kreis/reducedTrees/V00-01-02/benHack/";//path for MC
-//TString inputPath = "/cu2/kreis/reducedTrees/V00-01-02/";//path for MC
 TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-05_v3/";//path for MC
-//TString dataInputPath = "/cu2/kreis/reducedTrees/V00-02-03/";//path for data
+//TString inputPath = "/home/joshmt/";//path for MC
 TString dataInputPath = "/cu2/ra2b/reducedTrees/V00-02-05_v3/";
+
+//TString cutdesc = "SSVHPT_RecoPFjets_JES0_JERbias_PFMETTypeI_METunc0_PUunc0_BTagEff0"; //"SSVHPT";
+//TString cutdesc = "SSVHPT_RecoPFjets_JES0_JERbias_PFMETTypeI_METunc0_PUunc0_BTagEff0"; //"SSVHPT";
 
 TString cutdesc = "SSVHPT";
 //TString cutdesc = "TCHET";
@@ -98,6 +99,75 @@ double lumiScale_ = 1091.891;
 //TString cutdesc = "Baseline0_PF_pfMEThigh_PFLep0e0mu_minDP_MuonEcalCleaning";
 
 #include "drawReducedTrees.h"
+
+void pdfUncertainties2011(const SearchRegion & region) {
+  useFlavorHistoryWeights_=false;
+  loadSamples(); //needs to come first! this is why this should be turned into a class, with this guy in the ctor
+
+  dodata_=false;
+
+  TString sampleOfInterest="LM9";
+  clearSamples();
+  addSample(sampleOfInterest);
+
+  TString btagselection = region.btagSelection;
+  TCut HTcut=region.htSelection.Data(); 
+  TCut SRMET = region.metSelection.Data();
+  TCut bcut = "nbjetsSSVHPT>=1";
+  if (btagselection=="ge2b") {
+    bcut="nbjetsSSVHPT>=2";
+  }
+  else if (btagselection=="ge1b") {}
+  else if (btagselection=="ge3b") {
+    bcut="nbjetsSSVHPT>=3";
+  }
+  else {assert(0);}
+
+  TCut baseline = "cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1";
+
+  TCut passOther = "minDeltaPhiN>=4";
+
+  selection_ = baseline && HTcut && passOther && SRMET && bcut;
+
+  TString var="HT"; TString xtitle=var;
+  int  nbins=1; float low=0; float high=1e9;
+
+  drawPlots(var,nbins,low,high,xtitle,"events","dummyH");
+  double nominal=  getIntegral(sampleOfInterest);
+  double nominalerr=  getIntegralErr(sampleOfInterest);
+
+  cout<<"yield = "<<nominal<<" +/- "<<nominalerr<<endl;
+  TH1F* totalPdfWeights = (TH1F*) files_[sampleOfInterest]->Get("pdfWeightSum");
+  TTree* thetree = (TTree*) files_[sampleOfInterest]->Get("reducedTree");
+  const  float nominalweight=   totalPdfWeights->GetBinContent(1);
+
+  double largest=0;
+  double smallest=1e9;
+
+
+  for (int i=1; i<=44; i++) { //hard code that there are 44+1 pdf weights
+    //get the sum of weight[i] for the whole sample with no cuts
+    float totalweight=   totalPdfWeights->GetBinContent(i+1);
+    TString extraWeight=""; extraWeight+=nominalweight; extraWeight+="/"; extraWeight+=totalweight;
+    //then get the yield after cuts with extra weight pdfWeights[i]/sum
+    TH1D pdfEventCounter("pdfEventCounter","pdfEventCounter",1,0,1e9);
+    pdfEventCounter.Sumw2();
+    thetree->Project("pdfEventCounter","HT",getCutString(false, "",extraWeight,i).Data());
+    cout<<i<<"\t"<<pdfEventCounter.Integral()<<endl;
+    if ( pdfEventCounter.Integral()> largest) largest = pdfEventCounter.Integral();
+    if (pdfEventCounter.Integral()<smallest) smallest = pdfEventCounter.Integral();
+    pdfEventCounter.Reset(); //just to be safe
+  }
+
+ cout<<endl<<endl<<" == "<<endl<<smallest<<"\t"<<largest<<endl;
+
+}
+
+void runPdf2011() {
+  setSearchRegions();
+  pdfUncertainties2011(searchRegions_[0]);
+
+}
 
 void averageZ() {
   cout<<"Loose SIG ge1b"<<endl;
