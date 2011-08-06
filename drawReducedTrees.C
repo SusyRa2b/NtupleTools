@@ -30,17 +30,6 @@ in order to get one file per sample.
 Potential improvements:
  -- there are becoming way too many configuration options. i've stopped adding setter functions for them out of laziness
  -- the calls to renormBins() currently have a kludge that hard-codes the reference bin to 2
- -- The samples to be plotted are currently defined at compile time.
-Could make it so that all samples are always loaded, but there is an
-independent list that controls which samples are plotted. This would
-allow the user to switch the plotted samples on the fly.
-[any mechanism like this would also have to allow the user to control
-the order in which the samples are stack. This is currently defined
-by the order of the push_backs in loadSamples()]
-
----- update: this is now partially fixed. samples_ can be manipulated after compile time.
-More functions for manipulation (e.g. to allow adding a sample in the middle of the list) still
-need to be written
 
  -- The cuts are defined by the user settings the selection_ string
 directly. This can be error prone. A better interface would allow the user
@@ -80,24 +69,9 @@ TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-05_v3/";//path for MC
 //TString inputPath = "/home/joshmt/";//path for MC
 TString dataInputPath = "/cu2/ra2b/reducedTrees/V00-02-05_v3/";
 
-//TString cutdesc = "SSVHPT_RecoPFjets_JES0_JERbias_PFMETTypeI_METunc0_PUunc0_BTagEff0"; //"SSVHPT";
-//TString cutdesc = "SSVHPT_RecoPFjets_JES0_JERbias_PFMETTypeI_METunc0_PUunc0_BTagEff0"; //"SSVHPT";
-//TString cutdesc = "SSVHPT_RecoPFjets_JES0_JER0_PFMETTypeI_METunc0_PUunc0_BTagEff0";
-//    TString cutdesc = "SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0";
-//TString cutdesc = "SSVHPT";
-//TString cutdesc = "TCHET";
+//the cutdesc string is now defined in loadSamples()
 
-//double lumiScale_ = 4.17935645/190.5; // //data lumi / lumi of MC
-//double lumiScale_ = (94.432+166.732+216.430+154.830+84.698+57.994+2.101)/190.5;
-//double lumiScale_ = 777./190.5;
-//double lumiScale_ = (0.694037787)/190.5; // //data lumi / lumi of MC
-
-//double lumiScale_ = 1096.441;
 double lumiScale_ = 1091.891;
-
-//TString cutdesc = "Baseline0_PF_JERbias_pfMEThigh_PFLep0e0mu_minDP_MuonEcalCleaning";
-//TString cutdesc = "Baseline0_PF_pfMEThigh_PFLepRA20e0mu_minDP_MuonEcalCleaning";
-//TString cutdesc = "Baseline0_PF_pfMEThigh_PFLep0e0mu_minDP_MuonEcalCleaning";
 
 #include "drawReducedTrees.h"
 
