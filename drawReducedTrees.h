@@ -1246,7 +1246,6 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
   const TString ytitle="N pass / N fail";
   bool dataOnly = false;
 
-
   //const TString var = "MET"; //hardcoded for now
   cout << "x axis: " << var << endl;
   TString cstring1 = vary, cstring2=vary;
@@ -1385,6 +1384,10 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
     if (hnameR.Contains("QCD") && !dataOnly) { //HACK draw only qcd
       histos_[hnameR]->Draw(drawopt);
       if (!drawopt.Contains("same")) drawopt+=" same";
+      
+      //hack to save
+      //TH1D* hQCD = (TH1D*)histos_[hnameR]->Clone(savename+"_qcd");
+      //hQCD->SaveAs(savename+"_qcd.root");
       
       if (firsthist="") firsthist = hnameR;
       if (histos_[hnameR]->GetMaximum() > max) max = histos_[hnameR]->GetMaximum();
