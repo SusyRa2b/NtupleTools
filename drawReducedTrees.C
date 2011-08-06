@@ -76,14 +76,15 @@ functionality for TH1F and TH1D e.g. the case of addOverflowBin()
 #include <map>
 #include <set>
 													     
-TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-05_v3/";//path for MC
-//TString inputPath = "/home/joshmt/";//path for MC
+//TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-05_v3/";//path for MC
+TString inputPath = "/home/joshmt/";//path for MC
 TString dataInputPath = "/cu2/ra2b/reducedTrees/V00-02-05_v3/";
 
 //TString cutdesc = "SSVHPT_RecoPFjets_JES0_JERbias_PFMETTypeI_METunc0_PUunc0_BTagEff0"; //"SSVHPT";
 //TString cutdesc = "SSVHPT_RecoPFjets_JES0_JERbias_PFMETTypeI_METunc0_PUunc0_BTagEff0"; //"SSVHPT";
-
-TString cutdesc = "SSVHPT";
+//TString cutdesc = "SSVHPT_RecoPFjets_JES0_JER0_PFMETTypeI_METunc0_PUunc0_BTagEff0";
+TString cutdesc = "SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0";
+//TString cutdesc = "SSVHPT";
 //TString cutdesc = "TCHET";
 
 //double lumiScale_ = 4.17935645/190.5; // //data lumi / lumi of MC
@@ -105,6 +106,7 @@ void pdfUncertainties2011(const SearchRegion & region) {
   loadSamples(); //needs to come first! this is why this should be turned into a class, with this guy in the ctor
 
   dodata_=false;
+  savePlots_ =false;
 
   TString sampleOfInterest="LM9";
   clearSamples();
@@ -141,9 +143,22 @@ void pdfUncertainties2011(const SearchRegion & region) {
   TTree* thetree = (TTree*) files_[sampleOfInterest]->Get("reducedTree");
   const  float nominalweight=   totalPdfWeights->GetBinContent(1);
 
+  usePUweight_=true;
+  drawPlots(var,nbins,low,high,xtitle,"events","dummyH");
+  cout<<"with PU weight yield = "<<getIntegral(sampleOfInterest)<<" +/- "<<getIntegralErr(sampleOfInterest) <<endl;
+
+  useHLTeff_=true;
+  drawPlots(var,nbins,low,high,xtitle,"events","dummyH");
+  cout<<"with HLT eff = "<<getIntegral(sampleOfInterest)<<" +/- "<<getIntegralErr(sampleOfInterest) <<endl;
+
+  selection_ = baseline && HTcut && passOther && SRMET; //remove b tag
+  btagSFweight_="probge1";
+  drawPlots(var,nbins,low,high,xtitle,"events","dummyH");
+  cout<<"with b tag SF = "<<getIntegral(sampleOfInterest)<<" +/- "<<getIntegralErr(sampleOfInterest) <<endl;
+
   double largest=0;
   double smallest=1e9;
-
+  /*
 
   for (int i=1; i<=44; i++) { //hard code that there are 44+1 pdf weights
     //get the sum of weight[i] for the whole sample with no cuts
@@ -160,7 +175,7 @@ void pdfUncertainties2011(const SearchRegion & region) {
   }
 
  cout<<endl<<endl<<" == "<<endl<<smallest<<"\t"<<largest<<endl;
-
+  */
 }
 
 void runPdf2011() {
@@ -583,8 +598,8 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
   }
   else {
     addSample("TTbarJets");
-    addSample("WJets");
-    addSample("SingleTop");
+//     addSample("WJets");
+//     addSample("SingleTop");
   }
 
   //  TString sampleOfInterest = "PythiaPUQCD";

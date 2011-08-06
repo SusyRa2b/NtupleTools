@@ -159,6 +159,10 @@ bool normalized_=false;
 bool useFlavorHistoryWeights_=false;//no setter function
 float flavorHistoryScaling_=-1;
 
+bool usePUweight_=false;
+bool useHLTeff_ = false;
+TString btagSFweight_="1";
+
 bool savePlots_ = true; //no setter function
 bool drawTotalSM_=false; //no setter function
 bool drawTotalSMSusy_=false;//no setter function
@@ -437,6 +441,15 @@ TString getCutString(double lumiscale, TString extraWeight="", TString thisSelec
     pdfString.Form("*pdfWeights[%d]",pdfWeightIndex);
     weightedcut += pdfString;
   }
+  if (usePUweight_) {
+    weightedcut +="*PUweight";
+  }
+  if (useHLTeff_) {
+    weightedcut +="*hltHTeff";
+  }
+  weightedcut += "*";
+  weightedcut += btagSFweight_;
+ 
   if (thisSelection!="") {
     weightedcut += "*(";
     weightedcut+=thisSelection;
