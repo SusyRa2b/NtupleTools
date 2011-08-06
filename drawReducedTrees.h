@@ -11,16 +11,19 @@ TLatex* text2=0;
 std::vector<TString> samples_;
 //hold a list of all samples
 std::set<TString> samplesAll_;
+std::vector<TString> configDescriptions_;
 //these maps use the sample names as keys
-std::map<TString, TFile*> files_;
+//std::map<TString, TFile*> files_;
+std::map<TString, std::map<TString, TFile*> > files_;
 std::map<TString, TH1D*> histos_;
 std::map<TString, UInt_t> sampleColor_;
 std::map<TString, TString> sampleOwenName_;
 std::map<TString, TString> sampleLabel_;
 std::map<TString, UInt_t> sampleMarkerStyle_;
-//TFile* fdata=0;
 TChain* dtree=0;
 TH1D* hdata=0;
+
+TString currentConfig_;
 
 //default selection
 TString selection_ ="cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && cutMET==1 && cutDeltaPhi==1 && cutCleaning==1";
@@ -32,6 +35,7 @@ class SearchRegion {
 public:
   SearchRegion(TString btagSel,TString htSel,TString metSel,TString oId,bool isSig=true);
   ~SearchRegion();
+  void Print() const;
 
   TString htSelection;
   TString metSelection;
@@ -43,6 +47,10 @@ public:
 SearchRegion::SearchRegion(TString btagSel,TString htSel,TString metSel,TString oId,bool isSig) : 
   htSelection(htSel),metSelection(metSel),btagSelection(btagSel),owenId(oId),isSIG(isSig) {}
 SearchRegion::~SearchRegion() {}
+void SearchRegion::Print() const {
+  cout<<" == "<<btagSelection<<" "<<htSelection<<" "<<metSelection<<endl;
+
+}
 
 std::vector<SearchRegion > searchRegions_;
 std::vector<SearchRegion > sbRegions_;
@@ -298,6 +306,23 @@ void drawPlotHeader() {
 
 }
 
+TString getVariedSubstring(TString currentVariation) {
+
+  TObjArray* baseline = configDescriptions_[0].Tokenize("_");
+
+  TObjArray* mine = currentVariation.Tokenize("_");
+
+  TString output="";
+  for (int i=0; i<baseline->GetEntries(); i++) {
+    TString b=baseline->At(i)->GetName();
+    TString m=mine->At(i)->GetName();
+    if (b!=m) {
+      output+=b;
+    }
+  }
+  return output;
+}
+
 
 int mainpadWidth; int mainpadHeight;
 int ratiopadHeight = 250;
@@ -402,7 +427,7 @@ void fillFlavorHistoryScaling() {
   TTree* tree=0;
   for (unsigned int isample=0; isample<samples_.size(); isample++) {
     if ( samples_[isample].Contains("WJets")) { //will pick out WJets or WJetsZ2
-      tree = (TTree*) files_[samples_[isample]]->Get("reducedTree");
+      tree = (TTree*) files_[currentConfig_][samples_[isample]]->Get("reducedTree");
     }
   }
   if (tree==0) {cout<<"Did not find a WJets sample!"<<endl; return;}
@@ -447,6 +472,7 @@ TString getCutString(double lumiscale, TString extraWeight="", TString thisSelec
   if (useHLTeff_) {
     weightedcut +="*hltHTeff";
   }
+  if (btagSFweight_=="") btagSFweight_="1";
   weightedcut += "*";
   weightedcut += btagSFweight_;
  
@@ -691,7 +717,25 @@ void loadSamples(bool joinSingleTop=true) {
   samplesAll_.insert("LM13");
   samplesAll_.insert("LM9");
 
+  configDescriptions_.push_back("SSVHPT");
 
+//   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
+//   configDescriptions_.push_back("SSVHPT_PF2PATjets_JESdown_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
+//   configDescriptions_.push_back("SSVHPT_PF2PATjets_JESup_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
+//   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERdown_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
+//   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERup_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
+//   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METuncDown_PUunc0_BTagEff0_HLTEff0");
+//   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METuncUp_PUunc0_BTagEff0_HLTEff0");
+//   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncDown_BTagEff0_HLTEff0");
+//   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncUp_BTagEff0_HLTEff0");
+
+//   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffdown_HLTEff0");
+//   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffup_HLTEff0");
+
+//   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffdown");
+//   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffup");
+  //convention is that the [0] one should always be the "nominal" one while others are for systematics
+  currentConfig_=configDescriptions_[0];
 
   //these blocks are just a "dictionary"
   //no need to ever comment these out
@@ -754,31 +798,30 @@ void loadSamples(bool joinSingleTop=true) {
   sampleOwenName_["TotalSM"] = "totalsm";
   sampleOwenName_["Total"] = "total";  
 
-  for (std::set<TString>::iterator isample=samplesAll_.begin(); isample!=samplesAll_.end(); ++isample) {
-    TString fname="reducedTree.";
-    fname+=cutdesc;
-    fname+=".";
-    fname += *isample;
-    fname+=".root";
-    fname.Prepend(inputPath);
-    files_[*isample] = new TFile(fname);
-    if (files_[*isample]->IsZombie() ) {cout<<"file error with "<<*isample<<endl; files_[*isample]=0;}
-    else { if (!quiet_)    cout<<"Added sample: "<<*isample<<endl;}
+  for (std::vector<TString>::iterator iconfig=configDescriptions_.begin(); iconfig!=configDescriptions_.end(); ++iconfig) {
+    for (std::set<TString>::iterator isample=samplesAll_.begin(); isample!=samplesAll_.end(); ++isample) {
+      TString fname="reducedTree.";
+      fname += *iconfig;
+      fname+=".";
+      fname += *isample;
+      fname+=".root";
+      fname.Prepend(inputPath);
+      files_[*iconfig][*isample] = new TFile(fname);
+      if (files_[*iconfig][*isample]->IsZombie() ) {cout<<"file error with "<<*isample<<endl; files_[*iconfig][*isample]=0;}
+      else { if (!quiet_)    cout<<"Added sample: "<<*iconfig<<"\t"<<*isample<<endl;}
+    }
   }
 
   //load data file too
   TString dname="reducedTree.";
-  dname+=cutdesc;
+  dname+=currentConfig_;
   //dname+=".data.root";
   //dname+=".ht_run2011a_SUM_promptrecov4only_uptojun24.root";
   //dname+=".data_promptrecoThroughJul1.root";
   dname+=".ht_*.root";
   //dname+=".ht_run2011a_SUM_promptrecov4only_uptojul1.root";
   dname.Prepend(dataInputPath);
-  if (dname.Contains("JERbias")) {
-    dname.ReplaceAll("JERbias_",""); //JERbias not relevant for data
-    dname.ReplaceAll("JERbias6_",""); //JERbias not relevant for data
-  }
+  dname.ReplaceAll("JERbias","JER0"); //JERbias not relevant for data
   if ( dodata_) {
     dtree = new TChain("reducedTree");
     dtree->Add(dname);
@@ -804,7 +847,7 @@ float drawSimple(const TString var, const int nbins, const float low, const floa
     for (unsigned int isample=0; isample<samples_.size(); isample++) {
       if ( samples_[isample] == samplename) {
 	if (!quiet_) cout <<samples_[isample]<<endl;
-	tree = (TTree*) files_[samples_[isample]]->Get("reducedTree");
+	tree = (TTree*) files_[currentConfig_][samples_[isample]]->Get("reducedTree");
       }
     }
   }
@@ -860,7 +903,7 @@ void draw2d(const TString var, const int nbins, const float low, const float hig
   TString opt="colz";
   for (unsigned int isample=0; isample<1 ; isample++) { //plot only the first sample!
     gROOT->cd();
-    TTree* tree = (TTree*) files_[samples_[isample]]->Get("reducedTree");
+    TTree* tree = (TTree*) files_[currentConfig_][samples_[isample]]->Get("reducedTree");
     gROOT->cd();
     TString weightopt= useFlavorHistoryWeights_ && samples_[isample].Contains("WJets") ? "flavorHistoryWeight" : "";
     TString drawstring=vary;
@@ -965,7 +1008,7 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
     histos_[samples_[isample]] = (varbins==0) ? new TH1D(hname,"",nbins,low,high) : new TH1D(hname,"",nbins,varbins);
     histos_[samples_[isample]]->Sumw2();
 
-    TTree* tree = (TTree*) files_[samples_[isample]]->Get("reducedTree");
+    TTree* tree = (TTree*) files_[currentConfig_][samples_[isample]]->Get("reducedTree");
     gROOT->cd();
     TString weightopt= useFlavorHistoryWeights_ && samples_[isample].Contains("WJets") ? "flavorHistoryWeight" : "";
     tree->Project(hname,var,getCutString(lumiScale_,weightopt,selection_,"",0).Data());
@@ -1093,7 +1136,6 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
     TString hname = jmt::fortranize(var); hname += "_"; hname += "data";
     hdata = (varbins==0) ? new TH1D(hname,"",nbins,low,high) : new TH1D(hname,"",nbins,varbins);
     hdata->Sumw2();
-    //    TTree* dtree = (TTree*) fdata->Get("reducedTree");
     gROOT->cd();
     dtree->Project(hname,var,selection_.Data());
     //now the histo is filled
@@ -1315,7 +1357,7 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
   for (unsigned int isample=0; isample<samples_.size(); isample++) {
 
     if (!quiet_) cout <<samples_[isample]<<endl;
-    TTree* tree = (TTree*) files_[samples_[isample]]->Get("reducedTree");
+    TTree* tree = (TTree*) files_[currentConfig_][samples_[isample]]->Get("reducedTree");
 
     gROOT->cd();
 
@@ -1447,7 +1489,6 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
     histos_[hnameF] = (varbins==0) ? new TH1D(hnameF,"",nbins,low,high) : new TH1D(hnameF,"",nbins,varbins);
     histos_[hnameF]->Sumw2();
 
-    //    TTree* dtree = (TTree*) fdata->Get("reducedTree");
     gROOT->cd();
     dtree->Project(hnameP,var,getCutString(1.,"",selection_,cstring1,0).Data());
     dtree->Project(hnameF,var,getCutString(1.,"",selection_,cstring2,0).Data());
@@ -1812,7 +1853,7 @@ void cutflow(bool isTightSelection){
 
       //qcd reweighting not implemented yet
 
-      TTree* tree = (TTree*) files_[samples_[isample]]->Get("reducedTree");
+      TTree* tree = (TTree*) files_[currentConfig_][samples_[isample]]->Get("reducedTree");
       gROOT->cd();
       TString weightopt= useFlavorHistoryWeights_ && samples_[isample].Contains("WJets") ? "flavorHistoryWeight" : "";
       tree->Project(hname,var,thisStageCut);

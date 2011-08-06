@@ -76,14 +76,14 @@ functionality for TH1F and TH1D e.g. the case of addOverflowBin()
 #include <map>
 #include <set>
 													     
-//TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-05_v3/";//path for MC
-TString inputPath = "/home/joshmt/";//path for MC
+TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-05_v3/";//path for MC
+//TString inputPath = "/home/joshmt/";//path for MC
 TString dataInputPath = "/cu2/ra2b/reducedTrees/V00-02-05_v3/";
 
 //TString cutdesc = "SSVHPT_RecoPFjets_JES0_JERbias_PFMETTypeI_METunc0_PUunc0_BTagEff0"; //"SSVHPT";
 //TString cutdesc = "SSVHPT_RecoPFjets_JES0_JERbias_PFMETTypeI_METunc0_PUunc0_BTagEff0"; //"SSVHPT";
 //TString cutdesc = "SSVHPT_RecoPFjets_JES0_JER0_PFMETTypeI_METunc0_PUunc0_BTagEff0";
-TString cutdesc = "SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0";
+//    TString cutdesc = "SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0";
 //TString cutdesc = "SSVHPT";
 //TString cutdesc = "TCHET";
 
@@ -101,12 +101,18 @@ double lumiScale_ = 1091.891;
 
 #include "drawReducedTrees.h"
 
-void pdfUncertainties2011(const SearchRegion & region) {
+void signalSystematics2011(const SearchRegion & region, bool isSL=false, bool isLDP=false) {
   useFlavorHistoryWeights_=false;
   loadSamples(); //needs to come first! this is why this should be turned into a class, with this guy in the ctor
 
   dodata_=false;
   savePlots_ =false;
+  setQuiet(true);
+
+  region.Print();
+  assert ( !( isSL&&isLDP));
+  if (isLDP) cout<<"   == LDP "<<endl;
+  if (isSL) cout<<"   == SL "<<endl;
 
   TString sampleOfInterest="LM9";
   clearSamples();
@@ -116,20 +122,29 @@ void pdfUncertainties2011(const SearchRegion & region) {
   TCut HTcut=region.htSelection.Data(); 
   TCut SRMET = region.metSelection.Data();
   TCut bcut = "nbjetsSSVHPT>=1";
+  TString bweightstring="probge1";
   if (btagselection=="ge2b") {
     bcut="nbjetsSSVHPT>=2";
+    bweightstring="probge2";
   }
   else if (btagselection=="ge1b") {}
   else if (btagselection=="ge3b") {
     bcut="nbjetsSSVHPT>=3";
+    bweightstring="probge3"; //this one isn't calculated right now, i think
   }
   else {assert(0);}
 
   TCut baseline = "cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1";
 
   TCut passOther = "minDeltaPhiN>=4";
+  if (isLDP) passOther="minDeltaPhiN<4";
 
   selection_ = baseline && HTcut && passOther && SRMET && bcut;
+
+  //critical to reset these!
+  usePUweight_=false;
+  useHLTeff_=false;
+  btagSFweight_="1";
 
   TString var="HT"; TString xtitle=var;
   int  nbins=1; float low=0; float high=1e9;
@@ -138,27 +153,48 @@ void pdfUncertainties2011(const SearchRegion & region) {
   double nominal=  getIntegral(sampleOfInterest);
   double nominalerr=  getIntegralErr(sampleOfInterest);
 
-  cout<<"yield = "<<nominal<<" +/- "<<nominalerr<<endl;
-  TH1F* totalPdfWeights = (TH1F*) files_[sampleOfInterest]->Get("pdfWeightSum");
-  TTree* thetree = (TTree*) files_[sampleOfInterest]->Get("reducedTree");
+
+  cout<<"raw yield = "<<nominal<<" +/- "<<nominalerr<<endl;
+  TH1F* totalPdfWeights = (TH1F*) files_[currentConfig_][sampleOfInterest]->Get("pdfWeightSum");
+  TTree* thetree = (TTree*) files_[currentConfig_][sampleOfInterest]->Get("reducedTree");
   const  float nominalweight=   totalPdfWeights->GetBinContent(1);
 
   usePUweight_=true;
   drawPlots(var,nbins,low,high,xtitle,"events","dummyH");
-  cout<<"with PU weight yield = "<<getIntegral(sampleOfInterest)<<" +/- "<<getIntegralErr(sampleOfInterest) <<endl;
+  cout<<"add PU weight yield = "<<getIntegral(sampleOfInterest)<<" +/- "<<getIntegralErr(sampleOfInterest) <<endl;
 
   useHLTeff_=true;
   drawPlots(var,nbins,low,high,xtitle,"events","dummyH");
-  cout<<"with HLT eff = "<<getIntegral(sampleOfInterest)<<" +/- "<<getIntegralErr(sampleOfInterest) <<endl;
+  cout<<"add HLT eff = "<<getIntegral(sampleOfInterest)<<" +/- "<<getIntegralErr(sampleOfInterest) <<endl;
 
   selection_ = baseline && HTcut && passOther && SRMET; //remove b tag
-  btagSFweight_="probge1";
+  btagSFweight_=bweightstring;
   drawPlots(var,nbins,low,high,xtitle,"events","dummyH");
-  cout<<"with b tag SF = "<<getIntegral(sampleOfInterest)<<" +/- "<<getIntegralErr(sampleOfInterest) <<endl;
+  nominal=  getIntegral(sampleOfInterest);
+  nominalerr=  getIntegralErr(sampleOfInterest);
+  cout<<"add b tag SF = "<<nominal<<" +/- "<<nominalerr <<endl;
+
+  //we're gonna hard code the fact that these variations come in pairs
+  double var1=0,var2=0;
+  for (unsigned int j=1; j<configDescriptions_.size(); j++) {
+    currentConfig_=configDescriptions_[j];
+    drawPlots(var,nbins,low,high,xtitle,"events","dummyH");
+    double thisn=getIntegral(sampleOfInterest);
+    double thisnerr=getIntegralErr(sampleOfInterest);
+    //    cout<<currentConfig_<<"\t"<<100*(thisn-nominal)/nominal<<endl;
+    if (j%2==0) {
+      var2=fabs(100*(thisn-nominal)/nominal);
+      double bigger = var2>var1? var2:var1;
+      cout<<getVariedSubstring(currentConfig_)<<"\t"<<bigger<<endl;
+    }
+    else     var1=fabs(100*(thisn-nominal)/nominal);
+  }
+
+  //reset to the nominal
+  currentConfig_=configDescriptions_[0];
 
   double largest=0;
   double smallest=1e9;
-  /*
 
   for (int i=1; i<=44; i++) { //hard code that there are 44+1 pdf weights
     //get the sum of weight[i] for the whole sample with no cuts
@@ -168,19 +204,29 @@ void pdfUncertainties2011(const SearchRegion & region) {
     TH1D pdfEventCounter("pdfEventCounter","pdfEventCounter",1,0,1e9);
     pdfEventCounter.Sumw2();
     thetree->Project("pdfEventCounter","HT",getCutString(false, "",extraWeight,i).Data());
-    cout<<i<<"\t"<<pdfEventCounter.Integral()<<endl;
+    //cout<<i<<"\t"<<pdfEventCounter.Integral()<<endl;
     if ( pdfEventCounter.Integral()> largest) largest = pdfEventCounter.Integral();
     if (pdfEventCounter.Integral()<smallest) smallest = pdfEventCounter.Integral();
     pdfEventCounter.Reset(); //just to be safe
   }
 
- cout<<endl<<endl<<" == "<<endl<<smallest<<"\t"<<largest<<endl;
-  */
+  double pdfunc= ( fabs((smallest-nominal)/nominal) > fabs((largest-nominal)/nominal) ) ? fabs((smallest-nominal)/nominal):fabs((largest-nominal)/nominal);
+  cout<<"PDF\t"<<100*pdfunc<<endl;
+  
 }
 
 void runPdf2011() {
   setSearchRegions();
-  pdfUncertainties2011(searchRegions_[0]);
+  for (unsigned int i=0; i<searchRegions_.size(); i++) {
+    signalSystematics2011(sbRegions_[i]);
+    signalSystematics2011(searchRegions_[i]);
+
+    signalSystematics2011(sbRegions_[i],true);
+    signalSystematics2011(searchRegions_[i],true);
+
+    signalSystematics2011(sbRegions_[i],false,true);
+    signalSystematics2011(searchRegions_[i],false,true);
+  }
 
 }
 
@@ -2846,7 +2892,7 @@ void flvHistReweighting() {
   else {
     for (unsigned int isample=0; isample<samples_.size(); isample++) {
       if ( samples_[isample].Contains(samplename)) {
-	tree = (TTree*) files_[samples_[isample]]->Get("reducedTree");
+	tree = (TTree*) files_[currentConfig_][samples_[isample]]->Get("reducedTree");
       }
     }
   }
@@ -2931,12 +2977,12 @@ void pdfUncertainties() {
 
   TTree* tree=0;
   if (samplename=="data") {
-    tree = dtree;//(TTree*) fdata->Get("reducedTree");
+    tree = dtree;
   }
   else {
     for (unsigned int isample=0; isample<samples_.size(); isample++) {
       if ( samples_[isample] == samplename) {
-	tree = (TTree*) files_[samples_[isample]]->Get("reducedTree");
+	tree = (TTree*) files_[currentConfig_][samples_[isample]]->Get("reducedTree");
       }
     }
   }
