@@ -48,6 +48,8 @@ int main(int argc, char** argv)
   // Select variables to be read
   selectVariables(stream);
   PseudoConstructor();
+  //note -- fundamental settings like jet and met types need to be set directly in the PseudoConstructor
+
 
   setBTaggerType(kSSVHPT);  
   reducedTree(outputDir, stream);
@@ -98,6 +100,22 @@ int main(int argc, char** argv)
 
   //put back default
   thePUuncType_=kPUunc0;
+  
+  // == BtagEff variations
+  theBTagEffType_ =kBTagEffdown;
+  reducedTree(outputDir, stream);
+  theBTagEffType_ =kBTagEffup;
+  reducedTree(outputDir, stream);
+
+  theBTagEffType_ =kBTagEff0; //put back default
+
+  // == HLT Ht Eff variations
+  theHLTEffType_ =kHLTEffdown;
+  reducedTree(outputDir, stream);
+  theHLTEffType_ =kHLTEffup;
+  reducedTree(outputDir, stream);
+
+  theHLTEffType_ =kHLTEff0; //put back default
 
   return 0;
 
