@@ -160,6 +160,8 @@ enum PUuncType {kPUunc0=0,kPUuncDown,kPUuncUp};
 PUuncType thePUuncType_; std::map<PUuncType, TString> thePUuncNames_;
 enum BTagEffType {kBTagEff0=0,kBTagEffup,kBTagEffdown};
 BTagEffType theBTagEffType_; std::map<BTagEffType, TString> theBTagEffNames_;
+enum HLTEffType {kHLTEff0=0,kHLTEffup,kHLTEffdown};
+HLTEffType theHLTEffType_; std::map<HLTEffType, TString> theHLTEffNames_;
 //enum tailCleaningType {kNoCleaning=0, kMuonCleaning, kMuonEcalCleaning};
 //tailCleaningType theCleaningType_;
 //enum flavorHistoryType {kNoFlvHist=0, kFlvHist};
@@ -206,10 +208,10 @@ void InitializeStuff(){
 }
 #else
 //data
-//std::vector<jet1_s> * myJetsPF;
-//std::vector<jethelper_s> * myJetsPFhelper;
-std::vector<jet_s> * myJetsPF;
-std::vector<jetcleanhelper_s> * myJetsPFhelper;
+std::vector<jet1_s> * myJetsPF;
+std::vector<jethelper_s> * myJetsPFhelper;
+//std::vector<jet_s> * myJetsPF;
+//std::vector<jetcleanhelper_s> * myJetsPFhelper;
 
 std::vector<electron1_s> * myElectronsPF;
 std::vector<muon1_s> * myMuonsPF;
@@ -226,11 +228,11 @@ double* myEDM_luminosityBlock;
 double* myEDM_run;
 
 void InitializeStuff(){
-  //myJetsPF = &jet1;            //selectedPatJetsPF
-  //myJetsPFhelper = &jethelper; //selectedPatJetsPF helper
+  myJetsPF = &jet1;            //selectedPatJetsPF
+  myJetsPFhelper = &jethelper; //selectedPatJetsPF helper
 
-  myJetsPF = &jet;            //cleanPatJetsAK5PF
-  myJetsPFhelper = &jetcleanhelper; //cleanPatJetsAK5PF helper
+  //myJetsPF = &jet;            //cleanPatJetsAK5PF
+  //myJetsPFhelper = &jetcleanhelper; //cleanPatJetsAK5PF helper
 
   myElectronsPF = &electron1;  //selectedPatElectronsPF
   myMuonsPF = &muon1;          //selectedPatMuonsPF
@@ -321,6 +323,16 @@ bool passEleVeto() {
   return (countEle() == nElecut_);
 }
 
+bool doubleToBool( double a) {
+
+  int i = TMath::Nint(a);
+  if (i==0) return false;
+  else if (i==1) return true;
+
+  cout<<"[doubleToBool] Something weird going on! "<<a<<"\t"<<i<<endl;
+  if (i>1) return true;
+  return false;
+}
 
 double deltaPhi(double phi1, double phi2) { 
   double result = phi1 - phi2;
@@ -386,6 +398,7 @@ void changeVariables(TRandom* random, double jetLossProbability, int& nLostJets)
 {
   if(recalculatedVariables) return;
   recalculatedVariables=true;
+
   myJetsPF_temp                   = myJetsPF;		  
   //myElectronsPF_temp	          = myElectronsPF;	  
   //myMuonsPF_temp		  = myMuonsPF;		  
@@ -432,7 +445,7 @@ void changeVariables(TRandom* random, double jetLossProbability, int& nLostJets)
 }
 
 #else
-std::vector<jet_s> * myJetsPF_temp;
+std::vector<jet1_s> * myJetsPF_temp; //jmt changing this to go along with switch the PF2PAT
 //std::vector<electron1_s> * myElectronsPF_temp;
 //std::vector<muon1_s> * myMuonsPF_temp;
 //std::vector<tau1_s> * myTausPF_temp;
@@ -462,7 +475,7 @@ void changeVariables(TRandom* random, double jetLossProbability, int& nLostJets)
   //myEDM_luminosityBlock_temp      = myEDM_luminosityBlock;
   //myEDM_run_temp                  = myEDM_run;         
 
-  myJetsPF                = new std::vector<jet_s>;	  
+  myJetsPF                = new std::vector<jet1_s>;	   //jmt -- switch to PF2PAT
   //myElectronsPF	          = new std::vector<electron1_s>;	  
   //myMuonsPF		  = new std::vector<muon1_s>;	  
   //myTausPF		  = new std::vector<tau1_s>;	  
@@ -474,7 +487,7 @@ void changeVariables(TRandom* random, double jetLossProbability, int& nLostJets)
   //myEDM_isRealData	  = new double;
   //myEDM_luminosityBlock   = new double;
   //myEDM_run               = new double;
-  for(vector<jet_s>::iterator thisJet = myJetsPF_temp->begin(); thisJet != myJetsPF_temp->end(); thisJet++)
+  for(vector<jet1_s>::iterator thisJet = myJetsPF_temp->begin(); thisJet != myJetsPF_temp->end(); thisJet++)
     {
       if(random->Rndm() > jetLossProbability)
 	{
@@ -561,11 +574,12 @@ void checkConsistency() {
 
 void PseudoConstructor() {
   //  theCutScheme_ = kBaseline2010;
-  theMETType_=kPFMETTypeI;
-  //  theMETType_=kPFMET;
-  //  theMETRange_=kHigh;
-  theJetType_=kRECOPF;
-  //theJetType_=kPF2PAT; 
+
+  //  theMETType_=kPFMETTypeI;
+  //  theJetType_=kRECOPF;
+
+  theJetType_=kPF2PAT;
+  theMETType_=kPFMET;
 
   checkConsistency();
 
@@ -576,6 +590,7 @@ void PseudoConstructor() {
   theMETuncType_=kMETunc0;
   thePUuncType_=kPUunc0;
   theBTagEffType_=kBTagEff0;
+  theHLTEffType_=kHLTEff0;
   //  theCleaningType_=kNoCleaning;
   //  theFlavorHistoryType_=kNoFlvHist;
   theBTaggerType_=kSSVHPT;
@@ -607,6 +622,10 @@ void PseudoConstructor() {
   theBTagEffNames_[kBTagEff0]="BTagEff0";
   theBTagEffNames_[kBTagEffup]="BTagEffup";
   theBTagEffNames_[kBTagEffdown]="BTagEffdown";
+
+  theHLTEffNames_[kHLTEff0]="HLTEff0";
+  theHLTEffNames_[kHLTEffup]="HLTEffup";
+  theHLTEffNames_[kHLTEffdown]="HLTEffdown";
 
   theJERNames_[kJER0]="JER0";
   theJERNames_[kJERup]="JERup";
@@ -708,6 +727,9 @@ TString getCutDescriptionString(){
   cut += "_";
 
   cut += theBTagEffNames_[theBTagEffType_];
+  cut += "_";
+
+  cut += theHLTEffNames_[theHLTEffType_];
 
   return cut;
 }
@@ -818,19 +840,58 @@ void getPdfWeights( Float_t * pdfWeights, TH1F * sumofweights) {
   }
 }
 
+TFile * f_eff=0;
+TGraphAsymmErrors * htgraph=0;
+TGraphAsymmErrors * htgraphPlus=0;
+TGraphAsymmErrors * htgraphMinus=0;
+void loadHLTHTeff() {
+  if (f_eff==0) {
+
+    /*
+there is a horrible hack here where i have manually set the error on the trigger eff to 1.5% at high HT
+    */
+
+  //get this file from ~/public/wteo/
+    f_eff = new TFile("ht300_out_166864_eff_histogram.root","READ");
+    htgraph  = (TGraphAsymmErrors *) f_eff->Get("myeff");
+
+    //fill the graphs with plus and minus variations
+    htgraphPlus = new TGraphAsymmErrors(htgraph->GetN());
+    htgraphMinus = new TGraphAsymmErrors(htgraph->GetN());
+    for (int i=0; i<htgraph->GetN(); i++) {
+      double x,y;
+      htgraph->GetPoint(i,x,y);
+      double exl= htgraph->GetErrorXlow(i);
+      double exh= htgraph->GetErrorXhigh(i);
+      double eyl= htgraph->GetErrorYlow(i);
+      double eyh= htgraph->GetErrorYhigh(i);
+      //shift y
+      double yup = y+eyh > 1? 1: y+eyh;
+      double ydown = y-eyl < 0 ? 0: y-eyl;
+      if (x>500) ydown=0.985; //Horrible hack!
+      htgraphPlus->SetPoint(i,x,yup);
+      htgraphMinus->SetPoint(i,x,ydown);
+      htgraphPlus->SetPointError(i,exl,exh,eyl,eyh); //the errors don't matter
+      htgraphMinus->SetPointError(i,exl,exh,eyl,eyh);
+    }
+  }
+}
 
 float getHLTHTeff(float offHT) {
+  loadHLTHTeff();
 
   float eff=100;
-  //get this file from ~/public/wteo/
-  TFile f_eff("ht300_out_166864_eff_histogram.root","READ");
 
-  char graphname[200];
-  std::string grname = "myeff";
-  sprintf(graphname,"%s",grname.c_str());   
-  TGraphAsymmErrors * htgraph  = (TGraphAsymmErrors *)f_eff.Get(graphname);
+  //  TFile f_eff("ht300_out_166864_eff_histogram.root","READ");
+  //  char graphname[200];
+  //  std::string grname = "myeff";
+  //  sprintf(graphname,"%s",grname.c_str());   
+  //  TGraphAsymmErrors * htgraph  = (TGraphAsymmErrors *)f_eff.Get(graphname);
+  TGraphAsymmErrors * gr=htgraph;
+  if ( theHLTEffType_ ==kHLTEffup) gr=htgraphPlus;
+  else if ( theHLTEffType_ ==kHLTEffdown) gr=htgraphMinus;
 
-  eff = htgraph->Eval(offHT);
+  eff = gr->Eval(offHT);
 
   return eff;
 }
@@ -947,6 +1008,42 @@ float getJetPt( unsigned int ijet ) {
       pt *= ptscale;
     }
 
+  } 
+  //then JES
+  if ( theJESType_ == kJESup ) {
+    //in 2010 there was an extra term added in quadrature. 
+    //i will not implement that because i don't know if that term should exist in 2011
+    //note that this if statement is important because there are dummy values like -1000 sometimes
+    if (  fabs(myJetsPFhelper->at(ijet).jetUncPlus)<1 )   pt *= (1+myJetsPFhelper->at(ijet).jetUncPlus);
+  }
+  else if (theJESType_ == kJESdown) {
+    if (  fabs(myJetsPFhelper->at(ijet).jetUncMinus)<1 ) pt *= (1-myJetsPFhelper->at(ijet).jetUncMinus);
+  }
+
+  return pt;
+
+}
+
+float getUncorrectedJetPt( unsigned int ijet ) {
+
+  //i am going to write this to allow simultaneous use of JER and JES
+  //(hence use if repeated 'if' instead of 'else if')
+  //I hope this is sensible!
+
+  float pt = myJetsPF->at(ijet).uncor_pt;
+  //  if ( theJESType_ == kJES0 && theJERType_ == kJER0) return pt;
+
+  //first JER
+  if ( theJERType_ != kJER0 ) {
+    float genpt = myJetsPF->at(ijet).genJet_pt; //not sure what it will be called
+    if (genpt > 15) {
+      float recopt = myJetsPF->at(ijet).pt; //use corrected jet pt here
+      float factor = getJERbiasFactor(ijet);
+      float deltapt = (recopt - genpt) * factor;
+      float frac = (recopt+deltapt)/recopt;
+      float ptscale = frac>0 ? frac : 0;
+      pt *= ptscale;
+    }
   } 
   //then JES
   if ( theJESType_ == kJESup ) {
@@ -1124,46 +1221,6 @@ void setMuonReq(unsigned int nmu) {
 bool passMuVeto() {
   return (countMu() == nMucut_);
 }
-
-bool passBadPFMuonFilter(){
-  bool hasBadMuon = false;
-
-  //unsigned int nmu = 0;
-  //nmu = myMuonsPF->size();
-  //
-  //for (unsigned int i=0; i < nmu; i++) {
-  //  //if(muonhelper.at(i).badPFmuon) hasBadMuon = true; NEED TO GET THIS BACK IN BEN FIXME
-  //}
-
-  if(hasBadMuon) return false;
-  return true;
-}
-
-bool passInconsistentMuonFilter(){
-
-  bool hasInconsistentMuon = false;
-
-  //this should not be looping over selectedPatMuonsPF (which has some cuts applied), it should be looping over all PFCandidate muons
-  //use the ra2 code
-  /*
-  unsigned int nmu = 0;
-  nmu = myMuonsPF->size();
-
-  for (unsigned int i=0; i < nmu; i++) {
-    if(myMuonsPF->at(i).pt > 100){
-      if(myMuonsPF->at(i).isTrackerMuon &&  myMuonsPF->at(i).isGlobalMuon){
-	if( fabs( myMuonsPF->at(i).innerTrack_pt/myMuonsPF->at(i).globalTrack_pt - 1 ) > 0.1 )
-	  hasInconsistentMuon = true;
-      }
-    }
-  }
-  */
-
-  if(hasInconsistentMuon) return false;
-  return true;
-
-}
-
 
 float getBTagIPWeight() {//this function should be called *after* offline tagging 
   float w_event = 1;
@@ -1476,6 +1533,29 @@ void getCorrectedMET(float& correctedMET, float& correctedMETPhi) {
 }
 
 
+void getUncorrectedMET(float& uncorrectedMET, float& uncorrectedMETPhi) {
+
+  uncorrectedMET=myMETPF->at(0).pt;
+  uncorrectedMETPhi = myMETPF->at(0).phi;
+
+  if (theJESType_==kJES0 && theJERType_==kJER0) return;
+
+  double METx = uncorrectedMET * cos(uncorrectedMETPhi);
+  double METy = uncorrectedMET * sin(uncorrectedMETPhi);
+
+  for(unsigned int thisJet = 0; thisJet < myJetsPF->size(); thisJet++)
+    {
+      if (isCleanJet(thisJet) ){//this only has an effect for recopfjets
+	METx += myJetsPF->at(thisJet).uncor_pt * cos(myJetsPF->at(thisJet).uncor_phi);
+	METx -= getUncorrectedJetPt(thisJet) * cos(myJetsPF->at(thisJet).uncor_phi);
+	METy += myJetsPF->at(thisJet).uncor_pt * sin(myJetsPF->at(thisJet).uncor_phi);
+	METy -= getUncorrectedJetPt(thisJet) * sin(myJetsPF->at(thisJet).uncor_phi);
+      }
+    }
+  uncorrectedMET = sqrt(METx*METx + METy*METy);
+  uncorrectedMETPhi = atan2(METy,METx);
+}
+
 void dumpEvent () {
 
   cout<<" == jets"<<endl;
@@ -1495,10 +1575,8 @@ void dumpEvent () {
 }
 
 
-std::pair<float,float> getSmearedUnclusteredMETxy() {
-
-  float myMET=0;
-  float myMETphi=0;
+void getSmearedUnclusteredMET(float & myMET, float & myMETphi) {
+  assert(theJetType_ == kPF2PAT);
 
   //in both cases start with uncorrected MET
   if (theMETType_== kPFMET || theMETType_==kPFMETTypeI) {
@@ -1515,25 +1593,25 @@ std::pair<float,float> getSmearedUnclusteredMETxy() {
  
   //first remove jets from MET
   for (unsigned int i=0; i<myJetsPF->size(); i++) {
-    if (isCleanJet(i) ){//this only has an effect for recopfjets    
+    //    if (isCleanJet(i) ){//this only has an effect for recopfjets    
       //remove the uncorrected jet pT from the raw MET
-      myMETx += myJetsPF->at(i).uncor_pt * cos(myJetsPF->at(i).uncor_phi);
-      myMETy += myJetsPF->at(i).uncor_pt * sin(myJetsPF->at(i).uncor_phi);
-    }
+    myMETx += getUncorrectedJetPt(i) * cos(myJetsPF->at(i).uncor_phi);
+    myMETy += getUncorrectedJetPt(i) * sin(myJetsPF->at(i).uncor_phi);
+    //    }
   }
   //then muons
   for ( unsigned int i = 0; i<myMuonsPF->size() ; i++) {
-    if (isCleanMuon(i)) {
+    //    if (isCleanMuon(i)) {
       myMETx += myMuonsPF->at(i).pt * cos(myMuonsPF->at(i).phi);
       myMETy += myMuonsPF->at(i).pt * sin(myMuonsPF->at(i).phi);
-    }
+      //    }
   }
   //electrons
   for ( unsigned int i = 0; i<myElectronsPF->size() ; i++) {
-    if (isGoodElectron(i)) {
+    //    if (isGoodElectron(i)) {
       myMETx += myElectronsPF->at(i).pt * cos(myElectronsPF->at(i).phi);
       myMETy += myElectronsPF->at(i).pt * sin(myElectronsPF->at(i).phi);
-    }
+      //    }
   }
 
   //  if (sqrt(myMETx*myMETx + myMETy*myMETy) >50) {
@@ -1554,29 +1632,30 @@ std::pair<float,float> getSmearedUnclusteredMETxy() {
 
   //jets
   for (unsigned int i=0; i<myJetsPF->size(); i++) {
-    if (isCleanJet(i) ){//this only has an effect for recopfjets    
+    //    if (isCleanJet(i) ){//this only has an effect for recopfjets    
       //remove the corrected jet pT from MET
-      myMETx -= myJetsPF->at(i).pt * cos(myJetsPF->at(i).phi);
-      myMETy -= myJetsPF->at(i).pt * sin(myJetsPF->at(i).phi);
-    }
+      myMETx -= getUncorrectedJetPt(i) * cos(myJetsPF->at(i).phi);
+      myMETy -= getUncorrectedJetPt(i) * sin(myJetsPF->at(i).phi);
+      //    }
   }
   //muons
   for ( unsigned int i = 0; i<myMuonsPF->size() ; i++) {
-    if (isCleanMuon(i)) {
+    //    if (isCleanMuon(i)) {
       myMETx -= myMuonsPF->at(i).pt * cos(myMuonsPF->at(i).phi);
       myMETy -= myMuonsPF->at(i).pt * sin(myMuonsPF->at(i).phi);
-    }
+      //    }
   }
   //electrons
   for ( unsigned int i = 0; i<myElectronsPF->size() ; i++) {
-    if (isGoodElectron(i)) {
+    //    if (isGoodElectron(i)) {
       myMETx -= myElectronsPF->at(i).pt * cos(myElectronsPF->at(i).phi);
       myMETy -= myElectronsPF->at(i).pt * sin(myElectronsPF->at(i).phi);
-    }
+      //    }
   }
 
   //  cout<<sqrt(myMETx*myMETx + myMETy*myMETy)<<endl;
-  return make_pair(myMETx,myMETy);
+  myMET = sqrt(myMETx*myMETx + myMETy*myMETy);
+  myMETphi = atan2(myMETy,myMETx);
 }
 
 
@@ -1585,8 +1664,8 @@ float getMET() {
   float myMETphi =-1000;
 
   if(theMETType_== kPFMET){ 
-    assert(theJESType_==kJES0 && theJERType_==kJER0);
-    myMET = myMETPF->at(0).pt;
+    getUncorrectedMET(myMET,myMETphi);
+
   }
   else if(theMETType_ == kPFMETTypeI){
     getCorrectedMET(myMET,myMETphi);
@@ -1594,8 +1673,7 @@ float getMET() {
 
   //JER and JES are automatically handled inside getCorrectedMET()
   if (theMETuncType_!=kMETunc0) {
-    std::pair<float, float> metxy = getSmearedUnclusteredMETxy();
-    myMET = sqrt( metxy.first*metxy.first + metxy.second*metxy.second);
+    getSmearedUnclusteredMET(myMET,myMETphi);
   }
   return myMET;
 }
@@ -1605,16 +1683,14 @@ float getMETphi() {
   float myMETphi=-99;
 
   if(theMETType_== kPFMET){
-    myMETphi = myMETPF->at(0).phi;
+    getUncorrectedMET(myMET,myMETphi);
   }
   else if(theMETType_ == kPFMETTypeI){
     getCorrectedMET(myMET,myMETphi);
   }
 
   if (theMETuncType_!=kMETunc0) {
-    
-    std::pair<float, float> metxy = getSmearedUnclusteredMETxy();
-    myMETphi = atan2( metxy.second, metxy.first);
+    getSmearedUnclusteredMET(myMET,myMETphi);
   }
 
   return myMETphi;
@@ -2304,30 +2380,6 @@ void fillWTop() {
 
 
 
-
-
-
-bool passCleaning() {
-
-  //if (theCleaningType_ == kNoCleaning) return true;
-  //else if (theCleaningType_ == kMuonCleaning) {
-    //these bools have now been simplified in the ntuple.
-    //there are no longer extraneous _PF/not _PF copies
-  if(passBadPFMuonFilter() && passInconsistentMuonFilter() ) return true;
-    //}
-  //else if (theCleaningType_ ==kMuonEcalCleaning) {
-  //  bool passMuon = passesBadPFMuonFilter && passesInconsistentMuonPFCandidateFilter;
-  //  bool passEcal = passEcalDeadCellCleaning();
-  //  return passMuon && passEcal;
-  //}
-  //else {assert(0);}
-
-  return false;
-}
-
-
-
-
 float getMT_Wlep() {
 
   float MT = -1.;
@@ -2504,8 +2556,6 @@ bool passCut(const TString cutTag) {
   if (cutTag == "cut3b") return nbtags >=3;
   if (cutTag == "cutEq1b") return nbtags == 1;
   
-  if (cutTag == "cutCleaning") return passCleaning();
-
   return true;
 }
 
@@ -2552,7 +2602,7 @@ bool setCutScheme() {
   cutTags_.push_back("cut2b"); cutNames_[cutTags_.back()]=">=2b";
   cutTags_.push_back("cut3b"); cutNames_[cutTags_.back()]=">=3b";
 
-  cutTags_.push_back("cutCleaning"); cutNames_[cutTags_.back()]="TailCleaning";
+  //  cutTags_.push_back("cutCleaning"); cutNames_[cutTags_.back()]="TailCleaning";
 
 
   return true;
@@ -2641,7 +2691,7 @@ bool cutRequired(const TString cutTag) { //should put an & in here to improve pe
   else if (cutTag == "cut1b") cutIsRequired =  nBcut_ >=1;
   else if (cutTag == "cut2b") cutIsRequired =  nBcut_ >=2;
   else if (cutTag == "cut3b") cutIsRequired =  nBcut_ >=3;
-  else if (cutTag == "cutCleaning") cutIsRequired = true;
+  //  else if (cutTag == "cutCleaning") cutIsRequired = true;
   //else assert(0);
 
   return cutIsRequired;
@@ -2780,7 +2830,7 @@ TString getSampleNameOutputString(TString inname){
   if (inname.Contains("qcd_tunez2_pt80to120_summer11") )                        return inname;
   if (inname.Contains("ttjets_tunez2_madgraph_tauola_summer11") )               return "TTbarJets";
 
-
+  if (inname.Contains("TTJets_TuneZ2_7TeV-madgraph-tauola") ) return "TTbarJets";
   //if it isn't found, just use the full name 
   //  -- data will fall into this category, which is fine because we have to hadd the files after anyway
   return inname;
@@ -3066,9 +3116,18 @@ void reducedTree(TString outputpath, itreestream& stream)
   float minDeltaPhiMetTau;
 
   bool cutHT,cutPV,cutTrigger;
-  bool cut3Jets,cutEleVeto,cutMuVeto,cutMET,cutDeltaPhi, cutCleaning;
+  bool cut3Jets,cutEleVeto,cutMuVeto,cutMET,cutDeltaPhi;
 
-  bool passBadPFMuon, passInconsistentMuon;
+  bool	csctighthaloFilter;
+  bool	eenoiseFilter;
+  bool	greedymuonFilter;
+  bool	hbhenoiseFilter;
+  bool	inconsistentmuonFilter;
+  bool	ra2ecaltpFilter;
+  bool	scrapingvetoFilter;
+  bool	trackingfailureFilter;
+
+  bool passCleaning;
 
   bool isRealData;
   UInt_t pass_utilityHLT_HT300;
@@ -3157,14 +3216,20 @@ void reducedTree(TString outputpath, itreestream& stream)
   reducedTree.Branch("cutMuVeto",&cutMuVeto,"cutMuVeto/O");
   reducedTree.Branch("cutMET",&cutMET,"cutMET/O");
   reducedTree.Branch("cutDeltaPhi",&cutDeltaPhi,"cutDeltaPhi/O");
-  reducedTree.Branch("cutCleaning",&cutCleaning,"cutCleaning/O");
+  
+  reducedTree.Branch("csctighthaloFilter",&csctighthaloFilter,"csctighthaloFilter/O");
+  reducedTree.Branch("eenoiseFilter",&eenoiseFilter,"eenoiseFilter/O");
+  reducedTree.Branch("greedymuonFilter",&greedymuonFilter,"greedymuonFilter/O");
+  reducedTree.Branch("hbhenoiseFilter",&hbhenoiseFilter,"hbhenoiseFilter/O");
+  reducedTree.Branch("inconsistentmuonFilter",&inconsistentmuonFilter,"inconsistentmuonFilter/O");
+  reducedTree.Branch("ra2ecaltpFilter",&ra2ecaltpFilter,"ra2ecaltpFilter/O");
+  reducedTree.Branch("scrapingvetoFilter",&scrapingvetoFilter,"scrapingvetoFilter/O");
+  reducedTree.Branch("trackingfailureFilter",&trackingfailureFilter,"trackingfailureFilter/O");
+  reducedTree.Branch("passCleaning",&passCleaning,"passCleaning/O");
 
   reducedTree.Branch("nGoodPV",&nGoodPV,"nGoodPV/I");
 
   reducedTree.Branch("SUSY_nb",&SUSY_nb,"SUSY_nb/I");
-
-  reducedTree.Branch("passBadPFMuon",&passBadPFMuon,"passBadPFMuon/O");
-  reducedTree.Branch("passInconsistentMuon",&passInconsistentMuon,"passInconsistentMuon/O");
 
   reducedTree.Branch("njets",&njets,"njets/I");
   reducedTree.Branch("nbjets",&nbjets,"nbjets/I");
@@ -3356,14 +3421,9 @@ void reducedTree(TString outputpath, itreestream& stream)
       cutMuVeto = passCut("cutMuVeto");
       cutMET = passCut("cutMET");
       cutDeltaPhi = passCut("cutDeltaPhi");
-      cutCleaning = passCut("cutCleaning");
-      
 
       calculateTagProb(prob0,probge1,prob1,probge2);
 
-      passBadPFMuon = passBadPFMuonFilter();
-      passInconsistentMuon = passInconsistentMuonFilter();
-      
       isRealData = isRealDataInt(myEDM_isRealData);
       pass_utilityHLT_HT300 = utilityHLT_HT300();
       prescale_utilityHLT_HT300 = 0;
@@ -3468,6 +3528,16 @@ void reducedTree(TString outputpath, itreestream& stream)
       
       fillWTop(); //fill W,top masses and helicity angles
       
+      csctighthaloFilter = doubleToBool(triggerresultshelper1_csctighthaloFilter);
+      eenoiseFilter = doubleToBool(triggerresultshelper1_eenoiseFilter) ;
+      greedymuonFilter = doubleToBool(triggerresultshelper1_greedymuonFilter) ;
+      hbhenoiseFilter = doubleToBool(triggerresultshelper1_hbhenoiseFilter) ;
+      inconsistentmuonFilter = doubleToBool(triggerresultshelper1_inconsistentmuonFilter) ;
+      ra2ecaltpFilter = doubleToBool(triggerresultshelper1_ra2ecaltpFilter) ;
+      scrapingvetoFilter = doubleToBool(triggerresultshelper1_scrapingvetoFilter) ;
+      trackingfailureFilter = doubleToBool(triggerresultshelper1_trackingfailureFilter) ;
+
+      passCleaning = csctighthaloFilter && eenoiseFilter && greedymuonFilter && hbhenoiseFilter && inconsistentmuonFilter && ra2ecaltpFilter && scrapingvetoFilter && trackingfailureFilter;
       
       //fill new variables from Luke
       getSphericityJetMET(lambda1_allJets,lambda2_allJets,determinant_allJets,99,false);
