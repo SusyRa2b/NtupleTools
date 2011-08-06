@@ -65,8 +65,8 @@ functionality for TH1F and TH1D e.g. the case of addOverflowBin()
 #include <map>
 #include <set>
 													     
-TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-05_v3/";//path for MC
-//TString inputPath = "/home/joshmt/";//path for MC
+//TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-05_v3/";//path for MC
+TString inputPath = "/home/joshmt/";//path for MC
 TString dataInputPath = "/cu2/ra2b/reducedTrees/V00-02-05_v3/";
 
 //the cutdesc string is now defined in loadSamples()
@@ -109,6 +109,7 @@ void signalSystematics2011(const SearchRegion & region, bool isSL=false, bool is
   else {assert(0);}
 
   TCut baseline = "cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1";
+  if (isSL) baseline = "cutPV==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0))";
 
   TCut passOther = "minDeltaPhiN>=4";
   if (isLDP) passOther="minDeltaPhiN<4";
