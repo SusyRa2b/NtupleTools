@@ -1735,6 +1735,25 @@ double getTransverseMETError(unsigned int thisJet){
   return 0.1*sqrt(deltaT);
 }
 
+
+int doPBNR() {
+
+  bool nhBad=false;
+  bool phBad=false;
+
+  for (unsigned int i=0; i< myJetsPF->size(); i++) {
+    if (getJetPt(i) >30 ) {
+      if (myJetsPF->at(i).neutralHadronEnergyFraction >=0.95) nhBad=true;
+      if (myJetsPF->at(i).photonEnergy / myJetsPF->at(i).energy >= 0.95) phBad=true;
+    }
+  }
+
+  if (nhBad && phBad) return -3;
+  else if (phBad) return -2;
+  else if (nhBad) return -1;
+  return 1;
+}
+
 //double getTransverseMETErrorWithCorrections(unsigned int thisJet){
 //
 //  double deltaT=0;
@@ -3130,6 +3149,7 @@ void reducedTree(TString outputpath, itreestream& stream)
   bool	trackingfailureFilter;
 
   bool passCleaning;
+  int PBNRcode;
 
   bool isRealData;
   UInt_t pass_utilityHLT_HT300;
@@ -3228,6 +3248,7 @@ void reducedTree(TString outputpath, itreestream& stream)
   reducedTree.Branch("scrapingvetoFilter",&scrapingvetoFilter,"scrapingvetoFilter/O");
   reducedTree.Branch("trackingfailureFilter",&trackingfailureFilter,"trackingfailureFilter/O");
   reducedTree.Branch("passCleaning",&passCleaning,"passCleaning/O");
+  reducedTree.Branch("PBNRcode",&PBNRcode,"PBNRcode/I");
 
   reducedTree.Branch("nGoodPV",&nGoodPV,"nGoodPV/I");
 
@@ -3541,6 +3562,8 @@ void reducedTree(TString outputpath, itreestream& stream)
 
       passCleaning = csctighthaloFilter && eenoiseFilter && greedymuonFilter && hbhenoiseFilter && inconsistentmuonFilter && ra2ecaltpFilter && scrapingvetoFilter && trackingfailureFilter;
       
+      PBNRcode = doPBNR();
+
       //fill new variables from Luke
       getSphericityJetMET(lambda1_allJets,lambda2_allJets,determinant_allJets,99,false);
       getSphericityJetMET(lambda1_allJetsPlusMET,lambda2_allJetsPlusMET,determinant_allJetsPlusMET,99,true);
