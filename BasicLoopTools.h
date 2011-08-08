@@ -2768,6 +2768,7 @@ double getCrossSection(TString inname){
 
   if (inname.Contains("LM9_SUSY_sftsht_7TeV-pythia6") )                         return 7.134; //from ProductionSpring2011 twiki
   if (inname.Contains("TTJets_TuneZ2_7TeV-madgraph-tauola") )                   return 158; // +/- 10 +/- 15 //CMS PAS TOP-11-001
+  if (inname.Contains("ZJetsToNuNu_200_HT_inf_7TeV-madgraph"))                  return 32.92 * 1.28; //confirmed with Colorado
     
   std::cout<<"Cannot find cross section for this sample!"<<std::endl;
   assert(0); 
@@ -2831,6 +2832,7 @@ TString getSampleNameOutputString(TString inname){
   if (inname.Contains("ttjets_tunez2_madgraph_tauola_summer11") )               return "TTbarJets";
 
   if (inname.Contains("TTJets_TuneZ2_7TeV-madgraph-tauola") ) return "TTbarJets";
+  if (inname.Contains("ZJetsToNuNu_200_HT_inf_7TeV-madgraph"))                  return "Zinvisible";
   //if it isn't found, just use the full name 
   //  -- data will fall into this category, which is fine because we have to hadd the files after anyway
   return inname;
