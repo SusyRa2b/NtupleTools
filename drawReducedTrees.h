@@ -819,7 +819,7 @@ void loadSamples(bool joinSingleTop=true) {
   //dname+=".data.root";
   //dname+=".ht_run2011a_SUM_promptrecov4only_uptojun24.root";
   //dname+=".data_promptrecoThroughJul1.root";
-  dname+=".*.root"; //very dangerous hack! will pick up MC too!
+  dname+=".ht*.root";
   //dname+="*.root";
   //dname+=".ht_run2011a_SUM_promptrecov4only_uptojul1.root";
   dname.Prepend(dataInputPath);
