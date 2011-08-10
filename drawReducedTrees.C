@@ -2538,32 +2538,37 @@ void studyPrescale_r(int ibtag = 4) {
   //drawR("minDeltaPhiN",4,1,50,100,"Data_eq0b");
   
   //trigger version
-  selection_ =TCut("HT>=350 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1")&&util&&LSB&&theBTaggingCut;
+  //set dataOnly and might want to change hdata->SetXTitle()
   doOverflowAddition(false);
+  setPlotMaximum(0.5); setPlotMinimum(0);
+  selection_ =TCut("HT>=350 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1")&&util&&LSB&&theBTaggingCut;
   //drawR("minDeltaPhiN", 4, "pass_utilityHLT_HT300", 7, 1.5, 8.5, "triggerVersion_"+btagstring);
   //unexpected value for MC in last bin when adding overflow.
   
   //nGoodPV
   doOverflowAddition(true);
+  setPlotMaximum(0.5); setPlotMinimum(0);
   selection_ =TCut("HT>=350 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1")&&util&&LSB&&theBTaggingCut;
   //drawR("minDeltaPhiN", 4, "nGoodPV", 20, 0.5, 20.5, "nGoodPV_"+btagstring);
-  const int nvarbins=9;
-  const float varbins[]={1,2,3,4,5,6,7,8,12,17};
+  //const int nvarbins=9;
+  //const float varbins[]={0.5,1.5,2.5,3.5,4.5,5.5,6.5,8.5,11.5,16.5};
   //drawR("minDeltaPhiN", 4, "nGoodPV", nvarbins, varbins, "nGoodPV_"+btagstring);
   //dependence is seen here
   //
   //prescale vs physics check
   selection_ =TCut("HT>=350 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1")&&util&&LSB&&theBTaggingCut;
-  //drawSimple("nGoodPV",20,0,20,"nGoodPV.root", "nGoodPV_"+btagstring+"tag_prescale_data","data");
+  drawSimple("nGoodPV",20,0,20,"nGoodPV.root", "nGoodPV_"+btagstring+"tag_prescale_data","data");
   selection_ =TCut("HT>=350 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && cutTrigger==1 && MET>=150")&&theBTaggingCut;
-  //drawSimple("nGoodPV",20,0,20,"nGoodPV.root", "nGoodPV_"+btagstring+"tag_physics_data","data");
+  drawSimple("nGoodPV",20,0,20,"nGoodPV.root", "nGoodPV_"+btagstring+"tag_physics_data","data");
   
+
+
   //njets
-  doOverflowAddition(false);
+  doOverflowAddition(true);
   selection_ =TCut("HT>=350 && cutPV==1 && cutEleVeto==1 && cutMuVeto==1")&&util&&LSB&&theBTaggingCut;
-  //drawR("minDeltaPhiN", 4, "njets", 7, 2.5, 10.5, "njets_"+btagstring);
-  selection_ =TCut("HT>=350 && cutPV==1 && cutEleVeto==1 && cutMuVeto==1 && cutTrigger==1 && MET>=150")&&theBTaggingCut;
-  //drawR("minDeltaPhiN", 4, "njets", 7, 2.5, 10.5, "njets_physics_"+btagstring);
+  //drawR("minDeltaPhiN", 4, "njets", 8, 2.5, 10.5, "njets_"+btagstring);
+  selection_ =TCut("HT>=350 && cutPV==1 && cutEleVeto==1 && cutMuVeto==1 && cutTrigger==1 && MET>=150 && weight<1000")&&theBTaggingCut;
+  //drawR("minDeltaPhiN", 4, "njets",8, 2.5, 10.5, "njets_physics_"+btagstring);
   
   //nbjets -- does not depend on theBTaggingCut!!!
   doOverflowAddition(false);
@@ -2571,18 +2576,180 @@ void studyPrescale_r(int ibtag = 4) {
   //drawR("minDeltaPhiN", 4, "nbjetsSSVHPT", 4, -0.5, 3.5, "nbjets_"+btagstring);
   selection_ =TCut("HT>=350 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && cutTrigger==1 && MET>=150");
   //drawR("minDeltaPhiN", 4, "nbjetsSSVHPT", 4, -0.5, 3.5, "nbjets_physics_"+btagstring);
-  
-  
+   
   //runnumber
+  //set dataOnly to true
+  //should hack after first instance of thecanvas->cd(1); to add:  gPad->SetRightMargin(.1); gPad->Modified();
   doOverflowAddition(false);
+  setPlotMaximum(0.5); setPlotMinimum(0);
   selection_ =TCut("HT>=350 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1")&&util&&LSB&&theBTaggingCut;
   //drawR("minDeltaPhiN", 4, "runNumber", 10, 160403.5, 167913.5, "runNumber_"+btagstring);
-  const int nvarbins2 = 7;
-  const float varbins2[] = {160403.5, 161000, 162000, 163500, 165000,166000,167000,168000};
+  //const int nvarbins2 = 7;
+  //const float varbins2[] = {160403.5, 161000, 162000, 163500, 165000,166000,167000,168000};
   //drawR("minDeltaPhiN", 4, "runNumber", nvarbins2, varbins2, "runNumber_"+btagstring);
   
+
   //  }//btag loop
 }//end of function
+
+void studyNjet(int ibtag=3){
+  loadSamples();
+  drawTotalSM_=true;
+  drawLegend(true);
+  //setColorScheme("nostack");
+  //setStackMode(false);
+  doOverflowAddition(true);
+  doRatioPlot(true);
+  doData(true);
+
+  //lumiScale_ = 16.3030312; //customize lumiScale_
+  //TString btagselection="antib"; 
+  //TCut btagcut = "nbjetsSSVHPT==0"; 
+
+  TCut util = "pass_utilityHLT_HT300>=1 && weight<1000";
+  TCut LSB = "MET>=50 && MET<100";
+
+  const  TCut ge1b =  "nbjetsSSVHPT >= 1";
+  const  TCut ge2b =  "nbjetsSSVHPT >= 2";
+  const  TCut eq1b =  "nbjetsSSVHPT == 1";
+  const  TCut pretag =  "1";
+  const  TCut antitag = "nbjetsSSVHPT == 0";
+
+  //  for (int ibtag = 4; ibtag<5; ibtag++) {
+  TCut theBTaggingCut = ge1b; TString btagstring = "ge1b";
+  if (ibtag==0) { //nothing to do 
+  }
+  else if (ibtag==1) {
+    theBTaggingCut = eq1b;
+    btagstring = "eq1b";
+  }
+  else if (ibtag==2) {
+    theBTaggingCut = ge2b;
+    btagstring = "ge2b";
+  }
+  else if (ibtag==3) {
+    theBTaggingCut = pretag;
+    btagstring = "pre";
+  }
+  else if (ibtag==4) {
+    theBTaggingCut = antitag;
+    btagstring = "antib";
+  }
+  else assert(0);
+
+
+  doOverflowAddition(true);
+  selection_ =TCut("HT>=350 && cutPV==1 && cutEleVeto==1 && cutMuVeto==1")&&util&&LSB&&theBTaggingCut;
+  //drawR("minDeltaPhiN", 4, "njets", 7, 2.5, 10.5, "njets_"+btagstring); 
+  selection_ =TCut("HT>=350 && cutPV==1 && cutEleVeto==1 && cutMuVeto==1 && cutTrigger==1 && MET>=150")&&theBTaggingCut;
+  //drawR("minDeltaPhiN", 4, "njets", 7, 2.5, 10.5, "njets_physics_"+btagstring); 
+
+  //njet distributions -- note - NO minDeltahiN cut!
+  //selection_ =TCut("HT>=350 && cutPV==1 && cutEleVeto==1 && cutMuVeto==1 && cutTrigger==1 && MET>=150 && weight<1000")&&theBTaggingCut;
+  selection_ =TCut("HT>=350 && cutPV==1 && cutEleVeto==1 && cutMuVeto==1 && cutTrigger==1 && MET>=150 && weight<1000")&&ge2b;
+  //drawSimple("njets",10,0,10,"njets.root", "njets_"+btagstring+"tag_sig_qcd","PythiaPUQCD");
+  selection_ =TCut("HT>=350 && cutPV==1 && cutEleVeto==1 && cutMuVeto==1 && cutTrigger==1 && MET>=50 && MET<100 && weight<1000")&&theBTaggingCut;
+  //drawSimple("njets",10,0,10,"njets.root", "njets_"+btagstring+"tag_lsb_qcd","PythiaPUQCD");
+
+
+  //N JET DATA/MC
+  setStackMode(true); setLogY(true); resetPlotMinimum();    
+  TCut failmdp = "minDeltaPhiN<4.";
+
+  selection_ =TCut("HT>=350 && cutPV==1 && cutEleVeto==1 && cutMuVeto==1 && cutTrigger==1 && MET>=150 && weight<1000")&&theBTaggingCut && failmdp;
+  drawPlots("njets",7,2.5,10,"njets","Events", "H_njets_physics_"+btagstring);
+  
+  lumiScale_ = 16.3030312; //customize lumiScale_
+  selection_ =TCut("HT>=350 && cutPV==1 && cutEleVeto==1 && cutMuVeto==1")&&util&&LSB&&theBTaggingCut&&failmdp;
+  drawPlots("njets",7,2.5,10,"njets","Events", "H_njets_prescaled_"+btagstring);
+}
+
+void studyRqcd(int ibtag = 4){
+  loadSamples();
+  drawTotalSM_=false;
+  drawLegend(true);
+  setColorScheme("nostack");
+  setStackMode(false);
+  doOverflowAddition(true);
+  doRatioPlot(true);
+  doData(false);
+
+  lumiScale_ = 16.3030312; //customize lumiScale_
+
+  //TString btagselection="antib";
+  //TCut btagcut = "nbjetsSSVHPT==0";
+  
+  TCut util = "pass_utilityHLT_HT300>=1 && weight<1000";
+  TCut LSB = "MET>=50 && MET<100";
+  TCut SB = "MET>=150 && MET<200";
+  TCut SIG = "MET>=200";
+  TCut highMET = "MET>=150";
+
+  const  TCut ge1b =  "nbjetsSSVHPT >= 1";
+  const  TCut ge2b =  "nbjetsSSVHPT >= 2";
+  const  TCut eq1b =  "nbjetsSSVHPT == 1";
+  const  TCut pretag =  "1";
+  const  TCut antitag = "nbjetsSSVHPT == 0";
+ 
+  //  for (int ibtag = 4; ibtag<5; ibtag++) { 
+  TCut theBTaggingCut = ge1b; TString btagstring = "ge1b";
+  if (ibtag==0) { //nothing to do
+  }
+  else if (ibtag==1) {
+    theBTaggingCut = eq1b; 
+    btagstring = "eq1b";
+  }
+  else if (ibtag==2) {
+    theBTaggingCut = ge2b; 
+    btagstring = "ge2b";
+  }
+  else if (ibtag==3) {
+    theBTaggingCut = pretag;
+    btagstring = "pre";
+  }
+  else if (ibtag==4) {
+    theBTaggingCut = antitag;
+    btagstring = "antib";
+  }
+  else assert(0);
+  
+  //clearSamples();
+  //addSample("PythiaPUQCD");
+  
+  /*
+    // NJETS
+  selection_ =TCut("HT>=350 && cutPV==1 && cutEleVeto==1 && cutMuVeto==1")&&util&&LSB&&theBTaggingCut;
+  drawR("minDeltaPhiN", 4, "njets", 8, 2.5, 10.5, "njets_lsb_"+btagstring);
+  selection_ =TCut("HT>=350 && cutPV==1 && cutEleVeto==1 && cutMuVeto==1")&&util&&SB&&theBTaggingCut;
+  drawR("minDeltaPhiN", 4, "njets", 8, 2.5, 10.5, "njets_sb_"+btagstring);
+  selection_ =TCut("HT>=350 && cutPV==1 && cutEleVeto==1 && cutMuVeto==1")&&util&&SIG&&theBTaggingCut;
+  drawR("minDeltaPhiN", 4, "njets", 8, 2.5, 10.5, "njets_sig_"+btagstring);
+  selection_ =TCut("HT>=350 && cutPV==1 && cutEleVeto==1 && cutMuVeto==1")&&util&&highMET&&theBTaggingCut;
+  drawR("minDeltaPhiN", 4, "njets", 8, 2.5, 10.5, "njets_highMET_"+btagstring);
+  */
+
+  //NJETS FOR JOSH
+  selection_ =TCut("HT>=350 && cutPV==1 && cutEleVeto==1 && cutMuVeto==1")&&util&&LSB&&theBTaggingCut;
+  drawR("minDeltaPhiN", 4, "njets", 4, 2.5, 6.5, "njets_joshBin_lsb_"+btagstring);
+  selection_ =TCut("HT>=350 && cutPV==1 && cutEleVeto==1 && cutMuVeto==1")&&util&&highMET&&theBTaggingCut;
+  drawR("minDeltaPhiN", 4, "njets", 4, 2.5, 6.5, "njets_joshBin_highMET_"+btagstring);
+  
+  setPlotMaximum(0.35); setPlotMinimum(0);
+  selection_ =TCut("HT>=350 && cutPV==1 && cutEleVeto==1 && cutMuVeto==1 && cut3Jets==1")&&util&&LSB&&theBTaggingCut;
+  //drawR("minDeltaPhiN", 4, "MET", 1, 50, 100, "test_"+btagstring);
+
+  selection_ =TCut("HT>=350 && cutPV==1 && cutEleVeto==1 && cutMuVeto==1 && cut3Jets==1")&&util&&LSB&&theBTaggingCut;
+  //drawR("minDeltaPhiN", 4, "MET", 15, 50, 350, "test_"+btagstring);
+
+  selection_ =TCut("HT>=350 && cutPV==1 && cutEleVeto==1 && cutMuVeto==1 && njets==3")&&util&&theBTaggingCut;
+  //drawR("minDeltaPhiN", 4, "MET", 6, 50, 350, "MET_njets3_"+btagstring);
+  selection_ =TCut("HT>=350 && cutPV==1 && cutEleVeto==1 && cutMuVeto==1 && njets==4")&&util&&theBTaggingCut;
+  //drawR("minDeltaPhiN", 4, "MET", 6, 50, 350, "MET_njets4_"+btagstring);
+  selection_ =TCut("HT>=350 && cutPV==1 && cutEleVeto==1 && cutMuVeto==1 && njets>=5")&&util&&theBTaggingCut;
+  //drawR("minDeltaPhiN", 4, "MET", 6, 50, 350, "MET_njetsge5_"+btagstring);
+
+}
+
 
 void drawVJets() {
   
