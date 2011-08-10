@@ -2484,6 +2484,117 @@ void drawMETPlots_utility(){
     }
   }//end loop over b-tag selection
 }
+void drawQCDreweight(bool loose = true){
+  loadSamples(true);
+  savePlots_=false; //don't save eps,png,pdf files
+  doOverflowAddition(true);
+
+  //binning
+  const int nvarbins=4;
+  const float varbins[]={2.5, 3.5, 4.5, 5.5, 6.5};//note that overflow addition is ON
+
+  //output file 
+  TString histfilename = "";
+  histfilename += "qcdQCDreweight";
+  if(loose) histfilename += "_loose";
+  else histfilename += "_tight";
+  histfilename += ".root";
+  TFile fh(histfilename,"RECREATE");//will delete old root file if present 
+  fh.Close(); //going to open only when needed 
+  
+  //-- define some cuts to use 
+  //--------------------------
+  const TCut phys = "cutTrigger==1";
+  const TCut util = "pass_utilityHLT_HT300>=1";
+  const TCut LSB = "MET>=50 && MET<100";
+  const TCut SB = "MET>=150 && MET<200";
+  TCut SIG;
+  if(loose) SIG = "MET>=200";
+  else SIG =  "MET>=300";
+  TCut HTcut;
+  if(loose) HTcut = "HT>=350";
+  else HTcut = "HT>=500";
+  const  TCut ge1b =  "nbjetsSSVHPT >= 1";
+  const  TCut ge2b =  "nbjetsSSVHPT >= 2";
+  const  TCut eq1b =  "nbjetsSSVHPT == 1";
+  const  TCut pretag =  "1";
+  const  TCut antitag = "nbjetsSSVHPT == 0";
+  const TCut passmdpn = "minDeltaPhiN>=4";
+  const TCut failmdpn = "minDeltaPhiN<4";
+  TCut base = HTcut&&TCut("cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && weight<1000");// no trigger, met, minDeltaPhiN, btagger
+  
+  //-- LSB plots
+  //------------
+  lumiScale_ = 16.3030312;
+  
+  selection_ = base && LSB && util && failmdpn && antitag;
+  drawSimple("njets",nvarbins,varbins,histfilename, "h_LSB_fDP_antib_njets_data", "data");
+  drawSimple("njets",nvarbins,varbins,histfilename, "h_LSB_fDP_antib_njets_qcd", "PythiaPUQCD");
+  drawPlots( "njets",nvarbins,varbins, "", "",      "deleteme");   //drawPlots( "njets", 4, 2.5, 6.5, "", "", "test");
+  TFile fh1(histfilename, "UPDATE");
+  totalnonqcd->SetName("h_LSB_fDP_antib_njets_nonqcd");
+  totalnonqcd->Write();
+  fh1.Close();
+
+  selection_ = base && LSB && util && passmdpn && antitag;
+  drawSimple("njets",nvarbins,varbins,histfilename, "h_LSB_pDP_antib_njets_qcd", "PythiaPUQCD");
+  
+  //-- SB plots
+  //-----------
+  lumiScale_ = 1091.891;
+  
+  selection_ =  base && SB && phys && failmdpn && ge1b;
+  drawSimple("njets",nvarbins,varbins,histfilename, "h_SB_fDP_ge1b_njets_data", "data");
+  drawSimple("njets",nvarbins,varbins,histfilename, "h_SB_fDP_ge1b_njets_qcd", "PythiaPUQCD");
+  drawPlots( "njets",nvarbins,varbins, "", "",      "deleteme");   
+  TFile fh2(histfilename, "UPDATE");
+  totalnonqcd->SetName("h_SB_fDP_ge1b_njets_nonqcd");
+  totalnonqcd->Write();
+  fh2.Close();
+  
+  selection_ =  base && SB && phys && failmdpn && ge2b;
+  drawSimple("njets",nvarbins,varbins,histfilename, "h_SB_fDP_ge2b_njets_data", "data");
+  drawSimple("njets",nvarbins,varbins,histfilename, "h_SB_fDP_ge2b_njets_qcd", "PythiaPUQCD");
+  drawPlots( "njets",nvarbins,varbins, "", "",      "deleteme");
+  TFile fh3(histfilename, "UPDATE");
+  totalnonqcd->SetName("h_SB_fDP_ge2b_njets_nonqcd");
+  totalnonqcd->Write();
+  fh3.Close();
+
+  selection_ = base && SB && phys && passmdpn && ge1b;
+  drawSimple("njets",nvarbins,varbins,histfilename, "h_SB_pDP_ge1b_njets_qcd", "PythiaPUQCD");
+
+  selection_ = base && SB && phys && passmdpn && ge2b;
+  drawSimple("njets",nvarbins,varbins,histfilename, "h_SB_pDP_ge2b_njets_qcd", "PythiaPUQCD");
+
+  //-- SIG plots
+  //------------
+  selection_ =  base && SIG && phys && failmdpn && ge1b;
+  drawSimple("njets",nvarbins,varbins,histfilename, "h_SIG_fDP_ge1b_njets_data", "data");
+  drawSimple("njets",nvarbins,varbins,histfilename, "h_SIG_fDP_ge1b_njets_qcd", "PythiaPUQCD");
+  drawPlots( "njets",nvarbins,varbins, "", "",      "deleteme");
+  TFile fh4(histfilename, "UPDATE");
+  totalnonqcd->SetName("h_SIG_fDP_ge1b_njets_nonqcd");
+  totalnonqcd->Write();
+  fh4.Close();
+
+  selection_ =  base && SIG && phys && failmdpn && ge2b;
+  drawSimple("njets",nvarbins,varbins,histfilename, "h_SIG_fDP_ge2b_njets_data", "data");
+  drawSimple("njets",nvarbins,varbins,histfilename, "h_SIG_fDP_ge2b_njets_qcd", "PythiaPUQCD");
+  drawPlots( "njets",nvarbins,varbins, "", "",      "deleteme");
+  TFile fh5(histfilename, "UPDATE");
+  totalnonqcd->SetName("h_SIG_fDP_ge2b_njets_nonqcd");
+  totalnonqcd->Write();
+  fh5.Close();
+
+  selection_ = base && SIG && phys && passmdpn && ge1b;
+  drawSimple("njets",nvarbins,varbins,histfilename, "h_SIG_pDP_ge1b_njets_qcd", "PythiaPUQCD");
+
+  selection_ = base && SIG && phys && passmdpn && ge2b;
+  drawSimple("njets",nvarbins,varbins,histfilename, "h_SIG_pDP_ge2b_njets_qcd", "PythiaPUQCD");
+
+}
+
 
 void studyPrescale_r(int ibtag = 4) {
   loadSamples();
