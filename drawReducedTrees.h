@@ -1519,15 +1519,21 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
       histos_[firsthist]->SetMaximum( maxScaleFactor_*hdata->GetMaximum());
       totalsm->SetMaximum(maxScaleFactor_*hdata->GetMaximum());
     }
+    else if (doCustomPlotMax_ && dataOnly) {
+      hdata->SetMaximum(customPlotMax_);
+    }
     else if (doCustomPlotMax_) {
       histos_[firsthist]->SetMaximum( customPlotMax_);
       totalsm->SetMaximum(customPlotMax_);
     }
-    if (doCustomPlotMin_) {
+    if (doCustomPlotMin_ && dataOnly) {
+      hdata->SetMinimum(customPlotMin_);
+    }
+    else if (doCustomPlotMin_) {
       histos_[firsthist]->SetMinimum( customPlotMin_);
       totalsm->SetMinimum(customPlotMin_);
     }
-
+    
     //    cratio->cd();
     thecanvas->cd(2);
     if (ratio!=0) delete ratio;
