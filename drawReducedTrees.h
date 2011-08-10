@@ -26,7 +26,7 @@ TH1D* hdata=0;
 TString currentConfig_;
 
 //default selection
-TString selection_ ="cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && cutMET==1 && cutDeltaPhi==1 && cutCleaning==1";
+TString selection_ ="cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1";
 
 float leg_x1 = 0.696, leg_x2=0.94, leg_y1=0.5, leg_y2=0.92;
 
@@ -717,7 +717,8 @@ void loadSamples(bool joinSingleTop=true) {
   samplesAll_.insert("LM13");
   samplesAll_.insert("LM9");
 
-  configDescriptions_.push_back("SSVHPT");
+  //  configDescriptions_.push_back("SSVHPT");
+  configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
 
 //   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
 //   configDescriptions_.push_back("SSVHPT_PF2PATjets_JESdown_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
@@ -818,7 +819,8 @@ void loadSamples(bool joinSingleTop=true) {
   //dname+=".data.root";
   //dname+=".ht_run2011a_SUM_promptrecov4only_uptojun24.root";
   //dname+=".data_promptrecoThroughJul1.root";
-  dname+=".ht_*.root";
+  dname+=".*.root"; //very dangerous hack! will pick up MC too!
+  //dname+="*.root";
   //dname+=".ht_run2011a_SUM_promptrecov4only_uptojul1.root";
   dname.Prepend(dataInputPath);
   dname.ReplaceAll("JERbias","JER0"); //JERbias not relevant for data
@@ -1739,11 +1741,11 @@ void getCutStringForCutflow(vector<TString> &vectorOfCuts, vector<TString> &stag
   //  stageCut.push_back("DeltaPhiTaus");
   
   //Cleaning
-  if (thisSelection=="") thisSelection += "cutCleaning==1";
-  else thisSelection +=" && cutCleaning==1";
-  cut=getCutString(lumiScale_,thisSelection);
-  vectorOfCuts.push_back(cut);
-  stageCut.push_back("Cleaning");
+//   if (thisSelection=="") thisSelection += "cutCleaning==1";
+//   else thisSelection +=" && cutCleaning==1";
+//   cut=getCutString(lumiScale_,thisSelection);
+//   vectorOfCuts.push_back(cut);
+//   stageCut.push_back("Cleaning");
 
   //store selection string pre b cut
   selectionPreB=thisSelection;

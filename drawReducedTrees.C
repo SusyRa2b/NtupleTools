@@ -65,9 +65,10 @@ functionality for TH1F and TH1D e.g. the case of addOverflowBin()
 #include <map>
 #include <set>
 													     
-//TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-05_v3/";//path for MC
-TString inputPath = "/home/joshmt/";//path for MC
-TString dataInputPath = "/cu2/ra2b/reducedTrees/V00-02-05_v3/";
+TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-24_fullpf2pat/";//path for MC
+//TString inputPath = "/home/joshmt/";//path for MC
+//TString dataInputPath = "/cu2/ra2b/reducedTrees/V00-02-24_fullpf2pat/"; //sym links to V00-02-05_v3
+TString dataInputPath = "/cu3/wteo/reducedTrees/V00-02-05_v3-pickevents/"; //includes MET cleaning but uses a tight skim (not good for plots)
 
 //the cutdesc string is now defined in loadSamples()
 
@@ -155,7 +156,7 @@ void signalSystematics2011(const SearchRegion & region, bool isSL=false, bool is
     currentConfig_=configDescriptions_[j];
     drawPlots(var,nbins,low,high,xtitle,"events","dummyH");
     double thisn=getIntegral(sampleOfInterest);
-    double thisnerr=getIntegralErr(sampleOfInterest);
+    //    double thisnerr=getIntegralErr(sampleOfInterest);
     //    cout<<currentConfig_<<"\t"<<100*(thisn-nominal)/nominal<<endl;
     if (j%2==0) {
       var2=fabs(100*(thisn-nominal)/nominal);
@@ -573,28 +574,32 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
     double zv[2];
     double ze[2];
  //need to average mu mu and ee estimates
+    double zsbsyst=0.5;
     if ( qcdsubregion.owenId == "Tight" && btagselection=="ge1b") { //i think this should work for now...
-      zv[0] = 5.0; ze[0]=3.3; //Tight SB ge1b mumu
-      zv[1] = 5.2; ze[1]=3.3; //Tight SB ge1b ee
+      zv[0] = 7.0; ze[0]=2.9; //Tight SB ge1b mumu
+      zv[1] = 7.3; ze[1]=3.4; //Tight SB ge1b ee
+      zsbsyst = 0.55;
     }
     else    if ( qcdsubregion.owenId == "Loose"&&btagselection=="ge1b") {//    else {
-      zv[0] = 11.4; ze[0]=8.1; //Loose SB ge1b mumu
-      zv[1] = 23.3; ze[1]=12.1; //Loose SB ge1b ee
+      zv[0] = 16.0; ze[0]=11.4; //Loose SB ge1b mumu
+      zv[1] = 30.2; ze[1]=17.8; //Loose SB ge1b ee
+      zsbsyst=0.2;
     }
     else if (qcdsubregion.owenId == "Tight" && btagselection=="ge2b") {
-      zv[0] = 1.5; ze[0]=0.7; //Tight SB ge2b mumu
-      zv[1] = 0; ze[1]=1; //Tight SB ge2b ee (I doubt 1 is right!)
+      zv[0] = 1.6; ze[0]=0.8; //Tight SB ge2b mumu
+      zv[1] = 0; ze[1]=0.8; //Tight SB ge2b ee (error is bullshit)
+      zsbsyst=1.03;
     }
     else if (qcdsubregion.owenId == "Loose" && btagselection=="ge2b") {
-      zv[0] = 6.1; ze[0]=2.7; //Loose SB ge2b mumu
-      zv[1] = 0; ze[1]=1; //Loose SB ge2b ee (I doubt 1 is right!)
+      zv[0] = 6.7; ze[0]=3.5; //Loose SB ge2b mumu
+      zv[1] = 0; ze[1]=3.5; //Loose SB ge2b ee (error is bullshit)
+      zsbsyst = 0.55;
     }
     else {assert(0);}
     SBsubZ = jmt::weightedMean(2,zv,ze);
     SBsubZerr = jmt::weightedMean(2,zv,ze,true);
 
     if (mode.Contains("Z")) {
-      double zsbsyst=0.40; //use 40 percent for now
       SBsubZerr = sqrt( SBsubZerr*SBsubZerr + pow(zsbsyst*SBsubZ,2));
       
       if (mode=="Zup") SBsubZ += SBsubZerr;
