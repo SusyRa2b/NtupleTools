@@ -856,13 +856,12 @@ float drawSimple(const TString var, const int nbins, const float low, const floa
   if (tree==0) {cout<<"Something went wrong finding your sample!"<<endl; return 0;}
   gROOT->cd();
   
-  //when owen explicitly uses a histo type, it is a TH1F
-  TH1F* hh=0;
+  TH1D* hh=0;
   if (varbins==0) {
-    hh = new TH1F(histname,histname,nbins,low,high);
+    hh = new TH1D(histname,histname,nbins,low,high);
   }
   else {
-    hh = new TH1F(histname,histname,nbins,varbins);
+    hh = new TH1D(histname,histname,nbins,varbins);
   }
   hh->Sumw2();
    
@@ -871,7 +870,7 @@ float drawSimple(const TString var, const int nbins, const float low, const floa
   else tree->Project(histname,var,getCutString(lumiScale_,optfh,selection_,"",0).Data());
   float theIntegral = hh->Integral(0,nbins+1);
 
-  if (addOverflow_)  addOverflowBin( hh ); //manipulates the TH1F
+  if (addOverflow_)  addOverflowBin( hh ); //manipulates the TH1D
 
   //at this point i've got a histogram. what more could i want?
   TFile fout(filename,"UPDATE");
