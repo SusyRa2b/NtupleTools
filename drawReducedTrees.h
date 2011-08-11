@@ -443,7 +443,7 @@ void fillFlavorHistoryScaling() {
 
 }
 
-TString getCutString(double lumiscale, TString extraWeight="", TString thisSelection="", TString extraSelection="", int pdfWeightIndex=0) {
+TString getCutString(double lumiscale, TString extraWeight="", TString thisSelection="", TString extraSelection="", int pdfWeightIndex=0,TString pdfSet="CTEQ") {
   TString weightedcut="weight"; 
   
   weightedcut += "*(";
@@ -463,7 +463,7 @@ TString getCutString(double lumiscale, TString extraWeight="", TString thisSelec
   }
   if (pdfWeightIndex != 0) {
     TString pdfString;
-    pdfString.Form("*pdfWeights[%d]",pdfWeightIndex);
+    pdfString.Form("*pdfWeights%s[%d]",pdfSet.Data(),pdfWeightIndex);
     weightedcut += pdfString;
   }
   if (usePUweight_) {
@@ -495,10 +495,10 @@ TString getCutString(double lumiscale, TString extraWeight="", TString thisSelec
 }
 
 //add an interface more like the old one, but with an addition for the data/MC lumi scaling
-TString getCutString(bool isData, TString extraSelection="",TString extraWeight="",int pdfWeightIndex=0) {
+TString getCutString(bool isData, TString extraSelection="",TString extraWeight="",int pdfWeightIndex=0,TString pdfSet="CTEQ") {
 
   double ls = isData ? 1 : lumiScale_;
-  return    getCutString(ls, extraWeight, selection_,extraSelection, pdfWeightIndex) ;
+  return    getCutString(ls, extraWeight, selection_,extraSelection, pdfWeightIndex,pdfSet) ;
 }
 
 void addOverflowBin(TH1D* theHist) {
@@ -720,21 +720,23 @@ void loadSamples(bool joinSingleTop=true) {
   //  configDescriptions_.push_back("SSVHPT");
   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
 
-//   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
-//   configDescriptions_.push_back("SSVHPT_PF2PATjets_JESdown_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
-//   configDescriptions_.push_back("SSVHPT_PF2PATjets_JESup_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
-//   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERdown_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
-//   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERup_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
-//   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METuncDown_PUunc0_BTagEff0_HLTEff0");
-//   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METuncUp_PUunc0_BTagEff0_HLTEff0");
-//   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncDown_BTagEff0_HLTEff0");
-//   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncUp_BTagEff0_HLTEff0");
+/*
+  configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
+  configDescriptions_.push_back("SSVHPT_PF2PATjets_JESdown_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
+  configDescriptions_.push_back("SSVHPT_PF2PATjets_JESup_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
+  configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERdown_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
+  configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERup_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
+  configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METuncDown_PUunc0_BTagEff0_HLTEff0");
+  configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METuncUp_PUunc0_BTagEff0_HLTEff0");
+  configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncDown_BTagEff0_HLTEff0");
+  configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncUp_BTagEff0_HLTEff0");
 
-//   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffdown_HLTEff0");
-//   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffup_HLTEff0");
+  configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffdown_HLTEff0");
+  configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffup_HLTEff0");
 
-//   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffdown");
-//   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffup");
+  configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffdown");
+  configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffup");
+*/
   //convention is that the [0] one should always be the "nominal" one while others are for systematics
   currentConfig_=configDescriptions_[0];
 

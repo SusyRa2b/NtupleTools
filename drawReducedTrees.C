@@ -65,7 +65,8 @@ functionality for TH1F and TH1D e.g. the case of addOverflowBin()
 #include <map>
 #include <set>
 													     
-TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-24_fullpf2pat/";//path for MC
+TString inputPath = "/home/joshmt/";
+//TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-24_fullpf2pat/";//path for MC
 //TString inputPath = "/home/joshmt/";//path for MC
 //TString dataInputPath = "/cu2/ra2b/reducedTrees/V00-02-24_fullpf2pat/"; //sym links to V00-02-05_v3
 TString dataInputPath = "/cu3/wteo/reducedTrees/V00-02-05_v3-pickevents/"; //includes MET cleaning but uses a tight skim (not good for plots)
@@ -131,9 +132,17 @@ void signalSystematics2011(const SearchRegion & region, bool isSL=false, bool is
 
 
   cout<<"raw yield = "<<nominal<<" +/- "<<nominalerr<<endl;
-  TH1F* totalPdfWeights = (TH1F*) files_[currentConfig_][sampleOfInterest]->Get("pdfWeightSum");
+  TH1D* totalPdfWeightsCTEQ = (TH1D*) files_[currentConfig_][sampleOfInterest]->Get("pdfWeightSumCTEQ");
+  const  float nominalweight=   totalPdfWeightsCTEQ->GetBinContent(1);
+
+  TH1D* totalPdfWeightsMSTW = (TH1D*) files_[currentConfig_][sampleOfInterest]->Get("pdfWeightSumMSTW");
+  cout<< nominalweight<<"\t"<<   totalPdfWeightsMSTW->GetBinContent(1)<<endl;
+
+  TH1D* totalPdfWeightsNNPDF = (TH1D*) files_[currentConfig_][sampleOfInterest]->Get("pdfWeightSumNNPDF");
+  cout<< nominalweight<<"\t"<<   totalPdfWeightsNNPDF->GetBinContent(1)<<endl;
+
   TTree* thetree = (TTree*) files_[currentConfig_][sampleOfInterest]->Get("reducedTree");
-  const  float nominalweight=   totalPdfWeights->GetBinContent(1);
+
 
   usePUweight_=true;
   drawPlots(var,nbins,low,high,xtitle,"events","dummyH");
@@ -156,8 +165,6 @@ void signalSystematics2011(const SearchRegion & region, bool isSL=false, bool is
     currentConfig_=configDescriptions_[j];
     drawPlots(var,nbins,low,high,xtitle,"events","dummyH");
     double thisn=getIntegral(sampleOfInterest);
-    //    double thisnerr=getIntegralErr(sampleOfInterest);
-    //    cout<<currentConfig_<<"\t"<<100*(thisn-nominal)/nominal<<endl;
     if (j%2==0) {
       var2=fabs(100*(thisn-nominal)/nominal);
       double bigger = var2>var1? var2:var1;
@@ -172,27 +179,149 @@ void signalSystematics2011(const SearchRegion & region, bool isSL=false, bool is
   double largest=0;
   double smallest=1e9;
 
-  for (int i=1; i<=44; i++) { //hard code that there are 44+1 pdf weights
+  //debug
+//   TH1D*  HyieldsCTEQ = new TH1D("HyieldsCTEQ","CTEQ yields",100,0,200);
+//   TH1D*  HyieldsMSTW = new TH1D("HyieldsMSTW","MSTW yields",100,0,200);
+//   TH1D*  HyieldsNNPDF= new TH1D("HyieldsNNPDF","NNPDF yields",100,0,200);
+
+  double percentCTEQ=0,percentMSTW=0,percentNNPDF=0;
+
+  // ~~~~~~~~~~~~ CTEQ ~~~~~~~~~~
+  { //because i'm using horrible unstructured code here, give the variables a scope
+  double Xplus[22];// Xplus[0]=0;
+  double Xminus[22];// Xminus[0]=0;
+  for (int i=1; i<=44; i++) { //there are 44+1 pdf weights
     //get the sum of weight[i] for the whole sample with no cuts
-    float totalweight=   totalPdfWeights->GetBinContent(i+1);
+    float totalweight=   totalPdfWeightsCTEQ->GetBinContent(i+1);
     TString extraWeight=""; extraWeight+=nominalweight; extraWeight+="/"; extraWeight+=totalweight;
     //then get the yield after cuts with extra weight pdfWeights[i]/sum
     TH1D pdfEventCounter("pdfEventCounter","pdfEventCounter",1,0,1e9);
     pdfEventCounter.Sumw2();
-    thetree->Project("pdfEventCounter","HT",getCutString(false, "",extraWeight,i).Data());
-    //cout<<i<<"\t"<<pdfEventCounter.Integral()<<endl;
-    if ( pdfEventCounter.Integral()> largest) largest = pdfEventCounter.Integral();
-    if (pdfEventCounter.Integral()<smallest) smallest = pdfEventCounter.Integral();
-    pdfEventCounter.Reset(); //just to be safe
+    thetree->Project("pdfEventCounter","HT",getCutString(false, "",extraWeight,i,"CTEQ").Data());
+    if (i%2==0) {
+      Xminus[(i-2)/2] = pdfEventCounter.Integral();
+    }
+    else {
+      Xplus[(i-1)/2] = pdfEventCounter.Integral();
+    }
+    //for legacy comparison
+    if (pdfEventCounter.Integral() > largest) largest = pdfEventCounter.Integral();
+    if (pdfEventCounter.Integral() < smallest) smallest = pdfEventCounter.Integral();
+    //    HyieldsCTEQ->Fill(pdfEventCounter.Integral());
+    pdfEventCounter.Reset();
   }
 
-  double pdfunc= ( fabs((smallest-nominal)/nominal) > fabs((largest-nominal)/nominal) ) ? fabs((smallest-nominal)/nominal):fabs((largest-nominal)/nominal);
-  cout<<"PDF\t"<<100*pdfunc<<endl;
-  
+  double XplusMax = 0;
+  double XminusMax = 0;
+  for (int i=0; i<22; i++) {
+    double diff1 =  Xplus[i] - nominal ;
+    double diff2 =  Xminus[i] - nominal ;
+    double larger = diff1>diff2 ? diff1 : diff2;
+    if ( 0 > larger ) larger = 0;
+    XplusMax += larger*larger;
+  }
+  for (int i=0; i<22; i++) {
+    double diff1 =  nominal - Xplus[i] ;
+    double diff2 =  nominal - Xminus[i] ;
+    double larger = diff1>diff2 ? diff1 : diff2;
+    if ( 0 > larger ) larger = 0;
+    XminusMax += larger*larger;
+  }
+  XplusMax = sqrt(XplusMax);
+  XminusMax = sqrt(XminusMax);
+
+  //  double pdfunc= ( fabs((smallest-nominal)/nominal) > fabs((largest-nominal)/nominal) ) ? fabs((smallest-nominal)/nominal):fabs((largest-nominal)/nominal);
+  //  cout<<"PDF old method\t"<<100*pdfunc<<endl;
+  const double scale = 1.645;
+
+  cout<<"CTEQ old method\t"<<nominal-smallest<<"\t"<<largest-nominal<<endl;
+
+  cout<<"CTEQ new method\t"<<XminusMax/scale<<"\t"<<XplusMax/scale<<endl;
+  percentCTEQ = 0.5* ( XminusMax/scale + XplusMax/scale);
+  percentCTEQ = 100* percentCTEQ/nominal;
+  }
+
+  // ~~~~~~~~~~~~ MSTW ~~~~~~~~~~
+  // i really dislike copy/pasting code like this, but i'm tired....
+  {
+  double Xplus[20];// Xplus[0]=0;
+  double Xminus[20];// Xminus[0]=0;
+  for (int i=1; i<=40; i++) { //there are 40+1 pdf weights
+    //get the sum of weight[i] for the whole sample with no cuts
+    float totalweight=   totalPdfWeightsMSTW->GetBinContent(i+1);
+    TString extraWeight=""; extraWeight+=nominalweight; extraWeight+="/"; extraWeight+=totalweight;
+    //then get the yield after cuts with extra weight pdfWeights[i]/sum
+    TH1D pdfEventCounter("pdfEventCounter","pdfEventCounter",1,0,1e9);
+    pdfEventCounter.Sumw2();
+    thetree->Project("pdfEventCounter","HT",getCutString(false, "",extraWeight,i,"MSTW").Data());
+    if (i%2==0) {
+      Xminus[(i-2)/2] = pdfEventCounter.Integral();
+    }
+    else {
+      Xplus[(i-1)/2] = pdfEventCounter.Integral();
+    }
+    //    HyieldsMSTW->Fill(pdfEventCounter.Integral());
+  }
+
+  double XplusMax = 0;
+  double XminusMax = 0;
+  for (int i=0; i<20; i++) {
+    double diff1 =  Xplus[i] - nominal ;
+    double diff2 =  Xminus[i] - nominal ;
+    double larger = diff1>diff2 ? diff1 : diff2;
+    if ( 0 > larger ) larger = 0;
+    XplusMax += larger*larger;
+  }
+  for (int i=0; i<20; i++) {
+    double diff1 =  nominal - Xplus[i] ;
+    double diff2 =  nominal - Xminus[i] ;
+    double larger = diff1>diff2 ? diff1 : diff2;
+    if ( 0 > larger ) larger = 0;
+    XminusMax += larger*larger;
+  }
+  XplusMax = sqrt(XplusMax);
+  XminusMax = sqrt(XminusMax);
+  cout<<"MSTW new method\t"<<XminusMax<<"\t"<<XplusMax<<endl;
+  percentMSTW = 0.5* ( XminusMax + XplusMax);
+  percentMSTW = 100* percentMSTW/nominal;
+
+  }
+
+  // ~~~~~~~~~~~~~~~~ NNPDF ~~~~~~~~~~~(see emails from H&S -- just take the RMS as the error)
+  {
+    double totalX=0,totalX2=0;
+    int n=0;
+    for (int i=1; i<=99; i++) { //0 is just weight 1. there are 99 others
+      //get the sum of weight[i] for the whole sample with no cuts
+      float totalweight=   totalPdfWeightsNNPDF->GetBinContent(i+1); //i really did store the total in bin i+1
+      TString extraWeight=""; extraWeight+=nominalweight; extraWeight+="/"; extraWeight+=totalweight;
+      //then get the yield after cuts with extra weight pdfWeights[i]/sum
+      TH1D pdfEventCounter("pdfEventCounter","pdfEventCounter",1,0,1e9);
+      pdfEventCounter.Sumw2();
+      thetree->Project("pdfEventCounter","HT",getCutString(false, "",extraWeight,i,"NNPDF").Data());
+      totalX += pdfEventCounter.Integral();
+      totalX2 += pdfEventCounter.Integral()*pdfEventCounter.Integral();
+      n++;
+      //      HyieldsNNPDF->Fill(pdfEventCounter.Integral());
+      pdfEventCounter.Reset();
+    }
+    totalX/= double(n);
+    totalX2/=double(n);
+    cout<<"NNPDF method\t"<<sqrt(totalX2-(totalX*totalX))<<endl;
+    percentNNPDF = 100*sqrt(totalX2-(totalX*totalX)) / nominal;
+  }
+
+  if (percentCTEQ > percentMSTW) percentMSTW=percentCTEQ;
+  if (percentNNPDF > percentMSTW) percentMSTW = percentNNPDF;
+  cout<<"PDF uncertainty (%) = "<<percentMSTW<<endl;
+
 }
 
 void runPdf2011() {
   setSearchRegions();
+    signalSystematics2011(searchRegions_[0]);
+    return;
+
   for (unsigned int i=0; i<searchRegions_.size(); i++) {
     signalSystematics2011(sbRegions_[i]);
     signalSystematics2011(searchRegions_[i]);
