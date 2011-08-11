@@ -857,7 +857,7 @@ void AN2011_prescale( TString btagselection="ge1b" ) {
   // ==========================
 
   TCut util = "pass_utilityHLT_HT300>=1 && weight<1000";
-  lumiScale_ = 16.3030312; //customize lumiScale_
+  lumiScale_ = 19.23288; //customize lumiScale_
 
   // ========= regular N-1 plots
 
@@ -1062,7 +1062,7 @@ void AN2011_r() {
   doRatioPlot(true);
   drawLegend(true);
   setPlotMinimum(0); setPlotMaximum(0.5);
-  lumiScale_ = 16.3030312; //customize lumiScale_
+  lumiScale_ = 19.23288; //customize lumiScale_
   resetSamples();
   doData(true);
   TCut util = "pass_utilityHLT_HT300>=1 && weight<1000";
@@ -2525,7 +2525,7 @@ void drawQCDreweight(bool loose = true){
   
   //-- LSB plots
   //------------
-  lumiScale_ = 16.3030312;
+  lumiScale_ = 19.23288;
   
   selection_ = base && LSB && util && failmdpn && antitag;
   drawSimple("njets",nvarbins,varbins,histfilename, "h_LSB_fDP_antib_njets_data", "data");
@@ -2606,7 +2606,7 @@ void studyPrescale_r(int ibtag = 4) {
   doRatioPlot(true);
   doData(true);
 
-  lumiScale_ = 16.3030312; //customize lumiScale_
+  lumiScale_ = 19.23288; //customize lumiScale_
 
   //TString btagselection="antib";
   //TCut btagcut = "nbjetsSSVHPT==0";
@@ -2713,7 +2713,7 @@ void studyNjet(int ibtag=3){
   doRatioPlot(true);
   doData(true);
 
-  //lumiScale_ = 16.3030312; //customize lumiScale_
+  //lumiScale_ = 19.23288; //customize lumiScale_
   //TString btagselection="antib"; 
   //TCut btagcut = "nbjetsSSVHPT==0"; 
 
@@ -2770,7 +2770,7 @@ void studyNjet(int ibtag=3){
   selection_ =TCut("HT>=350 && cutPV==1 && cutEleVeto==1 && cutMuVeto==1 && cutTrigger==1 && MET>=150 && weight<1000")&&theBTaggingCut && failmdp;
   drawPlots("njets",7,2.5,10,"njets","Events", "H_njets_physics_"+btagstring);
   
-  lumiScale_ = 16.3030312; //customize lumiScale_
+  lumiScale_ = 19.23288; //customize lumiScale_
   selection_ =TCut("HT>=350 && cutPV==1 && cutEleVeto==1 && cutMuVeto==1")&&util&&LSB&&theBTaggingCut&&failmdp;
   drawPlots("njets",7,2.5,10,"njets","Events", "H_njets_prescaled_"+btagstring);
 }
@@ -2785,7 +2785,7 @@ void studyRqcd(int ibtag = 4){
   doRatioPlot(true);
   doData(false);
 
-  lumiScale_ = 16.3030312; //customize lumiScale_
+  lumiScale_ = 19.23288; //customize lumiScale_
 
   //TString btagselection="antib";
   //TCut btagcut = "nbjetsSSVHPT==0";
