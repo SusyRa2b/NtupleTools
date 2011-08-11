@@ -410,7 +410,7 @@ void changeVariables(TRandom* random, double jetLossProbability, int& nLostJets)
   //myEDM_event_temp	          = myEDM_event;	  
   //myEDM_isRealData_temp	          = myEDM_isRealData;	  
   //myEDM_luminosityBlock_temp      = myEDM_luminosityBlock;
-  //myEDM_run_temp                  = myEDM_run;      
+  //myEDM_run_temp                  = myEDM_run;
 
   myJetsPF                = new std::vector<jet3_s>;	  
   //myElectronsPF	          = new std::vector<electron3_s>;	  
@@ -473,8 +473,7 @@ void changeVariables(TRandom* random, double jetLossProbability, int& nLostJets)
   //myEDM_event_temp	          = myEDM_event;	  
   //myEDM_isRealData_temp	          = myEDM_isRealData;	  
   //myEDM_luminosityBlock_temp      = myEDM_luminosityBlock;
-  //myEDM_run_temp                  = myEDM_run;         
-
+  //myEDM_run_temp                  = myEDM_run;
   myJetsPF                = new std::vector<jet1_s>;	   //jmt -- switch to PF2PAT
   //myElectronsPF	          = new std::vector<electron1_s>;	  
   //myMuonsPF		  = new std::vector<muon1_s>;	  
@@ -760,6 +759,74 @@ bool passLumiMask(){
   return true;
 
 }
+
+void loadBEFailEvents(std::vector<int> &vrun, std::vector<int> &vlumi, std::vector<int> &vevent){
+
+  std::ifstream inFile;
+  inFile.open("BEfilter_fail_eventlist.txt");        
+
+  if(!inFile) std::cout << "ERROR: can't open event list" << std::endl;
+  while(!inFile.eof()) {
+    std::string line;
+    getline(inFile,line);
+    std::string field;
+    std::stringstream ss( line );
+    //uint array[3];                                                          
+
+    int value;
+    uint i = 0;
+    while (getline( ss, field, ':')){
+      std::stringstream fs(field);
+      value = 0;
+      fs >> value;
+      //fs >> array[i] ;                                                                       
+
+      if(i==0)vrun.push_back(value);
+      else if (i==1) vlumi.push_back(value);
+      else vevent.push_back(value);
+      i++;
+    }
+    //std::cout << array[0] << ":" << array[1] << ":" << array[2] << std::endl; 
+    //if(event.id().run() == array[0] && event.id().luminosityBlock() == array[1] && event.id().event() == array[2]){ 
+    //  eventPassTrigger = true; break;
+    //}                                                                        
+  }
+  inFile.close();
+
+
+}
+
+bool passBEFilter(){
+
+  int lumi =  TMath::Nint( *myEDM_luminosityBlock );
+  int run = TMath::Nint( *myEDM_run );
+  int event = TMath::Nint( *myEDM_event );
+
+  //These are only events in the 8 "boxes"
+  //(SR_SIG,SR_SB, SL_SIG,SL_SB, LDP_SIG,LDP_SB, LSB, and LSB_LDP)
+  //that otherwise passed their respective offline (loose) cuts
+  std::vector<int> vrun,vlumi,vevent;
+
+  loadBEFailEvents(vrun, vlumi, vevent);
+
+  bool passBEFilter = true;
+  for(uint i = 0; i< vevent.size(); ++i){
+    if( event == vevent.at(i)){
+      if( lumi == vlumi.at(i)){
+	if( run == vrun.at(i)){
+	  passBEFilter = false;
+	  break;
+	}
+      }
+    }
+  }
+
+  return passBEFilter;
+
+}
+
+
+
 
 
 bool passHLT() { 
@@ -3147,6 +3214,7 @@ void reducedTree(TString outputpath, itreestream& stream)
   bool	ra2ecaltpFilter;
   bool	scrapingvetoFilter;
   bool	trackingfailureFilter;
+  bool	ra2ecalbeFilter;
 
   bool passCleaning;
   int PBNRcode;
@@ -3247,6 +3315,7 @@ void reducedTree(TString outputpath, itreestream& stream)
   reducedTree.Branch("ra2ecaltpFilter",&ra2ecaltpFilter,"ra2ecaltpFilter/O");
   reducedTree.Branch("scrapingvetoFilter",&scrapingvetoFilter,"scrapingvetoFilter/O");
   reducedTree.Branch("trackingfailureFilter",&trackingfailureFilter,"trackingfailureFilter/O");
+  reducedTree.Branch("ra2ecalbeFilter",&ra2ecalbeFilter,"ra2ecalbeFilter/O");
   reducedTree.Branch("passCleaning",&passCleaning,"passCleaning/O");
   reducedTree.Branch("PBNRcode",&PBNRcode,"PBNRcode/I");
 
@@ -3418,7 +3487,7 @@ void reducedTree(TString outputpath, itreestream& stream)
     getPdfWeights(pdfWeights,&pdfWeightSum);
 
     if ( passCut("cutLumiMask") && (passCut("cutTrigger") || passCut("cutUtilityTrigger")) && passCut("cutHT") ) {
-    
+
            
       //if (entry%1000000==0) checkTimer(entry,nevents);
       weight = getWeight(nevents);
@@ -3559,7 +3628,9 @@ void reducedTree(TString outputpath, itreestream& stream)
       ra2ecaltpFilter = doubleToBool(triggerresultshelper1_ra2ecaltpFilter) ;
       scrapingvetoFilter = doubleToBool(triggerresultshelper1_scrapingvetoFilter) ;
       trackingfailureFilter = doubleToBool(triggerresultshelper1_trackingfailureFilter) ;
+      ra2ecalbeFilter = passBEFilter() ;
 
+      //exclude ra2ecalbefilter for now
       passCleaning = csctighthaloFilter && eenoiseFilter && greedymuonFilter && hbhenoiseFilter && inconsistentmuonFilter && ra2ecaltpFilter && scrapingvetoFilter && trackingfailureFilter;
       
       PBNRcode = doPBNR();
