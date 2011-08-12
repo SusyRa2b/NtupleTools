@@ -3,7 +3,7 @@
 //-----------------------------------------------------------------------------
 // File:        BasicLoopCU.h
 // Description: Analyzer header for ntuples created by TheNtupleMaker
-// Created:     Fri Jul 29 10:04:33 2011 by mkntanalyzer.py
+// Created:     Thu Aug 11 09:14:35 2011 by mkntanalyzer.py
 // Author:      Wee Don Teo
 //-----------------------------------------------------------------------------
 
@@ -209,78 +209,78 @@ getFilenames(std::string filelist)
 double	beamspot_x0;
 double	beamspot_y0;
 double	beamspot_z0;
-std::vector<double>	electron1_caloIso(7,0);
-std::vector<double>	electron1_charge(7,0);
-std::vector<double>	electron1_chargedHadronIso(7,0);
-std::vector<double>	electron1_convDcot(7,0);
-std::vector<double>	electron1_convDist(7,0);
-std::vector<double>	electron1_dB(7,0);
-std::vector<double>	electron1_deltaEtaSuperClusterTrackAtVtx(7,0);
-std::vector<double>	electron1_deltaPhiSuperClusterTrackAtVtx(7,0);
-std::vector<double>	electron1_dr03EcalRecHitSumEt(7,0);
-std::vector<double>	electron1_dr03HcalTowerSumEt(7,0);
-std::vector<double>	electron1_dr03TkSumPt(7,0);
-std::vector<double>	electron1_ecalIso(7,0);
-std::vector<double>	electron1_eidRobustTight(7,0);
-std::vector<double>	electron1_energy(7,0);
-std::vector<double>	electron1_et(7,0);
-std::vector<double>	electron1_eta(7,0);
-std::vector<double>	electron1_genLepton_eta(7,0);
-std::vector<double>	electron1_genLepton_pdgId(7,0);
-std::vector<double>	electron1_genLepton_phi(7,0);
-std::vector<double>	electron1_genLepton_pt(7,0);
-std::vector<double>	electron1_gsfTrack_d0(7,0);
-std::vector<double>	electron1_gsfTrack_trackerExpectedHitsInner_numberOfLostHits(7,0);
-std::vector<double>	electron1_hadronicOverEm(7,0);
-std::vector<double>	electron1_hcalIso(7,0);
-std::vector<double>	electron1_neutralHadronIso(7,0);
-std::vector<double>	electron1_phi(7,0);
-std::vector<double>	electron1_photonIso(7,0);
-std::vector<double>	electron1_pt(7,0);
-std::vector<double>	electron1_sigmaIetaIeta(7,0);
-std::vector<double>	electron1_superCluster_eta(7,0);
-std::vector<double>	electron1_trackIso(7,0);
-std::vector<double>	electron1_vertex_z(7,0);
-std::vector<double>	electron1_vz(7,0);
-std::vector<double>	electron_caloIso(15,0);
-std::vector<double>	electron_charge(15,0);
-std::vector<double>	electron_chargedHadronIso(15,0);
-std::vector<double>	electron_convDcot(15,0);
-std::vector<double>	electron_convDist(15,0);
-std::vector<double>	electron_dB(15,0);
-std::vector<double>	electron_deltaEtaSuperClusterTrackAtVtx(15,0);
-std::vector<double>	electron_deltaPhiSuperClusterTrackAtVtx(15,0);
-std::vector<double>	electron_dr03EcalRecHitSumEt(15,0);
-std::vector<double>	electron_dr03HcalTowerSumEt(15,0);
-std::vector<double>	electron_dr03TkSumPt(15,0);
-std::vector<double>	electron_ecalIso(15,0);
-std::vector<double>	electron_eidRobustTight(15,0);
-std::vector<double>	electron_energy(15,0);
-std::vector<double>	electron_et(15,0);
-std::vector<double>	electron_eta(15,0);
-std::vector<double>	electron_genLepton_eta(15,0);
-std::vector<double>	electron_genLepton_pdgId(15,0);
-std::vector<double>	electron_genLepton_phi(15,0);
-std::vector<double>	electron_genLepton_pt(15,0);
-std::vector<double>	electron_gsfTrack_d0(15,0);
-std::vector<double>	electron_gsfTrack_trackerExpectedHitsInner_numberOfLostHits(15,0);
-std::vector<double>	electron_hadronicOverEm(15,0);
-std::vector<double>	electron_hcalIso(15,0);
-std::vector<double>	electron_neutralHadronIso(15,0);
-std::vector<double>	electron_phi(15,0);
-std::vector<double>	electron_photonIso(15,0);
-std::vector<double>	electron_pt(15,0);
-std::vector<double>	electron_sigmaIetaIeta(15,0);
-std::vector<double>	electron_simpleEleId80cIso(15,0);
-std::vector<double>	electron_simpleEleId80relIso(15,0);
-std::vector<double>	electron_simpleEleId95cIso(15,0);
-std::vector<double>	electron_simpleEleId95relIso(15,0);
-std::vector<double>	electron_superCluster_eta(15,0);
-std::vector<double>	electron_trackIso(15,0);
-std::vector<double>	electron_vertex_z(15,0);
-std::vector<double>	electron_vz(15,0);
-std::vector<double>	electronhelper1_dxywrtBeamSpot(7,0);
-std::vector<double>	electronhelper_dxywrtBeamSpot(15,0);
+std::vector<double>	electron1_caloIso(9,0);
+std::vector<double>	electron1_charge(9,0);
+std::vector<double>	electron1_chargedHadronIso(9,0);
+std::vector<double>	electron1_convDcot(9,0);
+std::vector<double>	electron1_convDist(9,0);
+std::vector<double>	electron1_dB(9,0);
+std::vector<double>	electron1_deltaEtaSuperClusterTrackAtVtx(9,0);
+std::vector<double>	electron1_deltaPhiSuperClusterTrackAtVtx(9,0);
+std::vector<double>	electron1_dr03EcalRecHitSumEt(9,0);
+std::vector<double>	electron1_dr03HcalTowerSumEt(9,0);
+std::vector<double>	electron1_dr03TkSumPt(9,0);
+std::vector<double>	electron1_ecalIso(9,0);
+std::vector<double>	electron1_eidRobustTight(9,0);
+std::vector<double>	electron1_energy(9,0);
+std::vector<double>	electron1_et(9,0);
+std::vector<double>	electron1_eta(9,0);
+std::vector<double>	electron1_genLepton_eta(9,0);
+std::vector<double>	electron1_genLepton_pdgId(9,0);
+std::vector<double>	electron1_genLepton_phi(9,0);
+std::vector<double>	electron1_genLepton_pt(9,0);
+std::vector<double>	electron1_gsfTrack_d0(9,0);
+std::vector<double>	electron1_gsfTrack_trackerExpectedHitsInner_numberOfLostHits(9,0);
+std::vector<double>	electron1_hadronicOverEm(9,0);
+std::vector<double>	electron1_hcalIso(9,0);
+std::vector<double>	electron1_neutralHadronIso(9,0);
+std::vector<double>	electron1_phi(9,0);
+std::vector<double>	electron1_photonIso(9,0);
+std::vector<double>	electron1_pt(9,0);
+std::vector<double>	electron1_sigmaIetaIeta(9,0);
+std::vector<double>	electron1_superCluster_eta(9,0);
+std::vector<double>	electron1_trackIso(9,0);
+std::vector<double>	electron1_vertex_z(9,0);
+std::vector<double>	electron1_vz(9,0);
+std::vector<double>	electron_caloIso(17,0);
+std::vector<double>	electron_charge(17,0);
+std::vector<double>	electron_chargedHadronIso(17,0);
+std::vector<double>	electron_convDcot(17,0);
+std::vector<double>	electron_convDist(17,0);
+std::vector<double>	electron_dB(17,0);
+std::vector<double>	electron_deltaEtaSuperClusterTrackAtVtx(17,0);
+std::vector<double>	electron_deltaPhiSuperClusterTrackAtVtx(17,0);
+std::vector<double>	electron_dr03EcalRecHitSumEt(17,0);
+std::vector<double>	electron_dr03HcalTowerSumEt(17,0);
+std::vector<double>	electron_dr03TkSumPt(17,0);
+std::vector<double>	electron_ecalIso(17,0);
+std::vector<double>	electron_eidRobustTight(17,0);
+std::vector<double>	electron_energy(17,0);
+std::vector<double>	electron_et(17,0);
+std::vector<double>	electron_eta(17,0);
+std::vector<double>	electron_genLepton_eta(17,0);
+std::vector<double>	electron_genLepton_pdgId(17,0);
+std::vector<double>	electron_genLepton_phi(17,0);
+std::vector<double>	electron_genLepton_pt(17,0);
+std::vector<double>	electron_gsfTrack_d0(17,0);
+std::vector<double>	electron_gsfTrack_trackerExpectedHitsInner_numberOfLostHits(17,0);
+std::vector<double>	electron_hadronicOverEm(17,0);
+std::vector<double>	electron_hcalIso(17,0);
+std::vector<double>	electron_neutralHadronIso(17,0);
+std::vector<double>	electron_phi(17,0);
+std::vector<double>	electron_photonIso(17,0);
+std::vector<double>	electron_pt(17,0);
+std::vector<double>	electron_sigmaIetaIeta(17,0);
+std::vector<double>	electron_simpleEleId80cIso(17,0);
+std::vector<double>	electron_simpleEleId80relIso(17,0);
+std::vector<double>	electron_simpleEleId95cIso(17,0);
+std::vector<double>	electron_simpleEleId95relIso(17,0);
+std::vector<double>	electron_superCluster_eta(17,0);
+std::vector<double>	electron_trackIso(17,0);
+std::vector<double>	electron_vertex_z(17,0);
+std::vector<double>	electron_vz(17,0);
+std::vector<double>	electronhelper1_dxywrtBeamSpot(9,0);
+std::vector<double>	electronhelper_dxywrtBeamSpot(17,0);
 double	eventhelper_bunchCrossing;
 double	eventhelper_event;
 double	eventhelper_isRealData;
@@ -290,16 +290,26 @@ double	eventhelperextra_trackMPT1phi;
 double	eventhelperextra_trackMPT1pt;
 double	eventhelperextra_trackMPT5phi;
 double	eventhelperextra_trackMPT5pt;
+double	eventlhehelperextra_m0;
+double	eventlhehelperextra_m12;
 double	geneventinfoproduct_pdf1;
 double	geneventinfoproduct_pdf2;
 double	geneventinfoproduct_scalePDF;
 double	geneventinfoproduct_weight;
 double	geneventinfoproduct_x1;
 double	geneventinfoproduct_x2;
-std::vector<double>	geneventinfoproducthelper_pdf1(91,0);
-std::vector<double>	geneventinfoproducthelper_pdf2(91,0);
-std::vector<double>	geneventinfoproducthelper_pdfweight(91,0);
-std::vector<double>	geneventinfoproducthelper_pdfweightsum(91,0);
+std::vector<double>	geneventinfoproducthelper1_pdf1(91,0);
+std::vector<double>	geneventinfoproducthelper1_pdf2(91,0);
+std::vector<double>	geneventinfoproducthelper1_pdfweight(91,0);
+std::vector<double>	geneventinfoproducthelper1_pdfweightsum(91,0);
+std::vector<double>	geneventinfoproducthelper2_pdf1(83,0);
+std::vector<double>	geneventinfoproducthelper2_pdf2(83,0);
+std::vector<double>	geneventinfoproducthelper2_pdfweight(83,0);
+std::vector<double>	geneventinfoproducthelper2_pdfweightsum(83,0);
+std::vector<double>	geneventinfoproducthelper_pdf1(201,0);
+std::vector<double>	geneventinfoproducthelper_pdf2(201,0);
+std::vector<double>	geneventinfoproducthelper_pdfweight(201,0);
+std::vector<double>	geneventinfoproducthelper_pdfweightsum(201,0);
 std::vector<double>	genparticlehelperra2_charge(73,0);
 std::vector<double>	genparticlehelperra2_eta(73,0);
 std::vector<double>	genparticlehelperra2_firstDaughter(73,0);
@@ -316,156 +326,156 @@ double	genruninfoproduct_externalXSecLO_value;
 double	genruninfoproduct_filterEfficiency;
 double	genruninfoproduct_internalXSec_error;
 double	genruninfoproduct_internalXSec_value;
-std::vector<double>	jet1_HFEMEnergy(177,0);
-std::vector<double>	jet1_HFEMMultiplicity(177,0);
-std::vector<double>	jet1_HFHadronEnergy(177,0);
-std::vector<double>	jet1_HFHadronMultiplicity(177,0);
-std::vector<double>	jet1_chargedEmEnergyFraction(177,0);
-std::vector<double>	jet1_chargedHadronEnergyFraction(177,0);
-std::vector<double>	jet1_chargedHadronMultiplicity(177,0);
-std::vector<double>	jet1_chargedMuEnergy(177,0);
-std::vector<double>	jet1_chargedMultiplicity(177,0);
-std::vector<double>	jet1_combinedSecondaryVertexBJetTags(177,0);
-std::vector<double>	jet1_combinedSecondaryVertexMVABJetTags(177,0);
-std::vector<double>	jet1_electronEnergy(177,0);
-std::vector<double>	jet1_electronMultiplicity(177,0);
-std::vector<double>	jet1_energy(177,0);
-std::vector<double>	jet1_et(177,0);
-std::vector<double>	jet1_eta(177,0);
-std::vector<double>	jet1_genJet_energy(177,0);
-std::vector<double>	jet1_genJet_eta(177,0);
-std::vector<double>	jet1_genJet_invisibleEnergy(177,0);
-std::vector<double>	jet1_genJet_phi(177,0);
-std::vector<double>	jet1_genJet_pt(177,0);
-std::vector<double>	jet1_genParton_energy(177,0);
-std::vector<double>	jet1_genParton_eta(177,0);
-std::vector<double>	jet1_genParton_pdgId(177,0);
-std::vector<double>	jet1_genParton_phi(177,0);
-std::vector<double>	jet1_genParton_pt(177,0);
-std::vector<double>	jet1_jetArea(177,0);
-std::vector<double>	jet1_jetBProbabilityBJetTags(177,0);
-std::vector<double>	jet1_jetID_fHPD(177,0);
-std::vector<double>	jet1_jetID_n90Hits(177,0);
-std::vector<double>	jet1_jetProbabilityBJetTags(177,0);
-std::vector<double>	jet1_muonEnergy(177,0);
-std::vector<double>	jet1_neutralEmEnergyFraction(177,0);
-std::vector<double>	jet1_neutralHadronEnergy(177,0);
-std::vector<double>	jet1_neutralHadronEnergyFraction(177,0);
-std::vector<double>	jet1_neutralHadronMultiplicity(177,0);
-std::vector<double>	jet1_neutralMultiplicity(177,0);
-std::vector<double>	jet1_numberOfDaughters(177,0);
-std::vector<double>	jet1_partonFlavour(177,0);
-std::vector<double>	jet1_phi(177,0);
-std::vector<double>	jet1_photonEnergy(177,0);
-std::vector<double>	jet1_photonMultiplicity(177,0);
-std::vector<double>	jet1_pt(177,0);
-std::vector<double>	jet1_simpleSecondaryVertexBJetTags(177,0);
-std::vector<double>	jet1_simpleSecondaryVertexHighEffBJetTags(177,0);
-std::vector<double>	jet1_simpleSecondaryVertexHighPurBJetTags(177,0);
-std::vector<double>	jet1_softElectronByIP3dBJetTags(177,0);
-std::vector<double>	jet1_softElectronByPtBJetTags(177,0);
-std::vector<double>	jet1_softMuonBJetTags(177,0);
-std::vector<double>	jet1_softMuonByIP3dBJetTags(177,0);
-std::vector<double>	jet1_softMuonByPtBJetTags(177,0);
-std::vector<double>	jet1_trackCountingHighEffBJetTags(177,0);
-std::vector<double>	jet1_trackCountingHighPurBJetTags(177,0);
-std::vector<double>	jet1_uncor_energy(177,0);
-std::vector<double>	jet1_uncor_et(177,0);
-std::vector<double>	jet1_uncor_eta(177,0);
-std::vector<double>	jet1_uncor_phi(177,0);
-std::vector<double>	jet1_uncor_pt(177,0);
-std::vector<double>	jet_HFEMEnergy(205,0);
-std::vector<double>	jet_HFEMMultiplicity(205,0);
-std::vector<double>	jet_HFHadronEnergy(205,0);
-std::vector<double>	jet_HFHadronMultiplicity(205,0);
-std::vector<double>	jet_chargedEmEnergyFraction(205,0);
-std::vector<double>	jet_chargedHadronEnergyFraction(205,0);
-std::vector<double>	jet_chargedHadronMultiplicity(205,0);
-std::vector<double>	jet_chargedMuEnergy(205,0);
-std::vector<double>	jet_chargedMultiplicity(205,0);
-std::vector<double>	jet_combinedSecondaryVertexBJetTags(205,0);
-std::vector<double>	jet_combinedSecondaryVertexMVABJetTags(205,0);
-std::vector<double>	jet_electronEnergy(205,0);
-std::vector<double>	jet_electronMultiplicity(205,0);
-std::vector<double>	jet_energy(205,0);
-std::vector<double>	jet_et(205,0);
-std::vector<double>	jet_eta(205,0);
-std::vector<double>	jet_genJet_energy(205,0);
-std::vector<double>	jet_genJet_eta(205,0);
-std::vector<double>	jet_genJet_invisibleEnergy(205,0);
-std::vector<double>	jet_genJet_phi(205,0);
-std::vector<double>	jet_genJet_pt(205,0);
-std::vector<double>	jet_genParton_energy(205,0);
-std::vector<double>	jet_genParton_eta(205,0);
-std::vector<double>	jet_genParton_pdgId(205,0);
-std::vector<double>	jet_genParton_phi(205,0);
-std::vector<double>	jet_genParton_pt(205,0);
-std::vector<double>	jet_jetArea(205,0);
-std::vector<double>	jet_jetBProbabilityBJetTags(205,0);
-std::vector<double>	jet_jetID_fHPD(205,0);
-std::vector<double>	jet_jetID_n90Hits(205,0);
-std::vector<double>	jet_jetProbabilityBJetTags(205,0);
-std::vector<double>	jet_muonEnergy(205,0);
-std::vector<double>	jet_neutralEmEnergyFraction(205,0);
-std::vector<double>	jet_neutralHadronEnergy(205,0);
-std::vector<double>	jet_neutralHadronEnergyFraction(205,0);
-std::vector<double>	jet_neutralHadronMultiplicity(205,0);
-std::vector<double>	jet_neutralMultiplicity(205,0);
-std::vector<double>	jet_numberOfDaughters(205,0);
-std::vector<double>	jet_partonFlavour(205,0);
-std::vector<double>	jet_phi(205,0);
-std::vector<double>	jet_photonEnergy(205,0);
-std::vector<double>	jet_photonMultiplicity(205,0);
-std::vector<double>	jet_pt(205,0);
-std::vector<double>	jet_simpleSecondaryVertexBJetTags(205,0);
-std::vector<double>	jet_simpleSecondaryVertexHighEffBJetTags(205,0);
-std::vector<double>	jet_simpleSecondaryVertexHighPurBJetTags(205,0);
-std::vector<double>	jet_softElectronByIP3dBJetTags(205,0);
-std::vector<double>	jet_softElectronByPtBJetTags(205,0);
-std::vector<double>	jet_softMuonBJetTags(205,0);
-std::vector<double>	jet_softMuonByIP3dBJetTags(205,0);
-std::vector<double>	jet_softMuonByPtBJetTags(205,0);
-std::vector<double>	jet_trackCountingHighEffBJetTags(205,0);
-std::vector<double>	jet_trackCountingHighPurBJetTags(205,0);
-std::vector<double>	jet_uncor_energy(205,0);
-std::vector<double>	jet_uncor_et(205,0);
-std::vector<double>	jet_uncor_eta(205,0);
-std::vector<double>	jet_uncor_phi(205,0);
-std::vector<double>	jet_uncor_pt(205,0);
-std::vector<double>	jetcleanhelper_jecFactor(205,0);
-std::vector<double>	jetcleanhelper_jecFactorNoL1Fast(205,0);
-std::vector<double>	jetcleanhelper_jetUncMinus(205,0);
-std::vector<double>	jetcleanhelper_jetUncPlus(205,0);
-std::vector<double>	jetcleanhelper_nSecondaryVertices(205,0);
-std::vector<double>	jetcleanhelper_secondaryVertex0DirectionX(205,0);
-std::vector<double>	jetcleanhelper_secondaryVertex0DirectionY(205,0);
-std::vector<double>	jetcleanhelper_secondaryVertex0DirectionZ(205,0);
-std::vector<double>	jetcleanhelper_secondaryVertex0FlightDistance(205,0);
-std::vector<double>	jetcleanhelper_secondaryVertex0FlightDistanceSig(205,0);
-std::vector<double>	jetcleanhelper_secondaryVertex0Mass(205,0);
-std::vector<double>	jetcleanhelper_secondaryVertex1DirectionX(205,0);
-std::vector<double>	jetcleanhelper_secondaryVertex1DirectionY(205,0);
-std::vector<double>	jetcleanhelper_secondaryVertex1DirectionZ(205,0);
-std::vector<double>	jetcleanhelper_secondaryVertex1FlightDistance(205,0);
-std::vector<double>	jetcleanhelper_secondaryVertex1FlightDistanceSig(205,0);
-std::vector<double>	jetcleanhelper_secondaryVertex1Mass(205,0);
-std::vector<double>	jethelper_jecFactor(177,0);
-std::vector<double>	jethelper_jecFactorNoL1Fast(177,0);
-std::vector<double>	jethelper_jetUncMinus(177,0);
-std::vector<double>	jethelper_jetUncPlus(177,0);
-std::vector<double>	jethelper_nSecondaryVertices(177,0);
-std::vector<double>	jethelper_secondaryVertex0DirectionX(177,0);
-std::vector<double>	jethelper_secondaryVertex0DirectionY(177,0);
-std::vector<double>	jethelper_secondaryVertex0DirectionZ(177,0);
-std::vector<double>	jethelper_secondaryVertex0FlightDistance(177,0);
-std::vector<double>	jethelper_secondaryVertex0FlightDistanceSig(177,0);
-std::vector<double>	jethelper_secondaryVertex0Mass(177,0);
-std::vector<double>	jethelper_secondaryVertex1DirectionX(177,0);
-std::vector<double>	jethelper_secondaryVertex1DirectionY(177,0);
-std::vector<double>	jethelper_secondaryVertex1DirectionZ(177,0);
-std::vector<double>	jethelper_secondaryVertex1FlightDistance(177,0);
-std::vector<double>	jethelper_secondaryVertex1FlightDistanceSig(177,0);
-std::vector<double>	jethelper_secondaryVertex1Mass(177,0);
+std::vector<double>	jet1_HFEMEnergy(157,0);
+std::vector<double>	jet1_HFEMMultiplicity(157,0);
+std::vector<double>	jet1_HFHadronEnergy(157,0);
+std::vector<double>	jet1_HFHadronMultiplicity(157,0);
+std::vector<double>	jet1_chargedEmEnergyFraction(157,0);
+std::vector<double>	jet1_chargedHadronEnergyFraction(157,0);
+std::vector<double>	jet1_chargedHadronMultiplicity(157,0);
+std::vector<double>	jet1_chargedMuEnergy(157,0);
+std::vector<double>	jet1_chargedMultiplicity(157,0);
+std::vector<double>	jet1_combinedSecondaryVertexBJetTags(157,0);
+std::vector<double>	jet1_combinedSecondaryVertexMVABJetTags(157,0);
+std::vector<double>	jet1_electronEnergy(157,0);
+std::vector<double>	jet1_electronMultiplicity(157,0);
+std::vector<double>	jet1_energy(157,0);
+std::vector<double>	jet1_et(157,0);
+std::vector<double>	jet1_eta(157,0);
+std::vector<double>	jet1_genJet_energy(157,0);
+std::vector<double>	jet1_genJet_eta(157,0);
+std::vector<double>	jet1_genJet_invisibleEnergy(157,0);
+std::vector<double>	jet1_genJet_phi(157,0);
+std::vector<double>	jet1_genJet_pt(157,0);
+std::vector<double>	jet1_genParton_energy(157,0);
+std::vector<double>	jet1_genParton_eta(157,0);
+std::vector<double>	jet1_genParton_pdgId(157,0);
+std::vector<double>	jet1_genParton_phi(157,0);
+std::vector<double>	jet1_genParton_pt(157,0);
+std::vector<double>	jet1_jetArea(157,0);
+std::vector<double>	jet1_jetBProbabilityBJetTags(157,0);
+std::vector<double>	jet1_jetID_fHPD(157,0);
+std::vector<double>	jet1_jetID_n90Hits(157,0);
+std::vector<double>	jet1_jetProbabilityBJetTags(157,0);
+std::vector<double>	jet1_muonEnergy(157,0);
+std::vector<double>	jet1_neutralEmEnergyFraction(157,0);
+std::vector<double>	jet1_neutralHadronEnergy(157,0);
+std::vector<double>	jet1_neutralHadronEnergyFraction(157,0);
+std::vector<double>	jet1_neutralHadronMultiplicity(157,0);
+std::vector<double>	jet1_neutralMultiplicity(157,0);
+std::vector<double>	jet1_numberOfDaughters(157,0);
+std::vector<double>	jet1_partonFlavour(157,0);
+std::vector<double>	jet1_phi(157,0);
+std::vector<double>	jet1_photonEnergy(157,0);
+std::vector<double>	jet1_photonMultiplicity(157,0);
+std::vector<double>	jet1_pt(157,0);
+std::vector<double>	jet1_simpleSecondaryVertexBJetTags(157,0);
+std::vector<double>	jet1_simpleSecondaryVertexHighEffBJetTags(157,0);
+std::vector<double>	jet1_simpleSecondaryVertexHighPurBJetTags(157,0);
+std::vector<double>	jet1_softElectronByIP3dBJetTags(157,0);
+std::vector<double>	jet1_softElectronByPtBJetTags(157,0);
+std::vector<double>	jet1_softMuonBJetTags(157,0);
+std::vector<double>	jet1_softMuonByIP3dBJetTags(157,0);
+std::vector<double>	jet1_softMuonByPtBJetTags(157,0);
+std::vector<double>	jet1_trackCountingHighEffBJetTags(157,0);
+std::vector<double>	jet1_trackCountingHighPurBJetTags(157,0);
+std::vector<double>	jet1_uncor_energy(157,0);
+std::vector<double>	jet1_uncor_et(157,0);
+std::vector<double>	jet1_uncor_eta(157,0);
+std::vector<double>	jet1_uncor_phi(157,0);
+std::vector<double>	jet1_uncor_pt(157,0);
+std::vector<double>	jet_HFEMEnergy(185,0);
+std::vector<double>	jet_HFEMMultiplicity(185,0);
+std::vector<double>	jet_HFHadronEnergy(185,0);
+std::vector<double>	jet_HFHadronMultiplicity(185,0);
+std::vector<double>	jet_chargedEmEnergyFraction(185,0);
+std::vector<double>	jet_chargedHadronEnergyFraction(185,0);
+std::vector<double>	jet_chargedHadronMultiplicity(185,0);
+std::vector<double>	jet_chargedMuEnergy(185,0);
+std::vector<double>	jet_chargedMultiplicity(185,0);
+std::vector<double>	jet_combinedSecondaryVertexBJetTags(185,0);
+std::vector<double>	jet_combinedSecondaryVertexMVABJetTags(185,0);
+std::vector<double>	jet_electronEnergy(185,0);
+std::vector<double>	jet_electronMultiplicity(185,0);
+std::vector<double>	jet_energy(185,0);
+std::vector<double>	jet_et(185,0);
+std::vector<double>	jet_eta(185,0);
+std::vector<double>	jet_genJet_energy(185,0);
+std::vector<double>	jet_genJet_eta(185,0);
+std::vector<double>	jet_genJet_invisibleEnergy(185,0);
+std::vector<double>	jet_genJet_phi(185,0);
+std::vector<double>	jet_genJet_pt(185,0);
+std::vector<double>	jet_genParton_energy(185,0);
+std::vector<double>	jet_genParton_eta(185,0);
+std::vector<double>	jet_genParton_pdgId(185,0);
+std::vector<double>	jet_genParton_phi(185,0);
+std::vector<double>	jet_genParton_pt(185,0);
+std::vector<double>	jet_jetArea(185,0);
+std::vector<double>	jet_jetBProbabilityBJetTags(185,0);
+std::vector<double>	jet_jetID_fHPD(185,0);
+std::vector<double>	jet_jetID_n90Hits(185,0);
+std::vector<double>	jet_jetProbabilityBJetTags(185,0);
+std::vector<double>	jet_muonEnergy(185,0);
+std::vector<double>	jet_neutralEmEnergyFraction(185,0);
+std::vector<double>	jet_neutralHadronEnergy(185,0);
+std::vector<double>	jet_neutralHadronEnergyFraction(185,0);
+std::vector<double>	jet_neutralHadronMultiplicity(185,0);
+std::vector<double>	jet_neutralMultiplicity(185,0);
+std::vector<double>	jet_numberOfDaughters(185,0);
+std::vector<double>	jet_partonFlavour(185,0);
+std::vector<double>	jet_phi(185,0);
+std::vector<double>	jet_photonEnergy(185,0);
+std::vector<double>	jet_photonMultiplicity(185,0);
+std::vector<double>	jet_pt(185,0);
+std::vector<double>	jet_simpleSecondaryVertexBJetTags(185,0);
+std::vector<double>	jet_simpleSecondaryVertexHighEffBJetTags(185,0);
+std::vector<double>	jet_simpleSecondaryVertexHighPurBJetTags(185,0);
+std::vector<double>	jet_softElectronByIP3dBJetTags(185,0);
+std::vector<double>	jet_softElectronByPtBJetTags(185,0);
+std::vector<double>	jet_softMuonBJetTags(185,0);
+std::vector<double>	jet_softMuonByIP3dBJetTags(185,0);
+std::vector<double>	jet_softMuonByPtBJetTags(185,0);
+std::vector<double>	jet_trackCountingHighEffBJetTags(185,0);
+std::vector<double>	jet_trackCountingHighPurBJetTags(185,0);
+std::vector<double>	jet_uncor_energy(185,0);
+std::vector<double>	jet_uncor_et(185,0);
+std::vector<double>	jet_uncor_eta(185,0);
+std::vector<double>	jet_uncor_phi(185,0);
+std::vector<double>	jet_uncor_pt(185,0);
+std::vector<double>	jetcleanhelper_jecFactor(185,0);
+std::vector<double>	jetcleanhelper_jecFactorNoL1Fast(185,0);
+std::vector<double>	jetcleanhelper_jetUncMinus(185,0);
+std::vector<double>	jetcleanhelper_jetUncPlus(185,0);
+std::vector<double>	jetcleanhelper_nSecondaryVertices(185,0);
+std::vector<double>	jetcleanhelper_secondaryVertex0DirectionX(185,0);
+std::vector<double>	jetcleanhelper_secondaryVertex0DirectionY(185,0);
+std::vector<double>	jetcleanhelper_secondaryVertex0DirectionZ(185,0);
+std::vector<double>	jetcleanhelper_secondaryVertex0FlightDistance(185,0);
+std::vector<double>	jetcleanhelper_secondaryVertex0FlightDistanceSig(185,0);
+std::vector<double>	jetcleanhelper_secondaryVertex0Mass(185,0);
+std::vector<double>	jetcleanhelper_secondaryVertex1DirectionX(185,0);
+std::vector<double>	jetcleanhelper_secondaryVertex1DirectionY(185,0);
+std::vector<double>	jetcleanhelper_secondaryVertex1DirectionZ(185,0);
+std::vector<double>	jetcleanhelper_secondaryVertex1FlightDistance(185,0);
+std::vector<double>	jetcleanhelper_secondaryVertex1FlightDistanceSig(185,0);
+std::vector<double>	jetcleanhelper_secondaryVertex1Mass(185,0);
+std::vector<double>	jethelper_jecFactor(157,0);
+std::vector<double>	jethelper_jecFactorNoL1Fast(157,0);
+std::vector<double>	jethelper_jetUncMinus(157,0);
+std::vector<double>	jethelper_jetUncPlus(157,0);
+std::vector<double>	jethelper_nSecondaryVertices(157,0);
+std::vector<double>	jethelper_secondaryVertex0DirectionX(157,0);
+std::vector<double>	jethelper_secondaryVertex0DirectionY(157,0);
+std::vector<double>	jethelper_secondaryVertex0DirectionZ(157,0);
+std::vector<double>	jethelper_secondaryVertex0FlightDistance(157,0);
+std::vector<double>	jethelper_secondaryVertex0FlightDistanceSig(157,0);
+std::vector<double>	jethelper_secondaryVertex0Mass(157,0);
+std::vector<double>	jethelper_secondaryVertex1DirectionX(157,0);
+std::vector<double>	jethelper_secondaryVertex1DirectionY(157,0);
+std::vector<double>	jethelper_secondaryVertex1DirectionZ(157,0);
+std::vector<double>	jethelper_secondaryVertex1FlightDistance(157,0);
+std::vector<double>	jethelper_secondaryVertex1FlightDistanceSig(157,0);
+std::vector<double>	jethelper_secondaryVertex1Mass(157,0);
 std::vector<double>	met1_energy(3,0);
 std::vector<double>	met1_et(3,0);
 std::vector<double>	met1_genMET_energy(3,0);
@@ -546,53 +556,55 @@ std::vector<double>	muon1_track_hitPattern_numberOfValidMuonHits(7,0);
 std::vector<double>	muon1_track_hitPattern_numberOfValidPixelHits(7,0);
 std::vector<double>	muon1_track_normalizedChi2(7,0);
 std::vector<double>	muon1_vz(7,0);
-std::vector<double>	muon_AllGlobalMuons(29,0);
-std::vector<double>	muon_AllTrackerMuons(29,0);
-std::vector<double>	muon_GlobalMuonPromptTight(29,0);
-std::vector<double>	muon_charge(29,0);
-std::vector<double>	muon_chargedHadronIso(29,0);
-std::vector<double>	muon_combinedMuon_chi2(29,0);
-std::vector<double>	muon_combinedMuon_ndof(29,0);
-std::vector<double>	muon_combinedMuon_numberOfValidHits(29,0);
-std::vector<double>	muon_dB(29,0);
-std::vector<double>	muon_ecalIso(29,0);
-std::vector<double>	muon_energy(29,0);
-std::vector<double>	muon_et(29,0);
-std::vector<double>	muon_eta(29,0);
-std::vector<double>	muon_genLepton_eta(29,0);
-std::vector<double>	muon_genLepton_pdgId(29,0);
-std::vector<double>	muon_genLepton_phi(29,0);
-std::vector<double>	muon_genLepton_pt(29,0);
-std::vector<double>	muon_globalTrack_chi2(29,0);
-std::vector<double>	muon_globalTrack_hitPattern_numberOfValidTrackerHits(29,0);
-std::vector<double>	muon_globalTrack_ndof(29,0);
-std::vector<double>	muon_globalTrack_pt(29,0);
-std::vector<double>	muon_globalTrack_ptError(29,0);
-std::vector<double>	muon_hcalIso(29,0);
-std::vector<double>	muon_innerTrack_d0(29,0);
-std::vector<double>	muon_innerTrack_hitPattern_pixelLayersWithMeasurement(29,0);
-std::vector<double>	muon_innerTrack_numberOfValidHits(29,0);
-std::vector<double>	muon_innerTrack_phi(29,0);
-std::vector<double>	muon_innerTrack_pt(29,0);
-std::vector<double>	muon_innerTrack_vertex_z(29,0);
-std::vector<double>	muon_isGlobalMuon(29,0);
-std::vector<double>	muon_isTrackerMuon(29,0);
-std::vector<double>	muon_neutralHadronIso(29,0);
-std::vector<double>	muon_numberOfMatches(29,0);
-std::vector<double>	muon_phi(29,0);
-std::vector<double>	muon_photonIso(29,0);
-std::vector<double>	muon_pt(29,0);
-std::vector<double>	muon_trackIso(29,0);
-std::vector<double>	muon_track_d0(29,0);
-std::vector<double>	muon_track_hitPattern_numberOfValidMuonHits(29,0);
-std::vector<double>	muon_track_hitPattern_numberOfValidPixelHits(29,0);
-std::vector<double>	muon_track_normalizedChi2(29,0);
-std::vector<double>	muon_vz(29,0);
+std::vector<double>	muon_AllGlobalMuons(27,0);
+std::vector<double>	muon_AllTrackerMuons(27,0);
+std::vector<double>	muon_GlobalMuonPromptTight(27,0);
+std::vector<double>	muon_charge(27,0);
+std::vector<double>	muon_chargedHadronIso(27,0);
+std::vector<double>	muon_combinedMuon_chi2(27,0);
+std::vector<double>	muon_combinedMuon_ndof(27,0);
+std::vector<double>	muon_combinedMuon_numberOfValidHits(27,0);
+std::vector<double>	muon_dB(27,0);
+std::vector<double>	muon_ecalIso(27,0);
+std::vector<double>	muon_energy(27,0);
+std::vector<double>	muon_et(27,0);
+std::vector<double>	muon_eta(27,0);
+std::vector<double>	muon_genLepton_eta(27,0);
+std::vector<double>	muon_genLepton_pdgId(27,0);
+std::vector<double>	muon_genLepton_phi(27,0);
+std::vector<double>	muon_genLepton_pt(27,0);
+std::vector<double>	muon_globalTrack_chi2(27,0);
+std::vector<double>	muon_globalTrack_hitPattern_numberOfValidTrackerHits(27,0);
+std::vector<double>	muon_globalTrack_ndof(27,0);
+std::vector<double>	muon_globalTrack_pt(27,0);
+std::vector<double>	muon_globalTrack_ptError(27,0);
+std::vector<double>	muon_hcalIso(27,0);
+std::vector<double>	muon_innerTrack_d0(27,0);
+std::vector<double>	muon_innerTrack_hitPattern_pixelLayersWithMeasurement(27,0);
+std::vector<double>	muon_innerTrack_numberOfValidHits(27,0);
+std::vector<double>	muon_innerTrack_phi(27,0);
+std::vector<double>	muon_innerTrack_pt(27,0);
+std::vector<double>	muon_innerTrack_vertex_z(27,0);
+std::vector<double>	muon_isGlobalMuon(27,0);
+std::vector<double>	muon_isTrackerMuon(27,0);
+std::vector<double>	muon_neutralHadronIso(27,0);
+std::vector<double>	muon_numberOfMatches(27,0);
+std::vector<double>	muon_phi(27,0);
+std::vector<double>	muon_photonIso(27,0);
+std::vector<double>	muon_pt(27,0);
+std::vector<double>	muon_trackIso(27,0);
+std::vector<double>	muon_track_d0(27,0);
+std::vector<double>	muon_track_hitPattern_numberOfValidMuonHits(27,0);
+std::vector<double>	muon_track_hitPattern_numberOfValidPixelHits(27,0);
+std::vector<double>	muon_track_normalizedChi2(27,0);
+std::vector<double>	muon_vz(27,0);
 std::vector<double>	muonhelper1_dxywrtBeamSpot(7,0);
 std::vector<double>	muonhelper1_muonPFcandptdiff(7,0);
-std::vector<double>	muonhelper_dxywrtBeamSpot(29,0);
-std::vector<double>	muonhelper_muonPFcandptdiff(29,0);
-int	nGenEventInfoProductHelper_generator;
+std::vector<double>	muonhelper_dxywrtBeamSpot(27,0);
+std::vector<double>	muonhelper_muonPFcandptdiff(27,0);
+int	nGenEventInfoProductHelper_generator_NNPDF;
+int	nGenEventInfoProductHelper_generator_cteq;
+int	nGenEventInfoProductHelper_generator_mstw;
 int	nPileupSummaryInfo_addPileupInfo;
 int	nelectron;
 int	nelectron1;
@@ -614,27 +626,27 @@ int	nmuonhelper1;
 int	ntau;
 int	ntauhelper;
 int	nvertex;
-std::vector<double>	pileupsummaryinfo_addpileupinfo_getBunchCrossing(7,0);
-std::vector<double>	pileupsummaryinfo_addpileupinfo_getPU_NumInteractions(7,0);
+std::vector<double>	pileupsummaryinfo_addpileupinfo_getBunchCrossing(3,0);
+std::vector<double>	pileupsummaryinfo_addpileupinfo_getPU_NumInteractions(3,0);
 double	sdouble_kt6pfjets_rho_value;
 double	sdouble_kt6pfjets_sigma_value;
 double	suint_flavorhistoryfilter_value;
-std::vector<double>	tau_caloIso(7,0);
-std::vector<double>	tau_ecalIso(7,0);
-std::vector<double>	tau_energy(7,0);
-std::vector<double>	tau_et(7,0);
-std::vector<double>	tau_eta(7,0);
-std::vector<double>	tau_hcalIso(7,0);
-std::vector<double>	tau_phi(7,0);
-std::vector<double>	tau_pt(7,0);
-std::vector<double>	tau_tauID_againstElectron(7,0);
-std::vector<double>	tau_tauID_againstMuon(7,0);
-std::vector<double>	tau_tauID_byIsolation(7,0);
-std::vector<double>	tau_tauID_byTaNC(7,0);
-std::vector<double>	tau_tauID_byTaNCfrHalfPercent(7,0);
-std::vector<double>	tau_tauID_byTaNCfrQuarterPercent(7,0);
-std::vector<double>	tau_trackIso(7,0);
-std::vector<double>	tauhelper_genTauDecayModeID(7,0);
+std::vector<double>	tau_caloIso(9,0);
+std::vector<double>	tau_ecalIso(9,0);
+std::vector<double>	tau_energy(9,0);
+std::vector<double>	tau_et(9,0);
+std::vector<double>	tau_eta(9,0);
+std::vector<double>	tau_hcalIso(9,0);
+std::vector<double>	tau_phi(9,0);
+std::vector<double>	tau_pt(9,0);
+std::vector<double>	tau_tauID_againstElectron(9,0);
+std::vector<double>	tau_tauID_againstMuon(9,0);
+std::vector<double>	tau_tauID_byIsolation(9,0);
+std::vector<double>	tau_tauID_byTaNC(9,0);
+std::vector<double>	tau_tauID_byTaNCfrHalfPercent(9,0);
+std::vector<double>	tau_tauID_byTaNCfrQuarterPercent(9,0);
+std::vector<double>	tau_trackIso(9,0);
+std::vector<double>	tauhelper_genTauDecayModeID(9,0);
 double	triggerresultshelper1_csctighthaloFilter;
 double	triggerresultshelper1_eenoiseFilter;
 double	triggerresultshelper1_greedymuonFilter;
@@ -781,18 +793,18 @@ double	triggerresultshelper_HLT_HT550_v6;
 double	triggerresultshelper_HLT_HT550_v6_prs;
 double	triggerresultshelper_HLT_HT550_v7;
 double	triggerresultshelper_HLT_HT550_v7_prs;
-std::vector<double>	vertex_isFake(41,0);
-std::vector<double>	vertex_isValid(41,0);
-std::vector<double>	vertex_ndof(41,0);
-std::vector<double>	vertex_normalizedChi2(41,0);
-std::vector<double>	vertex_position_Rho(41,0);
-std::vector<double>	vertex_tracksSize(41,0);
-std::vector<double>	vertex_x(41,0);
-std::vector<double>	vertex_xError(41,0);
-std::vector<double>	vertex_y(41,0);
-std::vector<double>	vertex_yError(41,0);
-std::vector<double>	vertex_z(41,0);
-std::vector<double>	vertex_zError(41,0);
+std::vector<double>	vertex_isFake(35,0);
+std::vector<double>	vertex_isValid(35,0);
+std::vector<double>	vertex_ndof(35,0);
+std::vector<double>	vertex_normalizedChi2(35,0);
+std::vector<double>	vertex_position_Rho(35,0);
+std::vector<double>	vertex_tracksSize(35,0);
+std::vector<double>	vertex_x(35,0);
+std::vector<double>	vertex_xError(35,0);
+std::vector<double>	vertex_y(35,0);
+std::vector<double>	vertex_yError(35,0);
+std::vector<double>	vertex_z(35,0);
+std::vector<double>	vertex_zError(35,0);
 
 
 //-----------------------------------------------------------------------------
@@ -884,16 +896,26 @@ void selectVariables(itreestream& stream)
   stream.select("edmEventHelperExtra_info.trackMPT1pt", eventhelperextra_trackMPT1pt);
   stream.select("edmEventHelperExtra_info.trackMPT5phi", eventhelperextra_trackMPT5phi);
   stream.select("edmEventHelperExtra_info.trackMPT5pt", eventhelperextra_trackMPT5pt);
+  stream.select("edmEventLHEHelperExtra_info.m0", eventlhehelperextra_m0);
+  stream.select("edmEventLHEHelperExtra_info.m12", eventlhehelperextra_m12);
   stream.select("GenEventInfoProduct_generator.pdf1", geneventinfoproduct_pdf1);
   stream.select("GenEventInfoProduct_generator.pdf2", geneventinfoproduct_pdf2);
   stream.select("GenEventInfoProduct_generator.scalePDF", geneventinfoproduct_scalePDF);
   stream.select("GenEventInfoProduct_generator.weight", geneventinfoproduct_weight);
   stream.select("GenEventInfoProduct_generator.x1", geneventinfoproduct_x1);
   stream.select("GenEventInfoProduct_generator.x2", geneventinfoproduct_x2);
-  stream.select("GenEventInfoProductHelper_generator.pdf1", geneventinfoproducthelper_pdf1);
-  stream.select("GenEventInfoProductHelper_generator.pdf2", geneventinfoproducthelper_pdf2);
-  stream.select("GenEventInfoProductHelper_generator.pdfweight", geneventinfoproducthelper_pdfweight);
-  stream.select("GenEventInfoProductHelper_generator.pdfweightsum", geneventinfoproducthelper_pdfweightsum);
+  stream.select("GenEventInfoProductHelper_generator_cteq.pdf1", geneventinfoproducthelper1_pdf1);
+  stream.select("GenEventInfoProductHelper_generator_cteq.pdf2", geneventinfoproducthelper1_pdf2);
+  stream.select("GenEventInfoProductHelper_generator_cteq.pdfweight", geneventinfoproducthelper1_pdfweight);
+  stream.select("GenEventInfoProductHelper_generator_cteq.pdfweightsum", geneventinfoproducthelper1_pdfweightsum);
+  stream.select("GenEventInfoProductHelper_generator_mstw.pdf1", geneventinfoproducthelper2_pdf1);
+  stream.select("GenEventInfoProductHelper_generator_mstw.pdf2", geneventinfoproducthelper2_pdf2);
+  stream.select("GenEventInfoProductHelper_generator_mstw.pdfweight", geneventinfoproducthelper2_pdfweight);
+  stream.select("GenEventInfoProductHelper_generator_mstw.pdfweightsum", geneventinfoproducthelper2_pdfweightsum);
+  stream.select("GenEventInfoProductHelper_generator_NNPDF.pdf1", geneventinfoproducthelper_pdf1);
+  stream.select("GenEventInfoProductHelper_generator_NNPDF.pdf2", geneventinfoproducthelper_pdf2);
+  stream.select("GenEventInfoProductHelper_generator_NNPDF.pdfweight", geneventinfoproducthelper_pdfweight);
+  stream.select("GenEventInfoProductHelper_generator_NNPDF.pdfweightsum", geneventinfoproducthelper_pdfweightsum);
   stream.select("recoGenParticleHelperRA2b_genParticles.charge", genparticlehelperra2_charge);
   stream.select("recoGenParticleHelperRA2b_genParticles.eta", genparticlehelperra2_eta);
   stream.select("recoGenParticleHelperRA2b_genParticles.firstDaughter", genparticlehelperra2_firstDaughter);
@@ -1186,7 +1208,9 @@ void selectVariables(itreestream& stream)
   stream.select("patMuonHelper_selectedPatMuonsPF.muonPFcandptdiff", muonhelper1_muonPFcandptdiff);
   stream.select("patMuonHelper_cleanPatMuons.dxywrtBeamSpot", muonhelper_dxywrtBeamSpot);
   stream.select("patMuonHelper_cleanPatMuons.muonPFcandptdiff", muonhelper_muonPFcandptdiff);
-  stream.select("nGenEventInfoProductHelper_generator", nGenEventInfoProductHelper_generator);
+  stream.select("nGenEventInfoProductHelper_generator_NNPDF", nGenEventInfoProductHelper_generator_NNPDF);
+  stream.select("nGenEventInfoProductHelper_generator_cteq", nGenEventInfoProductHelper_generator_cteq);
+  stream.select("nGenEventInfoProductHelper_generator_mstw", nGenEventInfoProductHelper_generator_mstw);
   stream.select("nPileupSummaryInfo_addPileupInfo", nPileupSummaryInfo_addPileupInfo);
   stream.select("npatElectron_cleanPatElectrons", nelectron);
   stream.select("npatElectron_selectedPatElectronsPF", nelectron1);
@@ -1434,7 +1458,7 @@ struct electron_s
   double	vertex_z;
   double	vz;
 };
-std::vector<electron_s> electron(15);
+std::vector<electron_s> electron(17);
 
 std::ostream& operator<<(std::ostream& os, const electron_s& o)
 {
@@ -1516,7 +1540,7 @@ struct electron1_s
   double	vertex_z;
   double	vz;
 };
-std::vector<electron1_s> electron1(7);
+std::vector<electron1_s> electron1(9);
 
 std::ostream& operator<<(std::ostream& os, const electron1_s& o)
 {
@@ -1562,7 +1586,7 @@ struct electronhelper_s
 {
   double	dxywrtBeamSpot;
 };
-std::vector<electronhelper_s> electronhelper(15);
+std::vector<electronhelper_s> electronhelper(17);
 
 std::ostream& operator<<(std::ostream& os, const electronhelper_s& o)
 {
@@ -1576,7 +1600,7 @@ struct electronhelper1_s
 {
   double	dxywrtBeamSpot;
 };
-std::vector<electronhelper1_s> electronhelper1(7);
+std::vector<electronhelper1_s> electronhelper1(9);
 
 std::ostream& operator<<(std::ostream& os, const electronhelper1_s& o)
 {
@@ -1593,12 +1617,52 @@ struct geneventinfoproducthelper_s
   double	pdfweight;
   double	pdfweightsum;
 };
-std::vector<geneventinfoproducthelper_s> geneventinfoproducthelper(91);
+std::vector<geneventinfoproducthelper_s> geneventinfoproducthelper(201);
 
 std::ostream& operator<<(std::ostream& os, const geneventinfoproducthelper_s& o)
 {
   char r[1024];
   os << "geneventinfoproducthelper" << std::endl;
+  sprintf(r, "  %-32s: %f\n", "pdf1", (double)o.pdf1); os << r;
+  sprintf(r, "  %-32s: %f\n", "pdf2", (double)o.pdf2); os << r;
+  sprintf(r, "  %-32s: %f\n", "pdfweight", (double)o.pdfweight); os << r;
+  sprintf(r, "  %-32s: %f\n", "pdfweightsum", (double)o.pdfweightsum); os << r;
+  return os;
+}
+//-----------------------------------------------------------------------------
+struct geneventinfoproducthelper1_s
+{
+  double	pdf1;
+  double	pdf2;
+  double	pdfweight;
+  double	pdfweightsum;
+};
+std::vector<geneventinfoproducthelper1_s> geneventinfoproducthelper1(91);
+
+std::ostream& operator<<(std::ostream& os, const geneventinfoproducthelper1_s& o)
+{
+  char r[1024];
+  os << "geneventinfoproducthelper1" << std::endl;
+  sprintf(r, "  %-32s: %f\n", "pdf1", (double)o.pdf1); os << r;
+  sprintf(r, "  %-32s: %f\n", "pdf2", (double)o.pdf2); os << r;
+  sprintf(r, "  %-32s: %f\n", "pdfweight", (double)o.pdfweight); os << r;
+  sprintf(r, "  %-32s: %f\n", "pdfweightsum", (double)o.pdfweightsum); os << r;
+  return os;
+}
+//-----------------------------------------------------------------------------
+struct geneventinfoproducthelper2_s
+{
+  double	pdf1;
+  double	pdf2;
+  double	pdfweight;
+  double	pdfweightsum;
+};
+std::vector<geneventinfoproducthelper2_s> geneventinfoproducthelper2(83);
+
+std::ostream& operator<<(std::ostream& os, const geneventinfoproducthelper2_s& o)
+{
+  char r[1024];
+  os << "geneventinfoproducthelper2" << std::endl;
   sprintf(r, "  %-32s: %f\n", "pdf1", (double)o.pdf1); os << r;
   sprintf(r, "  %-32s: %f\n", "pdf2", (double)o.pdf2); os << r;
   sprintf(r, "  %-32s: %f\n", "pdfweight", (double)o.pdfweight); os << r;
@@ -1701,7 +1765,7 @@ struct jet_s
   double	uncor_phi;
   double	uncor_pt;
 };
-std::vector<jet_s> jet(205);
+std::vector<jet_s> jet(185);
 
 std::ostream& operator<<(std::ostream& os, const jet_s& o)
 {
@@ -1829,7 +1893,7 @@ struct jet1_s
   double	uncor_phi;
   double	uncor_pt;
 };
-std::vector<jet1_s> jet1(177);
+std::vector<jet1_s> jet1(157);
 
 std::ostream& operator<<(std::ostream& os, const jet1_s& o)
 {
@@ -1916,7 +1980,7 @@ struct jetcleanhelper_s
   double	secondaryVertex1FlightDistanceSig;
   double	secondaryVertex1Mass;
 };
-std::vector<jetcleanhelper_s> jetcleanhelper(205);
+std::vector<jetcleanhelper_s> jetcleanhelper(185);
 
 std::ostream& operator<<(std::ostream& os, const jetcleanhelper_s& o)
 {
@@ -1962,7 +2026,7 @@ struct jethelper_s
   double	secondaryVertex1FlightDistanceSig;
   double	secondaryVertex1Mass;
 };
-std::vector<jethelper_s> jethelper(177);
+std::vector<jethelper_s> jethelper(157);
 
 std::ostream& operator<<(std::ostream& os, const jethelper_s& o)
 {
@@ -2157,7 +2221,7 @@ struct muon_s
   double	track_normalizedChi2;
   double	vz;
 };
-std::vector<muon_s> muon(29);
+std::vector<muon_s> muon(27);
 
 std::ostream& operator<<(std::ostream& os, const muon_s& o)
 {
@@ -2309,7 +2373,7 @@ struct muonhelper_s
   double	dxywrtBeamSpot;
   double	muonPFcandptdiff;
 };
-std::vector<muonhelper_s> muonhelper(29);
+std::vector<muonhelper_s> muonhelper(27);
 
 std::ostream& operator<<(std::ostream& os, const muonhelper_s& o)
 {
@@ -2341,7 +2405,7 @@ struct pileupsummaryinfo_s
   double	addpileupinfo_getBunchCrossing;
   double	addpileupinfo_getPU_NumInteractions;
 };
-std::vector<pileupsummaryinfo_s> pileupsummaryinfo(7);
+std::vector<pileupsummaryinfo_s> pileupsummaryinfo(3);
 
 std::ostream& operator<<(std::ostream& os, const pileupsummaryinfo_s& o)
 {
@@ -2370,7 +2434,7 @@ struct tau_s
   double	tauID_byTaNCfrQuarterPercent;
   double	trackIso;
 };
-std::vector<tau_s> tau(7);
+std::vector<tau_s> tau(9);
 
 std::ostream& operator<<(std::ostream& os, const tau_s& o)
 {
@@ -2398,7 +2462,7 @@ struct tauhelper_s
 {
   double	genTauDecayModeID;
 };
-std::vector<tauhelper_s> tauhelper(7);
+std::vector<tauhelper_s> tauhelper(9);
 
 std::ostream& operator<<(std::ostream& os, const tauhelper_s& o)
 {
@@ -2423,7 +2487,7 @@ struct vertex_s
   double	z;
   double	zError;
 };
-std::vector<vertex_s> vertex(41);
+std::vector<vertex_s> vertex(35);
 
 std::ostream& operator<<(std::ostream& os, const vertex_s& o)
 {
@@ -2547,6 +2611,24 @@ void fillObjects()
       geneventinfoproducthelper[i].pdf2	= geneventinfoproducthelper_pdf2[i];
       geneventinfoproducthelper[i].pdfweight	= geneventinfoproducthelper_pdfweight[i];
       geneventinfoproducthelper[i].pdfweightsum	= geneventinfoproducthelper_pdfweightsum[i];
+    }
+
+  geneventinfoproducthelper1.resize(geneventinfoproducthelper1_pdf1.size());
+  for(unsigned int i=0; i < geneventinfoproducthelper1_pdf1.size(); ++i)
+    {
+      geneventinfoproducthelper1[i].pdf1	= geneventinfoproducthelper1_pdf1[i];
+      geneventinfoproducthelper1[i].pdf2	= geneventinfoproducthelper1_pdf2[i];
+      geneventinfoproducthelper1[i].pdfweight	= geneventinfoproducthelper1_pdfweight[i];
+      geneventinfoproducthelper1[i].pdfweightsum	= geneventinfoproducthelper1_pdfweightsum[i];
+    }
+
+  geneventinfoproducthelper2.resize(geneventinfoproducthelper2_pdf1.size());
+  for(unsigned int i=0; i < geneventinfoproducthelper2_pdf1.size(); ++i)
+    {
+      geneventinfoproducthelper2[i].pdf1	= geneventinfoproducthelper2_pdf1[i];
+      geneventinfoproducthelper2[i].pdf2	= geneventinfoproducthelper2_pdf2[i];
+      geneventinfoproducthelper2[i].pdfweight	= geneventinfoproducthelper2_pdfweight[i];
+      geneventinfoproducthelper2[i].pdfweightsum	= geneventinfoproducthelper2_pdfweightsum[i];
     }
 
   genparticlehelperra2.resize(genparticlehelperra2_charge.size());
