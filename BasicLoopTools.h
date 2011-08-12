@@ -3412,7 +3412,7 @@ void reducedTree(TString outputpath, itreestream& stream)
   bool	ra2ecaltpFilter;
   bool	scrapingvetoFilter;
   bool	trackingfailureFilter;
-  bool	ra2ecalbeFilter;
+  //  bool	ra2ecalbeFilter;
 
   bool passCleaning;
   int PBNRcode;
@@ -3541,7 +3541,7 @@ void reducedTree(TString outputpath, itreestream& stream)
   reducedTree.Branch("ra2ecaltpFilter",&ra2ecaltpFilter,"ra2ecaltpFilter/O");
   reducedTree.Branch("scrapingvetoFilter",&scrapingvetoFilter,"scrapingvetoFilter/O");
   reducedTree.Branch("trackingfailureFilter",&trackingfailureFilter,"trackingfailureFilter/O");
-  reducedTree.Branch("ra2ecalbeFilter",&ra2ecalbeFilter,"ra2ecalbeFilter/O");
+  //  reducedTree.Branch("ra2ecalbeFilter",&ra2ecalbeFilter,"ra2ecalbeFilter/O");
   reducedTree.Branch("passCleaning",&passCleaning,"passCleaning/O");
   reducedTree.Branch("PBNRcode",&PBNRcode,"PBNRcode/I");
 
@@ -3879,7 +3879,7 @@ void reducedTree(TString outputpath, itreestream& stream)
       ra2ecaltpFilter = doubleToBool(triggerresultshelper1_ra2ecaltpFilter) ;
       scrapingvetoFilter = doubleToBool(triggerresultshelper1_scrapingvetoFilter) ;
       trackingfailureFilter = doubleToBool(triggerresultshelper1_trackingfailureFilter) ;
-      ra2ecalbeFilter = passBEFilter() ;
+      //      ra2ecalbeFilter = passBEFilter() ;
 
       //exclude ra2ecalbefilter for now
       passCleaning = csctighthaloFilter && eenoiseFilter && greedymuonFilter && hbhenoiseFilter && inconsistentmuonFilter && ra2ecaltpFilter && scrapingvetoFilter && trackingfailureFilter;
