@@ -3185,8 +3185,45 @@ double getWeight(Long64_t nentries) {
   return  w;
 }
 
-float getPUWeight(reweight::LumiReWeighting lumiWeights_){
+bool noPUWeight(TString inname){
 
+
+  //Summer11 QCD
+  if (inname.Contains("qcd_tunez2_pt0to5_summer11") )                           return true;
+  if (inname.Contains("qcd_tunez2_pt1000to1400_summer11") )                     return true;
+  if (inname.Contains("qcd_tunez2_pt120to170_summer11") )                       return true; 
+  if (inname.Contains("qcd_tunez2_pt1400to1800_summer11") )                     return true;
+  if (inname.Contains("qcd_tunez2_pt15to3000_summer11") )                       return true;
+  if (inname.Contains("qcd_tunez2_pt15to30_summer11") )                         return true;
+  if (inname.Contains("qcd_tunez2_pt170to300_summer11") )                       return true;
+  if (inname.Contains("qcd_tunez2_pt1800_summer11") )                           return true;
+  if (inname.Contains("qcd_tunez2_pt300to470_summer11") )                       return true;
+  if (inname.Contains("qcd_tunez2_pt30to50_summer11") )                         return true;
+  if (inname.Contains("qcd_tunez2_pt470to600_summer11") )                       return true;
+  if (inname.Contains("qcd_tunez2_pt50to80_summer11") )                         return true;
+  if (inname.Contains("qcd_tunez2_pt5to15_summer11") )                          return true;
+  if (inname.Contains("qcd_tunez2_pt600to800_summer11") )                       return true;
+  if (inname.Contains("qcd_tunez2_pt800to1000_summer11") )                      return true;
+  if (inname.Contains("qcd_tunez2_pt80to120_summer11") )                        return true;
+  
+  //spring 11
+  if (inname.Contains("TToBLNu_TuneZ2_s-channel_7TeV-madgraph") )               return true;
+  if (inname.Contains("TToBLNu_TuneZ2_t-channel_7TeV-madgraph") )               return true; 
+  if (inname.Contains("TToBLNu_TuneZ2_tW-channel_7TeV-madgraph") )              return true;
+  if (inname.Contains("WWtoAnything_TuneZ2_7TeV-pythia6-tauola") )              return true;
+  if (inname.Contains("WZtoAnything_TuneZ2_7TeV-pythia6-tauola") )              return true;
+  if (inname.Contains("ZZtoAnything_TuneZ2_7TeV-pythia6-tauola") )              return true;
+  if (inname.Contains("DYJetsToLL_TuneD6T_M-10To50_7TeV-madgraph-tauola") )     return true;
+  if (inname.Contains("DYJetsToLL_TuneD6T_M-50_7TeV-madgraph-tauola") )         return true;
+  
+  return false;
+
+}
+
+float getPUWeight(reweight::LumiReWeighting lumiWeights_){
+  if(isRealDataInt(myEDM_isRealData)) return 1;
+  if(noPUWeight(sampleName_)) return 1;
+  
   float weight;
   float sum_nvtx = 0;
   int npv = 0;
