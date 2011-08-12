@@ -634,6 +634,8 @@ void  loadSusyScanCrossSections() {
 void setOptions( const TString & opt) {
   //cannot set the b tagger, or the jet type, or the met type, or the scan type
 
+  if (opt=="") return;
+
   //JES0_JERbias_...
 
   //i wish i could think of a more clever way to code this
