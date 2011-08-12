@@ -65,11 +65,11 @@ functionality for TH1F and TH1D e.g. the case of addOverflowBin()
 #include <map>
 #include <set>
 													     
-TString inputPath = "/home/joshmt/";
-//TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-24_fullpf2pat/";//path for MC
+//TString inputPath = "/home/joshmt/";
+TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-24_fullpf2pat/";//path for MC
 //TString inputPath = "/home/joshmt/";//path for MC
-//TString dataInputPath = "/cu2/ra2b/reducedTrees/V00-02-24_fullpf2pat/"; //sym links to V00-02-05_v3
-TString dataInputPath = "/cu3/wteo/reducedTrees/V00-02-05_v3-pickevents/"; //includes MET cleaning but uses a tight skim (not good for plots)
+TString dataInputPath = "/cu2/ra2b/reducedTrees/V00-02-24_fullpf2pat/"; //sym links to V00-02-05_v3
+//TString dataInputPath = "/cu3/wteo/reducedTrees/V00-02-05_v3-pickevents/"; //includes MET cleaning but uses a tight skim (not good for plots)
 
 //the cutdesc string is now defined in loadSamples()
 
@@ -1139,12 +1139,52 @@ other.
   //now switch to the normal selection
   selection_ =TCut("MET>=150 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4")&&btagcut&&HTcut;
   drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "SBandSIG_MET_normal_"+sample+"_"+btagselection+"_"+HTselection);
+  TH1D* SIGplot = (TH1D*)hinteractive->Clone("SIGplot");
   SLplot->SetLineColor(kRed);
   SLplot->SetMarkerColor(kRed);
   SLplot->Draw("SAME");
   
   thecanvas->SaveAs("METshape_"+sample+"_SLandStandard_"+btagselection+"_"+HTselection+".pdf");
   //not enough stats in WJets to really show anything
+
+  //Hack to get it plotted with ratio plot
+  TCanvas* myC = 0;
+  myC = new TCanvas("myC", "myC", 600,700);
+  myC->Divide(1,2);
+  const float padding=0.01; const float ydivide=0.2;
+  myC->GetPad(1)->SetPad( padding, ydivide + padding, 1-padding, 1-padding);
+  myC->GetPad(2)->SetPad( padding, padding, 1-padding, ydivide-padding);
+  myC->GetPad(1)->SetLogy(1);
+  myC->GetPad(1)->SetRightMargin(.05);
+  myC->GetPad(2)->SetRightMargin(.05);
+  myC->GetPad(1)->Modified();
+  myC->GetPad(2)->Modified();
+  myC->cd(1);
+  SIGplot->Draw();
+  SLplot->Draw("SAME");
+  //TH1D* myRatio = (TH1D*)SIGplot->Clone("myRatio");
+  //myRatio->Reset();
+  TH1D* myRatio = new TH1D("ratio", "ratio", nbins,low,high);
+  myRatio->Sumw2();
+  myRatio->SetLineColor(kBlack);
+  myRatio->SetMarkerColor(kBlack);
+  myRatio->Divide(SIGplot,SLplot);
+  myRatio->SetMinimum(0);
+  myRatio->SetMaximum(2);
+  myRatio->GetYaxis()->SetNdivisions(200 + int(ratioMax-ratioMin)+1);    //set ticks ; to be seen if this really works
+  myRatio->GetYaxis()->SetLabelSize(0.2); //make y label bigger
+  myC->cd(2);
+  myRatio->Draw();
+  myC->cd(1);
+  TLatex* mytext = new TLatex(3.570061,23.08044,"CMS Preliminary");
+  mytext->SetNDC();
+  mytext->SetTextAlign(13);
+  mytext->SetX(0.6);
+  mytext->SetY(0.9);
+  mytext->SetTextFont(42);
+  mytext->SetTextSizePixels(24);
+  mytext->Draw();
+  myC->Print("METshape_logAndRatio_"+sample+"_SLandStandard_"+btagselection+"_"+HTselection+".pdf");
 
   //get the SIG/SB Ratio
   double lv_sb_err=0, lv_sig_err=0;
@@ -2799,14 +2839,14 @@ void studyPrescale_r(int ibtag = 4) {
   //trigger version
   //set dataOnly and might want to change hdata->SetXTitle()
   doOverflowAddition(false);
-  setPlotMaximum(0.5); setPlotMinimum(0);
+  //setPlotMaximum(0.5); setPlotMinimum(0);
   selection_ =TCut("HT>=350 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1")&&util&&LSB&&theBTaggingCut;
   //drawR("minDeltaPhiN", 4, "pass_utilityHLT_HT300", 7, 1.5, 8.5, "triggerVersion_"+btagstring);
   //unexpected value for MC in last bin when adding overflow.
   
   //nGoodPV
   doOverflowAddition(true);
-  setPlotMaximum(0.5); setPlotMinimum(0);
+  //setPlotMaximum(0.5); setPlotMinimum(0);
   selection_ =TCut("HT>=350 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1")&&util&&LSB&&theBTaggingCut;
   //drawR("minDeltaPhiN", 4, "nGoodPV", 20, 0.5, 20.5, "nGoodPV_"+btagstring);
   //const int nvarbins=9;
@@ -2840,15 +2880,45 @@ void studyPrescale_r(int ibtag = 4) {
   //set dataOnly to true
   //should hack after first instance of thecanvas->cd(1); to add:  gPad->SetRightMargin(.1); gPad->Modified();
   doOverflowAddition(false);
-  setPlotMaximum(0.5); setPlotMinimum(0);
+  //setPlotMaximum(0.5); setPlotMinimum(0);
   selection_ =TCut("HT>=350 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1")&&util&&LSB&&theBTaggingCut;
   //drawR("minDeltaPhiN", 4, "runNumber", 10, 160403.5, 167913.5, "runNumber_"+btagstring);
   //const int nvarbins2 = 7;
   //const float varbins2[] = {160403.5, 161000, 162000, 163500, 165000,166000,167000,168000};
   //drawR("minDeltaPhiN", 4, "runNumber", nvarbins2, varbins2, "runNumber_"+btagstring);
   
-
-  //  }//btag loop
+  
+  //lowMET
+  doOverflowAddition(false);
+  selection_ =TCut("HT>=350 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1")&&util&&theBTaggingCut;
+  const int nvarbins=10;
+  const float varbins[]={0,10,20,30,40,50,60,70,80,90,100};
+  //  drawR("minDeltaPhiN", 4, "MET", nvarbins, varbins, "MET_"+btagstring);
+  //}//end btag loop
+}
+ 
+void lowMETcount(){
+  loadSamples();
+  doOverflowAddition(false);
+  setQuiet(false);
+  setStackMode(true); //regular stack
+  setColorScheme("stack");
+  doData(true);
+  drawMCErrors_=true;
+  
+  lumiScale_ = 19.23288; //customize lumiScale_
+  
+  TString btagselection="antib";
+  TCut theBTaggingCut = "nbjetsSSVHPT==0";
+  TCut util = "pass_utilityHLT_HT300>=1 && weight<1000";
+  
+  selection_ =TCut("HT>=350 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1")&&util&&theBTaggingCut;
+  const int nvarbins=3;
+  const float varbins[]={40,50,100,110};
+  drawPlots("MET", nvarbins, varbins, "","","deleteme");
+  cout << "BEN: Data integral1:::::::: " << hdata->GetBinContent(1) << endl;
+  cout << "BEN: Data integral2:::::::: " << hdata->GetBinContent(2) << endl;
+  cout << "BEN: Data integral3:::::::: " << hdata->GetBinContent(3) << endl;
 }//end of function
 
 void studyNjet(int ibtag=3){
