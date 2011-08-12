@@ -631,6 +631,54 @@ void  loadSusyScanCrossSections() {
 
 }
 
+void setOptions( const TString & opt) {
+  //cannot set the b tagger, or the jet type, or the met type, or the scan type
+
+  //JES0_JERbias_...
+
+  //i wish i could think of a more clever way to code this
+  if ( opt.Contains( theJESNames_[kJES0]) ) theJESType_ = kJES0;
+  else  if ( opt.Contains( theJESNames_[kJESup]) ) theJESType_ = kJESup;
+  else  if ( opt.Contains( theJESNames_[kJESdown]) ) theJESType_ = kJESdown;
+  else {assert(0);} //enforce a complete set of options!
+
+  if ( opt.Contains( theJERNames_[kJER0]) ) theJERType_ = kJER0;
+  else  if ( opt.Contains( theJERNames_[kJERup]) ) theJERType_ = kJERup;
+  else  if ( opt.Contains( theJERNames_[kJERdown]) ) theJERType_ = kJERdown;
+  else  if ( opt.Contains( theJERNames_[kJERbias]) ) theJERType_ = kJERbias;
+  else  if ( opt.Contains( theJERNames_[kJERra2]) ) theJERType_ = kJERra2;
+  else {assert(0);} //enforce a complete set of options!
+
+  if ( opt.Contains( theMETuncNames_[kMETunc0]) ) theMETuncType_ = kMETunc0;
+  else  if ( opt.Contains( theMETuncNames_[kMETuncUp]) ) theMETuncType_ = kMETuncUp;
+  else  if ( opt.Contains( theMETuncNames_[kMETuncDown]) ) theMETuncType_ = kMETuncDown;
+  else {assert(0);} //enforce a complete set of options!
+
+  if ( opt.Contains( thePUuncNames_[kPUunc0]) ) thePUuncType_ = kPUunc0;
+  else  if ( opt.Contains( thePUuncNames_[kPUuncUp]) ) thePUuncType_ = kPUuncUp;
+  else  if ( opt.Contains( thePUuncNames_[kPUuncDown]) ) thePUuncType_ = kPUuncDown;
+  else {assert(0);} //enforce a complete set of options!
+
+  if ( opt.Contains( theBTagEffNames_[kBTagEff0]) ) theBTagEffType_ = kBTagEff0;
+  else  if ( opt.Contains( theBTagEffNames_[kBTagEffup]) ) theBTagEffType_ = kBTagEffup;
+  else  if ( opt.Contains( theBTagEffNames_[kBTagEffdown]) ) theBTagEffType_ = kBTagEffdown;
+  else {assert(0);} //enforce a complete set of options!
+
+  if ( opt.Contains( theHLTEffNames_[kHLTEff0]) ) theHLTEffType_ = kHLTEff0;
+  else  if ( opt.Contains( theHLTEffNames_[kHLTEffup]) ) theHLTEffType_ = kHLTEffup;
+  else  if ( opt.Contains( theHLTEffNames_[kHLTEffdown]) ) theHLTEffType_ = kHLTEffdown;
+  else {assert(0);} //enforce a complete set of options!
+
+cout<<"Got options: "<<endl
+    <<theJESNames_[theJESType_]<<endl
+    <<theJERNames_[theJERType_]<<endl
+    <<theMETuncNames_[theMETuncType_]<<endl
+    <<thePUuncNames_[thePUuncType_]<<endl
+    <<theBTagEffNames_[theBTagEffType_]<<endl
+    <<theHLTEffNames_[theHLTEffType_]<<endl;
+
+}
+
 void PseudoConstructor() {
    theScanType_=kNotScan;
    //theScanType_=kmSugra;
@@ -643,16 +691,12 @@ void PseudoConstructor() {
 
   checkConsistency();
 
-  //  theLeptonType_=kPFLeptonsRA2;
-  //  theDPType_=kminDP;
   theJESType_=kJES0;
   theJERType_=kJER0;
   theMETuncType_=kMETunc0;
   thePUuncType_=kPUunc0;
   theBTagEffType_=kBTagEff0;
   theHLTEffType_=kHLTEff0;
-  //  theCleaningType_=kNoCleaning;
-  //  theFlavorHistoryType_=kNoFlvHist;
   theBTaggerType_=kSSVHPT;
 
   theBTaggerNames_[kSSVM]="SSVHEM";

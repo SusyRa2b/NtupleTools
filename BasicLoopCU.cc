@@ -21,7 +21,10 @@ int main(int argc, char** argv)
  
   //code for sampleName_ and output path
 
-  TString outputDir = "/cu2/ra2b/reducedTrees/"; //this is where reducedTrees will go
+  TString outputDir = "/home/joshmt/"; //this is where reducedTrees will go
+
+  TString options="";
+  if (argc>2) options = argv[2];
 
   stringstream ss;
   TString fileArg;
@@ -49,12 +52,14 @@ int main(int argc, char** argv)
   selectVariables(stream);
   PseudoConstructor();
   //note -- fundamental settings like jet and met types need to be set directly in the PseudoConstructor
-
-
   setBTaggerType(kSSVHPT);  
+
+  setOptions(options);
   reducedTree(outputDir, stream);
 
   return 0;
+
+
   //run with default settings == bias-corrected JER
   theJERType_=kJERbias;
   reducedTree(outputDir, stream);
