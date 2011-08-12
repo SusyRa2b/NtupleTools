@@ -18,11 +18,11 @@
 #include <RooMinuit.h>
 #include <RooTransverseThrustVar.h>
 #include <cassert>
-
+#include <fstream>
 #include <typeinfo>
 
 #include "TGraphAsymmErrors.h"
-#include "TH1F.h"
+#include "TH1.h"
 
 //Pile-up reweighting stuff
 //NOTE: Grab this header from PhysicsTools/Utilities/interface/LumiReweightingStandAlone.h
@@ -135,6 +135,9 @@ const double mW_ = 80.399;
 const double mtop_ = 172.0;
 const double lumi_ = 1.; //fix to 1/pb and scale MC later (e.g. in drawReducedTrees)
 TString sampleName_ = ""; 
+
+enum scanType {kNotScan=0, kmSugra, kSMS};
+scanType theScanType_;
 
 //jmt -- commenting out the ones that are not currently used
 // Note: when adding a new type type, make sure to give it a name is the PseudoConstructor
@@ -568,11 +571,69 @@ void checkConsistency() {
     assert(0);
   }
 
+  if (theScanType_!=kNotScan && sampleName_.Contains("LM")) {cout<<"LM point is not a scan! Check theScanType_!"<<endl; assert(0);}
+  if (theScanType_==kNotScan && sampleName_.Contains("SUGRA")) {cout<<"mSugra is a scan! Check theScanType_!"<<endl; assert(0);}
+
 }
 
+enum SUSYProcess {
+  ng = 0,
+  ns = 1,
+  nn = 2,
+  ll = 3,
+  sb = 4,
+  ss = 5,
+  tb = 6,
+  bb = 7,
+  gg = 8,
+  sg = 9,
+  NotFound = 10
+};
+
+map<pair<int, int>, map<SUSYProcess, double> > crossSectionTanb40_10_;
+map<pair<int, int>, map<SUSYProcess, double> > crossSectionTanb40_05_;
+map<pair<int, int>, map<SUSYProcess, double> > crossSectionTanb40_20_;
+void loadSusyScanCrossSection(const TString & filename, map<pair<int, int>, map<SUSYProcess, double> > & database) {
+
+  if (theScanType_==kNotScan) return;
+
+  database.clear();
+
+  int m0,m12;
+  double c1,c2,c3,c4,c5,c6,c7,c8,c9,c10;
+  ifstream file10(filename.Data());
+  while ( file10>>m0>>m12>>c1>>c2>>c3>>c4>>c5>>c6>>c7>>c8>>c9>>c10 ) {
+    pair<int, int> scanpoint = make_pair(m0,m12);
+
+    map<SUSYProcess, double> theseCrossSections;
+    theseCrossSections[ng] = c1;
+    theseCrossSections[ns] = c2;
+    theseCrossSections[nn] = c3;
+    theseCrossSections[ll] = c4;
+    theseCrossSections[sb] = c5;
+    theseCrossSections[ss] = c6;
+    theseCrossSections[tb] = c7;
+    theseCrossSections[bb] = c8;
+    theseCrossSections[gg] = c9;
+    theseCrossSections[sg] = c10;
+    database[scanpoint] = theseCrossSections;
+  }
+  file10.close();
+  cout<<"Loaded cross sections for "<<database.size()<<" scan points"<<endl;
+
+}
+
+void  loadSusyScanCrossSections() {
+  loadSusyScanCrossSection( "NLOxsec_tanb40_10.txt",crossSectionTanb40_10_);
+  loadSusyScanCrossSection( "NLOxsec_tanb40_05.txt",crossSectionTanb40_05_);
+  loadSusyScanCrossSection( "NLOxsec_tanb40_20.txt",crossSectionTanb40_20_);
+
+
+}
 
 void PseudoConstructor() {
-  //  theCutScheme_ = kBaseline2010;
+  // theScanType_=kNotScan;
+  theScanType_=kmSugra;
 
   //  theMETType_=kPFMETTypeI;
   //  theJetType_=kRECOPF;
@@ -631,6 +692,7 @@ void PseudoConstructor() {
   theJERNames_[kJERbias]="JERbias";
   theJERNames_[kJERra2]="JERra2";
   theJERNames_[kJERdown]="JERdown";
+  loadSusyScanCrossSections();
 
 }
 
@@ -671,6 +733,101 @@ unsigned int getSUSYnb(std::vector<uint> &susyb_index) {
   return SUSY_nb;
 
 }
+
+
+/*
+http://svnweb.cern.ch/world/wsvn/icfsusy/trunk/AnalysisV2/SUSYSignalScan/include/NLOTools.hh 
+[svnweb.cern.ch]
+http://svnweb.cern.ch/world/wsvn/icfsusy/trunk/AnalysisV2/SUSYSignalScan/src/common/NLOTools.cc 
+[svnweb.cern.ch]
+*/
+SUSYProcess getSUSYProcess() {
+
+  bool verbose = false;
+
+  int squarks = 0;
+  int antisquarks = 0;
+  int gluinos = 0;
+  int sleptons = 0;
+  int neutralinos = 0;
+  int charginos = 0;
+  int sbottoms = 0;
+  int stops = 0;
+
+
+  SUSYProcess process = NotFound;
+
+  //  for (std::vector<Event::GenObject>::const_iterator j = ev.GenParticles().begin();  j != ev.GenParticles().end(); ++j) {
+  for (unsigned int k = 0; k<myGenParticles->size(); k++) {
+
+    int motheridx = TMath::Nint(myGenParticles->at(k).firstMother);
+    if (motheridx<0) continue;
+    int motherId = abs(TMath::Nint( myGenParticles->at( motheridx).pdgId ));
+
+    if (motherId == 21 || motherId <=6  ) {
+
+      int myid = TMath::Nint(myGenParticles->at(k).pdgId );
+      //select squarks
+      if (( myid >= 1000001 && myid <= 1000004) ||
+	  (myid >= 2000001 && myid <= 2000004) ) {
+        squarks++;
+      }
+      //select antisquarks
+      if( ( myid <= -1000001 && myid >= -1000004) ||
+	  ( myid <= -2000001 && myid >= -2000004) ){
+        antisquarks++;
+      }
+      if ( abs( myid ) == 1000005 || abs( myid ) == 2000005) sbottoms++;
+      if ( abs( myid ) == 1000006 || abs( myid ) == 2000006) stops++;
+
+      //select gluinos
+      if ( abs( myid) == 1000021 ) gluinos++;
+
+      //select sleptons
+      if ( (abs( myid) >= 1000011 && fabs(myid) <= 1000016) ||
+	   ( abs(myid) >= 2000011 && abs(myid) <= 2000016)) sleptons++;
+      //select neutralinos
+      if ( abs( myid) == 1000022 || abs( myid) == 1000023 ||  abs(myid) == 1000025 || abs(myid) == 1000035 ||  abs(myid) == 1000045  ) neutralinos++;
+
+      if ( abs(myid) == 1000024 || abs(myid) == 1000037  ) charginos++;
+
+    }
+  }
+
+
+  if((neutralinos + charginos) == 1 && gluinos == 1) process = ng;
+  if((neutralinos + charginos) == 1 && (squarks + antisquarks) == 1) process = ns;
+  if(neutralinos + charginos == 2) process = nn;
+  if(sleptons == 2) process = ll;
+  if(squarks ==1 && antisquarks == 1) process = sb;
+  if(squarks == 2) process = ss;
+  if(stops == 2 ) process = tb;
+  if(sbottoms == 2) process = bb;
+  if(gluinos == 2) process = gg;
+  if(squarks + antisquarks + sbottoms + stops == 1 && gluinos == 1) process = sg;
+  if (process == NotFound) verbose = true;
+  if(verbose) cout << "************ Process = "  <<  process << endl;
+ if(verbose == true)cout << " neutralinos " << neutralinos << "\n charginos " << charginos << "\n gluinos " << gluinos << "\n squarks " << squarks << "\n antisquarks " << antisquarks << "\n sleptons " << sleptons << "\n stops " << stops << "\n sbottoms " << sbottoms << endl;
+ return process;
+}
+
+
+double getScanCrossSection( SUSYProcess p, const TString & variation ) {
+
+  //will need to code for tan beta changes too.
+  //but for now we only care about tan beta of 40
+
+  if (p==NotFound) return 0;
+
+  pair<int,int> thispoint = make_pair(TMath::Nint(eventlhehelperextra_m0),TMath::Nint(eventlhehelperextra_m12)); //names will need to be changed
+  if (variation=="")   return crossSectionTanb40_10_[thispoint][p];
+  else if (variation=="Plus")   return crossSectionTanb40_20_[thispoint][p];
+  else if (variation=="Minus")   return crossSectionTanb40_05_[thispoint][p];
+  else {assert(0);}
+
+  return 0;
+}
+
 
 ////#else
 //
@@ -898,13 +1055,39 @@ unsigned int utilityHLT_HT300_CentralJet30_BTagIP(){
   return passTrig;
 }
 
-void getPdfWeights( Float_t * pdfWeights, TH1F * sumofweights) {
+void getPdfWeights(const TString & pdfset, Float_t * pdfWeights, TH1D * sumofweights) {
 
-  const unsigned int s = geneventinfoproducthelper.size();
-  for (unsigned int i=0; i<s ; i++) {
-    pdfWeights[i]=isRealDataInt(myEDM_isRealData) ? 1 :  geneventinfoproducthelper.at(i).pdfweight;
-    sumofweights->SetBinContent(i+1, sumofweights->GetBinContent(i+1) + pdfWeights[i]);
+  //there are only 3 choices, so no fancy pointer manipulation
+
+  unsigned int s=0;
+  if (pdfset=="CTEQ") {
+    s = geneventinfoproducthelper1.size();
   }
+  else if (pdfset=="MSTW") {
+    s = geneventinfoproducthelper2.size();
+  }
+  else if (pdfset=="NNPDF") {
+    s = geneventinfoproducthelper.size();
+  }
+  else {assert(0);}
+
+  for (unsigned int i=0; i<s ; i++) {
+    if ( isRealDataInt(myEDM_isRealData) ) {pdfWeights[i]=1; }
+    else if ( pdfset=="CTEQ") {
+      pdfWeights[i] = geneventinfoproducthelper1.at(i).pdfweight;
+    }
+    else if (pdfset=="MSTW") {
+      pdfWeights[i] = geneventinfoproducthelper2.at(i).pdfweight;
+    }
+    else if (pdfset=="NNPDF") {
+      pdfWeights[i] = geneventinfoproducthelper.at(i).pdfweight;
+    }
+    else {assert(0);}
+    sumofweights->SetBinContent(i+1, sumofweights->GetBinContent(i+1) + pdfWeights[i]);
+
+    //   if (i==1) cout<<pdfset<<" "<<pdfWeights[i]<<endl;
+  }
+
 }
 
 TFile * f_eff=0;
@@ -2855,7 +3038,9 @@ double getCrossSection(TString inname){
   if (inname.Contains("LM9_SUSY_sftsht_7TeV-pythia6") )                         return 7.134; //from ProductionSpring2011 twiki
   if (inname.Contains("TTJets_TuneZ2_7TeV-madgraph-tauola") )                   return 158; // +/- 10 +/- 15 //CMS PAS TOP-11-001
   if (inname.Contains("ZJetsToNuNu_200_HT_inf_7TeV-madgraph"))                  return 32.92 * 1.28; //confirmed with Colorado
-    
+   
+  if (inname.Contains("mSUGRA")) return 1; //NLO cross sections will be specially stored per point
+ 
   std::cout<<"Cannot find cross section for this sample!"<<std::endl;
   assert(0); 
   return -1;
@@ -2919,6 +3104,9 @@ TString getSampleNameOutputString(TString inname){
 
   if (inname.Contains("TTJets_TuneZ2_7TeV-madgraph-tauola") ) return "TTbarJets";
   if (inname.Contains("ZJetsToNuNu_200_HT_inf_7TeV-madgraph"))                  return "Zinvisible";
+
+  if (inname.Contains("mSUGRA_tanb40_summer11"))                                return "mSUGRAtanb40";
+
   //if it isn't found, just use the full name 
   //  -- data will fall into this category, which is fine because we have to hadd the files after anyway
   return inname;
@@ -2928,6 +3116,9 @@ TString getSampleNameOutputString(TString inname){
 
 double getWeight(Long64_t nentries) {
   if(isRealDataInt(myEDM_isRealData)) return 1;
+
+  if (theScanType_==kmSugra) return 1;//special weighting in effect
+
 
   double sigma = getCrossSection(sampleName_);
   double w = lumi_ * sigma / double(nentries);
@@ -3194,6 +3385,10 @@ void reducedTree(TString outputpath, itreestream& stream)
   float btagIPweight, pfmhtweight;
   float PUweight;
   float hltHTeff;
+
+  double scanCrossSection,scanCrossSectionPlus,scanCrossSectionMinus;
+  int m0,m12;
+
   ULong64_t lumiSection, eventNumber, runNumber;
   float METsig;
   float HT, MHT, MET, METphi, minDeltaPhi, minDeltaPhiAll, minDeltaPhiAll30,minDeltaPhi30_eta5_noIdAll;
@@ -3239,6 +3434,7 @@ void reducedTree(TString outputpath, itreestream& stream)
   int nGoodPV;
 
   int SUSY_nb;
+  int SUSY_process;
 
   //new variables from Luke
   float lambda1_allJets;
@@ -3266,8 +3462,26 @@ void reducedTree(TString outputpath, itreestream& stream)
   float minDeltaPhiN_Luke_lostJet, maxDeltaPhiN_Luke_lostJet, deltaPhiN1_Luke_lostJet, deltaPhiN2_Luke_lostJet, deltaPhiN3_Luke_lostJet;
   float minTransverseMETSignificance_lostJet, maxTransverseMETSignificance_lostJet, transverseMETSignificance1_lostJet, transverseMETSignificance2_lostJet, transverseMETSignificance3_lostJet;
 
-  Float_t pdfWeights[45];
-  TH1F pdfWeightSum("pdfWeightSum","pdfWeightSum",45,0,45);
+  Float_t pdfWeightsCTEQ[45];
+  Float_t pdfWeightsMSTW[41];
+  Float_t pdfWeightsNNPDF[101];
+  TH1D pdfWeightSumCTEQ("pdfWeightSumCTEQ","pdfWeightSumCTEQ",45,0,45);
+  TH1D pdfWeightSumMSTW("pdfWeightSumMSTW","pdfWeightSumMSTW",41,0,41);
+  TH1D pdfWeightSumNNPDF("pdfWeightSumNNPDF","pdfWeightSumNNPDF",101,0,101);
+
+  pair<int,int> lastpoint = make_pair(0,0);
+
+  //i need an independent histogram for every scan point!
+  map<pair<int,int>, TH1D* >  scanProcessTotalsMap;
+  //should be safe in case we're not processing a scan. the map will just stay empty
+  for (map<pair<int, int>, map<SUSYProcess, double> >::iterator iscanpoint=crossSectionTanb40_10_.begin(); iscanpoint!=crossSectionTanb40_10_.end(); ++iscanpoint) {
+    TString histoname = "scanProcessTotals"; 
+    histoname += "_";
+    histoname +=iscanpoint->first.first; // m0
+    histoname += "_";
+    histoname +=iscanpoint->first.second; // m12
+    scanProcessTotalsMap[iscanpoint->first] = new TH1D(histoname,histoname,int(NotFound),int(ng),int(NotFound));
+  }
 
   float prob0,probge1,prob1,probge2;
 
@@ -3282,16 +3496,25 @@ void reducedTree(TString outputpath, itreestream& stream)
 
 
   reducedTree.Branch("weight",&weight,"weight/D");
+  reducedTree.Branch("scanCrossSection",&scanCrossSection,"scanCrossSection/D");
+  reducedTree.Branch("scanCrossSectionPlus",&scanCrossSectionPlus,"scanCrossSectionPlus/D");
+  reducedTree.Branch("scanCrossSectionMinus",&scanCrossSectionMinus,"scanCrossSectionMinus/D");
   reducedTree.Branch("runNumber",&runNumber,"runNumber/l");
   reducedTree.Branch("lumiSection",&lumiSection,"lumiSection/l");
   reducedTree.Branch("eventNumber",&eventNumber,"eventNumber/l");
+
+  reducedTree.Branch("m0",&m0,"m0/I");
+  reducedTree.Branch("m12",&m12,"m12/I");
 
   reducedTree.Branch("btagIPweight",&btagIPweight,"btagIPweight/F");
   reducedTree.Branch("pfmhtweight",&pfmhtweight,"pfmhtweight/F");
   reducedTree.Branch("PUweight",&PUweight,"PUweight/F");
   reducedTree.Branch("hltHTeff",&hltHTeff,"hltHTeff/F");
 
-  reducedTree.Branch("pdfWeights",&pdfWeights,"pdfWeights[45]/F"); //got to store the whole vector. very big, unfortunately
+  //got to store the whole vector. very big, unfortunately
+  reducedTree.Branch("pdfWeightsCTEQ",&pdfWeightsCTEQ,"pdfWeightsCTEQ[45]/F");
+  reducedTree.Branch("pdfWeightsMSTW",&pdfWeightsMSTW,"pdfWeightsMSTW[41]/F");
+  reducedTree.Branch("pdfWeightsNNPDF",&pdfWeightsNNPDF,"pdfWeightsNNPDF[101]/F");
 
   reducedTree.Branch("prob0",&prob0,"prob0/F");
   reducedTree.Branch("probge1",&probge1,"probge1/F");
@@ -3322,6 +3545,7 @@ void reducedTree(TString outputpath, itreestream& stream)
   reducedTree.Branch("nGoodPV",&nGoodPV,"nGoodPV/I");
 
   reducedTree.Branch("SUSY_nb",&SUSY_nb,"SUSY_nb/I");
+  reducedTree.Branch("SUSY_process",&SUSY_process,"SUSY_process/I");
 
   reducedTree.Branch("njets",&njets,"njets/I");
   reducedTree.Branch("nbjets",&nbjets,"nbjets/I");
@@ -3482,16 +3706,40 @@ void reducedTree(TString outputpath, itreestream& stream)
       cout << "weight: "<< getWeight(nevents) << endl;
     }
     if(entry%100000==0) cout << "  entry: " << entry << ", percent done=" << (int)(entry/(double)nevents*100.)<<  endl;
-    
-    //this must be done outside of the if statement...need to sum over all events!  
-    getPdfWeights(pdfWeights,&pdfWeightSum);
+
+    pair<int,int> thispoint = (theScanType_==kmSugra) ? make_pair(TMath::Nint(eventlhehelperextra_m0),TMath::Nint(eventlhehelperextra_m12)) : make_pair(0,0);
+
+    if (thispoint != lastpoint) {
+      cout<<"At mSugra point m0 = "<<thispoint.first<<" m12 = "<<thispoint.second<<endl;
+      lastpoint=thispoint;
+      if ( scanProcessTotalsMap.count(thispoint)==0 )	cout<<"m0 m12 = "<<thispoint.first<<" "<<thispoint.second<<" does not exist in NLO map!"<<endl;
+    }
+
+    //these must be done outside of the if statement...need to sum over all events!  
+    SUSYProcess prodprocess= (theScanType_==kmSugra) ? getSUSYProcess() : NotFound;
+    SUSY_process = int(prodprocess);
+
+    if (theScanType_==kmSugra) {
+      if ( scanProcessTotalsMap.count(thispoint) )
+	scanProcessTotalsMap[thispoint]->SetBinContent( int(prodprocess), scanProcessTotalsMap[thispoint]->GetBinContent(int(prodprocess))+1);
+      else 	continue; // skip this event
+    }
+    getPdfWeights("CTEQ",pdfWeightsCTEQ,&pdfWeightSumCTEQ);
+    getPdfWeights("MSTW",pdfWeightsMSTW,&pdfWeightSumMSTW);
+    getPdfWeights("NNPDF",pdfWeightsNNPDF,&pdfWeightSumNNPDF);
 
     if ( passCut("cutLumiMask") && (passCut("cutTrigger") || passCut("cutUtilityTrigger")) && passCut("cutHT") ) {
 
            
       //if (entry%1000000==0) checkTimer(entry,nevents);
       weight = getWeight(nevents);
-      
+
+      m0 = thispoint.first;
+      m12=thispoint.second;
+      scanCrossSection = getScanCrossSection(prodprocess,"");
+      scanCrossSectionPlus = getScanCrossSection(prodprocess,"Plus");
+      scanCrossSectionMinus = getScanCrossSection(prodprocess,"Minus");
+
       // cast these as long ints, with rounding, assumes they are positive to begin with 
       runNumber = (ULong64_t)((*myEDM_run)+0.5);
       lumiSection = (ULong64_t)((*myEDM_luminosityBlock)+0.5);
@@ -3623,7 +3871,7 @@ void reducedTree(TString outputpath, itreestream& stream)
       csctighthaloFilter = doubleToBool(triggerresultshelper1_csctighthaloFilter);
       eenoiseFilter = doubleToBool(triggerresultshelper1_eenoiseFilter) ;
       greedymuonFilter = doubleToBool(triggerresultshelper1_greedymuonFilter) ;
-      hbhenoiseFilter = doubleToBool(triggerresultshelper1_hbhenoiseFilter) ;
+      hbhenoiseFilter = (theScanType_==kNotScan) ? doubleToBool(triggerresultshelper1_hbhenoiseFilter) : true;
       inconsistentmuonFilter = doubleToBool(triggerresultshelper1_inconsistentmuonFilter) ;
       ra2ecaltpFilter = doubleToBool(triggerresultshelper1_ra2ecaltpFilter) ;
       scrapingvetoFilter = doubleToBool(triggerresultshelper1_scrapingvetoFilter) ;
