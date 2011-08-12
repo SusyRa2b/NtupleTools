@@ -632,8 +632,8 @@ void  loadSusyScanCrossSections() {
 }
 
 void PseudoConstructor() {
-  // theScanType_=kNotScan;
-  theScanType_=kmSugra;
+   theScanType_=kNotScan;
+   //theScanType_=kmSugra;
 
   //  theMETType_=kPFMETTypeI;
   //  theJetType_=kRECOPF;
@@ -1072,7 +1072,10 @@ void getPdfWeights(const TString & pdfset, Float_t * pdfWeights, TH1D * sumofwei
   else {assert(0);}
 
   for (unsigned int i=0; i<s ; i++) {
-    if ( isRealDataInt(myEDM_isRealData) ) {pdfWeights[i]=1; }
+    //for data, and for all samples other than signal, just store 1 (to save space via compression)
+    if ( isRealDataInt(myEDM_isRealData) 
+	 || !( sampleName_.Contains("LM") || sampleName_.Contains("SUGRA") )
+	 ) {pdfWeights[i]=1; }
     else if ( pdfset=="CTEQ") {
       pdfWeights[i] = geneventinfoproducthelper1.at(i).pdfweight;
     }
