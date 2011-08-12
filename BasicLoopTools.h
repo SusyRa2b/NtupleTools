@@ -1457,6 +1457,14 @@ uint nGoodJets() {
   return njets;
 }
 
+uint nGoodJets30() {
+  
+  uint njets=0;
+  for (unsigned int i=0; i < myJetsPF->size(); ++i) {
+    if (isGoodJet30(i) )   njets++;
+  }
+  return njets;
+}
 
 uint nGoodBJets( BTaggerType btagger=Nbtaggers) {
   uint nb=0;
@@ -1745,7 +1753,7 @@ float bjetPtOfN(unsigned int n) {
   for (unsigned int i=0; i<myJetsPF->size(); i++) {
 
     bool pass=false;
-    pass = (isGoodJet(i) && passBTagger(i));
+    pass = (isGoodJet30(i) && passBTagger(i));
 
     if (pass ) {
       ngood++;
@@ -1761,7 +1769,7 @@ float bjetPhiOfN(unsigned int n) {
   for (unsigned int i=0; i<myJetsPF->size(); i++) {
 
     bool pass=false;
-    pass = (isGoodJet(i) && passBTagger(i));
+    pass = (isGoodJet30(i) && passBTagger(i));
 
     if (pass ) {
       ngood++;
@@ -1777,7 +1785,7 @@ float bjetEtaOfN(unsigned int n) {
   for (unsigned int i=0; i<myJetsPF->size(); i++) {
 
     bool pass=false;
-    pass = (isGoodJet(i) && passBTagger(i));
+    pass = (isGoodJet30(i) && passBTagger(i));
 
     if (pass ) {
       ngood++;
@@ -1793,7 +1801,7 @@ float bjetEnergyOfN(unsigned int n) {
   for (unsigned int i=0; i<myJetsPF->size(); i++) {
 
     bool pass=false;
-    pass = (isGoodJet(i) && passBTagger(i));
+    pass = (isGoodJet30(i) && passBTagger(i));
 
     if (pass ) {
       ngood++;
@@ -3467,7 +3475,7 @@ void reducedTree(TString outputpath, itreestream& stream)
   UInt_t pass_utilityHLT_HT300_CentralJet30_BTagIP;
   UInt_t prescale_utilityHLT_HT300_CentralJet30_BTagIP;
 
-  int njets, nbjets, nElectrons, nMuons;
+  int njets, njets30, nbjets, nElectrons, nMuons;
   int nbjetsSSVM,nbjetsTCHET,nbjetsSSVHPT,nbjetsTCHPT,nbjetsTCHPM;
 
   float jetpt1,jetphi1, jeteta1, jetenergy1, bjetpt1, bjetphi1, bjeteta1, bjetenergy1;
@@ -3595,6 +3603,7 @@ void reducedTree(TString outputpath, itreestream& stream)
   reducedTree.Branch("SUSY_process",&SUSY_process,"SUSY_process/I");
 
   reducedTree.Branch("njets",&njets,"njets/I");
+  reducedTree.Branch("njets30",&njets30,"njets30/I");
   reducedTree.Branch("nbjets",&nbjets,"nbjets/I");
   reducedTree.Branch("nElectrons",&nElectrons,"nElectrons/I");
   reducedTree.Branch("nMuons",&nMuons,"nMuons/I");
@@ -3822,6 +3831,7 @@ void reducedTree(TString outputpath, itreestream& stream)
       //SUSY_nb = getSUSYnb();
 
       njets = nGoodJets();
+      njets30 = nGoodJets30();
       nbjets = nGoodBJets();
 
       //  int nbjetsSSVM,nbjetsTCHET,nbjetsSSVHPT,nbjetsTCHPT,nbjetsTCHPM;
