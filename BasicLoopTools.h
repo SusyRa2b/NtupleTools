@@ -682,8 +682,8 @@ cout<<"Got options: "<<endl
 }
 
 void PseudoConstructor() {
-   theScanType_=kNotScan;
-   //theScanType_=kmSugra;
+  //theScanType_=kNotScan;
+   theScanType_=kmSugra;
 
   //  theMETType_=kPFMETTypeI;
   //  theJetType_=kRECOPF;
@@ -3162,7 +3162,7 @@ TString getSampleNameOutputString(TString inname){
   if (inname.Contains("TTJets_TuneZ2_7TeV-madgraph-tauola") ) return "TTbarJets";
   if (inname.Contains("ZJetsToNuNu_200_HT_inf_7TeV-madgraph"))                  return "Zinvisible";
 
-  if (inname.Contains("mSUGRA_tanb40_summer11"))                                return "mSUGRAtanb40";
+  if (inname.Contains("mSUGRA_tanb40_summer11"))                                return inname;
 
   //if it isn't found, just use the full name 
   //  -- data will fall into this category, which is fine because we have to hadd the files after anyway
