@@ -66,12 +66,12 @@ functionality for TH1F and TH1D e.g. the case of addOverflowBin()
 #include <set>
 	
 //for rerunning the final background estimates...need standard MC and MET cleaning
-TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-24_fullpf2pat/";//path for MC	     
-TString dataInputPath = "/cu3/wteo/reducedTrees/V00-02-05_v3-pickevents/"; //includes MET cleaning but uses a tight skim (not good for plots)
+//TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-24_fullpf2pat/";//path for MC	     
+//TString dataInputPath = "/cu3/wteo/reducedTrees/V00-02-05_v3-pickevents/"; //includes MET cleaning but uses a tight skim (not good for plots)
 
 //for making the standard set of plots...need standard MC and all data
-//TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-24_fullpf2pat/";//path for MC	     
-//TString dataInputPath = "/cu2/ra2b/reducedTrees/V00-02-24_fullpf2pat/"; //sym links to V00-02-05_v3
+TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-24_fullpf2pat/";//path for MC	     
+TString dataInputPath = "/cu2/ra2b/reducedTrees/V00-02-24_fullpf2pat/"; //sym links to V00-02-05_v3
 
 //for special tests and signal systematics
 //TString inputPath = "/tmp/joshmt/";
@@ -1331,8 +1331,6 @@ other.
   myC->cd(1);
   SIGplot->Draw();
   SLplot->Draw("SAME");
-  //TH1D* myRatio = (TH1D*)SIGplot->Clone("myRatio");
-  //myRatio->Reset();
   TH1D* myRatio = new TH1D("ratio", "ratio", nbins,low,high);
   myRatio->Sumw2();
   myRatio->SetLineColor(kBlack);
@@ -1341,9 +1339,11 @@ other.
   myRatio->SetMinimum(0);
   myRatio->SetMaximum(2);
   myRatio->GetYaxis()->SetNdivisions(200 + int(ratioMax-ratioMin)+1);    //set ticks ; to be seen if this really works
-  myRatio->GetYaxis()->SetLabelSize(0.2); //make y label bigger
+  myRatio->GetYaxis()->SetLabelSize(0.15); //make y label bigger
   myC->cd(2);
   myRatio->Draw();
+  TLine* myLine = new TLine(low, 1, high, 1);
+  myLine->Draw();
   myC->cd(1);
   TLatex* mytext = new TLatex(3.570061,23.08044,"CMS Preliminary");
   mytext->SetNDC();
@@ -1353,6 +1353,16 @@ other.
   mytext->SetTextFont(42);
   mytext->SetTextSizePixels(24);
   mytext->Draw();
+  TLegend* myLegend = new TLegend(0.63,0.84,0.81,0.7);
+  myLegend->SetFillColor(0);
+  myLegend->SetBorderSize(0);
+  myLegend->SetLineStyle(0);
+  myLegend->SetTextFont(42);
+  myLegend->SetFillStyle(0);
+  myLegend->SetTextSize(0.04);
+  myLegend->AddEntry(SIGplot,"TTbar, SIG", "l");
+  myLegend->AddEntry(SLplot, "TTbar, SL", "l");
+  myLegend->Draw();
   myC->Print("METshape_logAndRatio_"+sample+"_SLandStandard_"+btagselection+"_"+HTselection+".pdf");
 
   //get the SIG/SB Ratio
@@ -1565,7 +1575,8 @@ void AN2011( TString btagselection="ge1b" ) {
   //MET distribution with tighter HT cut
   selection_ =TCut("HT>500 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4")&&btagcut;
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
-  nbins = 17; low=150; high=500;
+  if(btagselection=="ge2b") { nbins = 7; low=150; high=500; }//requested by 
+  else{ nbins = 17; low=150; high=500;}
   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_HT500_"+btagselection);
 
 
@@ -3114,6 +3125,19 @@ void lowMETcount(){
   cout << "BEN: Data integral2:::::::: " << hdata->GetBinContent(2) << endl;
   cout << "BEN: Data integral3:::::::: " << hdata->GetBinContent(3) << endl;
 }//end of function
+
+
+void sigbpt(){
+  loadSamples();
+  doOverflowAddition(true);
+  
+  TString btagstring="ge1b";
+  TCut theBTaggingCut = "nbjets>=1";
+
+  //loose
+  selection_ =TCut("(HT>=350 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN>=4 && MET>=200)")&&theBTaggingCut;
+  cout << "LM9: " << drawSimple("bjetpt1",20,50,500,"bjetpt1.root", "bjetpt1_"+btagstring+"tag_lm9", "LM9") << endl;;
+}
 
 void studyNjet(int ibtag=3){
   loadSamples();
