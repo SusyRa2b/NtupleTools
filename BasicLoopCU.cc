@@ -21,7 +21,7 @@ int main(int argc, char** argv)
  
   //code for sampleName_ and output path
 
-  TString outputDir = "/home/joshmt/"; //this is where reducedTrees will go
+  TString outputDir = "/tmp/joshmt/"; //this is where reducedTrees will go
 
   TString options="";
   if (argc>2) options = argv[2];
@@ -31,7 +31,8 @@ int main(int argc, char** argv)
   *argv++;
   ss<<*argv;
   ss>>fileArg;
-  setSampleName_(fileArg.Remove(fileArg.Last('.')));
+  if (fileArg.Contains(".")) fileArg.Remove(fileArg.Last('.'));
+  setSampleName_(fileArg);
   cout << fileArg << endl;
   *argv--;
   
@@ -61,6 +62,7 @@ int main(int argc, char** argv)
 
 
   //run with default settings == bias-corrected JER
+
   theJERType_=kJERbias;
   reducedTree(outputDir, stream);
 
