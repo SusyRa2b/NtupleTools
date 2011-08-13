@@ -64,12 +64,20 @@ functionality for TH1F and TH1D e.g. the case of addOverflowBin()
 #include <iostream>
 #include <map>
 #include <set>
-													     
-//TString inputPath = "/home/joshmt/";
-TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-24_fullpf2pat/";//path for MC
+	
+//for rerunning the final background estimates...need standard MC and MET cleaning
+TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-24_fullpf2pat/";//path for MC	     
+TString dataInputPath = "/cu3/wteo/reducedTrees/V00-02-05_v3-pickevents/"; //includes MET cleaning but uses a tight skim (not good for plots)
+
+//for making the standard set of plots...need standard MC and all data
+//TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-24_fullpf2pat/";//path for MC	     
+//TString dataInputPath = "/cu2/ra2b/reducedTrees/V00-02-24_fullpf2pat/"; //sym links to V00-02-05_v3
+
+//for special tests and signal systematics
+//TString inputPath = "/tmp/joshmt/";
 //TString inputPath = "/home/joshmt/";//path for MC
-TString dataInputPath = "/cu2/ra2b/reducedTrees/V00-02-24_fullpf2pat/"; //sym links to V00-02-05_v3
-//TString dataInputPath = "/cu3/wteo/reducedTrees/V00-02-05_v3-pickevents/"; //includes MET cleaning but uses a tight skim (not good for plots)
+
+
 
 //the cutdesc string is now defined in loadSamples()
 
@@ -77,7 +85,7 @@ double lumiScale_ = 1091.891;
 
 #include "drawReducedTrees.h"
 
-void signalSystematics2011(const SearchRegion & region, bool isSL=false, bool isLDP=false) {
+SignalEffData signalSystematics2011(const SearchRegion & region, bool isSL=false, bool isLDP=false, TString sampleOfInterest="LM9", int m0=0,int m12=0) {
   useFlavorHistoryWeights_=false;
   loadSamples(); //needs to come first! this is why this should be turned into a class, with this guy in the ctor
 
@@ -85,12 +93,17 @@ void signalSystematics2011(const SearchRegion & region, bool isSL=false, bool is
   savePlots_ =false;
   setQuiet(true);
 
+  SignalEffData results;
+
   region.Print();
   assert ( !( isSL&&isLDP));
   if (isLDP) cout<<"   == LDP "<<endl;
   if (isSL) cout<<"   == SL "<<endl;
 
-  TString sampleOfInterest="LM9";
+  //for susy scan; harmless for non-susy scan
+  m0_=m0;
+  m12_=m12;
+
   clearSamples();
   addSample(sampleOfInterest);
 
@@ -122,16 +135,33 @@ void signalSystematics2011(const SearchRegion & region, bool isSL=false, bool is
   usePUweight_=false;
   useHLTeff_=false;
   btagSFweight_="1";
+  currentConfig_=configDescriptions_[0]; //completely raw MC
+
+  //the logic here is very fragile to user error, so try to ensure that this is really completely raw MC
+  cout<<currentConfig_<<endl;
+  assert( currentConfig_.Contains("JER0") && currentConfig_.Contains("JES0") && currentConfig_.Contains("METunc0")
+	  && currentConfig_.Contains("PUunc0")&& currentConfig_.Contains("BTagEff0")&& currentConfig_.Contains("HLTEff0") );
 
   TString var="HT"; TString xtitle=var;
   int  nbins=1; float low=0; float high=1e9;
 
+  /*
+some explanation:
+the completely raw yield is needed to give to owen, both for comparison purposes and also
+to calculate the net effect of all corrections = corrected yield / raw yield
+
+But for calculating systematics, I want to compare the fractional change to the JERbias, because
+each of the systematics variations was done with JERbias turned on.
+
+So the convention is:
+configDescriptions_[0] is raw
+configDescriptions_[1] is with JERbias
+  */
+
   drawPlots(var,nbins,low,high,xtitle,"events","dummyH");
-  double nominal=  getIntegral(sampleOfInterest);
-  double nominalerr=  getIntegralErr(sampleOfInterest);
-
-
-  cout<<"raw yield = "<<nominal<<" +/- "<<nominalerr<<endl;
+  double raw0=  getIntegral(sampleOfInterest);
+  double rawerr0=  getIntegralErr(sampleOfInterest);
+  cout<<"raw yield = "<<raw0<<" +/- "<<rawerr0<<endl;
   TH1D* totalPdfWeightsCTEQ = (TH1D*) files_[currentConfig_][sampleOfInterest]->Get("pdfWeightSumCTEQ");
   const  float nominalweight=   totalPdfWeightsCTEQ->GetBinContent(1);
 
@@ -141,8 +171,16 @@ void signalSystematics2011(const SearchRegion & region, bool isSL=false, bool is
   TH1D* totalPdfWeightsNNPDF = (TH1D*) files_[currentConfig_][sampleOfInterest]->Get("pdfWeightSumNNPDF");
   cout<< nominalweight<<"\t"<<   totalPdfWeightsNNPDF->GetBinContent(1)<<endl;
 
-  TTree* thetree = (TTree*) files_[currentConfig_][sampleOfInterest]->Get("reducedTree");
+  currentConfig_=configDescriptions_[1]; //add  JER bias
+  //the logic here is very fragile to user error, so try to ensure that this is the correct thing
+  assert( currentConfig_.Contains("JERbias") && currentConfig_.Contains("JES0") && currentConfig_.Contains("METunc0")
+	  && currentConfig_.Contains("PUunc0")&& currentConfig_.Contains("BTagEff0")&& currentConfig_.Contains("HLTEff0") );
 
+  drawPlots(var,nbins,low,high,xtitle,"events","dummyH");
+  cout<<"add JER = "<<getIntegral(sampleOfInterest)<<" +/- "<<getIntegralErr(sampleOfInterest) <<endl;
+
+  //this will be used for PDF uncertainties
+  TTree* thetree = (TTree*) files_[currentConfig_][sampleOfInterest]->Get("reducedTree");
 
   usePUweight_=true;
   drawPlots(var,nbins,low,high,xtitle,"events","dummyH");
@@ -155,26 +193,50 @@ void signalSystematics2011(const SearchRegion & region, bool isSL=false, bool is
   selection_ = baseline && HTcut && passOther && SRMET; //remove b tag
   btagSFweight_=bweightstring;
   drawPlots(var,nbins,low,high,xtitle,"events","dummyH");
-  nominal=  getIntegral(sampleOfInterest);
-  nominalerr=  getIntegralErr(sampleOfInterest);
+  double nominal=  getIntegral(sampleOfInterest);
+  double nominalerr=  getIntegralErr(sampleOfInterest);
   cout<<"add b tag SF = "<<nominal<<" +/- "<<nominalerr <<endl;
+
+  results.effCorr = nominal / raw0;
+  results.rawYield = raw0;
+
+  // NLO k factor uncertainty
+  susyCrossSectionVariation_="Plus";
+  drawPlots(var,nbins,low,high,xtitle,"events","dummyH");
+  double kfactorplus= getIntegral(sampleOfInterest);
+
+  susyCrossSectionVariation_="Minus";
+  drawPlots(var,nbins,low,high,xtitle,"events","dummyH");
+  double kfactorminus= getIntegral(sampleOfInterest);
+
+  //do everything in %
+  kfactorplus=  100*fabs(kfactorplus-nominal)/nominal;
+  kfactorminus= 100*fabs(kfactorminus-nominal)/nominal;
+  cout<<"k factor uncertainties = "<<kfactorminus<<" "<<kfactorplus<<endl;
+  results.totalSystematic = pow(0.5*(kfactorplus+kfactorminus),2); //square of the error
+
+  susyCrossSectionVariation_=""; //reset to default k factors
+  //all other uncertainties
 
   //we're gonna hard code the fact that these variations come in pairs
   double var1=0,var2=0;
-  for (unsigned int j=1; j<configDescriptions_.size(); j++) {
+  for (unsigned int j=2; j<configDescriptions_.size(); j++) {
     currentConfig_=configDescriptions_[j];
     drawPlots(var,nbins,low,high,xtitle,"events","dummyH");
     double thisn=getIntegral(sampleOfInterest);
-    if (j%2==0) {
+    if (j%2==0) { //this one runs first
       var2=fabs(100*(thisn-nominal)/nominal);
+    }
+    else { //this one runs second
+      var1=fabs(100*(thisn-nominal)/nominal);
       double bigger = var2>var1? var2:var1;
       cout<<getVariedSubstring(currentConfig_)<<"\t"<<bigger<<endl;
+      results.totalSystematic += bigger*bigger; //add in quadrature
     }
-    else     var1=fabs(100*(thisn-nominal)/nominal);
   }
 
-  //reset to the nominal
-  currentConfig_=configDescriptions_[0];
+  //reset to the nominal with JER bias
+  currentConfig_=configDescriptions_[1];
 
   double largest=0;
   double smallest=1e9;
@@ -185,7 +247,7 @@ void signalSystematics2011(const SearchRegion & region, bool isSL=false, bool is
 //   TH1D*  HyieldsNNPDF= new TH1D("HyieldsNNPDF","NNPDF yields",100,0,200);
 
   double percentCTEQ=0,percentMSTW=0,percentNNPDF=0;
-
+  if (false) { //don't do pdf uncertainties
   // ~~~~~~~~~~~~ CTEQ ~~~~~~~~~~
   { //because i'm using horrible unstructured code here, give the variables a scope
   double Xplus[22];// Xplus[0]=0;
@@ -315,22 +377,118 @@ void signalSystematics2011(const SearchRegion & region, bool isSL=false, bool is
   if (percentNNPDF > percentMSTW) percentMSTW = percentNNPDF;
   cout<<"PDF uncertainty (%) = "<<percentMSTW<<endl;
 
+  results.totalSystematic += percentMSTW*percentMSTW;
+  }
+  else { 
+    //    results.totalSystematic += 13*13;
+    cout<<"Skipping PDF uncertainties!"<<endl;
+  }
+
+  results.totalSystematic += pow(4.5,2); //lumi uncertainty
+
+  //ok, we're done. take the square root to get the total systematics
+  results.totalSystematic = sqrt(results.totalSystematic);
+
+  return results;
 }
 
-void runPdf2011() {
+void runSystematics2011_LM9() {
   setSearchRegions();
-    signalSystematics2011(searchRegions_[0]);
-    return;
+  //  signalSystematics2011(searchRegions_[0]);
+  //    return;
+
+  TString sampleOfInterest="LM9";
+
+  vector<ofstream*> textfiles;
+  for (unsigned int i=0; i<searchRegions_.size(); i++) {
+    char effoutput[500];
+    sprintf(effoutput,"signalSyst.%s.%s%s.dat",sampleOfInterest.Data(),searchRegions_[i].btagSelection.Data(),searchRegions_[i].owenId.Data());
+
+    textfiles.push_back( new ofstream(effoutput));
+  }
 
   for (unsigned int i=0; i<searchRegions_.size(); i++) {
-    signalSystematics2011(sbRegions_[i]);
-    signalSystematics2011(searchRegions_[i]);
+    (*textfiles[i])<<m0_<<" "<<m12_<<" ";
+    SignalEffData SB =  signalSystematics2011(sbRegions_[i],false,false,sampleOfInterest);
+    SignalEffData SIG=  signalSystematics2011(searchRegions_[i],false,false,sampleOfInterest);
 
-    signalSystematics2011(sbRegions_[i],true);
-    signalSystematics2011(searchRegions_[i],true);
+    SignalEffData SBSL= signalSystematics2011(sbRegions_[i],true,false,sampleOfInterest);
+    SignalEffData SIGSL=signalSystematics2011(searchRegions_[i],true,false,sampleOfInterest);
 
-    signalSystematics2011(sbRegions_[i],false,true);
-    signalSystematics2011(searchRegions_[i],false,true);
+    SignalEffData SBLDP= signalSystematics2011(sbRegions_[i],false,true,sampleOfInterest);
+    SignalEffData SIGLDP=signalSystematics2011(searchRegions_[i],false,true,sampleOfInterest);
+
+    (*textfiles[i])<<SIG.rawYield<<" "<<SB.rawYield<<" "<<SIGSL.rawYield<<" "<<SBSL.rawYield<<" "<<SIGLDP.rawYield<<" "<<SBLDP.rawYield<<" "
+		   <<SIG.effCorr<<" "<<SB.effCorr<<" "<<SIGSL.effCorr<<" "<<SBSL.effCorr<<" "<<SIGLDP.effCorr<<" "<<SBLDP.effCorr<<" "
+	    <<SIG.totalSystematic<<" "<<SB.totalSystematic<<" "<<SIGSL.totalSystematic<<" "<<SBSL.totalSystematic<<" "<<SIGLDP.totalSystematic<<" "<<SBLDP.totalSystematic<<endl;
+  }
+
+  for (unsigned int i=0; i<searchRegions_.size(); i++) {
+    textfiles.at(i)->close();
+  }
+
+}
+
+void runSystematics2011_mSugra() {
+  TString sampleOfInterest="mSUGRAtanb40";
+  loadSamples();
+  clearSamples();
+  addSample(sampleOfInterest);
+
+  setSearchRegions();
+  loadSusyScanHistograms();
+  //  signalSystematics2011(searchRegions_[0]);
+  //    return;
+
+
+  vector<ofstream*> textfiles;
+  for (unsigned int i=0; i<searchRegions_.size(); i++) {
+    char effoutput[500];
+    sprintf(effoutput,"effCorrSyst.%s.%s%s.dat",sampleOfInterest.Data(),searchRegions_[i].btagSelection.Data(),searchRegions_[i].owenId.Data());
+
+    textfiles.push_back( new ofstream(effoutput));
+  }
+
+  //loop over the scan points
+  for (map<pair<int,int>, TH1D* >::iterator iscanpoint = scanProcessTotalsMap.begin(); iscanpoint!=scanProcessTotalsMap.end(); ++iscanpoint) {
+  
+
+
+    m0_=iscanpoint->first.first;
+    m12_=iscanpoint->first.second;
+
+    //need to check that there are 10k points, in order to throw out points that didn't work
+    int nentries=    scanProcessTotalsMap[iscanpoint->first]->GetEntries();
+    cout<<m0_<<" "<<m12_<<" NEntries = "<<nentries<<endl;
+//     if (nentries != 10000) {
+//       cout<<m0_<<" "<<m12_<<" being skipped! NEntries = "<<nentries<<endl;
+//       continue;
+//     }
+
+    if (nentries==0) continue;
+
+    for (unsigned int i=0; i<searchRegions_.size(); i++) {
+      (*textfiles[i])<<m0_<<" "<<m12_<<" ";
+//the logic here is screwy...i've got m0 and m12 as globals but then signalSystematics2011() takes them as arguments
+//and overwrites the globals with the arguments.
+//for now let's just live with it.
+  
+      SignalEffData SB =  signalSystematics2011(sbRegions_[i],false,false,sampleOfInterest,m0_,m12_);
+      SignalEffData SIG=  signalSystematics2011(searchRegions_[i],false,false,sampleOfInterest,m0_,m12_);
+      
+      SignalEffData SBSL= signalSystematics2011(sbRegions_[i],true,false,sampleOfInterest,m0_,m12_);
+      SignalEffData SIGSL=signalSystematics2011(searchRegions_[i],true,false,sampleOfInterest,m0_,m12_);
+      
+      SignalEffData SBLDP= signalSystematics2011(sbRegions_[i],false,true,sampleOfInterest,m0_,m12_);
+      SignalEffData SIGLDP=signalSystematics2011(searchRegions_[i],false,true,sampleOfInterest,m0_,m12_);
+      
+      (*textfiles[i])<<SIG.effCorr<<" "<<SB.effCorr<<" "<<SIGSL.effCorr<<" "<<SBSL.effCorr<<" "<<SIGLDP.effCorr<<" "<<SBLDP.effCorr<<" "
+		     <<SIG.totalSystematic<<" "<<SB.totalSystematic<<" "<<SIGSL.totalSystematic<<" "<<SBSL.totalSystematic<<" "<<SIGLDP.totalSystematic<<" "<<SBLDP.totalSystematic<<endl;
+    }
+  }
+
+  for (unsigned int i=0; i<searchRegions_.size(); i++) {
+    textfiles.at(i)->close();
   }
 
 }
@@ -466,27 +624,35 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
 
     if (isSIG) {
       myOwen->Nttbarmc_sig_ldp = getIntegral("TTbarJets");
+      myOwen->Nsingletopmc_sig_ldp = getIntegral("SingleTop");
       double lsfw = getIntegral("WJets") > 0 ?  pow(getIntegralErr("WJets"),2)/getIntegral("WJets"): -1;
+      double lsfzj = getIntegral("ZJets") > 0 ?  pow(getIntegralErr("ZJets"),2)/getIntegral("ZJets"): -1;
       double lsfz = getIntegral("Zinvisible") > 0 ?  pow(getIntegralErr("Zinvisible"),2)/getIntegral("Zinvisible"): -1;
 
       if (lsfw>0) myOwen->lsf_WJmc=lsfw;
       if (lsfz>0) myOwen->lsf_Znnmc=lsfz;
+      if (lsfzj>0) myOwen->lsf_Zjmc=lsfzj;
 
       myOwen->NWJmc_sig_ldp = getIntegral("WJets")/lsfw;
       myOwen->NZnnmc_sig_ldp = getIntegral("Zinvisible")/lsfz;
+      myOwen->NZjmc_sig_ldp = getIntegral("ZJets")/lsfzj;
 
     }
     else {
       myOwen->Nttbarmc_sb_ldp = getIntegral("TTbarJets");
+      myOwen->Nsingletopmc_sb_ldp = getIntegral("SingleTop");
 
       double lsfw = getIntegral("WJets") > 0 ?  pow(getIntegralErr("WJets"),2)/getIntegral("WJets"): -1;
       double lsfz = getIntegral("Zinvisible") > 0 ?  pow(getIntegralErr("Zinvisible"),2)/getIntegral("Zinvisible"): -1;
+      double lsfzj = getIntegral("ZJets") > 0 ?  pow(getIntegralErr("ZJets"),2)/getIntegral("ZJets"): -1;
 
       if (lsfw>0) myOwen->lsf_WJmc=lsfw;
       if (lsfz>0) myOwen->lsf_Znnmc=lsfz;
+      if (lsfzj>0) myOwen->lsf_Zjmc=lsfzj;
 
       myOwen->NWJmc_sb_ldp = getIntegral("WJets")/lsfw;
       myOwen->NZnnmc_sb_ldp = getIntegral("Zinvisible")/lsfz;
+      myOwen->NZjmc_sb_ldp = getIntegral("ZJets")/lsfzj;
     }
     //end of special stuff for owen
   }
@@ -640,7 +806,7 @@ void runDataQCD2011(const bool forOwen=false) {
   cout<<" == Running QCD closure test =="<<endl;
   runClosureTest2011(qcdSystErrors);
 
-  cout<<" == QCD systeamtics summary =="<<endl;
+  cout<<" == QCD systematics summary =="<<endl;
   for (unsigned int j=0; j<n.size(); j++) {
     qcdSystErrors["Total"].push_back( sqrt( pow(qcdSystErrors["MCsub"].at(j),2) +  pow(qcdSystErrors["Closure"].at(j),2)+ pow(qcdSystErrors["SBshift"].at(j),2)));
     cout<<j<<"\t&"<<qcdSystErrors["MCsub"].at(j)<<" & "<<qcdSystErrors["Closure"].at(j)<<" & "<<qcdSystErrors["SBshift"].at(j)<<" & "<<qcdSystErrors["Total"].at(j)<<endl;
@@ -936,9 +1102,10 @@ void runTtbarEstimate2011(const bool forOwen=false) {
   for (unsigned int j=0; j<searchRegions_.size();j++)   closure[j]=fabs(slABCD(j));
 
   cout<<" == summary (%) == "<<endl;
-  cout<<"\tClosure\tQCD\tZ\tMC"<<endl;
+  cout<<"\tClosure\tQCD\tZ\tMC\tTotal"<<endl;
   for (unsigned int j=0; j<searchRegions_.size();j++) {
-    cout<<j<<"\t"<<closure[j]<<"\t"<<qcd[j]<<"\t"<<znn[j]<<"\t"<<mc[j]<<endl;
+    double totalsyst = sqrt(closure[j]*closure[j] + qcd[j]*qcd[j] + znn[j]*znn[j] + mc[j]*mc[j]);
+    cout<<j<<"\t"<<closure[j]<<"\t"<<qcd[j]<<"\t"<<znn[j]<<"\t"<<mc[j]<<"\t"<<totalsyst <<endl;
   }
 
 
@@ -952,6 +1119,8 @@ void printOwenAll() {
   for (std::map<TString,OwenData>::iterator i=owenMap_.begin(); i!=owenMap_.end(); ++i) {
     printOwen( i->first);
   }
+  cout<<"luminosity = "<<lumiScale_<<endl;
+
 }
 
 void AN2011_prescale( TString btagselection="ge1b" ) {
@@ -1291,6 +1460,31 @@ void AN2011_opt() {
   var="MET"; xtitle="MET (GeV)";
   nbins = 10; low=200; high=600;
   drawPlots(var,nbins,low,high,xtitle,"Events", "opt_HT_MET200_HT1000_ge1b");
+
+}
+
+void drawMSugraTest() {
+  /*
+.L drawReducedTrees.C++
+  */
+
+  loadSamples();
+  clearSamples();
+  addSample("TTbarJets");
+  addSample("mSUGRAtanb40");
+  m0_=800;
+  m12_=200;
+  doOverflowAddition(true);
+  setStackMode(true); //regular stack
+  setColorScheme("stack");
+  doData(false);
+  int nbins; float low,high;
+  TString var,xtitle;
+
+  selection_ =TCut("cutHT==1 && cutPV==1 && cutTrigger==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=200 && minDeltaPhiN >= 4 && nbjets>=1");
+  var="njets"; xtitle="Jet multiplicity";
+  nbins = 8; low=1; high=9;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "testmsugra");
 
 }
 

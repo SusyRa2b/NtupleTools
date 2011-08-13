@@ -88,6 +88,13 @@ void setSearchRegions() {
   searchRegionsSet_=true;
 }
 
+struct SignalEffData {
+  double rawYield;
+
+  double effCorr;
+  double totalSystematic;
+};
+
 struct OwenData {
   double Nsig; //number in signal region , data //done
   double Nsb; // number in SB, data             //done
@@ -113,6 +120,13 @@ struct OwenData {
   double NZnnmc_sig_ldp; //done
   double NZnnmc_sb_ldp; //done
 
+  double lsf_Zjmc;
+  double NZjmc_sig_ldp;
+  double NZjmc_sb_ldp;
+
+  double Nsingletopmc_sig_ldp;
+  double Nsingletopmc_sb_ldp;
+
   //don't need DataLumi...that's just lumiScale_
 } ;
 
@@ -137,6 +151,9 @@ void printOwen(const TString& owenKey) {
   cout<<"Nttbarmc_sig_ldp  "<<  owenMap_[owenKey].Nttbarmc_sig_ldp<<endl;
   cout<<"Nttbarmc_sb_ldp   "<<  owenMap_[owenKey].Nttbarmc_sb_ldp<<endl;
 
+  cout<<"Nsingletopmc_sig_ldp  "<<  owenMap_[owenKey].Nsingletopmc_sig_ldp<<endl;
+  cout<<"Nsingletopmc_sb_ldp   "<<  owenMap_[owenKey].Nsingletopmc_sb_ldp<<endl;
+
   cout<<"lsf_WJmc          "<<  owenMap_[owenKey].lsf_WJmc<<endl;
   cout<<"NWJmc_sig_ldp     "<<  owenMap_[owenKey].NWJmc_sig_ldp<<endl;
   cout<<"NWJmc_sb_ldp      "<<  owenMap_[owenKey].NWJmc_sb_ldp<<endl;
@@ -145,6 +162,9 @@ void printOwen(const TString& owenKey) {
   cout<<"NZnnmc_sig_ldp    "<<  owenMap_[owenKey].NZnnmc_sig_ldp<<endl;
   cout<<"NZnnmc_sb_ldp     "<<  owenMap_[owenKey].NZnnmc_sb_ldp<<endl;
 
+  cout<<"lsf_Zjmc         "<<  owenMap_[owenKey].lsf_Zjmc<<endl;
+  cout<<"NZjmc_sig_ldp    "<<  owenMap_[owenKey].NZjmc_sig_ldp<<endl;
+  cout<<"NZjmc_sb_ldp     "<<  owenMap_[owenKey].NZjmc_sb_ldp<<endl;
 
 }
 
@@ -161,6 +181,10 @@ bool addOverflow_=true;
 bool drawMCErrors_=false;
 bool renormalizeBins_=false;//no setter function
 bool owenColor_ = false;
+
+int m0_=0;
+int m12_=0;
+TString susyCrossSectionVariation_="";
 
 bool normalized_=false;
 
@@ -206,6 +230,7 @@ TH1D* totalqcd=0; //ben - just for ease of doing event counts with drawPlots
 TH1D* ratio=0; float ratioMin=0; float ratioMax=2;
 TGraphErrors* mcerrors=0;
 bool loaded_=false; //bookkeeping
+bool loadedSusyHistos_=false;//bookkeeping
 
 // == set configuration options ==
 void setQuiet(bool q) {
@@ -274,6 +299,35 @@ void setLumiScale(double lumiscale){
   lumiScale_ = lumiscale;
 }
 
+map<pair<int,int>, TH1D* >  scanProcessTotalsMap;
+void loadSusyScanHistograms() {
+  if (loadedSusyHistos_) return;
+
+  TFile* susyfile = 0;
+  for (unsigned int isample=0; isample<samples_.size(); isample++) {
+    if ( samples_[isample].Contains("mSUGRA")) {
+      susyfile =  files_[currentConfig_][samples_[isample]];
+      cout<<" Loading SUSY scan histograms from file: "<<susyfile->GetName()<<endl;
+    }
+  }
+
+  if (susyfile==0) {cout<<"did not find mSugra in loadSusyScanHistograms!"<<endl; return;}
+
+  for (int i=0; i<susyfile->GetListOfKeys()->GetEntries(); i++) {
+    TString objname=  susyfile->GetListOfKeys()->At(i)->GetName();
+    if (objname.BeginsWith("scanProcessTotals") ) {
+      TString m0str=   objname.Tokenize("_")->At(1)->GetName();
+      TString m12str=   objname.Tokenize("_")->At(2)->GetName();
+      int m0 = m0str.Atoi();
+      int m12 = m12str.Atoi();
+      scanProcessTotalsMap[make_pair(m0,m12)] = (TH1D*) susyfile->Get(objname);
+    }
+  }
+
+
+  loadedSusyHistos_=true;
+}
+
 void drawPlotHeader() {
 
   const float ypos = 0.97;
@@ -308,7 +362,7 @@ void drawPlotHeader() {
 
 TString getVariedSubstring(TString currentVariation) {
 
-  TObjArray* baseline = configDescriptions_[0].Tokenize("_");
+  TObjArray* baseline = configDescriptions_[1].Tokenize("_");
 
   TObjArray* mine = currentVariation.Tokenize("_");
 
@@ -443,7 +497,7 @@ void fillFlavorHistoryScaling() {
 
 }
 
-TString getCutString(double lumiscale, TString extraWeight="", TString thisSelection="", TString extraSelection="", int pdfWeightIndex=0,TString pdfSet="CTEQ") {
+TString getCutString(double lumiscale, TString extraWeight="", TString thisSelection="", TString extraSelection="", int pdfWeightIndex=0,TString pdfSet="CTEQ", bool isSusyScan=false) {
   TString weightedcut="weight"; 
   
   weightedcut += "*(";
@@ -483,22 +537,57 @@ TString getCutString(double lumiscale, TString extraWeight="", TString thisSelec
       weightedcut += " && ";
       weightedcut +=extraSelection;
     }
+    if (isSusyScan) {
+      weightedcut += " && m0==";
+      weightedcut +=m0_;
+      weightedcut += " && m12==";
+      weightedcut +=m12_;
+    }
     weightedcut+=")";
   }
   else if (extraSelection !="") {
     weightedcut += "*(";
     weightedcut +=extraSelection;
+    if (isSusyScan) {
+      weightedcut += " && m0==";
+      weightedcut +=m0_;
+      weightedcut += " && m12==";
+      weightedcut +=m12_;
+    }
     weightedcut+=")";
   }
+
+  //the easy part is done above -- keep only events at the current scan point
+  //the hard part is to properly weight the events according to NLO cross sections
+  if (isSusyScan) {
+    //the cross section for the subprocess is stored in scanCrossSection (systematics in scanCrossSectionPlus and scanCrossSectionMinus)
+    //the normalization for the subprocess is stored in TH1D scanProcessTotals_<m0>_<m12>
+    loadSusyScanHistograms();
+    TH1D* thishist = scanProcessTotalsMap[make_pair(m0_,m12_)];
+    if (thishist==0) cout<<"We've got a problem in getCutString!"<<endl;
+    TString susyprocessweight = "(";
+    for (int i=0; i<=10; i++ ) {
+      char thisweight[50];
+      int thisn = TMath::Nint(thishist->GetBinContent(i));
+      if (thisn==0) thisn=1; //avoid div by 0. if there are no events anyway then any value is ok
+      sprintf(thisweight, "((SUSY_process==%d)*scanCrossSection%s/%d)",i,susyCrossSectionVariation_.Data(),thisn);
+      susyprocessweight += thisweight;
+      if (i!=10)    susyprocessweight += " + ";
+    }
+    susyprocessweight += ")";
+    weightedcut+="*";
+    weightedcut += susyprocessweight;
+  }
+
   if (!quiet_)  cout<<weightedcut<<endl;
   return weightedcut;
 }
 
 //add an interface more like the old one, but with an addition for the data/MC lumi scaling
-TString getCutString(bool isData, TString extraSelection="",TString extraWeight="",int pdfWeightIndex=0,TString pdfSet="CTEQ") {
+TString getCutString(bool isData, TString extraSelection="",TString extraWeight="",int pdfWeightIndex=0,TString pdfSet="CTEQ", bool isSusyScan=false) {
 
   double ls = isData ? 1 : lumiScale_;
-  return    getCutString(ls, extraWeight, selection_,extraSelection, pdfWeightIndex,pdfSet) ;
+  return    getCutString(ls, extraWeight, selection_,extraSelection, pdfWeightIndex,pdfSet,isSusyScan) ;
 }
 
 void addOverflowBin(TH1D* theHist) {
@@ -613,6 +702,7 @@ void setColorScheme(const TString & name) {
   if (name == "stack") {
     sampleColor_["LM13"] = kGray;
     sampleColor_["LM9"] =kGray;
+    sampleColor_["mSUGRAtanb40"] =kGray;
     sampleColor_["QCD"] = kYellow;
     sampleColor_["PythiaQCD"] = kYellow;
     sampleColor_["PythiaPUQCD"] = kYellow;
@@ -634,6 +724,7 @@ void setColorScheme(const TString & name) {
   else if (name == "nostack" || name=="owen") {
     sampleColor_["LM13"] = kBlue+2;
     sampleColor_["LM9"] = kCyan+2;
+    sampleColor_["mSUGRAtanb40"] =kCyan+2;
     sampleColor_["QCD"] = 2;
     sampleColor_["PythiaQCD"] = 2;
     sampleColor_["PythiaPUQCD"] =2;
@@ -717,23 +808,30 @@ void loadSamples(bool joinSingleTop=true) {
   samplesAll_.insert("LM13");
   samplesAll_.insert("LM9");
 
+  samplesAll_.insert("mSUGRAtanb40");
+
   //  configDescriptions_.push_back("SSVHPT");
   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
-
 /*
   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
+
+  //JES
   configDescriptions_.push_back("SSVHPT_PF2PATjets_JESdown_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
   configDescriptions_.push_back("SSVHPT_PF2PATjets_JESup_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
+  //JER
   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERdown_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERup_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
+  //unclustered MET
   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METuncDown_PUunc0_BTagEff0_HLTEff0");
   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METuncUp_PUunc0_BTagEff0_HLTEff0");
+  //PU
   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncDown_BTagEff0_HLTEff0");
   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncUp_BTagEff0_HLTEff0");
-
+  //btag eff
   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffdown_HLTEff0");
   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffup_HLTEff0");
 
+  //HLT eff
   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffdown");
   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffup");
 */
@@ -744,6 +842,7 @@ void loadSamples(bool joinSingleTop=true) {
   //no need to ever comment these out
   setColorScheme("stack");
 
+  sampleLabel_["mSUGRAtanb40"] = "tan #beta = 40";
   sampleLabel_["LM13"] = "LM13";
   sampleLabel_["LM9"] = "LM9";
   sampleLabel_["QCD"] = "QCD (madgraph)";
@@ -763,6 +862,7 @@ void loadSamples(bool joinSingleTop=true) {
   sampleLabel_["TotalSM"] = "SM";
   sampleLabel_["Total"] = "SM + LM13"; //again, this is a hack
 
+  sampleMarkerStyle_["mSUGRAtanb40"] = kFullStar;
   sampleMarkerStyle_["LM13"] = kFullStar;
   sampleMarkerStyle_["LM9"] = kFullStar;
   sampleMarkerStyle_["QCD"] = kFullCircle;
@@ -782,6 +882,7 @@ void loadSamples(bool joinSingleTop=true) {
   sampleMarkerStyle_["TotalSM"] = kOpenCross; //FIXME?
   sampleMarkerStyle_["Total"] = kDot; //FIXME?
 
+  sampleOwenName_["mSUGRAtanb40"] = "msugra40";
   sampleOwenName_["LM13"] = "lm13";
   sampleOwenName_["LM9"] = "lm9";
   sampleOwenName_["QCD"] = "qcd";
@@ -869,7 +970,7 @@ float drawSimple(const TString var, const int nbins, const float low, const floa
    
   TString optfh= useFlavorHistoryWeights_ && samplename.Contains("WJets") ? "flavorHistoryWeight" : "";
   if(samplename=="data") tree->Project(histname,var,getCutString(1.,optfh,selection_,"",0).Data());
-  else tree->Project(histname,var,getCutString(lumiScale_,optfh,selection_,"",0).Data());
+  else tree->Project(histname,var,getCutString(lumiScale_,optfh,selection_,"",0,"", samplename.Contains("mSUGRA")).Data());
   float theIntegral = hh->Integral(0,nbins+1);
 
   if (addOverflow_)  addOverflowBin( hh ); //manipulates the TH1D
@@ -912,7 +1013,7 @@ void draw2d(const TString var, const int nbins, const float low, const float hig
     TString drawstring=vary;
     drawstring+=":";
     drawstring+=var;
-    tree->Project(hname,drawstring,getCutString(false,"",weightopt).Data());
+    tree->Project(hname,drawstring,getCutString(false,"",weightopt,0,"",samples_[isample].Contains("mSUGRA") ).Data());
     //now the histo is filled
     
     h2d->SetXTitle(xtitle);
@@ -933,6 +1034,15 @@ void draw2d(const TString var, const int nbins, const float low, const float hig
     thecanvas->SaveAs(savename+".png"); //for twiki
   }
 
+}
+
+bool isSampleSM(const TString & name) {
+
+  if (name.Contains("LM")) return false;
+
+  if (name.Contains("SUGRA")) return false;
+
+  return true;
 }
 
 void drawPlots(const TString var, const int nbins, const float low, const float high, const TString xtitle, TString ytitle, TString filename="", const float* varbins=0) {
@@ -1014,7 +1124,7 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
     TTree* tree = (TTree*) files_[currentConfig_][samples_[isample]]->Get("reducedTree");
     gROOT->cd();
     TString weightopt= useFlavorHistoryWeights_ && samples_[isample].Contains("WJets") ? "flavorHistoryWeight" : "";
-    tree->Project(hname,var,getCutString(lumiScale_,weightopt,selection_,"",0).Data());
+    tree->Project(hname,var,getCutString(lumiScale_,weightopt,selection_,"",0,"",samples_[isample].Contains("mSUGRA")).Data());
     //now the histo is filled
     
     if (renormalizeBins_) ytitle=renormBins(histos_[samples_[isample]],2 ); //manipulates the TH1D //FIXME hard-coded "2"
@@ -1024,11 +1134,11 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
 
     hinteractive = histos_[samples_[isample]];// hinteractive will point to the last sample's histo
 
-   if (!samples_[isample].Contains("LM")) {
+    if (isSampleSM(samples_[isample])) {
       totalsm->Add(histos_[samples_[isample]]);
       //      if (!quiet_)    cout << "totalsm: " << samples_[isample] << endl;
     }
-    if (!samples_[isample].Contains("LM") && !samples_[isample].Contains("QCD") && !samples_[isample].Contains("TTbar")) {
+    if (!samples_[isample].Contains("LM") && !samples_[isample].Contains("QCD") && !samples_[isample].Contains("TTbar") && !samples_[isample].Contains("SUGRA")) {
       totalewk->Add(histos_[samples_[isample]]);
       //      if (!quiet_) cout << "totalewk: " << samples_[isample] << endl;
     }
@@ -1036,11 +1146,11 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
       totalqcdttbar->Add(histos_[samples_[isample]]);
       //      if (!quiet_) cout << "totalqcdttbar: " << samples_[isample] << endl;
     }
-    if (!samples_[isample].Contains("TTbar") && !samples_[isample].Contains("LM")){
+    if (!samples_[isample].Contains("TTbar") && !samples_[isample].Contains("LM") && !samples_[isample].Contains("SUGRA")) {
       totalnonttbar->Add(histos_[samples_[isample]]);
       //      if (!quiet_) cout << "totalnonttbar: " << samples_[isample] << endl;
     }
-    if (!samples_[isample].Contains("QCD") && !samples_[isample].Contains("LM")){
+    if (!samples_[isample].Contains("QCD") && !samples_[isample].Contains("LM")&& !samples_[isample].Contains("SUGRA")){
        totalnonqcd->Add(histos_[samples_[isample]]);
        //      if (!quiet_) cout << "totalnonqcd: " << samples_[isample] << endl;
     }
@@ -1073,7 +1183,7 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
     else { //draw non-stacked histo
       //normalize
       if ( normalized_ && histos_[samples_[isample]]->Integral() >0)  histos_[samples_[isample]]->Scale( 1.0 / histos_[samples_[isample]]->Integral() );
-      if (!drawSusyOnly_ || samples_[isample].Contains("LM")) { //drawSusyOnly_ means don't draw SM
+      if (!drawSusyOnly_ || samples_[isample].Contains("LM")|| samples_[isample].Contains("SUGRA")) { //drawSusyOnly_ means don't draw SM
 	//set max
 	if ( findOverallMax( histos_[samples_[isample]]) > histMax) histMax = findOverallMax(histos_[samples_[isample]]);
 	
@@ -1267,7 +1377,7 @@ void drawSignificance(const TString & var, const int nbins, const float low, con
 
   TH1D* hsusy=0;
   for (std::vector<TString>::iterator it = samples_.begin(); it!=samples_.end(); ++it) {
-    if ( (*it).Contains("LM") ) hsusy = histos_[ *it];
+    if ( (*it).Contains("LM") ||(*it).Contains("SUGRA")  ) hsusy = histos_[ *it];
   }
   if (hsusy==0) {
     cout<<"Didn't find a signal sample"<<endl;
@@ -1382,8 +1492,8 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
 
     //Fill histos
     if (useFlavorHistoryWeights_) assert(0); // this needs to be implemented
-    tree->Project(hnameP,var,getCutString(lumiScale_,"",selection_,cstring1,0).Data());
-    tree->Project(hnameF,var,getCutString(lumiScale_,"",selection_,cstring2,0).Data());
+    tree->Project(hnameP,var,getCutString(lumiScale_,"",selection_,cstring1,0,"",samples_[isample].Contains("mSUGRA")).Data());
+    tree->Project(hnameF,var,getCutString(lumiScale_,"",selection_,cstring2,0,"",samples_[isample].Contains("mSUGRA")).Data());
     
     if (addOverflow_)  addOverflowBin( histos_[hnameP] );
     if (addOverflow_)  addOverflowBin( histos_[hnameF] );
@@ -1397,7 +1507,7 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
     //compute ratio
     histos_[hnameR]->Divide(histos_[hnameP], histos_[hnameF]);
 
-    if (!samples_[isample].Contains("LM")) {
+    if (isSampleSM(samples_[isample])) {
       totalsm_pass.Add(histos_[hnameP]);
       totalsm_fail.Add(histos_[hnameF]);
 
@@ -1642,6 +1752,8 @@ TString format_nevents(double n,double e) {
 
 void getCutStringForCutflow(vector<TString> &vectorOfCuts, vector<TString> &stageCut, bool isTightSelection){
 
+  //careful -- doesn't support mSUGRA right now
+
   vectorOfCuts.clear(); stageCut.clear();
 
   //define the HT and MET thresholds
@@ -1868,7 +1980,7 @@ void cutflow(bool isTightSelection){
       tree->Project(hname,var,thisStageCut);
       //now the histo is filled
 
-      if (!samples_[isample].Contains("LM")) {
+      if (isSampleSM(samples_[isample])) {
 	totalsm->Add(histos_[samples_[isample]]);
 	if (!quiet_)    cout << "totalsm: " << samples_[isample] << endl;
       }
@@ -1902,7 +2014,7 @@ void cutflow(bool isTightSelection){
   //list sample names
   cout<<col_start<<"Cut "<<col;
   for (unsigned int isample=0; isample<samples_.size(); isample++) {
-    if ( !samples_[isample].Contains("LM") ){ //skip LM points to add total background column first 
+    if ( isSampleSM(samples_[isample])) { //skip LM points to add total background column first 
       if ( samples_[isample].Contains("VV") ) cout<<"Diboson"<<col; 
       else if ( samples_[isample].Contains("QCD") ) cout<<"QCD"<<col;
       else if ( samples_[isample]=="SingleTop" ) cout<<"Single Top"<<col;
@@ -1928,7 +2040,7 @@ void cutflow(bool isTightSelection){
   //now add total background, LM
   cout<<"Total SM";
   for (unsigned int isample=0; isample<samples_.size(); isample++) {
-    if ( samples_[isample].Contains("LM") ) cout<<col<<samples_[isample];
+    if ( !isSampleSM(samples_[isample])  ) cout<<col<<samples_[isample];
   }
   cout<<col_end<<endl;
   
@@ -1936,14 +2048,14 @@ void cutflow(bool isTightSelection){
   for (unsigned int istage=0; istage<vectorOfCuts.size(); istage++){
     cout<<col_start<<stageCut[istage]<<col;
     for (unsigned int isample=0; isample<samples_.size(); isample++){
-      if ( !samples_[isample].Contains("LM") ){
+      if ( isSampleSM(samples_[isample]) ) {
 	cout<<format_nevents(cutflowEntries[istage][isample],cutflowEntriesE[istage][isample])<<col;
       }
     }//end loop over samples
     //now add total background, LM
     cout<<format_nevents(nSumSM[istage],nSumSME[istage]);
     for (unsigned int isample=0; isample<samples_.size(); isample++) {
-      if ( samples_[isample].Contains("LM") ) cout<<col<<format_nevents(cutflowEntries[istage][isample],cutflowEntriesE[istage][isample]);
+      if ( !isSampleSM(samples_[isample]) ) cout<<col<<format_nevents(cutflowEntries[istage][isample],cutflowEntriesE[istage][isample]);
     }
     cout<<col_end<<endl;
     if (stageCut[istage]=="Cleaning") cout<<hline<<endl;
