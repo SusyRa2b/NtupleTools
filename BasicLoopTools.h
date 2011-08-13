@@ -862,7 +862,10 @@ double getScanCrossSection( SUSYProcess p, const TString & variation ) {
 
   //will need to code for tan beta changes too.
   //but for now we only care about tan beta of 40
-
+  
+#ifdef isMC
+  return 0;
+#else
   if (p==NotFound) return 0;
 
   pair<int,int> thispoint = make_pair(TMath::Nint(eventlhehelperextra_m0),TMath::Nint(eventlhehelperextra_m12)); //names will need to be changed
@@ -872,6 +875,8 @@ double getScanCrossSection( SUSYProcess p, const TString & variation ) {
   else {assert(0);}
 
   return 0;
+#endif
+
 }
 
 
@@ -1034,13 +1039,14 @@ bool passBEFilter(){
 
 bool passHLT() { 
 
-  long runnumber = (long)((*myEDM_run) +0.5); //just in case some crazy thing happens to myEDM_run being saved as a double
+
 
   //RA2b - 2011 Triggers
   bool passTrig = false;
 
   if(isRealDataInt(myEDM_isRealData)){
     #ifndef isMC
+    long runnumber = (long)((*myEDM_run) +0.5); //just in case some crazy thing happens to myEDM_run being saved as a double
     //edmtriggerresults is a double - possible values are 0 (failed trigger), 1 (passed trigger), -9999 (trig result not available)
     /* using BTagIP triggers
     if(runnumber >= 160431 && runnumber < 161205) passTrig = (edmtriggerresults_HLT_HT260_MHT60_v2 > 0);
@@ -1103,6 +1109,10 @@ unsigned int utilityHLT_HT300_CentralJet30_BTagIP(){
 
 void getPdfWeights(const TString & pdfset, Float_t * pdfWeights, TH1D * sumofweights) {
 
+#ifdef isMC
+  pdfWeights[0]=1; 
+  sumofweights->SetBinContent(0+1, sumofweights->GetBinContent(0+1) + pdfWeights[0]); 
+#else
   //there are only 3 choices, so no fancy pointer manipulation
 
   unsigned int s=0;
@@ -1136,7 +1146,7 @@ void getPdfWeights(const TString & pdfset, Float_t * pdfWeights, TH1D * sumofwei
 
     //   if (i==1) cout<<pdfset<<" "<<pdfWeights[i]<<endl;
   }
-
+#endif
 }
 
 TFile * f_eff=0;
@@ -1295,7 +1305,8 @@ float getJetPt( unsigned int ijet ) {
 
   float pt = myJetsPF->at(ijet).pt;
   //  if ( theJESType_ == kJES0 && theJERType_ == kJER0) return pt;
-
+  
+#ifndef isMC
   //first JER
   if ( theJERType_ != kJER0 ) {
     float genpt = myJetsPF->at(ijet).genJet_pt; //not sure what it will be called
@@ -1306,8 +1317,10 @@ float getJetPt( unsigned int ijet ) {
       float ptscale = frac>0 ? frac : 0;
       pt *= ptscale;
     }
-
-  } 
+    
+  }
+#endif
+  
   //then JES
   if ( theJESType_ == kJESup ) {
     //in 2010 there was an extra term added in quadrature. 
@@ -1332,6 +1345,7 @@ float getUncorrectedJetPt( unsigned int ijet ) {
   float pt = myJetsPF->at(ijet).uncor_pt;
   //  if ( theJESType_ == kJES0 && theJERType_ == kJER0) return pt;
 
+#ifndef isMC
   //first JER
   if ( theJERType_ != kJER0 ) {
     float genpt = myJetsPF->at(ijet).genJet_pt; //not sure what it will be called
@@ -1343,7 +1357,8 @@ float getUncorrectedJetPt( unsigned int ijet ) {
       float ptscale = frac>0 ? frac : 0;
       pt *= ptscale;
     }
-  } 
+  }
+#endif 
   //then JES
   if ( theJESType_ == kJESup ) {
     //in 2010 there was an extra term added in quadrature. 
@@ -2045,6 +2060,9 @@ double getTransverseMETError(unsigned int thisJet){
 
 int doPBNR() {
 
+#ifdef isMC
+  return 1;
+#else
   bool nhBad=false;
   bool phBad=false;
 
@@ -2059,6 +2077,7 @@ int doPBNR() {
   else if (phBad) return -2;
   else if (nhBad) return -1;
   return 1;
+#endif
 }
 
 //double getTransverseMETErrorWithCorrections(unsigned int thisJet){
@@ -3221,6 +3240,9 @@ bool noPUWeight(TString inname){
 }
 
 float getPUWeight(reweight::LumiReWeighting lumiWeights_){
+#ifdef isMC
+  return 1;
+#else
   if(isRealDataInt(myEDM_isRealData)) return 1;
   if(noPUWeight(sampleName_)) return 1;
   
@@ -3248,6 +3270,7 @@ float getPUWeight(reweight::LumiReWeighting lumiWeights_){
   }
 
   return weight;
+#endif
 }
 
 
@@ -3802,6 +3825,9 @@ void reducedTree(TString outputpath, itreestream& stream)
     }
     if(entry%100000==0) cout << "  entry: " << entry << ", percent done=" << (int)(entry/(double)nevents*100.)<<  endl;
 
+#ifdef isMC
+    pair<int,int> thispoint = make_pair(0,0);
+#else
     pair<int,int> thispoint = (theScanType_==kmSugra) ? make_pair(TMath::Nint(eventlhehelperextra_m0),TMath::Nint(eventlhehelperextra_m12)) : make_pair(0,0);
 
     if (thispoint != lastpoint) {
@@ -3809,6 +3835,7 @@ void reducedTree(TString outputpath, itreestream& stream)
       lastpoint=thispoint;
       if ( scanProcessTotalsMap.count(thispoint)==0 )	cout<<"m0 m12 = "<<thispoint.first<<" "<<thispoint.second<<" does not exist in NLO map!"<<endl;
     }
+#endif
 
     //these must be done outside of the if statement...need to sum over all events!  
     SUSYProcess prodprocess= (theScanType_==kmSugra) ? getSUSYProcess() : NotFound;
@@ -3819,6 +3846,7 @@ void reducedTree(TString outputpath, itreestream& stream)
 	scanProcessTotalsMap[thispoint]->SetBinContent( int(prodprocess), scanProcessTotalsMap[thispoint]->GetBinContent(int(prodprocess))+1);
       else 	continue; // skip this event
     }
+
     getPdfWeights("CTEQ",pdfWeightsCTEQ,&pdfWeightSumCTEQ);
     getPdfWeights("MSTW",pdfWeightsMSTW,&pdfWeightSumMSTW);
     getPdfWeights("NNPDF",pdfWeightsNNPDF,&pdfWeightSumNNPDF);
@@ -3828,9 +3856,10 @@ void reducedTree(TString outputpath, itreestream& stream)
            
       //if (entry%1000000==0) checkTimer(entry,nevents);
       weight = getWeight(nevents);
-
+      
       m0 = thispoint.first;
       m12=thispoint.second;
+
       scanCrossSection = getScanCrossSection(prodprocess,"");
       scanCrossSectionPlus = getScanCrossSection(prodprocess,"Plus");
       scanCrossSectionMinus = getScanCrossSection(prodprocess,"Minus");
@@ -3964,6 +3993,16 @@ void reducedTree(TString outputpath, itreestream& stream)
       
       fillWTop(); //fill W,top masses and helicity angles
       
+      #ifdef isMC
+      csctighthaloFilter = true;
+      eenoiseFilter = true;
+      greedymuonFilter = true;
+      hbhenoiseFilter = true;
+      inconsistentmuonFilter = true; 
+      ra2ecaltpFilter = true; 
+      scrapingvetoFilter = true; 
+      trackingfailureFilter = true;
+      #else
       csctighthaloFilter = doubleToBool(triggerresultshelper1_csctighthaloFilter);
       eenoiseFilter = doubleToBool(triggerresultshelper1_eenoiseFilter) ;
       greedymuonFilter = doubleToBool(triggerresultshelper1_greedymuonFilter) ;
@@ -3973,6 +4012,7 @@ void reducedTree(TString outputpath, itreestream& stream)
       scrapingvetoFilter = doubleToBool(triggerresultshelper1_scrapingvetoFilter) ;
       trackingfailureFilter = doubleToBool(triggerresultshelper1_trackingfailureFilter) ;
       //      ra2ecalbeFilter = passBEFilter() ;
+      #endif
 
       //exclude ra2ecalbefilter for now
       passCleaning = csctighthaloFilter && eenoiseFilter && greedymuonFilter && hbhenoiseFilter && inconsistentmuonFilter && ra2ecaltpFilter && scrapingvetoFilter && trackingfailureFilter;
