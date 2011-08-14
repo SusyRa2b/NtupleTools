@@ -682,8 +682,8 @@ cout<<"Got options: "<<endl
 }
 
 void PseudoConstructor() {
-  //theScanType_=kNotScan;
-   theScanType_=kmSugra;
+  theScanType_=kNotScan;
+  //theScanType_=kmSugra;
 
   //  theMETType_=kPFMETTypeI;
   //  theJetType_=kRECOPF;
@@ -868,11 +868,15 @@ double getScanCrossSection( SUSYProcess p, const TString & variation ) {
 #else
   if (p==NotFound) return 0;
 
-  pair<int,int> thispoint = make_pair(TMath::Nint(eventlhehelperextra_m0),TMath::Nint(eventlhehelperextra_m12)); //names will need to be changed
-  if (variation=="")   return crossSectionTanb40_10_[thispoint][p];
-  else if (variation=="Plus")   return crossSectionTanb40_20_[thispoint][p];
-  else if (variation=="Minus")   return crossSectionTanb40_05_[thispoint][p];
-  else {assert(0);}
+  if (theScanType_==kmSugra) {
+
+    pair<int,int> thispoint = make_pair(TMath::Nint(eventlhehelperextra_m0),TMath::Nint(eventlhehelperextra_m12)); //names will need to be changed
+    if (variation=="")   return crossSectionTanb40_10_[thispoint][p];
+    else if (variation=="Plus")   return crossSectionTanb40_20_[thispoint][p];
+    else if (variation=="Minus")   return crossSectionTanb40_05_[thispoint][p];
+    else {assert(0);}
+  }
+
 
   return 0;
 #endif
@@ -3065,7 +3069,7 @@ double getCrossSection(TString inname){
   if (inname.Contains("DYJetsToLL_TuneD6T_M-10To50_7TeV-madgraph-tauola") )     return 310;
   if (inname.Contains("DYJetsToLL_TuneD6T_M-50_7TeV-madgraph-tauola") )         return 3048;
   if (inname.Contains("LM13_SUSY_sftsht_7TeV-pythia6") )                        return 6.899;
-  if (inname.Contains("LM9_SUSY_sftsht_7TeV-pythia6_2") )                       return 7.134; //from ProductionSpring2011 twiki
+  if (inname.Contains("LM9_SUSY_sftsht_7TeV-pythia6_2") )                       return 7.134 * 1.48; //from ProductionSpring2011 twiki
   if (inname.Contains("QCD_Pt_0to5_TuneZ2_7TeV_pythia6_3") )                    return 4.844e10;
   if (inname.Contains("QCD_Pt_1000to1400_TuneZ2_7TeV_pythia6") )               return .3321;
   if (inname.Contains("QCD_Pt_120to170_TuneZ2_7TeV_pythia6") )                  return 1.151e5;
@@ -3111,7 +3115,7 @@ double getCrossSection(TString inname){
   if (inname.Contains("qcd_tunez2_pt80to120_summer11") )                        return 7.843e5;
   if (inname.Contains("ttjets_tunez2_madgraph_tauola_summer11") )               return 158; // +/- 10 +/- 15 //CMS PAS TOP-11-001
 
-  if (inname.Contains("LM9_SUSY_sftsht_7TeV-pythia6") )                         return 7.134; //from ProductionSpring2011 twiki
+  if (inname.Contains("LM9_SUSY_sftsht_7TeV-pythia6") )                         return 7.134 * 1.48; //from ProductionSpring2011 twiki
   if (inname.Contains("TTJets_TuneZ2_7TeV-madgraph-tauola") )                   return 158; // +/- 10 +/- 15 //CMS PAS TOP-11-001
   if (inname.Contains("ZJetsToNuNu_200_HT_inf_7TeV-madgraph"))                  return 32.92 * 1.28; //confirmed with Colorado
    
@@ -3838,7 +3842,7 @@ void reducedTree(TString outputpath, itreestream& stream)
 #endif
 
     //these must be done outside of the if statement...need to sum over all events!  
-    SUSYProcess prodprocess= (theScanType_==kmSugra) ? getSUSYProcess() : NotFound;
+    SUSYProcess prodprocess= (theScanType_==kmSugra || sampleName_.Contains("LM")) ? getSUSYProcess() : NotFound;
     SUSY_process = int(prodprocess);
 
     if (theScanType_==kmSugra) {
