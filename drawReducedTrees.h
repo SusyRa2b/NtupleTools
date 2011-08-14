@@ -497,14 +497,14 @@ void fillFlavorHistoryScaling() {
 
 }
 
-TString getCutString(double lumiscale, TString extraWeight="", TString thisSelection="", TString extraSelection="", int pdfWeightIndex=0,TString pdfSet="CTEQ", bool isSusyScan=false, int susySubProcess=-1) {
+TString getCutString(double lumiscale, TString extraWeight="", TString thisSelection="", TString extraSelection="", int pdfWeightIndex=0,TString pdfSet="CTEQ", bool isSusyScan=false, int susySubProcess=-1, const bool isData=false) {
   TString weightedcut="weight"; 
   
   weightedcut += "*(";
   weightedcut +=lumiscale;
   weightedcut+=")";
   
-  if (extraWeight=="flavorHistoryWeight") {
+  if (extraWeight=="flavorHistoryWeight" && !isData) {
     if (flavorHistoryScaling_ <0) {
       fillFlavorHistoryScaling();
     }
@@ -515,21 +515,32 @@ TString getCutString(double lumiscale, TString extraWeight="", TString thisSelec
     weightedcut +=extraWeight;
     weightedcut+=")";
   }
-  if (pdfWeightIndex != 0) {
+  if (pdfWeightIndex != 0 && !isData) {
     TString pdfString;
     pdfString.Form("*pdfWeights%s[%d]",pdfSet.Data(),pdfWeightIndex);
     weightedcut += pdfString;
   }
-  if (usePUweight_) {
+  if (usePUweight_ &&!isData) {
     weightedcut +="*PUweight";
   }
-  if (useHLTeff_) {
+  if (useHLTeff_ && !isData) {
     weightedcut +="*hltHTeff";
   }
+
   if (btagSFweight_=="") btagSFweight_="1";
-  weightedcut += "*";
-  weightedcut += btagSFweight_;
- 
+  if (isData) {
+    if (btagSFweight_=="probge1") weightedcut += "*(nbjets>=1)";
+    else if (btagSFweight_=="probge2") weightedcut += "*(nbjets>=2)";
+    else if (btagSFweight_=="prob1") weightedcut += "*(nbjets==1)";
+    else if (btagSFweight_=="prob0") weightedcut += "*(nbjets==0)";
+    else if (btagSFweight_=="1") {} //do nothing
+    else {cout<<"btagSF problem with data"<<endl; assert(0);}
+  }
+  else {
+    weightedcut += "*";
+    weightedcut += btagSFweight_;
+  } 
+
   if (thisSelection!="") {
     weightedcut += "*(";
     weightedcut+=thisSelection;
@@ -560,6 +571,7 @@ TString getCutString(double lumiscale, TString extraWeight="", TString thisSelec
   //the easy part is done above -- keep only events at the current scan point
   //the hard part is to properly weight the events according to NLO cross sections
   if (isSusyScan) {
+    assert(!isData);
     //the cross section for the subprocess is stored in scanCrossSection (systematics in scanCrossSectionPlus and scanCrossSectionMinus)
     //the normalization for the subprocess is stored in TH1D scanProcessTotals_<m0>_<m12>
     loadSusyScanHistograms();
@@ -581,6 +593,7 @@ TString getCutString(double lumiscale, TString extraWeight="", TString thisSelec
     weightedcut += susyprocessweight;
   }
   else if (susySubProcess>=0) {
+    assert(!isData);
     char thisweight[50];
     sprintf(thisweight, "*((SUSY_process==%d)*scanCrossSection%s)",susySubProcess,susyCrossSectionVariation_.Data());
     weightedcut += thisweight;
@@ -594,7 +607,7 @@ TString getCutString(double lumiscale, TString extraWeight="", TString thisSelec
 TString getCutString(bool isData, TString extraSelection="",TString extraWeight="",int pdfWeightIndex=0,TString pdfSet="CTEQ", bool isSusyScan=false, int susySubProcess=-1) {
 
   double ls = isData ? 1 : lumiScale_;
-  return    getCutString(ls, extraWeight, selection_,extraSelection, pdfWeightIndex,pdfSet,isSusyScan,susySubProcess) ;
+  return    getCutString(ls, extraWeight, selection_,extraSelection, pdfWeightIndex,pdfSet,isSusyScan,susySubProcess,isData) ;
 }
 
 void addOverflowBin(TH1D* theHist) {
@@ -990,7 +1003,7 @@ float drawSimple(const TString var, const int nbins, const float low, const floa
   hh->Sumw2();
    
   TString optfh= useFlavorHistoryWeights_ && samplename.Contains("WJets") ? "flavorHistoryWeight" : "";
-  if(samplename=="data") tree->Project(histname,var,getCutString(1.,optfh,selection_,"",0).Data());
+  if(samplename=="data") tree->Project(histname,var,getCutString(true).Data());
   else tree->Project(histname,var,getCutString(lumiScale_,optfh,selection_,"",0,"", samplename.Contains("mSUGRA")).Data());
   float theIntegral = hh->Integral(0,nbins+1);
 
@@ -1271,7 +1284,7 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
     hdata = (varbins==0) ? new TH1D(hname,"",nbins,low,high) : new TH1D(hname,"",nbins,varbins);
     hdata->Sumw2();
     gROOT->cd();
-    dtree->Project(hname,var,selection_.Data());
+    dtree->Project(hname,var,getCutString(true));
     //now the histo is filled
     
     hdata->UseCurrentStyle(); //maybe not needed anymore
@@ -1624,15 +1637,15 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
     histos_[hnameF]->Sumw2();
 
     gROOT->cd();
-    dtree->Project(hnameP,var,getCutString(1.,"",selection_,cstring1,0).Data());
-    dtree->Project(hnameF,var,getCutString(1.,"",selection_,cstring2,0).Data());
+    dtree->Project(hnameP,var,getCutString(1.,"",selection_,cstring1,0,"",false,-1,true).Data());
+    dtree->Project(hnameF,var,getCutString(1.,"",selection_,cstring2,0,"",false,-1,true).Data());
     if (addOverflow_)  addOverflowBin( histos_[hnameP] );
     if (addOverflow_)  addOverflowBin( histos_[hnameF] );
     //compute ratio
     hdata->Divide(histos_[hnameP], histos_[hnameF]);
 
-    dtree->Project("data2d_SB","minDeltaPhi:MET",getCutString(1.,"",selection_,"",0).Data());
-    dtree->Project("data2d_50","minDeltaPhi:MET",getCutString(1.,"",selection_,"",0).Data());
+    dtree->Project("data2d_SB","minDeltaPhi:MET",getCutString(1.,"",selection_,"",0,"",false,-1,true).Data());
+    dtree->Project("data2d_50","minDeltaPhi:MET",getCutString(1.,"",selection_,"",0,"",false,-1,true).Data());
 
     //    hdata->UseCurrentStyle(); //maybe not needed anymore
     hdata->SetMarkerColor(kBlack);

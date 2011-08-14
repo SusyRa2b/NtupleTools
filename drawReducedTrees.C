@@ -3815,7 +3815,7 @@ void countABCD() {
     TCut METC = "MET>=150 && MET<5000";
     TCut theSIGSelection = baseSelection && passCleaning && passMinDeltaPhi && theBTaggingCut && METC;
     selection_ = theSIGSelection.GetTitle();
-    tree->Project("dummyhist","HT",getCutString(1.,"",selection_, "",0).Data());
+    tree->Project("dummyhist","HT",getCutString(true).Data());
     cout<<"N_SIG = "<<dummyhist.Integral()<<endl;
 
     dummyhist.Reset();
@@ -3824,14 +3824,14 @@ void countABCD() {
     TCut METD = "MET>=150 && MET<5000";
     TCut theDSelection = baseSelection && passCleaning && failMinDeltaPhi && theBTaggingCut && METD;
     selection_ = theDSelection.GetTitle();
-    tree->Project("dummyhist","HT",getCutString(1.,"",selection_,"",0).Data());
+    tree->Project("dummyhist","HT",getCutString(true).Data());
     double nd = dummyhist.Integral();
     cout<<"N_D = "<<nd<<endl;
 
     TCut META = "MET>=100 && MET<150";
     TCut theASelection = baseSelection && passCleaning && failMinDeltaPhi && theBTaggingCut && META;
     selection_ = theASelection.GetTitle();
-    tree->Project("dummyhist","HT",getCutString(1.,"",selection_,"",0).Data());
+    tree->Project("dummyhist","HT",getCutString(true).Data());
     double na = dummyhist.Integral();
     cout<<"N_A = "<<na<<endl;
 
