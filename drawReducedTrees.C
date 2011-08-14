@@ -65,6 +65,7 @@ functionality for TH1F and TH1D e.g. the case of addOverflowBin()
 #include <map>
 #include <set>
 	
+
 //for rerunning the final background estimates...need standard MC and MET cleaning
 //TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-24_fullpf2pat/";//path for MC	     
 //TString dataInputPath = "/cu3/wteo/reducedTrees/V00-02-05_v3-pickevents/"; //includes MET cleaning but uses a tight skim (not good for plots)
@@ -2858,6 +2859,8 @@ void drawMETPlots_utility(){
     }
   }//end loop over b-tag selection
 }
+
+
 void drawQCDreweight(bool loose = true){
   loadSamples(true);
   savePlots_=false; //don't save eps,png,pdf files
@@ -2950,9 +2953,17 @@ void drawQCDreweight(bool loose = true){
 
   //-- SIG plots
   //------------
-  nbins=4;
-  low=2.5;
-  high=6.5;
+  if(loose){
+    nbins=4;
+    low=2.5;
+    high=6.5;
+  }
+  else{
+    nbins=3;
+    low=2.5;
+    high=5.5;
+  }
+
   selection_ =  base && SIG && phys && failmdpn && ge1b;
   drawSimple("njets",nbins,low,high,histfilename, "h_SIG_fDP_ge1b_njets_data", "data");
   drawSimple("njets",nbins,low,high,histfilename, "h_SIG_fDP_ge1b_njets_qcd", "PythiaPUQCD");
@@ -2962,9 +2973,16 @@ void drawQCDreweight(bool loose = true){
   totalnonqcd->Write();
   fh4.Close();
 
-  nbins=3;
-  low=2.5;
-  high=5.5;
+  if(loose){
+    nbins=3;
+    low=2.5;
+    high=5.5;
+  }
+  else{
+    nbins=2;
+    low=2.5;
+    high=4.5;
+  }
   selection_ =  base && SIG && phys && failmdpn && ge2b;
   drawSimple("njets",nbins,low,high,histfilename, "h_SIG_fDP_ge2b_njets_data", "data");
   drawSimple("njets",nbins,low,high,histfilename, "h_SIG_fDP_ge2b_njets_qcd", "PythiaPUQCD");
@@ -3136,7 +3154,7 @@ void sigbpt(){
 
   //loose
   selection_ =TCut("(HT>=350 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN>=4 && MET>=200)")&&theBTaggingCut;
-  cout << "LM9: " << drawSimple("bjetpt1",20,50,500,"bjetpt1.root", "bjetpt1_"+btagstring+"tag_lm9", "LM9") << endl;;
+  cout << "LM9: " << drawSimple("bjetpt1",20,30,500,"bjetpt1.root", "bjetpt1_"+btagstring+"tagLooseSignalRegion_lm9", "LM9") << endl;;
 }
 
 void studyNjet(int ibtag=3){
