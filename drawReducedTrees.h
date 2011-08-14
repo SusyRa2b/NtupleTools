@@ -497,7 +497,7 @@ void fillFlavorHistoryScaling() {
 
 }
 
-TString getCutString(double lumiscale, TString extraWeight="", TString thisSelection="", TString extraSelection="", int pdfWeightIndex=0,TString pdfSet="CTEQ", bool isSusyScan=false) {
+TString getCutString(double lumiscale, TString extraWeight="", TString thisSelection="", TString extraSelection="", int pdfWeightIndex=0,TString pdfSet="CTEQ", bool isSusyScan=false, int susySubProcess=-1) {
   TString weightedcut="weight"; 
   
   weightedcut += "*(";
@@ -566,6 +566,8 @@ TString getCutString(double lumiscale, TString extraWeight="", TString thisSelec
     TH1D* thishist = scanProcessTotalsMap[make_pair(m0_,m12_)];
     if (thishist==0) cout<<"We've got a problem in getCutString!"<<endl;
     TString susyprocessweight = "(";
+    int lowbound=0; int highbound=10;
+    if (susySubProcess>=0) { lowbound=susySubProcess; highbound=susySubProcess;}
     for (int i=0; i<=10; i++ ) {
       char thisweight[50];
       int thisn = TMath::Nint(thishist->GetBinContent(i));
@@ -578,16 +580,21 @@ TString getCutString(double lumiscale, TString extraWeight="", TString thisSelec
     weightedcut+="*";
     weightedcut += susyprocessweight;
   }
+  else if (susySubProcess>=0) {
+    char thisweight[50];
+    sprintf(thisweight, "*((SUSY_process==%d)*scanCrossSection%s)",susySubProcess,susyCrossSectionVariation_.Data());
+    weightedcut += thisweight;
+  }
 
   if (!quiet_)  cout<<weightedcut<<endl;
   return weightedcut;
 }
 
 //add an interface more like the old one, but with an addition for the data/MC lumi scaling
-TString getCutString(bool isData, TString extraSelection="",TString extraWeight="",int pdfWeightIndex=0,TString pdfSet="CTEQ", bool isSusyScan=false) {
+TString getCutString(bool isData, TString extraSelection="",TString extraWeight="",int pdfWeightIndex=0,TString pdfSet="CTEQ", bool isSusyScan=false, int susySubProcess=-1) {
 
   double ls = isData ? 1 : lumiScale_;
-  return    getCutString(ls, extraWeight, selection_,extraSelection, pdfWeightIndex,pdfSet,isSusyScan) ;
+  return    getCutString(ls, extraWeight, selection_,extraSelection, pdfWeightIndex,pdfSet,isSusyScan,susySubProcess) ;
 }
 
 void addOverflowBin(TH1D* theHist) {
@@ -812,29 +819,31 @@ void loadSamples(bool joinSingleTop=true) {
 
   //  configDescriptions_.push_back("SSVHPT");
   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
-/*
   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
 
   //JES
   configDescriptions_.push_back("SSVHPT_PF2PATjets_JESdown_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
   configDescriptions_.push_back("SSVHPT_PF2PATjets_JESup_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
   //JER
-  configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERdown_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
-  configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERup_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
+  //  configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERdown_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
+  //  configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERup_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
+
   //unclustered MET
   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METuncDown_PUunc0_BTagEff0_HLTEff0");
   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METuncUp_PUunc0_BTagEff0_HLTEff0");
+
   //PU
-  configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncDown_BTagEff0_HLTEff0");
-  configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncUp_BTagEff0_HLTEff0");
+  //  configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncDown_BTagEff0_HLTEff0");
+  //  configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncUp_BTagEff0_HLTEff0");
+
   //btag eff
   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffdown_HLTEff0");
   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffup_HLTEff0");
 
   //HLT eff
-  configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffdown");
-  configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffup");
-*/
+  //  configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffdown");
+  //  configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffup");
+
   //convention is that the [0] one should always be the "nominal" one while others are for systematics
   currentConfig_=configDescriptions_[0];
 
@@ -1749,6 +1758,82 @@ TString format_nevents(double n,double e) {
   }
   return TString(out);
 }
+
+typedef map<pair<int,int>, pair<double,double> > susyScanYields;
+susyScanYields getSusyScanYields(const TString & sampleOfInterest) {
+  //sample is an argument
+  //other important things are defined by the usual global variables
+  if (!quiet_) cout<<sampleOfInterest<<" "<<currentConfig_<<endl;
+
+  TString varx="m0"; TString xtitle=varx;
+  int  nbinsx=210; float lowx=-0.5; float highx=2100-0.5;
+
+  TString vary="m12"; TString ytitle=vary;
+  int  nbinsy=110; float lowy=-0.5; float highy=1100-0.5;
+  TString drawstring = vary+":"+varx;
+
+  TTree* thetree = (TTree*) files_[currentConfig_][sampleOfInterest]->Get("reducedTree");
+
+
+  vector<TH2D*> raw0;
+  for (int i=0; i<=10; i++) {
+    TString hname="raw0_";
+    hname += i;
+    raw0.push_back(new TH2D(hname,"raw event counts",nbinsx,lowx,highx,nbinsy,lowy,highy));
+    raw0[i]->Sumw2();
+    TString thecut = getCutString(false,"","",0,"",false,i);
+    thetree->Project(hname,drawstring,thecut.Data());
+  }
+
+  //at this point, each bin contains Npass_i * sigma_i for that (m0,m12)
+  //need to divide by N_i for each (m0,m12)
+
+  //loop over i and histo bins
+  for (int i=0; i<=10; i++) {
+    for (map<pair<int,int>, TH1D* >::iterator iscanpoint = scanProcessTotalsMap.begin(); iscanpoint!=scanProcessTotalsMap.end(); ++iscanpoint) {
+      int m0=iscanpoint->first.first;
+      int m12=iscanpoint->first.second;
+      TH1D* thishist = scanProcessTotalsMap[make_pair(m0,m12)];
+      int thisn = TMath::Nint(thishist->GetBinContent(i));
+      int bin=  raw0[i]->FindBin(m0,m12);
+      double N_i_thispoint = raw0[i]->GetBinContent(bin);
+      double err_i_thispoint = raw0[i]->GetBinError(bin);
+      if (thisn == 0) {
+	if (N_i_thispoint > 0.0000001) cout<<"Possible problem: "<<m0<<" "<<m12<<" "<<i<<" "<< N_i_thispoint<<" "<<thisn<<endl;
+	thisn=1; //prevent divide by zero
+	N_i_thispoint = 0; //need to come back to what is going wrong h
+      }
+      N_i_thispoint /= thisn;
+      err_i_thispoint /= thisn;
+      raw0[i]->SetBinContent(bin,N_i_thispoint);
+      raw0[i]->SetBinError(bin,err_i_thispoint);
+    }
+  }
+
+  //now we have Npass_i * sigma_i * lumi / Ngen_i 
+  //all that is left is to make the sum over i
+
+  susyScanYields theYields;
+  for (map<pair<int,int>, TH1D* >::iterator iscanpoint = scanProcessTotalsMap.begin(); iscanpoint!=scanProcessTotalsMap.end(); ++iscanpoint) {
+    double Nraw = 0, errraw=0;
+
+    int bin=  raw0[0]->FindBin(iscanpoint->first.first , iscanpoint->first.second);
+    for (unsigned int i=0; i<raw0.size(); i++) {
+      Nraw += raw0[i]->GetBinContent(bin);
+      errraw += pow(raw0[i]->GetBinError(bin),2);
+    }
+    //cout<<iscanpoint->first.first<<" "<<iscanpoint->first.second<<" "<<Nraw<< " +/- "<<sqrt(errraw)<<endl;
+    theYields[iscanpoint->first] = make_pair(Nraw,sqrt(errraw));
+  }
+
+  //try to clean up
+  for (unsigned int i=0; i<raw0.size(); i++) {
+    delete raw0[i];
+  }
+
+  return theYields;
+}
+
 
 void getCutStringForCutflow(vector<TString> &vectorOfCuts, vector<TString> &stageCut, bool isTightSelection){
 

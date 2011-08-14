@@ -56,6 +56,9 @@ functionality for TH1F and TH1D e.g. the case of addOverflowBin()
 #include "TLatex.h"
 #include "TChain.h"
 
+//from Luke
+//#include "TSelectorMultiDraw.h"
+
 // can be checked out of UserCode/joshmt
 #include "MiscUtil.cxx"
 
@@ -75,14 +78,16 @@ TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-24_fullpf2pat/";//path for MC
 TString dataInputPath = "/cu2/ra2b/reducedTrees/V00-02-24_fullpf2pat/"; //sym links to V00-02-05_v3
 
 //for special tests and signal systematics
-//TString inputPath = "/tmp/joshmt/";
+TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-25_fullpf2pat/";//path for MC	     
+//TString inputPath = "/cu2/joshmt/mSUGRAdell/PART1/"; // 25% of the msugra sample
 //TString inputPath = "/home/joshmt/";//path for MC
-
+TString dataInputPath = "/cu2/ra2b/reducedTrees/V00-02-24_fullpf2pat/"; //sym links to V00-02-05_v3
 
 
 //the cutdesc string is now defined in loadSamples()
 
-double lumiScale_ = 1091.891;
+//double lumiScale_ = 1091.891;
+double lumiScale_ = 1143;
 
 #include "drawReducedTrees.h"
 
@@ -430,6 +435,249 @@ void runSystematics2011_LM9() {
 
 }
 
+/*
+void runSystematics2011_mSugra_Luke() {
+  TString sampleOfInterest="mSUGRAtanb40";
+  loadSamples();
+  clearSamples();
+  addSample(sampleOfInterest);
+
+  setSearchRegions();
+  loadSusyScanHistograms();
+
+  SearchRegion region = searchRegions_[0];
+  TString btagselection = region.btagSelection;
+  TCut HTcut=region.htSelection.Data(); 
+  TCut SRMET = region.metSelection.Data();
+  TCut bcut = "nbjetsSSVHPT>=1";
+  TString bweightstring="probge1";
+  if (btagselection=="ge2b") {
+    bcut="nbjetsSSVHPT>=2";
+    bweightstring="probge2";
+  }
+  else if (btagselection=="ge1b") {}
+  else if (btagselection=="ge3b") {
+    bcut="nbjetsSSVHPT>=3";
+    bweightstring="probge3"; //this one isn't calculated right now, i think
+  }
+  else {assert(0);}
+  TCut baseline = "cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1";
+  TCut passOther = "minDeltaPhiN>=4";
+  selection_ = baseline && HTcut && passOther && SRMET && bcut;
+  //critical to reset these!
+  usePUweight_=false;
+  useHLTeff_=false;
+  btagSFweight_="1";
+  currentConfig_=configDescriptions_[0]; //completely raw MC
+
+  TString var="HT"; TString xtitle=var;
+  int  nbins=1; float low=0; float high=1e9;
+  //ok, so can we draw 3000 of these histograms at once?
+  TSelectorMultiDraw* mSugraSelector = new TSelectorMultiDraw();
+
+  map<pair<int,int>,TH1D*> dummyHistMap;
+
+  //loop over the scan points
+  for (map<pair<int,int>, TH1D* >::iterator iscanpoint = scanProcessTotalsMap.begin(); iscanpoint!=scanProcessTotalsMap.end(); ++iscanpoint) {
+    
+    m0_=iscanpoint->first.first;  
+    m12_=iscanpoint->first.second;  
+
+    int nentries=    scanProcessTotalsMap[iscanpoint->first]->GetEntries();
+    cout<<m0_<<" "<<m12_<<" NEntries = "<<nentries<<endl;
+    if (nentries==0) continue;
+
+
+    TString histName = "dummyHist_";
+    histName += m0_;
+    histName += "_";
+    histName += m12_;
+    dummyHistMap[iscanpoint->first] = new TH1D(histName,histName,nbins,low,high);
+    //Putting this new histograms information into the TSelectorMultiDraw with the correct mSugra requirements
+    //                                Luke had a + here, but i'm not sure about that    
+    mSugraSelector->LoadVariables( TString(var+">>"+histName).Data(),getCutString(lumiScale_,"",selection_,"",0,"",true).Data() );
+    //note that the 'true' at the end is because this is an msugra scan
+    
+  }
+   
+  TTree* thetree = (TTree*) files_[currentConfig_][sampleOfInterest]->Get("reducedTree");
+  Long64_t nentries = thetree->GetEntries();
+  thetree->Process(mSugraSelector,"goff",nentries,0);
+
+  cout<<" == begin results =="<<endl;
+  for (map<pair<int,int>, TH1D* >::iterator iscanpoint = dummyHistMap.begin(); iscanpoint!=dummyHistMap.end(); ++iscanpoint) {
+    cout<<iscanpoint->first.first<<" "<<iscanpoint->first.second<<" "<<iscanpoint->second->Integral()<<endl;
+  }
+
+}
+*/
+
+map<pair<int,int>, SignalEffData>  runTH2Syst2011_mSugra(const SearchRegion & region, 
+                 const bool isSL=false, const bool isLDP=false, const TString & sampleOfInterest="mSUGRAtanb40") {
+
+  //some of this is prob not needed, but to be safe
+  useFlavorHistoryWeights_=false;
+  dodata_=false;
+ 
+  loadSamples();
+  clearSamples();
+  addSample(sampleOfInterest);
+
+  setSearchRegions();
+  loadSusyScanHistograms();
+
+
+  region.Print();
+  assert ( !( isSL&&isLDP));
+  if (isLDP) cout<<"   == LDP "<<endl;
+  if (isSL) cout<<"   == SL "<<endl;
+
+
+  TString btagselection = region.btagSelection;
+  TCut HTcut=region.htSelection.Data(); 
+  TCut SRMET = region.metSelection.Data();
+  TCut bcut = "nbjetsSSVHPT>=1";
+  TString bweightstring="probge1";
+  if (btagselection=="ge2b") {
+    bcut="nbjetsSSVHPT>=2";
+    bweightstring="probge2";
+  }
+  else if (btagselection=="ge1b") {}
+  else if (btagselection=="ge3b") {
+    bcut="nbjetsSSVHPT>=3";
+    bweightstring="probge3"; //this one isn't calculated right now, i think
+  }
+  else {assert(0);}
+  TCut baseline = "cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1";
+  if (isSL) baseline = "cutPV==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0))";
+  TCut passOther = "minDeltaPhiN>=4";
+  if (isLDP) passOther="minDeltaPhiN<4";
+  selection_ = baseline && HTcut && passOther && SRMET && bcut;
+
+  //critical to reset these!
+  usePUweight_=false;
+  useHLTeff_=false;
+  btagSFweight_="1";
+  currentConfig_=configDescriptions_[0]; //completely raw MC
+
+  //the logic here is very fragile to user error, so try to ensure that this is really completely raw MC
+  assert( currentConfig_.Contains("JER0") && currentConfig_.Contains("JES0") && currentConfig_.Contains("METunc0")
+	  && currentConfig_.Contains("PUunc0")&& currentConfig_.Contains("BTagEff0")&& currentConfig_.Contains("HLTEff0") );
+
+  susyScanYields rawYields=getSusyScanYields(sampleOfInterest);
+
+  currentConfig_=configDescriptions_[1]; //add  JER bias
+  assert( currentConfig_.Contains("JERbias") && currentConfig_.Contains("JES0") && currentConfig_.Contains("METunc0")
+	  && currentConfig_.Contains("PUunc0")&& currentConfig_.Contains("BTagEff0")&& currentConfig_.Contains("HLTEff0") );
+
+  usePUweight_=true;
+  useHLTeff_=true;
+  selection_ = baseline && HTcut && passOther && SRMET; //remove b tag
+  btagSFweight_=bweightstring; // add b tag back in the form of the SF
+  susyScanYields nominalYields=getSusyScanYields(sampleOfInterest);
+
+  //NLO k factor uncertainty -- vary it up
+  susyCrossSectionVariation_="Plus";
+  susyScanYields kFactorPlusYields=getSusyScanYields(sampleOfInterest);
+
+  //NLO k factor uncertainty -- vary it down
+  susyCrossSectionVariation_="Minus";
+  susyScanYields kFactorMinusYields=getSusyScanYields(sampleOfInterest);
+
+  susyCrossSectionVariation_=""; //reset to default k factors
+
+  //again, this is rather fragile. the configDescriptions_ list needs to be set just right
+  //where just right == variations in pairs, starting at the 3rd (index==2) guy in the list
+
+  //make a map from the varied parameter to a pair of varied yields
+  map<TString, pair<susyScanYields,susyScanYields> > variedYields;
+
+  for (unsigned int j=2; j<configDescriptions_.size(); j+=2) {
+    currentConfig_=configDescriptions_[j];
+    TString varied1=  getVariedSubstring(currentConfig_);
+    susyScanYields variation1Yields=getSusyScanYields(sampleOfInterest);
+
+    currentConfig_=configDescriptions_[j+1];
+    TString varied2=   getVariedSubstring(currentConfig_);
+    susyScanYields variation2Yields=getSusyScanYields(sampleOfInterest);
+
+    assert(varied1 == varied2);
+
+    variedYields[varied1] = make_pair(variation1Yields,variation2Yields);
+  }
+
+  /*
+at this point we've got yields (raw , eff corrected , kfactor +/-, variations of JES, etc +/-) for every point in mSugra
+
+need to :
+convert to % wrt nominal
+take larger of each pair
+compute a total systematic
+
+return it in a data structure
+  */
+
+  map<pair<int,int>, SignalEffData> allResults;
+
+  for (  susyScanYields::iterator imusgra=rawYields.begin(); imusgra!=rawYields.end(); ++imusgra) {
+    SignalEffData theseResults;
+    theseResults.rawYield=0;
+    theseResults.effCorr=0;
+    theseResults.totalSystematic=0;
+
+    if (rawYields[imusgra->first].first >0) {
+      cout<<imusgra->first.first<<" "<<imusgra->first.second<<" " //m0 and m12
+	  <<rawYields[imusgra->first].first<<" "<<nominalYields[imusgra->first].first<<" "
+	  <<kFactorPlusYields[imusgra->first].first<<" "<<kFactorMinusYields[imusgra->first].first<<" ";
+
+      theseResults.rawYield = rawYields[imusgra->first].first;
+
+      double nominalYield = nominalYields[imusgra->first].first;
+      theseResults.effCorr = nominalYield/theseResults.rawYield;
+      if (nominalYield==0) nominalYield=0.000001; //should make this better
+
+      double totalSystematic = 0;
+
+      double kfactorP = fabs((kFactorPlusYields[imusgra->first].first - nominalYield) / nominalYield);
+      double kfactorM = fabs((kFactorMinusYields[imusgra->first].first - nominalYield) / nominalYield);
+      totalSystematic += pow( 0.5*(kfactorP+kfactorM), 2); //add in quadrature
+
+      for ( map<TString, pair<susyScanYields,susyScanYields> >::iterator ivariation=variedYields.begin(); ivariation!=variedYields.end(); ++ivariation) {
+	cout<<ivariation->second.first[imusgra->first].first<<" "<<ivariation->second.second[imusgra->first].first<<" ";
+	
+	double percent1 = fabs((ivariation->second.first[imusgra->first].first - nominalYield)/nominalYield);
+	double percent2 = fabs((ivariation->second.second[imusgra->first].first - nominalYield)/nominalYield);
+	double bigger = percent2>percent1 ? percent2 : percent1;
+	totalSystematic += bigger*bigger;
+      }
+      cout<<endl;
+
+
+
+      theseResults.totalSystematic += 0.045 * 0.045 ; //lumi uncertainty
+
+      //also add constant terms for JER, PU, HLT
+      theseResults.totalSystematic += 0.015 * 0.015 ; //HLT
+
+      theseResults.totalSystematic += 0.034 * 0.034 ; //PU
+      theseResults.totalSystematic += 0.01 * 0.01 ; //JER
+
+      //constant term for PDF uncertainties
+      theseResults.totalSystematic += 0.13*0.13; //PDF
+
+      theseResults.totalSystematic = 100*sqrt(totalSystematic);
+
+    }
+    //stuff theseResults into the map
+    allResults[imusgra->first] = theseResults;
+  }
+
+  //so these are results for all msugra for one particular selection
+  return allResults;
+
+}
+
+
 void runSystematics2011_mSugra() {
   TString sampleOfInterest="mSUGRAtanb40";
   loadSamples();
@@ -438,53 +686,37 @@ void runSystematics2011_mSugra() {
 
   setSearchRegions();
   loadSusyScanHistograms();
-  //  signalSystematics2011(searchRegions_[0]);
+  //  runTH2Syst2011_mSugra(searchRegions_[0]);
   //    return;
 
 
+  //open the output files
   vector<ofstream*> textfiles;
   for (unsigned int i=0; i<searchRegions_.size(); i++) {
     char effoutput[500];
-    sprintf(effoutput,"effCorrSyst.%s.%s%s.dat",sampleOfInterest.Data(),searchRegions_[i].btagSelection.Data(),searchRegions_[i].owenId.Data());
-
+    sprintf(effoutput,"signalSyst.%s.%s%s.dat",sampleOfInterest.Data(),searchRegions_[i].btagSelection.Data(),searchRegions_[i].owenId.Data());
     textfiles.push_back( new ofstream(effoutput));
   }
 
-  //loop over the scan points
-  for (map<pair<int,int>, TH1D* >::iterator iscanpoint = scanProcessTotalsMap.begin(); iscanpoint!=scanProcessTotalsMap.end(); ++iscanpoint) {
+  for (unsigned int i=0; i<searchRegions_.size(); i++) {
+    
+    map<pair<int,int>, SignalEffData> SB =  runTH2Syst2011_mSugra(sbRegions_[i],false,false,sampleOfInterest);
+    map<pair<int,int>, SignalEffData> SIG =  runTH2Syst2011_mSugra(searchRegions_[i],false,false,sampleOfInterest);
+    
+    map<pair<int,int>, SignalEffData> SBSL =  runTH2Syst2011_mSugra(sbRegions_[i],true,false,sampleOfInterest);
+    map<pair<int,int>, SignalEffData> SIGSL =  runTH2Syst2011_mSugra(searchRegions_[i],true,false,sampleOfInterest);
+    
+    map<pair<int,int>, SignalEffData> SBLDP =  runTH2Syst2011_mSugra(sbRegions_[i],false,true,sampleOfInterest);
+    map<pair<int,int>, SignalEffData> SIGLDP =  runTH2Syst2011_mSugra(searchRegions_[i],false,true,sampleOfInterest);
+     
   
-
-
-    m0_=iscanpoint->first.first;
-    m12_=iscanpoint->first.second;
-
-    //need to check that there are 10k points, in order to throw out points that didn't work
-    int nentries=    scanProcessTotalsMap[iscanpoint->first]->GetEntries();
-    cout<<m0_<<" "<<m12_<<" NEntries = "<<nentries<<endl;
-//     if (nentries != 10000) {
-//       cout<<m0_<<" "<<m12_<<" being skipped! NEntries = "<<nentries<<endl;
-//       continue;
-//     }
-
-    if (nentries==0) continue;
-
-    for (unsigned int i=0; i<searchRegions_.size(); i++) {
-      (*textfiles[i])<<m0_<<" "<<m12_<<" ";
-//the logic here is screwy...i've got m0 and m12 as globals but then signalSystematics2011() takes them as arguments
-//and overwrites the globals with the arguments.
-//for now let's just live with it.
-  
-      SignalEffData SB =  signalSystematics2011(sbRegions_[i],false,false,sampleOfInterest,m0_,m12_);
-      SignalEffData SIG=  signalSystematics2011(searchRegions_[i],false,false,sampleOfInterest,m0_,m12_);
-      
-      SignalEffData SBSL= signalSystematics2011(sbRegions_[i],true,false,sampleOfInterest,m0_,m12_);
-      SignalEffData SIGSL=signalSystematics2011(searchRegions_[i],true,false,sampleOfInterest,m0_,m12_);
-      
-      SignalEffData SBLDP= signalSystematics2011(sbRegions_[i],false,true,sampleOfInterest,m0_,m12_);
-      SignalEffData SIGLDP=signalSystematics2011(searchRegions_[i],false,true,sampleOfInterest,m0_,m12_);
-      
-      (*textfiles[i])<<SIG.effCorr<<" "<<SB.effCorr<<" "<<SIGSL.effCorr<<" "<<SBSL.effCorr<<" "<<SIGLDP.effCorr<<" "<<SBLDP.effCorr<<" "
-		     <<SIG.totalSystematic<<" "<<SB.totalSystematic<<" "<<SIGSL.totalSystematic<<" "<<SBSL.totalSystematic<<" "<<SIGLDP.totalSystematic<<" "<<SBLDP.totalSystematic<<endl;
+    for (map<pair<int,int>, TH1D* >::iterator iscanpoint = scanProcessTotalsMap.begin(); iscanpoint!=scanProcessTotalsMap.end(); ++iscanpoint) {
+      int nentries=    scanProcessTotalsMap[iscanpoint->first]->GetEntries();
+      cout<<iscanpoint->first.first<<" "<<iscanpoint->first.second<<" NEntries = "<<nentries<<endl;
+      (*textfiles[i])<<iscanpoint->first.first <<" "<<iscanpoint->first.second <<" "<<nentries<<" "
+		     <<SIG[iscanpoint->first].rawYield<<" "<<SB[iscanpoint->first].rawYield<<" "<<SIGSL[iscanpoint->first].rawYield<<" "<<SBSL[iscanpoint->first].rawYield<<" "<<SIGLDP[iscanpoint->first].rawYield<<" "<<SBLDP[iscanpoint->first].rawYield<<" "
+		     <<SIG[iscanpoint->first].effCorr<<" "<<SB[iscanpoint->first].effCorr<<" "<<SIGSL[iscanpoint->first].effCorr<<" "<<SBSL[iscanpoint->first].effCorr<<" "<<SIGLDP[iscanpoint->first].effCorr<<" "<<SBLDP[iscanpoint->first].effCorr<<" "
+		     <<SIG[iscanpoint->first].totalSystematic<<" "<<SB[iscanpoint->first].totalSystematic<<" "<<SIGSL[iscanpoint->first].totalSystematic<<" "<<SBSL[iscanpoint->first].totalSystematic<<" "<<SIGLDP[iscanpoint->first].totalSystematic<<" "<<SBLDP[iscanpoint->first].totalSystematic<<endl;
     }
   }
 
