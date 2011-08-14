@@ -939,7 +939,7 @@ float drawSimple(const TString var, const int nbins, const float low, const floa
 		 const TString histname , const TString samplename, const float* varbins=0) {
 
   loadSamples();
-
+  gROOT->SetStyle("CMS");
 //I would rather implement this functionality via drawPlots(), but I think it will be simpler
 //to just write something simple
 
