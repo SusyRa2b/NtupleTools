@@ -783,6 +783,18 @@ void resetSamples(bool joinSingleTop=true) {
 
 }
 
+/*
+void setConfig(const TString & aDescription) {
+
+  for (unsigned int i=0; i<configDescriptions_.size(); i++) {
+// TO DO --
+//let user pass in a description string.
+
+  }
+
+}
+*/
+
 void loadSamples(bool joinSingleTop=true) {
   if (loaded_) return;
   loaded_=true;
@@ -825,24 +837,24 @@ void loadSamples(bool joinSingleTop=true) {
   configDescriptions_.push_back("SSVHPT_PF2PATjets_JESdown_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
   configDescriptions_.push_back("SSVHPT_PF2PATjets_JESup_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
   //JER
-  //  configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERdown_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
-  //  configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERup_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
+    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERdown_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
+    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERup_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
 
   //unclustered MET
   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METuncDown_PUunc0_BTagEff0_HLTEff0");
   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METuncUp_PUunc0_BTagEff0_HLTEff0");
 
   //PU
-  //  configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncDown_BTagEff0_HLTEff0");
-  //  configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncUp_BTagEff0_HLTEff0");
+    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncDown_BTagEff0_HLTEff0");
+    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncUp_BTagEff0_HLTEff0");
 
   //btag eff
   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffdown_HLTEff0");
   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffup_HLTEff0");
 
   //HLT eff
-  //  configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffdown");
-  //  configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffup");
+    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffdown");
+    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffup");
 
   //convention is that the [0] one should always be the "nominal" one while others are for systematics
   currentConfig_=configDescriptions_[0];

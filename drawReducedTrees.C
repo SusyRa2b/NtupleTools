@@ -70,30 +70,34 @@ functionality for TH1F and TH1D e.g. the case of addOverflowBin()
 	
 
 //for rerunning the final background estimates...need standard MC and MET cleaning
-//TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-24_fullpf2pat/";//path for MC	     
+//V00-02-24_fullpf2pat was used for 13 Aug update of data results
+//stick with this version for now because 25 is missing one ZJets sample and that takes away one event from the LDP
+//TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-24_fullpf2pat/";//path for MC
 //TString dataInputPath = "/cu3/wteo/reducedTrees/V00-02-05_v3-pickevents/"; //includes MET cleaning but uses a tight skim (not good for plots)
 
 //for making the standard set of plots...need standard MC and all data
-TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-24_fullpf2pat/";//path for MC	     
-TString dataInputPath = "/cu2/ra2b/reducedTrees/V00-02-24_fullpf2pat/"; //sym links to V00-02-05_v3
+TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-25_fullpf2pat/";//path for MC	     
+TString dataInputPath = "/cu2/ra2b/reducedTrees/V00-02-25_fullpf2pat/";
 
 //for special tests and signal systematics
-TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-25_fullpf2pat/";//path for MC	     
+//TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-25_fullpf2pat/";//path for MC	     
 //TString inputPath = "/cu2/joshmt/mSUGRAdell/PART1/"; // 25% of the msugra sample
 //TString inputPath = "/home/joshmt/";//path for MC
-TString dataInputPath = "/cu2/ra2b/reducedTrees/V00-02-24_fullpf2pat/"; //sym links to V00-02-05_v3
+//TString dataInputPath = "/cu2/ra2b/reducedTrees/V00-02-24_fullpf2pat/"; //sym links to V00-02-05_v3
 
 
 //the cutdesc string is now defined in loadSamples()
 
 //double lumiScale_ = 1091.891;
-double lumiScale_ = 1143;
+double lumiScale_ = 1143; //official summer conf lumi
 
 #include "drawReducedTrees.h"
 
 SignalEffData signalSystematics2011(const SearchRegion & region, bool isSL=false, bool isLDP=false, TString sampleOfInterest="LM9", int m0=0,int m12=0) {
   useFlavorHistoryWeights_=false;
   loadSamples(); //needs to come first! this is why this should be turned into a class, with this guy in the ctor
+
+  assert(configDescriptions_.size() == 14); //to avoid stupid mistakes on LM9
 
   dodata_=false;
   savePlots_ =false;
@@ -741,6 +745,8 @@ void averageZ() {
 
 }
 
+const bool useScaleFactors_=false;
+
 std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode=false, float subscale=1,float SBshift=0, const TString LSBbsel="==0") {
   //kind of awful, but we'll return the estimate for datamode=true but the closure test bias for datamode=false
 
@@ -795,18 +801,43 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
     triggerCut = "cutTrigger==1";
   }
 
+  TCut ge1b = "nbjetsSSVHPT>=1";
+  btagSFweight_="1";
+  if (useScaleFactors_) {
+    ge1b="1";
+    usePUweight_=true;
+    useHLTeff_=true;
+    currentConfig_=configDescriptions_[1]; //add JERbias
+
+    if (btagselection=="ge2b") {
+      btagSFweight_="probge2";
+    }
+    else if (btagselection=="ge1b") {
+      btagSFweight_="probge1";
+    }
+    else if (btagselection=="ge3b") {
+      btagSFweight_="probge3";
+    }
+    else {assert(0);}
+  }
+  else {
+    usePUweight_=false;
+    useHLTeff_=false;
+    btagSFweight_="1";
+    currentConfig_=configDescriptions_[0]; //completely raw MC
+
+    if (btagselection=="ge2b") {
+      ge1b="nbjetsSSVHPT>=2";
+    }
+    else if (btagselection=="ge1b") {}
+    else if (btagselection=="ge3b") {
+      ge1b="nbjetsSSVHPT>=3";
+    }
+    else {assert(0);}
+  }
 
   TCut HTcut=region.htSelection.Data(); 
   TCut SRMET = region.metSelection.Data();
-  TCut ge1b = "nbjetsSSVHPT>=1";
-  if (btagselection=="ge2b") {
-    ge1b="nbjetsSSVHPT>=2";
-  }
-  else if (btagselection=="ge1b") {}
-  else if (btagselection=="ge3b") {
-    ge1b="nbjetsSSVHPT>=3";
-  }
-  else {assert(0);}
 
   SRMET = SRMET && ge1b && triggerCut; //apply physics trigger and physics b cut in high MET region
 
@@ -1145,7 +1176,6 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
   setColorScheme("nostack");
   clearSamples();
   if (datamode) {
-    //    addSample("SingleTop");
     addSample("ZJets");
     addSample("VV");
     sampleOfInterest="data";
