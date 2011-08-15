@@ -72,19 +72,19 @@ functionality for TH1F and TH1D e.g. the case of addOverflowBin()
 //for rerunning the final background estimates...need standard MC and MET cleaning
 //V00-02-24_fullpf2pat was used for 13 Aug update of data results
 //stick with this version for now because 25 is missing one ZJets sample and that takes away one event from the LDP
-//TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-24_fullpf2pat/";//path for MC
-//TString dataInputPath = "/cu3/wteo/reducedTrees/V00-02-05_v3-pickevents/"; //includes MET cleaning but uses a tight skim (not good for plots)
+TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-24_fullpf2pat/";//path for MC
+TString dataInputPath = "/cu3/wteo/reducedTrees/V00-02-05_v3-pickevents/"; //includes MET cleaning but uses a tight skim (not good for plots)
 
-//for making the standard set of plots...need standard MC and all data
-TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-25_fullpf2pat/";//path for MC	     
-TString dataInputPath = "/cu2/ra2b/reducedTrees/V00-02-25_fullpf2pat/";
+//for making the standard set of plots...need standard MC and all data.
+//TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-25_fullpf2pat/";//path for MC	     
+//TString dataInputPath = "/cu2/ra2b/reducedTrees/V00-02-25_fullpf2pat/";
+
 
 //for special tests and signal systematics
-//TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-25_fullpf2pat/";//path for MC	     
+//TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-25c_fullpf2pat/"; //with correct pdf weights
 //TString inputPath = "/cu2/joshmt/mSUGRAdell/PART1/"; // 25% of the msugra sample
 //TString inputPath = "/home/joshmt/";//path for MC
 //TString dataInputPath = "/cu2/ra2b/reducedTrees/V00-02-24_fullpf2pat/"; //sym links to V00-02-05_v3
-
 
 //the cutdesc string is now defined in loadSamples()
 
@@ -259,7 +259,7 @@ configDescriptions_[1] is with JERbias
 //   TH1D*  HyieldsNNPDF= new TH1D("HyieldsNNPDF","NNPDF yields",100,0,200);
 
   double percentCTEQ=0,percentMSTW=0,percentNNPDF=0;
-  if (false) { //don't do pdf uncertainties
+  if (true) { //do do pdf uncertainties!
   // ~~~~~~~~~~~~ CTEQ ~~~~~~~~~~
   { //because i'm using horrible unstructured code here, give the variables a scope
   double Xplus[22];// Xplus[0]=0;
@@ -421,7 +421,7 @@ void runSystematics2011_LM9(  TString sampleOfInterest="LM9" ) {
   }
 
   for (unsigned int i=0; i<searchRegions_.size(); i++) {
-    (*textfiles[i])<<m0_<<" "<<m12_<<" ";
+    (*textfiles[i])<<m0_<<" "<<m12_<<" "<<0<<" ";
     SignalEffData SB =  signalSystematics2011(sbRegions_[i],false,false,sampleOfInterest);
     SignalEffData SIG=  signalSystematics2011(searchRegions_[i],false,false,sampleOfInterest);
 
@@ -751,7 +751,7 @@ void averageZ() {
 
 }
 
-const bool useScaleFactors_=false;
+const bool useScaleFactors_=false; //note that useScaleFactors_=true *does not work* right now. would have to be debugged.
 
 std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode=false, float subscale=1,float SBshift=0, const TString LSBbsel="==0") {
   //kind of awful, but we'll return the estimate for datamode=true but the closure test bias for datamode=false
@@ -944,6 +944,7 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
   double num = B*(D-Dsub);
   double estimate = num / A;
   double estimateerr= jmt::errAoverB(num,numerr,A,Aerr);
+  double closureStat= datamode? 0: jmt::errAoverB(estimate,estimateerr,SIG,SIGerr);
 //   cout<<" ==== "<<endl
 //       <<"Estimate = "<<estimate<<" +/- "<<estimateerr<<endl
 //       <<" truth   = "<<SIG     <<" +/- "<<SIGerr<<endl;
@@ -951,10 +952,11 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
   btagselection += isSIG ? "SIG":"SB";
   char output[500];
   if (!datamode) {
-  sprintf(output,"%s & %s & %s & %s & %s & %s \\\\ %% %f",btagselection.Data(),
-	  jmt::format_nevents(B,Berr).Data(),jmt::format_nevents(A,Aerr).Data(),
-	  jmt::format_nevents(D,Derr).Data(),jmt::format_nevents(estimate,estimateerr).Data(),
-	  jmt::format_nevents(SIG,SIGerr).Data(),100*(SIG-estimate)/SIG);}
+    sprintf(output,"%s & %s & %s & %s & %s & %s \\\\ %% %f ++ %f",btagselection.Data(),
+	    jmt::format_nevents(B,Berr).Data(),jmt::format_nevents(A,Aerr).Data(),
+	    jmt::format_nevents(D,Derr).Data(),jmt::format_nevents(estimate,estimateerr).Data(),
+	    jmt::format_nevents(SIG,SIGerr).Data(),100*(SIG-estimate)/SIG,closureStat*100);
+  }
   else {
     sprintf(output,"%s & %d & %d & %d & %s & %s   \\\\",btagselection.Data(),
 	    TMath::Nint(B),TMath::Nint(A),
@@ -963,8 +965,9 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
     cout<<"(qcd) DATA\t";
   }
   cout<<output<<endl;
+
   if (datamode)  return make_pair(estimate,estimateerr);
-  return make_pair(100*(SIG-estimate)/SIG, 0);
+  return make_pair( 100*sqrt(pow((SIG-estimate)/SIG,2) + pow(closureStat,2)), 0);
 }
 
 void runClosureTest2011(std::map<TString, std::vector<double> > & syst)  {
@@ -1188,8 +1191,8 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
   }
   else {
     addSample("TTbarJets");
-//     addSample("WJets");
-//     addSample("SingleTop");
+    addSample("WJets");
+    addSample("SingleTop");
   }
 
   //  TString sampleOfInterest = "PythiaPUQCD";
@@ -1284,6 +1287,7 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
   double num = (B-SBsubMisc-SBsubQCD-SBsubZ)*D;
   double estimate = num / A;
   double estimateerr= jmt::errAoverB(num,numerr,A,Aerr);
+  double closureStat= datamode? 0: jmt::errAoverB(estimate,estimateerr,SIG,SIGerr);
 
 
 //   cout<<" ==== "<<endl
@@ -1294,10 +1298,11 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
 
   char output[500];
   if (!datamode) {
-    sprintf(output,"%s & %s & %s & %s & %s & %s \\\\ %% %f",btagselection.Data(),
+    sprintf(output,"%s & %s & %s & %s & %s & %s \\\\ %% %f ++ %f",btagselection.Data(),
 	    jmt::format_nevents(D,Derr).Data(),jmt::format_nevents(A,Aerr).Data(),
 	    jmt::format_nevents(B,Berr).Data(),jmt::format_nevents(estimate,estimateerr).Data(),
-	    jmt::format_nevents(SIG,SIGerr).Data(),100*(estimate-SIG)/SIG);
+	    jmt::format_nevents(SIG,SIGerr).Data(),100*(estimate-SIG)/SIG,100*closureStat);
+
   }
   else {
     sprintf(output,"ttbar DATA %s & %d & %d & %d & %s & %s  \\\\",btagselection.Data(),
@@ -1308,7 +1313,7 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
   cout<<output<<endl;
 
   if (datamode) return estimate;
-  return 100*(estimate-SIG)/SIG;
+  return 100*sqrt(pow((SIG-estimate)/SIG,2) + pow(closureStat,2));
 }
 
 void runSLClosureTest2011() {
