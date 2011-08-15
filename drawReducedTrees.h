@@ -212,8 +212,8 @@ double customPlotMin_=0;
 
 float maxScaleFactor_ = 1.05;
 
-bool latexMode_=false;
-//bool latexMode_=true;
+//bool latexMode_=false;
+bool latexMode_=true;
 const TString pm = latexMode_ ? " \\pm " : " +/- ";
 
 TCanvas* thecanvas=0;
@@ -498,6 +498,7 @@ void fillFlavorHistoryScaling() {
 }
 
 TString getCutString(double lumiscale, TString extraWeight="", TString thisSelection="", TString extraSelection="", int pdfWeightIndex=0,TString pdfSet="CTEQ", bool isSusyScan=false, int susySubProcess=-1, const bool isData=false) {
+
   TString weightedcut="weight"; 
   
   weightedcut += "*(";
@@ -1860,7 +1861,7 @@ susyScanYields getSusyScanYields(const TString & sampleOfInterest) {
 }
 
 
-void getCutStringForCutflow(vector<TString> &vectorOfCuts, vector<TString> &stageCut, bool isTightSelection){
+void getCutStringForCutflow(vector<TString> &vectorOfCuts, vector<TString> &stageCut, bool isTightSelection, bool btagSF=false) {
 
   //careful -- doesn't support mSUGRA right now
 
@@ -1981,21 +1982,26 @@ void getCutStringForCutflow(vector<TString> &vectorOfCuts, vector<TString> &stag
 
   //loose selection
   //>= 1 b
-  selectionGe1bLoose=selectionPreB; selectionGe1bLoose += " && nbjetsSSVHPT>=1";
+  selectionGe1bLoose=selectionPreB;
+  if (btagSF) btagSFweight_="probge1";
+  else selectionGe1bLoose += " && nbjetsSSVHPT>=1";
   cut=getCutString(lumiScale_,selectionGe1bLoose);
   vectorOfCuts.push_back(cut);
   if (latexMode_) stageCut.push_back("HT$\\ge$350, \\MET$\\ge$200, $\\ge$1 b");
   else stageCut.push_back("HT>=350, MET>=200, >= 1 b");
 
   //==1b
-  selectionEq1bLoose=selectionPreB; selectionEq1bLoose +=" && nbjetsSSVHPT==1";
-  cut=getCutString(lumiScale_,selectionEq1bLoose);
-  vectorOfCuts.push_back(cut);
-  if (latexMode_) stageCut.push_back("HT$\\ge$350, \\MET$\\ge$200, $==$1 b");
-  else stageCut.push_back("HT>=350, MET>=200, == 1 b");
+  //jmt -- don't bother with this
+//   selectionEq1bLoose=selectionPreB; selectionEq1bLoose +=" && nbjetsSSVHPT==1";
+//   cut=getCutString(lumiScale_,selectionEq1bLoose);
+//   vectorOfCuts.push_back(cut);
+//   if (latexMode_) stageCut.push_back("HT$\\ge$350, \\MET$\\ge$200, $==$1 b");
+//   else stageCut.push_back("HT>=350, MET>=200, == 1 b");
 
   //>= 2 b
-  selectionGe2bLoose=selectionPreB; selectionGe2bLoose +=" && nbjetsSSVHPT>=2";
+  selectionGe2bLoose=selectionPreB; 
+  if (btagSF) btagSFweight_="probge2";
+  else selectionGe2bLoose += " && nbjetsSSVHPT>=2";
   cut=getCutString(lumiScale_,selectionGe2bLoose);
   vectorOfCuts.push_back(cut);
   if (latexMode_) stageCut.push_back("HT$\\ge$350, \\MET$\\ge$200, $\\ge$2 b");
@@ -2011,21 +2017,25 @@ void getCutStringForCutflow(vector<TString> &vectorOfCuts, vector<TString> &stag
   //tight selection
   if (!isTightSelection){ //print out the results for the tight selection anyway
     //>=1 b
-    selectionGe1bTight=selectionPreB; selectionGe1bTight += " && nbjetsSSVHPT>=1 && HT>=500 && MET>=300"; //hard-coded!
+    selectionGe1bTight=selectionPreB; 
+    if (btagSF) {btagSFweight_="probge1"; selectionGe1bTight += " && HT>=500 && MET>=300";}
+    else selectionGe1bTight += " && nbjetsSSVHPT>=1 && HT>=500 && MET>=300"; //hard-coded!
     cut=getCutString(lumiScale_,selectionGe1bTight);
     vectorOfCuts.push_back(cut);
     if (latexMode_) stageCut.push_back("HT$\\ge$500, \\MET$\\ge$300, $\\ge$1 b");
     else stageCut.push_back("HT>=500, MET>=300, >= 1 b");
     
     //==1 b
-    selectionGe1bTight=selectionPreB; selectionGe1bTight += " && nbjetsSSVHPT==1 && HT>=500 && MET>=300"; //hard-coded!
-    cut=getCutString(lumiScale_,selectionGe1bTight);
-    vectorOfCuts.push_back(cut);
-    if (latexMode_) stageCut.push_back("HT$\\ge$500, \\MET$\\ge$300, $==$1 b");
-    else stageCut.push_back("HT>=500, MET>=300, == 1 b");
+//     selectionGe1bTight=selectionPreB; selectionGe1bTight += " && nbjetsSSVHPT==1 && HT>=500 && MET>=300"; //hard-coded!
+//     cut=getCutString(lumiScale_,selectionGe1bTight);
+//     vectorOfCuts.push_back(cut);
+//     if (latexMode_) stageCut.push_back("HT$\\ge$500, \\MET$\\ge$300, $==$1 b");
+//     else stageCut.push_back("HT>=500, MET>=300, == 1 b");
     
     //>=2 b
-    selectionGe1bTight=selectionPreB; selectionGe1bTight += " && nbjetsSSVHPT>=2 && HT>=500 && MET>=300"; //hard-coded!
+    selectionGe1bTight=selectionPreB;
+    if (btagSF) {btagSFweight_="probge2"; selectionGe1bTight += " && HT>=500 && MET>=300";}
+    else selectionGe1bTight += " && nbjetsSSVHPT>=2 && HT>=500 && MET>=300"; //hard-coded!
     cut=getCutString(lumiScale_,selectionGe1bTight);
     vectorOfCuts.push_back(cut);
     if (latexMode_) stageCut.push_back("HT$\\ge$500, \\MET$\\ge$300, $\\ge$2 b");
@@ -2045,9 +2055,15 @@ void cutflow(bool isTightSelection){
   loadSamples();
   resetHistos();
 
+  //jmt -- turn on weighting
+  usePUweight_=true; 
+  useHLTeff_=true;   
+  currentConfig_=configDescriptions_[1]; //use JERbias
+
   vector<TString> vectorOfCuts; //each element is a successive cut string for the cutflow table
   vector<TString> stageCut; //name of cut at each stage
-  getCutStringForCutflow(vectorOfCuts, stageCut, isTightSelection); //fills vectorOfCuts
+  //the 'true' at the end turns on b tag SF
+  getCutStringForCutflow(vectorOfCuts, stageCut, isTightSelection,true); //fills vectorOfCuts
 
   vector< vector<float> > cutflowEntries; //stores events by stage and sample
   vector< vector<float> > cutflowEntriesE; //stores error

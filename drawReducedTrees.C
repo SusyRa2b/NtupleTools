@@ -93,6 +93,8 @@ double lumiScale_ = 1143; //official summer conf lumi
 
 #include "drawReducedTrees.h"
 
+//this is the original implementation, using the traditional method of drawing a 1 bin histo to count events
+//works fine for small samples, completely unusable for mSugra
 SignalEffData signalSystematics2011(const SearchRegion & region, bool isSL=false, bool isLDP=false, TString sampleOfInterest="LM9", int m0=0,int m12=0) {
   useFlavorHistoryWeights_=false;
   loadSamples(); //needs to come first! this is why this should be turned into a class, with this guy in the ctor
@@ -402,12 +404,13 @@ configDescriptions_[1] is with JERbias
   return results;
 }
 
-void runSystematics2011_LM9() {
+//not only for LM9; can also be used for other samples e.g. ttbar. Just change sampleOfInterest
+void runSystematics2011_LM9(  TString sampleOfInterest="LM9" ) {
   setSearchRegions();
   //  signalSystematics2011(searchRegions_[0]);
   //    return;
 
-  TString sampleOfInterest="LM9";
+  
 
   vector<ofstream*> textfiles;
   for (unsigned int i=0; i<searchRegions_.size(); i++) {
@@ -439,7 +442,8 @@ void runSystematics2011_LM9() {
 
 }
 
-/*
+/* 
+//test of Luke's MultiSelector. seems to work. commented out because it requires an extra library to be loaded
 void runSystematics2011_mSugra_Luke() {
   TString sampleOfInterest="mSUGRAtanb40";
   loadSamples();
@@ -516,6 +520,8 @@ void runSystematics2011_mSugra_Luke() {
 }
 */
 
+//much more efficienct signal efficiency systematics calculation for mSugra
+//hopefully can be generalized to other scans without too much trouble, but this is not done yet
 map<pair<int,int>, SignalEffData>  runTH2Syst2011_mSugra(const SearchRegion & region, 
                  const bool isSL=false, const bool isLDP=false, const TString & sampleOfInterest="mSUGRAtanb40") {
 
@@ -681,7 +687,7 @@ return it in a data structure
 
 }
 
-
+//run mSugra systematics in the efficient way
 void runSystematics2011_mSugra() {
   TString sampleOfInterest="mSUGRAtanb40";
   loadSamples();
