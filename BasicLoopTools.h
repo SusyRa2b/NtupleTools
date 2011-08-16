@@ -632,6 +632,20 @@ void  loadSusyScanCrossSections() {
 
 }
 
+TString getOptPiece(const TString &key, const TString & opt) {
+  TObjArray * pieces = opt.Tokenize("_");
+
+  for (int i=0; i<pieces->GetEntries(); i++) {
+    TString thispiece = pieces->At(i)->GetName();
+    if (thispiece.Contains(key)) {
+      cout<<"Found piece = "<<thispiece<<endl;
+      return thispiece;
+    }
+  }
+
+  return "";
+}
+
 void setOptions( const TString & opt) {
   //cannot set the b tagger, or the jet type, or the met type, or the scan type
 
@@ -641,43 +655,43 @@ void setOptions( const TString & opt) {
   cout<<opt<<endl;
 
   //i wish i could think of a more clever way to code this
-  if ( opt.Contains( theJESNames_[kJES0]) ) theJESType_ = kJES0;
-  else  if ( opt.Contains( theJESNames_[kJESup]) ) theJESType_ = kJESup;
-  else  if ( opt.Contains( theJESNames_[kJESdown]) ) theJESType_ = kJESdown;
-  else {cout<<"problem with opt in JES"<<endl; assert(0);} //enforce a complete set of options!
+  if ( getOptPiece("JES",opt)== theJESNames_[kJES0]) theJESType_ = kJES0;
+  else  if ( getOptPiece("JES",opt)== theJESNames_[kJESup]) theJESType_ = kJESup;
+  else  if ( getOptPiece("JES",opt)== theJESNames_[kJESdown]) theJESType_ = kJESdown;
+  else {cout<<"problem with opt in JES"<<endl; assert(0) ;} //enforce a complete set of options!
 
-  if ( opt.Contains( theJERNames_[kJER0]) ) theJERType_ = kJER0;
-  else  if ( opt.Contains( theJERNames_[kJERup]) ) theJERType_ = kJERup;
-  else  if ( opt.Contains( theJERNames_[kJERdown]) ) theJERType_ = kJERdown;
-  else  if ( opt.Contains( theJERNames_[kJERbias]) ) theJERType_ = kJERbias;
-  else  if ( opt.Contains( theJERNames_[kJERra2]) ) theJERType_ = kJERra2;
+  if ( getOptPiece("JER",opt)== theJERNames_[kJER0]) theJERType_ = kJER0;
+  else  if ( getOptPiece("JER",opt)== theJERNames_[kJERup]) theJERType_ = kJERup;
+  else  if ( getOptPiece("JER",opt)== theJERNames_[kJERdown]) theJERType_ = kJERdown;
+  else  if ( getOptPiece("JER",opt)== theJERNames_[kJERbias]) theJERType_ = kJERbias;
+  else  if ( getOptPiece("JER",opt)== theJERNames_[kJERra2]) theJERType_ = kJERra2;
   else {cout<<"problem with opt in JER"<<endl; assert(0);} //enforce a complete set of options!
 
-  if ( opt.Contains( theMETuncNames_[kMETunc0]) ) theMETuncType_ = kMETunc0;
-  else  if ( opt.Contains( theMETuncNames_[kMETuncUp]) ) theMETuncType_ = kMETuncUp;
-  else  if ( opt.Contains( theMETuncNames_[kMETuncDown]) ) theMETuncType_ = kMETuncDown;
-  else {cout<<"problem with opt in METunc"<<endl; assert(0);} //enforce a complete set of options!
+  if ( getOptPiece("METunc",opt)== theMETuncNames_[kMETunc0]) theMETuncType_ = kMETunc0;
+  else  if ( getOptPiece("METunc",opt)== theMETuncNames_[kMETuncUp]) theMETuncType_ = kMETuncUp;
+  else  if ( getOptPiece("METunc",opt)== theMETuncNames_[kMETuncDown]) theMETuncType_ = kMETuncDown;
+  else {cout<<"problem with opt in METunc"<<endl; assert(0) ;} //enforce a complete set of options!
 
-  if ( opt.Contains( thePUuncNames_[kPUunc0]) ) thePUuncType_ = kPUunc0;
-  else  if ( opt.Contains( thePUuncNames_[kPUuncUp]) ) thePUuncType_ = kPUuncUp;
-  else  if ( opt.Contains( thePUuncNames_[kPUuncDown]) ) thePUuncType_ = kPUuncDown;
-  else {cout<<"problem with opt in PU"<<endl; assert(0);} //enforce a complete set of options!
+  if ( getOptPiece("PUunc",opt)== thePUuncNames_[kPUunc0]) thePUuncType_ = kPUunc0;
+  else  if ( getOptPiece("PUunc",opt)== thePUuncNames_[kPUuncUp]) thePUuncType_ = kPUuncUp;
+  else  if ( getOptPiece("PUunc",opt)== thePUuncNames_[kPUuncDown]) thePUuncType_ = kPUuncDown;
+  else {cout<<"problem with opt in PU"<<endl; assert(0) ;} //enforce a complete set of options!
 
-  if ( opt.Contains( theBTagEffNames_[kBTagEff0]) ) theBTagEffType_ = kBTagEff0;
-  else  if ( opt.Contains( theBTagEffNames_[kBTagEffup]) ) theBTagEffType_ = kBTagEffup;
-  else  if ( opt.Contains( theBTagEffNames_[kBTagEffdown]) ) theBTagEffType_ = kBTagEffdown;
-  else  if ( opt.Contains( theBTagEffNames_[kBTagEff02]) ) theBTagEffType_ = kBTagEff02;
-  else  if ( opt.Contains( theBTagEffNames_[kBTagEffup2]) ) theBTagEffType_ = kBTagEffup2;
-  else  if ( opt.Contains( theBTagEffNames_[kBTagEffdown2]) ) theBTagEffType_ = kBTagEffdown2;
-  else  if ( opt.Contains( theBTagEffNames_[kBTagEff03]) ) theBTagEffType_ = kBTagEff03;
-  else  if ( opt.Contains( theBTagEffNames_[kBTagEffup3]) ) theBTagEffType_ = kBTagEffup3;
-  else  if ( opt.Contains( theBTagEffNames_[kBTagEffdown3]) ) theBTagEffType_ = kBTagEffdown3;
-  else {cout<<"problem with opt in btag"<<endl; assert(0);} //enforce a complete set of options!
+  if ( getOptPiece("BTag",opt)== theBTagEffNames_[kBTagEff0]) theBTagEffType_ = kBTagEff0;
+  else  if ( getOptPiece("BTag",opt)== theBTagEffNames_[kBTagEffup]) theBTagEffType_ = kBTagEffup;
+  else  if ( getOptPiece("BTag",opt)== theBTagEffNames_[kBTagEffdown]) theBTagEffType_ = kBTagEffdown;
+  else  if ( getOptPiece("BTag",opt)== theBTagEffNames_[kBTagEff02]) theBTagEffType_ = kBTagEff02;
+  else  if ( getOptPiece("BTag",opt)== theBTagEffNames_[kBTagEffup2]) theBTagEffType_ = kBTagEffup2;
+  else  if ( getOptPiece("BTag",opt)== theBTagEffNames_[kBTagEffdown2]) theBTagEffType_ = kBTagEffdown2;
+  else  if ( getOptPiece("BTag",opt)== theBTagEffNames_[kBTagEff03]) theBTagEffType_ = kBTagEff03;
+  else  if ( getOptPiece("BTag",opt)== theBTagEffNames_[kBTagEffup3]) theBTagEffType_ = kBTagEffup3;
+  else  if ( getOptPiece("BTag",opt)== theBTagEffNames_[kBTagEffdown3]) theBTagEffType_ = kBTagEffdown3;
+  else {cout<<"problem with opt in btag"<<endl; assert(0) ;} //enforce a complete set of options!
 
-  if ( opt.Contains( theHLTEffNames_[kHLTEff0]) ) theHLTEffType_ = kHLTEff0;
-  else  if ( opt.Contains( theHLTEffNames_[kHLTEffup]) ) theHLTEffType_ = kHLTEffup;
-  else  if ( opt.Contains( theHLTEffNames_[kHLTEffdown]) ) theHLTEffType_ = kHLTEffdown;
-  else {cout<<"problem with opt in HLT"<<endl;assert(0);} //enforce a complete set of options!
+  if ( getOptPiece("HLT",opt)== theHLTEffNames_[kHLTEff0]) theHLTEffType_ = kHLTEff0;
+  else  if ( getOptPiece("HLT",opt)== theHLTEffNames_[kHLTEffup]) theHLTEffType_ = kHLTEffup;
+  else  if ( getOptPiece("HLT",opt)== theHLTEffNames_[kHLTEffdown]) theHLTEffType_ = kHLTEffdown;
+  else {cout<<"problem with opt in HLT"<<endl;assert(0) ;} //enforce a complete set of options!
 
 cout<<"Got options: "<<endl
     <<theJESNames_[theJESType_]<<endl
