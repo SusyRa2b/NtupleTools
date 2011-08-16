@@ -1,7 +1,7 @@
 #include "TFile.h"
 #include "TCanvas.h"
 #include "TH1D.h"
-#include "MiscUtil.cxx"
+#include "../MiscUtil.cxx"
 #include <cassert>
 #include <iostream>
 
@@ -32,11 +32,13 @@ void printABCD(double A, double Aerr, double B, double Berr, double C, double Ce
 
 void reweightQCD(){
 
-  TFile* ifl = TFile::Open("qcdReweight_loose.root","READ"); 
-  //TFile* ifl = TFile::Open("qcdReweight_loose30.root","READ"); 
-  //TFile* ifl = TFile::Open("qcdReweight_tight.root","READ"); 
-  //TFile* ifl = TFile::Open("qcdReweight_tight30.root","READ"); 
+  //TFile* ifl = TFile::Open("../qcdReweight_loose_50.root","READ"); 
+  //TFile* ifl = TFile::Open("../qcdReweight_loose_30.root","READ"); 
+  //TFile* ifl = TFile::Open("../qcdReweight_tight_50.root","READ"); 
+  TFile* ifl = TFile::Open("../qcdReweight_tight_30.root","READ"); 
   
+  bool d = true; //true to double size of correction
+
   TH1D* h_LSB_fDP_antib_njets_qcd    = (TH1D*)ifl->Get("h_LSB_fDP_antib_njets_qcd");
   TH1D* h_LSB_fDP_antib_njets_nonqcd = (TH1D*)ifl->Get("h_LSB_fDP_antib_njets_nonqcd");
   TH1D* h_LSB_fDP_antib_njets_data   = (TH1D*)ifl->Get("h_LSB_fDP_antib_njets_data");
@@ -114,8 +116,7 @@ void reweightQCD(){
   
   
   //make weights
-  bool d = false; //true to double size of correction
-  double w = 0.;
+
   
   if(d){
     wh_LSB_antib->Add(h_LSB_fDP_antib_njets_data, 2);
@@ -343,15 +344,15 @@ void reweightQCD(){
   TCanvas* myC = new TCanvas("myC", "myC", 600, 900);
   myC->Divide(2,3);
   myC->cd(1);    
-  wh_LSB_antib->Draw("HIST *H");
+  wh_LSB_antib->Draw();
   myC->cd(3);
-  wh_SB_ge1b->Draw("HIST *H");
+  wh_SB_ge1b->Draw();
   myC->cd(4);
-  wh_SIG_ge1b->Draw("HIST *H");
+  wh_SIG_ge1b->Draw();
   myC->cd(5);
-  wh_SB_ge2b->Draw("HIST *H");
+  wh_SB_ge2b->Draw();
   myC->cd(6);
-  wh_SIG_ge2b->Draw("HIST *H");
+  wh_SIG_ge2b->Draw();
   
 
   cout << "reweightQCD() is done." << endl;
