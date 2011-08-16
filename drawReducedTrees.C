@@ -442,6 +442,131 @@ void runSystematics2011_LM9(  TString sampleOfInterest="LM9" ) {
 
 }
 
+void countInBoxes(const SearchRegion & region,  ofstream * outfile ) {
+
+  //obviously this event counting is coded elsewhere in many other forms. but let's just redo it
+
+  //now that i know what owen really wants, i could have done this in the signal systematics code, but
+  //now this is written....
+
+  useFlavorHistoryWeights_=false;
+  loadSamples(); //needs to come first! this is why this should be turned into a class, with this guy in the ctor
+
+  dodata_=false;
+  savePlots_ =false;
+  //  setQuiet(true);
+
+  region.Print();
+
+  //for susy scan; harmless for non-susy scan
+  resetSamples();
+  const TString sample="totalsm";
+
+  TString btagselection = region.btagSelection;
+  TCut HTcut=region.htSelection.Data(); 
+  TCut SRMET = region.metSelection.Data();
+  bool isSIG = region.isSIG;
+  TCut bcut = "nbjetsSSVHPT>=1";
+  TString bweightstring="probge1";
+  if (btagselection=="ge2b") {
+    bcut="nbjetsSSVHPT>=2";
+    bweightstring="probge2";
+  }
+  else if (btagselection=="ge1b") {}
+  else if (btagselection=="ge3b") {
+    bcut="nbjetsSSVHPT>=3";
+    bweightstring="probge3"; //this one isn't calculated right now, i think
+  }
+  else {assert(0);}
+
+  TCut baseline = "cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1";
+  TCut baselineSL = "cutPV==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0))";
+
+  TCut passOther = "minDeltaPhiN>=4";
+  TCut failOther="minDeltaPhiN<4";
+
+
+  //use all of the corrections that are in the AN table
+  currentConfig_=configDescriptions_[1]; //add  JER bias
+  usePUweight_=true;
+  useHLTeff_=true;
+  btagSFweight_=bweightstring; //use b tag weight instead
+
+  TString var="HT"; TString xtitle=var;
+  int  nbins=1; float low=0; float high=1e9;
+
+/*
+Nsig              155
+Nsb               244
+Nsig_sl           103
+Nsb_sl            165
+Nsig_ldp          89
+Nsb_ldp           393
+*/
+
+  // --- nominal selection ---
+  selection_ = baseline && HTcut && passOther && SRMET; //no b cut because we're using the weighting
+  drawPlots(var,nbins,low,high,xtitle,"events","dummyH");
+  (*outfile)<<"N";//<<sampleOwenName_[sample]<<"mc"<<"_";
+  if (isSIG) (*outfile)<<"sig            "; 
+  else       (*outfile)<<"sb             "; 
+  (*outfile)<<getIntegral(sample)<<endl;
+
+  //now the error
+//   (*outfile)<<"N"<<sampleOwenName_[sample]<<"mc"<<"_";
+//   if (isSIG) (*outfile)<<"sig_err        "; 
+//   else       (*outfile)<<"sb_err         "; 
+//   (*outfile)<<getIntegralErr(sample)<<endl;
+
+  // -- SL selection --
+  selection_ = baselineSL && HTcut && passOther && SRMET; //no b cut because we're using the weighting
+  drawPlots(var,nbins,low,high,xtitle,"events","dummyH");
+  (*outfile)<<"N";//<<sampleOwenName_[sample]<<"mc"<<"_";
+  if (isSIG) (*outfile)<<"sig_sl         "; 
+  else       (*outfile)<<"sb_sl          "; 
+  (*outfile)<<getIntegral(sample)<<endl;
+
+  //now the error
+//   (*outfile)<<"N"<<sampleOwenName_[sample]<<"mc"<<"_";
+//   if (isSIG) (*outfile)<<"sig_sl_err     "; 
+//   else       (*outfile)<<"sb_sl_err      "; 
+//   (*outfile)<<getIntegralErr(sample)<<endl;
+
+  // -- LDP selection --
+  selection_ = baseline && HTcut && failOther && SRMET; //no b cut because we're using the weighting
+  drawPlots(var,nbins,low,high,xtitle,"events","dummyH");
+  (*outfile)<<"N";//<<sampleOwenName_[sample]<<"mc"<<"_";
+  if (isSIG) (*outfile)<<"sig_ldp        "; 
+  else       (*outfile)<<"sb_ldp         "; 
+  (*outfile)<<getIntegral(sample)<<endl;
+
+  //now the error
+//   (*outfile)<<"N"<<sampleOwenName_[sample]<<"mc"<<"_";
+//   if (isSIG) (*outfile)<<"sig_ldp_err    "; 
+//   else       (*outfile)<<"sb_ldp_err     "; 
+//   (*outfile)<<getIntegralErr(sample)<<endl;
+
+  
+
+}
+
+void runCountInBoxesMC() {
+
+  setSearchRegions();
+  for (unsigned int i=0; i<searchRegions_.size(); i++) {
+    char effoutput[500];
+    sprintf(effoutput,"mcEventCounts.%s%s.%dinvpb.dat",searchRegions_[i].btagSelection.Data(),searchRegions_[i].owenId.Data(),TMath::Nint(lumiScale_));
+    ofstream  textfile(effoutput);
+
+    countInBoxes(searchRegions_[i], &textfile ) ;
+    countInBoxes(sbRegions_[i], &textfile ) ;
+    textfile.close();
+  }
+
+}
+
+
+
 /* 
 //test of Luke's MultiSelector. seems to work. commented out because it requires an extra library to be loaded
 void runSystematics2011_mSugra_Luke() {
