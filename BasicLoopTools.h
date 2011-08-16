@@ -1653,7 +1653,7 @@ float jetTagEff(unsigned int ijet, TH1F* h_btageff, TH1F* h_ctageff, TH1F* h_lta
     else if (theBTagEffType_ == kBTagEffdown2) {
       SFU[0] = 0.9;
       SFU[1] = 0.68;
-      SFU[1] = 0.68;
+      SFU[2] = 0.68;
     }
 
     //Jeff's prescription 2
@@ -1661,15 +1661,15 @@ float jetTagEff(unsigned int ijet, TH1F* h_btageff, TH1F* h_ctageff, TH1F* h_lta
       SF[1]=0; // assume no efficiency for pt in [240,350] GeV
       SF[2]=0; // assume no efficiency for pt>350 GeV
     }
-    if (theBTagEffType_ == kBTagEffup2) {
+    if (theBTagEffType_ == kBTagEffup3) {
       SFU[0] = 1.10; // 10% uncertainty on SF from BTV-11-001
       SFU[1] = 1.32; // this number is irrelevant
       SFU[2] = 1.32; // this number is irrelevant
     }
-    else if (theBTagEffType_ == kBTagEffdown2) {
+    else if (theBTagEffType_ == kBTagEffdown3) {
       SFU[0] = 0.9;
       SFU[1] = 0.68; 
-      SFU[1] = 0.68;
+      SFU[2] = 0.68;
     }
 
    
