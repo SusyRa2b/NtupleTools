@@ -572,7 +572,8 @@ void checkConsistency() {
   }
 
   if (theScanType_!=kNotScan && sampleName_.Contains("LM")) {cout<<"LM point is not a scan! Check theScanType_!"<<endl; assert(0);}
-  if (theScanType_==kNotScan && sampleName_.Contains("SUGRA")) {cout<<"mSugra is a scan! Check theScanType_!"<<endl; assert(0);}
+  if (theScanType_!=kmSugra && sampleName_.Contains("SUGRA")) {cout<<"mSugra is a scan! Check theScanType_!"<<endl; assert(0);}
+  if (theScanType_!=kSMS && sampleName_.Contains("T1bbbb")) {cout<<"T1bbbb is a scan! Check theScanType_!"<<endl; assert(0);}
 
 }
 
@@ -637,29 +638,30 @@ void setOptions( const TString & opt) {
   if (opt=="") return;
 
   //JES0_JERbias_...
+  cout<<opt<<endl;
 
   //i wish i could think of a more clever way to code this
   if ( opt.Contains( theJESNames_[kJES0]) ) theJESType_ = kJES0;
   else  if ( opt.Contains( theJESNames_[kJESup]) ) theJESType_ = kJESup;
   else  if ( opt.Contains( theJESNames_[kJESdown]) ) theJESType_ = kJESdown;
-  else {assert(0);} //enforce a complete set of options!
+  else {cout<<"problem with opt in JES"<<endl; assert(0);} //enforce a complete set of options!
 
   if ( opt.Contains( theJERNames_[kJER0]) ) theJERType_ = kJER0;
   else  if ( opt.Contains( theJERNames_[kJERup]) ) theJERType_ = kJERup;
   else  if ( opt.Contains( theJERNames_[kJERdown]) ) theJERType_ = kJERdown;
   else  if ( opt.Contains( theJERNames_[kJERbias]) ) theJERType_ = kJERbias;
   else  if ( opt.Contains( theJERNames_[kJERra2]) ) theJERType_ = kJERra2;
-  else {assert(0);} //enforce a complete set of options!
+  else {cout<<"problem with opt in JER"<<endl; assert(0);} //enforce a complete set of options!
 
   if ( opt.Contains( theMETuncNames_[kMETunc0]) ) theMETuncType_ = kMETunc0;
   else  if ( opt.Contains( theMETuncNames_[kMETuncUp]) ) theMETuncType_ = kMETuncUp;
   else  if ( opt.Contains( theMETuncNames_[kMETuncDown]) ) theMETuncType_ = kMETuncDown;
-  else {assert(0);} //enforce a complete set of options!
+  else {cout<<"problem with opt in METunc"<<endl; assert(0);} //enforce a complete set of options!
 
   if ( opt.Contains( thePUuncNames_[kPUunc0]) ) thePUuncType_ = kPUunc0;
   else  if ( opt.Contains( thePUuncNames_[kPUuncUp]) ) thePUuncType_ = kPUuncUp;
   else  if ( opt.Contains( thePUuncNames_[kPUuncDown]) ) thePUuncType_ = kPUuncDown;
-  else {assert(0);} //enforce a complete set of options!
+  else {cout<<"problem with opt in PU"<<endl; assert(0);} //enforce a complete set of options!
 
   if ( opt.Contains( theBTagEffNames_[kBTagEff0]) ) theBTagEffType_ = kBTagEff0;
   else  if ( opt.Contains( theBTagEffNames_[kBTagEffup]) ) theBTagEffType_ = kBTagEffup;
@@ -670,12 +672,12 @@ void setOptions( const TString & opt) {
   else  if ( opt.Contains( theBTagEffNames_[kBTagEff03]) ) theBTagEffType_ = kBTagEff03;
   else  if ( opt.Contains( theBTagEffNames_[kBTagEffup3]) ) theBTagEffType_ = kBTagEffup3;
   else  if ( opt.Contains( theBTagEffNames_[kBTagEffdown3]) ) theBTagEffType_ = kBTagEffdown3;
-  else {assert(0);} //enforce a complete set of options!
+  else {cout<<"problem with opt in btag"<<endl; assert(0);} //enforce a complete set of options!
 
   if ( opt.Contains( theHLTEffNames_[kHLTEff0]) ) theHLTEffType_ = kHLTEff0;
   else  if ( opt.Contains( theHLTEffNames_[kHLTEffup]) ) theHLTEffType_ = kHLTEffup;
   else  if ( opt.Contains( theHLTEffNames_[kHLTEffdown]) ) theHLTEffType_ = kHLTEffdown;
-  else {assert(0);} //enforce a complete set of options!
+  else {cout<<"problem with opt in HLT"<<endl;assert(0);} //enforce a complete set of options!
 
 cout<<"Got options: "<<endl
     <<theJESNames_[theJESType_]<<endl
@@ -688,8 +690,9 @@ cout<<"Got options: "<<endl
 }
 
 void PseudoConstructor() {
-  theScanType_=kNotScan;
+  //theScanType_=kNotScan;
   //theScanType_=kmSugra;
+  theScanType_=kSMS;
 
   //  theMETType_=kPFMETTypeI;
   //  theJetType_=kRECOPF;
@@ -734,6 +737,13 @@ void PseudoConstructor() {
   theBTagEffNames_[kBTagEff0]="BTagEff0";
   theBTagEffNames_[kBTagEffup]="BTagEffup";
   theBTagEffNames_[kBTagEffdown]="BTagEffdown";
+  theBTagEffNames_[kBTagEff02]="BTagEff02";
+  theBTagEffNames_[kBTagEffup2]="BTagEffup2";
+  theBTagEffNames_[kBTagEffdown2]="BTagEffdown2";
+  theBTagEffNames_[kBTagEff03]="BTagEff03";
+  theBTagEffNames_[kBTagEffup3]="BTagEffup3";
+  theBTagEffNames_[kBTagEffdown3]="BTagEffdown3";
+
 
   theHLTEffNames_[kHLTEff0]="HLTEff0";
   theHLTEffNames_[kHLTEffup]="HLTEffup";
@@ -863,7 +873,7 @@ SUSYProcess getSUSYProcess() {
  return process;
 }
 
-
+TFile *smsCrossSectionFile=0;
 double getScanCrossSection( SUSYProcess p, const TString & variation ) {
 
   //will need to code for tan beta changes too.
@@ -874,19 +884,42 @@ double getScanCrossSection( SUSYProcess p, const TString & variation ) {
 #else
   if (p==NotFound) return 0;
 
-  if (theScanType_==kmSugra) {
 
+  if (theScanType_==kmSugra) {
     pair<int,int> thispoint = make_pair(TMath::Nint(eventlhehelperextra_m0),TMath::Nint(eventlhehelperextra_m12)); //names will need to be changed
     if (variation=="")   return crossSectionTanb40_10_[thispoint][p];
     else if (variation=="Plus")   return crossSectionTanb40_20_[thispoint][p];
     else if (variation=="Minus")   return crossSectionTanb40_05_[thispoint][p];
     else {assert(0);}
   }
+  else if (theScanType_==kSMS) {
+    assert(0);
+  }
 
 
   return 0;
 #endif
 
+}
+
+//this would need the isMC flag too....
+double getSMSScanCrossSection( const double mgluino) {
+  double sigma=0;
+
+  if (theScanType_==kSMS) {
+    if (smsCrossSectionFile==0) {
+      smsCrossSectionFile = new TFile("/afs/cern.ch/user/j/joshmt/public/RA2b/dalfonso_T1bbbb_reference_xSec.root");
+      if (smsCrossSectionFile->IsZombie() ) {cout<<"problem loading SMS cross sections!"<<endl; assert(0);}
+    }
+    //this is all hard-coded for T1bbbb for now
+    TH1D* crosssectionhist = (TH1D*) smsCrossSectionFile->Get("gluino");
+    int bin = crosssectionhist->FindBin(mgluino);
+    sigma = crosssectionhist->GetBinContent(bin);
+    
+  }
+
+
+  return sigma;
 }
 
 
@@ -1140,7 +1173,7 @@ void getPdfWeights(const TString & pdfset, Float_t * pdfWeights, TH1D * sumofwei
   for (unsigned int i=0; i<s ; i++) {
     //for data, and for all samples other than signal, just store 1 (to save space via compression)
     if ( isRealDataInt(myEDM_isRealData) 
-	 || !( sampleName_.Contains("LM") || sampleName_.Contains("SUGRA") )
+	 || !( sampleName_.Contains("LM") || sampleName_.Contains("SUGRA")||sampleName_.Contains("T1bbbb")  )
 	 ) {pdfWeights[i]=1; }
     else if ( pdfset=="CTEQ") {
       pdfWeights[i] = geneventinfoproducthelper1.at(i).pdfweight;
@@ -3161,6 +3194,7 @@ double getCrossSection(TString inname){
   if (inname.Contains("ZJetsToNuNu_200_HT_inf_7TeV-madgraph"))                  return 32.92 * 1.28; //confirmed with Colorado
    
   if (inname.Contains("mSUGRA")) return 1; //NLO cross sections will be specially stored per point
+  if (inname.Contains("T1bbbb")) return 1; //NLO cross sections will be specially stored per point
  
   std::cout<<"Cannot find cross section for this sample!"<<std::endl;
   assert(0); 
@@ -3227,6 +3261,7 @@ TString getSampleNameOutputString(TString inname){
   if (inname.Contains("ZJetsToNuNu_200_HT_inf_7TeV-madgraph"))                  return "Zinvisible";
 
   if (inname.Contains("mSUGRA_tanb40_summer11"))                                return inname;
+  if (inname.Contains("T1bbbb"))                                                return inname; //what i want to do here depends on whether the sample needs to be split or not
 
   //if it isn't found, just use the full name 
   //  -- data will fall into this category, which is fine because we have to hadd the files after anyway
@@ -3239,7 +3274,7 @@ double getWeight(Long64_t nentries) {
   if(isRealDataInt(myEDM_isRealData)) return 1;
 
   if (theScanType_==kmSugra) return 1;//special weighting in effect
-
+  else  if (theScanType_==kSMS) return 1;//special weighting in effect
 
   double sigma = getCrossSection(sampleName_);
   double w = lumi_ * sigma / double(nentries);
@@ -3251,6 +3286,7 @@ double getWeight(Long64_t nentries) {
 
 bool noPUWeight(TString inname){
 
+  if (inname.Contains("T1bbbb"))                                                return true;
 
   //Summer11 QCD
   if (inname.Contains("qcd_tunez2_pt0to5_summer11") )                           return true;
@@ -3626,10 +3662,10 @@ void reducedTree(TString outputpath, itreestream& stream)
 
   Float_t pdfWeightsCTEQ[45];
   Float_t pdfWeightsMSTW[41];
-  Float_t pdfWeightsNNPDF[101];
+  Float_t pdfWeightsNNPDF[100];
   TH1D pdfWeightSumCTEQ("pdfWeightSumCTEQ","pdfWeightSumCTEQ",45,0,45);
   TH1D pdfWeightSumMSTW("pdfWeightSumMSTW","pdfWeightSumMSTW",41,0,41);
-  TH1D pdfWeightSumNNPDF("pdfWeightSumNNPDF","pdfWeightSumNNPDF",101,0,101);
+  TH1D pdfWeightSumNNPDF("pdfWeightSumNNPDF","pdfWeightSumNNPDF",100,0,100);
 
   pair<int,int> lastpoint = make_pair(0,0);
 
@@ -3644,6 +3680,8 @@ void reducedTree(TString outputpath, itreestream& stream)
     histoname +=iscanpoint->first.second; // m12
     scanProcessTotalsMap[iscanpoint->first] = new TH1D(histoname,histoname,int(NotFound),int(ng),int(NotFound));
   }
+  TH2D* scanSMSngen=0;
+  if (theScanType_==kSMS) scanSMSngen = new TH2D("scanSMSngen","number of generated events",130,0,1300,120,0,1200); //mgluino,mLSP
 
   float prob0,probge1,prob1,probge2;
 
@@ -3676,7 +3714,7 @@ void reducedTree(TString outputpath, itreestream& stream)
   //got to store the whole vector. very big, unfortunately
   reducedTree.Branch("pdfWeightsCTEQ",&pdfWeightsCTEQ,"pdfWeightsCTEQ[45]/F");
   reducedTree.Branch("pdfWeightsMSTW",&pdfWeightsMSTW,"pdfWeightsMSTW[41]/F");
-  reducedTree.Branch("pdfWeightsNNPDF",&pdfWeightsNNPDF,"pdfWeightsNNPDF[101]/F");
+  reducedTree.Branch("pdfWeightsNNPDF",&pdfWeightsNNPDF,"pdfWeightsNNPDF[100]/F");
 
   reducedTree.Branch("prob0",&prob0,"prob0/F");
   reducedTree.Branch("probge1",&probge1,"probge1/F");
@@ -3873,23 +3911,34 @@ void reducedTree(TString outputpath, itreestream& stream)
 #ifdef isMC
     pair<int,int> thispoint = make_pair(0,0);
 #else
-    pair<int,int> thispoint = (theScanType_==kmSugra) ? make_pair(TMath::Nint(eventlhehelperextra_m0),TMath::Nint(eventlhehelperextra_m12)) : make_pair(0,0);
+    pair<int,int> thispoint;
+    if (theScanType_==kmSugra)  thispoint=make_pair(TMath::Nint(eventlhehelperextra_m0),TMath::Nint(eventlhehelperextra_m12)) ;
+    else if (theScanType_==kSMS) thispoint=make_pair(TMath::Nint(eventlhehelperextra_mGL),TMath::Nint(eventlhehelperextra_mLSP)); 
+    else thispoint=make_pair(0,0);
 
     if (thispoint != lastpoint) {
-      cout<<"At mSugra point m0 = "<<thispoint.first<<" m12 = "<<thispoint.second<<endl;
+      if (theScanType_==kmSugra)    cout<<"At mSugra point m0  = "<<thispoint.first<<" m12 = "<<thispoint.second<<endl;
+      else  if (theScanType_==kSMS) cout<<"At SMS point m_gluino = "<<thispoint.first<<" m_LSP = "<<thispoint.second<<endl;
       lastpoint=thispoint;
-      if ( scanProcessTotalsMap.count(thispoint)==0 )	cout<<"m0 m12 = "<<thispoint.first<<" "<<thispoint.second<<" does not exist in NLO map!"<<endl;
+      if ( theScanType_==kmSugra && scanProcessTotalsMap.count(thispoint)==0 )	cout<<"m0 m12 = "<<thispoint.first<<" "<<thispoint.second<<" does not exist in NLO map!"<<endl;
     }
 #endif
 
     //these must be done outside of the if statement...need to sum over all events!  
     SUSYProcess prodprocess= (theScanType_==kmSugra || sampleName_.Contains("LM")) ? getSUSYProcess() : NotFound;
     SUSY_process = int(prodprocess);
+    m0 = thispoint.first;
+    m12=thispoint.second;
 
     if (theScanType_==kmSugra) {
       if ( scanProcessTotalsMap.count(thispoint) )
 	scanProcessTotalsMap[thispoint]->SetBinContent( int(prodprocess), scanProcessTotalsMap[thispoint]->GetBinContent(int(prodprocess))+1);
       else 	continue; // skip this event
+    }
+    else if (theScanType_==kSMS) {
+      //Tincrement a 2d histogram of mGL, mLSP
+      //we know 10k were generated everywhere, but what if we have failed jobs?
+      scanSMSngen->Fill(m0,m12);
     }
 
     getPdfWeights("CTEQ",pdfWeightsCTEQ,&pdfWeightSumCTEQ);
@@ -3902,12 +3951,16 @@ void reducedTree(TString outputpath, itreestream& stream)
       //if (entry%1000000==0) checkTimer(entry,nevents);
       weight = getWeight(nevents);
       
-      m0 = thispoint.first;
-      m12=thispoint.second;
-
-      scanCrossSection = getScanCrossSection(prodprocess,"");
-      scanCrossSectionPlus = getScanCrossSection(prodprocess,"Plus");
-      scanCrossSectionMinus = getScanCrossSection(prodprocess,"Minus");
+      if (theScanType_!=kSMS) {
+	scanCrossSection = getScanCrossSection(prodprocess,"");
+	scanCrossSectionPlus = getScanCrossSection(prodprocess,"Plus");
+	scanCrossSectionMinus = getScanCrossSection(prodprocess,"Minus");
+      }
+      else {
+	scanCrossSection = getSMSScanCrossSection(m0); //gluino mass
+	scanCrossSectionPlus = scanCrossSection;
+	scanCrossSectionMinus = scanCrossSection; //there are no cross section errors for SMS
+      }
 
       // cast these as long ints, with rounding, assumes they are positive to begin with 
       runNumber = (ULong64_t)((*myEDM_run)+0.5);
