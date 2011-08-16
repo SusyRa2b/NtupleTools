@@ -1430,26 +1430,61 @@ void printOwenSyst() {
 
 }
 
-void AN2011_prescale( TString btagselection="ge1b" ) {
+void AN2011_prescale( TString btagselection="ge1b",const int mode=1 ) {
   /*
 .L drawReducedTrees.C++
   */
+  loadSamples();
+
+  //this mode thing is kludgey
+  TString modestring="";
+  if (mode==1) {
+    usePUweight_=false;
+    useHLTeff_=false;
+    btagSFweight_="1";
+    currentConfig_=configDescriptions_[0]; //completely raw MC
+  }
+  else if (mode==2 || mode==3) {
+    usePUweight_=true;
+    useHLTeff_=true;
+    currentConfig_=configDescriptions_[1]; //JER bias
+    if (mode==2) modestring="-JER-PU-HLT";
+    else if(mode==3) modestring="-JER-PU-HLT-bSF";
+  }
+  else assert(0);
+
   TCut btagcut = "nbjetsSSVHPT>=1";
-  if ( btagselection=="ge1b") {} //do nothing
-  else  if ( btagselection=="ge2b" ) {
-    btagcut = "nbjetsSSVHPT>=2";
+  if (mode==1 || mode==2) {
+    if ( btagselection=="ge1b") {} //do nothing
+    else  if ( btagselection=="ge2b" ) {
+      btagcut = "nbjetsSSVHPT>=2";
+    }
+    else if ( btagselection=="eq1b" ) {
+      btagcut = "nbjetsSSVHPT==1";
+    }
+    else {
+      assert(0);
+    }
   }
-  else if ( btagselection=="eq1b" ) {
-    btagcut = "nbjetsSSVHPT==1";
-  }
-  else if ( btagselection=="eq0b" ) {
-    btagcut = "nbjetsSSVHPT==0";
-  }
-  else {
-    assert(0);
+  else if (mode==3) {
+    if ( btagselection=="ge1b") {
+      btagcut="1";
+      btagSFweight_="probge1";
+    }
+    else  if ( btagselection=="ge2b" ) {
+      btagcut = "1";
+      btagSFweight_="probge2";
+    }
+    else if ( btagselection=="eq0b" ) {
+      btagcut = "1";
+      btagSFweight_="prob0";
+    }
+    else {
+      assert(0);
+    }
   }
 
-  loadSamples();
+
 
   int nbins;
   float low,high;
@@ -1477,24 +1512,24 @@ void AN2011_prescale( TString btagselection="ge1b" ) {
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
   nbins = 20; low=0; high=200;
   setLogY(false); resetPlotMinimum();
-  drawPlots(var,nbins,low,high,xtitle,"Events", "prescaled_MET_"+btagselection);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "prescaled_MET_"+btagselection+modestring);
   setLogY(true);  setPlotMinimum(1e-1);
-  drawPlots(var,nbins,low,high,xtitle,"Events", "prescaled_MET_"+btagselection);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "prescaled_MET_"+btagselection+modestring);
 
   //njets in 50 < MET < 100 region
   selection_ =TCut("cutHT==1 && cutPV==1 && MET>=50 && MET<100 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4")&&util&&btagcut;
   var="njets"; xtitle="Jet multiplicity";
   nbins = 8; low=1; high=9;
   setLogY(false); resetPlotMinimum();
-  drawPlots(var,nbins,low,high,xtitle,"Events", "prescaled_njets_LSB_"+btagselection);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "prescaled_njets_LSB_"+btagselection+modestring);
 
   selection_ =TCut("cutHT==1 && cutPV==1 && MET>=50 && MET<100 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && weight<10000")&&util&&btagcut;
   var="minDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}";
   nbins = 20; low=0; high=40;
   setLogY(false); resetPlotMinimum();
-  drawPlots(var,nbins,low,high,xtitle,"Events", "prescaled_minDeltaPhiN_LSB_"+btagselection);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "prescaled_minDeltaPhiN_LSB_"+btagselection+modestring);
   setLogY(true);  setPlotMinimum(1e-1);
-  drawPlots(var,nbins,low,high,xtitle,"Events", "prescaled_minDeltaPhiN_LSB_"+btagselection);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "prescaled_minDeltaPhiN_LSB_"+btagselection+modestring);
 
 
   //look again at MET
@@ -1502,10 +1537,11 @@ void AN2011_prescale( TString btagselection="ge1b" ) {
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
   nbins = 10; low=50; high=100;
   setLogY(false); resetPlotMinimum();
-  drawPlots(var,nbins,low,high,xtitle,"Events", "prescaled_METlimited_"+btagselection);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "prescaled_METlimited_"+btagselection+modestring);
 
 
   //sanity check
+  btagSFweight_="1";
   doRatioPlot(true);
   ratioMin=0; ratioMax=3;
   selection_ =TCut("MET>150 && cutHT==1 && cutPV==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN < 4")&&util;
@@ -1514,7 +1550,7 @@ void AN2011_prescale( TString btagselection="ge1b" ) {
   setLogY(false); resetPlotMinimum();
   drawPlots(var,nbins,low,high,xtitle,"Events", "prescaled_METhigh_lowDP");
 
-  lumiScale_ =  1091.891;
+  lumiScale_ =  1143;
   ratioMin=1; ratioMax=1.5;
   selection_ ="cutTrigger==1 && MET>150 && cutHT==1 && cutPV==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN < 4";
   drawPlots(var,nbins,low,high,xtitle,"Events", "unprescaled_METhigh_lowDP");
