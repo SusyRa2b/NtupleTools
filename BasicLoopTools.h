@@ -161,7 +161,7 @@ enum METuncType {kMETunc0=0,kMETuncDown,kMETuncUp};
 METuncType theMETuncType_; std::map<METuncType, TString> theMETuncNames_;
 enum PUuncType {kPUunc0=0,kPUuncDown,kPUuncUp};
 PUuncType thePUuncType_; std::map<PUuncType, TString> thePUuncNames_;
-enum BTagEffType {kBTagEff0=0,kBTagEffup,kBTagEffdown};
+enum BTagEffType {kBTagEff0=0,kBTagEffup,kBTagEffdown,kBTagEff02,kBTagEffup2,kBTagEffdown2,kBTagEff03,kBTagEffup3,kBTagEffdown3};
 BTagEffType theBTagEffType_; std::map<BTagEffType, TString> theBTagEffNames_;
 enum HLTEffType {kHLTEff0=0,kHLTEffup,kHLTEffdown};
 HLTEffType theHLTEffType_; std::map<HLTEffType, TString> theHLTEffNames_;
@@ -664,6 +664,12 @@ void setOptions( const TString & opt) {
   if ( opt.Contains( theBTagEffNames_[kBTagEff0]) ) theBTagEffType_ = kBTagEff0;
   else  if ( opt.Contains( theBTagEffNames_[kBTagEffup]) ) theBTagEffType_ = kBTagEffup;
   else  if ( opt.Contains( theBTagEffNames_[kBTagEffdown]) ) theBTagEffType_ = kBTagEffdown;
+  else  if ( opt.Contains( theBTagEffNames_[kBTagEff02]) ) theBTagEffType_ = kBTagEff02;
+  else  if ( opt.Contains( theBTagEffNames_[kBTagEffup2]) ) theBTagEffType_ = kBTagEffup2;
+  else  if ( opt.Contains( theBTagEffNames_[kBTagEffdown2]) ) theBTagEffType_ = kBTagEffdown2;
+  else  if ( opt.Contains( theBTagEffNames_[kBTagEff03]) ) theBTagEffType_ = kBTagEff03;
+  else  if ( opt.Contains( theBTagEffNames_[kBTagEffup3]) ) theBTagEffType_ = kBTagEffup3;
+  else  if ( opt.Contains( theBTagEffNames_[kBTagEffdown3]) ) theBTagEffType_ = kBTagEffdown3;
   else {assert(0);} //enforce a complete set of options!
 
   if ( opt.Contains( theHLTEffNames_[kHLTEff0]) ) theHLTEffType_ = kHLTEff0;
@@ -1621,17 +1627,51 @@ float jetTagEff(unsigned int ijet, TH1F* h_btageff, TH1F* h_ctageff, TH1F* h_lta
 
   if(isGoodJet30(ijet)){
 
-    float SF[2] = {0.9,0.9}; //2 bins of pT (<240 and > 240)
-    float SFU[2] = {1,1};
+    float SF[3] = {0.9,0.9,0.9}; //3 bins of pT (<240, 240 to 350, and >350)
+    float SFU[3] = {1,1,1};
 
     if (theBTagEffType_ == kBTagEffup) {
       SFU[0] = 1.10; // 10% uncertainty on SF from BTV-11-001
       SFU[1] = 1.20; // double the uncertainty for jets>240 GeV (need to check with B-POG)
+      SFU[2] = 1.20; // double the uncertainty for jets>240 GeV (need to check with B-POG)
     }
     else if (theBTagEffType_ == kBTagEffdown) {
       SFU[0] = 0.9;
       SFU[1] = 0.8;
+      SFU[2] = 0.8;
     }
+
+    //Jeff's prescription 1
+    if (theBTagEffType_ == kBTagEff02 || theBTagEffType_ == kBTagEffup2 || theBTagEffType_ == kBTagEffdown2) {
+      SF[2]=0; // assume no efficiency for pt>350 GeV
+    }
+    if (theBTagEffType_ == kBTagEffup2) {
+      SFU[0] = 1.10; // 10% uncertainty on SF from BTV-11-001
+      SFU[1] = 1.32; // 32% from UCSB's studies
+      SFU[2] = 1.32; // this number is irrelevant
+    }
+    else if (theBTagEffType_ == kBTagEffdown2) {
+      SFU[0] = 0.9;
+      SFU[1] = 0.68;
+      SFU[1] = 0.68;
+    }
+
+    //Jeff's prescription 2
+    if (theBTagEffType_ == kBTagEff03 || theBTagEffType_ == kBTagEffup3 || theBTagEffType_ == kBTagEffdown3) {
+      SF[1]=0; // assume no efficiency for pt in [240,350] GeV
+      SF[2]=0; // assume no efficiency for pt>350 GeV
+    }
+    if (theBTagEffType_ == kBTagEffup2) {
+      SFU[0] = 1.10; // 10% uncertainty on SF from BTV-11-001
+      SFU[1] = 1.32; // this number is irrelevant
+      SFU[2] = 1.32; // this number is irrelevant
+    }
+    else if (theBTagEffType_ == kBTagEffdown2) {
+      SFU[0] = 0.9;
+      SFU[1] = 0.68; 
+      SFU[1] = 0.68;
+    }
+
    
     //check the MC efficiencies from Summer11 TTbar
     //this histogram has bin edges {30,50,75,100,150,200,240,500,1000}
@@ -1640,7 +1680,8 @@ float jetTagEff(unsigned int ijet, TH1F* h_btageff, TH1F* h_ctageff, TH1F* h_lta
       tageff = h_btageff->GetBinContent( h_btageff->FindBin( pt ) );
       
       if(pt<240) tageff *= SF[0]*SFU[0];
-      else tageff *= SF[1]*SFU[1];
+      else if (pt>240 && pt<350) tageff *= SF[1]*SFU[1];
+      else tageff *= SF[2]*SFU[2];
 
       //std::cout << "b: tag eff = " << tageff << std::endl;
     }
