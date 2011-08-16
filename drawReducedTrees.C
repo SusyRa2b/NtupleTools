@@ -991,6 +991,8 @@ void runClosureTest2011()  {
 
 //to hold systematics
 //making this global because I'm lazy...
+//the string is the category of systematic
+//the vector is list of values for all of the search and sb regions (not a very good approach)
 std::map<TString, std::vector<double> > qcdSystErrors;
 void runDataQCD2011(const bool forOwen=false) {
 
@@ -1085,6 +1087,7 @@ void runDataQCD2011(const bool forOwen=false) {
     cout<<j<<"\t&"<<qcdSystErrors["MCsub"].at(j)<<" & "<<qcdSystErrors["Closure"].at(j)<<" & "<<qcdSystErrors["SBshift"].at(j)<<" & "<<qcdSystErrors["Total"].at(j)<<endl;
   }
   
+
 }
 
 //i don't like passing the index instead of the region itself, but it makes some things easier.
@@ -1324,6 +1327,7 @@ void runSLClosureTest2011() {
 
 }
 
+vector<double> ttbarClosureSyst;
 void runTtbarEstimate2011(const bool forOwen=false) {
   setSearchRegions();
 
@@ -1375,11 +1379,13 @@ void runTtbarEstimate2011(const bool forOwen=false) {
   cout<<"Running ttbar closure test"<<endl;
   for (unsigned int j=0; j<searchRegions_.size();j++)   closure[j]=fabs(slABCD(j));
 
+  ttbarClosureSyst.clear();
   cout<<" == summary (%) == "<<endl;
   cout<<"\tClosure\tQCD\tZ\tMC\tTotal"<<endl;
   for (unsigned int j=0; j<searchRegions_.size();j++) {
     double totalsyst = sqrt(closure[j]*closure[j] + qcd[j]*qcd[j] + znn[j]*znn[j] + mc[j]*mc[j]);
     cout<<j<<"\t"<<closure[j]<<"\t"<<qcd[j]<<"\t"<<znn[j]<<"\t"<<mc[j]<<"\t"<<totalsyst <<endl;
+    ttbarClosureSyst.push_back(closure[j]);
   }
 
 
@@ -1394,6 +1400,33 @@ void printOwenAll() {
     printOwen( i->first);
   }
   cout<<"luminosity = "<<lumiScale_<<endl;
+
+}
+
+void printOwenSyst() {
+
+  //note that because of the way the code is written, i am not at all sure that
+  //it is safe to run printOwenAll() and printOwenSyst() in the same session. better to be safe!
+
+  runDataQCD2011();
+  runTtbarEstimate2011();
+
+  for (unsigned int i=0; i<searchRegions_.size(); i++) {
+    char effoutput[500];
+    sprintf(effoutput,"backgroundSyst.%s%s.%dinvpb.dat",searchRegions_[i].btagSelection.Data(),searchRegions_[i].owenId.Data(),TMath::Nint(lumiScale_));
+
+    ofstream textfile(effoutput);
+
+    textfile<<"sf_mc            "<<1<<endl;
+    textfile<<"sf_mc            "<<0.5<<endl;
+    textfile<<"sf_qcd_sb        "<<1<<endl;
+    textfile<<"sf_qcd_sb_err    "<<0.01*sqrt(pow(qcdSystErrors["Closure"].at(i),2)+pow(qcdSystErrors["SBshift"].at(i),2))<<endl;
+    textfile<<"sf_qcd_sig       "<<1<<endl;
+    textfile<<"sf_qcd_sig_err   "<<0.01*sqrt(pow(qcdSystErrors["Closure"].at(2*i+1),2)+pow(qcdSystErrors["SBshift"].at(2*i+1),2))<<endl;
+    textfile<<"sf_ttwj_sig      "<<1<<endl;
+    textfile<<"sf_ttwj_sig_err  "<<0.01*ttbarClosureSyst[i]<<endl;
+    textfile.close();
+  }
 
 }
 
