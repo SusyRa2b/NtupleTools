@@ -704,9 +704,9 @@ cout<<"Got options: "<<endl
 }
 
 void PseudoConstructor() {
-  //theScanType_=kNotScan;
+  theScanType_=kNotScan;
   //theScanType_=kmSugra;
-  theScanType_=kSMS;
+  //theScanType_=kSMS;
 
   //  theMETType_=kPFMETTypeI;
   //  theJetType_=kRECOPF;
@@ -1248,11 +1248,6 @@ float getHLTHTeff(float offHT) {
 
   float eff=100;
 
-  //  TFile f_eff("ht300_out_166864_eff_histogram.root","READ");
-  //  char graphname[200];
-  //  std::string grname = "myeff";
-  //  sprintf(graphname,"%s",grname.c_str());   
-  //  TGraphAsymmErrors * htgraph  = (TGraphAsymmErrors *)f_eff.Get(graphname);
   TGraphAsymmErrors * gr=htgraph;
   if ( theHLTEffType_ ==kHLTEffup) gr=htgraphPlus;
   else if ( theHLTEffType_ ==kHLTEffdown) gr=htgraphMinus;
@@ -1261,6 +1256,58 @@ float getHLTHTeff(float offHT) {
 
   return eff;
 }
+
+TFile * f_eff_mht=0;
+TGraphAsymmErrors * mhtgraph=0;
+TGraphAsymmErrors * mhtgraphPlus=0;
+TGraphAsymmErrors * mhtgraphMinus=0;
+void loadHLTMHTeff() {
+  if (f_eff_mht==0) {
+
+    //there are four curves
+    //not sure what the best way to combine them are
+    f_eff_mht = new TFile("mht_eff_uptojul6.root","READ");
+    //mhtgraph  = (TGraphAsymmErrors *) f_eff_mht->Get("eff_MHT60");
+    //mhtgraph  = (TGraphAsymmErrors *) f_eff_mht->Get("eff_MHT70");
+    //mhtgraph  = (TGraphAsymmErrors *) f_eff_mht->Get("eff_MHT75");
+    mhtgraph  = (TGraphAsymmErrors *) f_eff_mht->Get("eff_MHT80");
+
+    //fill the graphs with plus and minus variations
+    mhtgraphPlus = new TGraphAsymmErrors(mhtgraph->GetN());
+    mhtgraphMinus = new TGraphAsymmErrors(mhtgraph->GetN());
+    for (int i=0; i<mhtgraph->GetN(); i++) {
+      double x,y;
+      mhtgraph->GetPoint(i,x,y);
+      double exl= mhtgraph->GetErrorXlow(i);
+      double exh= mhtgraph->GetErrorXhigh(i);
+      double eyl= mhtgraph->GetErrorYlow(i);
+      double eyh= mhtgraph->GetErrorYhigh(i);
+      //shift y
+      double yup = y+eyh > 1? 1: y+eyh;
+      double ydown = y-eyl < 0 ? 0: y-eyl;
+      mhtgraphPlus->SetPoint(i,x,yup);
+      mhtgraphMinus->SetPoint(i,x,ydown);
+      mhtgraphPlus->SetPointError(i,exl,exh,eyl,eyh); //the errors don't matter
+      mhtgraphMinus->SetPointError(i,exl,exh,eyl,eyh);
+    }
+  }
+}
+
+float getHLTMHTeff(float offMET) {
+  loadHLTMHTeff();
+
+  float eff=100;
+
+  TGraphAsymmErrors * gr=mhtgraph;
+  //if ( theHLTEffType_ ==kHLTEffup) gr=htgraphPlus;
+  //else if ( theHLTEffType_ ==kHLTEffdown) gr=htgraphMinus;
+
+  eff = gr->Eval(offMET);
+
+  return eff;
+}
+
+
 
 int countGoodPV() {
   
@@ -4181,7 +4228,7 @@ void sampleAnalyzer(itreestream& stream){
 
   int nevents = stream.size();
 
-  TFile fout("histos.root","RECREATE");
+  //TFile fout("histos.root","RECREATE");
   //TH1F * h_taupt = new TH1F("h_taupt","tau pt",200,0,200);
 
   InitializeStuff();//BEN
@@ -4191,18 +4238,19 @@ void sampleAnalyzer(itreestream& stream){
   setCutScheme();
   //setBCut(2);
 
-  setIgnoredCut("cutTrigger");
-  setIgnoredCut("cutPV");
-  setIgnoredCut("cutHT");
-  setIgnoredCut("cut3Jets");
-  setIgnoredCut("cutEleVeto");
-  setIgnoredCut("cutMuVeto");
-  setIgnoredCut("cutMET");
-  setIgnoredCut("cutDeltaPhiN");
-  setIgnoredCut("cutDeltaPhiTaus");
-  setBCut(0);
+  //setIgnoredCut("cutTrigger");
+  //setIgnoredCut("cutPV");
+  //setIgnoredCut("cutHT");
+  //setIgnoredCut("cut3Jets");
+  //setIgnoredCut("cutEleVeto");
+  //setIgnoredCut("cutMuVeto");
+  //setIgnoredCut("cutMET");
+  //setIgnoredCut("cutDeltaPhiN");
+  //setIgnoredCut("cutDeltaPhiTaus");
+  setBCut(1);
 
   int count = 0;
+  float countw = 0;
   startTimer();
   for(int entry=0; entry < nevents; ++entry){
     // Read event into memory
@@ -4213,6 +4261,10 @@ void sampleAnalyzer(itreestream& stream){
     if (Cut(entry) < 0) continue;
     count++;
 
+    countw += getHLTMHTeff(getMET());
+
+    std::cout << "MET = " << getMET() << ", MHTweight = " << getHLTMHTeff(getMET()) << std::endl;
+
     //std::cout << "genweight = " << (*myGenWeight) << std::endl;
     //std::cout << "btagIP weight = " << getBTagIPWeight() << std::endl;
     //std::cout << "PFMHT weight = " << getPFMHTWeight() << std::endl;
@@ -4220,8 +4272,11 @@ void sampleAnalyzer(itreestream& stream){
   }
   stopTimer(nevents);
 
-  fout.Write();
-  fout.Close();
+  std::cout << "count = " << count << std::endl;
+  std::cout << "countw = " << countw << std::endl;
+
+  //fout.Write();
+  //fout.Close();
 
   return;
 }
