@@ -21,21 +21,21 @@ void printABCD(double A, double Aerr, double B, double Berr, double C, double Ce
   cout << "MC truth  : " << C << " +- " << Cerr << endl;
   
   double num1 = C-estimate;
-  double num1err = sqrt(Cerr*Cerr + estimateerr*estimateerr);
   double perc = num1/C;
-  double percerr = jmt::errAoverB(num1,num1err,C,Cerr);
+  double percerr = jmt::errAoverB(estimate, estimateerr, C, Cerr);
   cout << "percent   : " << perc*100. << " +- " << percerr*100. << endl;
   cout << "combined  : " << sqrt(perc*perc + percerr*percerr)*100. << endl;
+
 }
 
 
 
 void reweightQCD(){
 
-  //TFile* ifl = TFile::Open("../qcdReweight_loose_50.root","READ"); 
+  TFile* ifl = TFile::Open("../qcdReweight_loose_50.root","READ"); 
   //TFile* ifl = TFile::Open("../qcdReweight_loose_30.root","READ"); 
   //TFile* ifl = TFile::Open("../qcdReweight_tight_50.root","READ"); 
-  TFile* ifl = TFile::Open("../qcdReweight_tight_30.root","READ"); 
+  // TFile* ifl = TFile::Open("../qcdReweight_tight_30.root","READ"); 
   
   bool d = true; //true to double size of correction
 
