@@ -93,6 +93,7 @@ double lumiScale_ = 1143; //official summer conf lumi
 
 #include "drawReducedTrees.h"
 
+
 //this is the original implementation, using the traditional method of drawing a 1 bin histo to count events
 //works fine for small samples, completely unusable for mSugra
 SignalEffData signalSystematics2011(const SearchRegion & region, bool isSL=false, bool isLDP=false, TString sampleOfInterest="LM9", int m0=0,int m12=0) {
@@ -1070,6 +1071,11 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
   double estimate = num / A;
   double estimateerr= jmt::errAoverB(num,numerr,A,Aerr);
   double closureStat= datamode? 0: jmt::errAoverB(estimate,estimateerr,SIG,SIGerr);
+
+  //for a cross-check
+  double R0 = B/A;
+  double R0err = jmt::errAoverB(B,Berr,A,Aerr);
+
 //   cout<<" ==== "<<endl
 //       <<"Estimate = "<<estimate<<" +/- "<<estimateerr<<endl
 //       <<" truth   = "<<SIG     <<" +/- "<<SIGerr<<endl;
@@ -1083,10 +1089,10 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
 	    jmt::format_nevents(SIG,SIGerr).Data(),100*(SIG-estimate)/SIG,closureStat*100);
   }
   else {
-    sprintf(output,"%s & %d & %d & %d & %s & %s   \\\\",btagselection.Data(),
+    sprintf(output,"%s & %d & %d & %d & %s & %s   \\\\ %% %f +/- %f",btagselection.Data(),
 	    TMath::Nint(B),TMath::Nint(A),
 	    TMath::Nint(D), jmt::format_nevents(Dsub,Dsuberr).Data(),
-	    jmt::format_nevents(estimate,estimateerr).Data());
+	    jmt::format_nevents(estimate,estimateerr).Data(),R0,R0err);
     cout<<"(qcd) DATA\t";
   }
   cout<<output<<endl;
@@ -1196,7 +1202,7 @@ void runDataQCD2011(const bool forOwen=false) {
     qcdSystErrors["SBshift"].push_back( fabs(var1)>fabs(var2) ? fabs(var1) : fabs(var2));
   }
   cout<<" =END systematics for SB shift ==== "<<endl;
-
+  
   cout<<"== Cross check with >=1 b instead of exactly 0 b =="<<endl;
   for (unsigned int i=0; i<sbRegions_.size(); i++) {
     anotherABCD(sbRegions_[i],true,1,0,">=1");
