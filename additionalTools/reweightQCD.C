@@ -11,7 +11,12 @@ using namespace std;
 
 
 void printABCD(double A, double Aerr, double B, double Berr, double C, double Cerr, double D, double Derr) {
-  
+  cout << "A: " << A << " +- " << Aerr << endl;
+  cout << "B: " << B << " +- " << Berr << endl;  
+  cout << "C: " << C << " +- " << Cerr << endl;
+  cout << "D: " << D << " +- " << Derr << endl;
+
+
   double numerr=jmt::errAtimesB(B,Berr,D,Derr);
   double num = B*D;
   double estimate = num / A;
@@ -25,7 +30,7 @@ void printABCD(double A, double Aerr, double B, double Berr, double C, double Ce
   double percerr = jmt::errAoverB(estimate, estimateerr, C, Cerr);
   cout << "percent   : " << perc*100. << " +- " << percerr*100. << endl;
   cout << "combined  : " << sqrt(perc*perc + percerr*percerr)*100. << endl;
-
+  cout << endl;
 }
 
 
@@ -37,7 +42,7 @@ void reweightQCD(){
   //TFile* ifl = TFile::Open("../qcdReweight_tight_50.root","READ"); 
   // TFile* ifl = TFile::Open("../qcdReweight_tight_30.root","READ"); 
   
-  bool d = true; //true to double size of correction
+  bool d = false; //true to double size of correction
 
   TH1D* h_LSB_fDP_antib_njets_qcd    = (TH1D*)ifl->Get("h_LSB_fDP_antib_njets_qcd");
   TH1D* h_LSB_fDP_antib_njets_nonqcd = (TH1D*)ifl->Get("h_LSB_fDP_antib_njets_nonqcd");
@@ -226,16 +231,29 @@ void reweightQCD(){
   h_SIG_pDP_ge1b_njets_qcd_w->Add(h_SIG_pDP_ge1b_njets_qcd);
   h_SIG_pDP_ge1b_njets_qcd_w->Multiply(wh_SIG_ge1b);
   
-  h_SB_fDP_ge2b_njets_qcd_w->Add(h_SB_fDP_ge2b_njets_qcd);
-  h_SB_fDP_ge2b_njets_qcd_w->Multiply(wh_SB_ge2b);
-  h_SB_pDP_ge2b_njets_qcd_w->Add(h_SB_pDP_ge2b_njets_qcd);
-  h_SB_pDP_ge2b_njets_qcd_w->Multiply(wh_SB_ge2b);
-  
-  h_SIG_fDP_ge2b_njets_qcd_w->Add(h_SIG_fDP_ge2b_njets_qcd);
-  h_SIG_fDP_ge2b_njets_qcd_w->Multiply(wh_SIG_ge2b);
-  h_SIG_pDP_ge2b_njets_qcd_w->Add(h_SIG_pDP_ge2b_njets_qcd);
-  h_SIG_pDP_ge2b_njets_qcd_w->Multiply(wh_SIG_ge2b);
-  
+  bool w12same = true;
+  if(!w12same){
+    h_SB_fDP_ge2b_njets_qcd_w->Add(h_SB_fDP_ge2b_njets_qcd);
+    h_SB_fDP_ge2b_njets_qcd_w->Multiply(wh_SB_ge2b);
+    h_SB_pDP_ge2b_njets_qcd_w->Add(h_SB_pDP_ge2b_njets_qcd);
+    h_SB_pDP_ge2b_njets_qcd_w->Multiply(wh_SB_ge2b);
+    
+    h_SIG_fDP_ge2b_njets_qcd_w->Add(h_SIG_fDP_ge2b_njets_qcd);
+    h_SIG_fDP_ge2b_njets_qcd_w->Multiply(wh_SIG_ge2b);
+    h_SIG_pDP_ge2b_njets_qcd_w->Add(h_SIG_pDP_ge2b_njets_qcd);
+    h_SIG_pDP_ge2b_njets_qcd_w->Multiply(wh_SIG_ge2b);
+  }
+  else{
+    h_SB_fDP_ge2b_njets_qcd_w->Add(h_SB_fDP_ge2b_njets_qcd);
+    h_SB_fDP_ge2b_njets_qcd_w->Multiply(wh_SB_ge1b);
+    h_SB_pDP_ge2b_njets_qcd_w->Add(h_SB_pDP_ge2b_njets_qcd);
+    h_SB_pDP_ge2b_njets_qcd_w->Multiply(wh_SB_ge1b);
+    
+    h_SIG_fDP_ge2b_njets_qcd_w->Add(h_SIG_fDP_ge2b_njets_qcd);
+    h_SIG_fDP_ge2b_njets_qcd_w->Multiply(wh_SIG_ge1b);
+    h_SIG_pDP_ge2b_njets_qcd_w->Add(h_SIG_pDP_ge2b_njets_qcd);
+    h_SIG_pDP_ge2b_njets_qcd_w->Multiply(wh_SIG_ge1b);
+  }
 
   
   //do ABCD
