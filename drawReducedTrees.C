@@ -1890,9 +1890,56 @@ void AN2011_r() {
   TCut util = "pass_utilityHLT_HT300>=1 && weight<1000";
   selection_ =TCut("HT>=350 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && nbjetsSSVHPT==0")&&util;
   drawR("minDeltaPhiN",4,10,50,150,"Data_eq0b");
+}
 
+
+void AN2011_r_SLreq() {
+  TString btagselection="ge1b";
+  TCut btagcut = "nbjetsSSVHPT>=1";
+  loadSamples();
+  
+  // == draw r(MET)
+  clearSamples();
+  addSample("PythiaPUQCD");
+  setColorScheme("nostack");
+  
+  drawLegend(false);
+  doRatioPlot(false);
+  doData(false);
+  setStackMode(false);
+  doOverflowAddition(true);
+  
+  selection_ =TCut("cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1&&weight<1000")&&btagcut;
+  setPlotMaximum(0.7); setPlotMinimum(0);
+  //drawR("minDeltaPhi",0.3,15,50,350,"old_"+btagselection);
+  //drawR("minDeltaPhiN",4,15,50,350,btagselection);
+
+
+
+
+  const int nvarbins=13;
+  const float varbins[]={0,15,30,45,80,110,140,170,200,230,260,290,320,350};
+  selection_ ="cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && nbjetsSSVHPT==0&&weight<1000";
+  //drawR("minDeltaPhiN",4, "MET", nvarbins, varbins,"eq0b");
+
+
+
+  const int nvarbins1=9;
+  const float varbins1[]={0,15,30,45,75,125,175,225,275,350};
+  selection_ ="cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && nbjetsSSVHPT==1&&weight<1000";
+  //drawR("minDeltaPhiN",4, "MET", nvarbins1, varbins1,"eq1b");
+
+  selection_ ="cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && nbjetsSSVHPT>=1&&weight<1000";
+  //drawR("minDeltaPhiN",4, "MET", nvarbins1, varbins1,"ge1b");
+  drawR("minDeltaPhi",0.3, "MET", nvarbins, varbins,"old_ge1b");
+
+  const int nvarbins2=8;
+  const float varbins2[]={0,15,30,45,75,125,175,225, 350};
+  selection_ ="cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && nbjetsSSVHPT>=2&&weight<1000";
+  //drawR("minDeltaPhiN",4, "MET", nvarbins2, varbins2,"eq2b");
 
 }
+
 
 void AN2011_opt() {
 
