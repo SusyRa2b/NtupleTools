@@ -3518,6 +3518,86 @@ void drawQCDreweight(bool loose = true){
 }
 
 
+void ptresABCD(bool loose = true){
+  doOverflowAddition(true);
+  loadSamples();
+  clearSamples();
+  addSample("PythiaPUQCD");
+  
+  const TCut LSB = "MET>=50 && MET<100";
+  const TCut SB = "MET>=150 && MET<200";
+  TCut SIG;
+  if(loose) SIG = "MET>=200";
+  else SIG =  "MET>=300";
+  TCut HTcut;
+  if(loose) HTcut = "HT>=350";
+  else HTcut = "HT>=500";
+  const  TCut ge1b =  "nbjetsSSVHPT >= 1";
+  const  TCut ge2b =  "nbjetsSSVHPT >= 2";
+  const  TCut eq1b =  "nbjetsSSVHPT == 1";
+  const  TCut pretag =  "1";
+  const  TCut antitag = "nbjetsSSVHPT == 0";
+  const TCut passmdpn = "minDeltaPhiN>=4";
+  const TCut failmdpn = "minDeltaPhiN<4";//.1412212
+  //const TCut passmdpn = "minDeltaPhiN15>=2.7";
+  //const TCut failmdpn = "minDeltaPhiN15<2.7";//.142238
+  //const TCut passmdpn = "minDeltaPhiN5>=7.9";
+  //const TCut failmdpn = "minDeltaPhiN5<7.9";
+  TCut base = HTcut&&TCut("cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && weight<1000");// no trigger, met, minDeltaPhiN, btagger
+  
+  double A, B, C, D, Aerr, Berr, Cerr, Derr;
+
+  TString sampleOfInterest = ("PythiaPUQCD");
+  TString var="HT"; TString xtitle=var;
+  int nbins=1; double low=0; double high=50000; //ht overflow is on
+  
+
+  //A
+  selection_ = base&&LSB&&failmdpn&&antitag;
+  drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_A");
+  A=getIntegral(sampleOfInterest);
+  Aerr=getIntegralErr(sampleOfInterest);
+
+  //B
+  selection_ = base&&LSB&&passmdpn&&antitag;
+  drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_A");
+  B=getIntegral(sampleOfInterest);
+  Berr=getIntegralErr(sampleOfInterest);
+
+  cout << "**************" << endl;
+  cout << "B/A: " << B/A << endl;
+  cout << "**************" << endl;
+ 
+
+  //C
+  selection_ = base&&SIG&&passmdpn&&ge1b;
+  drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_A");
+  C=getIntegral(sampleOfInterest);
+  Cerr=getIntegralErr(sampleOfInterest);
+
+  //D
+  selection_ = base&&SIG&&failmdpn&&ge1b;
+  drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_A");
+  D=getIntegral(sampleOfInterest);
+  Derr=getIntegralErr(sampleOfInterest);
+
+  double numerr=jmt::errAtimesB(B,Berr,D,Derr);
+  double num = B*D;
+  double estimate = num / A;
+  double estimateerr= jmt::errAoverB(num,numerr,A,Aerr);
+
+  cout << "prediction: " << estimate << " +- " << estimateerr << endl;
+  cout << "MC truth  : " << C << " +- " << Cerr << endl;
+  
+  double num1 = C-estimate;
+  double perc = num1/C;
+  double percerr = jmt::errAoverB(estimate, estimateerr,C,Cerr);
+  cout << "percent   : " << perc*100. << " +- " << percerr*100. << endl;
+  cout << "combined  : " << sqrt(perc*perc + percerr*percerr)*100. << endl;
+
+}
+
+
 void studyPrescale_r(int ibtag = 4) {
   loadSamples();
   drawTotalSM_=true;
