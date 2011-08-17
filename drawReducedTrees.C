@@ -1732,7 +1732,20 @@ other.
   int nbins;
   float low,high;
   TString var,xtitle;
+  bool vb = true;
   
+  //ge1b, Loose
+  const int nvarbins=18;
+  const float varbins[]={100, 120, 140, 160, 180, 200, 220, 240, 260, 280, 300, 320, 340, 360, 380, 400, 450, 500, 550};
+
+  //ge1b, Tight
+  //const int nvarbins=15;
+  //const float varbins[]={100, 120, 140, 160, 180, 200, 220, 240, 260, 280, 300, 350, 400, 450, 500, 550};
+  
+  //ge2b, Loose and Tight
+  //const int nvarbins=12;
+  //const float varbins[]={100, 125, 150, 175, 200, 225, 250, 275, 300, 350, 400, 450, 550};
+
   doOverflowAddition(true);
 
   setStackMode(false,true); //normalized
@@ -1748,12 +1761,15 @@ other.
   if(samplename=="TTbarJets") sample = "ttbar";
   else if(samplename=="WJets") sample = "wjets";
 
-  selection_ =TCut("MET>=150 && cutPV==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && minDeltaPhiN >= 4")&&btagcut&&HTcut;
+  selection_ =TCut("cutPV==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && minDeltaPhiN >= 4")&&btagcut&&HTcut;
+  //selection_ =TCut("MET>=150 && cutPV==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && minDeltaPhiN >= 4")&&btagcut&&HTcut; //AN v5
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
-  nbins = 40; low=150; high=550;
+  nbins = 40; low=100; high=550; 
+  //nbins = 40; low=150; high=550; //AN v5
   //nbins = 20; low=150; high=550;
   //nbins = 16; low=150; high=550;
-  drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "SBandSIG_MET_SL_"+sample+"_"+btagselection+"_"+HTselection);
+  if(vb) drawPlots(var,nvarbins, varbins, xtitle,"Arbitrary units", "SBandSIG_MET_SL_"+sample+"_"+btagselection+"_"+HTselection);
+  else drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "SBandSIG_MET_SL_"+sample+"_"+btagselection+"_"+HTselection);
 
   int lowbin = hinteractive->FindBin(low);
   int boundarybin_sb = 0, boundarybin_sig=0;
@@ -1780,8 +1796,10 @@ other.
 
   TH1D* SLplot = (TH1D*)hinteractive->Clone("SLplot");
   //now switch to the normal selection
-  selection_ =TCut("MET>=150 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4")&&btagcut&&HTcut;
-  drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "SBandSIG_MET_normal_"+sample+"_"+btagselection+"_"+HTselection);
+  selection_ =TCut("cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4")&&btagcut&&HTcut;
+  //selection_ =TCut("MET>=150 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4")&&btagcut&&HTcut;// AN v5
+  if(vb)drawPlots(var,nvarbins, varbins ,xtitle,"Arbitrary units", "SBandSIG_MET_normal_"+sample+"_"+btagselection+"_"+HTselection);
+  else drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "SBandSIG_MET_normal_"+sample+"_"+btagselection+"_"+HTselection);
   TH1D* SIGplot = (TH1D*)hinteractive->Clone("SIGplot");
   SLplot->SetLineColor(kRed);
   SLplot->SetMarkerColor(kRed);
@@ -1803,9 +1821,11 @@ other.
   myC->GetPad(1)->Modified();
   myC->GetPad(2)->Modified();
   myC->cd(1);
-  SIGplot->Draw();
-  SLplot->Draw("SAME");
-  TH1D* myRatio = new TH1D("ratio", "ratio", nbins,low,high);
+  SIGplot->Draw("HIST E");
+  SLplot->Draw("HIST E SAME");
+  TH1D* myRatio;
+  if(vb) myRatio = new TH1D("ratio", "ratio", nvarbins, varbins);
+  else  myRatio = new TH1D("ratio", "ratio", nbins,low,high);
   myRatio->Sumw2();
   myRatio->SetLineColor(kBlack);
   myRatio->SetMarkerColor(kBlack);
@@ -1816,7 +1836,8 @@ other.
   myRatio->GetYaxis()->SetLabelSize(0.15); //make y label bigger
   myC->cd(2);
   myRatio->Draw();
-  TLine* myLine = new TLine(low, 1, high, 1);
+  TLine* myLine;
+  myLine = new TLine(low, 1, high, 1);
   myLine->Draw();
   myC->cd(1);
   TLatex* mytext = new TLatex(3.570061,23.08044,"CMS Preliminary");
