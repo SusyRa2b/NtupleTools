@@ -3439,6 +3439,51 @@ void drawMETPlots_utility(){
   }//end loop over b-tag selection
 }
 
+void qcdFit(bool loose = true){
+  loadSamples(true);
+  savePlots_=false; //don't save eps,png,pdf files
+  doOverflowAddition(false);
+
+  //output file 
+  TString histfilename = "fitHists.root";
+  TFile fh(histfilename,"RECREATE");//will delete old root file if present 
+  fh.Close(); //going to open only when needed 
+  
+  //-- define some cuts to use 
+  //--------------------------
+  const TCut phys = "cutTrigger==1";
+  const TCut util = "pass_utilityHLT_HT300>=1";
+  const TCut LSB = "MET>=50 && MET<100";
+  const TCut SB = "MET>=150 && MET<200";
+  TCut SIG;
+  if(loose) SIG = "MET>=200";
+  else SIG =  "MET>=300";
+  TCut HTcut;
+  if(loose) HTcut = "HT>=350";
+  else HTcut = "HT>=500";
+  const  TCut ge1b =  "nbjetsSSVHPT >= 1";
+  const  TCut ge2b =  "nbjetsSSVHPT >= 2";
+  const  TCut eq1b =  "nbjetsSSVHPT == 1";
+  const  TCut pretag =  "1";
+  const  TCut antitag = "nbjetsSSVHPT == 0";
+  const TCut passmdpn = "minDeltaPhiN>=4";
+  const TCut failmdpn = "minDeltaPhiN<4";
+  TCut base = HTcut&&TCut("cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && weight<1000");// no trigger, met, minDeltaPhiN, btagger
+
+  TString var = "MET";
+  int nbins; double low; double high;
+  
+  selection_ = base&&util&&LSB&&antitag&& passmdpn;
+  nbins=1; low=50; high=100;
+  drawSimple(var,nbins,low,high,histfilename, "h_LSB_fDP_antib_MET_data", "data");
+  drawSimple(var,nbins,low,high,histfilename, "h_LSB_fDP_antib_MET_qcd", "PythiaPUQCD");
+  drawPlots( var,nbins,low,high, "", "",      "deleteme");  
+  TFile fh1(histfilename, "UPDATE");
+  totalnonqcd->SetName("h_LSB_fDP_antib_MET_nonqcd");
+  totalnonqcd->Write();
+  fh1.Close();
+
+}
 
 void drawQCDreweight(bool loose = true, bool njets50 = false){
   loadSamples(true);
@@ -3448,7 +3493,8 @@ void drawQCDreweight(bool loose = true, bool njets50 = false){
   TString var = "";
   if(njets50) var = "njets";
   else var = "njets30";
-  
+  bool b12same=true;
+
   //output file 
   TString histfilename = "";
   histfilename += "qcdReweight";
@@ -3509,19 +3555,6 @@ void drawQCDreweight(bool loose = true, bool njets50 = false){
   
   if(njets50) { nbins=4; low=2.5; high=6.5;} 
   else{         nbins=5; low=2.5; high=7.5;}
-  selection_ =  base && SB && phys && failmdpn && ge1b;
-  drawSimple(var,nbins,low,high,histfilename, "h_SB_fDP_ge1b_njets_data", "data");
-  drawSimple(var,nbins,low,high,histfilename, "h_SB_fDP_ge1b_njets_qcd", "PythiaPUQCD");
-  drawPlots( var,nbins,low,high, "", "",      "deleteme");   
-  TFile fh2(histfilename, "UPDATE");
-  totalnonqcd->SetName("h_SB_fDP_ge1b_njets_nonqcd");
-  totalnonqcd->Write();
-  fh2.Close(); 
-  selection_ = base && SB && phys && passmdpn && ge1b;
-  drawSimple(var,nbins,low,high,histfilename, "h_SB_pDP_ge1b_njets_qcd", "PythiaPUQCD");
-   
-  if(njets50) { nbins=4; low=2.5; high=6.5;} 
-  else{         nbins=5; low=2.5; high=7.5;}
   selection_ =  base && SB && phys && failmdpn && ge2b;
   drawSimple(var,nbins,low,high,histfilename, "h_SB_fDP_ge2b_njets_data", "data");
   drawSimple(var,nbins,low,high,histfilename, "h_SB_fDP_ge2b_njets_qcd", "PythiaPUQCD");
@@ -3533,27 +3566,23 @@ void drawQCDreweight(bool loose = true, bool njets50 = false){
   selection_ = base && SB && phys && passmdpn && ge2b;
   drawSimple(var,nbins,low,high,histfilename, "h_SB_pDP_ge2b_njets_qcd", "PythiaPUQCD");
   
+  if(!b12same){
+    if(njets50) { nbins=4; low=2.5; high=6.5;} 
+    else{         nbins=5; low=2.5; high=7.5;}
+  }
+  selection_ =  base && SB && phys && failmdpn && ge1b;
+  drawSimple(var,nbins,low,high,histfilename, "h_SB_fDP_ge1b_njets_data", "data");
+  drawSimple(var,nbins,low,high,histfilename, "h_SB_fDP_ge1b_njets_qcd", "PythiaPUQCD");
+  drawPlots( var,nbins,low,high, "", "",      "deleteme");   
+  TFile fh2(histfilename, "UPDATE");
+  totalnonqcd->SetName("h_SB_fDP_ge1b_njets_nonqcd");
+  totalnonqcd->Write();
+  fh2.Close(); 
+  selection_ = base && SB && phys && passmdpn && ge1b;
+  drawSimple(var,nbins,low,high,histfilename, "h_SB_pDP_ge1b_njets_qcd", "PythiaPUQCD");
+
   //-- SIG plots
   //------------
-  if(njets50){
-    if(loose){ nbins=4; low=2.5; high=6.5; }
-    else{      nbins=2; low=2.5; high=4.5; }
-  }
-  else{
-    if(loose){ nbins=5; low=2.5; high=7.5; }
-    else{      nbins=4; low=2.5; high=6.5; }
-  }
-  selection_ =  base && SIG && phys && failmdpn && ge1b;
-  drawSimple(var,nbins,low,high,histfilename, "h_SIG_fDP_ge1b_njets_data", "data");
-  drawSimple(var,nbins,low,high,histfilename, "h_SIG_fDP_ge1b_njets_qcd", "PythiaPUQCD");
-  drawPlots(var,nbins,low,high, "", "",      "deleteme");
-  TFile fh4(histfilename, "UPDATE");
-  totalnonqcd->SetName("h_SIG_fDP_ge1b_njets_nonqcd");
-  totalnonqcd->Write();
-  fh4.Close();
-  selection_ = base && SIG && phys && passmdpn && ge1b;
-  drawSimple(var,nbins,low,high,histfilename, "h_SIG_pDP_ge1b_njets_qcd", "PythiaPUQCD");
-  
   if(njets50){
     if(loose){ nbins=3; low=2.5; high=5.5; }
     else{      nbins=2; low=2.5; high=4.5; }
@@ -3572,8 +3601,31 @@ void drawQCDreweight(bool loose = true, bool njets50 = false){
   fh5.Close();
   selection_ = base && SIG && phys && passmdpn && ge2b;
   drawSimple(var,nbins,low,high,histfilename, "h_SIG_pDP_ge2b_njets_qcd", "PythiaPUQCD");
+
+  if(!b12same){
+    if(njets50){
+      if(loose){ nbins=4; low=2.5; high=6.5; }
+      else{      nbins=2; low=2.5; high=4.5; }
+    }
+    else{
+      if(loose){ nbins=5; low=2.5; high=7.5; }
+      else{      nbins=4; low=2.5; high=6.5; }
+    }
+  }
+  selection_ =  base && SIG && phys && failmdpn && ge1b;
+  drawSimple(var,nbins,low,high,histfilename, "h_SIG_fDP_ge1b_njets_data", "data");
+  drawSimple(var,nbins,low,high,histfilename, "h_SIG_fDP_ge1b_njets_qcd", "PythiaPUQCD");
+  drawPlots(var,nbins,low,high, "", "",      "deleteme");
+  TFile fh4(histfilename, "UPDATE");
+  totalnonqcd->SetName("h_SIG_fDP_ge1b_njets_nonqcd");
+  totalnonqcd->Write();
+  fh4.Close();
+  selection_ = base && SIG && phys && passmdpn && ge1b;
+  drawSimple(var,nbins,low,high,histfilename, "h_SIG_pDP_ge1b_njets_qcd", "PythiaPUQCD");
   
 }
+
+
 
 void ptresABCD(bool loose = true){
   doOverflowAddition(true);
@@ -3766,6 +3818,12 @@ void studyPrescale_r(int ibtag = 4) {
   const float varbins[]={0,10,20,30,40,50,60,70,80,90,100};
   //  drawR("minDeltaPhiN", 4, "MET", nvarbins, varbins, "MET_"+btagstring);
   //}//end btag loop
+
+  //MET fit?
+  doOverflowAddition(false);
+  selection_ =TCut("HT>=350 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1")&&util&&theBTaggingCut;
+  drawR("minDeltaPhiN", 4, "MET", 1, 50, 100, "MET_"+btagstring);
+
 }
  
 void lowMETcount(){
@@ -3941,16 +3999,18 @@ void studyRqcd(int ibtag = 4){
   drawR("minDeltaPhiN", 4, "njets", 8, 2.5, 10.5, "njets_highMET_"+btagstring);
   */
 
+  /*
   //NJETS FOR JOSH
   selection_ =TCut("HT>=350 && cutPV==1 && cutEleVeto==1 && cutMuVeto==1")&&util&&LSB&&theBTaggingCut;
   drawR("minDeltaPhiN", 4, "njets", 4, 2.5, 6.5, "njets_joshBin_lsb_"+btagstring);
   selection_ =TCut("HT>=350 && cutPV==1 && cutEleVeto==1 && cutMuVeto==1")&&util&&highMET&&theBTaggingCut;
   drawR("minDeltaPhiN", 4, "njets", 4, 2.5, 6.5, "njets_joshBin_highMET_"+btagstring);
-  
-  setPlotMaximum(0.35); setPlotMinimum(0);
-  selection_ =TCut("HT>=350 && cutPV==1 && cutEleVeto==1 && cutMuVeto==1 && cut3Jets==1")&&util&&LSB&&theBTaggingCut;
-  //drawR("minDeltaPhiN", 4, "MET", 1, 50, 100, "test_"+btagstring);
+  */  
 
+  //setPlotMaximum(0.35); setPlotMinimum(0);
+  //selection_ =TCut("HT>=350 && cutPV==1 && cutEleVeto==1 && cutMuVeto==1 && cut3Jets==1")&&util&&LSB&&theBTaggingCut;
+  //drawR("minDeltaPhiN", 4, "MET", 1, 50, 100, "test_"+btagstring);
+  
   selection_ =TCut("HT>=350 && cutPV==1 && cutEleVeto==1 && cutMuVeto==1 && cut3Jets==1")&&util&&LSB&&theBTaggingCut;
   //drawR("minDeltaPhiN", 4, "MET", 15, 50, 350, "test_"+btagstring);
 
