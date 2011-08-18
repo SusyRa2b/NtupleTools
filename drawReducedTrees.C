@@ -81,7 +81,8 @@ TString dataInputPath = "/cu2/ra2b/reducedTrees/V00-02-25_fullpf2pat/";
 
 
 //for special tests and signal systematics
-//TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-25c_fullpf2pat/"; //with correct pdf weights
+//TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-25c_fullpf2pat/"; //LM9 with correct pdf weights
+//TString inputPath = "/cu2/joshmt/reducedTrees/V00-02-25c_fullpf2pat/"; //with correct pdf weights
 //TString inputPath = "/cu2/joshmt/mSUGRAdell/PART1/"; // 25% of the msugra sample
 //TString inputPath = "/home/joshmt/";//path for MC
 //TString dataInputPath = "/cu2/ra2b/reducedTrees/V00-02-24_fullpf2pat/"; //sym links to V00-02-05_v3
@@ -445,6 +446,10 @@ void runSystematics2011_LM9(  TString sampleOfInterest="LM9" ) {
 
 void countInBoxes(const SearchRegion & region,  ofstream * outfile ) {
 
+  /*
+owen asked for total MC event counts in the 6 boxes, output in a particular format
+  */
+
   //obviously this event counting is coded elsewhere in many other forms. but let's just redo it
 
   //now that i know what owen really wants, i could have done this in the signal systematics code, but
@@ -660,7 +665,7 @@ map<pair<int,int>, SignalEffData>  runTH2Syst2011_mSugra(const SearchRegion & re
   addSample(sampleOfInterest);
 
   setSearchRegions();
-  loadSusyScanHistograms();
+  if (sampleOfInterest.Contains("mSUGRA"))  loadSusyScanHistograms();
 
 
   region.Print();
@@ -712,10 +717,11 @@ map<pair<int,int>, SignalEffData>  runTH2Syst2011_mSugra(const SearchRegion & re
   btagSFweight_=bweightstring; // add b tag back in the form of the SF
   susyScanYields nominalYields=getSusyScanYields(sampleOfInterest);
 
+  //(only applicable to mSugra, but easier to leave it in for now)
   //NLO k factor uncertainty -- vary it up
   susyCrossSectionVariation_="Plus";
   susyScanYields kFactorPlusYields=getSusyScanYields(sampleOfInterest);
-
+  
   //NLO k factor uncertainty -- vary it down
   susyCrossSectionVariation_="Minus";
   susyScanYields kFactorMinusYields=getSusyScanYields(sampleOfInterest);
@@ -760,6 +766,8 @@ return it in a data structure
     theseResults.rawYield=0;
     theseResults.effCorr=0;
     theseResults.totalSystematic=0;
+    theseResults.btagSystematic=0;
+    theseResults.jesSystematic=0;
 
     if (rawYields[imusgra->first].first >0) {
       cout<<imusgra->first.first<<" "<<imusgra->first.second<<" " //m0 and m12
@@ -784,6 +792,8 @@ return it in a data structure
 	double percent1 = fabs((ivariation->second.first[imusgra->first].first - nominalYield)/nominalYield);
 	double percent2 = fabs((ivariation->second.second[imusgra->first].first - nominalYield)/nominalYield);
 	double bigger = percent2>percent1 ? percent2 : percent1;
+	if (ivariation->first.Contains("JES")) theseResults.jesSystematic = bigger;
+	else if (ivariation->first.Contains("BTagEff")) theseResults.btagSystematic = bigger;
 	totalSystematic += bigger*bigger;
       }
       cout<<endl;
@@ -794,13 +804,13 @@ return it in a data structure
 
       //also add constant terms for JER, PU, HLT
       theseResults.totalSystematic += 0.015 * 0.015 ; //HLT
-
+      
       theseResults.totalSystematic += 0.034 * 0.034 ; //PU
       theseResults.totalSystematic += 0.01 * 0.01 ; //JER
-
+      
       //constant term for PDF uncertainties
       theseResults.totalSystematic += 0.13*0.13; //PDF
-
+	
       theseResults.totalSystematic = 100*sqrt(totalSystematic);
 
     }
@@ -810,6 +820,84 @@ return it in a data structure
 
   //so these are results for all msugra for one particular selection
   return allResults;
+
+}
+
+void runSystematics2011_T1bbbb() {
+  TString sampleOfInterest="T1bbbb";
+  loadSamples();
+  clearSamples();
+  addSample(sampleOfInterest);
+
+  setSearchRegions();
+
+  //open the output files
+  //-- these are the text files for Owen et al
+  vector<ofstream*> textfiles;
+  vector<TFile*> rootfiles;
+  for (unsigned int i=0; i<searchRegions_.size(); i++) {
+    char effoutput[500];
+    sprintf(effoutput,"signalSyst.%s.%s%s.dat",sampleOfInterest.Data(),searchRegions_[i].btagSelection.Data(),searchRegions_[i].owenId.Data());
+    textfiles.push_back( new ofstream(effoutput));
+    sprintf(effoutput,"RA2b.%s.%s%s.root",sampleOfInterest.Data(),searchRegions_[i].btagSelection.Data(),searchRegions_[i].owenId.Data());
+    rootfiles.push_back(new TFile(effoutput,"RECREATE"));
+  }
+
+  //as specified by mariarosaria
+  const  int    nbinsx=60;
+  const  int    nbinsy=60;
+  const  double    lowx=0;
+  const  double    lowy=0;
+  const  double    highx=1500;
+  const  double    highy=1500;
+
+
+  for (unsigned int i=0; i<searchRegions_.size(); i++) {
+    
+    map<pair<int,int>, SignalEffData> SB =  runTH2Syst2011_mSugra(sbRegions_[i],false,false,sampleOfInterest);
+    map<pair<int,int>, SignalEffData> SIG =  runTH2Syst2011_mSugra(searchRegions_[i],false,false,sampleOfInterest);
+    
+    map<pair<int,int>, SignalEffData> SBSL =  runTH2Syst2011_mSugra(sbRegions_[i],true,false,sampleOfInterest);
+    map<pair<int,int>, SignalEffData> SIGSL =  runTH2Syst2011_mSugra(searchRegions_[i],true,false,sampleOfInterest);
+    
+    map<pair<int,int>, SignalEffData> SBLDP =  runTH2Syst2011_mSugra(sbRegions_[i],false,true,sampleOfInterest);
+    map<pair<int,int>, SignalEffData> SIGLDP =  runTH2Syst2011_mSugra(searchRegions_[i],false,true,sampleOfInterest);
+
+    for (map<pair<int,int>, SignalEffData >::iterator iscanpoint = SB.begin(); iscanpoint!= SB.end(); ++iscanpoint) {
+      int nentries=   TMath::Nint(scanSMSngen->GetBinContent(scanSMSngen->FindBin(iscanpoint->first.first,iscanpoint->first.second ))); 
+      
+      (*textfiles[i])<<iscanpoint->first.first <<" "<<iscanpoint->first.second <<" "<<nentries<<" "
+		     <<SIG[iscanpoint->first].rawYield<<" "<<SB[iscanpoint->first].rawYield<<" "<<SIGSL[iscanpoint->first].rawYield<<" "<<SBSL[iscanpoint->first].rawYield<<" "<<SIGLDP[iscanpoint->first].rawYield<<" "<<SBLDP[iscanpoint->first].rawYield<<" "
+		     <<SIG[iscanpoint->first].effCorr<<" "<<SB[iscanpoint->first].effCorr<<" "<<SIGSL[iscanpoint->first].effCorr<<" "<<SBSL[iscanpoint->first].effCorr<<" "<<SIGLDP[iscanpoint->first].effCorr<<" "<<SBLDP[iscanpoint->first].effCorr<<" "
+		     <<SIG[iscanpoint->first].totalSystematic<<" "<<SB[iscanpoint->first].totalSystematic<<" "<<SIGSL[iscanpoint->first].totalSystematic<<" "<<SBSL[iscanpoint->first].totalSystematic<<" "<<SIGLDP[iscanpoint->first].totalSystematic<<" "<<SBLDP[iscanpoint->first].totalSystematic<<endl;
+    }
+
+    //now output to root. need to convert back to TH2D
+    rootfiles[i]->cd();
+    TString hsuffix = sampleOfInterest; hsuffix+="_"; hsuffix+=searchRegions_[i].btagSelection; hsuffix+=searchRegions_[i].owenId;
+    TString hname="efficiency_"; hname+=hsuffix;
+    TH2D efficiency(hname,hname,nbinsx,lowx,highx,nbinsy,lowy,highy);
+    hname="statError_"; hname+=hsuffix;
+    TH2D statError(hname,hname,nbinsx,lowx,highx,nbinsy,lowy,highy);
+    hname="btagError_"; hname+=hsuffix;
+    TH2D btagError(hname,hname,nbinsx,lowx,highx,nbinsy,lowy,highy);
+    hname="jesError_"; hname+=hsuffix;
+    TH2D jesError(hname,hname,nbinsx,lowx,highx,nbinsy,lowy,highy);
+    //she only cares about SIG
+    for (map<pair<int,int>, SignalEffData>::iterator iscan=SIG.begin(); iscan!=SIG.end(); ++iscan) {
+      double N = iscan->second.rawYield * iscan->second.effCorr ;
+      efficiency.SetBinContent( iscan->first.first, iscan->first.second, N/10000.0 );
+      statError.SetBinContent(  iscan->first.first, iscan->first.second, sqrt( N*(1-N/10000.0)) );
+      btagError.SetBinContent(  iscan->first.first, iscan->first.second, iscan->second.btagSystematic );
+      jesError.SetBinContent(  iscan->first.first, iscan->first.second, iscan->second.jesSystematic );
+
+    }
+    rootfiles.at(i)->Write();
+
+    textfiles.at(i)->close();
+    rootfiles.at(i)->Close();
+  }
+
 
 }
 
@@ -1072,9 +1160,12 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
   double estimateerr= jmt::errAoverB(num,numerr,A,Aerr);
   double closureStat= datamode? 0: jmt::errAoverB(estimate,estimateerr,SIG,SIGerr);
 
+  double closureStat2 = datamode? 0: jmt::errAoverB(SIG,SIGerr,estimate,estimateerr);
+
   //for a cross-check
   double R0 = B/A;
   double R0err = jmt::errAoverB(B,Berr,A,Aerr);
+
 
 //   cout<<" ==== "<<endl
 //       <<"Estimate = "<<estimate<<" +/- "<<estimateerr<<endl
@@ -1083,10 +1174,10 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
   btagselection += isSIG ? "SIG":"SB";
   char output[500];
   if (!datamode) {
-    sprintf(output,"%s & %s & %s & %s & %s & %s \\\\ %% %f ++ %f",btagselection.Data(),
+    sprintf(output,"%s & %s & %s & %s & %s & %s \\\\ %% %f ++ %f %% alternate denominator: %f ++ %f",btagselection.Data(),
 	    jmt::format_nevents(B,Berr).Data(),jmt::format_nevents(A,Aerr).Data(),
 	    jmt::format_nevents(D,Derr).Data(),jmt::format_nevents(estimate,estimateerr).Data(),
-	    jmt::format_nevents(SIG,SIGerr).Data(),100*(SIG-estimate)/SIG,closureStat*100);
+	    jmt::format_nevents(SIG,SIGerr).Data(),100*(SIG-estimate)/SIG,closureStat*100,100*(SIG-estimate)/estimate,closureStat2*100);
   }
   else {
     sprintf(output,"%s & %d & %d & %d & %s & %s   \\\\ %% %f +/- %f",btagselection.Data(),
@@ -4292,6 +4383,8 @@ void countABCD() {
   }
 }
 
+//jmt -- don't feel like fixing getCutString here and we're not doing flvHistReweighting anyway...
+/*
 void flvHistReweighting() {
 
   //we want to make a way to apply the k-factors 
@@ -4386,49 +4479,7 @@ void flvHistReweighting() {
   cout<<"down syst = "<<sqrt(total_down)<<endl;
 
 }
-
-void pdfUncertainties() {
-  dodata_=false;
-  const TString samplename = "WJetsZ2"; //if this is changed to data, lumiScale_ should not be applied
-  setQuiet(true);
-  loadSamples();
-
-  selection_ ="nbjets>=1 && cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && cutMET==1 && cutDeltaPhi==1 && passInconsistentMuon==1 && passBadPFMuon==1 && weight<1000";
-
-  TTree* tree=0;
-  if (samplename=="data") {
-    tree = dtree;
-  }
-  else {
-    for (unsigned int isample=0; isample<samples_.size(); isample++) {
-      if ( samples_[isample] == samplename) {
-	tree = (TTree*) files_[currentConfig_][samples_[isample]]->Get("reducedTree");
-      }
-    }
-  }
-  if (tree==0) {cout<<"Something went wrong finding your sample!"<<endl; return;}
-
-  gROOT->cd();
-  TString optfh= useFlavorHistoryWeights_ && samplename.Contains("WJets") ? "flavorHistoryWeight" : "";
-
-  TH1D dummyhist("dummyhist","",1,0,1e9); //the typical kludge to count events; 1 bin histogram with large range
-  dummyhist.Sumw2();
-  //nominal case
-  tree->Project("dummyhist","HT",getCutString(lumiScale_,optfh,selection_,"",0).Data());
-  float n = dummyhist.GetBinContent(1);
-  float nerr = dummyhist.GetBinError(1);
-
-  TH1D HpdfUnc("HpdfUnc","",100,n - 3*nerr, n+3*nerr);
-  for (int i=1; i<=44; i++) { //hard code that there are 44+1 pdf weights
-    dummyhist.Reset(); //maybe not needed
-    tree->Project("dummyhist","HT",getCutString(lumiScale_,optfh,selection_,"",i).Data());
-    HpdfUnc.Fill(dummyhist.GetBinContent(1));
-  }
-
-  cout<<" nominal = "<<n<<" +/- "<<nerr<<endl;
-  cout<<" w/pdf   = "<<HpdfUnc.GetMean()<<" +/- "<<HpdfUnc.GetRMS()<<endl;
-
-}
+*/
 
 void countQCDMC(){
   useFlavorHistoryWeights_=false;

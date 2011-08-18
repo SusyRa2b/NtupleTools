@@ -93,6 +93,11 @@ struct SignalEffData {
 
   double effCorr;
   double totalSystematic;
+
+  //extra info for mariarosaria
+  double btagSystematic;
+  double jesSystematic;
+
 };
 
 struct OwenData {
@@ -497,7 +502,30 @@ void fillFlavorHistoryScaling() {
 
 }
 
-TString getCutString(double lumiscale, TString extraWeight="", TString thisSelection="", TString extraSelection="", int pdfWeightIndex=0,TString pdfSet="CTEQ", bool isSusyScan=false, int susySubProcess=-1, const bool isData=false) {
+//try to bring some rationality to the options passed to getcutstring....
+enum sampleType {kData, kMC, kmSugraPoint, kmSugraPlane, kSMSPoint, kSMSPlane};
+//for more rationality, should make a data struct (or class) to hold the options, so that fewer arguments need to be passed
+//TString getCutString(double lumiscale, TString extraWeight="", TString thisSelection="", TString extraSelection="", int pdfWeightIndex=0,TString pdfSet="CTEQ", bool isSusyScan=false, int susySubProcess=-1, const bool isData=false) {
+TString getCutString(sampleType type, TString extraWeight="", TString thisSelection="", TString extraSelection="", int pdfWeightIndex=0,TString pdfSet="CTEQ", int susySubProcess=-1) {
+
+  //an explanation of the options
+  /*
+kmSugraPoint means put a cut on m0,m12. Good for making plots of one sample point (e.g. MET distribution of 
+m0=x, m12=y). But doesn't work for looking at the whole plane at once as we do when we do systematics. So
+for that we have kmSugraPlane, where no requirement is placed on m0 and m12, only on the susySubProcess
+
+Similarly, kSMSPoint will select one point in the mGL, mLSP plane, and weight using the reference cross section.
+kSMSPlane treats the MC like data -- no weighting at all. Good for making efficiency measurements. (Calling function must 
+normalize properly by Ngenerated)
+
+for legacy purposes I am keeping all of the weight and selection TStrings, although I wonder if they are really needed....
+  */
+  double lumiscale = 0;
+
+  if (type==kData)    lumiscale=1;
+  else if (type==kMC || type==kmSugraPoint || type==kmSugraPlane ||type==kSMSPoint) lumiscale=lumiScale_;
+  else if (type==kSMSPlane) lumiscale=1;
+  else {assert(0);}
 
   TString weightedcut="weight"; 
   
@@ -505,7 +533,8 @@ TString getCutString(double lumiscale, TString extraWeight="", TString thisSelec
   weightedcut +=lumiscale;
   weightedcut+=")";
   
-  if (extraWeight=="flavorHistoryWeight" && !isData) {
+  //this flavorHistoryWeight business is too kludgey...someday should fix it
+  if (extraWeight=="flavorHistoryWeight" && type!=kData) {
     if (flavorHistoryScaling_ <0) {
       fillFlavorHistoryScaling();
     }
@@ -516,20 +545,20 @@ TString getCutString(double lumiscale, TString extraWeight="", TString thisSelec
     weightedcut +=extraWeight;
     weightedcut+=")";
   }
-  if (pdfWeightIndex != 0 && !isData) {
+  if (pdfWeightIndex != 0 && type!=kData) {
     TString pdfString;
     pdfString.Form("*pdfWeights%s[%d]",pdfSet.Data(),pdfWeightIndex);
     weightedcut += pdfString;
   }
-  if (usePUweight_ &&!isData) {
+  if (usePUweight_ && type!=kData) {
     weightedcut +="*PUweight";
   }
-  if (useHLTeff_ && !isData) {
+  if (useHLTeff_ &&  type!=kData) {
     weightedcut +="*hltHTeff";
   }
 
   if (btagSFweight_=="") btagSFweight_="1";
-  if (isData) {
+  if ( type==kData) {
     if (btagSFweight_=="probge1") weightedcut += "*(nbjets>=1)";
     else if (btagSFweight_=="probge2") weightedcut += "*(nbjets>=2)";
     else if (btagSFweight_=="prob1") weightedcut += "*(nbjets==1)";
@@ -549,7 +578,7 @@ TString getCutString(double lumiscale, TString extraWeight="", TString thisSelec
       weightedcut += " && ";
       weightedcut +=extraSelection;
     }
-    if (isSusyScan) {
+    if (type == kmSugraPoint || type==kSMSPoint) {
       weightedcut += " && m0==";
       weightedcut +=m0_;
       weightedcut += " && m12==";
@@ -560,7 +589,7 @@ TString getCutString(double lumiscale, TString extraWeight="", TString thisSelec
   else if (extraSelection !="") {
     weightedcut += "*(";
     weightedcut +=extraSelection;
-    if (isSusyScan) {
+    if (type == kmSugraPoint || type==kSMSPoint) {
       weightedcut += " && m0==";
       weightedcut +=m0_;
       weightedcut += " && m12==";
@@ -571,8 +600,7 @@ TString getCutString(double lumiscale, TString extraWeight="", TString thisSelec
 
   //the easy part is done above -- keep only events at the current scan point
   //the hard part is to properly weight the events according to NLO cross sections
-  if (isSusyScan) {
-    assert(!isData);
+  if (type == kmSugraPoint) { 
     //the cross section for the subprocess is stored in scanCrossSection (systematics in scanCrossSectionPlus and scanCrossSectionMinus)
     //the normalization for the subprocess is stored in TH1D scanProcessTotals_<m0>_<m12>
     loadSusyScanHistograms();
@@ -593,22 +621,37 @@ TString getCutString(double lumiscale, TString extraWeight="", TString thisSelec
     weightedcut+="*";
     weightedcut += susyprocessweight;
   }
-  else if (susySubProcess>=0) {
-    assert(!isData);
+  else if (type == kmSugraPlane && susySubProcess>=0) {
     char thisweight[50];
     sprintf(thisweight, "*((SUSY_process==%d)*scanCrossSection%s)",susySubProcess,susyCrossSectionVariation_.Data());
     weightedcut += thisweight;
   }
+  else if (type == kSMSPoint) {
+    //need to weight with the standard sigma / N
+    //sigma should be stored in the scanCrossSection field. N needs to be pulled out of the histogram
+    //not too important so implement later
+    cout<<"not implemented yet!"<<endl;
+    assert(0);
+  }
+  else if (type == kmSugraPlane && susySubProcess<0) { //sanity check
+    cout<<"You need to specify the susySubProcess!"<<endl; assert(0);
+  }
+  //for kSMSPlane we don't need to do anything!
 
   if (!quiet_)  cout<<weightedcut<<endl;
   return weightedcut;
 }
 
+//legacy interface!
 //add an interface more like the old one, but with an addition for the data/MC lumi scaling
 TString getCutString(bool isData, TString extraSelection="",TString extraWeight="",int pdfWeightIndex=0,TString pdfSet="CTEQ", bool isSusyScan=false, int susySubProcess=-1) {
 
-  double ls = isData ? 1 : lumiScale_;
-  return    getCutString(ls, extraWeight, selection_,extraSelection, pdfWeightIndex,pdfSet,isSusyScan,susySubProcess,isData) ;
+  sampleType st=kMC;
+
+  if (isData) st=kData;
+  else if (isSusyScan) st = kmSugraPoint;
+  else if (susySubProcess >=0) st=kmSugraPlane;
+  return    getCutString(st, extraWeight, selection_,extraSelection, pdfWeightIndex,pdfSet,susySubProcess) ;
 }
 
 void addOverflowBin(TH1D* theHist) {
@@ -724,6 +767,7 @@ void setColorScheme(const TString & name) {
     sampleColor_["LM13"] = kGray;
     sampleColor_["LM9"] =kGray;
     sampleColor_["mSUGRAtanb40"] =kGray;
+    sampleColor_["T1bbbb"] =kGray;
     sampleColor_["QCD"] = kYellow;
     sampleColor_["PythiaQCD"] = kYellow;
     sampleColor_["PythiaPUQCD"] = kYellow;
@@ -746,6 +790,7 @@ void setColorScheme(const TString & name) {
     sampleColor_["LM13"] = kBlue+2;
     sampleColor_["LM9"] = kCyan+2;
     sampleColor_["mSUGRAtanb40"] =kCyan+2;
+    sampleColor_["T1bbbb"] =kCyan+2;
     sampleColor_["QCD"] = 2;
     sampleColor_["PythiaQCD"] = 2;
     sampleColor_["PythiaPUQCD"] =2;
@@ -842,8 +887,10 @@ void loadSamples(bool joinSingleTop=true) {
   samplesAll_.insert("LM9");
 
   samplesAll_.insert("mSUGRAtanb40");
+  samplesAll_.insert("T1bbbb");
 
   //  configDescriptions_.push_back("SSVHPT");
+  //  old btageff prescription
   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
 
@@ -851,24 +898,53 @@ void loadSamples(bool joinSingleTop=true) {
   configDescriptions_.push_back("SSVHPT_PF2PATjets_JESdown_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
   configDescriptions_.push_back("SSVHPT_PF2PATjets_JESup_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
   //JER
-    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERdown_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
-    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERup_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
+  //  configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERdown_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
+  //  configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERup_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
 
   //unclustered MET
   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METuncDown_PUunc0_BTagEff0_HLTEff0");
   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METuncUp_PUunc0_BTagEff0_HLTEff0");
 
   //PU
-    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncDown_BTagEff0_HLTEff0");
-    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncUp_BTagEff0_HLTEff0");
+  //    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncDown_BTagEff0_HLTEff0");
+  //    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncUp_BTagEff0_HLTEff0");
 
   //btag eff
   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffdown_HLTEff0");
   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffup_HLTEff0");
 
   //HLT eff
-    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffdown");
-    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffup");
+  //    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffdown");
+  //    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffup");
+  
+
+//   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
+//   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
+
+/*
+  //JES
+  configDescriptions_.push_back("SSVHPT_PF2PATjets_JESdown_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
+  configDescriptions_.push_back("SSVHPT_PF2PATjets_JESup_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
+  //JER
+  //  configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERdown_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
+  //  configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERup_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
+
+  //unclustered MET
+  configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METuncDown_PUunc0_BTagEff02_HLTEff0");
+  configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METuncUp_PUunc0_BTagEff02_HLTEff0");
+
+  //PU
+  //    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncDown_BTagEff02_HLTEff0");
+  //    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncUp_BTagEff02_HLTEff0");
+
+  //btag eff
+  configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffdown2_HLTEff0");
+  configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffup2_HLTEff0");
+
+  //HLT eff
+  //    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEffdown");
+  //    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEffup");
+  */
 
   //convention is that the [0] one should always be the "nominal" one while others are for systematics
   currentConfig_=configDescriptions_[0];
@@ -878,6 +954,7 @@ void loadSamples(bool joinSingleTop=true) {
   setColorScheme("stack");
 
   sampleLabel_["mSUGRAtanb40"] = "tan #beta = 40";
+  sampleLabel_["T1bbbb"] = "T1bbbb";
   sampleLabel_["LM13"] = "LM13";
   sampleLabel_["LM9"] = "LM9";
   sampleLabel_["QCD"] = "QCD (madgraph)";
@@ -898,6 +975,7 @@ void loadSamples(bool joinSingleTop=true) {
   sampleLabel_["Total"] = "SM + LM13"; //again, this is a hack
 
   sampleMarkerStyle_["mSUGRAtanb40"] = kFullStar;
+  sampleMarkerStyle_["T1bbbb"] = kFullStar;
   sampleMarkerStyle_["LM13"] = kFullStar;
   sampleMarkerStyle_["LM9"] = kFullStar;
   sampleMarkerStyle_["QCD"] = kFullCircle;
@@ -918,6 +996,7 @@ void loadSamples(bool joinSingleTop=true) {
   sampleMarkerStyle_["Total"] = kDot; //FIXME?
 
   sampleOwenName_["mSUGRAtanb40"] = "msugra40";
+  sampleOwenName_["T1bbbb"] = "t1bbbb";
   sampleOwenName_["LM13"] = "lm13";
   sampleOwenName_["LM9"] = "lm9";
   sampleOwenName_["QCD"] = "qcd";
@@ -969,6 +1048,21 @@ void loadSamples(bool joinSingleTop=true) {
 
 }
 
+//ug...not liking this
+sampleType getSampleType(const TString & sample , const TString & planeOrPoint="") {
+
+  assert(planeOrPoint=="" || planeOrPoint=="point" || planeOrPoint=="plane");
+
+  if (sample=="data") return kData;
+  else if (sample.Contains("mSUGRA") && planeOrPoint=="point") return kmSugraPoint;
+  else if (sample.Contains("mSUGRA") && planeOrPoint=="plane") return kmSugraPlane;
+  else if (sample.Contains("T1bbbb") && planeOrPoint=="point") return kSMSPoint;
+  else if (sample.Contains("T1bbbb") && planeOrPoint=="plane") return kSMSPlane;
+
+  return kMC;
+
+}
+
 //if something is passed to varbins, then low and high will be ignored
 float drawSimple(const TString var, const int nbins, const float low, const float high, const TString filename, 
 		 const TString histname , const TString samplename, const float* varbins=0) {
@@ -1004,8 +1098,8 @@ float drawSimple(const TString var, const int nbins, const float low, const floa
   hh->Sumw2();
    
   TString optfh= useFlavorHistoryWeights_ && samplename.Contains("WJets") ? "flavorHistoryWeight" : "";
-  if(samplename=="data") tree->Project(histname,var,getCutString(true).Data());
-  else tree->Project(histname,var,getCutString(lumiScale_,optfh,selection_,"",0,"", samplename.Contains("mSUGRA")).Data());
+  if (samplename=="data") tree->Project(histname,var,getCutString(true).Data());
+  else tree->Project(histname,var,getCutString( getSampleType(samplename,"point"),optfh,selection_,"",0,"").Data());
   float theIntegral = hh->Integral(0,nbins+1);
 
   if (addOverflow_)  addOverflowBin( hh ); //manipulates the TH1D
@@ -1048,7 +1142,8 @@ void draw2d(const TString var, const int nbins, const float low, const float hig
     TString drawstring=vary;
     drawstring+=":";
     drawstring+=var;
-    tree->Project(hname,drawstring,getCutString(false,"",weightopt,0,"",samples_[isample].Contains("mSUGRA") ).Data());
+    tree->Project(hname,drawstring,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,"",0,""));
+
     //now the histo is filled
     
     h2d->SetXTitle(xtitle);
@@ -1159,7 +1254,8 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
     TTree* tree = (TTree*) files_[currentConfig_][samples_[isample]]->Get("reducedTree");
     gROOT->cd();
     TString weightopt= useFlavorHistoryWeights_ && samples_[isample].Contains("WJets") ? "flavorHistoryWeight" : "";
-    tree->Project(hname,var,getCutString(lumiScale_,weightopt,selection_,"",0,"",samples_[isample].Contains("mSUGRA")).Data());
+    tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,"",0,"").Data());
+    
     //now the histo is filled
     
     if (renormalizeBins_) ytitle=renormBins(histos_[samples_[isample]],2 ); //manipulates the TH1D //FIXME hard-coded "2"
@@ -1527,9 +1623,9 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
 
     //Fill histos
     if (useFlavorHistoryWeights_) assert(0); // this needs to be implemented
-    tree->Project(hnameP,var,getCutString(lumiScale_,"",selection_,cstring1,0,"",samples_[isample].Contains("mSUGRA")).Data());
-    tree->Project(hnameF,var,getCutString(lumiScale_,"",selection_,cstring2,0,"",samples_[isample].Contains("mSUGRA")).Data());
-    
+    tree->Project(hnameP,var,getCutString(getSampleType(samples_[isample],"point"),"",selection_,cstring1).Data());
+    tree->Project(hnameF,var,getCutString(getSampleType(samples_[isample],"point"),"",selection_,cstring2).Data());
+
     if (addOverflow_)  addOverflowBin( histos_[hnameP] );
     if (addOverflow_)  addOverflowBin( histos_[hnameF] );
 
@@ -1638,15 +1734,15 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
     histos_[hnameF]->Sumw2();
 
     gROOT->cd();
-    dtree->Project(hnameP,var,getCutString(1.,"",selection_,cstring1,0,"",false,-1,true).Data());
-    dtree->Project(hnameF,var,getCutString(1.,"",selection_,cstring2,0,"",false,-1,true).Data());
+    dtree->Project(hnameP,var,getCutString(kData,"",selection_,cstring1).Data());
+    dtree->Project(hnameF,var,getCutString(kData,"",selection_,cstring2).Data());
     if (addOverflow_)  addOverflowBin( histos_[hnameP] );
     if (addOverflow_)  addOverflowBin( histos_[hnameF] );
     //compute ratio
     hdata->Divide(histos_[hnameP], histos_[hnameF]);
 
-    dtree->Project("data2d_SB","minDeltaPhi:MET",getCutString(1.,"",selection_,"",0,"",false,-1,true).Data());
-    dtree->Project("data2d_50","minDeltaPhi:MET",getCutString(1.,"",selection_,"",0,"",false,-1,true).Data());
+    dtree->Project("data2d_SB","minDeltaPhi:MET",getCutString(kData,"",selection_).Data());
+    dtree->Project("data2d_50","minDeltaPhi:MET",getCutString(kData,"",selection_).Data());
 
     //    hdata->UseCurrentStyle(); //maybe not needed anymore
     hdata->SetMarkerColor(kBlack);
@@ -1786,70 +1882,112 @@ TString format_nevents(double n,double e) {
 }
 
 typedef map<pair<int,int>, pair<double,double> > susyScanYields;
+TH2D* scanSMSngen=0;
 susyScanYields getSusyScanYields(const TString & sampleOfInterest) {
+
+  /*
+this function was written for mSugra.
+most of it is irrelevant for SMS, but we'll use it anyway
+  */
+  susyScanYields theYields;
+
   //sample is an argument
   //other important things are defined by the usual global variables
   if (!quiet_) cout<<sampleOfInterest<<" "<<currentConfig_<<endl;
 
+  //these are for mSugra
   TString varx="m0"; TString xtitle=varx;
   int  nbinsx=210; float lowx=-0.5; float highx=2100-0.5;
 
   TString vary="m12"; TString ytitle=vary;
   int  nbinsy=110; float lowy=-0.5; float highy=1100-0.5;
+
+  if (sampleOfInterest== "T1bbbb") { //change binning
+    //m0 -> mGl
+    //m12 -> mLSP
+    if (scanSMSngen==0) scanSMSngen = (TH2D*) files_[currentConfig_][sampleOfInterest]->Get("scanSMSngen");
+    nbinsx=60;//scanSMSngen->GetNbinsX();
+    nbinsy=60;//scanSMSngen->GetNbinsY(); //take our histo def'n from the ngen histo
+    lowx=0;//scanSMSngen->GetXaxis()->GetBinLowEdge(1);
+    lowy=0;//scanSMSngen->GetYaxis()->GetBinLowEdge(1);
+    highx=1500;//scanSMSngen->GetXaxis()->GetBinLowEdge(nbinsx+1);
+    highy=1500;//scanSMSngen->GetYaxis()->GetBinLowEdge(nbinsy+1);
+  }
+
   TString drawstring = vary+":"+varx;
 
   TTree* thetree = (TTree*) files_[currentConfig_][sampleOfInterest]->Get("reducedTree");
 
-
+  const int nsubprocesses = sampleOfInterest.Contains("mSUGRA") ? 10 : 0;
   vector<TH2D*> raw0;
-  for (int i=0; i<=10; i++) {
+  for (int i=0; i<=nsubprocesses; i++) {
     TString hname="raw0_";
     hname += i;
     raw0.push_back(new TH2D(hname,"raw event counts",nbinsx,lowx,highx,nbinsy,lowy,highy));
     raw0[i]->Sumw2();
-    TString thecut = getCutString(false,"","",0,"",false,i);
+    TString thecut = sampleOfInterest.Contains("mSUGRA") ? getCutString(false,"","",0,"",false,i) : getCutString(kSMSPlane,"",selection_);
     thetree->Project(hname,drawstring,thecut.Data());
   }
 
+  //[for mSugra]
   //at this point, each bin contains Npass_i * sigma_i for that (m0,m12)
   //need to divide by N_i for each (m0,m12)
 
-  //loop over i and histo bins
-  for (int i=0; i<=10; i++) {
-    for (map<pair<int,int>, TH1D* >::iterator iscanpoint = scanProcessTotalsMap.begin(); iscanpoint!=scanProcessTotalsMap.end(); ++iscanpoint) {
-      int m0=iscanpoint->first.first;
-      int m12=iscanpoint->first.second;
-      TH1D* thishist = scanProcessTotalsMap[make_pair(m0,m12)];
-      int thisn = TMath::Nint(thishist->GetBinContent(i));
-      int bin=  raw0[i]->FindBin(m0,m12);
-      double N_i_thispoint = raw0[i]->GetBinContent(bin);
-      double err_i_thispoint = raw0[i]->GetBinError(bin);
-      if (thisn == 0) {
-	if (N_i_thispoint > 0.0000001) cout<<"Possible problem: "<<m0<<" "<<m12<<" "<<i<<" "<< N_i_thispoint<<" "<<thisn<<endl;
-	thisn=1; //prevent divide by zero
-	N_i_thispoint = 0; //need to come back to what is going wrong h
+  //[for SMS]
+  //each bin contains just raw Npass_i for that (mgl,mLSP)
+
+  if (sampleOfInterest.Contains("mSUGRA") ) {
+    //loop over i and histo bins
+    for (int i=0; i<=nsubprocesses; i++) {
+      for (map<pair<int,int>, TH1D* >::iterator iscanpoint = scanProcessTotalsMap.begin(); iscanpoint!=scanProcessTotalsMap.end(); ++iscanpoint) {
+	int m0=iscanpoint->first.first;
+	int m12=iscanpoint->first.second;
+	TH1D* thishist = scanProcessTotalsMap[make_pair(m0,m12)];
+	int thisn = TMath::Nint(thishist->GetBinContent(i));
+	int bin=  raw0[i]->FindBin(m0,m12);
+	double N_i_thispoint = raw0[i]->GetBinContent(bin);
+	double err_i_thispoint = raw0[i]->GetBinError(bin);
+	if (thisn == 0) {
+	  if (N_i_thispoint > 0.0000001) cout<<"Possible problem: "<<m0<<" "<<m12<<" "<<i<<" "<< N_i_thispoint<<" "<<thisn<<endl;
+	  thisn=1; //prevent divide by zero
+	  N_i_thispoint = 0; //need to come back to what is going wrong h
+	}
+	N_i_thispoint /= thisn;
+	err_i_thispoint /= thisn;
+	raw0[i]->SetBinContent(bin,N_i_thispoint);
+	raw0[i]->SetBinError(bin,err_i_thispoint);
       }
-      N_i_thispoint /= thisn;
-      err_i_thispoint /= thisn;
-      raw0[i]->SetBinContent(bin,N_i_thispoint);
-      raw0[i]->SetBinError(bin,err_i_thispoint);
+    }
+    
+    //now we have Npass_i * sigma_i * lumi / Ngen_i 
+    //all that is left is to make the sum over i
+    
+    for (map<pair<int,int>, TH1D* >::iterator iscanpoint = scanProcessTotalsMap.begin(); iscanpoint!=scanProcessTotalsMap.end(); ++iscanpoint) {
+      double Nraw = 0, errraw=0;
+      
+      int bin=  raw0[0]->FindBin(iscanpoint->first.first , iscanpoint->first.second);
+      for (unsigned int i=0; i<raw0.size(); i++) {
+	Nraw += raw0[i]->GetBinContent(bin);
+	errraw += pow(raw0[i]->GetBinError(bin),2);
+      }
+      //cout<<iscanpoint->first.first<<" "<<iscanpoint->first.second<<" "<<Nraw<< " +/- "<<sqrt(errraw)<<endl;
+      theYields[iscanpoint->first] = make_pair(Nraw,sqrt(errraw));
     }
   }
-
-  //now we have Npass_i * sigma_i * lumi / Ngen_i 
-  //all that is left is to make the sum over i
-
-  susyScanYields theYields;
-  for (map<pair<int,int>, TH1D* >::iterator iscanpoint = scanProcessTotalsMap.begin(); iscanpoint!=scanProcessTotalsMap.end(); ++iscanpoint) {
-    double Nraw = 0, errraw=0;
-
-    int bin=  raw0[0]->FindBin(iscanpoint->first.first , iscanpoint->first.second);
-    for (unsigned int i=0; i<raw0.size(); i++) {
-      Nraw += raw0[i]->GetBinContent(bin);
-      errraw += pow(raw0[i]->GetBinError(bin),2);
+  else { //not mSugra
+    //just copy the histogram into the data structure
+    //kinda stupid to do this instead of just returning a histogram, but such is life
+    for (int i=1; i<=nbinsx; i++) {
+      for (int j=1; j<=nbinsy; j++) {
+	int mgl=TMath::Nint(raw0[0]->GetXaxis()->GetBinLowEdge(i));
+	int mlsp=TMath::Nint(raw0[0]->GetYaxis()->GetBinLowEdge(j));
+	double nevents = raw0[0]->GetBinContent(raw0[0]->FindBin(mgl,mlsp));
+	//take this opportunity to throw out points that don't have ngen = 10000
+	if ( TMath::Nint(scanSMSngen->GetBinContent(scanSMSngen->FindBin(mgl,mlsp))) == 10000 ) {
+	  theYields[make_pair(mgl,mlsp)] = make_pair(nevents,0); //skip errors for now
+	}
+      }
     }
-    //cout<<iscanpoint->first.first<<" "<<iscanpoint->first.second<<" "<<Nraw<< " +/- "<<sqrt(errraw)<<endl;
-    theYields[iscanpoint->first] = make_pair(Nraw,sqrt(errraw));
   }
 
   //try to clean up
@@ -1908,7 +2046,7 @@ void getCutStringForCutflow(vector<TString> &vectorOfCuts, vector<TString> &stag
   //HT
   if (thisSelection=="") {thisSelection += "HT>="; thisSelection += minHT;}
   else { thisSelection += " && HT>="; thisSelection += minHT;}
-  cut=getCutString(lumiScale_,thisSelection);
+  cut=getCutString(kMC,thisSelection); //not compatible with scans!
   vectorOfCuts.push_back(cut);
   if (latexMode_) stageCut.push_back("HT$\\ge$"+minHT);
   else stageCut.push_back("HT>="+minHT);
@@ -1916,7 +2054,7 @@ void getCutStringForCutflow(vector<TString> &vectorOfCuts, vector<TString> &stag
   //3 or more jets
   if (thisSelection=="") thisSelection += "cut3Jets==1";
   else thisSelection += " && cut3Jets==1";
-  cut=getCutString(lumiScale_,thisSelection);
+  cut=getCutString(kMC,thisSelection);
   vectorOfCuts.push_back(cut);
   if (latexMode_) stageCut.push_back("$\\ge$ 3 jets");
   else stageCut.push_back(">= 3 jets");
@@ -1924,14 +2062,14 @@ void getCutStringForCutflow(vector<TString> &vectorOfCuts, vector<TString> &stag
   //Ele veto
   if (thisSelection=="") thisSelection += "cutEleVeto==1";
   else thisSelection += " && cutEleVeto==1";
-  cut=getCutString(lumiScale_,thisSelection);
+  cut=getCutString(kMC,thisSelection);
   vectorOfCuts.push_back(cut);
   stageCut.push_back("e veto");
 
   //Mu veto
   if (thisSelection=="") thisSelection += "cutMuVeto==1";
   else thisSelection += " && cutMuVeto==1";
-  cut=getCutString(lumiScale_,thisSelection);
+  cut=getCutString(kMC,thisSelection);
   vectorOfCuts.push_back(cut);
   if (latexMode_) stageCut.push_back("$\\mu$ veto");
   else stageCut.push_back("Mu veto");
@@ -1939,7 +2077,7 @@ void getCutStringForCutflow(vector<TString> &vectorOfCuts, vector<TString> &stag
   //MET
   if (thisSelection=="") {thisSelection += "MET>="; thisSelection += minMET; }
   else {thisSelection += " && MET>="; thisSelection += minMET;}
-  cut=getCutString(lumiScale_,thisSelection);
+  cut=getCutString(kMC,thisSelection);
   vectorOfCuts.push_back(cut);
   if (latexMode_) stageCut.push_back("\\MET$\\ge$"+minMET);
   else stageCut.push_back("MET>="+minMET);
@@ -1958,7 +2096,7 @@ void getCutStringForCutflow(vector<TString> &vectorOfCuts, vector<TString> &stag
   //  else thisSelection += " && cutDeltaPhiN==1";
   if (thisSelection=="") thisSelection += "minDeltaPhiN>4";
   else thisSelection += " && minDeltaPhiN>=4";
-  cut=getCutString(lumiScale_,thisSelection);
+  cut=getCutString(kMC,thisSelection);
   vectorOfCuts.push_back(cut);
   if (latexMode_) stageCut.push_back("$\\minDeltaPhiN>$4");
   else stageCut.push_back("minDeltaPhiN>4");
@@ -1985,7 +2123,7 @@ void getCutStringForCutflow(vector<TString> &vectorOfCuts, vector<TString> &stag
   selectionGe1bLoose=selectionPreB;
   if (btagSF) btagSFweight_="probge1";
   else selectionGe1bLoose += " && nbjetsSSVHPT>=1";
-  cut=getCutString(lumiScale_,selectionGe1bLoose);
+  cut=getCutString(kMC,selectionGe1bLoose);
   vectorOfCuts.push_back(cut);
   if (latexMode_) stageCut.push_back("HT$\\ge$350, \\MET$\\ge$200, $\\ge$1 b");
   else stageCut.push_back("HT>=350, MET>=200, >= 1 b");
@@ -2002,7 +2140,7 @@ void getCutStringForCutflow(vector<TString> &vectorOfCuts, vector<TString> &stag
   selectionGe2bLoose=selectionPreB; 
   if (btagSF) btagSFweight_="probge2";
   else selectionGe2bLoose += " && nbjetsSSVHPT>=2";
-  cut=getCutString(lumiScale_,selectionGe2bLoose);
+  cut=getCutString(kMC,selectionGe2bLoose);
   vectorOfCuts.push_back(cut);
   if (latexMode_) stageCut.push_back("HT$\\ge$350, \\MET$\\ge$200, $\\ge$2 b");
   else stageCut.push_back("HT>=350, MET>=200, >= 2 b");
@@ -2020,7 +2158,7 @@ void getCutStringForCutflow(vector<TString> &vectorOfCuts, vector<TString> &stag
     selectionGe1bTight=selectionPreB; 
     if (btagSF) {btagSFweight_="probge1"; selectionGe1bTight += " && HT>=500 && MET>=300";}
     else selectionGe1bTight += " && nbjetsSSVHPT>=1 && HT>=500 && MET>=300"; //hard-coded!
-    cut=getCutString(lumiScale_,selectionGe1bTight);
+    cut=getCutString(kMC,selectionGe1bTight);
     vectorOfCuts.push_back(cut);
     if (latexMode_) stageCut.push_back("HT$\\ge$500, \\MET$\\ge$300, $\\ge$1 b");
     else stageCut.push_back("HT>=500, MET>=300, >= 1 b");
@@ -2036,7 +2174,7 @@ void getCutStringForCutflow(vector<TString> &vectorOfCuts, vector<TString> &stag
     selectionGe1bTight=selectionPreB;
     if (btagSF) {btagSFweight_="probge2"; selectionGe1bTight += " && HT>=500 && MET>=300";}
     else selectionGe1bTight += " && nbjetsSSVHPT>=2 && HT>=500 && MET>=300"; //hard-coded!
-    cut=getCutString(lumiScale_,selectionGe1bTight);
+    cut=getCutString(kMC,selectionGe1bTight);
     vectorOfCuts.push_back(cut);
     if (latexMode_) stageCut.push_back("HT$\\ge$500, \\MET$\\ge$300, $\\ge$2 b");
     else stageCut.push_back("HT>=500, MET>=300, >= 2 b");  
