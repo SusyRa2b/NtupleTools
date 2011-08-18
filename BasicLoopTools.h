@@ -704,9 +704,9 @@ cout<<"Got options: "<<endl
 }
 
 void PseudoConstructor() {
-  theScanType_=kNotScan;
+  //theScanType_=kNotScan;
   //theScanType_=kmSugra;
-  //theScanType_=kSMS;
+  theScanType_=kSMS;
 
   //  theMETType_=kPFMETTypeI;
   //  theJetType_=kRECOPF;
@@ -3721,6 +3721,7 @@ void reducedTree(TString outputpath, itreestream& stream)
   float minDeltaPhiN_Luke_lostJet, maxDeltaPhiN_Luke_lostJet, deltaPhiN1_Luke_lostJet, deltaPhiN2_Luke_lostJet, deltaPhiN3_Luke_lostJet;
   float minTransverseMETSignificance_lostJet, maxTransverseMETSignificance_lostJet, transverseMETSignificance1_lostJet, transverseMETSignificance2_lostJet, transverseMETSignificance3_lostJet;
 
+  //these are not useful for scans...work fine for LM9, etc
   Float_t pdfWeightsCTEQ[45];
   Float_t pdfWeightsMSTW[41];
   Float_t pdfWeightsNNPDF[100];
@@ -3951,6 +3952,40 @@ void reducedTree(TString outputpath, itreestream& stream)
 
   InitializeStuff();//BEN
 
+  /*
+    i can't find a way out of looping over events twice...especially bad for mSugra :-(
+  */
+  map<pair<int,int>, vector<double> > scanPdfWeightsCTEQ;
+  map<pair<int,int>, vector<double> > scanPdfWeightsMSTW;
+  map<pair<int,int>, vector<double> > scanPdfWeightsNNPDF;
+  if (theScanType_ != kNotScan) {
+    for(int entry=0; entry < nevents; ++entry) {
+      // Read event into memory
+      stream.read(entry);
+      fillObjects();
+      if(entry%100000==0) cout << "[pdf loop]  entry: " << entry << ", percent done=" << (int)(entry/(double)nevents*100.)<<  endl;
+
+      pair<int,int> thispoint;
+      if (theScanType_==kmSugra)  thispoint=make_pair(TMath::Nint(eventlhehelperextra_m0),TMath::Nint(eventlhehelperextra_m12)) ;
+      else if (theScanType_==kSMS) thispoint=make_pair(TMath::Nint(eventlhehelperextra_mGL),TMath::Nint(eventlhehelperextra_mLSP)); 
+      //CTEQ
+      for (unsigned int i=0; i<  geneventinfoproducthelper1.size(); i++) {
+	if (scanPdfWeightsCTEQ[thispoint].empty()) scanPdfWeightsCTEQ[thispoint].assign(45,0);
+	scanPdfWeightsCTEQ[thispoint][i] += geneventinfoproducthelper1.at(i).pdfweight;
+      }
+      //MSTW
+      for (unsigned int i=0; i<  geneventinfoproducthelper2.size(); i++) {
+	if (scanPdfWeightsMSTW[thispoint].empty()) scanPdfWeightsMSTW[thispoint].assign(41,0);
+	scanPdfWeightsMSTW[thispoint][i] += geneventinfoproducthelper2.at(i).pdfweight;
+      }
+      //NNPDF
+      for (unsigned int i=0; i<  geneventinfoproducthelper.size(); i++) {
+	if (scanPdfWeightsNNPDF[thispoint].empty()) scanPdfWeightsNNPDF[thispoint].assign(100,0);
+	scanPdfWeightsNNPDF[thispoint][i] += geneventinfoproducthelper.at(i).pdfweight;
+      }
+    }
+  }
+
   startTimer();
   for(int entry=0; entry < nevents; ++entry){
     // Read event into memory
@@ -4002,15 +4037,31 @@ void reducedTree(TString outputpath, itreestream& stream)
       scanSMSngen->Fill(m0,m12);
     }
 
-    getPdfWeights("CTEQ",pdfWeightsCTEQ,&pdfWeightSumCTEQ);
-    getPdfWeights("MSTW",pdfWeightsMSTW,&pdfWeightSumMSTW);
-    getPdfWeights("NNPDF",pdfWeightsNNPDF,&pdfWeightSumNNPDF);
+    if (theScanType_ == kNotScan) {
+      getPdfWeights("CTEQ",pdfWeightsCTEQ,&pdfWeightSumCTEQ);
+      getPdfWeights("MSTW",pdfWeightsMSTW,&pdfWeightSumMSTW);
+      getPdfWeights("NNPDF",pdfWeightsNNPDF,&pdfWeightSumNNPDF);
+    }
 
     if ( passCut("cutLumiMask") && (passCut("cutTrigger") || passCut("cutUtilityTrigger")) && passCut("cutHT") ) {
 
            
       //if (entry%1000000==0) checkTimer(entry,nevents);
       weight = getWeight(nevents);
+      
+      if (theScanType_ != kNotScan) {
+	for ( unsigned int j=0; j<scanPdfWeightsCTEQ[thispoint].size(); j++) {
+	  //this event's weight divided by the sum of the weights
+	  pdfWeightsCTEQ[j] = geneventinfoproducthelper1.at(j).pdfweight / scanPdfWeightsCTEQ[thispoint][j];
+	}
+	for ( unsigned int j=0; j<scanPdfWeightsMSTW[thispoint].size(); j++) {
+	  pdfWeightsMSTW[j] = geneventinfoproducthelper2.at(j).pdfweight / scanPdfWeightsMSTW[thispoint][j];
+	}
+	for ( unsigned int j=0; j<scanPdfWeightsNNPDF[thispoint].size(); j++) {
+	  pdfWeightsNNPDF[j] = geneventinfoproducthelper.at(j).pdfweight / scanPdfWeightsNNPDF[thispoint][j];
+	}
+      }
+      
       
       if (theScanType_!=kSMS) {
 	scanCrossSection = getScanCrossSection(prodprocess,"");
