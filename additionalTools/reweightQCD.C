@@ -7,7 +7,9 @@
 
 using namespace std;
 
-
+//
+// input to this is created by drawQCDreweight in drawReducedTrees.C
+//
 
 
 void printABCD(double A, double Aerr, double B, double Berr, double C, double Cerr, double D, double Derr) {
@@ -26,8 +28,8 @@ void printABCD(double A, double Aerr, double B, double Berr, double C, double Ce
   cout << "MC truth  : " << C << " +- " << Cerr << endl;
   
   double num1 = C-estimate;
-  double perc = num1/C;
-  double percerr = jmt::errAoverB(estimate, estimateerr, C, Cerr);
+  double perc = num1/estimate;
+  double percerr = jmt::errAoverB(C, Cerr, estimate, estimateerr);
   cout << "percent   : " << perc*100. << " +- " << percerr*100. << endl;
   cout << "combined  : " << sqrt(perc*perc + percerr*percerr)*100. << endl;
   cout << endl;
