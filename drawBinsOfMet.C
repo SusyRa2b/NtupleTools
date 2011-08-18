@@ -1,10 +1,13 @@
 //void plotSlices( const TCut btag = "nbjets>=1")
 {
 
-  const TCut btag = "nbjetsSSVHPT>=1";
+  //const TCut btag = "nbjetsSSVHPT>=1";
+  const TCut btag = "nbjetsSSVHPT>=2";
+  //const TCut btag = "nbjetsSSVHPT==0";
   //const TCut btag = "nbjetsSSV0>=1";
 
-  const TString var ="minDeltaPhi";
+  const TString var ="minDeltaPhiN";
+  //  const TString var ="minDeltaPhi";
   //  const TString var ="bestTopMass";
   //  const TString var ="MET/(MET+HT)";
   //  const TString var ="deltaPhiMPTcaloMET";
@@ -14,7 +17,8 @@
   const bool drawSB = true;
   const bool drawSIG = true;
 
-  const float customMax = -1;
+  const float customMax = 1;
+  //const float customMax = -1;
   const bool doRatio=false; //hack for a specific ratio plot
 
   const  int nbins=10;
@@ -59,7 +63,9 @@
 //   madgraph.Add("/cu2/joshmt/V00-03-01_6/reducedTree.Baseline0_PF_JERbias6_pfMEThigh_PFLepRA20e0mu_minDP_MuonCleaning.QCD.root");
 
   TChain pypu("reducedTree");
-  pypu.Add("/cu2/ra2b/reducedTrees/V00-02-05_v2/reducedTree.SSVHPT.PythiaPUQCD.root");
+  //pypu.Add("/cu2/ra2b/reducedTrees/V00-02-05_v2/reducedTree.SSVHPT.PythiaPUQCD.root");
+  pypu.Add("/cu2/ra2b/reducedTrees/V00-02-25_fullpf2pat/reducedTree.SSVHPT_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.PythiaPUQCD.root");
+  
 
 //   TChain py("reducedTree");
 //   py.Add("/cu2/joshmt/V00-03-01_6/reducedTree.Baseline0_PF_JERbias6_pfMEThigh_PFLepRA20e0mu_minDP_MuonCleaning.PythiaQCD.root");
