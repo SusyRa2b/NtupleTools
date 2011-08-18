@@ -79,6 +79,9 @@ functionality for TH1F and TH1D e.g. the case of addOverflowBin()
 TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-25_fullpf2pat/";//path for MC	     
 TString dataInputPath = "/cu2/ra2b/reducedTrees/V00-02-25_fullpf2pat/";
 
+//for njet reweighting (needed because not all reducedTrees in nominal V00-02-25 have njets30)
+//TString inputPath = "/cu2/ra2b/reducedTrees/benV00-02-25_fullpf2pat/";
+//TString dataInputPath = "/cu2/ra2b/reducedTrees/benV00-02-25_fullpf2pat/";
 
 //for special tests and signal systematics
 //TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-25c_fullpf2pat/"; //LM9 with correct pdf weights
@@ -3581,10 +3584,12 @@ void drawQCDreweight(bool loose = true, bool njets50 = false){
   savePlots_=false; //don't save eps,png,pdf files
   doOverflowAddition(true);
 
+  //for Summer11 result, run drawQCDreweight(true,false) and drawQCDreweight(false,false) with b12same=true.
+  bool b12same=true;
+
   TString var = "";
   if(njets50) var = "njets";
   else var = "njets30";
-  bool b12same=true;
 
   //output file 
   TString histfilename = "";
@@ -3626,9 +3631,8 @@ void drawQCDreweight(bool loose = true, bool njets50 = false){
   //-- LSB plots
   //------------
   lumiScale_ = 19.23288;
-
   if(njets50) {nbins=4; low=2.5; high=6.5;}
-  else{        nbins=6; low=2.5; high=8.5;}
+  else{        nbins=5; low=2.5; high=7.5;}
   selection_ = base && LSB && util && failmdpn && antitag;
   drawSimple(var,nbins,low,high,histfilename, "h_LSB_fDP_antib_njets_data", "data");
   drawSimple(var,nbins,low,high,histfilename, "h_LSB_fDP_antib_njets_qcd", "PythiaPUQCD");
@@ -3645,7 +3649,7 @@ void drawQCDreweight(bool loose = true, bool njets50 = false){
   lumiScale_ = 1143.;
   
   if(njets50) { nbins=4; low=2.5; high=6.5;} 
-  else{         nbins=5; low=2.5; high=7.5;}
+  else{         nbins=4; low=2.5; high=6.5;}
   selection_ =  base && SB && phys && failmdpn && ge2b;
   drawSimple(var,nbins,low,high,histfilename, "h_SB_fDP_ge2b_njets_data", "data");
   drawSimple(var,nbins,low,high,histfilename, "h_SB_fDP_ge2b_njets_qcd", "PythiaPUQCD");
