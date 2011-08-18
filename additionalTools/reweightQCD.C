@@ -10,7 +10,7 @@ using namespace std;
 
 //
 // input to this is created by drawQCDreweight in drawReducedTrees.C
-//
+//          --- output is a file with the columns: selectionString unweightedClosure weightedClosure
 
 ofstream filestr; //global cuz i'm lazy
 
@@ -261,14 +261,14 @@ void doreweightQCD(TString lt){
   }
   else{
     h_SB_fDP_ge2b_njets_qcd_w->Add(h_SB_fDP_ge2b_njets_qcd);
-    h_SB_fDP_ge2b_njets_qcd_w->Multiply(wh_SB_ge1b);
+    h_SB_fDP_ge2b_njets_qcd_w->Multiply(wh_SB_ge1b);//ge1b weight
     h_SB_pDP_ge2b_njets_qcd_w->Add(h_SB_pDP_ge2b_njets_qcd);
-    h_SB_pDP_ge2b_njets_qcd_w->Multiply(wh_SB_ge1b);
+    h_SB_pDP_ge2b_njets_qcd_w->Multiply(wh_SB_ge1b);//ge1b weight
     
     h_SIG_fDP_ge2b_njets_qcd_w->Add(h_SIG_fDP_ge2b_njets_qcd);
-    h_SIG_fDP_ge2b_njets_qcd_w->Multiply(wh_SIG_ge1b);
+    h_SIG_fDP_ge2b_njets_qcd_w->Multiply(wh_SIG_ge1b);//ge1b weight
     h_SIG_pDP_ge2b_njets_qcd_w->Add(h_SIG_pDP_ge2b_njets_qcd);
-    h_SIG_pDP_ge2b_njets_qcd_w->Multiply(wh_SIG_ge1b);
+    h_SIG_pDP_ge2b_njets_qcd_w->Multiply(wh_SIG_ge1b);//ge1b weight
   }
 
   
@@ -403,8 +403,9 @@ void doreweightQCD(TString lt){
   wh_SB_ge2b->Draw();
   myC->cd(6);
   wh_SIG_ge2b->Draw();
+  myC->Print(lt+".pdf");
+  myC->Clear();
   
-
   ifl->Close();
 }
 
