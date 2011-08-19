@@ -1229,12 +1229,14 @@ void runClosureTest2011(std::map<TString, std::vector<double> > & syst)  {
     double jsig =  fabs(anotherABCD(searchRegions_[i]).first);
     double bsb =  fabs(unweightedClosureA_sb[i]);
     double bsig = fabs(unweightedClosureA_sig[i]);
+    double wsb =  fabs(weightedClosureA_sb[i]);
+    double wsig = fabs(weightedClosureA_sig[i]);
     cout << "SB: " << jsb << " " << bsb << endl;
     cout << "SIG: " << jsig << " " << bsig << endl;
     assert( fabs(jsb-bsb)   <0.001);
     assert( fabs(jsig-bsig) <0.001);
-    syst["Closure"].push_back( jsb>bsb ? jsb:bsb );
-    syst["Closure"].push_back( jsig>bsig ? jsig:bsig);
+    syst["Closure"].push_back( jsb>wsb ? jsb:wsb );
+    syst["Closure"].push_back( jsig>wsig ? jsig:wsig);
   }
 
 }
