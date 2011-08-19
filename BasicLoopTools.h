@@ -28,6 +28,10 @@
 //NOTE: Grab this header from PhysicsTools/Utilities/interface/LumiReweightingStandAlone.h
 #include "LumiReweightingStandAlone.h"
 
+#include "JetCorrectorParameters.h"
+#include "FactorizedJetCorrector.h"
+
+
 //the data histogram obtained from: 
 // /afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions11/7TeV/PileUp/Pileup_2011_EPS_8_jul.root
 float TrueDist2011_f[25] = {
@@ -153,7 +157,7 @@ jetType theJetType_; std::map<jetType, TString> theJetNames_;
 //leptonType theLeptonType_;
 //enum dpType {kDeltaPhi=0, kminDP, kMPT, kDPSync1, kminDPinv, kminDPAll30};
 //dpType theDPType_;
-enum JESType {kJES0=0,kJESup,kJESdown};
+enum JESType {kJES0=0,kJESup,kJESdown,kJESFLY};
 JESType theJESType_; std::map<JESType, TString> theJESNames_;
 enum JERType {kJER0=0,kJERbias,kJERup,kJERdown,kJERra2};
 JERType theJERType_; std::map<JERType, TString> theJERNames_;
@@ -658,6 +662,7 @@ void setOptions( const TString & opt) {
   if ( getOptPiece("JES",opt)== theJESNames_[kJES0]) theJESType_ = kJES0;
   else  if ( getOptPiece("JES",opt)== theJESNames_[kJESup]) theJESType_ = kJESup;
   else  if ( getOptPiece("JES",opt)== theJESNames_[kJESdown]) theJESType_ = kJESdown;
+  else  if ( getOptPiece("JES",opt)== theJESNames_[kJESFLY]) theJESType_ = kJESFLY;
   else {cout<<"problem with opt in JES"<<endl; assert(0) ;} //enforce a complete set of options!
 
   if ( getOptPiece("JER",opt)== theJERNames_[kJER0]) theJERType_ = kJER0;
@@ -704,9 +709,9 @@ cout<<"Got options: "<<endl
 }
 
 void PseudoConstructor() {
-  //theScanType_=kNotScan;
+  theScanType_=kNotScan;
   //theScanType_=kmSugra;
-  theScanType_=kSMS;
+  //theScanType_=kSMS;
 
   //  theMETType_=kPFMETTypeI;
   //  theJetType_=kRECOPF;
@@ -717,6 +722,7 @@ void PseudoConstructor() {
   checkConsistency();
 
   theJESType_=kJES0;
+  //theJESType_=kJESFLY;
   theJERType_=kJER0;
   theMETuncType_=kMETunc0;
   thePUuncType_=kPUunc0;
@@ -739,6 +745,7 @@ void PseudoConstructor() {
   theJESNames_[kJES0]="JES0";
   theJESNames_[kJESup]="JESup";
   theJESNames_[kJESdown]="JESdown";
+  theJESNames_[kJESFLY]="JESFLY";
 
   theMETuncNames_[kMETunc0]="METunc0";
   theMETuncNames_[kMETuncUp]="METuncUp";
@@ -1401,6 +1408,14 @@ float getJERbiasFactor(unsigned int ijet) {
   return 0;
 }
 
+
+JetCorrectorParameters *ResJetPar;
+JetCorrectorParameters *L3JetPar;
+JetCorrectorParameters *L2JetPar; 
+JetCorrectorParameters *L1JetPar; 
+std::vector<JetCorrectorParameters> vPar;
+FactorizedJetCorrector *JetCorrector;
+
 float getJetPt( unsigned int ijet ) {
 
   //i am going to write this to allow simultaneous use of JER and JES
@@ -1409,6 +1424,25 @@ float getJetPt( unsigned int ijet ) {
 
   float pt = myJetsPF->at(ijet).pt;
   //  if ( theJESType_ == kJES0 && theJERType_ == kJER0) return pt;
+
+  if(theJESType_ == kJESFLY){
+    JetCorrector->setJetEta( myJetsPF->at(ijet).eta);
+    JetCorrector->setJetPt( myJetsPF->at(ijet).uncor_pt );
+    JetCorrector->setJetA( myJetsPF->at(ijet).jetArea );
+    JetCorrector->setRho( sdouble_kt6pfjets_rho_value ); 
+    
+    std::vector<float> factors = JetCorrector->getSubCorrections();
+    //[0] = L1Fast, [1] = [0]*L2Residual, [2] = [1]*L3Absolute, [3] = [2]*L2L3Residual
+
+    //this will return the L3Absolute corrected pt (i.e. the exact same pt as is normally used for MC)
+    //pt = myJetsPF->at(ijet).uncor_pt * factors[2];
+
+    //this will return the pt with "ANTI" L2L3Residual corrections!!
+    float L2L3Residualonly = factors[3]/factors[2];
+    pt = myJetsPF->at(ijet).uncor_pt * factors[2]/L2L3Residualonly;
+
+  }
+
   
 #ifndef isMC
   //first JER
@@ -3470,6 +3504,18 @@ void cutflow(itreestream& stream, int maxevents=-1){
 
   InitializeStuff();//BEN
 
+  if(theJESType_==kJESFLY){
+    ResJetPar = new JetCorrectorParameters("START42_V13_AK5PFchs_L2L3Residual.txt"); 
+    L3JetPar  = new JetCorrectorParameters("START42_V13_AK5PFchs_L3Absolute.txt");
+    L2JetPar  = new JetCorrectorParameters("START42_V13_AK5PFchs_L2Relative.txt");
+    L1JetPar  = new JetCorrectorParameters("START42_V13_AK5PFchs_L1FastJet.txt");
+    vPar.push_back(*L1JetPar);
+    vPar.push_back(*L2JetPar);
+    vPar.push_back(*L3JetPar);
+    vPar.push_back(*ResJetPar);
+    JetCorrector =  new FactorizedJetCorrector(vPar);
+  }
+
 
   startTimer();
   for(int entry=0; entry < nevents; ++entry){
@@ -4299,9 +4345,9 @@ void sampleAnalyzer(itreestream& stream){
   //setIgnoredCut("cutDeltaPhiN");
   //setIgnoredCut("cutDeltaPhiTaus");
   setBCut(1);
-
+  
   int count = 0;
-  float countw = 0;
+  //float countw = 0;
   startTimer();
   for(int entry=0; entry < nevents; ++entry){
     // Read event into memory
@@ -4309,12 +4355,13 @@ void sampleAnalyzer(itreestream& stream){
     fillObjects();
     if(entry%100000==0) cout << "  entry: " << entry << ", percent done=" << (int)(entry/(double)nevents*100.)<<  endl;
 
+
     if (Cut(entry) < 0) continue;
     count++;
 
-    countw += getHLTMHTeff(getMET());
+    //countw += getHLTMHTeff(getMET());
 
-    std::cout << "MET = " << getMET() << ", MHTweight = " << getHLTMHTeff(getMET()) << std::endl;
+    //std::cout << "MET = " << getMET() << ", MHTweight = " << getHLTMHTeff(getMET()) << std::endl;
 
     //std::cout << "genweight = " << (*myGenWeight) << std::endl;
     //std::cout << "btagIP weight = " << getBTagIPWeight() << std::endl;
@@ -4324,7 +4371,7 @@ void sampleAnalyzer(itreestream& stream){
   stopTimer(nevents);
 
   std::cout << "count = " << count << std::endl;
-  std::cout << "countw = " << countw << std::endl;
+  //std::cout << "countw = " << countw << std::endl;
 
   //fout.Write();
   //fout.Close();
