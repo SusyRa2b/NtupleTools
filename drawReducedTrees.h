@@ -784,7 +784,7 @@ void setColorScheme(const TString & name) {
     sampleColor_["TotalSM"] = kBlue+2;
     sampleColor_["Total"] = kGreen+3;
     sampleColor_["VV"] = kCyan+1;
-
+    sampleColor_["HerwigQCDFlat"] = kYellow;
   }
   else if (name == "nostack" || name=="owen") {
     sampleColor_["LM13"] = kBlue+2;
@@ -807,6 +807,7 @@ void setColorScheme(const TString & name) {
     sampleColor_["TotalSM"] =kGreen+2; //owen requested 3
     sampleColor_["Total"] = 6;
     sampleColor_["VV"] = kOrange-3;
+    sampleColor_["HerwigQCDFlat"] = 2;
   }
   else {
     cout<<"Sorry, color scheme "<<name<<" is not known!"<<endl;
@@ -823,7 +824,7 @@ void resetSamples(bool joinSingleTop=true) {
   //careful -- QCD must have 'QCD' in its name somewhere.
   //samples_.push_back("QCD"); //madgraph
   //samples_.push_back("PythiaQCD");
-  samples_.push_back("PythiaPUQCD");
+  samples_.push_back("PythiaPUQCD"); 
   //samples_.push_back("PythiaPUQCDFlat");
 
   samples_.push_back("TTbarJets");
@@ -838,6 +839,7 @@ void resetSamples(bool joinSingleTop=true) {
   samples_.push_back("ZJets");
   samples_.push_back("VV");
   samples_.push_back("Zinvisible");
+  //samples_.push_back("HerwigQCDFlat");
   samples_.push_back("LM9");
 
 }
@@ -877,7 +879,7 @@ void loadSamples(bool joinSingleTop=true) {
   samplesAll_.insert("SingleTop-sChannel");
   samplesAll_.insert("SingleTop-tChannel");
   samplesAll_.insert("SingleTop-tWChannel");
-
+  samplesAll_.insert("HerwigQCDFlat");
   //  samplesAll_.insert("WJetsZ2");
   //  samplesAll_.insert("ZJetsZ2");
   samplesAll_.insert("VV");
@@ -971,6 +973,7 @@ void loadSamples(bool joinSingleTop=true) {
   sampleLabel_["SingleTop-tChannel"] = "Single-Top (t)";
   sampleLabel_["SingleTop-tWChannel"] = "Single-Top (tW)";
   sampleLabel_["VV"] = "Diboson";
+  sampleLabel_["HerwigQCDFlat"] = "Herwig QCD";
   sampleLabel_["TotalSM"] = "SM";
   sampleLabel_["Total"] = "SM + LM13"; //again, this is a hack
 
@@ -988,6 +991,7 @@ void loadSamples(bool joinSingleTop=true) {
   sampleMarkerStyle_["WJetsZ2"] = kMultiply;
   sampleMarkerStyle_["ZJets"] = kFullTriangleUp;
   sampleMarkerStyle_["Zinvisible"] = kFullTriangleDown;
+  sampleMarkerStyle_["HerwigQCDFlat"] = kFullCircle;
   sampleMarkerStyle_["VV"] = kOpenCross;
   sampleMarkerStyle_["SingleTop-sChannel"] = kOpenSquare;
   sampleMarkerStyle_["SingleTop-tChannel"] = kOpenSquare;
@@ -1008,6 +1012,7 @@ void loadSamples(bool joinSingleTop=true) {
   sampleOwenName_["WJets"] = "wjets";
   sampleOwenName_["WJetsZ2"] = "wjets";
   sampleOwenName_["ZJets"] = "zjets";
+  sampleOwenName_["HerwigQCDFlat"] = "herwigqcdflat";
   sampleOwenName_["Zinvisible"] = "zinvis";
   sampleOwenName_["VV"] = "vv";
   sampleOwenName_["SingleTop-sChannel"] = "singletops";
