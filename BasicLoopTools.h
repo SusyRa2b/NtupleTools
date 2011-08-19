@@ -30,7 +30,7 @@
 
 #include "JetCorrectorParameters.h"
 #include "FactorizedJetCorrector.h"
-
+#include "JetCorrectionUncertainty.h"
 
 //the data histogram obtained from: 
 // /afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions11/7TeV/PileUp/Pileup_2011_EPS_8_jul.root
@@ -722,6 +722,8 @@ void PseudoConstructor() {
   checkConsistency();
 
   theJESType_=kJES0;
+  //theJESType_=kJESup;
+  //theJESType_=kJESdown;
   //theJESType_=kJESFLY;
   theJERType_=kJER0;
   theMETuncType_=kMETunc0;
@@ -1415,6 +1417,31 @@ JetCorrectorParameters *L2JetPar;
 JetCorrectorParameters *L1JetPar; 
 std::vector<JetCorrectorParameters> vPar;
 FactorizedJetCorrector *JetCorrector;
+JetCorrectionUncertainty *jecUnc;
+
+float getJESUncertainty( unsigned int ijet ){
+
+  float uncertainty = -1000;
+
+  if ( theJESType_ == kJESup ) {
+    //uncertainty = myJetsPFhelper->at(ijet).jetUncPlus;
+    if( fabs(myJetsPF->at(ijet).eta) <5 ){
+      jecUnc->setJetEta(myJetsPF->at(ijet).eta);
+      jecUnc->setJetPt(myJetsPF->at(ijet).pt); // here you must use the CORRECTED jet pt
+      uncertainty = jecUnc->getUncertainty(true);
+    }
+  }
+  else if (theJESType_ == kJESdown) {
+    //uncertainty = myJetsPFhelper->at(ijet).jetUncMinus;
+    if( fabs(myJetsPF->at(ijet).eta) <5 ){
+      jecUnc->setJetEta(myJetsPF->at(ijet).eta);
+      jecUnc->setJetPt(myJetsPF->at(ijet).pt); // here you must use the CORRECTED jet pt
+      uncertainty = jecUnc->getUncertainty(false);
+    }
+  }
+
+  return uncertainty;
+}
 
 float getJetPt( unsigned int ijet ) {
 
@@ -1464,10 +1491,10 @@ float getJetPt( unsigned int ijet ) {
     //in 2010 there was an extra term added in quadrature. 
     //i will not implement that because i don't know if that term should exist in 2011
     //note that this if statement is important because there are dummy values like -1000 sometimes
-    if (  fabs(myJetsPFhelper->at(ijet).jetUncPlus)<1 )   pt *= (1+myJetsPFhelper->at(ijet).jetUncPlus);
+    if (  fabs(getJESUncertainty(ijet))<1 )   pt *= (1+getJESUncertainty(ijet));
   }
   else if (theJESType_ == kJESdown) {
-    if (  fabs(myJetsPFhelper->at(ijet).jetUncMinus)<1 ) pt *= (1-myJetsPFhelper->at(ijet).jetUncMinus);
+    if (  fabs(getJESUncertainty(ijet))<1 ) pt *= (1-getJESUncertainty(ijet));
   }
 
   return pt;
@@ -1502,10 +1529,10 @@ float getUncorrectedJetPt( unsigned int ijet ) {
     //in 2010 there was an extra term added in quadrature. 
     //i will not implement that because i don't know if that term should exist in 2011
     //note that this if statement is important because there are dummy values like -1000 sometimes
-    if (  fabs(myJetsPFhelper->at(ijet).jetUncPlus)<1 )   pt *= (1+myJetsPFhelper->at(ijet).jetUncPlus);
+    if (  fabs(getJESUncertainty(ijet))<1 )   pt *= (1+getJESUncertainty(ijet));
   }
   else if (theJESType_ == kJESdown) {
-    if (  fabs(myJetsPFhelper->at(ijet).jetUncMinus)<1 ) pt *= (1-myJetsPFhelper->at(ijet).jetUncMinus);
+    if (  fabs(getJESUncertainty(ijet))<1 ) pt *= (1-getJESUncertainty(ijet));
   }
 
   return pt;
@@ -3515,6 +3542,7 @@ void cutflow(itreestream& stream, int maxevents=-1){
     vPar.push_back(*ResJetPar);
     JetCorrector =  new FactorizedJetCorrector(vPar);
   }
+  jecUnc = new JetCorrectionUncertainty("START42_V13_AK5PFchs_Uncertainty.txt");
 
 
   startTimer();
@@ -3997,6 +4025,9 @@ void reducedTree(TString outputpath, itreestream& stream)
   int nevents = stream.size();
 
   InitializeStuff();//BEN
+
+  //initialize jec uncertainty on-the-fly
+  jecUnc = new JetCorrectionUncertainty("START42_V13_AK5PFchs_Uncertainty.txt");
 
   /*
     i can't find a way out of looping over events twice...especially bad for mSugra :-(
