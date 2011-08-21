@@ -1,5 +1,7 @@
 // -*- C++ -*-
 
+#include "TStopwatch.h"
+
 //useful for playing around with plots in interactive ROOT
 TH1D* hinteractive=0;
 TH2D* h2d=0;
@@ -97,6 +99,14 @@ struct SignalEffData {
   //extra info for mariarosaria
   double btagSystematic;
   double jesSystematic;
+  double pdfSystematic;
+  double metSystematic;
+
+  double otherSystematic;
+
+  //  double lumiSystematic;
+  //  double triggerSystematic;
+  //  double jerSystematic;
 
 };
 
@@ -522,9 +532,11 @@ for legacy purposes I am keeping all of the weight and selection TStrings, altho
   */
   double lumiscale = 0;
 
+  //for now treat sms point just like smsplane
+
   if (type==kData)    lumiscale=1;
-  else if (type==kMC || type==kmSugraPoint || type==kmSugraPlane ||type==kSMSPoint) lumiscale=lumiScale_;
-  else if (type==kSMSPlane) lumiscale=1;
+  else if (type==kMC || type==kmSugraPoint || type==kmSugraPlane) lumiscale=lumiScale_;
+  else if (type==kSMSPlane||type==kSMSPoint) lumiscale=1;
   else {assert(0);}
 
   TString weightedcut="weight"; 
@@ -630,8 +642,11 @@ for legacy purposes I am keeping all of the weight and selection TStrings, altho
     //need to weight with the standard sigma / N
     //sigma should be stored in the scanCrossSection field. N needs to be pulled out of the histogram
     //not too important so implement later
-    cout<<"not implemented yet!"<<endl;
-    assert(0);
+
+    //forget cross section and just return without weight
+
+    //    cout<<"not implemented yet!"<<endl;
+    //    assert(0);
   }
   else if (type == kmSugraPlane && susySubProcess<0) { //sanity check
     cout<<"You need to specify the susySubProcess!"<<endl; assert(0);
@@ -893,6 +908,7 @@ void loadSamples(bool joinSingleTop=true) {
 
   //  configDescriptions_.push_back("SSVHPT");
   //  old btageff prescription
+/*
   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
 
@@ -919,11 +935,15 @@ void loadSamples(bool joinSingleTop=true) {
   //    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffdown");
   //    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffup");
   
+*/
 
-//   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
-//   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
 
-/*
+
+//new btag eff prescription
+   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
+   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
+ //comment here to save time
+
   //JES
   configDescriptions_.push_back("SSVHPT_PF2PATjets_JESdown_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
   configDescriptions_.push_back("SSVHPT_PF2PATjets_JESup_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
@@ -946,7 +966,7 @@ void loadSamples(bool joinSingleTop=true) {
   //HLT eff
   //    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEffdown");
   //    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEffup");
-  */
+
 
   //convention is that the [0] one should always be the "nominal" one while others are for systematics
   currentConfig_=configDescriptions_[0];
@@ -1888,7 +1908,11 @@ TString format_nevents(double n,double e) {
 
 typedef map<pair<int,int>, pair<double,double> > susyScanYields;
 TH2D* scanSMSngen=0;
-susyScanYields getSusyScanYields(const TString & sampleOfInterest) {
+susyScanYields getSusyScanYields(const TString & sampleOfInterest,const int pdfindex=0, const TString & pdfset="") {
+
+  if (sampleOfInterest.Contains("mSUGRA") ) assert(pdfset=="" && pdfindex==0); //just until i have time to think about it
+
+  TStopwatch timer;
 
   /*
 this function was written for mSugra.
@@ -1930,7 +1954,7 @@ most of it is irrelevant for SMS, but we'll use it anyway
     hname += i;
     raw0.push_back(new TH2D(hname,"raw event counts",nbinsx,lowx,highx,nbinsy,lowy,highy));
     raw0[i]->Sumw2();
-    TString thecut = sampleOfInterest.Contains("mSUGRA") ? getCutString(false,"","",0,"",false,i) : getCutString(kSMSPlane,"",selection_);
+    TString thecut = sampleOfInterest.Contains("mSUGRA") ? getCutString(false,"","",0,"",false,i) : getCutString(kSMSPlane,"",selection_,"",pdfindex,pdfset);
     thetree->Project(hname,drawstring,thecut.Data());
   }
 
@@ -2000,9 +2024,204 @@ most of it is irrelevant for SMS, but we'll use it anyway
     delete raw0[i];
   }
 
+  timer.Stop();
+  cout<<"CPU time = "<<timer.CpuTime()<<endl;
+
   return theYields;
 }
 
+//sigh...looks like to use Luke's magic code i have to really go at this from scratch
+vector<susyScanYields> getSusyScanYields(const TString & sampleOfInterest,const TString & pdfset) {
+  assert(sampleOfInterest=="T1bbbb");
+  TStopwatch timer;
+
+  vector<susyScanYields> theYields;
+  if (!quiet_) cout<<sampleOfInterest<<" "<<currentConfig_<<endl;
+  //these are for mSugra
+  TString varx="m0"; TString xtitle=varx;
+  int  nbinsx=210; float lowx=-0.5; float highx=2100-0.5;
+
+  TString vary="m12"; TString ytitle=vary;
+  int  nbinsy=110; float lowy=-0.5; float highy=1100-0.5;
+  if (sampleOfInterest== "T1bbbb") { //change binning
+    //m0 -> mGl
+    //m12 -> mLSP
+    if (scanSMSngen==0) scanSMSngen = (TH2D*) files_[currentConfig_][sampleOfInterest]->Get("scanSMSngen");
+    nbinsx=60;//scanSMSngen->GetNbinsX();
+    nbinsy=60;//scanSMSngen->GetNbinsY(); //take our histo def'n from the ngen histo
+    lowx=0;//scanSMSngen->GetXaxis()->GetBinLowEdge(1);
+    lowy=0;//scanSMSngen->GetYaxis()->GetBinLowEdge(1);
+    highx=1500;//scanSMSngen->GetXaxis()->GetBinLowEdge(nbinsx+1);
+    highy=1500;//scanSMSngen->GetYaxis()->GetBinLowEdge(nbinsy+1);
+  }
+  TString drawstring = vary+":"+varx;
+
+  TTree* thetree = (TTree*) files_[currentConfig_][sampleOfInterest]->Get("reducedTree");
+  vector<TH2D*> raw0;
+  int npdfset=0;
+  if (pdfset=="CTEQ") npdfset=44;
+  else if (pdfset=="MSTW") npdfset =40;
+  else if (pdfset=="NNPDF") {npdfset =99; } //not implemented yet
+  else assert(0);
+
+  //work luke's magic
+  TSelectorMultiDraw* multiDraw = new TSelectorMultiDraw();
+
+  for (int i=0; i<=npdfset; i++) { //start at 0 instead of 1...i think that's right
+    TString hname="raw0_";
+    hname += i;
+    raw0.push_back(new TH2D(hname,"raw event counts",nbinsx,lowx,highx,nbinsy,lowy,highy));
+    raw0[i]->Sumw2();
+    TString thecut = sampleOfInterest.Contains("mSUGRA") ? getCutString(false,"","",0,"",false,i) : getCutString(kSMSPlane,"",selection_,"",i,pdfset);
+    //    thetree->Project(hname,drawstring,thecut.Data());
+    multiDraw->LoadVariables( TString(drawstring+">>"+hname).Data(), thecut.Data());
+  }
+  Long64_t numberofentries = thetree->GetEntries();
+  thetree->Process(multiDraw,"goff",numberofentries,0);
+
+  //valid for T1bbbb only (not mSugra)
+
+  //copy the histograms into the data structure
+  //kinda stupid to do this instead of just returning the histograms, but such is life
+  for (int ipdf=0; ipdf<=npdfset; ipdf++) { //start at 0 instead of 1...i think that's right
+    susyScanYields oneSetOfYields;
+    
+    for (int i=1; i<=nbinsx; i++) {
+      for (int j=1; j<=nbinsy; j++) {
+	int mgl=TMath::Nint(raw0[ipdf]->GetXaxis()->GetBinLowEdge(i));
+	int mlsp=TMath::Nint(raw0[ipdf]->GetYaxis()->GetBinLowEdge(j));
+	double nevents = raw0[ipdf]->GetBinContent(raw0[ipdf]->FindBin(mgl,mlsp));
+	//take this opportunity to throw out points that don't have ngen = 10000
+	if ( TMath::Nint(scanSMSngen->GetBinContent(scanSMSngen->FindBin(mgl,mlsp))) == 10000 ) {
+	  oneSetOfYields[make_pair(mgl,mlsp)] = make_pair(nevents,0); //skip errors for now
+	}
+      }
+    }
+    theYields.push_back(oneSetOfYields);
+  }
+  timer.Stop();
+  cout<<"CPU time ("<<pdfset<<") = "<<timer.CpuTime()<<endl;
+
+  //try to clean up
+  for (unsigned int i=0; i<raw0.size(); i++) {
+    delete raw0[i];
+  }
+  delete multiDraw;
+
+  return theYields;
+
+}
+
+//   XplusMax          XminusMax
+pair<susyScanYields,susyScanYields> doScanPDFUncertainties(const TString & sample, const TString & pdfset,  susyScanYields & nominal) {
+  //can't make nominal const because of the use of [] . should fix it
+
+  int npdfset=0;
+  if (pdfset=="CTEQ") npdfset=44;
+  else if (pdfset=="MSTW") npdfset =40;
+  else if (pdfset=="NNPDF") {npdfset =99; }
+  else assert(0);
+
+  vector<susyScanYields> theYields;
+  if (sample=="T1bbbb") theYields=getSusyScanYields(sample,pdfset);
+
+  //  pair<int,int> apoint=make_pair(375,100);
+//   for (unsigned int i=0; i<theYields.size(); i++) {
+//     cout<<"DEBUG: "<<nominal[apoint].first<<"\t"<<theYields[i][apoint].first<<endl;
+//   }
+  
+  //in the current implementation, for T1bbbb we do all the calculations above and then
+  //just shuffle the results into two vectors below
+
+  //in mSugra we get all the results below
+
+  vector<susyScanYields> cteqXplus;
+  vector<susyScanYields> cteqXminus;
+  for (int i=1; i<=npdfset; i++) {
+    //for the scans, the pdfWeight in the ntuple is already normalized properly
+    //i filled element 0 of theYields on purpose so that I could skip it here
+    susyScanYields cteq= theYields.empty() ?  getSusyScanYields(sample,i,pdfset) : theYields.at(i);
+    if (pdfset=="NNPDF") { //for nnpdf, no need to split things up
+      cteqXplus.push_back(cteq); 
+    }
+    else {
+      if (i%2==0) {
+	//	cout<<" "<<cteq[apoint].first<<endl;
+	cteqXminus.push_back(cteq);
+      }
+      else {
+	//	cout<<"DEBUG "<<cteq[apoint].first;
+	cteqXplus.push_back(cteq);
+      }
+    }
+  }
+  assert((cteqXplus.size() == cteqXminus.size()) || pdfset=="NNPDF");
+  susyScanYields XplusMax ;
+  susyScanYields XminusMax;
+  if (pdfset=="NNPDF" ) {
+
+    int nn=0;
+    for (unsigned int i=0; i<cteqXplus.size(); i++) { //only xplus is filled
+      for (susyScanYields::iterator ipoint=cteqXplus[i].begin(); ipoint!=cteqXplus[i].end(); ++ipoint) {
+	//if this scan point doesn't exist, create it with 0
+	if ( XplusMax.count(ipoint->first) ==0) XplusMax[ipoint->first]=make_pair(0,0);
+	if ( XminusMax.count(ipoint->first) ==0) XminusMax[ipoint->first]=make_pair(0,0);
+	double val = cteqXplus[i][ipoint->first].first;
+	XplusMax[ipoint->first].first += val; //sum up the values for pdf i and this scan point
+	XminusMax[ipoint->first].first += val*val; //sum up the values for pdf i and this scan point
+      }
+      nn++;
+    }
+    for (susyScanYields::iterator ipoint=XplusMax.begin() ; ipoint!=XplusMax.end(); ++ipoint) {
+      XplusMax[ipoint->first].first = XplusMax[ipoint->first].first / double(nn);
+      XminusMax[ipoint->first].first = XminusMax[ipoint->first].first / double(nn);
+    }
+
+  }
+  else {
+    //loop over pdfs and over scan points
+    for (unsigned int i=0; i<cteqXplus.size(); i++) {
+      for (susyScanYields::iterator ipoint=cteqXplus[i].begin(); ipoint!=cteqXplus[i].end(); ++ipoint) {
+	//	if (ipoint->first ==apoint) cout<<ipoint->first.first<<" "<<ipoint->first.second<<" -- "<<nominal[ipoint->first].first<<" " <<cteqXplus[i][ipoint->first].first<<" "<<cteqXminus[i][ipoint->first].first<<endl;
+	double diff1 =  cteqXplus[i][ipoint->first].first - nominal[ipoint->first].first ;
+	double diff2 =  cteqXminus[i][ipoint->first].first - nominal[ipoint->first].first ;
+	double larger = diff1>diff2 ? diff1 : diff2;
+	if ( 0 > larger ) larger = 0;
+	if ( XplusMax.count(ipoint->first) ==0) {
+	  XplusMax[ipoint->first]=make_pair(0,0);
+	  //  if (ipoint->first ==apoint) cout<<" ***** CREATING XplusMax"<<endl;
+	}
+	XplusMax[ipoint->first].first += larger*larger;
+	//	if (ipoint->first ==apoint) cout<<"       XplusMax = "<<XplusMax[ipoint->first].first<<endl;
+      }
+    }
+    for (unsigned int i=0; i<cteqXplus.size(); i++) {
+      for (susyScanYields::iterator ipoint=cteqXplus[i].begin(); ipoint!=cteqXplus[i].end(); ++ipoint) {
+	double diff1 =  nominal[ipoint->first].first  - cteqXplus[i][ipoint->first].first ;
+	double diff2 =  nominal[ipoint->first].first - cteqXminus[i][ipoint->first].first ;
+	double larger = diff1>diff2 ? diff1 : diff2;
+	if ( 0 > larger ) larger = 0;
+	if ( XminusMax.count(ipoint->first) ==0) XminusMax[ipoint->first]=make_pair(0,0);
+	XminusMax[ipoint->first].first += larger*larger;
+      }
+    }
+
+    const double scale = (pdfset=="CTEQ") ? 1.645 : 1;
+    for (susyScanYields::iterator ipoint=XplusMax.begin() ; ipoint!=XplusMax.end() ; ++ipoint) {
+      ipoint->second.first = sqrt(ipoint->second.first);
+      ipoint->second.first = ipoint->second.first / scale;
+    }
+    for (susyScanYields::iterator ipoint=XminusMax.begin() ; ipoint!=XminusMax.end() ; ++ipoint) {
+      ipoint->second.first = sqrt(ipoint->second.first);
+      ipoint->second.first = ipoint->second.first / scale;
+    }
+  }
+
+
+
+  return make_pair(XplusMax,XminusMax);
+
+}
 
 void getCutStringForCutflow(vector<TString> &vectorOfCuts, vector<TString> &stageCut, bool isTightSelection, bool btagSF=false) {
 

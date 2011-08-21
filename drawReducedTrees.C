@@ -57,7 +57,7 @@ functionality for TH1F and TH1D e.g. the case of addOverflowBin()
 #include "TChain.h"
 
 //from Luke
-//#include "TSelectorMultiDraw.h"
+#include "TSelectorMultiDraw.h"
 
 // can be checked out of UserCode/joshmt
 #include "MiscUtil.cxx"
@@ -76,7 +76,7 @@ functionality for TH1F and TH1D e.g. the case of addOverflowBin()
 //TString dataInputPath = "/cu3/wteo/reducedTrees/V00-02-05_v3-pickevents/"; //includes MET cleaning but uses a tight skim (not good for plots)
 
 //for making the standard set of plots...need standard MC and all data.
-TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-25_fullpf2pat/";//path for MC	     
+//TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-25_fullpf2pat/";//path for MC	     
 TString dataInputPath = "/cu2/ra2b/reducedTrees/V00-02-25_fullpf2pat/";
 
 //for njet reweighting (needed because not all reducedTrees in nominal V00-02-25 have njets30)
@@ -85,7 +85,7 @@ TString dataInputPath = "/cu2/ra2b/reducedTrees/V00-02-25_fullpf2pat/";
 
 //for special tests and signal systematics
 //TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-25c_fullpf2pat/"; //LM9 with correct pdf weights
-//TString inputPath = "/cu2/joshmt/reducedTrees/V00-02-25c_fullpf2pat/"; //with correct pdf weights
+TString inputPath = "/cu2/joshmt/reducedTrees/V00-02-25c_fullpf2pat/"; //with correct pdf weights
 //TString inputPath = "/cu2/joshmt/mSUGRAdell/PART1/"; // 25% of the msugra sample
 //TString inputPath = "/home/joshmt/";//path for MC
 //TString dataInputPath = "/cu2/ra2b/reducedTrees/V00-02-24_fullpf2pat/"; //sym links to V00-02-05_v3
@@ -104,11 +104,11 @@ SignalEffData signalSystematics2011(const SearchRegion & region, bool isSL=false
   useFlavorHistoryWeights_=false;
   loadSamples(); //needs to come first! this is why this should be turned into a class, with this guy in the ctor
 
-  assert(configDescriptions_.size() == 14); //to avoid stupid mistakes on LM9
+  //  assert(configDescriptions_.size() == 14); //to avoid stupid mistakes on LM9
 
   dodata_=false;
   savePlots_ =false;
-  setQuiet(true);
+  //setQuiet(true);
 
   SignalEffData results;
 
@@ -264,7 +264,9 @@ configDescriptions_[1] is with JERbias
 //   TH1D*  HyieldsNNPDF= new TH1D("HyieldsNNPDF","NNPDF yields",100,0,200);
 
   double percentCTEQ=0,percentMSTW=0,percentNNPDF=0;
+
   if (true) { //do do pdf uncertainties!
+    
   // ~~~~~~~~~~~~ CTEQ ~~~~~~~~~~
   { //because i'm using horrible unstructured code here, give the variables a scope
   double Xplus[22];// Xplus[0]=0;
@@ -276,7 +278,8 @@ configDescriptions_[1] is with JERbias
     //then get the yield after cuts with extra weight pdfWeights[i]/sum
     TH1D pdfEventCounter("pdfEventCounter","pdfEventCounter",1,0,1e9);
     pdfEventCounter.Sumw2();
-    thetree->Project("pdfEventCounter","HT",getCutString(false, "",extraWeight,i,"CTEQ").Data());
+    if (sampleOfInterest!="T1bbbb")    thetree->Project("pdfEventCounter","HT",getCutString(false, "",extraWeight,i,"CTEQ").Data());
+    else      thetree->Project("pdfEventCounter","HT",getCutString(kSMSPoint,"",selection_,"",i,"CTEQ").Data());
     if (i%2==0) {
       Xminus[(i-2)/2] = pdfEventCounter.Integral();
     }
@@ -332,7 +335,9 @@ configDescriptions_[1] is with JERbias
     //then get the yield after cuts with extra weight pdfWeights[i]/sum
     TH1D pdfEventCounter("pdfEventCounter","pdfEventCounter",1,0,1e9);
     pdfEventCounter.Sumw2();
-    thetree->Project("pdfEventCounter","HT",getCutString(false, "",extraWeight,i,"MSTW").Data());
+    if (sampleOfInterest!="T1bbbb")    thetree->Project("pdfEventCounter","HT",getCutString(false, "",extraWeight,i,"MSTW").Data());
+    else      thetree->Project("pdfEventCounter","HT",getCutString(kSMSPoint,"",selection_,"",i,"MSTW").Data());
+    //    thetree->Project("pdfEventCounter","HT",getCutString(false, "",extraWeight,i,"MSTW").Data());
     if (i%2==0) {
       Xminus[(i-2)/2] = pdfEventCounter.Integral();
     }
@@ -365,11 +370,12 @@ configDescriptions_[1] is with JERbias
   percentMSTW = 100* percentMSTW/nominal;
 
   }
-
+    
   // ~~~~~~~~~~~~~~~~ NNPDF ~~~~~~~~~~~(see emails from H&S -- just take the RMS as the error)
   {
     double totalX=0,totalX2=0;
     int n=0;
+    TH1D nnpdfYields("nnpdfYields","nnpdf yields",2,0,1e9); //the limits really don't matter (root finds the RMS in an unbinned way)
     for (int i=1; i<=99; i++) { //0 is just weight 1. there are 99 others
       //get the sum of weight[i] for the whole sample with no cuts
       float totalweight=   totalPdfWeightsNNPDF->GetBinContent(i+1); //i really did store the total in bin i+1
@@ -377,7 +383,11 @@ configDescriptions_[1] is with JERbias
       //then get the yield after cuts with extra weight pdfWeights[i]/sum
       TH1D pdfEventCounter("pdfEventCounter","pdfEventCounter",1,0,1e9);
       pdfEventCounter.Sumw2();
-      thetree->Project("pdfEventCounter","HT",getCutString(false, "",extraWeight,i,"NNPDF").Data());
+      //      thetree->Project("pdfEventCounter","HT",getCutString(false, "",extraWeight,i,"NNPDF").Data());
+      if (sampleOfInterest!="T1bbbb")    thetree->Project("pdfEventCounter","HT",getCutString(false, "",extraWeight,i,"NNPDF").Data());
+      else      thetree->Project("pdfEventCounter","HT",getCutString(kSMSPoint,"",selection_,"",i,"NNPDF").Data());
+      cout<<"    yield = "<<pdfEventCounter.Integral()<<endl;
+      nnpdfYields.Fill(pdfEventCounter.Integral());
       totalX += pdfEventCounter.Integral();
       totalX2 += pdfEventCounter.Integral()*pdfEventCounter.Integral();
       n++;
@@ -386,8 +396,10 @@ configDescriptions_[1] is with JERbias
     }
     totalX/= double(n);
     totalX2/=double(n);
-    cout<<"NNPDF method\t"<<sqrt(totalX2-(totalX*totalX))<<endl;
-    percentNNPDF = 100*sqrt(totalX2-(totalX*totalX)) / nominal;
+    cout<<"NNPDF method\t"<<sqrt(totalX2-(totalX*totalX))<<endl;   
+    cout<<"NNPDF method (new)\t"<<nnpdfYields.GetRMS() <<endl;
+    //    percentNNPDF = 100*sqrt(totalX2-(totalX*totalX)) / nominal;
+    percentNNPDF = 100*nnpdfYields.GetRMS() / nominal;
   }
 
   if (percentCTEQ > percentMSTW) percentMSTW=percentCTEQ;
@@ -412,8 +424,9 @@ configDescriptions_[1] is with JERbias
 //not only for LM9; can also be used for other samples e.g. ttbar. Just change sampleOfInterest
 void runSystematics2011_LM9(  TString sampleOfInterest="LM9" ) {
   setSearchRegions();
-  //  signalSystematics2011(searchRegions_[0]);
-  //    return;
+
+  //  signalSystematics2011(sbRegions_[0],false,false,"T1bbbb",1175,75);
+  //     return;
 
   
 
@@ -655,9 +668,11 @@ void runSystematics2011_mSugra_Luke() {
 */
 
 //much more efficienct signal efficiency systematics calculation for mSugra
-//hopefully can be generalized to other scans without too much trouble, but this is not done yet
+//in progress of generalizing for SMS scans
 map<pair<int,int>, SignalEffData>  runTH2Syst2011_mSugra(const SearchRegion & region, 
                  const bool isSL=false, const bool isLDP=false, const TString & sampleOfInterest="mSUGRAtanb40") {
+
+  const bool fullPdfUncertainties = true;
 
   //some of this is prob not needed, but to be safe
   useFlavorHistoryWeights_=false;
@@ -668,7 +683,8 @@ map<pair<int,int>, SignalEffData>  runTH2Syst2011_mSugra(const SearchRegion & re
   addSample(sampleOfInterest);
 
   setSearchRegions();
-  if (sampleOfInterest.Contains("mSUGRA"))  loadSusyScanHistograms();
+  const bool ismSugra= sampleOfInterest.Contains("mSUGRA");
+  if (ismSugra)  loadSusyScanHistograms();
 
 
   region.Print();
@@ -720,19 +736,30 @@ map<pair<int,int>, SignalEffData>  runTH2Syst2011_mSugra(const SearchRegion & re
   btagSFweight_=bweightstring; // add b tag back in the form of the SF
   susyScanYields nominalYields=getSusyScanYields(sampleOfInterest);
 
-  //(only applicable to mSugra, but easier to leave it in for now)
+  //only applicable to mSugra
   //NLO k factor uncertainty -- vary it up
   susyCrossSectionVariation_="Plus";
-  susyScanYields kFactorPlusYields=getSusyScanYields(sampleOfInterest);
+  susyScanYields kFactorPlusYields= ismSugra ? getSusyScanYields(sampleOfInterest) : nominalYields;
   
   //NLO k factor uncertainty -- vary it down
   susyCrossSectionVariation_="Minus";
-  susyScanYields kFactorMinusYields=getSusyScanYields(sampleOfInterest);
+  susyScanYields kFactorMinusYields=ismSugra ? getSusyScanYields(sampleOfInterest): nominalYields;
 
   susyCrossSectionVariation_=""; //reset to default k factors
 
+  // == do PDF uncertainties ==
+  pair<susyScanYields,susyScanYields> cteqXplusminus;
+  pair<susyScanYields,susyScanYields> mstwXplusminus; 
+  pair<susyScanYields,susyScanYields> nnpdfXX2; 
+  if (fullPdfUncertainties) {
+    cout<<"Doing full pdf uncertainties!"<<endl;
+    cteqXplusminus = doScanPDFUncertainties(sampleOfInterest, "CTEQ",nominalYields);
+    mstwXplusminus = doScanPDFUncertainties(sampleOfInterest, "MSTW",nominalYields);
+    nnpdfXX2 = doScanPDFUncertainties(sampleOfInterest,"NNPDF",nominalYields);
+  }
+
   //again, this is rather fragile. the configDescriptions_ list needs to be set just right
-  //where just right == variations in pairs, starting at the 3rd (index==2) guy in the list
+  //where just right is: variations in pairs, starting at the 3rd (index==2) guy in the list
 
   //make a map from the varied parameter to a pair of varied yields
   map<TString, pair<susyScanYields,susyScanYields> > variedYields;
@@ -751,6 +778,7 @@ map<pair<int,int>, SignalEffData>  runTH2Syst2011_mSugra(const SearchRegion & re
     variedYields[varied1] = make_pair(variation1Yields,variation2Yields);
   }
 
+
   /*
 at this point we've got yields (raw , eff corrected , kfactor +/-, variations of JES, etc +/-) for every point in mSugra
 
@@ -764,61 +792,119 @@ return it in a data structure
 
   map<pair<int,int>, SignalEffData> allResults;
 
-  for (  susyScanYields::iterator imusgra=rawYields.begin(); imusgra!=rawYields.end(); ++imusgra) {
+  for (  susyScanYields::iterator imsugra=rawYields.begin(); imsugra!=rawYields.end(); ++imsugra) {
     SignalEffData theseResults;
     theseResults.rawYield=0;
     theseResults.effCorr=0;
     theseResults.totalSystematic=0;
     theseResults.btagSystematic=0;
     theseResults.jesSystematic=0;
+    theseResults.metSystematic=0;
+    theseResults.pdfSystematic=0;
 
-    if (rawYields[imusgra->first].first >0) {
-      cout<<imusgra->first.first<<" "<<imusgra->first.second<<" " //m0 and m12
-	  <<rawYields[imusgra->first].first<<" "<<nominalYields[imusgra->first].first<<" "
-	  <<kFactorPlusYields[imusgra->first].first<<" "<<kFactorMinusYields[imusgra->first].first<<" ";
+    theseResults.otherSystematic=0;
 
-      theseResults.rawYield = rawYields[imusgra->first].first;
 
-      double nominalYield = nominalYields[imusgra->first].first;
+    if (rawYields[imsugra->first].first >0) {
+      cout<<imsugra->first.first<<" "<<imsugra->first.second<<" " //m0 and m12
+ 	  <<rawYields[imsugra->first].first<<" "<<nominalYields[imsugra->first].first<<" "
+ 	  <<kFactorPlusYields[imsugra->first].first<<" "<<kFactorMinusYields[imsugra->first].first<<" ";
+
+      theseResults.rawYield = rawYields[imsugra->first].first;
+
+      double nominalYield = nominalYields[imsugra->first].first;
       theseResults.effCorr = nominalYield/theseResults.rawYield;
       if (nominalYield==0) nominalYield=0.000001; //should make this better
 
-      double totalSystematic = 0;
+      double kfactorP = fabs((kFactorPlusYields[imsugra->first].first - nominalYield) / nominalYield);
+      double kfactorM = fabs((kFactorMinusYields[imsugra->first].first - nominalYield) / nominalYield);
+      theseResults.totalSystematic += pow( 0.5*(kfactorP+kfactorM), 2); //add in quadrature
 
-      double kfactorP = fabs((kFactorPlusYields[imusgra->first].first - nominalYield) / nominalYield);
-      double kfactorM = fabs((kFactorMinusYields[imusgra->first].first - nominalYield) / nominalYield);
-      totalSystematic += pow( 0.5*(kfactorP+kfactorM), 2); //add in quadrature
-
-      for ( map<TString, pair<susyScanYields,susyScanYields> >::iterator ivariation=variedYields.begin(); ivariation!=variedYields.end(); ++ivariation) {
-	cout<<ivariation->second.first[imusgra->first].first<<" "<<ivariation->second.second[imusgra->first].first<<" ";
+      //pdf uncertainties
+      if (fullPdfUncertainties) {
 	
-	double percent1 = fabs((ivariation->second.first[imusgra->first].first - nominalYield)/nominalYield);
-	double percent2 = fabs((ivariation->second.second[imusgra->first].first - nominalYield)/nominalYield);
+	double cteqXminusMax = cteqXplusminus.first[imsugra->first].first;
+	double cteqXplusMax = cteqXplusminus.second[imsugra->first].first;
+
+	//cout<<"\nCTEQ nominal xMinusMax xPlusMax "<<nominalYield<<" "<<cteqXminusMax<<" "<<cteqXplusMax<<endl;
+	double  cteqFracPDF = 0.5* ( cteqXminusMax + cteqXplusMax);
+	cteqFracPDF = fabs( cteqFracPDF ) /nominalYield;
+	
+	cout<<endl;
+	cout<<imsugra->first.first<<" "<<imsugra->first.second<<" CTEQ  % = "<<100*cteqFracPDF<<endl;
+
+
+	double mstwXminusMax = mstwXplusminus.first[imsugra->first].first;
+	double mstwXplusMax = mstwXplusminus.second[imsugra->first].first;
+	double  mstwFracPDF = 0.5* ( mstwXminusMax + mstwXplusMax);
+	mstwFracPDF = fabs( mstwFracPDF ) /nominalYield;
+	cout<<imsugra->first.first<<" "<<imsugra->first.second<<" MSTW  % = "<<100*mstwFracPDF<<endl;
+	if (cteqFracPDF > mstwFracPDF) mstwFracPDF = cteqFracPDF;
+	
+	double nnpdfTotalX  = nnpdfXX2.first[imsugra->first].first;
+	double nnpdfTotalX2 = nnpdfXX2.second[imsugra->first].first;
+	double nnpdfFracPDF = sqrt(nnpdfTotalX2 - (nnpdfTotalX*nnpdfTotalX)) / nominalYield;
+	cout<<imsugra->first.first<<" "<<imsugra->first.second<<" NNPDF % = "<<100*nnpdfFracPDF<<endl;
+ 	if (nnpdfFracPDF > mstwFracPDF) mstwFracPDF = nnpdfFracPDF;
+
+ 	theseResults.pdfSystematic = mstwFracPDF;
+
+	theseResults.totalSystematic += pow( mstwFracPDF,2); //add in quadrature
+      }
+      else {
+      //constant term for PDF uncertainties
+        theseResults.totalSystematic += 0.13*0.13; //PDF
+      }
+	
+      //      bool pudone=false;
+      for ( map<TString, pair<susyScanYields,susyScanYields> >::iterator ivariation=variedYields.begin(); ivariation!=variedYields.end(); ++ivariation) {
+	cout<<ivariation->second.first[imsugra->first].first<<" "<<ivariation->second.second[imsugra->first].first<<" ";
+	
+	double percent1 = fabs((ivariation->second.first[imsugra->first].first - nominalYield)/nominalYield);
+	double percent2 = fabs((ivariation->second.second[imsugra->first].first - nominalYield)/nominalYield);
 	double bigger = percent2>percent1 ? percent2 : percent1;
+	//keep track of the sub-parts of some systematics
 	if (ivariation->first.Contains("JES")) theseResults.jesSystematic = bigger;
 	else if (ivariation->first.Contains("BTagEff")) theseResults.btagSystematic = bigger;
-	totalSystematic += bigger*bigger;
+	else if (ivariation->first.Contains("METunc")) theseResults.metSystematic = bigger;
+	//	else if (ivariation->first.Contains("PUunc")) {theseResults.puSystematic = bigger; pudone=true;}
+	else {cout<<"found an unexpected variation "<<ivariation->first<<endl;}
+	theseResults.totalSystematic += bigger*bigger;
       }
       cout<<endl;
 
+      /*
+done above (probably):
+JES
+BtagEff
+METunc
+PDFs
 
+fixed:
+PU
+lumi
+trigger
+JER          - ues 2%
+L2L3 thing   - 1%
+MET Cleaning - 1%
+Lepton veto  - 2%
+      */
 
-      theseResults.totalSystematic += 0.045 * 0.045 ; //lumi uncertainty
+      const double puunc = 0.04;
+      const double lumiunc = 0.045;
+      const double hltunc = 0.025; //use 2.5%
+      const double jerunc = 0.02;
+      const double miscunc = sqrt(0.01*0.01 + 0.01*0.01+ 0.02*0.02); //need some other misc stuff -- inefficiencies from cleaning, L2L3 thing
 
-      //also add constant terms for JER, PU, HLT
-      theseResults.totalSystematic += 0.015 * 0.015 ; //HLT
-      
-      theseResults.totalSystematic += 0.034 * 0.034 ; //PU
-      theseResults.totalSystematic += 0.01 * 0.01 ; //JER
-      
-      //constant term for PDF uncertainties
-      theseResults.totalSystematic += 0.13*0.13; //PDF
-	
-      theseResults.totalSystematic = 100*sqrt(totalSystematic);
+      theseResults.otherSystematic = sqrt( lumiunc*lumiunc + hltunc*hltunc + jerunc*jerunc + miscunc*miscunc +puunc*puunc);
+
+      theseResults.totalSystematic += theseResults.otherSystematic*theseResults.otherSystematic ;
+
+      theseResults.totalSystematic = 100*sqrt(theseResults.totalSystematic);
 
     }
     //stuff theseResults into the map
-    allResults[imusgra->first] = theseResults;
+    allResults[imsugra->first] = theseResults;
   }
 
   //so these are results for all msugra for one particular selection
@@ -826,13 +912,17 @@ return it in a data structure
 
 }
 
-void runSystematics2011_T1bbbb() {
+void runSystematics2011_T1bbbb(/*unsigned int i*/) {
+
+  
   TString sampleOfInterest="T1bbbb";
   loadSamples();
   clearSamples();
   addSample(sampleOfInterest);
 
   setSearchRegions();
+
+  //  if (i>=searchRegions_.size() ) { cout<<"There are only "<<searchRegions_.size()<<" search regions!"<<endl; return;}
 
   //open the output files
   //-- these are the text files for Owen et al
@@ -846,14 +936,21 @@ void runSystematics2011_T1bbbb() {
     rootfiles.push_back(new TFile(effoutput,"RECREATE"));
   }
 
-  //as specified by mariarosaria
-  const  int    nbinsx=60;
-  const  int    nbinsy=60;
-  const  double    lowx=0;
-  const  double    lowy=0;
-  const  double    highx=1500;
-  const  double    highy=1500;
-
+  //as specified by mariarosaria for T1bbbb
+  int    nbinsx=60;
+  int    nbinsy=60;
+  double    lowx=0;
+  double    lowy=0;
+  double    highx=1500;
+  double    highy=1500;
+  if ( sampleOfInterest.Contains("mSUGRA")) {
+    nbinsx=200;
+    nbinsy=100;
+    lowx=0;
+    lowy=0;
+    highx=2000;
+    highy=1000;
+  }
 
   for (unsigned int i=0; i<searchRegions_.size(); i++) {
     
@@ -865,6 +962,7 @@ void runSystematics2011_T1bbbb() {
     
     map<pair<int,int>, SignalEffData> SBLDP =  runTH2Syst2011_mSugra(sbRegions_[i],false,true,sampleOfInterest);
     map<pair<int,int>, SignalEffData> SIGLDP =  runTH2Syst2011_mSugra(searchRegions_[i],false,true,sampleOfInterest);
+
 
     for (map<pair<int,int>, SignalEffData >::iterator iscanpoint = SB.begin(); iscanpoint!= SB.end(); ++iscanpoint) {
       int nentries=   TMath::Nint(scanSMSngen->GetBinContent(scanSMSngen->FindBin(iscanpoint->first.first,iscanpoint->first.second ))); 
@@ -886,14 +984,26 @@ void runSystematics2011_T1bbbb() {
     TH2D btagError(hname,hname,nbinsx,lowx,highx,nbinsy,lowy,highy);
     hname="jesError_"; hname+=hsuffix;
     TH2D jesError(hname,hname,nbinsx,lowx,highx,nbinsy,lowy,highy);
+    hname="metError_"; hname+=hsuffix;
+    TH2D metError(hname,hname,nbinsx,lowx,highx,nbinsy,lowy,highy);
+    hname="pdfError_"; hname+=hsuffix;
+    TH2D pdfError(hname,hname,nbinsx,lowx,highx,nbinsy,lowy,highy);
+    hname="otherError_"; hname+=hsuffix;
+    TH2D otherError(hname,hname,nbinsx,lowx,highx,nbinsy,lowy,highy);
+
+    hname="totalSystematicError_"; hname+=hsuffix;
+    TH2D totalSystematicError(hname,hname,nbinsx,lowx,highx,nbinsy,lowy,highy);
     //she only cares about SIG
     for (map<pair<int,int>, SignalEffData>::iterator iscan=SIG.begin(); iscan!=SIG.end(); ++iscan) {
       double N = iscan->second.rawYield * iscan->second.effCorr ;
-      efficiency.SetBinContent( iscan->first.first, iscan->first.second, N/10000.0 );
-      statError.SetBinContent(  iscan->first.first, iscan->first.second, sqrt( N*(1-N/10000.0)) );
-      btagError.SetBinContent(  iscan->first.first, iscan->first.second, iscan->second.btagSystematic );
-      jesError.SetBinContent(  iscan->first.first, iscan->first.second, iscan->second.jesSystematic );
-
+      efficiency.Fill( iscan->first.first, iscan->first.second, N/10000.0 );
+      statError.Fill(  iscan->first.first, iscan->first.second, sqrt( N*(1-N/10000.0)) );
+      btagError.Fill(  iscan->first.first, iscan->first.second, iscan->second.btagSystematic );
+      jesError.Fill(  iscan->first.first, iscan->first.second, iscan->second.jesSystematic );
+      metError.Fill(  iscan->first.first, iscan->first.second, iscan->second.metSystematic );
+      pdfError.Fill(  iscan->first.first, iscan->first.second, iscan->second.pdfSystematic );
+      otherError.Fill(  iscan->first.first, iscan->first.second, iscan->second.otherSystematic );
+      totalSystematicError.Fill(iscan->first.first, iscan->first.second, iscan->second.totalSystematic );
     }
     rootfiles.at(i)->Write();
 
