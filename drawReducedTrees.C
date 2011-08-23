@@ -76,7 +76,7 @@ functionality for TH1F and TH1D e.g. the case of addOverflowBin()
 //TString dataInputPath = "/cu3/wteo/reducedTrees/V00-02-05_v3-pickevents/"; //includes MET cleaning but uses a tight skim (not good for plots)
 
 //for making the standard set of plots...need standard MC and all data.
-//TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-25_fullpf2pat/";//path for MC	     
+TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-25_fullpf2pat/";//path for MC	     
 TString dataInputPath = "/cu2/ra2b/reducedTrees/V00-02-25_fullpf2pat/";
 
 //for njet reweighting (needed because not all reducedTrees in nominal V00-02-25 have njets30)
@@ -85,7 +85,7 @@ TString dataInputPath = "/cu2/ra2b/reducedTrees/V00-02-25_fullpf2pat/";
 
 //for special tests and signal systematics
 //TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-25c_fullpf2pat/"; //LM9 with correct pdf weights
-TString inputPath = "/cu2/joshmt/reducedTrees/V00-02-25c_fullpf2pat/"; //with correct pdf weights
+//TString inputPath = "/cu2/joshmt/reducedTrees/V00-02-25c_fullpf2pat/"; //with correct pdf weights
 //TString inputPath = "/cu2/joshmt/mSUGRAdell/PART1/"; // 25% of the msugra sample
 //TString inputPath = "/home/joshmt/";//path for MC
 //TString dataInputPath = "/cu2/ra2b/reducedTrees/V00-02-24_fullpf2pat/"; //sym links to V00-02-05_v3
@@ -2058,6 +2058,8 @@ other.
   myC->GetPad(1)->Modified();
   myC->GetPad(2)->Modified();
   myC->cd(1);
+  renormBins(SIGplot,-1);
+  renormBins(SLplot,-1);
   SIGplot->Draw("HIST E");
   SLplot->Draw("HIST E SAME");
   TH1D* myRatio;
@@ -2070,7 +2072,8 @@ other.
   myRatio->SetMinimum(0);
   myRatio->SetMaximum(2);
   myRatio->GetYaxis()->SetNdivisions(200 + int(ratioMax-ratioMin)+1);    //set ticks ; to be seen if this really works
-  myRatio->GetYaxis()->SetLabelSize(0.15); //make y label bigger
+  myRatio->GetYaxis()->SetLabelSize(0.1); //make y label bigger
+  myRatio->GetXaxis()->SetLabelSize(0.1); //make y label bigger
   myC->cd(2);
   myRatio->Draw();
   TLine* myLine;
@@ -2092,8 +2095,8 @@ other.
   myLegend->SetTextFont(42);
   myLegend->SetFillStyle(0);
   myLegend->SetTextSize(0.04);
-  myLegend->AddEntry(SIGplot,"TTbar, SIG", "l");
-  myLegend->AddEntry(SLplot, "TTbar, SL", "l");
+  myLegend->AddEntry(SIGplot,"t#bar{t}, SIG", "l");
+  myLegend->AddEntry(SLplot, "t#bar{t}, SL", "l");
   myLegend->Draw();
   myC->Print("METshape_logAndRatio_"+sample+"_SLandStandard_"+btagselection+"_"+HTselection+".pdf");
 
@@ -2129,11 +2132,11 @@ void AN2011_r() {
 
   selection_ =TCut("cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1&&weight<1000")&&btagcut;
   setPlotMaximum(0.7); setPlotMinimum(0);
-  drawR("minDeltaPhi",0.3,15,50,350,"old_"+btagselection);
-  drawR("minDeltaPhiN",4,15,50,350,btagselection);
+  //drawR("minDeltaPhi",0.3,15,50,350,"old_"+btagselection);
+  //drawR("minDeltaPhiN",4,15,50,350,btagselection);
 
   selection_ ="cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && nbjetsSSVHPT==0&&weight<1000";
-  drawR("minDeltaPhiN",4,15,50,350,"eq0b");
+  //drawR("minDeltaPhiN",4,15,50,350,"eq0b");
 
   //now try drawing it in data
   //careful -- there is a bug in the drawR() implementation
@@ -2167,8 +2170,10 @@ void AN2011_r_SLreq() {
   setStackMode(false);
   doOverflowAddition(true);
   
+  
+  setPlotMaximum(0.5); setPlotMinimum(0);
+ 
   selection_ =TCut("cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1&&weight<1000")&&btagcut;
-  setPlotMaximum(0.7); setPlotMinimum(0);
   //drawR("minDeltaPhi",0.3,15,50,350,"old_"+btagselection);
   //drawR("minDeltaPhiN",4,15,50,350,btagselection);
 
@@ -2178,8 +2183,7 @@ void AN2011_r_SLreq() {
   const int nvarbins=13;
   const float varbins[]={0,15,30,45,80,110,140,170,200,230,260,290,320,350};
   selection_ ="cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && nbjetsSSVHPT==0&&weight<1000";
-  //drawR("minDeltaPhiN",4, "MET", nvarbins, varbins,"eq0b");
-
+  drawR("minDeltaPhiN",4, "MET", nvarbins, varbins,"eq0b");
 
 
   const int nvarbins1=9;
@@ -2188,8 +2192,9 @@ void AN2011_r_SLreq() {
   //drawR("minDeltaPhiN",4, "MET", nvarbins1, varbins1,"eq1b");
 
   selection_ ="cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && nbjetsSSVHPT>=1&&weight<1000";
-  //drawR("minDeltaPhiN",4, "MET", nvarbins1, varbins1,"ge1b");
-  drawR("minDeltaPhi",0.3, "MET", nvarbins, varbins,"old_ge1b");
+  drawR("minDeltaPhiN",4, "MET", nvarbins, varbins,"ge1b");
+  setPlotMaximum(5); setPlotMinimum(0);
+  //drawR("minDeltaPhi",0.3, "MET", nvarbins, varbins,"old_ge1b");
 
   const int nvarbins2=8;
   const float varbins2[]={0,15,30,45,75,125,175,225, 350};

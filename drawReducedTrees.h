@@ -343,6 +343,18 @@ void loadSusyScanHistograms() {
   loadedSusyHistos_=true;
 }
 
+void drawPlotHeaderInside() {
+  if (text1 != 0 ) delete text1;
+  text1 = new TLatex(3.570061,23.08044,"CMS Preliminary");
+  text1->SetNDC();
+  text1->SetTextAlign(13);
+  text1->SetX(0.5);
+  text1->SetY(.85);
+  text1->SetTextFont(42);
+  text1->SetTextSizePixels(24);
+  text1->Draw();
+}
+
 void drawPlotHeader() {
 
   const float ypos = 0.97;
@@ -357,7 +369,6 @@ void drawPlotHeader() {
   text1->SetTextFont(42);
   text1->SetTextSizePixels(24);
   text1->Draw();
-
 
   if (normalized_ == false) {
     TString astring;
@@ -474,9 +485,13 @@ TString renormBins( TH1D* hp, int refbin ) {
 
   if ( hp==0 ) return "PROBLEM";
 
-  double refbinwid = hp->GetBinLowEdge( refbin+1 ) - hp->GetBinLowEdge( refbin ) ;
-  if (!quiet_)  printf(" reference bin: [%6.1f,%6.1f], width = %6.3f\n",  hp->GetBinLowEdge( refbin ), hp->GetBinLowEdge( refbin+1 ), refbinwid ) ;
-  
+  double refbinwid = -99;
+  if(refbin=-1) refbinwid = 1.;
+  else {
+    refbin = hp->GetBinLowEdge( refbin+1 ) - hp->GetBinLowEdge( refbin ) ;
+    if (!quiet_)  printf(" reference bin: [%6.1f,%6.1f], width = %6.3f\n",  hp->GetBinLowEdge( refbin ), hp->GetBinLowEdge( refbin+1 ), refbinwid ) ;
+  }
+
   for ( int bi=1; bi<= hp->GetNbinsX(); bi++ ) {
     double binwid = hp->GetBinLowEdge( bi+1 ) - hp->GetBinLowEdge( bi ) ;
     double sf = refbinwid / binwid ;
@@ -908,7 +923,7 @@ void loadSamples(bool joinSingleTop=true) {
 
   //  configDescriptions_.push_back("SSVHPT");
   //  old btageff prescription
-/*
+
   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
 
@@ -935,9 +950,9 @@ void loadSamples(bool joinSingleTop=true) {
   //    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffdown");
   //    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffup");
   
-*/
 
 
+  /* //BEN
 
 //new btag eff prescription
    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
@@ -967,6 +982,7 @@ void loadSamples(bool joinSingleTop=true) {
   //    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEffdown");
   //    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEffup");
 
+  */
 
   //convention is that the [0] one should always be the "nominal" one while others are for systematics
   currentConfig_=configDescriptions_[0];
@@ -1555,6 +1571,8 @@ void drawSignificance(const TString & var, const int nbins, const float low, con
 //could add xtitle and ytitle
 void drawR(const TString vary, const float cutVal, const TString var, const int nbins, const float low, const float high, const TString& savename, const float* varbins=0) {
   const TString ytitle="N pass / N fail";
+  TString xtitle = var;
+  if(var=="MET") xtitle = "E_{T}^{miss} [GeV]"; 
   bool dataOnly = false;
 
   //const TString var = "MET"; //hardcoded for now
@@ -1685,13 +1703,20 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
     histos_[hnameR]->SetMarkerStyle(sampleMarkerStyle_[samples_[isample]]);
     histos_[hnameR]->SetMarkerColor(sampleColor_[samples_[isample]]);
     histos_[hnameR]->SetYTitle(ytitle);
-    histos_[hnameR]->SetXTitle(var);
+    histos_[hnameR]->SetXTitle(xtitle);
+    histos_[hnameR]->GetYaxis()->SetLabelSize(0.04); //make y label bigger
+    histos_[hnameR]->GetXaxis()->SetLabelSize(0.04); //make x label bigger
 
     //ad hoc additions
     histos_[hnameR]->SetLineWidth(2);
 
     //draw
     thecanvas->cd(1);
+    gPad->SetRightMargin(0.1);
+    gPad->Modified();
+
+    if(dodata_) drawPlotHeader();
+
     if (hnameR.Contains("QCD") && !dataOnly) { //HACK draw only qcd
       histos_[hnameR]->Draw(drawopt);
       if (!drawopt.Contains("same")) drawopt+=" same";
@@ -1699,6 +1724,8 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
       //hack to save
       //TH1D* hQCD = (TH1D*)histos_[hnameR]->Clone(savename+"_qcd");
       //hQCD->SaveAs(savename+"_qcd.root");
+     
+      //drawPlotHeaderInside(); //for qcd only plots, this works.
       
       if (firsthist="") firsthist = hnameR;
       if (histos_[hnameR]->GetMaximum() > max) max = histos_[hnameR]->GetMaximum();
@@ -1777,7 +1804,9 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
 
     thecanvas->cd(1);
     hdata->SetYTitle(ytitle);
-    hdata->SetXTitle(var);
+    hdata->SetXTitle(xtitle);
+    hdata->GetYaxis()->SetLabelSize(0.04); //make y label bigger
+    hdata->GetXaxis()->SetLabelSize(0.04); //make x label bigger
     if(dataOnly) hdata->Draw();
     else hdata->Draw("SAME");
     leg->AddEntry(hdata,"Data");
@@ -1803,6 +1832,8 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
     
     //    cratio->cd();
     thecanvas->cd(2);
+    gPad->SetRightMargin(0.1);
+    gPad->Modified();
     if (ratio!=0) delete ratio;
     if(!dataOnly){
       ratio = (varbins==0) ? new TH1D("ratio","data/(SM MC)",nbins,low,high) : new TH1D("ratio","data/(SM MC)",nbins,varbins);
@@ -1810,6 +1841,9 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
       ratio->Divide(hdata,totalsm); 
       ratio->SetMinimum(ratioMin);
       ratio->SetMaximum(ratioMax);
+      ratio->GetYaxis()->SetNdivisions(200 + int(ratioMax-ratioMin)+1);    //set ticks ; to be seen if this really works
+      ratio->GetYaxis()->SetLabelSize(0.1); //make y label bigger
+      ratio->GetXaxis()->SetLabelSize(0.1); //make x label bigger
       ratio->Draw();
     }
     cout<<"KS Test results (shape only): "<<hdata->KolmogorovTest(totalsm)<<endl;;
