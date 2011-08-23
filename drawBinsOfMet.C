@@ -182,6 +182,16 @@
   if (drawSIG)  leg.AddEntry(&Hhigh,"E_{T}^{miss} > 150 GeV");
   leg.Draw();
 
+  TLatex* text1=0;
+  text1 = new TLatex(3.570061,23.08044,"CMS Preliminary");
+  text1->SetNDC();
+  text1->SetTextAlign(13);
+  text1->SetX(0.45);
+  text1->SetY(.9);
+  text1->SetTextFont(42);
+  text1->SetTextSizePixels(24);
+  text1->Draw();
+
   if (doRatio) {
     Hratio.Divide(&Hmh,&Hlow);
     Hratio.SetLineWidth(2);
