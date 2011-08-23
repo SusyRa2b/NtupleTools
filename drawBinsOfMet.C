@@ -1,8 +1,9 @@
 //void plotSlices( const TCut btag = "nbjets>=1")
 {
-
-  //const TCut btag = "nbjetsSSVHPT>=1";
-  const TCut btag = "nbjetsSSVHPT>=2";
+  gROOT->SetStyle("CMS");
+  
+  const TCut btag = "nbjetsSSVHPT>=1";
+  //const TCut btag = "nbjetsSSVHPT>=2";
   //const TCut btag = "nbjetsSSVHPT==0";
   //const TCut btag = "nbjetsSSV0>=1";
 
@@ -100,6 +101,10 @@
   Hmed.SetLineColor(1);
   Hmh.SetLineColor(kRed);
   Hhigh.SetLineColor(6);
+  Hlow.SetMarkerColor(kBlue);
+  Hmed.SetMarkerColor(1);
+  Hmh.SetMarkerColor(kRed);
+  Hhigh.SetMarkerColor(6);
 
   float width=2.5;
   Hlow.SetLineWidth(width);
@@ -112,6 +117,8 @@
   if (drawMSB) pypu.Draw(var+">>Hmed",selection2);
   if (drawSB) pypu.Draw(var+">>Hmh",selection3);
   if (drawSIG) pypu.Draw(var+">>Hhigh",selection4);
+  gPad->SetRightMargin(0.1);
+  gPad->Modified();
 
   if (addOverflow) {
     Hlow.SetBinContent(nbins, Hlow.GetBinContent(nbins)+Hlow.GetBinContent(nbins+1));
@@ -143,7 +150,8 @@
   Hmh.SetYTitle(ytitle);
   Hmed.SetYTitle(ytitle);
   Hlow.SetYTitle(ytitle);
-  TString thetitle=btag.GetTitle();
+  //TString thetitle=btag.GetTitle();
+  TString thetitle="";
   //  thetitle += " (fail minDeltaPhi)";
   Hhigh.SetTitle(thetitle);
   Hmh.SetTitle(thetitle);
@@ -161,8 +169,13 @@
 //     Hhigh.GetXaxis()->SetRangeUser(0,2);
 //   }
 
-  TLegend leg(0.55,0.55,0.85,0.85);
+  TLegend leg(0.45,0.55,0.85,0.85);
   leg.SetFillColor(0);
+  leg.SetBorderSize(0);
+  leg.SetLineStyle(0);
+  leg.SetFillStyle(0);
+  leg.SetTextFont(42);
+  leg.SetTextSize(.04);
   if (drawLSB)  leg.AddEntry(&Hlow,"E_{T}^{miss} < 50 GeV");
   if (drawMSB)  leg.AddEntry(&Hmed,"50 < E_{T}^{miss} < 100 GeV");
   if (drawSB)   leg.AddEntry(&Hmh,"100 < E_{T}^{miss} < 150 GeV");
@@ -193,6 +206,8 @@
 //   cout<<"Hand chi^2 = "<<chi2<<endl;
 //   Hlow.Chi2Test(&Hmh,"WW p");
 
+
+  thecanvas->Print(var+".pdf");
 }
 
 // plotAll() {
