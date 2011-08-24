@@ -73,11 +73,11 @@ functionality for TH1F and TH1D e.g. the case of addOverflowBin()
 //V00-02-24_fullpf2pat was used for 13 Aug update of data results
 //stick with this version for now because 25 is missing one ZJets sample and that takes away one event from the LDP
 //TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-24_fullpf2pat/";//path for MC
-//TString dataInputPath = "/cu3/wteo/reducedTrees/V00-02-05_v3-pickevents/"; //includes MET cleaning but uses a tight skim (not good for plots)
+TString dataInputPath = "/cu3/wteo/reducedTrees/V00-02-05_v3-pickevents/"; //includes MET cleaning but uses a tight skim (not good for plots)
 
 //for making the standard set of plots...need standard MC and all data.
 TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-25_fullpf2pat/";//path for MC	     
-TString dataInputPath = "/cu2/ra2b/reducedTrees/V00-02-25_fullpf2pat/";
+//TString dataInputPath = "/cu2/ra2b/reducedTrees/V00-02-25_fullpf2pat/";
 
 //for njet reweighting (needed because not all reducedTrees in nominal V00-02-25 have njets30)
 //TString inputPath = "/cu2/ra2b/reducedTrees/benV00-02-25_fullpf2pat/";
@@ -1460,8 +1460,10 @@ void runDataQCD2011(const bool forOwen=false) {
 
 //i don't like passing the index instead of the region itself, but it makes some things easier.
 //this code is all around a big kludge...
-double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const TString & mode="" ) {
-  //in datamode, return the estimate; in non-datamode, return the Closure Test results (true-pred)/true
+double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const TString & mode="", const bool justttbar=false ) {
+  //in datamode, return the estimate; in non-datamode, return the Closure Test results (true-pred)/pred
+
+  if (justttbar == true) cout<<"Will run closure test in ttbar only mode!"<<endl;
 
   /*
 .L drawReducedTrees.C++
@@ -1562,8 +1564,10 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
   }
   else {
     addSample("TTbarJets");
-    addSample("WJets");
-    addSample("SingleTop");
+    if (!justttbar) {
+      addSample("WJets");
+      addSample("SingleTop");
+    }
   }
 
   //  TString sampleOfInterest = "PythiaPUQCD";
@@ -1658,7 +1662,7 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
   double num = (B-SBsubMisc-SBsubQCD-SBsubZ)*D;
   double estimate = num / A;
   double estimateerr= jmt::errAoverB(num,numerr,A,Aerr);
-  double closureStat= datamode? 0: jmt::errAoverB(estimate,estimateerr,SIG,SIGerr);
+  double closureStat= datamode? 0: jmt::errAoverB(SIG,SIGerr,estimate,estimateerr);
 
 
 //   cout<<" ==== "<<endl
@@ -1672,7 +1676,7 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
     sprintf(output,"%s & %s & %s & %s & %s & %s \\\\ %% %f ++ %f",btagselection.Data(),
 	    jmt::format_nevents(D,Derr).Data(),jmt::format_nevents(A,Aerr).Data(),
 	    jmt::format_nevents(B,Berr).Data(),jmt::format_nevents(estimate,estimateerr).Data(),
-	    jmt::format_nevents(SIG,SIGerr).Data(),100*(estimate-SIG)/SIG,100*closureStat);
+	    jmt::format_nevents(SIG,SIGerr).Data(),100*(estimate-SIG)/estimate,100*closureStat);
 
   }
   else {
@@ -1684,7 +1688,7 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
   cout<<output<<endl;
 
   if (datamode) return estimate;
-  return 100*sqrt(pow((SIG-estimate)/SIG,2) + pow(closureStat,2));
+  return 100*sqrt(pow((SIG-estimate)/estimate,2) + pow(closureStat,2));
 }
 
 void runSLClosureTest2011() {
@@ -1692,7 +1696,7 @@ void runSLClosureTest2011() {
   setSearchRegions();
 
   for (unsigned int j=0; j<searchRegions_.size();j++) slABCD(j);
-
+  cout<<"Note that this is the joint tt+W+t closure test only!"<<endl;
 }
 
 vector<double> ttbarClosureSyst;
@@ -1744,8 +1748,12 @@ void runTtbarEstimate2011(const bool forOwen=false) {
 
   //finally, run the closure test
   double closure[4];
-  cout<<"Running ttbar closure test"<<endl;
-  for (unsigned int j=0; j<searchRegions_.size();j++)   closure[j]=fabs(slABCD(j));
+  cout<<"Running closure tests"<<endl;
+  for (unsigned int j=0; j<searchRegions_.size();j++) {
+    double allsamples=fabs(slABCD(j)); //mix of samples
+    double ttbaronly=fabs(slABCD(j,false,"",true)); //just ttbar
+    closure[j] = (allsamples>ttbaronly) ? allsamples : ttbaronly;
+  }
 
   ttbarClosureSyst.clear();
   cout<<" == summary (%) == "<<endl;
