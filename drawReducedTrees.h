@@ -1943,6 +1943,12 @@ TString format_nevents(double n,double e) {
 typedef map<pair<int,int>, pair<double,double> > susyScanYields;
 TH2D* scanSMSngen=0;
 susyScanYields getSusyScanYields(const TString & sampleOfInterest,const int pdfindex=0, const TString & pdfset="") {
+  cout<<" ~~ begin slow version of getSusyScanYields()"<<endl;
+
+  /*
+this function was written to draw mSugra. It can also draw T1bbbb with no problem.
+The pdfindex and pdfset can also be specified, but it is not good for checking the whole mSugra plane because it is too slow
+  */
 
   if (sampleOfInterest.Contains("mSUGRA") ) assert(pdfset=="" && pdfindex==0); //just until i have time to think about it
 
@@ -1988,7 +1994,7 @@ most of it is irrelevant for SMS, but we'll use it anyway
     hname += i;
     raw0.push_back(new TH2D(hname,"raw event counts",nbinsx,lowx,highx,nbinsy,lowy,highy));
     raw0[i]->Sumw2();
-    TString thecut = sampleOfInterest.Contains("mSUGRA") ? getCutString(false,"","",0,"",false,i) : getCutString(kSMSPlane,"",selection_,"",pdfindex,pdfset);
+    TString thecut = sampleOfInterest.Contains("mSUGRA") ? getCutString(kmSugraPlane,"",selection_,"",pdfindex,pdfset,i) : getCutString(kSMSPlane,"",selection_,"",pdfindex,pdfset);
     thetree->Project(hname,drawstring,thecut.Data());
   }
 
@@ -2045,8 +2051,8 @@ most of it is irrelevant for SMS, but we'll use it anyway
 	int mgl=TMath::Nint(raw0[0]->GetXaxis()->GetBinLowEdge(i));
 	int mlsp=TMath::Nint(raw0[0]->GetYaxis()->GetBinLowEdge(j));
 	double nevents = raw0[0]->GetBinContent(raw0[0]->FindBin(mgl,mlsp));
-	//take this opportunity to throw out points that don't have ngen = 10000
-	if ( TMath::Nint(scanSMSngen->GetBinContent(scanSMSngen->FindBin(mgl,mlsp))) == 10000 ) {
+	//throw out points that have ngen too far from 10000
+	if ( TMath::Nint(scanSMSngen->GetBinContent(scanSMSngen->FindBin(mgl,mlsp))) >= 1000 ) {
 	  theYields[make_pair(mgl,mlsp)] = make_pair(nevents,0); //skip errors for now
 	}
       }
@@ -2059,14 +2065,15 @@ most of it is irrelevant for SMS, but we'll use it anyway
   }
 
   timer.Stop();
-  cout<<"CPU time = "<<timer.CpuTime()<<endl;
+  cout<<"[getSusyScanYields() (slow)] CPU time = "<<timer.CpuTime()<<endl;
 
   return theYields;
 }
 
 //sigh...looks like to use Luke's magic code i have to really go at this from scratch
+//this works for T1bbbb. Need to work on it to make it work for mSugra
 vector<susyScanYields> getSusyScanYields(const TString & sampleOfInterest,const TString & pdfset) {
-  assert(sampleOfInterest=="T1bbbb");
+  cout<<" ~~ begin fast version of getSusyScanYields()"<<endl;
   TStopwatch timer;
 
   vector<susyScanYields> theYields;
@@ -2091,7 +2098,8 @@ vector<susyScanYields> getSusyScanYields(const TString & sampleOfInterest,const 
   TString drawstring = vary+":"+varx;
 
   TTree* thetree = (TTree*) files_[currentConfig_][sampleOfInterest]->Get("reducedTree");
-  vector<TH2D*> raw0;
+  //key of the map is the susysubprocess. the vector is over the pdf weight indices
+  map<int, vector<TH2D*> > raw0;
   int npdfset=0;
   if (pdfset=="CTEQ") npdfset=44;
   else if (pdfset=="MSTW") npdfset =40;
@@ -2101,46 +2109,95 @@ vector<susyScanYields> getSusyScanYields(const TString & sampleOfInterest,const 
   //work luke's magic
   TSelectorMultiDraw* multiDraw = new TSelectorMultiDraw();
 
-  for (int i=0; i<=npdfset; i++) { //start at 0 instead of 1...i think that's right
-    TString hname="raw0_";
-    hname += i;
-    raw0.push_back(new TH2D(hname,"raw event counts",nbinsx,lowx,highx,nbinsy,lowy,highy));
-    raw0[i]->Sumw2();
-    TString thecut = sampleOfInterest.Contains("mSUGRA") ? getCutString(false,"","",0,"",false,i) : getCutString(kSMSPlane,"",selection_,"",i,pdfset);
-    //    thetree->Project(hname,drawstring,thecut.Data());
-    multiDraw->LoadVariables( TString(drawstring+">>"+hname).Data(), thecut.Data());
+  //for mSugra this is crazy. i need to loop over both pdf sets and subprocesses
+  const int nsubprocesses = sampleOfInterest.Contains("mSUGRA") ? 10 : 0;
+  for (int isusy=0; isusy<=nsubprocesses; isusy++) {
+    for (int ipdf=0; ipdf<=npdfset; ipdf++) { //start at 0 instead of 1...i think that's right
+      TString hname="raw0_";
+      hname += ipdf;
+      hname+="_";
+      hname+=isusy;
+      raw0[isusy].push_back(new TH2D(hname,"raw event counts",nbinsx,lowx,highx,nbinsy,lowy,highy));
+      raw0[isusy][ipdf]->Sumw2();
+      TString thecut = sampleOfInterest.Contains("mSUGRA") ? getCutString(kmSugraPlane,"",selection_,"",ipdf,pdfset,isusy) : getCutString(kSMSPlane,"",selection_,"",ipdf,pdfset);
+      multiDraw->LoadVariables( TString(drawstring+">>"+hname).Data(), thecut.Data());
+    }
   }
   Long64_t numberofentries = thetree->GetEntries();
   thetree->Process(multiDraw,"goff",numberofentries,0);
 
-  //valid for T1bbbb only (not mSugra)
 
   //copy the histograms into the data structure
   //kinda stupid to do this instead of just returning the histograms, but such is life
   for (int ipdf=0; ipdf<=npdfset; ipdf++) { //start at 0 instead of 1...i think that's right
     susyScanYields oneSetOfYields;
-    
-    for (int i=1; i<=nbinsx; i++) {
-      for (int j=1; j<=nbinsy; j++) {
-	int mgl=TMath::Nint(raw0[ipdf]->GetXaxis()->GetBinLowEdge(i));
-	int mlsp=TMath::Nint(raw0[ipdf]->GetYaxis()->GetBinLowEdge(j));
-	double nevents = raw0[ipdf]->GetBinContent(raw0[ipdf]->FindBin(mgl,mlsp));
-	//take this opportunity to throw out points that don't have ngen = 10000
-	if ( TMath::Nint(scanSMSngen->GetBinContent(scanSMSngen->FindBin(mgl,mlsp))) == 10000 ) {
-	  oneSetOfYields[make_pair(mgl,mlsp)] = make_pair(nevents,0); //skip errors for now
+
+    if (sampleOfInterest.Contains("mSUGRA")) {
+      //[for mSugra]
+      //at this point, each bin contains Npass_i * sigma_i for that (m0,m12)
+      //need to divide by N_i for each (m0,m12)
+      for (int i=0; i<=nsubprocesses; i++) {
+	for (map<pair<int,int>, TH1D* >::iterator iscanpoint = scanProcessTotalsMap.begin(); iscanpoint!=scanProcessTotalsMap.end(); ++iscanpoint) {
+	  int m0=iscanpoint->first.first;
+	  int m12=iscanpoint->first.second;
+	  TH1D* thishist = scanProcessTotalsMap[make_pair(m0,m12)];
+	  int thisn = TMath::Nint(thishist->GetBinContent(i));
+	  int bin=  raw0[i][ipdf]->FindBin(m0,m12);
+	  double N_i_thispoint = raw0[i][ipdf]->GetBinContent(bin);
+	  double err_i_thispoint = raw0[i][ipdf]->GetBinError(bin);
+	  if (thisn == 0) {
+	    if (N_i_thispoint > 0.0000001) cout<<"[new getSusyScanYields()] Possible problem: "<<m0<<" "<<m12<<" "<<i<<" "<<ipdf<<" "<< N_i_thispoint<<" "<<thisn<<endl;
+	    thisn=1; //prevent divide by zero
+	    N_i_thispoint = 0; 
+	  }
+	  N_i_thispoint /= thisn;
+	  err_i_thispoint /= thisn;
+	  raw0[i][ipdf]->SetBinContent(bin,N_i_thispoint);
+	  raw0[i][ipdf]->SetBinError(bin,err_i_thispoint);
+	}
+      }
+      //now we have Npass_i * sigma_i * lumi / Ngen_i 
+      //all that is left is to make the sum over i
+      for (map<pair<int,int>, TH1D* >::iterator iscanpoint = scanProcessTotalsMap.begin(); iscanpoint!=scanProcessTotalsMap.end(); ++iscanpoint) {
+	double Nraw = 0, errraw=0;
+	
+	int bin=  raw0[0][ipdf]->FindBin(iscanpoint->first.first , iscanpoint->first.second);
+	//since we're using a map, we could do an iterator loop here, but this works too
+	for (unsigned int i=0; i<raw0.size(); i++) { //we want the size of the *map* (number of susy subprocesses)
+	  Nraw += raw0[i][ipdf]->GetBinContent(bin);
+	  errraw += pow(raw0[i][ipdf]->GetBinError(bin),2);
+	}
+	//cout<<iscanpoint->first.first<<" "<<iscanpoint->first.second<<" "<<Nraw<< " +/- "<<sqrt(errraw)<<endl;
+	oneSetOfYields[iscanpoint->first] = make_pair(Nraw,sqrt(errraw));
+      }
+    }
+    else { //for T1bbbb and hopefully other samples that don't have the susy subprocesses 
+      for (int i=1; i<=nbinsx; i++) {
+	for (int j=1; j<=nbinsy; j++) {
+	  int mgl=TMath::Nint(raw0[0][ipdf]->GetXaxis()->GetBinLowEdge(i));
+	  int mlsp=TMath::Nint(raw0[0][ipdf]->GetYaxis()->GetBinLowEdge(j));
+	  double nevents = raw0[0][ipdf]->GetBinContent(raw0[0][ipdf]->FindBin(mgl,mlsp));
+	  if ( TMath::Nint(scanSMSngen->GetBinContent(scanSMSngen->FindBin(mgl,mlsp))) >= 1000 ) {
+	    oneSetOfYields[make_pair(mgl,mlsp)] = make_pair(nevents,0); //skip errors for now
+	  }
 	}
       }
     }
+
     theYields.push_back(oneSetOfYields);
   }
   timer.Stop();
-  cout<<"CPU time ("<<pdfset<<") = "<<timer.CpuTime()<<endl;
+  cout<<"[getSusyScanYields() (fast)] CPU time ("<<pdfset<<") = "<<timer.CpuTime()<<endl;
 
   //try to clean up
-  for (unsigned int i=0; i<raw0.size(); i++) {
-    delete raw0[i];
+  //need to fix this for the new data structure
+  for ( map<int, vector<TH2D*> >::iterator im = raw0.begin(); im!=raw0.end() ; ++im) {
+    for (unsigned int i=0; i<im->second.size(); i++) {
+      delete im->second[i];
+    }
   }
   delete multiDraw;
+  cout<<"[getSusyScanYields() (fast)] done with cleanup"<<endl;
 
   return theYields;
 
@@ -2157,7 +2214,7 @@ pair<susyScanYields,susyScanYields> doScanPDFUncertainties(const TString & sampl
   else assert(0);
 
   vector<susyScanYields> theYields;
-  if (sample=="T1bbbb") theYields=getSusyScanYields(sample,pdfset);
+  theYields=getSusyScanYields(sample,pdfset);
 
   //  pair<int,int> apoint=make_pair(375,100);
 //   for (unsigned int i=0; i<theYields.size(); i++) {
@@ -2174,6 +2231,9 @@ pair<susyScanYields,susyScanYields> doScanPDFUncertainties(const TString & sampl
   for (int i=1; i<=npdfset; i++) {
     //for the scans, the pdfWeight in the ntuple is already normalized properly
     //i filled element 0 of theYields on purpose so that I could skip it here
+
+    //this is old logic, which assumed that sometimes we would need to do the calculation one pdf index at a time
+    //no need to change it though
     susyScanYields cteq= theYields.empty() ?  getSusyScanYields(sample,i,pdfset) : theYields.at(i);
     if (pdfset=="NNPDF") { //for nnpdf, no need to split things up
       cteqXplus.push_back(cteq); 

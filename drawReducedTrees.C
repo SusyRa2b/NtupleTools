@@ -589,83 +589,6 @@ void runCountInBoxesMC() {
 
 
 
-/* 
-//test of Luke's MultiSelector. seems to work. commented out because it requires an extra library to be loaded
-void runSystematics2011_mSugra_Luke() {
-  TString sampleOfInterest="mSUGRAtanb40";
-  loadSamples();
-  clearSamples();
-  addSample(sampleOfInterest);
-
-  setSearchRegions();
-  loadSusyScanHistograms();
-
-  SearchRegion region = searchRegions_[0];
-  TString btagselection = region.btagSelection;
-  TCut HTcut=region.htSelection.Data(); 
-  TCut SRMET = region.metSelection.Data();
-  TCut bcut = "nbjetsSSVHPT>=1";
-  TString bweightstring="probge1";
-  if (btagselection=="ge2b") {
-    bcut="nbjetsSSVHPT>=2";
-    bweightstring="probge2";
-  }
-  else if (btagselection=="ge1b") {}
-  else if (btagselection=="ge3b") {
-    bcut="nbjetsSSVHPT>=3";
-    bweightstring="probge3"; //this one isn't calculated right now, i think
-  }
-  else {assert(0);}
-  TCut baseline = "cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1";
-  TCut passOther = "minDeltaPhiN>=4";
-  selection_ = baseline && HTcut && passOther && SRMET && bcut;
-  //critical to reset these!
-  usePUweight_=false;
-  useHLTeff_=false;
-  btagSFweight_="1";
-  currentConfig_=configDescriptions_[0]; //completely raw MC
-
-  TString var="HT"; TString xtitle=var;
-  int  nbins=1; float low=0; float high=1e9;
-  //ok, so can we draw 3000 of these histograms at once?
-  TSelectorMultiDraw* mSugraSelector = new TSelectorMultiDraw();
-
-  map<pair<int,int>,TH1D*> dummyHistMap;
-
-  //loop over the scan points
-  for (map<pair<int,int>, TH1D* >::iterator iscanpoint = scanProcessTotalsMap.begin(); iscanpoint!=scanProcessTotalsMap.end(); ++iscanpoint) {
-    
-    m0_=iscanpoint->first.first;  
-    m12_=iscanpoint->first.second;  
-
-    int nentries=    scanProcessTotalsMap[iscanpoint->first]->GetEntries();
-    cout<<m0_<<" "<<m12_<<" NEntries = "<<nentries<<endl;
-    if (nentries==0) continue;
-
-
-    TString histName = "dummyHist_";
-    histName += m0_;
-    histName += "_";
-    histName += m12_;
-    dummyHistMap[iscanpoint->first] = new TH1D(histName,histName,nbins,low,high);
-    //Putting this new histograms information into the TSelectorMultiDraw with the correct mSugra requirements
-    //                                Luke had a + here, but i'm not sure about that    
-    mSugraSelector->LoadVariables( TString(var+">>"+histName).Data(),getCutString(lumiScale_,"",selection_,"",0,"",true).Data() );
-    //note that the 'true' at the end is because this is an msugra scan
-    
-  }
-   
-  TTree* thetree = (TTree*) files_[currentConfig_][sampleOfInterest]->Get("reducedTree");
-  Long64_t nentries = thetree->GetEntries();
-  thetree->Process(mSugraSelector,"goff",nentries,0);
-
-  cout<<" == begin results =="<<endl;
-  for (map<pair<int,int>, TH1D* >::iterator iscanpoint = dummyHistMap.begin(); iscanpoint!=dummyHistMap.end(); ++iscanpoint) {
-    cout<<iscanpoint->first.first<<" "<<iscanpoint->first.second<<" "<<iscanpoint->second->Integral()<<endl;
-  }
-
-}
-*/
 
 //much more efficienct signal efficiency systematics calculation for mSugra
 //in progress of generalizing for SMS scans
@@ -894,7 +817,7 @@ Lepton veto  - 2%
       const double lumiunc = 0.045;
       const double hltunc = 0.025; //use 2.5%
       const double jerunc = 0.02;
-      const double miscunc = sqrt(0.01*0.01 + 0.01*0.01+ 0.02*0.02); //need some other misc stuff -- inefficiencies from cleaning, L2L3 thing
+      const double miscunc = sqrt(0.01*0.01 + 0.01*0.01+ 0.02*0.02); //need some other misc stuff -- inefficiencies from cleaning, L2L3 thing, lepton veto
 
       theseResults.otherSystematic = sqrt( lumiunc*lumiunc + hltunc*hltunc + jerunc*jerunc + miscunc*miscunc +puunc*puunc);
 
@@ -996,8 +919,11 @@ void runSystematics2011_T1bbbb(/*unsigned int i*/) {
     //she only cares about SIG
     for (map<pair<int,int>, SignalEffData>::iterator iscan=SIG.begin(); iscan!=SIG.end(); ++iscan) {
       double N = iscan->second.rawYield * iscan->second.effCorr ;
-      efficiency.Fill( iscan->first.first, iscan->first.second, N/10000.0 );
-      statError.Fill(  iscan->first.first, iscan->first.second, sqrt( N*(1-N/10000.0)) );
+
+      double ngen=  TMath::Nint(scanSMSngen->GetBinContent(scanSMSngen->FindBin(iscan->first.first,iscan->first.second ))); 
+
+      efficiency.Fill( iscan->first.first, iscan->first.second, N/ngen );
+      statError.Fill(  iscan->first.first, iscan->first.second, sqrt( N*(1-N/ngen)) );
       btagError.Fill(  iscan->first.first, iscan->first.second, iscan->second.btagSystematic );
       jesError.Fill(  iscan->first.first, iscan->first.second, iscan->second.jesSystematic );
       metError.Fill(  iscan->first.first, iscan->first.second, iscan->second.metSystematic );
@@ -1015,7 +941,9 @@ void runSystematics2011_T1bbbb(/*unsigned int i*/) {
 }
 
 //run mSugra systematics in the efficient way
-void runSystematics2011_mSugra() {
+void runSystematics2011_mSugra(const unsigned int i) {
+  //add index i argument to define the search region we're interested in.
+
   TString sampleOfInterest="mSUGRAtanb40";
   loadSamples();
   clearSamples();
@@ -1026,16 +954,18 @@ void runSystematics2011_mSugra() {
   //  runTH2Syst2011_mSugra(searchRegions_[0]);
   //    return;
 
+  if (i>=searchRegions_.size() ) { cout<<"There are only "<<searchRegions_.size()<<" search regions!"<<endl; return;}
+
 
   //open the output files
   vector<ofstream*> textfiles;
-  for (unsigned int i=0; i<searchRegions_.size(); i++) {
+  //  for (unsigned int i=0; i<searchRegions_.size(); i++) {
     char effoutput[500];
     sprintf(effoutput,"signalSyst.%s.%s%s.dat",sampleOfInterest.Data(),searchRegions_[i].btagSelection.Data(),searchRegions_[i].owenId.Data());
     textfiles.push_back( new ofstream(effoutput));
-  }
+    //  }
 
-  for (unsigned int i=0; i<searchRegions_.size(); i++) {
+    //  for (unsigned int i=0; i<searchRegions_.size(); i++) {
     
     map<pair<int,int>, SignalEffData> SB =  runTH2Syst2011_mSugra(sbRegions_[i],false,false,sampleOfInterest);
     map<pair<int,int>, SignalEffData> SIG =  runTH2Syst2011_mSugra(searchRegions_[i],false,false,sampleOfInterest);
@@ -1050,16 +980,16 @@ void runSystematics2011_mSugra() {
     for (map<pair<int,int>, TH1D* >::iterator iscanpoint = scanProcessTotalsMap.begin(); iscanpoint!=scanProcessTotalsMap.end(); ++iscanpoint) {
       int nentries=    scanProcessTotalsMap[iscanpoint->first]->GetEntries();
       cout<<iscanpoint->first.first<<" "<<iscanpoint->first.second<<" NEntries = "<<nentries<<endl;
-      (*textfiles[i])<<iscanpoint->first.first <<" "<<iscanpoint->first.second <<" "<<nentries<<" "
+      (*textfiles[0])<<iscanpoint->first.first <<" "<<iscanpoint->first.second <<" "<<nentries<<" "
 		     <<SIG[iscanpoint->first].rawYield<<" "<<SB[iscanpoint->first].rawYield<<" "<<SIGSL[iscanpoint->first].rawYield<<" "<<SBSL[iscanpoint->first].rawYield<<" "<<SIGLDP[iscanpoint->first].rawYield<<" "<<SBLDP[iscanpoint->first].rawYield<<" "
 		     <<SIG[iscanpoint->first].effCorr<<" "<<SB[iscanpoint->first].effCorr<<" "<<SIGSL[iscanpoint->first].effCorr<<" "<<SBSL[iscanpoint->first].effCorr<<" "<<SIGLDP[iscanpoint->first].effCorr<<" "<<SBLDP[iscanpoint->first].effCorr<<" "
 		     <<SIG[iscanpoint->first].totalSystematic<<" "<<SB[iscanpoint->first].totalSystematic<<" "<<SIGSL[iscanpoint->first].totalSystematic<<" "<<SBSL[iscanpoint->first].totalSystematic<<" "<<SIGLDP[iscanpoint->first].totalSystematic<<" "<<SBLDP[iscanpoint->first].totalSystematic<<endl;
     }
-  }
+    //  }
 
-  for (unsigned int i=0; i<searchRegions_.size(); i++) {
-    textfiles.at(i)->close();
-  }
+    //  for (unsigned int i=0; i<searchRegions_.size(); i++) {
+    textfiles.at(0)->close();
+    //  }
 
 }
 
