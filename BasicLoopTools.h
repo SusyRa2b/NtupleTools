@@ -21,6 +21,7 @@
 #include <fstream>
 #include <typeinfo>
 
+#include "MiscUtil.cxx"
 #include "TGraphAsymmErrors.h"
 #include "TH1.h"
 
@@ -578,6 +579,7 @@ void checkConsistency() {
   if (theScanType_!=kNotScan && sampleName_.Contains("LM")) {cout<<"LM point is not a scan! Check theScanType_!"<<endl; assert(0);}
   if (theScanType_!=kmSugra && sampleName_.Contains("SUGRA")) {cout<<"mSugra is a scan! Check theScanType_!"<<endl; assert(0);}
   if (theScanType_!=kSMS && sampleName_.Contains("T1bbbb")) {cout<<"T1bbbb is a scan! Check theScanType_!"<<endl; assert(0);}
+  if (theScanType_!=kSMS && sampleName_.Contains("T2bb")) {cout<<"T2bb is a scan! Check theScanType_!"<<endl; assert(0);}
 
 }
 
@@ -927,6 +929,9 @@ double getScanCrossSection( SUSYProcess p, const TString & variation ) {
 
 //this would need the isMC flag too....
 double getSMSScanCrossSection( const double mgluino) {
+
+  return 1; //FIXME need to implement T2bb etc
+
   double sigma=0;
 
   if (theScanType_==kSMS) {
@@ -1173,6 +1178,15 @@ unsigned int utilityHLT_HT300_CentralJet30_BTagIP(){
   return passTrig;
 }
 
+double checkPdfWeightSanity( double a) {
+
+  if ( std::isnan(a) ) {cout<<"Found PDF NaN!"<<endl; return 1;}
+  if ( a<0 ) return 1;
+  if ( a>10) return 1; //i'm not sure if this is a good idea at all, nor do i know what threshold to set
+
+  return a;
+}
+
 void getPdfWeights(const TString & pdfset, Float_t * pdfWeights, TH1D * sumofweights) {
 
 #ifdef isMC
@@ -1196,16 +1210,16 @@ void getPdfWeights(const TString & pdfset, Float_t * pdfWeights, TH1D * sumofwei
   for (unsigned int i=0; i<s ; i++) {
     //for data, and for all samples other than signal, just store 1 (to save space via compression)
     if ( isRealDataInt(myEDM_isRealData) 
-	 || !( sampleName_.Contains("LM") || sampleName_.Contains("SUGRA")||sampleName_.Contains("T1bbbb")  )
+	 || !( sampleName_.Contains("LM") || sampleName_.Contains("SUGRA")||sampleName_.Contains("T1bbbb") ||sampleName_.Contains("T2bb") )
 	 ) {pdfWeights[i]=1; }
     else if ( pdfset=="CTEQ") {
-      pdfWeights[i] = geneventinfoproducthelper1.at(i).pdfweight;
+      pdfWeights[i] = checkPdfWeightSanity( geneventinfoproducthelper1.at(i).pdfweight);
     }
     else if (pdfset=="MSTW") {
-      pdfWeights[i] = geneventinfoproducthelper2.at(i).pdfweight;
+      pdfWeights[i] = checkPdfWeightSanity(geneventinfoproducthelper2.at(i).pdfweight);
     }
     else if (pdfset=="NNPDF") {
-      pdfWeights[i] = geneventinfoproducthelper.at(i).pdfweight;
+      pdfWeights[i] = checkPdfWeightSanity(geneventinfoproducthelper.at(i).pdfweight);
     }
     else {assert(0);}
     sumofweights->SetBinContent(i+1, sumofweights->GetBinContent(i+1) + pdfWeights[i]);
@@ -3016,9 +3030,18 @@ void getTransverseThrustVariables(float & thrust, float & thrustPhi, bool addMET
 }
 
 //event shape variables from Luke
+bool printedWarning_=false;
 void getSphericityJetMET(float & lambda1, float & lambda2, float & det,
 				    const int jetmax, bool addMET) {
 
+  //dirty hack to save CPU cycles!
+  if (theScanType_==kSMS) {
+    if (!printedWarning_) { cout<<"WARNING: event shape variables disabled!"<<endl; printedWarning_=true;}
+    lambda1=0;
+    lambda2=0;
+    det=0;
+    return;
+  }
 
   TMatrixD top3Jets(2,2);
   double top3JetsScale = 0;
@@ -3190,8 +3213,43 @@ void resetRequiredCut() {
   requiredCut_.clear();
 }
 
+ifstream * T1bbbbMassFile=0;
+map< jmt::eventID, pair<int,int> > T1bbbbMasses;
+pair<int,int> get_T1bbbbMass() {
+
+  if ( T1bbbbMassFile==0) {
+    T1bbbbMassFile = new ifstream("/home/joshmt/Mgluinorun.txt"); //input file for T1bbbb from Chris of Colorado
+
+    ULong64_t run,ls,ev;
+    int mgl,mlsp;
+    while ((*T1bbbbMassFile)>>run>>ls>>ev>>mgl>>mlsp) {
+      jmt::eventID evid(run,ls,ev);
+      if (T1bbbbMasses.count(evid) !=0) cout<<"Problem while reading in T1bbbb masses. I already have this event!"<<endl;
+      T1bbbbMasses[evid] = make_pair(mgl,mlsp);
+    }
+    cout<<"Loaded masses for "<<T1bbbbMasses.size()<<" events!"<<endl;
+  }
+
+  jmt::eventID thisevent(TMath::Nint(*myEDM_run), TMath::Nint(*myEDM_luminosityBlock),TMath::Nint(*myEDM_event) );
+
+  if (T1bbbbMasses.count( thisevent) ==0) {
+    cout<<"Problem in T1bbbb masses! This event not found!"<<endl;
+    assert(0);
+  }
+
+  return T1bbbbMasses[thisevent];
+
+}
+
+pair<int,int> getSMSmasses() {
+  assert(theScanType_==kSMS);
+  if (sampleName_.Contains("T2bb")) return make_pair( TMath::Nint(eventlhehelperextra_mGL), TMath::Nint(eventlhehelperextra_mLSP));
+  else if (sampleName_.Contains("T1bbbb")) return get_T1bbbbMass();
 
 
+  assert(0);
+  return make_pair(0,0);
+}
 
 bool cutRequired(const TString cutTag) { //should put an & in here to improve performance
 
@@ -3316,8 +3374,9 @@ double getCrossSection(TString inname){
   if (inname.Contains("ZJetsToNuNu_200_HT_inf_7TeV-madgraph"))                  return 32.92 * 1.28; //confirmed with Colorado
    
   if (inname.Contains("mSUGRA")) return 1; //NLO cross sections will be specially stored per point
-  if (inname.Contains("T1bbbb")) return 1; //NLO cross sections will be specially stored per point
- 
+  if (inname.Contains("T1bbbb")) return 1;
+  if (inname.Contains("T2bb")) return 1;
+
   std::cout<<"Cannot find cross section for this sample!"<<std::endl;
   assert(0); 
   return -1;
@@ -3384,6 +3443,7 @@ TString getSampleNameOutputString(TString inname){
 
   if (inname.Contains("mSUGRA_tanb40_summer11"))                                return inname;
   if (inname.Contains("T1bbbb"))                                                return inname; //what i want to do here depends on whether the sample needs to be split or not
+  if (inname.Contains("T2bb"))                                                  return inname;
 
   //if it isn't found, just use the full name 
   //  -- data will fall into this category, which is fine because we have to hadd the files after anyway
@@ -3409,6 +3469,7 @@ double getWeight(Long64_t nentries) {
 bool noPUWeight(TString inname){
 
   if (inname.Contains("T1bbbb"))                                                return true;
+  if (inname.Contains("T2bb"))                                                return true; //dunno if it has PU weights or not
 
   //Summer11 QCD
   if (inname.Contains("qcd_tunez2_pt0to5_summer11") )                           return true;
@@ -4031,10 +4092,12 @@ void reducedTree(TString outputpath, itreestream& stream)
 
   /*
     i can't find a way out of looping over events twice...especially bad for mSugra :-(
+
+    another thing...for mSugra I think we should normalize over each subprocess....so make these guys into maps?
   */
-  map<pair<int,int>, vector<double> > scanPdfWeightsCTEQ;
-  map<pair<int,int>, vector<double> > scanPdfWeightsMSTW;
-  map<pair<int,int>, vector<double> > scanPdfWeightsNNPDF;
+  map<SUSYProcess, map<pair<int,int>, vector<double> > > scanPdfWeightsCTEQ;
+  map<SUSYProcess, map<pair<int,int>, vector<double> > > scanPdfWeightsMSTW;
+  map<SUSYProcess, map<pair<int,int>, vector<double> > > scanPdfWeightsNNPDF;
   if (theScanType_ != kNotScan) {
     for(int entry=0; entry < nevents; ++entry) {
       // Read event into memory
@@ -4042,23 +4105,25 @@ void reducedTree(TString outputpath, itreestream& stream)
       fillObjects();
       if(entry%100000==0) cout << "[pdf loop]  entry: " << entry << ", percent done=" << (int)(entry/(double)nevents*100.)<<  endl;
 
+      SUSYProcess thisprocess = (theScanType_==kmSugra) ? getSUSYProcess() : NotFound;
+
       pair<int,int> thispoint;
       if (theScanType_==kmSugra)  thispoint=make_pair(TMath::Nint(eventlhehelperextra_m0),TMath::Nint(eventlhehelperextra_m12)) ;
-      else if (theScanType_==kSMS) thispoint=make_pair(TMath::Nint(eventlhehelperextra_mGL),TMath::Nint(eventlhehelperextra_mLSP)); 
+      else if (theScanType_==kSMS) thispoint=getSMSmasses(); 
       //CTEQ
       for (unsigned int i=0; i<  geneventinfoproducthelper1.size(); i++) {
-	if (scanPdfWeightsCTEQ[thispoint].empty()) scanPdfWeightsCTEQ[thispoint].assign(45,0);
-	scanPdfWeightsCTEQ[thispoint][i] += geneventinfoproducthelper1.at(i).pdfweight;
+	if (scanPdfWeightsCTEQ[thisprocess][thispoint].empty()) scanPdfWeightsCTEQ[thisprocess][thispoint].assign(45,0);
+	scanPdfWeightsCTEQ[thisprocess][thispoint][i] += checkPdfWeightSanity(geneventinfoproducthelper1.at(i).pdfweight);
       }
       //MSTW
       for (unsigned int i=0; i<  geneventinfoproducthelper2.size(); i++) {
-	if (scanPdfWeightsMSTW[thispoint].empty()) scanPdfWeightsMSTW[thispoint].assign(41,0);
-	scanPdfWeightsMSTW[thispoint][i] += geneventinfoproducthelper2.at(i).pdfweight;
+	if (scanPdfWeightsMSTW[thisprocess][thispoint].empty()) scanPdfWeightsMSTW[thisprocess][thispoint].assign(41,0);
+	scanPdfWeightsMSTW[thisprocess][thispoint][i] += checkPdfWeightSanity(geneventinfoproducthelper2.at(i).pdfweight);
       }
       //NNPDF
       for (unsigned int i=0; i<  geneventinfoproducthelper.size(); i++) {
-	if (scanPdfWeightsNNPDF[thispoint].empty()) scanPdfWeightsNNPDF[thispoint].assign(100,0);
-	scanPdfWeightsNNPDF[thispoint][i] += geneventinfoproducthelper.at(i).pdfweight;
+	if (scanPdfWeightsNNPDF[thisprocess][thispoint].empty()) scanPdfWeightsNNPDF[thisprocess][thispoint].assign(100,0);
+	scanPdfWeightsNNPDF[thisprocess][thispoint][i] += checkPdfWeightSanity(geneventinfoproducthelper.at(i).pdfweight);
       }
     }
   }
@@ -4086,7 +4151,7 @@ void reducedTree(TString outputpath, itreestream& stream)
 #else
     pair<int,int> thispoint;
     if (theScanType_==kmSugra)  thispoint=make_pair(TMath::Nint(eventlhehelperextra_m0),TMath::Nint(eventlhehelperextra_m12)) ;
-    else if (theScanType_==kSMS) thispoint=make_pair(TMath::Nint(eventlhehelperextra_mGL),TMath::Nint(eventlhehelperextra_mLSP)); 
+    else if (theScanType_==kSMS) thispoint=getSMSmasses();
     else thispoint=make_pair(0,0);
 
     if (thispoint != lastpoint) {
@@ -4125,17 +4190,31 @@ void reducedTree(TString outputpath, itreestream& stream)
            
       //if (entry%1000000==0) checkTimer(entry,nevents);
       weight = getWeight(nevents);
-      
+
       if (theScanType_ != kNotScan) {
-	for ( unsigned int j=0; j<scanPdfWeightsCTEQ[thispoint].size(); j++) {
+	//for T1bbbb, prodprocess will always be NotFound
+	for ( unsigned int j=0; j<scanPdfWeightsCTEQ[prodprocess][thispoint].size(); j++) {
 	  //this event's weight divided by the sum of the weights
-	  pdfWeightsCTEQ[j] = geneventinfoproducthelper1.at(j).pdfweight / scanPdfWeightsCTEQ[thispoint][j];
+	  if (scanPdfWeightsCTEQ[prodprocess][thispoint][j] == 0) {
+	    cout<<"Something screwy in CTEQ weights!"<<endl;
+	    assert(0);
+	  }
+	  pdfWeightsCTEQ[j] = scanPdfWeightsCTEQ[prodprocess][thispoint][0]*checkPdfWeightSanity(geneventinfoproducthelper1.at(j).pdfweight) / scanPdfWeightsCTEQ[prodprocess][thispoint][j];
 	}
-	for ( unsigned int j=0; j<scanPdfWeightsMSTW[thispoint].size(); j++) {
-	  pdfWeightsMSTW[j] = geneventinfoproducthelper2.at(j).pdfweight / scanPdfWeightsMSTW[thispoint][j];
+	for ( unsigned int j=0; j<scanPdfWeightsMSTW[prodprocess][thispoint].size(); j++) {
+	  if (scanPdfWeightsMSTW[prodprocess][thispoint][j] == 0) {
+	    cout<<"Something screwy in MSTW weights!"<<endl;
+	    assert(0);
+	  }
+
+	  pdfWeightsMSTW[j] = scanPdfWeightsMSTW[prodprocess][thispoint][0]*checkPdfWeightSanity(geneventinfoproducthelper2.at(j).pdfweight) / scanPdfWeightsMSTW[prodprocess][thispoint][j];
 	}
-	for ( unsigned int j=0; j<scanPdfWeightsNNPDF[thispoint].size(); j++) {
-	  pdfWeightsNNPDF[j] = geneventinfoproducthelper.at(j).pdfweight / scanPdfWeightsNNPDF[thispoint][j];
+	for ( unsigned int j=0; j<scanPdfWeightsNNPDF[prodprocess][thispoint].size(); j++) {
+	  if (scanPdfWeightsNNPDF[prodprocess][thispoint][j] == 0) {
+	    cout<<"Something screwy in NNPDF weights!"<<endl;
+	    assert(0);
+	  }
+	  pdfWeightsNNPDF[j] = scanPdfWeightsNNPDF[prodprocess][thispoint][0]*checkPdfWeightSanity(geneventinfoproducthelper.at(j).pdfweight) / scanPdfWeightsNNPDF[prodprocess][thispoint][j];
 	}
       }
       
