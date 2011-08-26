@@ -798,6 +798,7 @@ void setColorScheme(const TString & name) {
     sampleColor_["LM9"] =kGray;
     sampleColor_["mSUGRAtanb40"] =kGray;
     sampleColor_["T1bbbb"] =kGray;
+    sampleColor_["T2bb"] =kGray;
     sampleColor_["QCD"] = kYellow;
     sampleColor_["PythiaQCD"] = kYellow;
     sampleColor_["PythiaPUQCD"] = kYellow;
@@ -821,6 +822,7 @@ void setColorScheme(const TString & name) {
     sampleColor_["LM9"] = kCyan+2;
     sampleColor_["mSUGRAtanb40"] =kCyan+2;
     sampleColor_["T1bbbb"] =kCyan+2;
+    sampleColor_["T2bb"] =kCyan+2;
     sampleColor_["QCD"] = 2;
     sampleColor_["PythiaQCD"] = 2;
     sampleColor_["PythiaPUQCD"] =2;
@@ -920,6 +922,7 @@ void loadSamples(bool joinSingleTop=true) {
 
   samplesAll_.insert("mSUGRAtanb40");
   samplesAll_.insert("T1bbbb");
+  samplesAll_.insert("T2bb");
 
   //  configDescriptions_.push_back("SSVHPT");
   //  old btageff prescription
@@ -993,6 +996,7 @@ void loadSamples(bool joinSingleTop=true) {
 
   sampleLabel_["mSUGRAtanb40"] = "tan #beta = 40";
   sampleLabel_["T1bbbb"] = "T1bbbb";
+  sampleLabel_["T2bb"] = "T2bb";
   sampleLabel_["LM13"] = "LM13";
   sampleLabel_["LM9"] = "LM9";
   sampleLabel_["QCD"] = "QCD (madgraph)";
@@ -1015,6 +1019,7 @@ void loadSamples(bool joinSingleTop=true) {
 
   sampleMarkerStyle_["mSUGRAtanb40"] = kFullStar;
   sampleMarkerStyle_["T1bbbb"] = kFullStar;
+  sampleMarkerStyle_["T2bb"] = kFullStar;
   sampleMarkerStyle_["LM13"] = kFullStar;
   sampleMarkerStyle_["LM9"] = kFullStar;
   sampleMarkerStyle_["QCD"] = kFullCircle;
@@ -1037,6 +1042,7 @@ void loadSamples(bool joinSingleTop=true) {
 
   sampleOwenName_["mSUGRAtanb40"] = "msugra40";
   sampleOwenName_["T1bbbb"] = "t1bbbb";
+  sampleOwenName_["T2bb"] = "t2bb";
   sampleOwenName_["LM13"] = "lm13";
   sampleOwenName_["LM9"] = "lm9";
   sampleOwenName_["QCD"] = "qcd";
@@ -1099,6 +1105,8 @@ sampleType getSampleType(const TString & sample , const TString & planeOrPoint="
   else if (sample.Contains("mSUGRA") && planeOrPoint=="plane") return kmSugraPlane;
   else if (sample.Contains("T1bbbb") && planeOrPoint=="point") return kSMSPoint;
   else if (sample.Contains("T1bbbb") && planeOrPoint=="plane") return kSMSPlane;
+  else if (sample.Contains("T2bb") && planeOrPoint=="point") return kSMSPoint;
+  else if (sample.Contains("T2bb") && planeOrPoint=="plane") return kSMSPlane;
 
   return kMC;
 
@@ -1971,7 +1979,7 @@ most of it is irrelevant for SMS, but we'll use it anyway
   TString vary="m12"; TString ytitle=vary;
   int  nbinsy=110; float lowy=-0.5; float highy=1100-0.5;
 
-  if (sampleOfInterest== "T1bbbb") { //change binning
+  if (sampleOfInterest== "T1bbbb" || sampleOfInterest== "T2bb") { //change binning
     //m0 -> mGl
     //m12 -> mLSP
     if (scanSMSngen==0) scanSMSngen = (TH2D*) files_[currentConfig_][sampleOfInterest]->Get("scanSMSngen");
@@ -2084,7 +2092,7 @@ vector<susyScanYields> getSusyScanYields(const TString & sampleOfInterest,const 
 
   TString vary="m12"; TString ytitle=vary;
   int  nbinsy=110; float lowy=-0.5; float highy=1100-0.5;
-  if (sampleOfInterest== "T1bbbb") { //change binning
+  if (sampleOfInterest== "T1bbbb" || sampleOfInterest== "T2bb") { //change binning
     //m0 -> mGl
     //m12 -> mLSP
     if (scanSMSngen==0) scanSMSngen = (TH2D*) files_[currentConfig_][sampleOfInterest]->Get("scanSMSngen");
