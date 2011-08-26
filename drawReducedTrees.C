@@ -104,7 +104,7 @@ SignalEffData signalSystematics2011(const SearchRegion & region, bool isSL=false
   useFlavorHistoryWeights_=false;
   loadSamples(); //needs to come first! this is why this should be turned into a class, with this guy in the ctor
 
-  //  assert(configDescriptions_.size() == 14); //to avoid stupid mistakes on LM9
+  assert(configDescriptions_.size() == 12); //to avoid stupid mistakes on LM9 (no more HLT eff)
 
   dodata_=false;
   savePlots_ =false;
@@ -278,7 +278,7 @@ configDescriptions_[1] is with JERbias
     //then get the yield after cuts with extra weight pdfWeights[i]/sum
     TH1D pdfEventCounter("pdfEventCounter","pdfEventCounter",1,0,1e9);
     pdfEventCounter.Sumw2();
-    if (sampleOfInterest!="T1bbbb")    thetree->Project("pdfEventCounter","HT",getCutString(false, "",extraWeight,i,"CTEQ").Data());
+    if (sampleOfInterest!="T1bbbb"&&sampleOfInterest!="T2bb")    thetree->Project("pdfEventCounter","HT",getCutString(false, "",extraWeight,i,"CTEQ").Data());
     else      thetree->Project("pdfEventCounter","HT",getCutString(kSMSPoint,"",selection_,"",i,"CTEQ").Data());
     if (i%2==0) {
       Xminus[(i-2)/2] = pdfEventCounter.Integral();
@@ -335,7 +335,7 @@ configDescriptions_[1] is with JERbias
     //then get the yield after cuts with extra weight pdfWeights[i]/sum
     TH1D pdfEventCounter("pdfEventCounter","pdfEventCounter",1,0,1e9);
     pdfEventCounter.Sumw2();
-    if (sampleOfInterest!="T1bbbb")    thetree->Project("pdfEventCounter","HT",getCutString(false, "",extraWeight,i,"MSTW").Data());
+    if (sampleOfInterest!="T1bbbb"&&sampleOfInterest!="T2bb")    thetree->Project("pdfEventCounter","HT",getCutString(false, "",extraWeight,i,"MSTW").Data());
     else      thetree->Project("pdfEventCounter","HT",getCutString(kSMSPoint,"",selection_,"",i,"MSTW").Data());
     //    thetree->Project("pdfEventCounter","HT",getCutString(false, "",extraWeight,i,"MSTW").Data());
     if (i%2==0) {
@@ -384,7 +384,7 @@ configDescriptions_[1] is with JERbias
       TH1D pdfEventCounter("pdfEventCounter","pdfEventCounter",1,0,1e9);
       pdfEventCounter.Sumw2();
       //      thetree->Project("pdfEventCounter","HT",getCutString(false, "",extraWeight,i,"NNPDF").Data());
-      if (sampleOfInterest!="T1bbbb")    thetree->Project("pdfEventCounter","HT",getCutString(false, "",extraWeight,i,"NNPDF").Data());
+      if (sampleOfInterest!="T1bbbb"&&sampleOfInterest!="T2bb")    thetree->Project("pdfEventCounter","HT",getCutString(false, "",extraWeight,i,"NNPDF").Data());
       else      thetree->Project("pdfEventCounter","HT",getCutString(kSMSPoint,"",selection_,"",i,"NNPDF").Data());
       cout<<"    yield = "<<pdfEventCounter.Integral()<<endl;
       nnpdfYields.Fill(pdfEventCounter.Integral());
@@ -414,6 +414,9 @@ configDescriptions_[1] is with JERbias
   }
 
   results.totalSystematic += pow(4.5,2); //lumi uncertainty
+  results.totalSystematic += pow(2.5,2); //HLT
+  const double miscunc = 100*sqrt(0.01*0.01 + 0.01*0.01+ 0.02*0.02); //need some other misc stuff -- inefficiencies from cleaning, L2L3 thing, lepton veto
+  results.totalSystematic += pow(miscunc,2);
 
   //ok, we're done. take the square root to get the total systematics
   results.totalSystematic = sqrt(results.totalSystematic);
@@ -835,10 +838,8 @@ Lepton veto  - 2%
 
 }
 
-void runSystematics2011_T1bbbb(/*unsigned int i*/) {
-
+void runSystematics2011_SMS(TString sampleOfInterest="T1bbbb") {
   
-  TString sampleOfInterest="T1bbbb";
   loadSamples();
   clearSamples();
   addSample(sampleOfInterest);
