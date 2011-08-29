@@ -18,7 +18,7 @@
 
   TH2F* bestUL = (TH2F*) ul[0]->Clone("bestUL");
   bestUL->Reset();
-  TH2F* bestULlog10 = (TH2F*) ul[0]->Clone("bestUL10");
+  TH2F* bestULlog10 = (TH2F*) ul[0]->Clone("bestULlog10");
   bestULlog10->Reset();
 
   TH2F* whichIsBest = (TH2F*) ul[0]->Clone("whichIsBest");
