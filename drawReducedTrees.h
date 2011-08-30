@@ -13,7 +13,7 @@ TLatex* text2=0;
 std::vector<TString> samples_;
 //hold a list of all samples
 std::set<TString> samplesAll_;
-std::vector<TString> configDescriptions_;
+//config descriptions defined below
 //these maps use the sample names as keys
 //std::map<TString, TFile*> files_;
 std::map<TString, std::map<TString, TFile*> > files_;
@@ -31,6 +31,95 @@ TString currentConfig_;
 TString selection_ ="cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1";
 
 float leg_x1 = 0.696, leg_x2=0.94, leg_y1=0.5, leg_y2=0.92;
+
+class ConfigurationDescriptions {
+public:
+  ConfigurationDescriptions();
+  ~ConfigurationDescriptions();
+
+  //setters
+  void setDefault(const TString & description) {default_ = description;}
+  void setCorrected(const TString & description) {corrected_=description;}
+  void addVariation(const TString & description1, const TString & description2);
+
+  //getters
+  TString getDefault() const {return default_;}
+  TString getCorrected() const {return corrected_;}
+  TString at(const unsigned int i);
+
+  //utilities
+  TString getVariedSubstring(const TString &currentVariation);
+
+  //kludge a way to iterate over the elements
+  //this fits nicely with the way we were already accessing the old data structure in drawReducedTrees.C
+  unsigned int size();
+
+private:
+  TString default_;
+  TString corrected_;
+  std::map< TString, std::pair<TString, TString> > variationPairs;
+};
+ConfigurationDescriptions::ConfigurationDescriptions() : 
+  default_(""),corrected_("") { }
+ConfigurationDescriptions::~ConfigurationDescriptions() {}
+
+TString ConfigurationDescriptions::at(const unsigned int i) {
+  if (i == 0) return getDefault();
+  else  if (i == 1) return getCorrected();
+  else {
+    const unsigned int j=i-2;
+    unsigned int k=0;
+    for (std::map<TString, std::pair<TString,TString> >::iterator iconfig=variationPairs.begin(); iconfig!=variationPairs.end(); ++iconfig) {
+      if (j == k) return iconfig->second.first;
+      else if (j == k+1) return iconfig->second.second;
+      k+=2;
+    }
+  }
+
+  cout<<"WARNING in ConfigurationDescriptions::at() -- asked for element "<<i<<" when there are only "<<this->size()<<" elements!"<<endl;
+  return "";
+}
+
+unsigned int ConfigurationDescriptions::size() {
+  unsigned int s=0;
+  if (default_ != "") ++s;
+  if (corrected_ != "") ++s;
+
+  s+= 2*variationPairs.size();
+
+  return s;
+}
+
+TString ConfigurationDescriptions::getVariedSubstring(const TString & currentVariation) {
+
+  TObjArray* baseline = corrected_.Tokenize("_");
+
+  TObjArray* mine = currentVariation.Tokenize("_");
+
+  TString output="";
+  for (int i=0; i<baseline->GetEntries(); i++) {
+    TString b=baseline->At(i)->GetName();
+    TString m=mine->At(i)->GetName();
+    if (b!=m) {
+      output+=b;
+    }
+  }
+  return output;
+}
+
+void ConfigurationDescriptions::addVariation(const TString & description1, const TString & description2) {
+
+  TString var1=getVariedSubstring(description1);
+  TString var2=getVariedSubstring(description2);
+
+  assert(var1 == var2);
+
+  variationPairs[var1] = make_pair(description1,description2);
+
+}
+
+//std::vector<TString> configDescriptions_;
+ConfigurationDescriptions configDescriptions_;
 
 //special containers for holding the "search regions of interest"
 class SearchRegion {
@@ -393,23 +482,6 @@ void drawPlotHeader() {
     text2->Draw();
   }
 
-}
-
-TString getVariedSubstring(TString currentVariation) {
-
-  TObjArray* baseline = configDescriptions_[1].Tokenize("_");
-
-  TObjArray* mine = currentVariation.Tokenize("_");
-
-  TString output="";
-  for (int i=0; i<baseline->GetEntries(); i++) {
-    TString b=baseline->At(i)->GetName();
-    TString m=mine->At(i)->GetName();
-    if (b!=m) {
-      output+=b;
-    }
-  }
-  return output;
 }
 
 
@@ -885,17 +957,6 @@ void resetSamples(bool joinSingleTop=true) {
 
 }
 
-/*
-void setConfig(const TString & aDescription) {
-
-  for (unsigned int i=0; i<configDescriptions_.size(); i++) {
-// TO DO --
-//let user pass in a description string.
-
-  }
-
-}
-*/
 
 void loadSamples(bool joinSingleTop=true) {
   if (loaded_) return;
@@ -963,7 +1024,7 @@ void loadSamples(bool joinSingleTop=true) {
   //    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffup");
   */
 
-
+/*
   //new btag eff prescription
   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
@@ -991,11 +1052,39 @@ void loadSamples(bool joinSingleTop=true) {
   //HLT eff
   //    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEffdown");
   //    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEffup");
+*/
+
+  //new btag eff prescription
+  configDescriptions_.setDefault("SSVHPT_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
+  configDescriptions_.setCorrected("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
+  //comment here to save time
+  
+  //JES
+  configDescriptions_.addVariation("SSVHPT_PF2PATjets_JESdown_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0",
+				   "SSVHPT_PF2PATjets_JESup_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
+  //JER
+  configDescriptions_.addVariation("SSVHPT_PF2PATjets_JES0_JERdown_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0",
+				   "SSVHPT_PF2PATjets_JES0_JERup_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
+
+  //unclustered MET
+  configDescriptions_.addVariation("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METuncDown_PUunc0_BTagEff02_HLTEff0",
+				   "SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METuncUp_PUunc0_BTagEff02_HLTEff0");
+
+  //PU
+  configDescriptions_.addVariation("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncDown_BTagEff02_HLTEff0",
+				   "SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncUp_BTagEff02_HLTEff0");
+
+  //btag eff
+  configDescriptions_.addVariation("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffdown2_HLTEff0",
+				   "SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffup2_HLTEff0");
+
+  //HLT eff
+  //    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEffdown");
+  //    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEffup");
 
   
 
-  //convention is that the [0] one should always be the "nominal" one while others are for systematics
-  currentConfig_=configDescriptions_[0];
+  currentConfig_=configDescriptions_.getDefault();
 
   //these blocks are just a "dictionary"
   //no need to ever comment these out
@@ -1070,17 +1159,19 @@ void loadSamples(bool joinSingleTop=true) {
   sampleOwenName_["TotalSM"] = "totalsm";
   sampleOwenName_["Total"] = "total";  
 
-  for (std::vector<TString>::iterator iconfig=configDescriptions_.begin(); iconfig!=configDescriptions_.end(); ++iconfig) {
+  //  for (std::vector<TString>::iterator iconfig=configDescriptions_.begin(); iconfig!=configDescriptions_.end(); ++iconfig) {
+  for (unsigned int iconfig=0; iconfig<configDescriptions_.size(); ++iconfig) {
     for (std::set<TString>::iterator isample=samplesAll_.begin(); isample!=samplesAll_.end(); ++isample) {
       TString fname="reducedTree.";
-      fname += *iconfig;
+      TString thisconfig = configDescriptions_.at(iconfig);
+      fname += thisconfig;
       fname+=".";
       fname += *isample;
       fname+=".root";
       fname.Prepend(inputPath);
-      files_[*iconfig][*isample] = new TFile(fname);
-      if (files_[*iconfig][*isample]->IsZombie() ) {cout<<"file error with "<<*isample<<endl; files_[*iconfig][*isample]=0;}
-      else { if (!quiet_)    cout<<"Added sample: "<<*iconfig<<"\t"<<*isample<<endl;}
+      files_[thisconfig][*isample] = new TFile(fname);
+      if (files_[thisconfig][*isample]->IsZombie() ) {cout<<"file error with "<<*isample<<endl; files_[thisconfig][*isample]=0;}
+      else { if (!quiet_)    cout<<"Added sample: "<<thisconfig<<"\t"<<*isample<<endl;}
     }
   }
 
@@ -2529,7 +2620,7 @@ void cutflow(bool isTightSelection){
   //jmt -- turn on weighting
   usePUweight_=true; 
   useHLTeff_=true;   
-  currentConfig_=configDescriptions_[1]; //use JERbias
+  currentConfig_=configDescriptions_.getCorrected(); //use JERbias
 
   vector<TString> vectorOfCuts; //each element is a successive cut string for the cutflow table
   vector<TString> stageCut; //name of cut at each stage

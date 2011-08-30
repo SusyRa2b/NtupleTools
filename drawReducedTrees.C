@@ -154,7 +154,7 @@ SignalEffData signalSystematics2011(const SearchRegion & region, bool isSL=false
   usePUweight_=false;
   useHLTeff_=false;
   btagSFweight_="1";
-  currentConfig_=configDescriptions_[0]; //completely raw MC
+  currentConfig_=configDescriptions_.getDefault(); //completely raw MC
 
   //the logic here is very fragile to user error, so try to ensure that this is really completely raw MC
   cout<<currentConfig_<<endl;
@@ -190,7 +190,7 @@ configDescriptions_[1] is with JERbias
   TH1D* totalPdfWeightsNNPDF = (TH1D*) files_[currentConfig_][sampleOfInterest]->Get("pdfWeightSumNNPDF");
   cout<< nominalweight<<"\t"<<   totalPdfWeightsNNPDF->GetBinContent(1)<<endl;
 
-  currentConfig_=configDescriptions_[1]; //add  JER bias
+  currentConfig_=configDescriptions_.getCorrected(); //add  JER bias
   //the logic here is very fragile to user error, so try to ensure that this is the correct thing
   assert( currentConfig_.Contains("JERbias") && currentConfig_.Contains("JES0") && currentConfig_.Contains("METunc0")
 	  && currentConfig_.Contains("PUunc0")&& currentConfig_.Contains("BTagEff0")&& currentConfig_.Contains("HLTEff0") );
@@ -240,7 +240,7 @@ configDescriptions_[1] is with JERbias
   //we're gonna hard code the fact that these variations come in pairs
   double var1=0,var2=0;
   for (unsigned int j=2; j<configDescriptions_.size(); j++) {
-    currentConfig_=configDescriptions_[j];
+    currentConfig_=configDescriptions_.at(j);
     drawPlots(var,nbins,low,high,xtitle,"events","dummyH");
     double thisn=getIntegral(sampleOfInterest);
     if (j%2==0) { //this one runs first
@@ -249,13 +249,13 @@ configDescriptions_[1] is with JERbias
     else { //this one runs second
       var1=fabs(100*(thisn-nominal)/nominal);
       double bigger = var2>var1? var2:var1;
-      cout<<getVariedSubstring(currentConfig_)<<"\t"<<bigger<<endl;
+      cout<<configDescriptions_.getVariedSubstring(currentConfig_)<<"\t"<<bigger<<endl;
       results.totalSystematic += bigger*bigger; //add in quadrature
     }
   }
 
   //reset to the nominal with JER bias
-  currentConfig_=configDescriptions_[1];
+  currentConfig_=configDescriptions_.getCorrected();
 
   double largest=0;
   double smallest=1e9;
@@ -514,7 +514,7 @@ owen asked for total MC event counts in the 6 boxes, output in a particular form
 
 
   //use all of the corrections that are in the AN table
-  currentConfig_=configDescriptions_[1]; //add  JER bias
+  currentConfig_=configDescriptions_.getCorrected(); //add  JER bias
   usePUweight_=true;
   useHLTeff_=true;
   btagSFweight_=bweightstring; //use b tag weight instead
@@ -646,7 +646,7 @@ map<pair<int,int>, SignalEffData>  runTH2Syst2011_mSugra(const SearchRegion & re
   usePUweight_=false;
   useHLTeff_=false;
   btagSFweight_="1";
-  currentConfig_=configDescriptions_[0]; //completely raw MC
+  currentConfig_=configDescriptions_.getDefault(); //completely raw MC
 
   //the logic here is very fragile to user error, so try to ensure that this is really completely raw MC
   assert( currentConfig_.Contains("JER0") && currentConfig_.Contains("JES0") && currentConfig_.Contains("METunc0")
@@ -654,7 +654,7 @@ map<pair<int,int>, SignalEffData>  runTH2Syst2011_mSugra(const SearchRegion & re
 
   susyScanYields rawYields=getSusyScanYields(sampleOfInterest);
 
-  currentConfig_=configDescriptions_[1]; //add  JER bias
+  currentConfig_=configDescriptions_.getCorrected(); //add  JER bias
   assert( currentConfig_.Contains("JERbias") && currentConfig_.Contains("JES0") && currentConfig_.Contains("METunc0")
 	  && currentConfig_.Contains("PUunc0")&& currentConfig_.Contains("BTagEff0")&& currentConfig_.Contains("HLTEff0") );
 
@@ -693,12 +693,12 @@ map<pair<int,int>, SignalEffData>  runTH2Syst2011_mSugra(const SearchRegion & re
   map<TString, pair<susyScanYields,susyScanYields> > variedYields;
 
   for (unsigned int j=2; j<configDescriptions_.size(); j+=2) {
-    currentConfig_=configDescriptions_[j];
-    TString varied1=  getVariedSubstring(currentConfig_);
+    currentConfig_=configDescriptions_.at(j);
+    TString varied1=  configDescriptions_.getVariedSubstring(currentConfig_);
     susyScanYields variation1Yields=getSusyScanYields(sampleOfInterest);
 
-    currentConfig_=configDescriptions_[j+1];
-    TString varied2=   getVariedSubstring(currentConfig_);
+    currentConfig_=configDescriptions_.at(j+1);
+    TString varied2=   configDescriptions_.getVariedSubstring(currentConfig_);
     susyScanYields variation2Yields=getSusyScanYields(sampleOfInterest);
 
     assert(varied1 == varied2);
@@ -1074,7 +1074,7 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
     ge1b="1";
     usePUweight_=true;
     useHLTeff_=true;
-    currentConfig_=configDescriptions_[1]; //add JERbias
+    currentConfig_=configDescriptions_.getCorrected(); //add JERbias
 
     if (btagselection=="ge2b") {
       btagSFweight="probge2";
@@ -1091,7 +1091,7 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
     usePUweight_=false;
     useHLTeff_=false;
     btagSFweight_="1";
-    currentConfig_=configDescriptions_[0]; //completely raw MC
+    currentConfig_=configDescriptions_.getDefault(); //completely raw MC
 
     if (btagselection=="ge2b") {
       ge1b="nbjetsSSVHPT>=2";
@@ -1753,12 +1753,12 @@ void AN2011_prescale( TString btagselection="ge1b",const int mode=1 ) {
     usePUweight_=false;
     useHLTeff_=false;
     btagSFweight_="1";
-    currentConfig_=configDescriptions_[0]; //completely raw MC
+    currentConfig_=configDescriptions_.getDefault(); //completely raw MC
   }
   else if (mode==2 || mode==3) {
     usePUweight_=true;
     useHLTeff_=true;
-    currentConfig_=configDescriptions_[1]; //JER bias
+    currentConfig_=configDescriptions_.getCorrected(); //JER bias
     if (mode==2) modestring="-JER-PU-HLT";
     else if(mode==3) modestring="-JER-PU-HLT-bSF";
   }
@@ -2238,12 +2238,12 @@ void AN2011( TString btagselection="ge1b",const int mode=1  ) {
     usePUweight_=false;
     useHLTeff_=false;
     btagSFweight_="1";
-    currentConfig_=configDescriptions_[0]; //completely raw MC
+    currentConfig_=configDescriptions_.getDefault(); //completely raw MC
   }
   else if (mode==2 || mode==3) {
     usePUweight_=true;
     useHLTeff_=true;
-    currentConfig_=configDescriptions_[1]; //JER bias
+    currentConfig_=configDescriptions_.getCorrected(); //JER bias
     if (mode==2) modestring="-JER-PU-HLT";
     else if(mode==3) modestring="-JER-PU-HLT-bSF";
   }
