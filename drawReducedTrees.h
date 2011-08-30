@@ -537,7 +537,7 @@ void fillFlavorHistoryScaling() {
 }
 
 //try to bring some rationality to the options passed to getcutstring....
-enum sampleType {kData, kMC, kmSugraPoint, kmSugraPlane, kSMSPoint, kSMSPlane, kmSugraPlaneNoCrossSection};
+enum sampleType {kData, kMC, kmSugraPoint, kmSugraPlane, kSMSPoint, kSMSPlane};
 //for more rationality, should make a data struct (or class) to hold the options, so that fewer arguments need to be passed
 //TString getCutString(double lumiscale, TString extraWeight="", TString thisSelection="", TString extraSelection="", int pdfWeightIndex=0,TString pdfSet="CTEQ", bool isSusyScan=false, int susySubProcess=-1, const bool isData=false) {
 TString getCutString(sampleType type, TString extraWeight="", TString thisSelection="", TString extraSelection="", int pdfWeightIndex=0,TString pdfSet="CTEQ", int susySubProcess=-1) {
@@ -559,7 +559,7 @@ for legacy purposes I am keeping all of the weight and selection TStrings, altho
   //for now treat sms point just like smsplane
 
   if (type==kData)    lumiscale=1;
-  else if (type==kMC || type==kmSugraPoint || type==kmSugraPlane ||type==kmSugraPlaneNoCrossSection ) lumiscale=lumiScale_;
+  else if (type==kMC || type==kmSugraPoint || type==kmSugraPlane ) lumiscale=lumiScale_;
   else if (type==kSMSPlane||type==kSMSPoint) lumiscale=1;
   else {assert(0);}
 
@@ -660,11 +660,6 @@ for legacy purposes I am keeping all of the weight and selection TStrings, altho
   else if (type == kmSugraPlane && susySubProcess>=0) {
     char thisweight[50];
     sprintf(thisweight, "*((SUSY_process==%d)*scanCrossSection%s)",susySubProcess,susyCrossSectionVariation_.Data());
-    weightedcut += thisweight;
-  }
-  else if (type == kmSugraPlaneNoCrossSection && susySubProcess>=0) {
-    char thisweight[50];
-    sprintf(thisweight, "*(SUSY_process==%d)",susySubProcess);
     weightedcut += thisweight;
   }
   else if (type == kSMSPoint) {
