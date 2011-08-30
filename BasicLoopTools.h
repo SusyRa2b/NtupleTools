@@ -22,6 +22,8 @@
 #include <typeinfo>
 
 #include "MiscUtil.cxx"
+#include "CrossSectionTable.h"
+
 #include "TGraphAsymmErrors.h"
 #include "TH1.h"
 
@@ -583,59 +585,16 @@ void checkConsistency() {
 
 }
 
-enum SUSYProcess {
-  ng = 0,
-  ns = 1,
-  nn = 2,
-  ll = 3,
-  sb = 4,
-  ss = 5,
-  tb = 6,
-  bb = 7,
-  gg = 8,
-  sg = 9,
-  NotFound = 10
-};
-
-map<pair<int, int>, map<SUSYProcess, double> > crossSectionTanb40_10_;
-map<pair<int, int>, map<SUSYProcess, double> > crossSectionTanb40_05_;
-map<pair<int, int>, map<SUSYProcess, double> > crossSectionTanb40_20_;
-void loadSusyScanCrossSection(const TString & filename, map<pair<int, int>, map<SUSYProcess, double> > & database) {
-
-  if (theScanType_==kNotScan) return;
-
-  database.clear();
-
-  int m0,m12;
-  double c1,c2,c3,c4,c5,c6,c7,c8,c9,c10;
-  ifstream file10(filename.Data());
-  while ( file10>>m0>>m12>>c1>>c2>>c3>>c4>>c5>>c6>>c7>>c8>>c9>>c10 ) {
-    pair<int, int> scanpoint = make_pair(m0,m12);
-
-    map<SUSYProcess, double> theseCrossSections;
-    theseCrossSections[ng] = c1;
-    theseCrossSections[ns] = c2;
-    theseCrossSections[nn] = c3;
-    theseCrossSections[ll] = c4;
-    theseCrossSections[sb] = c5;
-    theseCrossSections[ss] = c6;
-    theseCrossSections[tb] = c7;
-    theseCrossSections[bb] = c8;
-    theseCrossSections[gg] = c9;
-    theseCrossSections[sg] = c10;
-    database[scanpoint] = theseCrossSections;
-  }
-  file10.close();
-  cout<<"Loaded cross sections for "<<database.size()<<" scan points"<<endl;
-
-}
+CrossSectionTable * crossSectionTanb40_10_=0;
+CrossSectionTable * crossSectionTanb40_05_=0;
+CrossSectionTable * crossSectionTanb40_20_=0;
 
 void  loadSusyScanCrossSections() {
-  loadSusyScanCrossSection( "NLOxsec_tanb40_10.txt",crossSectionTanb40_10_);
-  loadSusyScanCrossSection( "NLOxsec_tanb40_05.txt",crossSectionTanb40_05_);
-  loadSusyScanCrossSection( "NLOxsec_tanb40_20.txt",crossSectionTanb40_20_);
-
-
+  if (theScanType_ == kmSugra ) {
+    crossSectionTanb40_10_ = new CrossSectionTable("NLOxsec_tanb40_10.txt");
+    crossSectionTanb40_05_ = new CrossSectionTable("NLOxsec_tanb40_05.txt");
+    crossSectionTanb40_20_ = new CrossSectionTable("NLOxsec_tanb40_20.txt");
+  }
 }
 
 TString getOptPiece(const TString &key, const TString & opt) {
@@ -711,8 +670,8 @@ cout<<"Got options: "<<endl
 }
 
 void PseudoConstructor() {
-  theScanType_=kNotScan;
-  //theScanType_=kmSugra;
+  //theScanType_=kNotScan;
+  theScanType_=kmSugra;
   //theScanType_=kSMS;
 
   //  theMETType_=kPFMETTypeI;
@@ -912,9 +871,9 @@ double getScanCrossSection( SUSYProcess p, const TString & variation ) {
 
   if (theScanType_==kmSugra) {
     pair<int,int> thispoint = make_pair(TMath::Nint(eventlhehelperextra_m0),TMath::Nint(eventlhehelperextra_m12)); //names will need to be changed
-    if (variation=="")   return crossSectionTanb40_10_[thispoint][p];
-    else if (variation=="Plus")   return crossSectionTanb40_20_[thispoint][p];
-    else if (variation=="Minus")   return crossSectionTanb40_05_[thispoint][p];
+    if (variation=="")   return (*crossSectionTanb40_10_)[thispoint][p];
+    else if (variation=="Plus")   return (*crossSectionTanb40_20_)[thispoint][p];
+    else if (variation=="Minus")   return (*crossSectionTanb40_05_)[thispoint][p];
     else {assert(0);}
   }
   else if (theScanType_==kSMS) {
@@ -3868,14 +3827,15 @@ void reducedTree(TString outputpath, itreestream& stream)
 
   //i need an independent histogram for every scan point!
   map<pair<int,int>, TH1D* >  scanProcessTotalsMap;
-  //should be safe in case we're not processing a scan. the map will just stay empty
-  for (map<pair<int, int>, map<SUSYProcess, double> >::iterator iscanpoint=crossSectionTanb40_10_.begin(); iscanpoint!=crossSectionTanb40_10_.end(); ++iscanpoint) {
-    TString histoname = "scanProcessTotals"; 
-    histoname += "_";
-    histoname +=iscanpoint->first.first; // m0
-    histoname += "_";
-    histoname +=iscanpoint->first.second; // m12
-    scanProcessTotalsMap[iscanpoint->first] = new TH1D(histoname,histoname,int(NotFound),int(ng),int(NotFound));
+  if (crossSectionTanb40_10_ != 0) {
+    for (map<pair<int, int>, map<SUSYProcess, double> >::iterator iscanpoint=crossSectionTanb40_10_->begin(); iscanpoint!=crossSectionTanb40_10_->end(); ++iscanpoint) {
+      TString histoname = "scanProcessTotals"; 
+      histoname += "_";
+      histoname +=iscanpoint->first.first; // m0
+      histoname += "_";
+      histoname +=iscanpoint->first.second; // m12
+      scanProcessTotalsMap[iscanpoint->first] = new TH1D(histoname,histoname,int(NotFound),int(ng),int(NotFound));
+    }
   }
   TH2D* scanSMSngen=0;
   if (theScanType_==kSMS) scanSMSngen = new TH2D("scanSMSngen","number of generated events",130,0,1300,120,0,1200); //mgluino,mLSP

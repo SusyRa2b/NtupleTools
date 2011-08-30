@@ -59,6 +59,9 @@ functionality for TH1F and TH1D e.g. the case of addOverflowBin()
 //from Luke
 #include "TSelectorMultiDraw.h"
 
+//container for mSugra cross-sections
+#include "CrossSectionTable.h"
+
 // can be checked out of UserCode/joshmt
 #include "MiscUtil.cxx"
 
@@ -76,17 +79,16 @@ functionality for TH1F and TH1D e.g. the case of addOverflowBin()
 TString dataInputPath = "/cu3/wteo/reducedTrees/V00-02-05_v3-pickevents/"; //includes MET cleaning but uses a tight skim (not good for plots)
 
 //for making the standard set of plots...need standard MC and all data.
-TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-25_fullpf2pat/";//path for MC	     
+//TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-25_fullpf2pat/";//path for MC	     
 //TString dataInputPath = "/cu2/ra2b/reducedTrees/V00-02-25_fullpf2pat/";
 
 //for njet reweighting (needed because not all reducedTrees in nominal V00-02-25 have njets30)
 //TString inputPath = "/cu2/ra2b/reducedTrees/benV00-02-25_fullpf2pat/";
 //TString dataInputPath = "/cu2/ra2b/reducedTrees/benV00-02-25_fullpf2pat/";
 
-//for special tests and signal systematics
-//TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-25c_fullpf2pat/"; //LM9 with correct pdf weights
+//for signal systematics
+TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-25c_fullpf2pat/"; //LM9 with correct pdf weights
 //TString inputPath = "/cu2/joshmt/reducedTrees/V00-02-25c_fullpf2pat/"; //with correct pdf weights
-//TString inputPath = "/cu2/joshmt/mSUGRAdell/PART1/"; // 25% of the msugra sample
 //TString inputPath = "/home/joshmt/";//path for MC
 //TString dataInputPath = "/cu2/ra2b/reducedTrees/V00-02-24_fullpf2pat/"; //sym links to V00-02-05_v3
 
@@ -1009,7 +1011,7 @@ void averageZ() {
 
 }
 
-const bool useScaleFactors_=false; //note that useScaleFactors_=true *does not work* right now. would have to be debugged.
+const bool useScaleFactors_=false; //whether or not to use MC scale factors when doing subtraction for data-driven estimates
 
 std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode=false, float subscale=1,float SBshift=0, const TString LSBbsel="==0") {
   //kind of awful, but we'll return the estimate for datamode=true but the closure test bias for datamode=false
@@ -1067,6 +1069,7 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
 
   TCut ge1b = "nbjetsSSVHPT>=1";
   btagSFweight_="1";
+  TString btagSFweight=""; //we're going to have to switch this one in and out of the global var
   if (useScaleFactors_) {
     ge1b="1";
     usePUweight_=true;
@@ -1074,13 +1077,13 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
     currentConfig_=configDescriptions_[1]; //add JERbias
 
     if (btagselection=="ge2b") {
-      btagSFweight_="probge2";
+      btagSFweight="probge2";
     }
     else if (btagselection=="ge1b") {
-      btagSFweight_="probge1";
+      btagSFweight="probge1";
     }
     else if (btagselection=="ge3b") {
-      btagSFweight_="probge3";
+      btagSFweight="probge3";
     }
     else {assert(0);}
   }
@@ -1134,6 +1137,7 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
   B=getIntegral(sampleOfInterest);
   Berr=getIntegralErr(sampleOfInterest);
   //D
+  if (useScaleFactors_) btagSFweight_=btagSFweight; //for region D only, use btag SF
   selection_ = baseline && cleaning && dpcut  && SRMET && failOther; //auto cast to TString seems to work
   drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_D");
   D=getIntegral(sampleOfInterest);
@@ -2428,6 +2432,104 @@ void AN2011( TString btagselection="ge1b",const int mode=1  ) {
 
 
 }
+
+// working but not polished code to draw efficiency over mSugra space
+void drawmSugraEfficiency() {
+  loadSamples();
+  clearSamples();
+  addSample("mSUGRAtanb40");
+
+  loadSusyScanHistograms();
+
+  loadSusyCrossSections();
+
+  selection_ ="cutHT==1 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=200 && minDeltaPhiN >= 4 && nbjets>=1";
+
+  //these are for mSugra [copied and pasted from getSusyScanYields() ]
+  TString varx="m0"; TString xtitle=varx;
+  int  nbinsx=210; float lowx=-0.5; float highx=2100-0.5;
+
+  TString vary="m12"; TString ytitle=vary;
+  int  nbinsy=110; float lowy=-0.5; float highy=1100-0.5;
+  TString drawstring = vary+":"+varx;
+
+  TTree* thetree = (TTree*) files_[currentConfig_]["mSUGRAtanb40"]->Get("reducedTree");
+ 
+  //get the efficiency = Nreco / Ngen for each subprocess
+  //then reweight by the subprocess cross section
+
+  const int nsubprocesses =  10;
+  vector<TH2D*> raw0; //for Npass*sigma*L
+  TH2D totalSigma("totalSigma","",nbinsx,lowx,highx,nbinsy,lowy,highy);
+  for (int i=0; i<=nsubprocesses; i++) {
+    TString hname="raw0_";
+    hname += i;
+    raw0.push_back(new TH2D(hname,"raw event counts",nbinsx,lowx,highx,nbinsy,lowy,highy));
+    TString thecut = getCutString(kmSugraPlane,"",selection_,"",0,"",i);
+    thetree->Project(hname,drawstring,thecut.Data());
+  }
+  //[for mSugra]
+  //at this point, each bin contains Npass_i * sigma_i * L for that (m0,m12)
+  //need to divide by Ngen_i for each (m0,m12)
+
+  //loop over i and histo bins
+  for (int i=0; i<=nsubprocesses; i++) {
+    for (map<pair<int,int>, TH1D* >::iterator iscanpoint = scanProcessTotalsMap.begin(); iscanpoint!=scanProcessTotalsMap.end(); ++iscanpoint) {
+      int m0=iscanpoint->first.first;
+      int m12=iscanpoint->first.second;
+
+      TH1D* thishist = scanProcessTotalsMap[make_pair(m0,m12)];
+      int thisn = TMath::Nint(thishist->GetBinContent(i)); // n gen
+      int bin=  raw0[i]->FindBin(m0,m12);
+      double N_i_thispoint = raw0[i]->GetBinContent(bin); // Npass * sigma * L
+      double this_sigma = CrossSectionTable_mSUGRAtanb40_->getCrossSection(m0,m12,SUSYProcess(i));
+      if (thisn == 0) {
+	if (N_i_thispoint > 0.0000001) cout<<"Possible problem: "<<m0<<" "<<m12<<" "<<i<<" "<< N_i_thispoint<<" "<<thisn<<endl;
+	thisn=1; //prevent divide by zero
+	N_i_thispoint = 0;
+      }
+      N_i_thispoint /= thisn;
+      totalSigma.SetBinContent(bin, totalSigma.GetBinContent(bin) + this_sigma);
+      raw0[i]->SetBinContent(bin,N_i_thispoint);
+    }
+  }
+
+  //now we have Npass_i * sigma_i * lumi / Ngen_i 
+  //all that is left is to make the sum over i
+  susyScanYields theEff;
+  for (map<pair<int,int>, TH1D* >::iterator iscanpoint = scanProcessTotalsMap.begin(); iscanpoint!=scanProcessTotalsMap.end(); ++iscanpoint) {
+    int nentries=    iscanpoint->second->GetEntries();
+    if (nentries >10000 || nentries<9500) continue;
+
+    double Nraw = 0;
+    
+    int bin=  raw0[0]->FindBin(iscanpoint->first.first , iscanpoint->first.second);
+    for (unsigned int i=0; i<raw0.size(); i++) {
+      Nraw += raw0[i]->GetBinContent(bin);
+    }
+    //the badly named Nraw is sum_i Npass_i * sigma_i * lumi / Ngen_i = sum_i eff_i * sgima_i * lumi = sum_i Nobs_i = N observed
+
+    //total Sigma is already the sum over i
+    double crossSectionTimesLumi = totalSigma.GetBinContent(bin) * lumiScale_;
+    if (crossSectionTimesLumi >0)    theEff[iscanpoint->first] = make_pair(Nraw / crossSectionTimesLumi,0);
+    else if (Nraw < 0.00001 && crossSectionTimesLumi <0.00001) {}//do nothing
+    else {cout<<"Something weird? crossSectionTimeLumi is zero!"<<endl;}
+  }
+
+  renewCanvas();
+  if (h2d!=0) delete h2d;
+  TString hname="mSugraEffMap";
+  h2d = new TH2D(hname,hname,nbinsx,lowx,highx,nbinsy,lowy,highy);
+  TString opt="colz";
+  for (susyScanYields::iterator ieff = theEff.begin(); ieff!=theEff.end(); ++ieff) {
+    int bin=    h2d->FindBin( ieff->first.first, ieff->first.second);
+    h2d->SetBinContent(bin, ieff->second.first);
+  }
+
+  h2d->Draw(opt);
+
+}
+
 
 void morerstuff() {
   /*

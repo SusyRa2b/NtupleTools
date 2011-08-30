@@ -314,6 +314,15 @@ void setLumiScale(double lumiscale){
   lumiScale_ = lumiscale;
 }
 
+
+CrossSectionTable * CrossSectionTable_mSUGRAtanb40_=0;
+void loadSusyCrossSections() {
+  if (CrossSectionTable_mSUGRAtanb40_==0) {
+    CrossSectionTable_mSUGRAtanb40_ = new  CrossSectionTable("NLOxsec_tanb40_10.txt");
+  }
+
+}
+
 map<pair<int,int>, TH1D* >  scanProcessTotalsMap;
 void loadSusyScanHistograms() {
   if (loadedSusyHistos_) return;
@@ -486,7 +495,7 @@ TString renormBins( TH1D* hp, int refbin ) {
   if ( hp==0 ) return "PROBLEM";
 
   double refbinwid = -99;
-  if(refbin=-1) refbinwid = 1.;
+  if(refbin==-1) refbinwid = 1.;
   else {
     refbin = hp->GetBinLowEdge( refbin+1 ) - hp->GetBinLowEdge( refbin ) ;
     if (!quiet_)  printf(" reference bin: [%6.1f,%6.1f], width = %6.3f\n",  hp->GetBinLowEdge( refbin ), hp->GetBinLowEdge( refbin+1 ), refbinwid ) ;
@@ -528,7 +537,7 @@ void fillFlavorHistoryScaling() {
 }
 
 //try to bring some rationality to the options passed to getcutstring....
-enum sampleType {kData, kMC, kmSugraPoint, kmSugraPlane, kSMSPoint, kSMSPlane};
+enum sampleType {kData, kMC, kmSugraPoint, kmSugraPlane, kSMSPoint, kSMSPlane, kmSugraPlaneNoCrossSection};
 //for more rationality, should make a data struct (or class) to hold the options, so that fewer arguments need to be passed
 //TString getCutString(double lumiscale, TString extraWeight="", TString thisSelection="", TString extraSelection="", int pdfWeightIndex=0,TString pdfSet="CTEQ", bool isSusyScan=false, int susySubProcess=-1, const bool isData=false) {
 TString getCutString(sampleType type, TString extraWeight="", TString thisSelection="", TString extraSelection="", int pdfWeightIndex=0,TString pdfSet="CTEQ", int susySubProcess=-1) {
@@ -550,7 +559,7 @@ for legacy purposes I am keeping all of the weight and selection TStrings, altho
   //for now treat sms point just like smsplane
 
   if (type==kData)    lumiscale=1;
-  else if (type==kMC || type==kmSugraPoint || type==kmSugraPlane) lumiscale=lumiScale_;
+  else if (type==kMC || type==kmSugraPoint || type==kmSugraPlane ||type==kmSugraPlaneNoCrossSection ) lumiscale=lumiScale_;
   else if (type==kSMSPlane||type==kSMSPoint) lumiscale=1;
   else {assert(0);}
 
@@ -636,7 +645,7 @@ for legacy purposes I am keeping all of the weight and selection TStrings, altho
     TString susyprocessweight = "(";
     int lowbound=0; int highbound=10;
     if (susySubProcess>=0) { lowbound=susySubProcess; highbound=susySubProcess;}
-    for (int i=0; i<=10; i++ ) {
+    for (int i=lowbound; i<=highbound; i++ ) {
       char thisweight[50];
       int thisn = TMath::Nint(thishist->GetBinContent(i));
       if (thisn==0) thisn=1; //avoid div by 0. if there are no events anyway then any value is ok
@@ -651,6 +660,11 @@ for legacy purposes I am keeping all of the weight and selection TStrings, altho
   else if (type == kmSugraPlane && susySubProcess>=0) {
     char thisweight[50];
     sprintf(thisweight, "*((SUSY_process==%d)*scanCrossSection%s)",susySubProcess,susyCrossSectionVariation_.Data());
+    weightedcut += thisweight;
+  }
+  else if (type == kmSugraPlaneNoCrossSection && susySubProcess>=0) {
+    char thisweight[50];
+    sprintf(thisweight, "*(SUSY_process==%d)",susySubProcess);
     weightedcut += thisweight;
   }
   else if (type == kSMSPoint) {
@@ -926,7 +940,7 @@ void loadSamples(bool joinSingleTop=true) {
 
   //  configDescriptions_.push_back("SSVHPT");
   //  old btageff prescription
-
+/*
   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
 
@@ -952,30 +966,28 @@ void loadSamples(bool joinSingleTop=true) {
   //HLT eff
   //    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffdown");
   //    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffup");
+  */
+
+
+  //new btag eff prescription
+  configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
+  configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
+  //comment here to save time
   
-
-
-  /* //BEN
-
-//new btag eff prescription
-   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
-   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
- //comment here to save time
-
   //JES
   configDescriptions_.push_back("SSVHPT_PF2PATjets_JESdown_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
   configDescriptions_.push_back("SSVHPT_PF2PATjets_JESup_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
   //JER
-  //  configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERdown_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
-  //  configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERup_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
+    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERdown_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
+    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERup_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
 
   //unclustered MET
   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METuncDown_PUunc0_BTagEff02_HLTEff0");
   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METuncUp_PUunc0_BTagEff02_HLTEff0");
 
   //PU
-  //    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncDown_BTagEff02_HLTEff0");
-  //    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncUp_BTagEff02_HLTEff0");
+      configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncDown_BTagEff02_HLTEff0");
+      configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncUp_BTagEff02_HLTEff0");
 
   //btag eff
   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffdown2_HLTEff0");
@@ -985,7 +997,7 @@ void loadSamples(bool joinSingleTop=true) {
   //    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEffdown");
   //    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEffup");
 
-  */
+  
 
   //convention is that the [0] one should always be the "nominal" one while others are for systematics
   currentConfig_=configDescriptions_[0];
