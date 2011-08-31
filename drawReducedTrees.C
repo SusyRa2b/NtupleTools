@@ -171,10 +171,6 @@ to calculate the net effect of all corrections = corrected yield / raw yield
 
 But for calculating systematics, I want to compare the fractional change to the JERbias, because
 each of the systematics variations was done with JERbias turned on.
-
-So the convention is:
-configDescriptions_[0] is raw
-configDescriptions_[1] is with JERbias
   */
 
   drawPlots(var,nbins,low,high,xtitle,"events","dummyH");
@@ -191,7 +187,8 @@ configDescriptions_[1] is with JERbias
   cout<< nominalweight<<"\t"<<   totalPdfWeightsNNPDF->GetBinContent(1)<<endl;
 
   currentConfig_=configDescriptions_.getCorrected(); //add  JER bias
-  //the logic here is very fragile to user error, so try to ensure that this is the correct thing
+  //the logic here used to be very fragile, so try to ensure that this is the correct thing
+  //(things are improved a bit now, but still a good check to make)
   assert( currentConfig_.Contains("JERbias") && currentConfig_.Contains("JES0") && currentConfig_.Contains("METunc0")
 	  && currentConfig_.Contains("PUunc0")&& currentConfig_.Contains("BTagEff0")&& currentConfig_.Contains("HLTEff0") );
 
@@ -1729,7 +1726,7 @@ void printOwenSyst() {
     ofstream textfile(effoutput);
 
     textfile<<"sf_mc            "<<1<<endl;
-    textfile<<"sf_mc            "<<0.5<<endl;
+    textfile<<"sf_mc_err        "<<0.5<<endl;
     textfile<<"sf_qcd_sb        "<<1<<endl;
     textfile<<"sf_qcd_sb_err    "<<0.01*sqrt(pow(qcdSystErrors["Closure"].at(i),2)+pow(qcdSystErrors["SBshift"].at(i),2))<<endl;
     textfile<<"sf_qcd_sig       "<<1<<endl;
@@ -2435,98 +2432,140 @@ void AN2011( TString btagselection="ge1b",const int mode=1  ) {
 
 // working but not polished code to draw efficiency over mSugra space
 void drawmSugraEfficiency() {
+  gROOT->SetStyle("CMS");
   loadSamples();
   clearSamples();
   addSample("mSUGRAtanb40");
+  setSearchRegions();
 
   loadSusyScanHistograms();
 
   loadSusyCrossSections();
 
-  selection_ ="cutHT==1 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=200 && minDeltaPhiN >= 4 && nbjets>=1";
+  TFile fout("mSugraEffMap.root","RECREATE");
+  gROOT->cd();
 
-  //these are for mSugra [copied and pasted from getSusyScanYields() ]
-  TString varx="m0"; TString xtitle=varx;
-  int  nbinsx=210; float lowx=-0.5; float highx=2100-0.5;
-
-  TString vary="m12"; TString ytitle=vary;
-  int  nbinsy=110; float lowy=-0.5; float highy=1100-0.5;
-  TString drawstring = vary+":"+varx;
-
-  TTree* thetree = (TTree*) files_[currentConfig_]["mSUGRAtanb40"]->Get("reducedTree");
- 
-  //get the efficiency = Nreco / Ngen for each subprocess
-  //then reweight by the subprocess cross section
-
-  const int nsubprocesses =  10;
-  vector<TH2D*> raw0; //for Npass*sigma*L
-  TH2D totalSigma("totalSigma","",nbinsx,lowx,highx,nbinsy,lowy,highy);
-  for (int i=0; i<=nsubprocesses; i++) {
-    TString hname="raw0_";
-    hname += i;
-    raw0.push_back(new TH2D(hname,"raw event counts",nbinsx,lowx,highx,nbinsy,lowy,highy));
-    TString thecut = getCutString(kmSugraPlane,"",selection_,"",0,"",i);
-    thetree->Project(hname,drawstring,thecut.Data());
-  }
-  //[for mSugra]
-  //at this point, each bin contains Npass_i * sigma_i * L for that (m0,m12)
-  //need to divide by Ngen_i for each (m0,m12)
-
-  //loop over i and histo bins
-  for (int i=0; i<=nsubprocesses; i++) {
-    for (map<pair<int,int>, TH1D* >::iterator iscanpoint = scanProcessTotalsMap.begin(); iscanpoint!=scanProcessTotalsMap.end(); ++iscanpoint) {
-      int m0=iscanpoint->first.first;
-      int m12=iscanpoint->first.second;
-
-      TH1D* thishist = scanProcessTotalsMap[make_pair(m0,m12)];
-      int thisn = TMath::Nint(thishist->GetBinContent(i)); // n gen
-      int bin=  raw0[i]->FindBin(m0,m12);
-      double N_i_thispoint = raw0[i]->GetBinContent(bin); // Npass * sigma * L
-      double this_sigma = CrossSectionTable_mSUGRAtanb40_->getCrossSection(m0,m12,SUSYProcess(i));
-      if (thisn == 0) {
-	if (N_i_thispoint > 0.0000001) cout<<"Possible problem: "<<m0<<" "<<m12<<" "<<i<<" "<< N_i_thispoint<<" "<<thisn<<endl;
-	thisn=1; //prevent divide by zero
-	N_i_thispoint = 0;
-      }
-      N_i_thispoint /= thisn;
-      totalSigma.SetBinContent(bin, totalSigma.GetBinContent(bin) + this_sigma);
-      raw0[i]->SetBinContent(bin,N_i_thispoint);
+  for (unsigned int iregion=0; iregion<searchRegions_.size(); iregion++) {
+    currentConfig_ = configDescriptions_.getCorrected();
+    selection_ =TCut("cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4")
+      && TCut(searchRegions_[iregion].metSelection.Data()) && TCut(searchRegions_[iregion].htSelection.Data());
+    usePUweight_=true;
+    useHLTeff_=true;
+    TString bweightstring="probge1";
+    TString btagselection = searchRegions_[iregion].btagSelection;
+    if (btagselection=="ge2b") {
+      bweightstring="probge2";
     }
-  }
+    else if (btagselection=="ge1b") {}
+    else if (btagselection=="ge3b") {
+      bweightstring="probge3"; //this one isn't calculated right now, i think
+    }
+    else {assert(0);}
+    btagSFweight_ = bweightstring;
 
-  //now we have Npass_i * sigma_i * lumi / Ngen_i 
-  //all that is left is to make the sum over i
-  susyScanYields theEff;
-  for (map<pair<int,int>, TH1D* >::iterator iscanpoint = scanProcessTotalsMap.begin(); iscanpoint!=scanProcessTotalsMap.end(); ++iscanpoint) {
-    int nentries=    iscanpoint->second->GetEntries();
-    if (nentries >10000 || nentries<9500) continue;
-
-    double Nraw = 0;
+    //these are for mSugra [copied and pasted from getSusyScanYields() ]
+    TString varx="m0"; TString xtitle=varx;
+    int  nbinsx=210; float lowx=-0.5; float highx=2100-0.5;
     
-    int bin=  raw0[0]->FindBin(iscanpoint->first.first , iscanpoint->first.second);
-    for (unsigned int i=0; i<raw0.size(); i++) {
-      Nraw += raw0[i]->GetBinContent(bin);
+    TString vary="m12"; TString ytitle=vary;
+    int  nbinsy=110; float lowy=-0.5; float highy=1100-0.5;
+    TString drawstring = vary+":"+varx;
+    
+    TTree* thetree = (TTree*) files_[currentConfig_]["mSUGRAtanb40"]->Get("reducedTree");
+    
+    //get the efficiency = Nreco / Ngen for each subprocess
+    //then reweight by the subprocess cross section
+    
+    const int nsubprocesses =  10;
+    vector<TH2D*> raw0; //for Npass*sigma*L
+    TH2D totalSigma("totalSigma","",nbinsx,lowx,highx,nbinsy,lowy,highy);
+    for (int i=0; i<=nsubprocesses; i++) {
+      TString hname="raw0_";
+      hname += i;
+      raw0.push_back(new TH2D(hname,"raw event counts",nbinsx,lowx,highx,nbinsy,lowy,highy));
+      TString thecut = getCutString(kmSugraPlane,"",selection_,"",0,"",i);
+      thetree->Project(hname,drawstring,thecut.Data());
     }
-    //the badly named Nraw is sum_i Npass_i * sigma_i * lumi / Ngen_i = sum_i eff_i * sgima_i * lumi = sum_i Nobs_i = N observed
+    //[for mSugra]
+    //at this point, each bin contains Npass_i * sigma_i * L for that (m0,m12)
+    //need to divide by Ngen_i for each (m0,m12)
+    
+    //loop over i and histo bins
+    for (int i=0; i<=nsubprocesses; i++) {
+      for (map<pair<int,int>, TH1D* >::iterator iscanpoint = scanProcessTotalsMap.begin(); iscanpoint!=scanProcessTotalsMap.end(); ++iscanpoint) {
+	int m0=iscanpoint->first.first;
+	int m12=iscanpoint->first.second;
+	
+	TH1D* thishist = scanProcessTotalsMap[make_pair(m0,m12)];
+	int thisn = TMath::Nint(thishist->GetBinContent(i)); // n gen
+	int bin=  raw0[i]->FindBin(m0,m12);
+	double N_i_thispoint = raw0[i]->GetBinContent(bin); // Npass * sigma * L
+	double this_sigma = CrossSectionTable_mSUGRAtanb40_->getCrossSection(m0,m12,SUSYProcess(i));
+	if (thisn == 0) {
+	  if (N_i_thispoint > 0.0000001) cout<<"Possible problem: "<<m0<<" "<<m12<<" "<<i<<" "<< N_i_thispoint<<" "<<thisn<<endl;
+	  thisn=1; //prevent divide by zero
+	  N_i_thispoint = 0;
+	}
+	N_i_thispoint /= thisn;
+	totalSigma.SetBinContent(bin, totalSigma.GetBinContent(bin) + this_sigma);
+	raw0[i]->SetBinContent(bin,N_i_thispoint);
+      }
+    }
+    
+    //now we have Npass_i * sigma_i * lumi / Ngen_i 
+    //all that is left is to make the sum over i
+    susyScanYields theEff;
+    for (map<pair<int,int>, TH1D* >::iterator iscanpoint = scanProcessTotalsMap.begin(); iscanpoint!=scanProcessTotalsMap.end(); ++iscanpoint) {
+      int nentries=    iscanpoint->second->GetEntries();
+      if (nentries >10000 || nentries<9500) continue;
+      
+      double Nraw = 0;
+      
+      int bin=  raw0[0]->FindBin(iscanpoint->first.first , iscanpoint->first.second);
+      for (unsigned int i=0; i<raw0.size(); i++) {
+	Nraw += raw0[i]->GetBinContent(bin);
+      }
+      //the badly named Nraw is sum_i Npass_i * sigma_i * lumi / Ngen_i = sum_i eff_i * sgima_i * lumi = sum_i Nobs_i = N observed
+      
+      //total Sigma is already the sum over i
+      double crossSectionTimesLumi = totalSigma.GetBinContent(bin) * lumiScale_;
+      if (crossSectionTimesLumi >0)    theEff[iscanpoint->first] = make_pair(Nraw / crossSectionTimesLumi,0);
+      else if (Nraw < 0.00001 && crossSectionTimesLumi <0.00001) {}//do nothing
+      else {cout<<"Something weird? crossSectionTimeLumi is zero!"<<endl;}
+    }
+    
+    renewCanvas();
+    thecanvas->cd()->SetRightMargin(0.2);
+    if (h2d!=0) delete h2d;
 
-    //total Sigma is already the sum over i
-    double crossSectionTimesLumi = totalSigma.GetBinContent(bin) * lumiScale_;
-    if (crossSectionTimesLumi >0)    theEff[iscanpoint->first] = make_pair(Nraw / crossSectionTimesLumi,0);
-    else if (Nraw < 0.00001 && crossSectionTimesLumi <0.00001) {}//do nothing
-    else {cout<<"Something weird? crossSectionTimeLumi is zero!"<<endl;}
+    //redo the binning with what appears to be the actual binning (for better presentation)
+    nbinsx=105;  lowx=-0.5; highx=2100-0.5; //m0
+    nbinsy=40;  lowy=-0.5;  highy=800-0.5; //m12
+
+    TString hname="mSugraEffMap";
+    h2d = new TH2D(hname,hname,nbinsx,lowx,highx,nbinsy,lowy,highy);
+    TString opt="colz";
+    for (susyScanYields::iterator ieff = theEff.begin(); ieff!=theEff.end(); ++ieff) {
+      int bin=    h2d->FindBin( ieff->first.first, ieff->first.second);
+      h2d->SetBinContent(bin, ieff->second.first);
+    }
+    
+    h2d->SetXTitle("m_{0} [GeV]");
+    h2d->SetYTitle("m_{1/2} [GeV]");
+    h2d->Draw(opt);
+
+    thecanvas->SaveAs(hname+"."+btagselection+searchRegions_[iregion].owenId+".eps");
+
+    fout.cd();
+    h2d->SetName(hname+"_"+btagselection+searchRegions_[iregion].owenId);
+    h2d->Write();
+    gROOT->cd();
+
+    //clean stuff up
+    for (unsigned int ir=0; ir < raw0.size(); ir++) delete raw0[ir];
   }
 
-  renewCanvas();
-  if (h2d!=0) delete h2d;
-  TString hname="mSugraEffMap";
-  h2d = new TH2D(hname,hname,nbinsx,lowx,highx,nbinsy,lowy,highy);
-  TString opt="colz";
-  for (susyScanYields::iterator ieff = theEff.begin(); ieff!=theEff.end(); ++ieff) {
-    int bin=    h2d->FindBin( ieff->first.first, ieff->first.second);
-    h2d->SetBinContent(bin, ieff->second.first);
-  }
-
-  h2d->Draw(opt);
+  fout.Close();
 
 }
 

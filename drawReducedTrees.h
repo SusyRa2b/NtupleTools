@@ -118,7 +118,6 @@ void ConfigurationDescriptions::addVariation(const TString & description1, const
 
 }
 
-//std::vector<TString> configDescriptions_;
 ConfigurationDescriptions configDescriptions_;
 
 //special containers for holding the "search regions of interest"
