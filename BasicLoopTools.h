@@ -324,7 +324,7 @@ uint countEle() {
 
 
 
-uint nElecut_;
+uint nElecut_=0;
 void setEleReq(unsigned int ne) {
   nElecut_=ne;
 }
@@ -670,8 +670,8 @@ cout<<"Got options: "<<endl
 }
 
 void PseudoConstructor() {
-  //theScanType_=kNotScan;
-  theScanType_=kmSugra;
+  theScanType_=kNotScan;
+  //theScanType_=kmSugra;
   //theScanType_=kSMS;
 
   //  theMETType_=kPFMETTypeI;
@@ -1673,7 +1673,7 @@ uint countMu() {
   return ngoodmu;
 }
 
-uint nMucut_;
+uint nMucut_=0;
 void setMuonReq(unsigned int nmu) {
   nMucut_=nmu;
 }
