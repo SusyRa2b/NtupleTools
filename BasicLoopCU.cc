@@ -4,9 +4,9 @@
 // Created:     Fri Jun  3 16:38:31 2011 by mkntanalyzer.py
 // Author:      Ben Kreis
 //-----------------------------------------------------------------------------
-//#include "BasicLoopCU.h"
-#include "BasicLoopTools.h"
 
+//#include "BasicLoopTools.h"
+#include "EventCalculator.C"
 
 #ifdef PROJECT_NAME
 #include "PhysicsTools/TheNtupleMaker/interface/pdg.h"
@@ -32,7 +32,7 @@ int main(int argc, char** argv)
   ss<<*argv;
   ss>>fileArg;
   if (fileArg.Contains(".")) fileArg.Remove(fileArg.Last('.'));
-  setSampleName_(fileArg);
+  //  setSampleName_(fileArg);
   cout << fileArg << endl;
   *argv--;
   
@@ -51,78 +51,11 @@ int main(int argc, char** argv)
 
   // Select variables to be read
   selectVariables(stream);
-  PseudoConstructor();
-  //note -- fundamental settings like jet and met types need to be set directly in the PseudoConstructor
-  setBTaggerType(kSSVHPT);  
 
-  setOptions(options);
-  reducedTree(outputDir, stream);
-
-  return 0;
-
-
-  //run with default settings == bias-corrected JER
-
-  theJERType_=kJERbias;
-  reducedTree(outputDir, stream);
-
-  // return 0;
-
-  //JER varations
-  theJERType_=kJERdown;
-  reducedTree(outputDir, stream);
-
-  theJERType_=kJERup;
-  reducedTree(outputDir, stream);
-
-  //put the default JER back
-  theJERType_=kJERbias;
-
-  //JES variations
-  theJESType_=kJESdown;
-  reducedTree(outputDir, stream);
-
-  theJESType_=kJESup;
-  reducedTree(outputDir, stream);
-
-  //put the default JES back
-  theJESType_=kJES0;
-
-  //unc MET variations
-  theMETuncType_=kMETuncUp;
-  reducedTree(outputDir, stream);
-
-  theMETuncType_=kMETuncDown;
-  reducedTree(outputDir, stream);
-
-  //put the default back
-  theMETuncType_=kMETunc0;
-
-  // == PU variations ==
-  thePUuncType_=kPUuncDown;
-  reducedTree(outputDir, stream);
-
-  thePUuncType_=kPUuncUp;
-  reducedTree(outputDir, stream);
-
-  //put back default
-  thePUuncType_=kPUunc0;
-  
-  // == BtagEff variations
-  theBTagEffType_ =kBTagEffdown;
-  reducedTree(outputDir, stream);
-  theBTagEffType_ =kBTagEffup;
-  reducedTree(outputDir, stream);
-
-  theBTagEffType_ =kBTagEff0; //put back default
-
-  // == HLT Ht Eff variations
-  theHLTEffType_ =kHLTEffdown;
-  reducedTree(outputDir, stream);
-  theHLTEffType_ =kHLTEffup;
-  reducedTree(outputDir, stream);
-
-  theHLTEffType_ =kHLTEff0; //put back default
+  EventCalculator ec(fileArg, EventCalculator::kPF2PAT, EventCalculator::kPFMET);
+  ec.setBTaggerType(EventCalculator::kSSVHPT);
+  ec.setOptions(options);
+  ec.reducedTree(outputDir, stream);
 
   return 0;
 
