@@ -2571,7 +2571,7 @@ TString EventCalculator::getOptPiece(const TString &key, const TString & opt) {
 void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
 
   //open output file
-  TString outfilename="reducedTreeNew";
+  TString outfilename="reducedTree";
   outfilename += ".";
   outfilename += getCutDescriptionString();
   outfilename += ".";
