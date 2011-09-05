@@ -1,21 +1,33 @@
 /* Bill wants both efficiency and best UL for each point. */
 
-//work well for SMS.
-//the presentation side for mSugra will be much more difficult
 
 //void combine()
 {
+  const bool old=false;
+
   gROOT->SetStyle("CMS");
   gROOT->ForceStyle();
 
-  const  TString pathUl = "/afs/cern.ch/user/o/owen/public/RA2b/an-scanplot-unblind-t1bbbb-withcontam-";
+  TString pathUl="";
+  if (old) pathUl = "/afs/cern.ch/user/o/owen/public/RA2b/an-scanplot-unblind-t1bbbb-withcontam-"; //old
+  else     pathUl = "/afs/cern.ch/user/o/owen/public/RA2b/t1bbbb-all-plots.root"; //new
   const TString pathEff = "/afs/cern.ch/user/j/joshmt/public/RA2b/RA2b.T1bbbb.";
 
+
   TString stubs[4];
-  stubs[0] = "ge1b-loose.root";
-  stubs[1] = "ge1b-tight.root";
-  stubs[2] = "ge2b-loose.root";
-  stubs[3] = "ge2b-tight.root";
+  if (old) {
+    stubs[0] = "ge1b-loose.root";
+    stubs[1] = "ge1b-tight.root";
+    stubs[2] = "ge2b-loose.root";
+    stubs[3] = "ge2b-tight.root";
+  }
+  else {
+    //new
+    stubs[0] = "ge1bloose";
+    stubs[1] = "ge1btight";
+    stubs[2] = "ge2bloose";
+    stubs[3] = "ge2btight";
+  }
 
   TString stubsEff[4];
   stubsEff[0] = "ge1bLoose.root";
@@ -26,12 +38,22 @@
   TFile * files[4];
   TFile * filesEff[4];
 
+  //new
+  if (!old)  files[0] = new TFile(pathUl);
+
   TH2F * ul[4];
   TH2D * eff[4];
   for (int i=0; i<4; i++) {
 
-    files[i] = new TFile(pathUl+stubs[i]);
-    ul[i] = (TH2F*) files[i]->Get("hsusyscanXsecul");
+    if (old)    files[i] = new TFile(pathUl+stubs[i]); //old
+    else        files[i] = files[0];    //new -- only 1 file
+
+    if (old)    ul[i] = (TH2F*) files[i]->Get("hsusyscanXsecul");
+    else        {
+      TString histoname = stubs[i];
+      histoname += "_hplxsecul";
+      ul[i] = (TH2F*) files[i]->Get(histoname);
+    }
 
     filesEff[i] = new TFile(pathEff+stubsEff[i]);
     TString hname="efficiency_T1bbbb_";
@@ -64,6 +86,7 @@
       if (selectionIsBest!=0) {
 	bestULlog10->SetBinContent(i,j,log10(minul));
 	bestUL->SetBinContent(i,j,minul);
+	cout<<"selectionIsBest = "<<selectionIsBest<<endl;
 	whichIsBest->SetBinContent(i,j,selectionIsBest);
 	TH2D* bestEff = eff[selectionIsBest-1];
 	//need to look up the efficiency without assuming that the histograms have the same binning
@@ -78,6 +101,14 @@
       }
     }
   }
+
+  //max is still a holdover from the cloned histo
+  //this trick seems effective at finding the real max
+  whichIsBest->SetMaximum( whichIsBest->GetBinContent(whichIsBest->GetMaximumBin()));
+  whichIsBest->SetMinimum(0);
+  effAtBestUL->SetMaximum( effAtBestUL->GetBinContent(effAtBestUL->GetMaximumBin()));
+  effAtBestUL->SetMinimum(0);
+  bestUL->SetMinimum(1e-2); //hard coded for T1bbbb PL results
 
   TFile fout("ULcombination.T1bbbb.PL.root","RECREATE");
   bestUL->Write();
@@ -134,7 +165,6 @@
   bestUL->GetXaxis()->SetRangeUser(0,GLmax);
   bestUL->Draw("COLZ");
   ulCanvas.SetLogz();
-  bestUL->SetMinimum(1e-2); //hard coded for T1bbbb PL results
 
   text1->Draw();
   text2->Draw();
@@ -148,7 +178,8 @@
   whichIsBest->SetYTitle("m_{LSP} [GeV]");
   whichIsBest->GetYaxis()->SetRangeUser(0,LSPmax);
   whichIsBest->GetXaxis()->SetRangeUser(0,GLmax);
-  whichIsBest->Draw("COLZ");
+  whichIsBest->Draw("COL");
+  whichIsBest->Draw("text same");
 
   text1->Draw();
   text2->Draw();
