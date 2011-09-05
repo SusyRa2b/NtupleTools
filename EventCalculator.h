@@ -23,7 +23,7 @@ left undone -- have not tried to port luke's jet killing stuff (should be done)
 */
 #include "BasicLoopCU.h" //get all of the tree-related variables
 
-
+class TRandom3;
 
 //global constants
 const double mW_ = 80.399;
@@ -84,13 +84,9 @@ public:
   float getMHT();
   float getMHTphi();
 
-  //  float getMT_Wlep(); //SKIPping this for now
+  void getTransverseThrustVariables(float & thrust, float & thrustPhi, bool addMET);
+  void getSphericityJetMET(float & lambda1, float & lambda2, float & det,const int jetmax, bool addMET);
 
-  /* stuff that i'm skipping for now
-    void getTransverseThrustVariables(float & thrust, float & thrustPhi, bool addMET);
-void getSphericityJetMET(float & lambda1, float & lambda2, float & det,const int jetmax, bool addMET);
-
-*/
 
   bool passCut(const TString cutTag);
 
@@ -234,6 +230,11 @@ private:
   std::vector<met1_s> * myMETPF;
   std::vector<vertex_s> * myVertex;
   std::vector<genparticlehelperra2_s> * myGenParticles;
+
+  //versions for jet-loss study
+  std::vector<jet1_s> * myJetsPF_temp;
+  std::vector<met1_s> * myMETPF_temp;
+
   double* myGenWeight;
   double* myEDM_bunchCrossing;
   double* myEDM_event;
@@ -293,6 +294,9 @@ private:
   void  loadSusyScanCrossSections();
 
   unsigned int getSeed();
+  void changeVariables(TRandom3* random, double jetLossProbability, int& nLostJets);
+  void resetVariables();
+  bool  recalculatedVariables_;
 
 };
 

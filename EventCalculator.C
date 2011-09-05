@@ -7,6 +7,12 @@
 #include "TRandom3.h"
 #include "TTree.h"
 #include "TFile.h"
+#include "TMatrixT.h"
+#include "TMatrixDEigen.h"
+
+#include <RooRealVar.h>
+#include <RooMinuit.h>
+#include <RooTransverseThrustVar.h>
 
 #include <cassert>
 #include <fstream>
@@ -36,6 +42,8 @@ EventCalculator::EventCalculator(const TString & sampleName, jetType theJetType,
   myMETPF(&met1),
   myVertex(&vertex),
   myGenParticles(&genparticlehelperra2),
+  myJetsPF_temp(0),
+  myMETPF_temp(0),
   myEDM_bunchCrossing ( &eventhelper_bunchCrossing),
   myEDM_event ( &eventhelper_event),
   myEDM_isRealData ( &eventhelper_isRealData),
@@ -59,8 +67,8 @@ EventCalculator::EventCalculator(const TString & sampleName, jetType theJetType,
   L1JetPar_(0),
   JetCorrector_(0),
   jecUnc_(new JetCorrectionUncertainty("START42_V13_AK5PFchs_Uncertainty.txt")),
-  starttime_(0)
-
+  starttime_(0),
+  recalculatedVariables_(false)
 {
 
   if ( sampleName_.Contains("mSUGRA") ) {
@@ -3170,17 +3178,14 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
       PBNRcode = doPBNR();
 
       //fill new variables from Luke
-/* SKIP for now
       getSphericityJetMET(lambda1_allJets,lambda2_allJets,determinant_allJets,99,false);
       getSphericityJetMET(lambda1_allJetsPlusMET,lambda2_allJetsPlusMET,determinant_allJetsPlusMET,99,true);
       getSphericityJetMET(lambda1_topThreeJets,lambda2_topThreeJets,determinant_topThreeJets,3,false);
       getSphericityJetMET(lambda1_topThreeJetsPlusMET,lambda2_topThreeJetsPlusMET,determinant_topThreeJetsPlusMET,3,true);
-*/
-        //Uncomment next two lines to do thrust calculations
+      //Uncomment next two lines to do thrust calculations
       //getTransverseThrustVariables(transverseThrust, transverseThrustPhi, false);
       //getTransverseThrustVariables(transverseThrustWithMET, transverseThrustWithMETPhi, true);
 
-/* SKIP for now
       changeVariables(&random,0.05,nLostJet);
 
       njets_lostJet = nGoodJets();
@@ -3203,7 +3208,8 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
       transverseMETSignificance2_lostJet = getTransverseMETSignificance(1);
       transverseMETSignificance3_lostJet = getTransverseMETSignificance(2);
       resetVariables();
-*/
+
+      //Fill the tree
       reducedTree.Fill();
       
 
@@ -3217,6 +3223,8 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
 
 
 unsigned int EventCalculator::getSeed() {
+
+  //jmt -- we might want to add an assert(0) at the end here
 
   unsigned int seed = 4357;
   
@@ -3330,4 +3338,140 @@ double EventCalculator::calc_mNj( unsigned int j1i, unsigned int j2i, unsigned i
   v.push_back(j2i);
   v.push_back(j3i);
   return calc_mNj(v);
+}
+
+
+void EventCalculator::changeVariables(TRandom3* random, double jetLossProbability, int& nLostJets)
+{
+  if(recalculatedVariables_) return;
+  recalculatedVariables_=true;
+  myJetsPF_temp                   = myJetsPF;		  
+  myMETPF_temp		          = myMETPF;		  
+
+  myJetsPF                = new std::vector<jet1_s>;	   //jmt -- switch to PF2PAT
+  myMETPF		  = new std::vector<met1_s>(*myMETPF_temp);	  
+
+  for(vector<jet1_s>::iterator thisJet = myJetsPF_temp->begin(); thisJet != myJetsPF_temp->end(); thisJet++)
+    {
+      if(random->Rndm() > jetLossProbability)
+	{
+	  myJetsPF->push_back(*thisJet);
+	}
+      else
+	{
+	  double jetPx = thisJet->uncor_pt * cos(thisJet->uncor_phi);
+	  double jetPy = thisJet->uncor_pt * sin(thisJet->uncor_phi);
+	  double METx = myMETPF->at(0).pt * cos(myMETPF->at(0).phi) - jetPx;
+	  double METy = myMETPF->at(0).pt * sin(myMETPF->at(0).phi) - jetPy;
+	  myMETPF->at(0).pt = sqrt(METx*METx + METy*METy);
+	  myMETPF->at(0).phi = atan2(METy,METx);
+	}
+    }
+  nLostJets = myJetsPF_temp->size() - myJetsPF->size();
+
+}
+
+void EventCalculator::resetVariables()
+{
+  if(!recalculatedVariables_) return;
+  recalculatedVariables_ = false;
+  if(myJetsPF != 0) delete myJetsPF;
+  else cout << "you've done something wrong!" << endl;
+  if(myMETPF != 0)delete myMETPF;		
+  else cout << "you've done something wrong!" << endl;
+
+  myJetsPF                = myJetsPF_temp;		  
+  myMETPF		  = myMETPF_temp;		  
+    
+}
+
+
+void EventCalculator::getSphericityJetMET(float & lambda1, float & lambda2, float & det,
+			 const int jetmax, bool addMET) {
+
+  TMatrixD top3Jets(2,2);
+  double top3JetsScale = 0;
+  
+  unsigned int njets=  myJetsPF->size();
+  int ngoodj=0;
+  for (unsigned int i=0; i<njets ; i++) {
+    if ( isGoodJet(i) ) {
+      ++ngoodj;
+      double phi = myJetsPF->at(i).phi;
+      double eT = getJetPt(i);
+      double eX = eT*cos(phi);
+      double eY = eT*sin(phi);
+      if(ngoodj <= jetmax) {
+	top3Jets[0][0] += eX*eX/eT;
+	top3Jets[0][1] += eX*eY/eT;
+	top3Jets[1][0] += eX*eY/eT;
+	top3Jets[1][1] += eY*eY/eT;
+	top3JetsScale += eT;
+      }
+      else break;
+    }
+  }
+
+  if (addMET) {
+    double phi = getMETphi();
+    double eT = getMET();
+    double eX = eT*cos(phi);
+    double eY = eT*sin(phi);
+  
+    top3Jets[0][0] += eX*eX/eT;
+    top3Jets[0][1] += eX*eY/eT;
+    top3Jets[1][0] += eX*eY/eT;
+    top3Jets[1][1] += eY*eY/eT;
+    top3JetsScale += eT;
+  }
+  top3Jets*=1/top3JetsScale;
+  TMatrixDEigen top3JetsEigen(top3Jets);
+  lambda1 = top3JetsEigen.GetEigenValuesRe()[0];
+  lambda2 = top3JetsEigen.GetEigenValuesRe()[1];
+  det = top3Jets.Determinant();
+  
+}
+
+
+
+
+void EventCalculator::getTransverseThrustVariables(float & thrust, float & thrustPhi, bool addMET)
+{
+    //Begin Thrust Calculations
+    //Copy Formula from http://home.thep.lu.se/~torbjorn/pythia/lutp0613man2.pdf 
+
+    unsigned int njets = myJetsPF->size();
+     
+    vector<double> goodJetPx;
+    vector<double> goodJetPy;
+
+
+    for (unsigned int i = 0; i<njets; i++) {
+      if ( !isGoodJet(i) ) continue;
+      //ngoodjets++;
+      double phi = myJetsPF->at(i).phi;
+      double pT = getJetPt(i);
+      double pX = pT*cos(phi);
+      double pY = pT*sin(phi);
+      goodJetPx.push_back(pX);
+      goodJetPy.push_back(pY);
+    }
+
+    if(addMET)
+      {
+	double metPhi = getMETphi();
+	double eT = getMET();
+	double eX = eT*cos(metPhi);
+	double eY = eT*sin(metPhi);
+	goodJetPx.push_back(eX);
+	goodJetPy.push_back(eY);
+      }
+
+    double phiGuess = myJetsPF->at(0).phi;
+    RooRealVar phi("phi","phi",phiGuess,-1.0*TMath::Pi(),TMath::Pi());
+    RooTransverseThrustVar negThrustValue("negThrustValue","negThrustValue",phi,goodJetPx,goodJetPy);
+    RooMinuit rm(negThrustValue);
+    rm.migrad();
+    thrust = -1*negThrustValue.getVal();
+    thrustPhi = (phi.getVal()>0) ? phi.getVal()-TMath::Pi() : phi.getVal()+TMath::Pi();
 }
