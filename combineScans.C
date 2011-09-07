@@ -2,12 +2,12 @@
 
 //void combine()
 {
-  const TString which = "aleCLs"; //aleCLs, old, new
+  const TString which = "owenPL";
   TString outfileid="";
   if (which=="old") {
     outfileid=   "oldPL";
   }
-  else if (which=="new") {
+  else if (which=="owenPL") {
     outfileid=   "alternativePL";
   }
   else if (which=="aleCLs") {
@@ -20,7 +20,7 @@
 
   TString pathUl="";
   if (which=="old")      pathUl = "/afs/cern.ch/user/o/owen/public/RA2b/an-scanplot-unblind-t1bbbb-withcontam-"; //old
-  else if (which=="new") pathUl = "/afs/cern.ch/user/o/owen/public/RA2b/t1bbbb-all-plots.root"; //new
+  else if (which=="owenPL") pathUl = "/afs/cern.ch/user/o/owen/public/RA2b/t1bbbb-all-plots.root"; //new
   else if (which=="aleCLs") pathUl = "/afs/cern.ch/user/g/gaz/public/T1bbbb_xsULs.root";
   const TString pathEff = "/afs/cern.ch/user/j/joshmt/public/RA2b/RA2b.T1bbbb.";
 
@@ -31,7 +31,7 @@
     stubs[2] = "ge2b-loose.root";
     stubs[3] = "ge2b-tight.root";
   }
-  else if (which=="new") {
+  else if (which=="owenPL") {
     //new
     stubs[0] = "ge1bloose";
     stubs[1] = "ge1btight";
@@ -68,7 +68,7 @@
     if (which=="old")    ul[i] = (TH2F*) files[i]->Get("hsusyscanXsecul");
     else        {
       TString histoname="";
-      if (which=="new") {
+      if (which=="owenPL") {
 	histoname = stubs[i];
 	histoname += "_hplxsecul";
       }
@@ -149,14 +149,18 @@
   const float ypos = 0.92;
   const float xpos = 0.18;
 
+  const int width=900;
+  const int height=500;
   // ~~~~~~~ eff ~~~~~~
-  TCanvas effCanvas("effCanvas","eff canvas",700,500);
+  gStyle->SetPaintTextFormat("3.2f");
+  TCanvas effCanvas("effCanvas","eff canvas",width,height);
   effCanvas.cd()->SetRightMargin(0.14);
   effAtBestUL->SetXTitle("m_{gluino} [GeV]");
   effAtBestUL->SetYTitle("m_{LSP} [GeV]");
   effAtBestUL->GetYaxis()->SetRangeUser(0,LSPmax);
   effAtBestUL->GetXaxis()->SetRangeUser(0,GLmax);
   effAtBestUL->Draw("COLZ");
+  effAtBestUL->Draw("text same");
 
   TLatex* text1= new TLatex(3.570061,23.08044,"CMS Preliminary");
   text1->SetNDC();
@@ -183,13 +187,14 @@
 
   // ~~~~~~~ best UL ~~~~~~
   gStyle->SetPaintTextFormat("3.2f");
-  TCanvas ulCanvas("ulCanvas","ul canvas",700,500);
+  TCanvas ulCanvas("ulCanvas","ul canvas",width,height);
   ulCanvas.cd()->SetRightMargin(0.18); //14
   bestUL->SetXTitle("m_{gluino} [GeV]");
   bestUL->SetYTitle("m_{LSP} [GeV]");
   bestUL->SetZTitle("Cross section UL at 95% CL [pb]");
   bestUL->GetYaxis()->SetRangeUser(0,LSPmax);
   bestUL->GetXaxis()->SetRangeUser(0,GLmax);
+  bestUL->SetMaximum(40);
   bestUL->Draw("COLZ");
   bestUL->Draw("text same");
 
@@ -202,7 +207,7 @@
 
   // ~~~~~~~ which selection ~~~~~~
   gStyle->SetPaintTextFormat("1.0f");
-  TCanvas whichCanvas("whichCanvas","which canvas",700,500);
+  TCanvas whichCanvas("whichCanvas","which canvas",width,height);
   whichCanvas.cd()->SetRightMargin(0.14);
   whichIsBest->SetXTitle("m_{gluino} [GeV]");
   whichIsBest->SetYTitle("m_{LSP} [GeV]");
@@ -233,55 +238,3 @@
   whichCanvas.SaveAs("bestSelection_T1bbbb_"+outfileid+".pdf");
 
 }
-
-// {
-
-//   TFile fmsugra("/afs/cern.ch/user/o/owen/public/RA2b/clsplots-tb40-ge1btight.root");
-
-//   TH2F* hcls = (TH2F*) fmsugra.Get("hcls");
-
-//   TH2* hist = (TH2*) hcls->Clone("interpolated");
-//   int xMax = hist->GetNbinsX();
-//   int yMax = hist->GetNbinsY();
-
-//   int xMin = 0;
-  
-//   {// for interactive root
-//     for(int xBin = 1; xBin <= xMax; xBin++)
-//       {
-// 	for(int yBin = 1; yBin <= yMax; yBin++)
-// 	  {
-// 	    if(hist->GetBinContent(xBin,yBin)>0)
-// 	      {
-// 		xMin = xBin;
-// 		yBin = yMax+1;
-// 		xBin = xMax+1;
-// 	      }
-// 	  }
-//       }
-//   }
-  
-//   hist->Draw("COLZ");
-
-//   { //interactive root
-//     for (int jj=0; jj<25; jj++) {
-//       for(int xBin = xMin; xBin <= xMax; xBin++)  {
-// 	for(int yBin = 1; yBin <= yMax; yBin++) {
-// 	  if (hist->GetBinContent(xBin,yBin) <=0 ) {
-// 	    double av=0;
-// 	    int n=0;
-// 	    if (hist->GetBinContent(xBin + 1,yBin + 1)>0 && xBin!=xMax && yBin!=yMax) { av+= hist->GetBinContent(xBin + 1,yBin + 1); ++n;}
-// 	    if (hist->GetBinContent(xBin + 1,yBin)    >0 && xBin!=xMax) { av+= hist->GetBinContent(xBin + 1,yBin);     ++n;}
-// 	    if (hist->GetBinContent(xBin ,yBin + 1)   >0 && yBin!=yMax) { av+= hist->GetBinContent(xBin ,yBin + 1);    ++n;}
-	    
-// 	    if (n>0)  hist->SetBinContent(xBin,yBin,av/double(n));
-// 	  }
-// 	}
-//       }
-//       hist->Draw("COLZ");
-//     }
-//   }
-
-
-
-// }
