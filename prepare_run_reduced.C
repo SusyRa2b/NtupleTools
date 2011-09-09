@@ -11,7 +11,7 @@ void prepare_run_reduced(){
   
   //NEWER 42X data and MC
   TString dir1 = "/cu2/ra2b/Ftuples/";
-  TString inputVersion = "V00-02-24_fullpf2pat"; 
+  TString inputVersion = "V00-02-25c_fullpf2pat"; 
 
   //NEW 42X data and MC - don't use for SUS-11-006!!
   //TString dir1 = "/cu2/ra2b/Ftuples/";
@@ -45,7 +45,7 @@ void prepare_run_reduced(){
     fileliststream.open(sampleName+".txt", ios::trunc);
     
     TString dir2 = samplefiles1;
-    dir2+="/*";
+    dir2+="/*.root";
     TChain dummy2("dummy3");
     dummy2.Add(dir2);
     TObjArray* dir2list = dummy2.GetListOfFiles();
