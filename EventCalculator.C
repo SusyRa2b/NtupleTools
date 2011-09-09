@@ -76,7 +76,7 @@ EventCalculator::EventCalculator(const TString & sampleName, jetType theJetType,
     std::cout<<"\tDetected that I'm running over an mSugra scan!"<<std::endl;
     sampleIsSignal_=true;
   }
-  else if (sampleName_.Contains("T1bbbb") || sampleName_.Contains("T2bb") ) {
+  else if (sampleName_.Contains("T1bbbb") || sampleName_.Contains("T2bb") || sampleName_.Contains("T2tt")) {
     theScanType_ = kSMS;
     std::cout<<"\tDetected that I'm running over an SMS scan!"<<std::endl;
     sampleIsSignal_=true;
@@ -180,10 +180,12 @@ void EventCalculator::checkConsistency() {
     assert(0);
   }
 
+  //theScanType_ is set automatically now, so this is basically redundant
   if (theScanType_!=kNotScan && sampleName_.Contains("LM")) {cout<<"LM point is not a scan! Check theScanType_!"<<endl; assert(0);}
   if (theScanType_!=kmSugra && sampleName_.Contains("SUGRA")) {cout<<"mSugra is a scan! Check theScanType_!"<<endl; assert(0);}
   if (theScanType_!=kSMS && sampleName_.Contains("T1bbbb")) {cout<<"T1bbbb is a scan! Check theScanType_!"<<endl; assert(0);}
   if (theScanType_!=kSMS && sampleName_.Contains("T2bb")) {cout<<"T2bb is a scan! Check theScanType_!"<<endl; assert(0);}
+  if (theScanType_!=kSMS && sampleName_.Contains("T2tt")) {cout<<"T2tt is a scan! Check theScanType_!"<<endl; assert(0);}
 
 
 }
@@ -288,6 +290,7 @@ bool EventCalculator::noPUWeight() {
 
   if (sampleName_.Contains("T1bbbb"))                                                return true;
   if (sampleName_.Contains("T2bb"))                                                return true; //dunno if it has PU weights or not
+  if (sampleName_.Contains("T2tt"))                                                return true; //dunno if it has PU weights or not
 
   //Summer11 QCD
   if (sampleName_.Contains("qcd_tunez2_pt0to5_summer11") )                           return true;
@@ -1393,6 +1396,10 @@ float EventCalculator::getJESUncertainty( unsigned int ijet ){
       jecUnc_->setJetEta(myJetsPF->at(ijet).eta);
       jecUnc_->setJetPt(myJetsPF->at(ijet).pt); // here you must use the CORRECTED jet pt
       uncertainty = jecUnc_->getUncertainty(true);
+
+      //      cout<<"[EventCalculator::getJESUncertainty] "<<myJetsPFhelper->at(ijet).jetUncPlus<<"\t"<<uncertainty<<endl;
+      //      if ( fabs(  myJetsPFhelper->at(ijet).jetUncPlus - uncertainty) >0.01) cout<<"[EventCalculator::getJESUncertainty] something Bad!"<<endl;
+      
     }
   }
   else if (theJESType_ == kJESdown) {
@@ -2067,7 +2074,8 @@ std::pair<int,int> EventCalculator::getSMSmasses() {
   assert(theScanType_==kSMS);
 
   //our first pass at the official T1bbbb sample had bogus mGL, mLSP. we're not going to deal with that here.
-  //also, i'm nervous about our handling of the T2bb masses. need to verify!
+
+  //Don says that the squark mass for T2qq is stored in the mGL field
 
   return make_pair( TMath::Nint(eventlhehelperextra_mGL), TMath::Nint(eventlhehelperextra_mLSP));
 }
@@ -2101,7 +2109,12 @@ void EventCalculator::getPdfWeights(const TString & pdfset, Float_t * pdfWeights
   for (unsigned int i=0; i<s ; i++) {
     //for data, and for all samples other than signal, just store 1 (to save space via compression)
     if ( isSampleRealData() 
-	 || !( sampleName_.Contains("LM") || sampleName_.Contains("SUGRA")||sampleName_.Contains("T1bbbb") ||sampleName_.Contains("T2bb") )
+	 || !( sampleName_.Contains("LM") 
+	       || sampleName_.Contains("SUGRA")
+	       ||sampleName_.Contains("T1bbbb") 
+	       ||sampleName_.Contains("T2bb") 
+	       ||sampleName_.Contains("T2tt") 
+	       )
 	 ) {pdfWeights[i]=1; }
     else if ( pdfset=="CTEQ") {
       pdfWeights[i] = checkPdfWeightSanity( geneventinfoproducthelper1.at(i).pdfweight);
@@ -2196,6 +2209,7 @@ double EventCalculator::getCrossSection(){
   if (sampleName_.Contains("mSUGRA")) return 1; //NLO cross sections will be specially stored per point
   if (sampleName_.Contains("T1bbbb")) return 1;
   if (sampleName_.Contains("T2bb")) return 1;
+  if (sampleName_.Contains("T2tt")) return 1;
 
   std::cout<<"Cannot find cross section for this sample!"<<std::endl;
   assert(0); 
@@ -2263,6 +2277,7 @@ TString EventCalculator::getSampleNameOutputString(){
   if (sampleName_.Contains("mSUGRA_tanb40_summer11"))                                return sampleName_;
   if (sampleName_.Contains("T1bbbb"))                                                return sampleName_; //what i want to do here depends on whether the sample needs to be split or not
   if (sampleName_.Contains("T2bb"))                                                  return sampleName_;
+  if (sampleName_.Contains("T2tt"))                                                  return sampleName_;
 
   //if it isn't found, just use the full name 
   return sampleName_;
@@ -2986,7 +3001,7 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
       else 	continue; // skip this event
     }
     else if (theScanType_==kSMS) {
-      //Tincrement a 2d histogram of mGL, mLSP
+      //increment a 2d histogram of mGL, mLSP
       //we know 10k were generated everywhere, but what if we have failed jobs?
       scanSMSngen->Fill(m0,m12);
     }
