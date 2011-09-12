@@ -3,6 +3,7 @@
 #include "TGraph.h"
 #include "TCanvas.h"
 #include "TSpline.h"
+#include "TMath.h"
 
 #include <vector>
 #include <set>
@@ -57,15 +58,22 @@ std::set<pair<double,double> > smoothCurve(const std::set<pair<double,double> > 
 }
 
 
-void makeSplines(TString file) {
+void makeSplines(TString file, TString histname) {
 
-  TString id=file(file.Index("ge"),9);
+  TString id="";
+  if (histname=="") {
+    id=file(file.Index("ge"),9);
+  }
+  else {
+    id = histname(histname.Index("value_")+6,7);
+    id.Prepend("ge");
+  }
   if (c1!=0) delete c1;
   c1=new TCanvas(id);
 
   TFile* fmsugra=new TFile(file);
 
-  TH2F* hcls = (TH2F*) fmsugra->Get("hcls");
+  TH2F* hcls = (TH2F*) fmsugra->Get(histname);
 
   TH2* hist = (TH2*) hcls->Clone("interpolated");
   int xMax = hist->GetNbinsX();
@@ -78,11 +86,14 @@ void makeSplines(TString file) {
       {
 	for(int yBin = 1; yBin <= yMax; yBin++)
 	  {
-	    if(hist->GetBinContent(xBin,yBin)>0)
+	    if(hist->GetBinContent(xBin,yBin)>-2)
 	      {
 		xMin = xBin;
 		yBin = yMax+1;
 		xBin = xMax+1;
+		//set bins with -1 to a dummy excluded value of 0.01
+		//maybe this is the wrong approach
+		//		if ( hist->GetBinContent(xBin,yBin) == -1 )  hist->SetBinContent(xBin,yBin,0.01);
 	      }
 	  }
       }
@@ -90,18 +101,26 @@ void makeSplines(TString file) {
   
   hist->Draw("COLZ");
 
+  const int validcut=-2;
+
   { //interactive root
     for (int jj=0; jj<25; jj++) {
       for(int xBin = xMin; xBin <= xMax; xBin++)  {
 	for(int yBin = 1; yBin <= yMax; yBin++) {
-	  if (hist->GetBinContent(xBin,yBin) <=0 ) {
+	  if (hist->GetBinContent(xBin,yBin) <= validcut ) { //don't interpolate over the -1 points
 	    double av=0;
 	    int n=0;
 	    if (hist->GetBinContent(xBin + 1,yBin + 1)>0 && xBin!=xMax && yBin!=yMax) { av+= hist->GetBinContent(xBin + 1,yBin + 1); ++n;}
 	    if (hist->GetBinContent(xBin + 1,yBin)    >0 && xBin!=xMax) { av+= hist->GetBinContent(xBin + 1,yBin);     ++n;}
 	    if (hist->GetBinContent(xBin ,yBin + 1)   >0 && yBin!=yMax) { av+= hist->GetBinContent(xBin ,yBin + 1);    ++n;}
+
+	    bool neg1flag=false;
+	    if ( TMath::Nint(hist->GetBinContent(xBin + 1,yBin + 1)) == -1 
+		 || TMath::Nint(hist->GetBinContent(xBin + 1,yBin))==-1 || TMath::Nint(hist->GetBinContent(xBin ,yBin + 1))==-1)
+	      neg1flag=true;
 	    
-	    if (n>0)  hist->SetBinContent(xBin,yBin,av/double(n));
+	    if (n>0 && !neg1flag)  hist->SetBinContent(xBin,yBin,av/double(n));
+	    else if (neg1flag==true) hist->SetBinContent(xBin,yBin,-1);
 	  }
 	}
       }
@@ -119,10 +138,12 @@ void makeSplines(TString file) {
       
       if (foundAtThisX) continue;
 
-      if (hist->GetBinContent(xBin, yBin) < 0 || hist->GetBinContent(xBin, yBin+1)<0) continue;
+      if (hist->GetBinContent(xBin, yBin) < validcut || hist->GetBinContent(xBin, yBin+1)< validcut) continue;
 
       if (hist->GetBinContent(xBin, yBin) <cutval && hist->GetBinContent(xBin, yBin+1) >=cutval) {
 	//found a transition
+	//HACK -- if transition is at m12 greater than 500, ignore it!
+	if (hist->GetYaxis()->GetBinLowEdge(yBin+1) >500) continue;
 	//need to keep track of the x and y values of the transition
 	xyvals.insert(make_pair( hist->GetXaxis()->GetBinCenter(xBin),hist->GetYaxis()->GetBinLowEdge(yBin+1) ));
 	//	xvals.push_back( hist->GetXaxis()->GetBinCenter(xBin) );
@@ -141,6 +162,8 @@ void makeSplines(TString file) {
 
   pair<double,double> leftpoint = *xyvals.begin();
   pair<double,double> rightpoint = *xyvals.rbegin();
+
+  if (rightpoint.first != 2000) { cout<<file<<" "<<rightpoint.first<<endl;   rightpoint = make_pair(2000,0);  }
 
   TSpline3* spl=0;
   TSpline3* spl2=0;
@@ -190,11 +213,17 @@ void check() {
 
 void msugraExclusion() {
 
-  outputfile = new TFile("RA2b_tb40_exclusion.root","RECREATE");
-  makeSplines("/afs/cern.ch/user/o/owen/public/RA2b/clsplots-tb40-ge1btight.root");
-  makeSplines("/afs/cern.ch/user/o/owen/public/RA2b/clsplots-tb40-ge1bloose.root");
-  makeSplines("/afs/cern.ch/user/o/owen/public/RA2b/clsplots-tb40-ge2btight.root");
-  makeSplines("/afs/cern.ch/user/o/owen/public/RA2b/clsplots-tb40-ge2bloose.root");
+   outputfile = new TFile("RA2b_tb40_exclusion.root","RECREATE");
+//   makeSplines("/afs/cern.ch/user/o/owen/public/RA2b/clsplots-tb40-ge1btight.root","");
+//   makeSplines("/afs/cern.ch/user/o/owen/public/RA2b/clsplots-tb40-ge1bloose.root","");
+//   makeSplines("/afs/cern.ch/user/o/owen/public/RA2b/clsplots-tb40-ge2btight.root","");
+//   makeSplines("/afs/cern.ch/user/o/owen/public/RA2b/clsplots-tb40-ge2bloose.root","");
+
+
+   makeSplines("/afs/cern.ch/user/g/gaz/public/mSugra_scans.root","cls_value_1bloose");
+   makeSplines("/afs/cern.ch/user/g/gaz/public/mSugra_scans.root","cls_value_1btight");
+   makeSplines("/afs/cern.ch/user/g/gaz/public/mSugra_scans.root","cls_value_2bloose");
+   makeSplines("/afs/cern.ch/user/g/gaz/public/mSugra_scans.root","cls_value_2btight");
 
   outputfile->Close();
 
