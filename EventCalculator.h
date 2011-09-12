@@ -298,6 +298,8 @@ private:
   void resetVariables();
   bool  recalculatedVariables_;
 
+  TStopwatch* watch_; //not used for everyday running; just for testing
+
 };
 
 #endif

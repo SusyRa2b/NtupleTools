@@ -9,6 +9,7 @@
 #include "TFile.h"
 #include "TMatrixT.h"
 #include "TMatrixDEigen.h"
+#include "TStopwatch.h"
 
 #include <RooRealVar.h>
 #include <RooMinuit.h>
@@ -68,7 +69,8 @@ EventCalculator::EventCalculator(const TString & sampleName, jetType theJetType,
   JetCorrector_(0),
   jecUnc_(new JetCorrectionUncertainty("START42_V13_AK5PFchs_Uncertainty.txt")),
   starttime_(0),
-  recalculatedVariables_(false)
+  recalculatedVariables_(false),
+  watch_(0)
 {
 
   if ( sampleName_.Contains("mSUGRA") ) {
@@ -1386,30 +1388,38 @@ float EventCalculator::getJERbiasFactor(unsigned int ijet) {
 }
 
 
-float EventCalculator::getJESUncertainty( unsigned int ijet ){
+float EventCalculator::getJESUncertainty( unsigned int ijet ) {
+
 
   float uncertainty = -1000;
 
-  if ( theJESType_ == kJESup ) {
-    //uncertainty = myJetsPFhelper->at(ijet).jetUncPlus;
-    if( fabs(myJetsPF->at(ijet).eta) <5 ){
-      jecUnc_->setJetEta(myJetsPF->at(ijet).eta);
-      jecUnc_->setJetPt(myJetsPF->at(ijet).pt); // here you must use the CORRECTED jet pt
-      uncertainty = jecUnc_->getUncertainty(true);
+/* for timing tests only
+  if ( watch_==0 ) watch_ = new TStopwatch(); //ctor starts the timer
+  else watch_->Continue(); //kFALSE == don't reset the timer
+*/
 
-      //      cout<<"[EventCalculator::getJESUncertainty] "<<myJetsPFhelper->at(ijet).jetUncPlus<<"\t"<<uncertainty<<endl;
-      //      if ( fabs(  myJetsPFhelper->at(ijet).jetUncPlus - uncertainty) >0.01) cout<<"[EventCalculator::getJESUncertainty] something Bad!"<<endl;
+  if ( theJESType_ == kJESup ) {
+    uncertainty = myJetsPFhelper->at(ijet).jetUncPlus; //ntuple values are much faster than running this on the fly
+//     if( fabs(myJetsPF->at(ijet).eta) <5 ){
+//       jecUnc_->setJetEta(myJetsPF->at(ijet).eta);
+//       jecUnc_->setJetPt(myJetsPF->at(ijet).pt); // here you must use the CORRECTED jet pt
+//       uncertainty = jecUnc_->getUncertainty(true);
+
+//       //      cout<<"[EventCalculator::getJESUncertainty] "<<myJetsPFhelper->at(ijet).jetUncPlus<<"\t"<<uncertainty<<endl;
+//       //      if ( fabs(  myJetsPFhelper->at(ijet).jetUncPlus - uncertainty) >0.01) cout<<"[EventCalculator::getJESUncertainty] something Bad!"<<endl;
       
-    }
+//     }
   }
   else if (theJESType_ == kJESdown) {
-    //uncertainty = myJetsPFhelper->at(ijet).jetUncMinus;
-    if( fabs(myJetsPF->at(ijet).eta) <5 ){
-      jecUnc_->setJetEta(myJetsPF->at(ijet).eta);
-      jecUnc_->setJetPt(myJetsPF->at(ijet).pt); // here you must use the CORRECTED jet pt
-      uncertainty = jecUnc_->getUncertainty(false);
-    }
+    uncertainty = myJetsPFhelper->at(ijet).jetUncMinus; //ntuple values are much faster than running this on the fly
+//     if( fabs(myJetsPF->at(ijet).eta) <5 ){
+//       jecUnc_->setJetEta(myJetsPF->at(ijet).eta);
+//       jecUnc_->setJetPt(myJetsPF->at(ijet).pt); // here you must use the CORRECTED jet pt
+//       uncertainty = jecUnc_->getUncertainty(false);
+//     }
   }
+
+  //  watch_->Stop(); //for timing tests only
 
   return uncertainty;
 }
@@ -1461,10 +1471,12 @@ float EventCalculator::getJetPt( unsigned int ijet ) {
     //in 2010 there was an extra term added in quadrature. 
     //i will not implement that because i don't know if that term should exist in 2011
     //note that this if statement is important because there are dummy values like -1000 sometimes
-    if (  fabs(getJESUncertainty(ijet))<1 )   pt *= (1+getJESUncertainty(ijet));
+    const    float unc = getJESUncertainty(ijet);
+    if (  fabs(unc)<1 )   pt *= (1+ unc);
   }
   else if (theJESType_ == kJESdown) {
-    if (  fabs(getJESUncertainty(ijet))<1 ) pt *= (1-getJESUncertainty(ijet));
+    const    float unc = getJESUncertainty(ijet);
+    if (  fabs( unc)<1 ) pt *= (1- unc);
   }
   
   return pt;
@@ -1499,10 +1511,12 @@ float EventCalculator::getUncorrectedJetPt( unsigned int ijet ) {
     //in 2010 there was an extra term added in quadrature. 
     //i will not implement that because i don't know if that term should exist in 2011
     //note that this if statement is important because there are dummy values like -1000 sometimes
-    if (  fabs(getJESUncertainty(ijet))<1 )   pt *= (1+getJESUncertainty(ijet));
+    const    float unc = getJESUncertainty(ijet);
+    if (  fabs(unc)<1 )   pt *= (1+unc);
   }
   else if (theJESType_ == kJESdown) {
-    if (  fabs(getJESUncertainty(ijet))<1 ) pt *= (1-getJESUncertainty(ijet));
+    const    float unc = getJESUncertainty(ijet);
+    if (  fabs( unc)<1 ) pt *= (1- unc);
   }
 
   return pt;
@@ -3231,6 +3245,9 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
     } //end of reduced tree skim
   } //end of loop over events
   stopTimer(nevents);
+
+  if (watch_!=0) watch_->Print();
+
   fout.Write();
   fout.Close();
   
