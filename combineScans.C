@@ -2,7 +2,7 @@
 
 //void combine()
 {
-  const TString which = "owenPL";
+  const TString which = "aleCLs";
   TString outfileid="";
   if (which=="old") {
     outfileid=   "oldPL";
@@ -13,6 +13,9 @@
   else if (which=="aleCLs") {
     outfileid=   "officialCLs";
   }
+  else if (which=="alePL") {
+    outfileid=   "officialPL";
+  }
   else {assert(0);}
 
   gROOT->SetStyle("CMS");
@@ -22,6 +25,7 @@
   if (which=="old")      pathUl = "/afs/cern.ch/user/o/owen/public/RA2b/an-scanplot-unblind-t1bbbb-withcontam-"; //old
   else if (which=="owenPL") pathUl = "/afs/cern.ch/user/o/owen/public/RA2b/t1bbbb-all-plots.root"; //new
   else if (which=="aleCLs") pathUl = "/afs/cern.ch/user/g/gaz/public/T1bbbb_xsULs.root";
+  else if (which=="alePL") pathUl = "/afs/cern.ch/user/g/gaz/public/T1bbbb_PLxsULs.root";
   const TString pathEff = "/afs/cern.ch/user/j/joshmt/public/RA2b/RA2b.T1bbbb.";
 
   TString stubs[4];
@@ -38,7 +42,7 @@
     stubs[2] = "ge2bloose";
     stubs[3] = "ge2btight";
   }
-  else if (which=="aleCLs") {
+  else if (which=="aleCLs" || which=="alePL") {
     //new
     stubs[0] = "1bloose";
     stubs[1] = "1btight";
@@ -76,6 +80,11 @@
 	histoname = "h2d_";
 	histoname+=stubs[i];
 	histoname+="_xsUL";
+      }
+      else if (which=="alePL") {
+	histoname = "h2d_";
+	histoname+=stubs[i];
+	histoname+="_PLxsUL";
       }
       ul[i] = (TH2F*) files[i]->Get(histoname);
     }
@@ -120,7 +129,7 @@
 	double xcoord=	bestUL->GetXaxis()->GetBinCenter(i);
 	double ycoord=	bestUL->GetYaxis()->GetBinCenter(j);
 	int thisbin=	bestEff->FindBin(xcoord,ycoord); //now look up the bin number on eff histogram
-	double thiseff = bestEff->GetBinContent(thisbin);
+	double thiseff = 100*bestEff->GetBinContent(thisbin);
 	//this guy has the same binning by definition
 	effAtBestUL->SetBinContent(i,j,thiseff);
       }
@@ -152,7 +161,7 @@
   const int width=900;
   const int height=500;
   // ~~~~~~~ eff ~~~~~~
-  gStyle->SetPaintTextFormat("3.2f");
+  gStyle->SetPaintTextFormat("2.0f");
   TCanvas effCanvas("effCanvas","eff canvas",width,height);
   effCanvas.cd()->SetRightMargin(0.14);
   effAtBestUL->SetXTitle("m_{gluino} [GeV]");
