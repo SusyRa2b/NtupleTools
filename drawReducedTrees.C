@@ -76,18 +76,18 @@ functionality for TH1F and TH1D e.g. the case of addOverflowBin()
 //V00-02-24_fullpf2pat was used for 13 Aug update of data results
 //stick with this version for now because 25 is missing one ZJets sample and that takes away one event from the LDP
 //TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-24_fullpf2pat/";//path for MC
-TString dataInputPath = "/cu3/wteo/reducedTrees/V00-02-05_v3-pickevents/"; //includes MET cleaning but uses a tight skim (not good for plots)
+//TString dataInputPath = "/cu3/wteo/reducedTrees/V00-02-05_v3-pickevents/"; //includes MET cleaning but uses a tight skim (not good for plots)
 
 //for making the standard set of plots...need standard MC and all data.
-//TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-25_fullpf2pat/";//path for MC	     
-//TString dataInputPath = "/cu2/ra2b/reducedTrees/V00-02-25_fullpf2pat/";
+TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-25_fullpf2pat/";//path for MC	     
+TString dataInputPath = "/cu2/ra2b/reducedTrees/V00-02-25_fullpf2pat/";
 
 //for njet reweighting (needed because not all reducedTrees in nominal V00-02-25 have njets30)
 //TString inputPath = "/cu2/ra2b/reducedTrees/benV00-02-25_fullpf2pat/";
 //TString dataInputPath = "/cu2/ra2b/reducedTrees/benV00-02-25_fullpf2pat/";
 
 //for signal systematics
-TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-25c_fullpf2pat/"; //LM9 with correct pdf weights
+//TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-25c_fullpf2pat/"; //LM9 with correct pdf weights
 //TString inputPath = "/cu2/joshmt/reducedTrees/V00-02-25c_fullpf2pat/"; //with correct pdf weights
 //TString inputPath = "/home/joshmt/";//path for MC
 //TString dataInputPath = "/cu2/ra2b/reducedTrees/V00-02-24_fullpf2pat/"; //sym links to V00-02-05_v3
@@ -1912,16 +1912,16 @@ other.
   bool vb = true;
   
   //ge1b, Loose
-  const int nvarbins=18;
-  const float varbins[]={100, 120, 140, 160, 180, 200, 220, 240, 260, 280, 300, 320, 340, 360, 380, 400, 450, 500, 550};
+  //const int nvarbins=18;
+  //const float varbins[]={100, 120, 140, 160, 180, 200, 220, 240, 260, 280, 300, 320, 340, 360, 380, 400, 450, 500, 550}; //AN and PAS
 
   //ge1b, Tight
   //const int nvarbins=15;
-  //const float varbins[]={100, 120, 140, 160, 180, 200, 220, 240, 260, 280, 300, 350, 400, 450, 500, 550};
+  //const float varbins[]={100, 120, 140, 160, 180, 200, 220, 240, 260, 280, 300, 350, 400, 450, 500, 550}; //AN
   
   //ge2b, Loose and Tight
-  //const int nvarbins=12;
-  //const float varbins[]={100, 125, 150, 175, 200, 225, 250, 275, 300, 350, 400, 450, 550};
+  const int nvarbins=12;
+  const float varbins[]={100, 125, 150, 175, 200, 225, 250, 275, 300, 350, 400, 450, 550}; //AN and PAS 
 
   doOverflowAddition(true);
 
@@ -2020,7 +2020,8 @@ other.
   myLine = new TLine(low, 1, high, 1);
   myLine->Draw();
   myC->cd(1);
-  TLatex* mytext = new TLatex(3.570061,23.08044,"CMS Preliminary");
+  //TLatex* mytext = new TLatex(3.570061,23.08044,"CMS Preliminary");
+  TLatex* mytext = new TLatex(3.570061,23.08044,"CMS Simulation");
   mytext->SetNDC();
   mytext->SetTextAlign(13);
   mytext->SetX(0.6);
@@ -2090,13 +2091,14 @@ void AN2011_r() {
   doData(true);
   TCut util = "pass_utilityHLT_HT300>=1 && weight<1000";
   selection_ =TCut("HT>=350 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && nbjetsSSVHPT==0")&&util;
-  drawR("minDeltaPhiN",4,10,50,150,"Data_eq0b");
+  //drawR("minDeltaPhiN",4,10,50,150,"Data_eq0b");
+  drawR("minDeltaPhiN",4,15,0,150,"Data_eq0b"); //used in PAS
+  
 }
 
 
 void AN2011_r_SLreq() {
-  TString btagselection="ge1b";
-  TCut btagcut = "nbjetsSSVHPT>=1";
+  //used for PAS
   loadSamples();
   
   // == draw r(MET)
@@ -2110,37 +2112,31 @@ void AN2011_r_SLreq() {
   setStackMode(false);
   doOverflowAddition(true);
   
-  
   setPlotMaximum(0.5); setPlotMinimum(0);
  
-  selection_ =TCut("cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1&&weight<1000")&&btagcut;
-  //drawR("minDeltaPhi",0.3,15,50,350,"old_"+btagselection);
-  //drawR("minDeltaPhiN",4,15,50,350,btagselection);
-
-
-
-
   const int nvarbins=13;
-  const float varbins[]={0,15,30,45,80,110,140,170,200,230,260,290,320,350};
+  const float varbins[]={0,15,30,45,80,110,140,170,200,230,260,290,320,350}; //use for PAS
+  
   selection_ ="cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && nbjetsSSVHPT==0&&weight<1000";
   drawR("minDeltaPhiN",4, "MET", nvarbins, varbins,"eq0b");
-
-
-  const int nvarbins1=9;
-  const float varbins1[]={0,15,30,45,75,125,175,225,275,350};
-  selection_ ="cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && nbjetsSSVHPT==1&&weight<1000";
-  //drawR("minDeltaPhiN",4, "MET", nvarbins1, varbins1,"eq1b");
-
+  
   selection_ ="cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && nbjetsSSVHPT>=1&&weight<1000";
   drawR("minDeltaPhiN",4, "MET", nvarbins, varbins,"ge1b");
+  
   setPlotMaximum(5); setPlotMinimum(0);
-  //drawR("minDeltaPhi",0.3, "MET", nvarbins, varbins,"old_ge1b");
-
+  drawR("minDeltaPhi",0.3, "MET", nvarbins, varbins,"old_ge1b");
+  
+  
+  /*
+  //other plots looked at, but not in PAS, for example.
+  selection_ ="cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && nbjetsSSVHPT==1&&weight<1000";
+  drawR("minDeltaPhiN",4, "MET", nvarbins, varbins,"eq1b");
+  
   const int nvarbins2=8;
   const float varbins2[]={0,15,30,45,75,125,175,225, 350};
   selection_ ="cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && nbjetsSSVHPT>=2&&weight<1000";
-  //drawR("minDeltaPhiN",4, "MET", nvarbins2, varbins2,"eq2b");
-
+  drawR("minDeltaPhiN",4, "MET", nvarbins2, varbins2,"ge2b");
+  */
 }
 
 
@@ -2294,12 +2290,13 @@ void AN2011( TString btagselection="ge1b",const int mode=1  ) {
 
   doData(false);
 
+  
   var="minDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}";
   nbins = 40; low=0; high=40;
   //no delta phi cut, loose MET window (only good for MC)
   selection_ =TCut("cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=100")&&btagcut;
   drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "minDeltaPhiN_looseMET_MConly_"+btagselection+modestring);
-
+  
 
   // ========= regular N-1 plots
 
@@ -2308,13 +2305,14 @@ void AN2011( TString btagselection="ge1b",const int mode=1  ) {
   setColorScheme("stack");
   doData(true);
   drawMCErrors_=true;
-
+  
+  
   var="minDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}";
   nbins = 20; low=0; high=40;
   //no delta phi cut
   selection_ =TCut("cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=150")&&btagcut;
-  drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_minDeltaPhiN_"+btagselection+modestring);
-
+  drawPlots(var,nbins,low,high,xtitle,"Events/2", "SBandSIG_minDeltaPhiN_"+btagselection+modestring);
+  
   // n Jets
   selection_ =TCut("cutHT==1 && cutPV==1 && cutTrigger==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=150 && minDeltaPhiN >= 4")&&btagcut;
   var="njets"; xtitle="Jet multiplicity";
@@ -2326,21 +2324,23 @@ void AN2011( TString btagselection="ge1b",const int mode=1  ) {
   var="HT"; xtitle="H_{T} (GeV)";
   nbins = 20; low=350; high=1050;
   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_HT_"+btagselection+modestring);
+  
 
   //MET
   selection_ =TCut("cutHT==1 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4")&&btagcut;
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
   nbins = 35; low=150; high=500;
-  drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_"+btagselection+modestring);
+  drawPlots(var,nbins,low,high,xtitle,"Events/10 GeV", "SBandSIG_MET_"+btagselection+modestring);
 
   //MET distribution with tighter HT cut
   selection_ =TCut("HT>500 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4")&&btagcut;
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
-  if(btagselection=="ge2b") { nbins = 7; low=150; high=500; }//requested by 
-  else{ nbins = 17; low=150; high=500;}
-  drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_HT500_"+btagselection+modestring);
+  TString thisytitle = "";
+  if(btagselection=="ge2b") { nbins = 7; low=150; high=500; thisytitle = "Events/50 GeV";}//requested by TK 
+  else{ nbins = 17; low=150; high=500; thisytitle = "Events/20.6 GeV";}
+  drawPlots(var,nbins,low,high,xtitle,thisytitle, "SBandSIG_MET_HT500_"+btagselection+modestring);
 
-
+  
   // == finally, draw the signal region only!
   selection_ =TCut("cutHT==1 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=200 && minDeltaPhiN >= 4")&&btagcut;
   var="HT"; xtitle="H_{T} (GeV)";
@@ -2382,13 +2382,13 @@ void AN2011( TString btagselection="ge1b",const int mode=1  ) {
   var="muonpt1"; xtitle="muon p_{T} [GeV]";
   nbins = 20; low=0; high=200;
   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_muonpT_0e1mu_"+btagselection+modestring);
-
+  
   // == MET for the combined sample
   selection_ =TCut("MET>=150 &&cutHT==1 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && minDeltaPhiN >= 4")&&btagcut;
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
   nbins = 15; low=150; high=450;
-  drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_SL_"+btagselection+modestring);
-
+  drawPlots(var,nbins,low,high,xtitle,"Events/20 GeV", "SBandSIG_MET_SL_"+btagselection+modestring);
+  
   // == HT for the combined sample
   selection_ =TCut("MET>=150 &&cutHT==1 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && minDeltaPhiN >= 4")&&btagcut;
   var="HT"; xtitle="H_{T} [GeV]";
@@ -2400,13 +2400,13 @@ void AN2011( TString btagselection="ge1b",const int mode=1  ) {
   var="HT"; xtitle="H_{T} [GeV]";
   nbins = 20; low=350; high=1050;
   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_njets_SL_"+btagselection+modestring);
-
+  
   // == MET for the combined sample (HT>500)
   selection_ =TCut("MET>=150 && HT>500 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && minDeltaPhiN >= 4")&&btagcut;
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
   nbins = 15; low=150; high=450;
-  drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_SL_HT500_"+btagselection+modestring);
-
+  drawPlots(var,nbins,low,high,xtitle,"Events/20 GeV", "SBandSIG_MET_SL_HT500_"+btagselection+modestring);
+  
   //different scale to compare to Kristen
   selection_ =TCut("MET>=150 && HT>500 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && minDeltaPhiN >= 4")&&btagcut;
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
@@ -2426,7 +2426,7 @@ void AN2011( TString btagselection="ge1b",const int mode=1  ) {
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
   nbins = 30; low=150; high=450;
   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_ldp_"+btagselection+modestring);
-
+ 
 
 }
 

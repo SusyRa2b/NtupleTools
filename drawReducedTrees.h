@@ -442,7 +442,8 @@ void loadSusyScanHistograms() {
 
 void drawPlotHeaderInside() {
   if (text1 != 0 ) delete text1;
-  text1 = new TLatex(3.570061,23.08044,"CMS Preliminary");
+  //text1 = new TLatex(3.570061,23.08044,"CMS Preliminary");
+  text1 = new TLatex(3.570061,23.08044,"CMS Simulation");
   text1->SetNDC();
   text1->SetTextAlign(13);
   text1->SetX(0.5);
@@ -469,7 +470,8 @@ void drawPlotHeader() {
 
   if (normalized_ == false) {
     TString astring;
-    astring.Form("%.0f pb^{-1} at #sqrt{s} = 7 TeV",lumiScale_);
+    //astring.Form("%.0f pb^{-1} at #sqrt{s} = 7 TeV",lumiScale_);
+    astring.Form("%.1f fb^{-1} at #sqrt{s} = 7 TeV",lumiScale_/1000.);
     if (text2 != 0 ) delete text2;
     text2 = new TLatex(3.570061,23.08044,astring);
     text2->SetNDC();
@@ -995,7 +997,8 @@ void loadSamples(bool joinSingleTop=true) {
 
   //  configDescriptions_.push_back("SSVHPT");
   //  old btageff prescription
-/*
+
+  /*
   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
   configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
 
@@ -1022,6 +1025,42 @@ void loadSamples(bool joinSingleTop=true) {
   //    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffdown");
   //    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffup");
   */
+
+
+
+  //FOR PLOTS
+  ////////////
+  configDescriptions_.setDefault("SSVHPT_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
+  configDescriptions_.setCorrected("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
+
+  //JES
+  configDescriptions_.addVariation("SSVHPT_PF2PATjets_JESdown_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0",
+				   "SSVHPT_PF2PATjets_JESup_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
+  //JER
+  //  configDescriptions_.addVariation("SSVHPT_PF2PATjets_JES0_JERdown_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0",
+  //"SSVHPT_PF2PATjets_JES0_JERup_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
+
+  //unclustered MET
+  configDescriptions_.addVariation("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METuncDown_PUunc0_BTagEff0_HLTEff0", 
+				   "SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METuncUp_PUunc0_BTagEff0_HLTEff0");
+
+  //PU
+  //    configDescriptions_.addVariation("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncDown_BTagEff0_HLTEff0",
+  //"SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncUp_BTagEff0_HLTEff0");
+
+  //btag eff
+  configDescriptions_.addVariation("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffdown_HLTEff0",
+				   "SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffup_HLTEff0");
+
+  //HLT eff
+  //    configDescriptions_.addVariation("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffdown",
+  //"SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffup");
+
+  ///////////////
+  //////////////
+
+
+
 
 /*
   //new btag eff prescription
@@ -1053,6 +1092,7 @@ void loadSamples(bool joinSingleTop=true) {
   //    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEffup");
 */
 
+/*
   //new btag eff prescription
   configDescriptions_.setDefault("SSVHPT_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
   configDescriptions_.setCorrected("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
@@ -1081,7 +1121,7 @@ void loadSamples(bool joinSingleTop=true) {
   //    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEffdown");
   //    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEffup");
 
-  
+*/
 
   currentConfig_=configDescriptions_.getDefault();
 
