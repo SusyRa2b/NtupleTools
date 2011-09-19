@@ -2,7 +2,7 @@
 
 //void combine()
 {
-  const TString which = "aleCLs";
+  const TString which = "aleCLsExpected";
   TString outfileid="";
   if (which=="old") {
     outfileid=   "oldPL";
@@ -16,6 +16,9 @@
   else if (which=="alePL") {
     outfileid=   "officialPL";
   }
+  else if (which=="aleCLsExpected") {
+    outfileid=   "officialCLsExpected";
+  }
   else {assert(0);}
 
   gROOT->SetStyle("CMS");
@@ -25,6 +28,7 @@
   if (which=="old")      pathUl = "/afs/cern.ch/user/o/owen/public/RA2b/an-scanplot-unblind-t1bbbb-withcontam-"; //old
   else if (which=="owenPL") pathUl = "/afs/cern.ch/user/o/owen/public/RA2b/t1bbbb-all-plots.root"; //new
   else if (which=="aleCLs") pathUl = "/afs/cern.ch/user/g/gaz/public/T1bbbb_xsULs.root";
+  else if (which=="aleCLsExpected") pathUl = "/afs/cern.ch/user/g/gaz/public/T1bbbb_xsULs_expected.root";
   else if (which=="alePL") pathUl = "/afs/cern.ch/user/g/gaz/public/T1bbbb_PLxsULs.root";
   const TString pathEff = "/afs/cern.ch/user/j/joshmt/public/RA2b/RA2b.T1bbbb.";
 
@@ -42,7 +46,7 @@
     stubs[2] = "ge2bloose";
     stubs[3] = "ge2btight";
   }
-  else if (which=="aleCLs" || which=="alePL") {
+  else if (which=="aleCLs" || which=="alePL" ||which=="aleCLsExpected") {
     //new
     stubs[0] = "1bloose";
     stubs[1] = "1btight";
@@ -80,6 +84,11 @@
 	histoname = "h2d_";
 	histoname+=stubs[i];
 	histoname+="_xsUL";
+      }
+      else if (which=="aleCLsExpected") {
+	histoname = "h2d_";
+	histoname+=stubs[i];
+	histoname+="_xsUL_exp";
       }
       else if (which=="alePL") {
 	histoname = "h2d_";
