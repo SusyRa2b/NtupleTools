@@ -79,18 +79,18 @@ functionality for TH1F and TH1D e.g. the case of addOverflowBin()
 //TString dataInputPath = "/cu3/wteo/reducedTrees/V00-02-05_v3-pickevents/"; //includes MET cleaning but uses a tight skim (not good for plots)
 
 //for making the standard set of plots...need standard MC and all data.
-TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-25_fullpf2pat/";//path for MC	     
-TString dataInputPath = "/cu2/ra2b/reducedTrees/V00-02-25_fullpf2pat/";
+//TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-25_fullpf2pat/";//path for MC	     
+//TString dataInputPath = "/cu2/ra2b/reducedTrees/V00-02-25_fullpf2pat/";
 
 //for njet reweighting (needed because not all reducedTrees in nominal V00-02-25 have njets30)
 //TString inputPath = "/cu2/ra2b/reducedTrees/benV00-02-25_fullpf2pat/";
 //TString dataInputPath = "/cu2/ra2b/reducedTrees/benV00-02-25_fullpf2pat/";
 
 //for signal systematics
-//TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-25c_fullpf2pat/"; //LM9 with correct pdf weights
+TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-25c_fullpf2pat/"; //LM9 with correct pdf weights
 //TString inputPath = "/cu2/joshmt/reducedTrees/V00-02-25c_fullpf2pat/"; //with correct pdf weights
 //TString inputPath = "/home/joshmt/";//path for MC
-//TString dataInputPath = "/cu2/ra2b/reducedTrees/V00-02-24_fullpf2pat/"; //sym links to V00-02-05_v3
+TString dataInputPath = "/cu2/ra2b/reducedTrees/V00-02-24_fullpf2pat/"; //sym links to V00-02-05_v3
 
 //the cutdesc string is now defined in loadSamples()
 
@@ -277,7 +277,7 @@ each of the systematics variations was done with JERbias turned on.
     //then get the yield after cuts with extra weight pdfWeights[i]/sum
     TH1D pdfEventCounter("pdfEventCounter","pdfEventCounter",1,0,1e9);
     pdfEventCounter.Sumw2();
-    if (sampleOfInterest!="T1bbbb"&&sampleOfInterest!="T2bb")    thetree->Project("pdfEventCounter","HT",getCutString(false, "",extraWeight,i,"CTEQ").Data());
+    if (sampleOfInterest!="T1bbbb"&&sampleOfInterest!="T2bb"&&sampleOfInterest!="T2tt")    thetree->Project("pdfEventCounter","HT",getCutString(false, "",extraWeight,i,"CTEQ").Data());
     else      thetree->Project("pdfEventCounter","HT",getCutString(kSMSPoint,"",selection_,"",i,"CTEQ").Data());
     if (i%2==0) {
       Xminus[(i-2)/2] = pdfEventCounter.Integral();
@@ -334,7 +334,7 @@ each of the systematics variations was done with JERbias turned on.
     //then get the yield after cuts with extra weight pdfWeights[i]/sum
     TH1D pdfEventCounter("pdfEventCounter","pdfEventCounter",1,0,1e9);
     pdfEventCounter.Sumw2();
-    if (sampleOfInterest!="T1bbbb"&&sampleOfInterest!="T2bb")    thetree->Project("pdfEventCounter","HT",getCutString(false, "",extraWeight,i,"MSTW").Data());
+    if (sampleOfInterest!="T1bbbb"&&sampleOfInterest!="T2bb"&&sampleOfInterest!="T2tt")    thetree->Project("pdfEventCounter","HT",getCutString(false, "",extraWeight,i,"MSTW").Data());
     else      thetree->Project("pdfEventCounter","HT",getCutString(kSMSPoint,"",selection_,"",i,"MSTW").Data());
     //    thetree->Project("pdfEventCounter","HT",getCutString(false, "",extraWeight,i,"MSTW").Data());
     if (i%2==0) {
@@ -383,7 +383,7 @@ each of the systematics variations was done with JERbias turned on.
       TH1D pdfEventCounter("pdfEventCounter","pdfEventCounter",1,0,1e9);
       pdfEventCounter.Sumw2();
       //      thetree->Project("pdfEventCounter","HT",getCutString(false, "",extraWeight,i,"NNPDF").Data());
-      if (sampleOfInterest!="T1bbbb"&&sampleOfInterest!="T2bb")    thetree->Project("pdfEventCounter","HT",getCutString(false, "",extraWeight,i,"NNPDF").Data());
+      if (sampleOfInterest!="T1bbbb"&&sampleOfInterest!="T2bb"&&sampleOfInterest!="T2tt")    thetree->Project("pdfEventCounter","HT",getCutString(false, "",extraWeight,i,"NNPDF").Data());
       else      thetree->Project("pdfEventCounter","HT",getCutString(kSMSPoint,"",selection_,"",i,"NNPDF").Data());
       cout<<"    yield = "<<pdfEventCounter.Integral()<<endl;
       nnpdfYields.Fill(pdfEventCounter.Integral());
@@ -860,6 +860,7 @@ void runSystematics2011_SMS(TString sampleOfInterest="T1bbbb") {
   }
 
   //as specified by mariarosaria for T1bbbb
+  // -- also works for T2bb and T2tt (see https://twiki.cern.ch/twiki/bin/viewauth/CMS?SUSY42XSUSYScan)
   int    nbinsx=60;
   int    nbinsy=60;
   double    lowx=0;

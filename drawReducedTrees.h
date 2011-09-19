@@ -881,6 +881,7 @@ void setColorScheme(const TString & name) {
     sampleColor_["mSUGRAtanb40"] =kGray;
     sampleColor_["T1bbbb"] =kGray;
     sampleColor_["T2bb"] =kGray;
+    sampleColor_["T2tt"] =kGray;
     sampleColor_["QCD"] = kYellow;
     sampleColor_["PythiaQCD"] = kYellow;
     sampleColor_["PythiaPUQCD"] = kYellow;
@@ -905,6 +906,7 @@ void setColorScheme(const TString & name) {
     sampleColor_["mSUGRAtanb40"] =kCyan+2;
     sampleColor_["T1bbbb"] =kCyan+2;
     sampleColor_["T2bb"] =kCyan+2;
+    sampleColor_["T2tt"] =kCyan+2;
     sampleColor_["QCD"] = 2;
     sampleColor_["PythiaQCD"] = 2;
     sampleColor_["PythiaPUQCD"] =2;
@@ -994,6 +996,7 @@ void loadSamples(bool joinSingleTop=true) {
   samplesAll_.insert("mSUGRAtanb40");
   samplesAll_.insert("T1bbbb");
   samplesAll_.insert("T2bb");
+  samplesAll_.insert("T2tt");
 
   //  configDescriptions_.push_back("SSVHPT");
   //  old btageff prescription
@@ -1027,7 +1030,7 @@ void loadSamples(bool joinSingleTop=true) {
   */
 
 
-
+  /*
   //FOR PLOTS
   ////////////
   configDescriptions_.setDefault("SSVHPT_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
@@ -1058,7 +1061,7 @@ void loadSamples(bool joinSingleTop=true) {
 
   ///////////////
   //////////////
-
+  */
 
 
 
@@ -1092,7 +1095,7 @@ void loadSamples(bool joinSingleTop=true) {
   //    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEffup");
 */
 
-/*
+
   //new btag eff prescription
   configDescriptions_.setDefault("SSVHPT_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
   configDescriptions_.setCorrected("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
@@ -1101,17 +1104,17 @@ void loadSamples(bool joinSingleTop=true) {
   //JES
   configDescriptions_.addVariation("SSVHPT_PF2PATjets_JESdown_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0",
 				   "SSVHPT_PF2PATjets_JESup_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
-  //JER
-  configDescriptions_.addVariation("SSVHPT_PF2PATjets_JES0_JERdown_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0",
-				   "SSVHPT_PF2PATjets_JES0_JERup_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
+  //JER - out for SMS
+  //configDescriptions_.addVariation("SSVHPT_PF2PATjets_JES0_JERdown_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0",
+  //				   "SSVHPT_PF2PATjets_JES0_JERup_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
 
   //unclustered MET
   configDescriptions_.addVariation("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METuncDown_PUunc0_BTagEff02_HLTEff0",
 				   "SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METuncUp_PUunc0_BTagEff02_HLTEff0");
 
-  //PU
-  configDescriptions_.addVariation("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncDown_BTagEff02_HLTEff0",
-				   "SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncUp_BTagEff02_HLTEff0");
+  //PU - out for SMS
+  //configDescriptions_.addVariation("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncDown_BTagEff02_HLTEff0",
+  //				   "SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncUp_BTagEff02_HLTEff0");
 
   //btag eff
   configDescriptions_.addVariation("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffdown2_HLTEff0",
@@ -1121,7 +1124,7 @@ void loadSamples(bool joinSingleTop=true) {
   //    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEffdown");
   //    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEffup");
 
-*/
+
 
   currentConfig_=configDescriptions_.getDefault();
 
@@ -1132,6 +1135,7 @@ void loadSamples(bool joinSingleTop=true) {
   sampleLabel_["mSUGRAtanb40"] = "tan #beta = 40";
   sampleLabel_["T1bbbb"] = "T1bbbb";
   sampleLabel_["T2bb"] = "T2bb";
+  sampleLabel_["T2tt"] = "T2tt";
   sampleLabel_["LM13"] = "LM13";
   sampleLabel_["LM9"] = "LM9";
   sampleLabel_["QCD"] = "QCD (madgraph)";
@@ -1155,6 +1159,7 @@ void loadSamples(bool joinSingleTop=true) {
   sampleMarkerStyle_["mSUGRAtanb40"] = kFullStar;
   sampleMarkerStyle_["T1bbbb"] = kFullStar;
   sampleMarkerStyle_["T2bb"] = kFullStar;
+  sampleMarkerStyle_["T2tt"] = kFullStar;
   sampleMarkerStyle_["LM13"] = kFullStar;
   sampleMarkerStyle_["LM9"] = kFullStar;
   sampleMarkerStyle_["QCD"] = kFullCircle;
@@ -1178,6 +1183,7 @@ void loadSamples(bool joinSingleTop=true) {
   sampleOwenName_["mSUGRAtanb40"] = "msugra40";
   sampleOwenName_["T1bbbb"] = "t1bbbb";
   sampleOwenName_["T2bb"] = "t2bb";
+  sampleOwenName_["T2tt"] = "t2tt";
   sampleOwenName_["LM13"] = "lm13";
   sampleOwenName_["LM9"] = "lm9";
   sampleOwenName_["QCD"] = "qcd";
@@ -1244,6 +1250,8 @@ sampleType getSampleType(const TString & sample , const TString & planeOrPoint="
   else if (sample.Contains("T1bbbb") && planeOrPoint=="plane") return kSMSPlane;
   else if (sample.Contains("T2bb") && planeOrPoint=="point") return kSMSPoint;
   else if (sample.Contains("T2bb") && planeOrPoint=="plane") return kSMSPlane;
+  else if (sample.Contains("T2tt") && planeOrPoint=="point") return kSMSPoint;
+  else if (sample.Contains("T2tt") && planeOrPoint=="plane") return kSMSPlane;
 
   return kMC;
 
@@ -2116,7 +2124,7 @@ most of it is irrelevant for SMS, but we'll use it anyway
   TString vary="m12"; TString ytitle=vary;
   int  nbinsy=110; float lowy=-0.5; float highy=1100-0.5;
 
-  if (sampleOfInterest== "T1bbbb" || sampleOfInterest== "T2bb") { //change binning
+  if (sampleOfInterest== "T1bbbb" || sampleOfInterest== "T2bb" || sampleOfInterest== "T2tt") { //change binning
     //m0 -> mGl
     //m12 -> mLSP
     if (scanSMSngen==0) scanSMSngen = (TH2D*) files_[currentConfig_][sampleOfInterest]->Get("scanSMSngen");
@@ -2229,7 +2237,7 @@ vector<susyScanYields> getSusyScanYields(const TString & sampleOfInterest,const 
 
   TString vary="m12"; TString ytitle=vary;
   int  nbinsy=110; float lowy=-0.5; float highy=1100-0.5;
-  if (sampleOfInterest== "T1bbbb" || sampleOfInterest== "T2bb") { //change binning
+  if (sampleOfInterest== "T1bbbb" || sampleOfInterest== "T2bb" || sampleOfInterest== "T2tt") { //change binning
     //m0 -> mGl
     //m12 -> mLSP
     if (scanSMSngen==0) scanSMSngen = (TH2D*) files_[currentConfig_][sampleOfInterest]->Get("scanSMSngen");
