@@ -837,27 +837,27 @@ Lepton veto  - 2%
 
 }
 
-void runSystematics2011_SMS(TString sampleOfInterest="T1bbbb") {
+void runSystematics2011_SMS(TString sampleOfInterest="T1bbbb", const int i=0) {
   
   loadSamples();
   clearSamples();
   addSample(sampleOfInterest);
-
+  
   setSearchRegions();
-
+  
   //  if (i>=searchRegions_.size() ) { cout<<"There are only "<<searchRegions_.size()<<" search regions!"<<endl; return;}
-
+  
   //open the output files
   //-- these are the text files for Owen et al
   vector<ofstream*> textfiles;
   vector<TFile*> rootfiles;
-  for (unsigned int i=0; i<searchRegions_.size(); i++) {
+  //for (unsigned int i=0; i<searchRegions_.size(); i++) {
     char effoutput[500];
     sprintf(effoutput,"signalSyst.%s.%s%s.dat",sampleOfInterest.Data(),searchRegions_[i].btagSelection.Data(),searchRegions_[i].owenId.Data());
     textfiles.push_back( new ofstream(effoutput));
     sprintf(effoutput,"RA2b.%s.%s%s.root",sampleOfInterest.Data(),searchRegions_[i].btagSelection.Data(),searchRegions_[i].owenId.Data());
     rootfiles.push_back(new TFile(effoutput,"RECREATE"));
-  }
+  //}
 
   //as specified by mariarosaria for T1bbbb
   // -- also works for T2bb and T2tt (see https://twiki.cern.ch/twiki/bin/viewauth/CMS?SUSY42XSUSYScan)
@@ -876,7 +876,7 @@ void runSystematics2011_SMS(TString sampleOfInterest="T1bbbb") {
     highy=1000;
   }
 
-  for (unsigned int i=0; i<searchRegions_.size(); i++) {
+  //for (unsigned int i=0; i<searchRegions_.size(); i++) {
     
     map<pair<int,int>, SignalEffData> SB =  runTH2Syst2011_mSugra(sbRegions_[i],false,false,sampleOfInterest);
     map<pair<int,int>, SignalEffData> SIG =  runTH2Syst2011_mSugra(searchRegions_[i],false,false,sampleOfInterest);
@@ -891,14 +891,14 @@ void runSystematics2011_SMS(TString sampleOfInterest="T1bbbb") {
     for (map<pair<int,int>, SignalEffData >::iterator iscanpoint = SB.begin(); iscanpoint!= SB.end(); ++iscanpoint) {
       int nentries=   TMath::Nint(scanSMSngen->GetBinContent(scanSMSngen->FindBin(iscanpoint->first.first,iscanpoint->first.second ))); 
       
-      (*textfiles[i])<<iscanpoint->first.first <<" "<<iscanpoint->first.second <<" "<<nentries<<" "
+      (*textfiles[0])<<iscanpoint->first.first <<" "<<iscanpoint->first.second <<" "<<nentries<<" "
 		     <<SIG[iscanpoint->first].rawYield<<" "<<SB[iscanpoint->first].rawYield<<" "<<SIGSL[iscanpoint->first].rawYield<<" "<<SBSL[iscanpoint->first].rawYield<<" "<<SIGLDP[iscanpoint->first].rawYield<<" "<<SBLDP[iscanpoint->first].rawYield<<" "
 		     <<SIG[iscanpoint->first].effCorr<<" "<<SB[iscanpoint->first].effCorr<<" "<<SIGSL[iscanpoint->first].effCorr<<" "<<SBSL[iscanpoint->first].effCorr<<" "<<SIGLDP[iscanpoint->first].effCorr<<" "<<SBLDP[iscanpoint->first].effCorr<<" "
 		     <<SIG[iscanpoint->first].totalSystematic<<" "<<SB[iscanpoint->first].totalSystematic<<" "<<SIGSL[iscanpoint->first].totalSystematic<<" "<<SBSL[iscanpoint->first].totalSystematic<<" "<<SIGLDP[iscanpoint->first].totalSystematic<<" "<<SBLDP[iscanpoint->first].totalSystematic<<endl;
     }
 
     //now output to root. need to convert back to TH2D
-    rootfiles[i]->cd();
+    rootfiles[0]->cd();
     TString hsuffix = sampleOfInterest; hsuffix+="_"; hsuffix+=searchRegions_[i].btagSelection; hsuffix+=searchRegions_[i].owenId;
     TString hname="efficiency_"; hname+=hsuffix;
     TH2D efficiency(hname,hname,nbinsx,lowx,highx,nbinsy,lowy,highy);
@@ -932,11 +932,11 @@ void runSystematics2011_SMS(TString sampleOfInterest="T1bbbb") {
       otherError.Fill(  iscan->first.first, iscan->first.second, iscan->second.otherSystematic );
       totalSystematicError.Fill(iscan->first.first, iscan->first.second, iscan->second.totalSystematic );
     }
-    rootfiles.at(i)->Write();
-
-    textfiles.at(i)->close();
-    rootfiles.at(i)->Close();
-  }
+    rootfiles.at(0)->Write();
+    
+    textfiles.at(0)->close();
+    rootfiles.at(0)->Close();
+    //}
 
 
 }
