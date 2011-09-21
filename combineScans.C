@@ -2,7 +2,7 @@
 
 //void combine()
 {
-  const TString which = "aleCLsExpected";
+  const TString which = "aleCLsCustom";
   TString outfileid="";
   if (which=="old") {
     outfileid=   "oldPL";
@@ -19,6 +19,9 @@
   else if (which=="aleCLsExpected") {
     outfileid=   "officialCLsExpected";
   }
+  else if (which=="aleCLsCustom") {
+    outfileid=   "officialCLsCustom";
+  }
   else {assert(0);}
 
   gROOT->SetStyle("CMS");
@@ -28,6 +31,7 @@
   if (which=="old")      pathUl = "/afs/cern.ch/user/o/owen/public/RA2b/an-scanplot-unblind-t1bbbb-withcontam-"; //old
   else if (which=="owenPL") pathUl = "/afs/cern.ch/user/o/owen/public/RA2b/t1bbbb-all-plots.root"; //new
   else if (which=="aleCLs") pathUl = "/afs/cern.ch/user/g/gaz/public/T1bbbb_xsULs.root";
+  else if (which=="aleCLsCustom") pathUl = "/afs/cern.ch/user/g/gaz/public/T1bbbb_xsULs.root";
   else if (which=="aleCLsExpected") pathUl = "/afs/cern.ch/user/g/gaz/public/T1bbbb_xsULs_expected.root";
   else if (which=="alePL") pathUl = "/afs/cern.ch/user/g/gaz/public/T1bbbb_PLxsULs.root";
   const TString pathEff = "/afs/cern.ch/user/j/joshmt/public/RA2b/RA2b.T1bbbb.";
@@ -46,7 +50,7 @@
     stubs[2] = "ge2bloose";
     stubs[3] = "ge2btight";
   }
-  else if (which=="aleCLs" || which=="alePL" ||which=="aleCLsExpected") {
+  else if (which=="aleCLs" || which=="alePL" ||which=="aleCLsExpected" ||which=="aleCLsCustom") {
     //new
     stubs[0] = "1bloose";
     stubs[1] = "1btight";
@@ -80,7 +84,7 @@
 	histoname = stubs[i];
 	histoname += "_hplxsecul";
       }
-      else if (which=="aleCLs") {
+      else if (which=="aleCLs" || which=="aleCLsCustom") {
 	histoname = "h2d_";
 	histoname+=stubs[i];
 	histoname+="_xsUL";
@@ -118,13 +122,27 @@
   whichIsBest->Reset();
   whichIsBest->SetTitle("Selection with best UL");
 
+  TFile * whichLimitFile = 0;
+  if (which=="aleCLsCustom") {
+    //replace the whichIsBest histo with Ale's histo
+    whichLimitFile = new TFile("/afs/cern.ch/user/g/gaz/public/best_selection_expected.root");
+    whichIsBest = (TH2F*) whichLimitFile->Get("h2d_best_sel_two");
+    //cout<<"wib = "<<whichIsBest<<endl;
+  }
+
   for (int i=1; i<=bestUL->GetXaxis()->GetNbins(); i++) {
     for (int j=1; j<=bestUL->GetYaxis()->GetNbins(); j++) {
       double minul=1e9;
       int selectionIsBest=0;
-      for (int ifile=0; ifile<4; ifile++) {
-	double thisul = ul[ifile]->GetBinContent(i,j);
-	if (thisul<minul && thisul>0) { minul=thisul; selectionIsBest = ifile+1;}
+      if (whichLimitFile==0) {
+	for (int ifile=0; ifile<4; ifile++) {
+	  double thisul = ul[ifile]->GetBinContent(i,j);
+	  if (thisul<minul && thisul>0) { minul=thisul; selectionIsBest = ifile+1;}
+	}
+      }
+      else { //don't find the best, because the external file is already telling us which one is best
+	selectionIsBest = whichIsBest->GetBinContent(i,j);
+	if (selectionIsBest>0)	minul = ul[selectionIsBest-1]->GetBinContent(i,j);
       }
       if (selectionIsBest!=0) {
 	bestULlog10->SetBinContent(i,j,log10(minul));
@@ -147,7 +165,7 @@
 
   //max is still a holdover from the cloned histo
   //this trick seems effective at finding the real max
-  whichIsBest->SetMaximum( whichIsBest->GetBinContent(whichIsBest->GetMaximumBin()));
+  whichIsBest->SetMaximum(4);
   whichIsBest->SetMinimum(0);
   effAtBestUL->SetMaximum( effAtBestUL->GetBinContent(effAtBestUL->GetMaximumBin()));
   effAtBestUL->SetMinimum(0);
