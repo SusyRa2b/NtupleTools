@@ -92,10 +92,12 @@ public:
 
   double getMinDeltaPhiMET(unsigned int maxjets);
   double getTransverseMETError(unsigned int thisJet);
-  double getDeltaPhiNMET(unsigned int thisJet);
-  double getDeltaPhiMETN( unsigned int goodJetN ); //yes, we have two !
-  double getMinDeltaPhiNMET(unsigned int maxjets);
-  double getMinDeltaPhiMETN(unsigned int maxjets); //again a duplicate!
+  double getDeltaPhiNMET(unsigned int thisJet); //Luke
+  double getDeltaPhiMETN( unsigned int goodJetN, float mainpt, float maineta, bool mainid, float otherpt, float othereta, bool otherid, bool dataJetRes, bool keith ); //Ben
+  double getDeltaPhiMETN( unsigned int goodJetN ) {return getDeltaPhiMETN(goodJetN,50,2.4,true,30,2.4,true,false,false); }; //Ben, overloaded
+  double getMinDeltaPhiNMET(unsigned int maxjets); //Luke
+  double getMinDeltaPhiMETN(unsigned int maxjets, float mainmt, float maineta, bool mainid, float otherpt, float othereta, bool otherid, bool dataJetRes, bool keith ); //Ben
+  double getMinDeltaPhiMETN(unsigned int maxjets) {return getMinDeltaPhiMETN(maxjets,50,2.4,true,30,2.4,true,false,false); }; //Ben, overloaded
 
   double getMaxDeltaPhiNMET(unsigned int maxjets);
   double getTransverseMETSignificance(unsigned int thisJet);
@@ -122,9 +124,9 @@ public:
   ULong64_t getEventNumber() {return TMath::Nint( *myEDM_event );}
 
   bool isCleanJet(const unsigned int ijet);
-  bool isGoodJet(const unsigned int ijet, const float pTthreshold=50, const float etaMax=2.4); //subset of isCleanJet
-  bool isGoodJet10(unsigned int ijet) {return isGoodJet(ijet,10,2.4);}
-  bool isGoodJet30(unsigned int ijet) {return isGoodJet(ijet,30,2.4);}
+  bool isGoodJet(const unsigned int ijet, const float pTthreshold=50, const float etaMax=2.4, const bool jetid=true); //subset of isCleanJet
+  bool isGoodJet10(unsigned int ijet) {return isGoodJet(ijet,10,2.4,true);}
+  bool isGoodJet30(unsigned int ijet) {return isGoodJet(ijet,30,2.4,true);}
   bool isGoodJetMHT(unsigned int ijet);
   bool passBTagger(int ijet, BTaggerType btagger=Nbtaggers );
 
@@ -259,6 +261,18 @@ private:
 
   void loadHLTHTeff();
   void loadHLTMHTeff();
+
+  void loadDataJetRes();
+  float getDataJetRes(float pt, float eta);
+  TFile *fDataJetRes_;
+  TH1D *hEta0_0p5_;
+  TH1D *hEta0p5_1_;
+  TH1D *hEta1_1p5_;
+  TH1D *hEta1p5_2_;
+  TH1D *hEta2_2p5_;
+  TH1D *hEta2p5_3_;
+  TH1D *hEta3_5_;
+  
 
   TString getOptPiece(const TString &key, const TString & opt);
 

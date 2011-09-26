@@ -97,7 +97,8 @@ EventCalculator::EventCalculator(const TString & sampleName, jetType theJetType,
 
   loadHLTMHTeff();
   loadHLTHTeff();
-
+  loadDataJetRes();
+  
 }
 
 EventCalculator::~EventCalculator() {}
@@ -597,7 +598,30 @@ float EventCalculator::getHLTHTeff(float offHT) {
   return eff;
 }
 
+void EventCalculator::loadDataJetRes(){
+  if(fDataJetRes_ ==0){
+    fDataJetRes_ = new TFile("additionalTools/datajetres.root", "READ");
+    hEta0_0p5_ = (TH1D*) fDataJetRes_->Get("hEta0_0p5");
+    hEta0p5_1_ = (TH1D*) fDataJetRes_->Get("hEta0p5_1");
+    hEta1_1p5_ = (TH1D*) fDataJetRes_->Get("hEta1_1p5");
+    hEta1p5_2_ = (TH1D*) fDataJetRes_->Get("hEta1p5_2");
+    hEta2_2p5_ = (TH1D*) fDataJetRes_->Get("hEta2_2p5");
+    hEta2p5_3_ = (TH1D*) fDataJetRes_->Get("hEta2p5_3");
+    hEta3_5_   = (TH1D*) fDataJetRes_->Get("hEta3_5");
+  }
+}
 
+float EventCalculator::getDataJetRes(float pt, float eta){
+  float abseta = fabs(eta);
+  if(abseta<=0.5)                    return hEta0_0p5_->GetBinContent(hEta0_0p5_->FindFixBin(pt));
+  else if(abseta>0.5 && abseta<=1.0) return hEta0p5_1_->GetBinContent(hEta0p5_1_->FindFixBin(pt));
+  else if(abseta>1.0 && abseta<=1.5) return hEta1_1p5_->GetBinContent(hEta1_1p5_->FindFixBin(pt));
+  else if(abseta>1.5 && abseta<=2.0) return hEta1p5_2_->GetBinContent(hEta1p5_2_->FindFixBin(pt));
+  else if(abseta>2.0 && abseta<=2.5) return hEta2_2p5_->GetBinContent(hEta2_2p5_->FindFixBin(pt));
+  else if(abseta>2.5 && abseta<=3.0) return hEta2p5_3_->GetBinContent(hEta2p5_3_->FindFixBin(pt));
+  else if(abseta>3.0 && abseta<=5.0) return hEta3_5_  ->GetBinContent(hEta3_5_  ->FindFixBin(pt));
+  else {assert(0);}
+}
 
 int EventCalculator::countGoodPV() {
   
@@ -789,7 +813,7 @@ double EventCalculator::getTransverseMETError(unsigned int thisJet) {
   return 0.1*sqrt(deltaT);
 }
 
-double EventCalculator::getDeltaPhiNMET(unsigned int thisJet) {
+double EventCalculator::getDeltaPhiNMET(unsigned int thisJet) {//Luke
 
   if(!(thisJet<myJetsPF->size())) return 1E12;
 
@@ -800,13 +824,14 @@ double EventCalculator::getDeltaPhiNMET(unsigned int thisJet) {
 }
 
 
-double EventCalculator::getDeltaPhiMETN( unsigned int goodJetN ) {
+double EventCalculator::getDeltaPhiMETN( unsigned int goodJetN, float mainpt, float maineta, bool mainid,
+					 float otherpt, float othereta, bool otherid, bool dataJetRes, bool keith) {//Ben
   
   //find the goodJetN-th good jet -- this is the jet deltaPhiN will be calculated for
   unsigned int ijet = 999999;
   unsigned int goodJetI=0;
   for (unsigned int i=0; i< myJetsPF->size(); i++) {
-    if (isGoodJet(i)) {
+    if (isGoodJet(i, mainpt, maineta, mainid)) {
       if(goodJetI == goodJetN){
 	ijet = i;
 	break;
@@ -816,20 +841,25 @@ double EventCalculator::getDeltaPhiMETN( unsigned int goodJetN ) {
   }
   if(ijet == 999999) return -99;
   
+  double METx = myMETPF->at(0).pt * cos(myMETPF->at(0).phi);
+  double METy = myMETPF->at(0).pt * sin(myMETPF->at(0).phi);
+  
   //get sum for deltaT
   double sum = 0;
   for (unsigned int i=0; i< myJetsPF->size(); i++) {
-    if(i==ijet) continue; //not really needed since it adds zero to the sum
-    if(isGoodJet30(i)){
-      sum += pow( (getJetPx(ijet)*getJetPy(i) - getJetPy(ijet)*getJetPx(i)), 2);      
+    if(i==ijet) continue; 
+    if(isGoodJet(i, otherpt, othereta, otherid)){
+      double jetres = dataJetRes ? getDataJetRes(getJetPt(i), myJetsPF->at(i).eta) : 0.1;
+      if(keith)  sum += pow( jetres*(METx*getJetPy(i) - METy*getJetPx(i)), 2);      
+      else sum += pow( jetres*(getJetPx(ijet)*getJetPy(i) - getJetPy(ijet)*getJetPx(i)), 2);      
     }//is good jet
   }//i
   
   //get deltaT
-  double deltaT = (0.1 / getJetPt(ijet))*sqrt(sum);
-  
+  double deltaT = keith ? sqrt(sum)/getMET() : sqrt(sum)/getJetPt(ijet);
+    
   //calculate deltaPhiMETN
-  double dp =  getDeltaPhi( myJetsPF->at(ijet).phi , getMETphi());
+  double dp =  getDeltaPhi(myJetsPF->at(ijet).phi, getMETphi());
   double dpN = dp / atan2(deltaT, getMET());
   
   return dpN;
@@ -837,19 +867,20 @@ double EventCalculator::getDeltaPhiMETN( unsigned int goodJetN ) {
 
 
 
-double EventCalculator::getMinDeltaPhiMETN(unsigned int maxjets){
+double EventCalculator::getMinDeltaPhiMETN(unsigned int maxjets, float mainpt, float maineta, bool mainid, 
+					   float otherpt, float othereta, bool otherid, bool dataJetRes, bool keith){//Ben
   
   double mdpN=1E12;
   
-  for (unsigned int i=0; i<maxjets; i++) {//could really start at i=1
+  for (unsigned int i=0; i<maxjets; i++) {
     if(i>=nGoodJets()) break;
-    double dpN =  getDeltaPhiMETN(i);//i is for i'th *good* jet, starting at i=0. returns -99 if bad jet.
+    double dpN =  getDeltaPhiMETN(i, mainpt, maineta, mainid, otherpt, othereta, otherid, dataJetRes, keith);//i is for i'th *good* jet, starting at i=0. returns -99 if bad jet.
     if (dpN>=0 && dpN<mdpN) mdpN=dpN;//checking that dpN>=0 shouldn't be necessary after break statement above, but add it anyway 
   }
   return mdpN;
 }
 
-double EventCalculator::getMinDeltaPhiNMET(unsigned int maxjets) {
+double EventCalculator::getMinDeltaPhiNMET(unsigned int maxjets) {//Luke
   
   double mindpn=1E12;
 
@@ -1172,11 +1203,11 @@ bool EventCalculator::isCleanJet(const unsigned int ijet){
 }
 
 
-bool EventCalculator::isGoodJet(const unsigned int ijet, const float pTthreshold, const float etaMax) {
+bool EventCalculator::isGoodJet(const unsigned int ijet, const float pTthreshold, const float etaMax, const bool jetid) {
 
   if ( getJetPt(ijet) <pTthreshold) return false;
   if ( fabs(myJetsPF->at(ijet).eta) > etaMax) return false;
-  if ( !jetPassLooseID(ijet) ) return false;
+  if ( jetid && !jetPassLooseID(ijet) ) return false;
 
   //do manual cleaning for reco pfjets
   if(theJetType_ == kRECOPF){
@@ -2634,8 +2665,11 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   float maxDeltaPhi, maxDeltaPhiAll, maxDeltaPhiAll30, maxDeltaPhi30_eta5_noIdAll;
   float sumDeltaPhi, diffDeltaPhi;
   float minDeltaPhiN, deltaPhiN1, deltaPhiN2, deltaPhiN3;
+  float minDeltaPhiN_otherEta5, minDeltaPhiN_otherEta5idNo, minDeltaPhiN_mainPt30_otherEta5idNo, minDeltaPhiN_mainPt30Eta5_otherEta5idNo, minDeltaPhiN_mainPt30Eta5idNo_otherEta5idNo;
+  float minDeltaPhiK, minDeltaPhiK_otherEta5, minDeltaPhiK_otherEta5idNo, minDeltaPhiK_mainPt30_otherEta5idNo, minDeltaPhiK_mainPt30Eta5_otherEta5idNo, minDeltaPhiK_mainPt30Eta5idNo_otherEta5idNo;
+  float minDeltaPhiN_DJR, minDeltaPhiN_DJR_otherEta5, minDeltaPhiK_DJR, minDeltaPhiK_DJR_otherEta5;
   float minDeltaPhiMetTau;
-
+  
   bool cutHT,cutPV,cutTrigger;
   bool cut3Jets,cutEleVeto,cutMuVeto,cutMET,cutDeltaPhi;
 
@@ -2845,6 +2879,22 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   reducedTree.Branch("deltaPhiN1", &deltaPhiN1, "deltaPhiN1/F");
   reducedTree.Branch("deltaPhiN2", &deltaPhiN2, "deltaPhiN2/F");
   reducedTree.Branch("deltaPhiN3", &deltaPhiN3, "deltaPhiN3/F");
+
+  reducedTree.Branch("minDeltaPhiN_otherEta5", &minDeltaPhiN_otherEta5, "minDeltaPhiN_otherEta5/F");
+  reducedTree.Branch("minDeltaPhiN_otherEta5idNo", &minDeltaPhiN_otherEta5idNo, "minDeltaPhiN_otherEta5idNo/F");
+  reducedTree.Branch("minDeltaPhiN_mainPt30_otherEta5idNo", &minDeltaPhiN_mainPt30_otherEta5idNo, "minDeltaPhiN_mainPt30_otherEta5idNo/F");
+  reducedTree.Branch("minDeltaPhiN_mainPt30Eta5_otherEta5idNo", &minDeltaPhiN_mainPt30Eta5_otherEta5idNo, "minDeltaPhiN_mainPt30Eta5_otherEta5idNo/F");
+  reducedTree.Branch("minDeltaPhiN_mainPt30Eta5idNo_otherEta5idNo", &minDeltaPhiN_mainPt30Eta5idNo_otherEta5idNo, "minDeltaPhiN_mainPt30Eta5idNo_otherEta5idNo/F");
+  reducedTree.Branch("minDeltaPhiK", &minDeltaPhiK, "minDeltaPhiK/F");
+  reducedTree.Branch("minDeltaPhiK_otherEta5", &minDeltaPhiK_otherEta5, "minDeltaPhiK_otherEta5/F");
+  reducedTree.Branch("minDeltaPhiK_otherEta5idNo", &minDeltaPhiK_otherEta5idNo, "minDeltaPhiK_otherEta5idNo/F");
+  reducedTree.Branch("minDeltaPhiK_mainPt30_otherEta5idNo", &minDeltaPhiK_mainPt30_otherEta5idNo, "minDeltaPhiK_mainPt30_otherEta5idNo/F");
+  reducedTree.Branch("minDeltaPhiK_mainPt30Eta5_otherEta5idNo", &minDeltaPhiK_mainPt30Eta5_otherEta5idNo, "minDeltaPhiK_mainPt30Eta5_otherEta5idNo/F");
+  reducedTree.Branch("minDeltaPhiK_mainPt30Eta5idNo_otherEta5idNo", &minDeltaPhiK_mainPt30Eta5idNo_otherEta5idNo, "minDeltaPhiK_mainPt30Eta5idNo_otherEta5idNo/F");
+  reducedTree.Branch("minDeltaPhiN_DJR", &minDeltaPhiN_DJR, "minDeltaPhiN_DJR/F");
+  reducedTree.Branch("minDeltaPhiN_DJR_otherEta5", &minDeltaPhiN_DJR_otherEta5, "minDeltaPhiN_DJR_otherEta5/F");
+  reducedTree.Branch("minDeltaPhiK_DJR", &minDeltaPhiK_DJR, "minDeltaPhiK_DJR/F");
+  reducedTree.Branch("minDeltaPhiK_DJR_otherEta5", &minDeltaPhiK_DJR_otherEta5, "minDeltaPhiK_DJR_otherEta5/F");
 
   reducedTree.Branch("minDeltaPhiN_lostJet", &minDeltaPhiN_lostJet, "minDeltaPhiN_lostJet/F");
   reducedTree.Branch("deltaPhiN1_lostJet", &deltaPhiN1_lostJet, "deltaPhiN1_lostJet/F");
@@ -3140,6 +3190,25 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
       deltaPhiN1 = getDeltaPhiMETN(0);
       deltaPhiN2 = getDeltaPhiMETN(1);
       deltaPhiN3 = getDeltaPhiMETN(2);
+
+      //alternatives for testing
+      minDeltaPhiN_otherEta5                      = getMinDeltaPhiMETN(3,50,2.4,true, 30,5,true, false,false);
+      minDeltaPhiN_otherEta5idNo                  = getMinDeltaPhiMETN(3,50,2.4,true, 30,5,false,false,false);
+      minDeltaPhiN_mainPt30_otherEta5idNo         = getMinDeltaPhiMETN(3,30,2.4,true, 30,5,false,false,false);
+      minDeltaPhiN_mainPt30Eta5_otherEta5idNo     = getMinDeltaPhiMETN(3,30,5,  true, 30,5,false,false,false);
+      minDeltaPhiN_mainPt30Eta5idNo_otherEta5idNo = getMinDeltaPhiMETN(3,30,5,  false,30,5,false,false,false);
+
+      minDeltaPhiK                                = getMinDeltaPhiMETN(3,50,2.4,true, 30,2.4,true, false,true); //K is for Keith
+      minDeltaPhiK_otherEta5                      = getMinDeltaPhiMETN(3,50,2.4,true, 30,5,  true, false,true);
+      minDeltaPhiK_otherEta5idNo                  = getMinDeltaPhiMETN(3,50,2.4,true, 30,5,  false,false,true);
+      minDeltaPhiK_mainPt30_otherEta5idNo         = getMinDeltaPhiMETN(3,30,2.4,true, 30,5,  false,false,true);
+      minDeltaPhiK_mainPt30Eta5_otherEta5idNo     = getMinDeltaPhiMETN(3,30,5,  true, 30,5,  false,false,true);
+      minDeltaPhiK_mainPt30Eta5idNo_otherEta5idNo = getMinDeltaPhiMETN(3,30,5,  false,30,5,  false,false,true);
+      
+      minDeltaPhiN_DJR           = getMinDeltaPhiMETN(3,50,2.4,true,30,2.4,true,true,false); //DJR is for data jet resolution
+      minDeltaPhiN_DJR_otherEta5 = getMinDeltaPhiMETN(3,50,2.4,true,30,5,  true,true,false);
+      minDeltaPhiK_DJR           = getMinDeltaPhiMETN(3,50,2.4,true,30,2.4,true,true,true );
+      minDeltaPhiK_DJR_otherEta5 = getMinDeltaPhiMETN(3,50,2.4,true,30,5,  true,true,true );
 
       minDeltaPhiN_Luke = getMinDeltaPhiNMET(3);
       maxDeltaPhiN_Luke = getMaxDeltaPhiNMET(3);
