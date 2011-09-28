@@ -262,19 +262,29 @@
   const float GLmax=1210;
   const float GLmin=300;
 
-  const float ypos = 0.92;
+  bool wide = false;
+
+  const float ypos = wide ? 0.92 : 0.88;
   const float xpos = 0.18;
 
-  const int width=900;
-  const int height=500;
+  const int width= wide? 900 : 700;
+  const int height=wide? 500 : 650;
+
+  const float rightmarginZ = wide ? 0.18 : 0.24;
+
+  TString legT1bbbb="pp #rightarrow #tilde{g} #tilde{g}, #tilde{g} #rightarrow 2b + LSP; m(#tilde{q})>>m(#tilde{g})"; 
   // ~~~~~~~ eff ~~~~~~
   gStyle->SetPaintTextFormat("2.0f");
   TCanvas effCanvas("effCanvas","eff canvas",width,height);
-  effCanvas.cd()->SetRightMargin(0.14);
-  effAtBestUL->SetXTitle("m_{gluino} [GeV]");
+  if (!wide)  effCanvas.cd()->SetTopMargin(0.1);
+  //  effCanvas.cd()->SetRightMargin(0.14);
+  effCanvas.cd()->SetRightMargin(rightmarginZ); //14
+  effAtBestUL->SetXTitle("m_{#tilde{g}} [GeV]");
   effAtBestUL->SetYTitle("m_{LSP} [GeV]");
+  effAtBestUL->SetZTitle("A #times #varepsilon [%]");
   effAtBestUL->GetYaxis()->SetRangeUser(0,LSPmax);
   effAtBestUL->GetXaxis()->SetRangeUser(GLmin,GLmax);
+  if (!wide) effAtBestUL->GetXaxis()->SetNdivisions(505);
   effAtBestUL->Draw("COLZ");
   effAtBestUL->Draw("text same");
   diagonal->Draw("L");
@@ -283,21 +293,31 @@
   text1->SetNDC();
   text1->SetTextAlign(13);
   text1->SetX(xpos);
-  text1->SetY(ypos-0.05);
+  text1->SetY(ypos-0.06);
   text1->SetTextFont(42);
-  text1->SetTextSizePixels(24);
+  text1->SetTextSizePixels(23);
   text1->Draw();
 
   TString astring;
-  astring.Form("%.1f fb^{-1} at #sqrt{s} = 7 TeV",1.1);
+  astring.Form("L_{int} = %.1f fb^{-1}, #sqrt{s} = 7 TeV",1.1);
   text2 = new TLatex(3.570061,23.08044,astring);
   text2->SetNDC();
   text2->SetTextAlign(13);
   text2->SetX(xpos);
   text2->SetY(ypos+0.005);//0.88); //0.005 is a kluge to make things look right. i don't get it
   text2->SetTextFont(42);
-  text2->SetTextSizePixels(24);
+  text2->SetTextSizePixels(23);
   text2->Draw();
+
+  TLatex* text3= new TLatex(3.570061,23.08044,legT1bbbb);
+  text3->SetNDC();
+  text3->SetTextAlign(13);
+  text3->SetX(xpos);
+  text3->SetY(ypos+0.07);
+  text3->SetTextFont(42);
+  text3->SetTextSize(4e-2);
+  text3->Draw();
+
 
   effCanvas.SaveAs("effAtBestUL_T1bbbb_"+outfileid+".eps");
   effCanvas.SaveAs("effAtBestUL_T1bbbb_"+outfileid+".pdf");
@@ -305,14 +325,18 @@
   // ~~~~~~~ best UL ~~~~~~
   gStyle->SetPaintTextFormat("3.2f");
   TCanvas ulCanvas("ulCanvas","ul canvas",width,height);
-  ulCanvas.cd()->SetRightMargin(0.18); //14
-  bestUL->SetXTitle("m_{gluino} [GeV]");
+  if (!wide)  ulCanvas.cd()->SetTopMargin(0.1);
+  ulCanvas.cd()->SetRightMargin(rightmarginZ); //14
+  bestUL->SetXTitle("m_{#tilde{g}} [GeV]");
   bestUL->SetYTitle("m_{LSP} [GeV]");
   bestUL->SetZTitle("Cross section UL at 95% CL [pb]");
   bestUL->GetYaxis()->SetRangeUser(0,LSPmax);
   bestUL->GetXaxis()->SetRangeUser(GLmin,GLmax);
+  if (!wide)  bestUL->GetZaxis()->SetTitleOffset(1.3);
+  if (!wide) bestUL->GetXaxis()->SetNdivisions(505);
   bestUL->SetMaximum(40);
   bestUL->Draw("COLZ");
+  bestUL->SetMarkerSize(0.8);
   bestUL->Draw("text same");
   diagonal->Draw("L");
 
@@ -320,6 +344,7 @@
 
   text1->Draw();
   text2->Draw();
+  text3->Draw();
 
   gr10->SetLineWidth(2);
   gr30->SetLineWidth(2);
@@ -332,13 +357,13 @@
   gr03->Draw("L");
   gr30->Draw("L");
 
-  TLegend smsleg(xpos,ypos-0.34,xpos+0.25,ypos-0.11);
+  TLegend smsleg(xpos,ypos-0.29,xpos+0.2,ypos-0.1);
   smsleg.AddEntry(gr10,"#sigma^{prod} = #sigma^{NLO-QCD}");
   smsleg.AddEntry(gr30,"#sigma^{prod} = 3 #times #sigma^{NLO-QCD}");
   smsleg.AddEntry(gr03,"#sigma^{prod} = 1/3 #times #sigma^{NLO-QCD}");
   smsleg.SetFillColor(0); 
   smsleg.SetShadowColor(0);
-  smsleg.SetTextSize(0.04);
+  smsleg.SetTextSize(0.03);
   smsleg.SetBorderSize(0);
   smsleg.Draw();
 
@@ -348,11 +373,13 @@
   // ~~~~~~~ which selection ~~~~~~
   gStyle->SetPaintTextFormat("1.0f");
   TCanvas whichCanvas("whichCanvas","which canvas",width,height);
+  if (!wide)  whichCanvas.cd()->SetTopMargin(0.1);
   whichCanvas.cd()->SetRightMargin(0.14);
-  whichIsBest->SetXTitle("m_{gluino} [GeV]");
+  whichIsBest->SetXTitle("m_{#tilde{g}} [GeV]");
   whichIsBest->SetYTitle("m_{LSP} [GeV]");
   whichIsBest->GetYaxis()->SetRangeUser(0,LSPmax);
   whichIsBest->GetXaxis()->SetRangeUser(GLmin,GLmax);
+  if (!wide) whichIsBest->GetXaxis()->SetNdivisions(505);
   whichIsBest->Draw("COL");
   //  whichIsBest->Draw("text same");
   diagonal->Draw("L");
@@ -370,7 +397,7 @@
 	pave->SetTextAlign(22); //centered in both vert and horz
 	pave->SetFillColor(kWhite);
 	pave->SetShadowColor(0);
-	//  myleg->SetTextSize(0.04);
+	pave->SetTextSize(0.025);
 	pave->SetBorderSize(0);
 	pave->SetFillStyle(0);
 	pave->Draw();
@@ -381,6 +408,7 @@
 
   text1->Draw();
   text2->Draw();
+  text3->Draw();
 
 //   TLatex * key[4];
 //   TLatex* key[0]= new TLatex(3.570061,23.08044,"1 = #geq 1b Loose");
@@ -393,7 +421,7 @@
 //     key[i]->SetX(xpos);
 //     key[i]->SetY(ypos-(i+3)*0.05);
 //     key[i]->SetTextFont(42);
-//     key[i]->SetTextSizePixels(24);
+//     key[i]->SetTextSizePixels(23);
 //     key[i]->Draw();
 //   }
 
