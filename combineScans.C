@@ -2,6 +2,7 @@
 
 //void combine()
 {
+
   const TString which = "aleCLsCustom";
   TString outfileid="";
   if (which=="old") {
@@ -19,6 +20,9 @@
   else if (which=="aleCLsExpected") {
     outfileid=   "officialCLsExpected";
   }
+  else if (which=="aleCLsObsExp") { //show observed, based on expected
+    outfileid=   "officialCLsObsExp";
+  }
   else if (which=="aleCLsCustom") {
     outfileid=   "officialCLsCustom";
   }
@@ -27,14 +31,32 @@
   gROOT->SetStyle("CMS");
   gROOT->ForceStyle();
 
+  TFile fcurve("htCurveT1bbbb.root");
+  TH2D* htfrac =  (TH2D*) fcurve.Get("genbHTfrac");
+  TGraph* htcurve = (TGraph*) fcurve.Get("htCurveT1bbbb");
+  TLine* diagonal = new TLine(300,300,1200,1200);
+  diagonal->SetLineStyle(2);
+
+  TFile fmaria("/afs/cern.ch/user/d/dalfonso/public/myFileGraph_RA2b.root");
+  TGraph* gr10 = (TGraph*) fmaria.Get("graph_h_RA2b_best_T1bbbb_cloned_1.000000");
+  TGraph* gr03 = (TGraph*) fmaria.Get("graph_h_RA2b_best_T1bbbb_cloned_0.333333");
+  TGraph* gr30 = (TGraph*) fmaria.Get("graph_h_RA2b_best_T1bbbb_cloned_3.000000");
+  gr10->SetMarkerSize(0);
+  gr03->SetMarkerSize(0);
+  gr30->SetMarkerSize(0);
+
   TString pathUl="";
+  TString pathUlExp="";
   if (which=="old")      pathUl = "/afs/cern.ch/user/o/owen/public/RA2b/an-scanplot-unblind-t1bbbb-withcontam-"; //old
   else if (which=="owenPL") pathUl = "/afs/cern.ch/user/o/owen/public/RA2b/t1bbbb-all-plots.root"; //new
   else if (which=="aleCLs") pathUl = "/afs/cern.ch/user/g/gaz/public/T1bbbb_xsULs.root";
   else if (which=="aleCLsCustom") pathUl = "/afs/cern.ch/user/g/gaz/public/T1bbbb_xsULs.root";
+  else if (which=="aleCLsObsExp") pathUl = "/afs/cern.ch/user/g/gaz/public/T1bbbb_xsULs.root";
   else if (which=="aleCLsExpected") pathUl = "/afs/cern.ch/user/g/gaz/public/T1bbbb_xsULs_expected.root";
   else if (which=="alePL") pathUl = "/afs/cern.ch/user/g/gaz/public/T1bbbb_PLxsULs.root";
   const TString pathEff = "/afs/cern.ch/user/j/joshmt/public/RA2b/RA2b.T1bbbb.";
+
+  if (which=="aleCLsObsExp") pathUlExp = "/afs/cern.ch/user/g/gaz/public/T1bbbb_xsULs_expected.root";
 
   TString stubs[4];
   if (which=="old") {
@@ -50,7 +72,7 @@
     stubs[2] = "ge2bloose";
     stubs[3] = "ge2btight";
   }
-  else if (which=="aleCLs" || which=="alePL" ||which=="aleCLsExpected" ||which=="aleCLsCustom") {
+  else if (which=="aleCLs" || which=="alePL" ||which=="aleCLsExpected" ||which=="aleCLsCustom" || which=="aleCLsObsExp") {
     //new
     stubs[0] = "1bloose";
     stubs[1] = "1btight";
@@ -66,11 +88,13 @@
 
   TFile * files[4];
   TFile * filesEff[4];
+  TFile * filesExp[4];
 
   //new
   if (which!="old")  files[0] = new TFile(pathUl);
 
   TH2F * ul[4];
+  TH2F * ulExp[4];
   TH2D * eff[4];
   for (int i=0; i<4; i++) {
 
@@ -84,7 +108,7 @@
 	histoname = stubs[i];
 	histoname += "_hplxsecul";
       }
-      else if (which=="aleCLs" || which=="aleCLsCustom") {
+      else if (which=="aleCLs" || which=="aleCLsCustom"|| which=="aleCLsObsExp") {
 	histoname = "h2d_";
 	histoname+=stubs[i];
 	histoname+="_xsUL";
@@ -100,6 +124,20 @@
 	histoname+="_PLxsUL";
       }
       ul[i] = (TH2F*) files[i]->Get(histoname);
+
+      if ( which=="aleCLsObsExp") {
+	histoname = "h2d_";
+	histoname+=stubs[i];
+	histoname+="_xsUL_exp";
+	if (i==0) filesExp[i]= new TFile(pathUlExp);
+	else filesExp[i]=filesExp[0];
+
+	ulExp[i] = (TH2F*) filesExp[i]->Get(histoname);
+      }
+      else {
+	filesExp[i]=0;
+	ulExp[i]=0;
+      }
     }
 
     filesEff[i] = new TFile(pathEff+stubsEff[i]);
@@ -113,6 +151,8 @@
   bestUL->Reset();
   TH2F* bestULlog10 = (TH2F*) ul[0]->Clone("bestULlog10");
   bestULlog10->Reset();
+  bestUL->SetTitle("best upper limit");
+  bestULlog10->SetTitle("log10 of best upper limit");
 
   TH2F* effAtBestUL = (TH2F*) ul[0]->Clone("effAtBestUL");
   effAtBestUL->Reset();
@@ -136,7 +176,8 @@
       int selectionIsBest=0;
       if (whichLimitFile==0) {
 	for (int ifile=0; ifile<4; ifile++) {
-	  double thisul = ul[ifile]->GetBinContent(i,j);
+	  //	  double thisul = ul[ifile]->GetBinContent(i,j);
+	  double thisul = (ulExp[ifile]==0) ? ul[ifile]->GetBinContent(i,j) : ulExp[ifile]->GetBinContent(i,j);
 	  if (thisul<minul && thisul>0) { minul=thisul; selectionIsBest = ifile+1;}
 	}
       }
@@ -145,6 +186,7 @@
 	if (selectionIsBest>0)	minul = ul[selectionIsBest-1]->GetBinContent(i,j);
       }
       if (selectionIsBest!=0) {
+	minul = ul[selectionIsBest-1]->GetBinContent(i,j);
 	bestULlog10->SetBinContent(i,j,log10(minul));
 	bestUL->SetBinContent(i,j,minul);
 	//	cout<<"selectionIsBest = "<<selectionIsBest<<endl;
@@ -163,6 +205,42 @@
     }
   }
 
+
+  //kill off the 'forbidden' bins according to Gala's histo
+
+  for (int i=1; i<=bestUL->GetXaxis()->GetNbins(); i++) {
+    for (int j=1; j<=bestUL->GetYaxis()->GetNbins(); j++) {
+      double x1,x2,y1,y2;
+      //find coordinates of all 4 corners
+      x1=  bestUL->GetXaxis()->GetBinLowEdge(i);
+      x2=  bestUL->GetXaxis()->GetBinLowEdge(i+1);
+      y1=  bestUL->GetXaxis()->GetBinLowEdge(j);
+      y2=  bestUL->GetXaxis()->GetBinLowEdge(j+1);
+
+      //check ht frac in all for corners
+      //i'm going to all this work because i think the histos have different binning
+      double  f1=  htfrac->GetBinContent( htfrac->FindBin(x1,y1));
+      double  f2=  htfrac->GetBinContent( htfrac->FindBin(x1,y2));
+      double  f3=  htfrac->GetBinContent( htfrac->FindBin(x2,y1));
+      double  f4=  htfrac->GetBinContent( htfrac->FindBin(x2,y2));
+
+      //      cout<<f1<<"\t"<<f2<<"\t"<<f3<<"\t"<<f4<<endl;
+      const double cutval = 0.2;
+      //      if (f1<cutval || f2<cutval*/||f3<cutval||f4<cutval) {
+      if (f3<cutval) { //seems to work best to reproduce Mariarosaria's cut for MT2b
+	bestUL->SetBinContent(i,j,0);
+	whichIsBest->SetBinContent(i,j,0);
+	effAtBestUL->SetBinContent(i,j,0);
+      }
+      else {
+	if (fabs(x1-y1)<250) {
+	  cout<<"NOT Throwing out point with DeltaM = "<<x1-y1<<endl;
+	  cout<<x1<<"\t"<<y1<<endl;
+	}
+      }
+    }
+  }
+
   //max is still a holdover from the cloned histo
   //this trick seems effective at finding the real max
   whichIsBest->SetMaximum(4);
@@ -170,6 +248,7 @@
   effAtBestUL->SetMaximum( effAtBestUL->GetBinContent(effAtBestUL->GetMaximumBin()));
   effAtBestUL->SetMinimum(0);
   bestUL->SetMinimum(1e-2); //hard coded for T1bbbb PL results
+  bestUL->SetMaximum( bestUL->GetBinContent(bestUL->GetMaximumBin()));
 
   TFile fout("ULcombination.T1bbbb."+outfileid+".root","RECREATE");
   bestUL->Write();
@@ -181,6 +260,7 @@
   //now presentation ... always the biggest pain
   const float LSPmax=1200;
   const float GLmax=1210;
+  const float GLmin=300;
 
   const float ypos = 0.92;
   const float xpos = 0.18;
@@ -194,9 +274,10 @@
   effAtBestUL->SetXTitle("m_{gluino} [GeV]");
   effAtBestUL->SetYTitle("m_{LSP} [GeV]");
   effAtBestUL->GetYaxis()->SetRangeUser(0,LSPmax);
-  effAtBestUL->GetXaxis()->SetRangeUser(0,GLmax);
+  effAtBestUL->GetXaxis()->SetRangeUser(GLmin,GLmax);
   effAtBestUL->Draw("COLZ");
   effAtBestUL->Draw("text same");
+  diagonal->Draw("L");
 
   TLatex* text1= new TLatex(3.570061,23.08044,"CMS Preliminary");
   text1->SetNDC();
@@ -208,7 +289,7 @@
   text1->Draw();
 
   TString astring;
-  astring.Form("%.0f pb^{-1} at #sqrt{s} = 7 TeV",1143.0);
+  astring.Form("%.1f fb^{-1} at #sqrt{s} = 7 TeV",1.1);
   text2 = new TLatex(3.570061,23.08044,astring);
   text2->SetNDC();
   text2->SetTextAlign(13);
@@ -229,15 +310,38 @@
   bestUL->SetYTitle("m_{LSP} [GeV]");
   bestUL->SetZTitle("Cross section UL at 95% CL [pb]");
   bestUL->GetYaxis()->SetRangeUser(0,LSPmax);
-  bestUL->GetXaxis()->SetRangeUser(0,GLmax);
+  bestUL->GetXaxis()->SetRangeUser(GLmin,GLmax);
   bestUL->SetMaximum(40);
   bestUL->Draw("COLZ");
   bestUL->Draw("text same");
+  diagonal->Draw("L");
 
   ulCanvas.SetLogz();
 
   text1->Draw();
   text2->Draw();
+
+  gr10->SetLineWidth(2);
+  gr30->SetLineWidth(2);
+  gr03->SetLineWidth(2);
+
+  gr30->SetLineStyle(3);
+  gr03->SetLineStyle(2);
+
+  gr10->Draw("L");
+  gr03->Draw("L");
+  gr30->Draw("L");
+
+  TLegend smsleg(xpos,ypos-0.34,xpos+0.25,ypos-0.11);
+  smsleg.AddEntry(gr10,"#sigma^{prod} = #sigma^{NLO-QCD}");
+  smsleg.AddEntry(gr30,"#sigma^{prod} = 3 #times #sigma^{NLO-QCD}");
+  smsleg.AddEntry(gr03,"#sigma^{prod} = 1/3 #times #sigma^{NLO-QCD}");
+  smsleg.SetFillColor(0); 
+  smsleg.SetShadowColor(0);
+  smsleg.SetTextSize(0.04);
+  smsleg.SetBorderSize(0);
+  smsleg.Draw();
+
   ulCanvas.SaveAs("bestUL_T1bbbb_"+outfileid+".eps");
   ulCanvas.SaveAs("bestUL_T1bbbb_"+outfileid+".pdf");
 
@@ -248,27 +352,50 @@
   whichIsBest->SetXTitle("m_{gluino} [GeV]");
   whichIsBest->SetYTitle("m_{LSP} [GeV]");
   whichIsBest->GetYaxis()->SetRangeUser(0,LSPmax);
-  whichIsBest->GetXaxis()->SetRangeUser(0,GLmax);
+  whichIsBest->GetXaxis()->SetRangeUser(GLmin,GLmax);
   whichIsBest->Draw("COL");
-  whichIsBest->Draw("text same");
+  //  whichIsBest->Draw("text same");
+  diagonal->Draw("L");
+
+  TPaveText * pave=0;
+  for (int i= 1; i<=whichIsBest->GetXaxis()->GetNbins(); i++) {
+    for (int j= 1; j<=whichIsBest->GetYaxis()->GetNbins(); j++) {
+      if (whichIsBest->GetBinContent(i,j) >=1 && whichIsBest->GetBinContent(i,j)<=4) {
+	if (whichIsBest->GetXaxis()->GetBinLowEdge(i) >=GLmin) {
+	pave= new TPaveText(whichIsBest->GetXaxis()->GetBinLowEdge(i),whichIsBest->GetYaxis()->GetBinLowEdge(j),
+			    whichIsBest->GetXaxis()->GetBinLowEdge(i+1),whichIsBest->GetYaxis()->GetBinLowEdge(j+1),"");
+	TString code = ( whichIsBest->GetBinContent(i,j) == 1 || whichIsBest->GetBinContent(i,j) == 2) ? "1" : "2";
+	code += ( whichIsBest->GetBinContent(i,j) == 1 || whichIsBest->GetBinContent(i,j) == 3) ? "L" : "T";
+	pave->AddText(code);
+	pave->SetTextAlign(22); //centered in both vert and horz
+	pave->SetFillColor(kWhite);
+	pave->SetShadowColor(0);
+	//  myleg->SetTextSize(0.04);
+	pave->SetBorderSize(0);
+	pave->SetFillStyle(0);
+	pave->Draw();
+	}
+      }
+    }
+  }
 
   text1->Draw();
   text2->Draw();
 
-  TLatex * key[4];
-  TLatex* key[0]= new TLatex(3.570061,23.08044,"1 = #geq 1b Loose");
-  TLatex* key[1]= new TLatex(3.570061,23.08044,"2 = #geq 1b Tight");
-  TLatex* key[2]= new TLatex(3.570061,23.08044,"3 = #geq 2b Loose");
-  TLatex* key[3]= new TLatex(3.570061,23.08044,"4 = #geq 2b Tight");
-  for (int i=0; i<4; i++) {
-    key[i]->SetNDC();
-    key[i]->SetTextAlign(13);
-    key[i]->SetX(xpos);
-    key[i]->SetY(ypos-(i+3)*0.05);
-    key[i]->SetTextFont(42);
-    key[i]->SetTextSizePixels(24);
-    key[i]->Draw();
-  }
+//   TLatex * key[4];
+//   TLatex* key[0]= new TLatex(3.570061,23.08044,"1 = #geq 1b Loose");
+//   TLatex* key[1]= new TLatex(3.570061,23.08044,"2 = #geq 1b Tight");
+//   TLatex* key[2]= new TLatex(3.570061,23.08044,"3 = #geq 2b Loose");
+//   TLatex* key[3]= new TLatex(3.570061,23.08044,"4 = #geq 2b Tight");
+//   for (int i=0; i<4; i++) {
+//     key[i]->SetNDC();
+//     key[i]->SetTextAlign(13);
+//     key[i]->SetX(xpos);
+//     key[i]->SetY(ypos-(i+3)*0.05);
+//     key[i]->SetTextFont(42);
+//     key[i]->SetTextSizePixels(24);
+//     key[i]->Draw();
+//   }
 
   whichCanvas.SaveAs("bestSelection_T1bbbb_"+outfileid+".eps");
   whichCanvas.SaveAs("bestSelection_T1bbbb_"+outfileid+".pdf");
