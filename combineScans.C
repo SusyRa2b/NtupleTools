@@ -1,4 +1,5 @@
-/* Bill wants both efficiency and best UL for each point. */
+// use: .x combineScans.C
+// setting for public result is aleCLsCustom
 
 //void combine()
 {
@@ -262,6 +263,9 @@
   const float GLmax=1210;
   const float GLmin=300;
 
+  //we were using  a "wide" aspect ratio at the request of Bill et al
+  //ARC asked for standard square format
+  //here s a switch to go between the two
   bool wide = false;
 
   const float ypos = wide ? 0.92 : 0.88;
@@ -346,9 +350,9 @@
   text2->Draw();
   text3->Draw();
 
-  gr10->SetLineWidth(2);
-  gr30->SetLineWidth(2);
-  gr03->SetLineWidth(2);
+  gr10->SetLineWidth(3);
+  gr30->SetLineWidth(3);
+  gr03->SetLineWidth(3);
 
   gr30->SetLineStyle(3);
   gr03->SetLineStyle(2);
@@ -381,26 +385,32 @@
   whichIsBest->GetXaxis()->SetRangeUser(GLmin,GLmax);
   if (!wide) whichIsBest->GetXaxis()->SetNdivisions(505);
   whichIsBest->Draw("COL");
-  //  whichIsBest->Draw("text same");
+  if (which!="aleCLsCustom")  whichIsBest->Draw("text same");
   diagonal->Draw("L");
 
+  //draw the "David Stuart" code on the plot.
+  // this is only relevant for aleCLsCustom mode
+
   TPaveText * pave=0;
-  for (int i= 1; i<=whichIsBest->GetXaxis()->GetNbins(); i++) {
-    for (int j= 1; j<=whichIsBest->GetYaxis()->GetNbins(); j++) {
-      if (whichIsBest->GetBinContent(i,j) >=1 && whichIsBest->GetBinContent(i,j)<=4) {
-	if (whichIsBest->GetXaxis()->GetBinLowEdge(i) >=GLmin) {
-	pave= new TPaveText(whichIsBest->GetXaxis()->GetBinLowEdge(i),whichIsBest->GetYaxis()->GetBinLowEdge(j),
-			    whichIsBest->GetXaxis()->GetBinLowEdge(i+1),whichIsBest->GetYaxis()->GetBinLowEdge(j+1),"");
-	TString code = ( whichIsBest->GetBinContent(i,j) == 1 || whichIsBest->GetBinContent(i,j) == 2) ? "1" : "2";
-	code += ( whichIsBest->GetBinContent(i,j) == 1 || whichIsBest->GetBinContent(i,j) == 3) ? "L" : "T";
-	pave->AddText(code);
-	pave->SetTextAlign(22); //centered in both vert and horz
-	pave->SetFillColor(kWhite);
-	pave->SetShadowColor(0);
-	pave->SetTextSize(0.025);
-	pave->SetBorderSize(0);
-	pave->SetFillStyle(0);
-	pave->Draw();
+  if (which=="aleCLsCustom") {
+
+    for (int i= 1; i<=whichIsBest->GetXaxis()->GetNbins(); i++) {
+      for (int j= 1; j<=whichIsBest->GetYaxis()->GetNbins(); j++) {
+	if (whichIsBest->GetBinContent(i,j) >=1 && whichIsBest->GetBinContent(i,j)<=4) {
+	  if (whichIsBest->GetXaxis()->GetBinLowEdge(i) >=GLmin) {
+	    pave= new TPaveText(whichIsBest->GetXaxis()->GetBinLowEdge(i),whichIsBest->GetYaxis()->GetBinLowEdge(j),
+				whichIsBest->GetXaxis()->GetBinLowEdge(i+1),whichIsBest->GetYaxis()->GetBinLowEdge(j+1),"");
+	    TString code = ( whichIsBest->GetBinContent(i,j) == 1 || whichIsBest->GetBinContent(i,j) == 2) ? "1" : "2";
+	    code += ( whichIsBest->GetBinContent(i,j) == 1 || whichIsBest->GetBinContent(i,j) == 3) ? "L" : "T";
+	    pave->AddText(code);
+	    pave->SetTextAlign(22); //centered in both vert and horz
+	    pave->SetFillColor(kWhite);
+	    pave->SetShadowColor(0);
+	    pave->SetTextSize(0.025);
+	    pave->SetBorderSize(0);
+	    pave->SetFillStyle(0);
+	    pave->Draw();
+	  }
 	}
       }
     }
@@ -410,20 +420,22 @@
   text2->Draw();
   text3->Draw();
 
-//   TLatex * key[4];
-//   TLatex* key[0]= new TLatex(3.570061,23.08044,"1 = #geq 1b Loose");
-//   TLatex* key[1]= new TLatex(3.570061,23.08044,"2 = #geq 1b Tight");
-//   TLatex* key[2]= new TLatex(3.570061,23.08044,"3 = #geq 2b Loose");
-//   TLatex* key[3]= new TLatex(3.570061,23.08044,"4 = #geq 2b Tight");
-//   for (int i=0; i<4; i++) {
-//     key[i]->SetNDC();
-//     key[i]->SetTextAlign(13);
-//     key[i]->SetX(xpos);
-//     key[i]->SetY(ypos-(i+3)*0.05);
-//     key[i]->SetTextFont(42);
-//     key[i]->SetTextSizePixels(23);
-//     key[i]->Draw();
-//   }
+  TLatex * key[4];
+  if (which!="aleCLsCustom") {
+    TLatex* key[0]= new TLatex(3.570061,23.08044,"1 = #geq 1b Loose");
+    TLatex* key[1]= new TLatex(3.570061,23.08044,"2 = #geq 1b Tight");
+    TLatex* key[2]= new TLatex(3.570061,23.08044,"3 = #geq 2b Loose");
+    TLatex* key[3]= new TLatex(3.570061,23.08044,"4 = #geq 2b Tight");
+    for (int i=0; i<4; i++) {
+      key[i]->SetNDC();
+      key[i]->SetTextAlign(13);
+      key[i]->SetX(xpos);
+      key[i]->SetY(ypos-(i+3)*0.05);
+      key[i]->SetTextFont(42);
+      key[i]->SetTextSizePixels(23);
+      key[i]->Draw();
+    }
+  }
 
   whichCanvas.SaveAs("bestSelection_T1bbbb_"+outfileid+".eps");
   whichCanvas.SaveAs("bestSelection_T1bbbb_"+outfileid+".pdf");
