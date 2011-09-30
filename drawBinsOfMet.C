@@ -8,7 +8,7 @@
   //const TCut btag = "nbjetsSSV0>=1";
 
   const TString var ="minDeltaPhiN";
-  //  const TString var ="minDeltaPhi";
+  //const TString var ="minDeltaPhi";
   //  const TString var ="bestTopMass";
   //  const TString var ="MET/(MET+HT)";
   //  const TString var ="deltaPhiMPTcaloMET";
@@ -97,6 +97,7 @@
   TH1D Hmh("Hmh","",nbins,varbins);
   TH1D Hhigh("Hhigh","",nbins,varbins);
   */
+  /*
   Hlow.SetLineColor(kBlue);
   Hmed.SetLineColor(1);
   Hmh.SetLineColor(kRed);
@@ -105,6 +106,26 @@
   Hmed.SetMarkerColor(1);
   Hmh.SetMarkerColor(kRed);
   Hhigh.SetMarkerColor(6);
+  */
+  Hlow.SetLineColor(kBlue);
+  Hmed.SetLineColor(kGreen);
+  Hmh.SetLineColor(kOrange-3);
+  Hhigh.SetLineColor(kMagenta+2);
+ 
+  Hlow.SetMarkerColor(kBlue);
+  Hmed.SetMarkerColor(kGreen);
+  Hmh.SetMarkerColor(kOrange-3);
+  Hhigh.SetMarkerColor(kMagenta+2);
+
+  Hlow.SetMarkerStyle(20);
+  Hmed.SetMarkerStyle(21);
+  Hmh.SetMarkerStyle(22);
+  Hhigh.SetMarkerStyle(23);
+
+  Hlow.SetMarkerSize(2);
+  Hmed.SetMarkerSize(2);
+  Hmh.SetMarkerSize(2);
+  Hhigh.SetMarkerSize(2);
 
   float width=2.5;
   Hlow.SetLineWidth(width);
@@ -134,7 +155,7 @@
   if (Hmh.Integral()>0) Hmh.Scale( 1.0 / Hmh.Integral());
   if (Hhigh.Integral()>0) Hhigh.Scale( 1.0 / Hhigh.Integral());
   
-  if (var=="minDeltaPhi")  Hhigh.SetXTitle("#Delta #phi_{min}");
+  if (var=="minDeltaPhi")  Hhigh.SetXTitle("#Delta #phi_{min} [rad.]");
   else if (var=="bestTopMass")  {
     TString title="best 3-jet mass (GeV)";
     Hhigh.SetXTitle(title);
@@ -183,7 +204,7 @@
   leg.Draw();
 
   TLatex* text1=0;
-  text1 = new TLatex(3.570061,23.08044,"CMS Preliminary");
+  text1 = new TLatex(3.570061,23.08044,"CMS Simulation");
   text1->SetNDC();
   text1->SetTextAlign(13);
   text1->SetX(0.45);
