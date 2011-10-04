@@ -1030,7 +1030,7 @@ void loadSamples(bool joinSingleTop=true) {
   */
 
 
-  /*
+  
   //FOR PLOTS
   ////////////
   configDescriptions_.setDefault("SSVHPT_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
@@ -1061,7 +1061,7 @@ void loadSamples(bool joinSingleTop=true) {
 
   ///////////////
   //////////////
-  */
+ 
 
 
 
@@ -1095,7 +1095,7 @@ void loadSamples(bool joinSingleTop=true) {
   //    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEffup");
 */
 
-
+  /*
   //new btag eff prescription
   configDescriptions_.setDefault("SSVHPT_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
   configDescriptions_.setCorrected("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
@@ -1123,7 +1123,7 @@ void loadSamples(bool joinSingleTop=true) {
   //HLT eff
   //    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEffdown");
   //    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEffup");
-
+  */
 
 
   currentConfig_=configDescriptions_.getDefault();
@@ -1778,10 +1778,10 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
   data2d_SB.Sumw2();
   // === end correlation hack ===
 
-  TH1D  totalsm_pass("totalsm_pass","",nbins,low,high);
-  TH1D  totalsm_fail("totalsm_fail","",nbins,low,high);
-  totalsm_pass.Sumw2(); 
-  totalsm_fail.Sumw2(); 
+  TH1D * totalsm_pass = (varbins==0) ? new TH1D("totalsm_pass","",nbins,low,high) : new TH1D("totalsm_pass","",nbins,varbins);
+  TH1D * totalsm_fail = (varbins==0) ? new TH1D("totalsm_fail","",nbins,low,high) : new TH1D("totalsm_fail","",nbins,varbins);
+  totalsm_pass->Sumw2(); 
+  totalsm_fail->Sumw2(); 
   if (totalsm!=0) delete totalsm;
   totalsm =  (varbins==0) ? new TH1D("totalsm","",nbins,low,high) : new TH1D("totalsm","",nbins,varbins);
   totalsm->Sumw2();
@@ -1825,7 +1825,7 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
     if (addOverflow_)  addOverflowBin( histos_[hnameP] );
     if (addOverflow_)  addOverflowBin( histos_[hnameF] );
 
-    cout<<"Bug check!"<<endl;
+    cout<<"Bug check"<<endl;
     for (int ib=1; ib<3; ib++) {
       cout<<histos_[hnameP]->GetBinContent(ib)<<"\t";
       cout<<histos_[hnameF]->GetBinContent(ib)<<"\t";
@@ -1835,8 +1835,8 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
     histos_[hnameR]->Divide(histos_[hnameP], histos_[hnameF]);
 
     if (isSampleSM(samples_[isample])) {
-      totalsm_pass.Add(histos_[hnameP]);
-      totalsm_fail.Add(histos_[hnameF]);
+      totalsm_pass->Add(histos_[hnameP]);
+      totalsm_fail->Add(histos_[hnameF]);
 
       //comment out filling of these for now to save time
       TH2D this2d_SB("this2d_SB","",50,100,150,50,0,TMath::Pi());
@@ -1907,7 +1907,7 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
     hinteractive =  histos_[firsthist];
   }
 
-  totalsm->Divide(&totalsm_pass,&totalsm_fail);
+  totalsm->Divide(totalsm_pass,totalsm_fail);
   if (drawTotalSM_ && !dataOnly) {
     totalsm->Draw("hist e same");
     //    leg->Clear();
