@@ -1,5 +1,6 @@
 #include "TFile.h"
 #include "TH1D.h"
+#include "TCanvas.h"
 
 #include <iostream>
 
@@ -23,13 +24,13 @@ void datajetres(){
   const int nbins3 = 9;
   const int nbins4 = 6;
 
-  TH1D* hEta0_0p5 = new TH1D("hEta0_0p5","hEta0_0p5", nbins1, bins1);
-  TH1D* hEta0p5_1 = new TH1D("hEta0p5_1","hEta0p5_1", nbins1, bins1);
-  TH1D* hEta1_1p5 = new TH1D("hEta1_1p5","hEta1_1p5", nbins1, bins1);
-  TH1D* hEta1p5_2 = new TH1D("hEta1p5_2","hEta1p5_2", nbins1, bins1);
-  TH1D* hEta2_2p5 = new TH1D("hEta2_2p5","hEta2_2p5", nbins2, bins2);
-  TH1D* hEta2p5_3 = new TH1D("hEta2p5_3","hEta2p5_3", nbins3, bins3);
-  TH1D* hEta3_5 = new TH1D("hEta3_5","hEta3_5", nbins4, bins4);
+  TH1D* hEta0_0p5 = new TH1D("hEta0_0p5","0 < |eta| <= 0.5", nbins1, bins1);
+  TH1D* hEta0p5_1 = new TH1D("hEta0p5_1","0.5 < |eta| <= 1", nbins1, bins1);
+  TH1D* hEta1_1p5 = new TH1D("hEta1_1p5","1 < |eta| <= 1.5", nbins1, bins1);
+  TH1D* hEta1p5_2 = new TH1D("hEta1p5_2","1.5 < |eta| <= 2", nbins1, bins1);
+  TH1D* hEta2_2p5 = new TH1D("hEta2_2p5","2 < |eta| <= 2.5", nbins2, bins2);
+  TH1D* hEta2p5_3 = new TH1D("hEta2p5_3","2.5 < |eta| <= 3", nbins3, bins3);
+  TH1D* hEta3_5 = new TH1D("hEta3_5","3 < |eta| <= 5", nbins4, bins4);
   
   hEta0_0p5->SetBinContent(1, 0.122);
   hEta0_0p5->SetBinContent(2, 0.118);
@@ -128,6 +129,46 @@ void datajetres(){
   hEta3_5->SetBinContent(6, 0.124);
   hEta3_5->Fill(1000, 0.122);//overflow
   
+  bool drawdatajetres = true;
+  if(drawdatajetres){
+    TCanvas * myC = new TCanvas("myC", "myC", 900,500);
+    myC->Divide(4,2);
+    TString xtitle = "p_{T} [GeV]";
+    TString ytitle = "jet p_{T} resolution";
+    hEta0_0p5->GetXaxis()->SetTitle(xtitle);
+    hEta0p5_1->GetXaxis()->SetTitle(xtitle);
+    hEta1_1p5->GetXaxis()->SetTitle(xtitle);
+    hEta1p5_2->GetXaxis()->SetTitle(xtitle);
+    hEta2_2p5->GetXaxis()->SetTitle(xtitle);
+    hEta2p5_3->GetXaxis()->SetTitle(xtitle);
+    hEta3_5->GetXaxis()->SetTitle(xtitle);
+
+    hEta0_0p5->GetYaxis()->SetTitle(ytitle);
+    hEta0p5_1->GetYaxis()->SetTitle(ytitle);
+    hEta1_1p5->GetYaxis()->SetTitle(ytitle);
+    hEta1p5_2->GetYaxis()->SetTitle(ytitle);
+    hEta2_2p5->GetYaxis()->SetTitle(ytitle);
+    hEta2p5_3->GetYaxis()->SetTitle(ytitle);
+    hEta3_5->GetYaxis()->SetTitle(ytitle);
+
+    myC->cd(1); //myC->GetPad(1)->SetLogx();
+    //hEta0_0p5->GetXaxis()->SetRangeUser(30,hEta0_0p5->GetBinLowEdge(hEta0_0p5->GetNbinsX())); //doesnt work...
+    hEta0_0p5->Draw();
+    myC->cd(2); //myC->GetPad(2)->SetLogx();
+    hEta0p5_1->Draw();
+    myC->cd(3); //myC->GetPad(3)->SetLogx();
+    hEta1_1p5->Draw();
+    myC->cd(4); //myC->GetPad(4)->SetLogx();
+    hEta1p5_2->Draw();
+    myC->cd(5); //myC->GetPad(5)->SetLogx();
+    hEta2_2p5->Draw();
+    myC->cd(6); //myC->GetPad(6)->SetLogx();
+    hEta2p5_3->Draw();
+    myC->cd(7); //myC->GetPad(7)->SetLogx();
+    hEta3_5->Draw();
+    myC->Print("djr.png");
+  }
+
 
   hEta0_0p5->Write();
   hEta0p5_1->Write();
@@ -138,3 +179,5 @@ void datajetres(){
   hEta3_5->Write();
   fout.Close();
 }
+
+
