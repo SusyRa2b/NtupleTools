@@ -79,18 +79,18 @@ functionality for TH1F and TH1D e.g. the case of addOverflowBin()
 //TString dataInputPath = "/cu3/wteo/reducedTrees/V00-02-05_v3-pickevents/"; //includes MET cleaning but uses a tight skim (not good for plots)
 
 //for making the standard set of plots...need standard MC and all data.
-//TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-25_fullpf2pat/";//path for MC	     
-//TString dataInputPath = "/cu2/ra2b/reducedTrees/V00-02-25_fullpf2pat/";
+TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-25_fullpf2pat/";//path for MC	     
+TString dataInputPath = "/cu2/ra2b/reducedTrees/V00-02-25_fullpf2pat/";
 
 //for njet reweighting (needed because not all reducedTrees in nominal V00-02-25 have njets30)
 //TString inputPath = "/cu2/ra2b/reducedTrees/benV00-02-25_fullpf2pat/";
 //TString dataInputPath = "/cu2/ra2b/reducedTrees/benV00-02-25_fullpf2pat/";
 
 //for signal systematics
-TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-25c_fullpf2pat/"; //LM9 with correct pdf weights
+//TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-25c_fullpf2pat/"; //LM9 with correct pdf weights
 //TString inputPath = "/cu2/joshmt/reducedTrees/V00-02-25c_fullpf2pat/"; //with correct pdf weights
 //TString inputPath = "/home/joshmt/";//path for MC
-TString dataInputPath = "/cu2/ra2b/reducedTrees/V00-02-24_fullpf2pat/"; //sym links to V00-02-05_v3
+//TString dataInputPath = "/cu2/ra2b/reducedTrees/V00-02-24_fullpf2pat/"; //sym links to V00-02-05_v3
 
 //the cutdesc string is now defined in loadSamples()
 
@@ -1987,21 +1987,34 @@ other.
   //not enough stats in WJets to really show anything
 
   //Hack to get it plotted with ratio plot
+   //Hack to get it plotted with ratio plot
   TCanvas* myC = 0;
   myC = new TCanvas("myC", "myC", 600,700);
-  myC->Divide(1,2);
-  const float padding=0.01; const float ydivide=0.2;
+  gStyle->SetPadBorderMode(0);
+  gStyle->SetFrameBorderMode(0);
+  Float_t small = 1e-5;
+  myC->Divide(1,2,small,small);
+  //myC->Divide(1,2);
+  //const float padding=0.01; const float ydivide=0.2;
+  const float padding=1e-5; const float ydivide=0.3;
   myC->GetPad(1)->SetPad( padding, ydivide + padding, 1-padding, 1-padding);
   myC->GetPad(2)->SetPad( padding, padding, 1-padding, ydivide-padding);
   myC->GetPad(1)->SetLogy(1);
   myC->GetPad(1)->SetRightMargin(.05);
   myC->GetPad(2)->SetRightMargin(.05);
+  myC->GetPad(2)->SetBottomMargin(.4);
   myC->GetPad(1)->Modified();
   myC->GetPad(2)->Modified();
   myC->cd(1);
+  gPad->SetBottomMargin(small);
+  gPad->Modified();
+
   renormBins(SIGplot,-1);
   renormBins(SLplot,-1);
+  SIGplot->GetYaxis()->SetTitleSize(0.07);
+  SIGplot->GetYaxis()->SetTitleOffset(1.);
   SIGplot->Draw("HIST E");
+  SLplot->SetMarkerStyle(kFullTriangleUp);
   SLplot->Draw("HIST E SAME");
   TH1D* myRatio;
   if(vb) myRatio = new TH1D("ratio", "ratio", nvarbins, varbins);
@@ -2011,11 +2024,24 @@ other.
   myRatio->SetMarkerColor(kBlack);
   myRatio->Divide(SIGplot,SLplot);
   myRatio->SetMinimum(0);
-  myRatio->SetMaximum(2);
+  myRatio->SetMaximum(2.5);
   myRatio->GetYaxis()->SetNdivisions(200 + int(ratioMax-ratioMin)+1);    //set ticks ; to be seen if this really works
+  //myRatio->GetYaxis()->SetNdivisions(400);
   myRatio->GetYaxis()->SetLabelSize(0.1); //make y label bigger
   myRatio->GetXaxis()->SetLabelSize(0.1); //make y label bigger
+  myRatio->GetXaxis()->SetTitleOffset(1.1);
+  myRatio->GetXaxis()->SetTitle("E_{T}^{miss} [GeV]"); //make y label bigger
+  myRatio->GetXaxis()->SetLabelSize(0.12);
+  myRatio->GetXaxis()->SetLabelOffset(0.04);
+  myRatio->GetXaxis()->SetTitleSize(0.16);
+  myRatio->GetYaxis()->SetTitle("Ratio ");
+  myRatio->GetYaxis()->SetTitleSize(0.16);
+  myRatio->GetYaxis()->SetTitleOffset(.43);
   myC->cd(2);
+  gPad->SetTopMargin(small);
+  gPad->SetTickx();
+  gPad->Modified();
+
   myRatio->Draw();
   TLine* myLine;
   myLine = new TLine(low, 1, high, 1);
@@ -2030,15 +2056,15 @@ other.
   mytext->SetTextFont(42);
   mytext->SetTextSizePixels(24);
   mytext->Draw();
-  TLegend* myLegend = new TLegend(0.63,0.84,0.81,0.7);
+  TLegend* myLegend = new TLegend(0.615,0.84,0.81,0.7);
   myLegend->SetFillColor(0);
   myLegend->SetBorderSize(0);
   myLegend->SetLineStyle(0);
   myLegend->SetTextFont(42);
   myLegend->SetFillStyle(0);
-  myLegend->SetTextSize(0.04);
-  myLegend->AddEntry(SIGplot,"t#bar{t}, SIG", "l");
-  myLegend->AddEntry(SLplot, "t#bar{t}, SL", "l");
+  myLegend->SetTextSize(0.045);
+  myLegend->AddEntry(SIGplot,"t#bar{t}, 0 leptons", "lp");
+  myLegend->AddEntry(SLplot, "t#bar{t}, 1 lepton", "lp");
   myLegend->Draw();
   myC->Print("METshape_logAndRatio_"+sample+"_SLandStandard_"+btagselection+"_"+HTselection+".pdf");
 
