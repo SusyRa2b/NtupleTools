@@ -15,8 +15,8 @@
 
 using namespace std;
 
-void drawBinsOfMet(const TString var = "minDeltaPhiN", const TString treestring = "/cu2/ra2b/reducedTrees/V00-02-25_fullpf2pat/reducedTree.SSVHPT_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.PythiaPUQCD.root")
-//void drawBinsOfMet(const TString var = "minDeltaPhiN", const TString treestring = "/cu2/kreis/reducedTrees/test/reducedTree.SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.PythiaPUQCD.root")
+//void drawBinsOfMet(const TString var = "minDeltaPhiN", const TString treestring = "/cu2/ra2b/reducedTrees/V00-02-25_fullpf2pat/reducedTree.SSVHPT_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.PythiaPUQCD.root")
+void drawBinsOfMet(const TString var = "minDeltaPhiN", bool logy = false, const TString treestring = "/cu2/kreis/reducedTrees/test/reducedTree.SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.PythiaPUQCD.root")
 {
   gROOT->SetStyle("CMS");
   
@@ -36,7 +36,8 @@ void drawBinsOfMet(const TString var = "minDeltaPhiN", const TString treestring 
   const bool drawSB = true;
   const bool drawSIG = true;
 
-  const float customMax = 1;
+  float customMax = 1;
+  if(logy) customMax = 10;
   //const float customMax = -1;
   const bool doRatio=false; //hack for a specific ratio plot
 
@@ -93,7 +94,7 @@ void drawBinsOfMet(const TString var = "minDeltaPhiN", const TString treestring 
 
   TH1::SetDefaultSumw2(); //trick to turn on Sumw2 for all histos
 
-  //const int nbins=6;
+  //constint nbins=6;
   //  const double varbins[]={0.,160.,180.,260.,400.,800.,2000};
 
   int height= doRatio ? 800 : 600;
@@ -144,11 +145,19 @@ void drawBinsOfMet(const TString var = "minDeltaPhiN", const TString treestring 
   Hmh->SetLineWidth(width);
   Hhigh->SetLineWidth(width);
 
+  if(logy){
+    Hlow->SetMinimum(1E-2);
+    Hmed->SetMinimum(1E-2);
+    Hmh->SetMinimum(1E-2);
+    Hhigh->SetMinimum(1E-2);
+  }
+
   if (drawLSB) pypu->Draw(var+">>Hlow", selection1);
   if (drawMSB) pypu->Draw(var+">>Hmed", selection2);
   if (drawSB)  pypu->Draw(var+">>Hmh",  selection3);
   if (drawSIG) pypu->Draw(var+">>Hhigh",selection4);
   gPad->SetRightMargin(0.1);
+  gPad->SetLogy(logy);
   gPad->Modified();
 
   if (addOverflow) {
@@ -201,18 +210,21 @@ void drawBinsOfMet(const TString var = "minDeltaPhiN", const TString treestring 
 //     Hhigh->GetXaxis()->SetRangeUser(0,2);
 //   }
 
-  TLegend leg(0.45,0.55,0.85,0.85);
-  leg.SetFillColor(0);
-  leg.SetBorderSize(0);
-  leg.SetLineStyle(0);
-  leg.SetFillStyle(0);
-  leg.SetTextFont(42);
-  leg.SetTextSize(.04);
-  if (drawLSB)  leg.AddEntry(Hlow,"E_{T}^{miss} < 50 GeV");
-  if (drawMSB)  leg.AddEntry(Hmed,"50 < E_{T}^{miss} < 100 GeV");
-  if (drawSB)   leg.AddEntry(Hmh,"100 < E_{T}^{miss} < 150 GeV");
-  if (drawSIG)  leg.AddEntry(Hhigh,"E_{T}^{miss} > 150 GeV");
-  leg.Draw();
+  TLegend * leg = 0;
+  if(logy) leg = new TLegend(0.45,0.65,0.85,0.85);
+  else {leg = new TLegend(0.45,0.55,0.85,0.85);}
+  leg->SetFillColor(0);
+  leg->SetBorderSize(0);
+  leg->SetLineStyle(0);
+  leg->SetFillStyle(0);
+  leg->SetTextFont(42);
+  leg->SetTextSize(.04);
+  if(logy) leg->SetTextSize(0.03);
+  if (drawLSB)  leg->AddEntry(Hlow,"E_{T}^{miss} < 50 GeV");
+  if (drawMSB)  leg->AddEntry(Hmed,"50 < E_{T}^{miss} < 100 GeV");
+  if (drawSB)   leg->AddEntry(Hmh,"100 < E_{T}^{miss} < 150 GeV");
+  if (drawSIG)  leg->AddEntry(Hhigh,"E_{T}^{miss} > 150 GeV");
+  leg->Draw();
 
   TLatex* text1=0;
   text1 = new TLatex(3.570061,23.08044,"CMS Simulation");
@@ -248,8 +260,8 @@ void drawBinsOfMet(const TString var = "minDeltaPhiN", const TString treestring 
 //   cout<<"Hand chi^2 = "<<chi2<<endl;
 //   Hlow->Chi2Test(Hmh,"WW p");
 
-
-  thecanvas->Print("METcorrelation_"+var+".pdf");
+  if(logy) thecanvas->Print("METcorrelation_"+var+"_logy.png");
+  else {thecanvas->Print("METcorrelation_"+var+".png");}
   
   delete pypu;
   delete Hlow;
