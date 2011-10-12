@@ -4,6 +4,8 @@
 //void combine()
 {
 
+  const bool modLinesThick=true; //requested by Bill on 2011 10 12
+
   const TString which = "aleCLsCustom";
   TString outfileid="";
   if (which=="old") {
@@ -324,7 +326,10 @@
 
 
   effCanvas.SaveAs("effAtBestUL_T1bbbb_"+outfileid+".eps");
+  effCanvas.SaveAs("effAtBestUL_T1bbbb_"+outfileid+".C");
+  effCanvas.SaveAs("effAtBestUL_T1bbbb_"+outfileid+".root");
   effCanvas.SaveAs("effAtBestUL_T1bbbb_"+outfileid+".pdf");
+  effCanvas.SaveAs("effAtBestUL_T1bbbb_"+outfileid+".png");
 
   // ~~~~~~~ best UL ~~~~~~
   gStyle->SetPaintTextFormat("3.2f");
@@ -356,15 +361,30 @@
 
   gr30->SetLineStyle(3);
   gr03->SetLineStyle(2);
-
+  
+  if(modLinesThick){
+    gr10->SetLineWidth(4);
+    gr30->SetLineWidth(4);
+    gr03->SetLineWidth(4); 
+    gStyle->SetLineStyleString(7,"40 20");
+    gr30->SetLineStyle(7);
+  }
+  
   gr10->Draw("L");
   gr03->Draw("L");
   gr30->Draw("L");
-
+  
   TLegend smsleg(xpos,ypos-0.29,xpos+0.2,ypos-0.1);
-  smsleg.AddEntry(gr10,"#sigma^{prod} = #sigma^{NLO-QCD}");
-  smsleg.AddEntry(gr30,"#sigma^{prod} = 3 #times #sigma^{NLO-QCD}");
-  smsleg.AddEntry(gr03,"#sigma^{prod} = 1/3 #times #sigma^{NLO-QCD}");
+  if(modLinesThick){
+    smsleg.AddEntry(gr10,"#sigma^{prod} = #sigma^{NLO-QCD}","l");
+    smsleg.AddEntry(gr30,"#sigma^{prod} = 3 #times #sigma^{NLO-QCD}", "l");
+    smsleg.AddEntry(gr03,"#sigma^{prod} = 1/3 #times #sigma^{NLO-QCD}", "l");
+  }
+  else{
+    smsleg.AddEntry(gr10,"#sigma^{prod} = #sigma^{NLO-QCD}");
+    smsleg.AddEntry(gr30,"#sigma^{prod} = 3 #times #sigma^{NLO-QCD}");
+    smsleg.AddEntry(gr03,"#sigma^{prod} = 1/3 #times #sigma^{NLO-QCD}");
+  }
   smsleg.SetFillColor(0); 
   smsleg.SetShadowColor(0);
   smsleg.SetTextSize(0.03);
@@ -372,7 +392,10 @@
   smsleg.Draw();
 
   ulCanvas.SaveAs("bestUL_T1bbbb_"+outfileid+".eps");
+  ulCanvas.SaveAs("bestUL_T1bbbb_"+outfileid+".C");
+  ulCanvas.SaveAs("bestUL_T1bbbb_"+outfileid+".root");
   ulCanvas.SaveAs("bestUL_T1bbbb_"+outfileid+".pdf");
+  ulCanvas.SaveAs("bestUL_T1bbbb_"+outfileid+".png");
 
   // ~~~~~~~ which selection ~~~~~~
   gStyle->SetPaintTextFormat("1.0f");
@@ -438,6 +461,9 @@
   }
 
   whichCanvas.SaveAs("bestSelection_T1bbbb_"+outfileid+".eps");
+  whichCanvas.SaveAs("bestSelection_T1bbbb_"+outfileid+".C");
+  whichCanvas.SaveAs("bestSelection_T1bbbb_"+outfileid+".root");
   whichCanvas.SaveAs("bestSelection_T1bbbb_"+outfileid+".pdf");
+  whichCanvas.SaveAs("bestSelection_T1bbbb_"+outfileid+".png");
 
 }
