@@ -21,7 +21,8 @@ int main(int argc, char** argv)
  
   //code for sampleName_ and output path
 
-  TString outputDir = "/tmp/joshmt/"; //this is where reducedTrees will go
+  TString outputDir = "./"; //this is where reducedTrees will go, use "./" for T3
+  //TString outputDir = "/uscmst1b_scratch/lpc1/3DayLifetime/wdteo/"; //this is where reducedTrees will go
 
   TString options="";
   if (argc>2) options = argv[2];
@@ -53,7 +54,8 @@ int main(int argc, char** argv)
   selectVariables(stream);
 
   EventCalculator ec(fileArg, EventCalculator::kPF2PAT, EventCalculator::kPFMET);
-  ec.setBTaggerType(EventCalculator::kSSVHPT);
+  //ec.setBTaggerType(EventCalculator::kSSVHPT);
+  ec.setBTaggerType(EventCalculator::kCSVM);
   ec.setOptions(options);
   ec.reducedTree(outputDir, stream);
 
