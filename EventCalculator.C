@@ -32,11 +32,11 @@ EventCalculator::EventCalculator(const TString & sampleName, jetType theJetType,
   thePUuncType_(kPUunc0),
   theBTagEffType_(kBTagEff0),
   theHLTEffType_(kHLTEff0),
-  theBTaggerType_(kSSVHPT),
+  theBTaggerType_(kCSVM),
   //default settings for the collection pointers
   //this is what used to be in 'InitializeStuff()'
-  myJetsPF( &jet1),    //selectedPatJetsPF
-  myJetsPFhelper( &jethelper),
+  myJetsPF( &jet2),    //selectedPatJetsPF
+  myJetsPFhelper( &jethelper2),
   myElectronsPF( &electron1),
   myMuonsPF(&muon1),
   myTausPF(&tau),
@@ -160,7 +160,8 @@ void EventCalculator::checkConsistency() {
  //this is probably bad coding, but the only thing I can think of for this already horribly-constructed code
   std::string jettype = typeid( *myJetsPF ).name();
   std::string recopfjet = "jet_s";
-  std::string pf2patjet = "jet1_s";
+  //std::string pf2patjet = "jet1_s";
+  std::string pf2patjet = "jet2_s";
   if( theJetType_==kPF2PAT && std::string::npos != jettype.find(recopfjet)) { 
     //std::cout << "myJetsPF is pointing to recopfjet" << std::endl;
     std::cout << "ERROR: theJetType_ is set to kPF2PAT jets, while myJetsPF is pointing to something else. "
@@ -176,7 +177,8 @@ void EventCalculator::checkConsistency() {
 
   std::string mettype = typeid( *myMETPF ).name();
   std::string rawpfmet = "met1_s";
-  std::string type1pfmet = "met2_s";
+  //std::string type1pfmet = "met2_s";
+  std::string type1pfmet = "met4_s";
   if( theMETType_ == kPFMETTypeI &&  std::string::npos != jettype.find(type1pfmet)){
     std::cout << "ERROR: theMETType_ is set to PFMETTypeI, while myMETsPF is also pointing to type1pfmet.  "
 	      << "This will double-correct the MET!  Aborting." << std::endl;
@@ -1242,6 +1244,7 @@ bool EventCalculator::passBTagger(int ijet, BTaggerType btagger ) {
   else if (btagger==kSSVHPT) return myJetsPF->at(ijet).simpleSecondaryVertexHighPurBJetTags >= 2;
   else if (btagger==kTCHPT ) return myJetsPF->at(ijet).trackCountingHighPurBJetTags >= 3.41;
   else if (btagger==kTCHPM ) return myJetsPF->at(ijet).trackCountingHighPurBJetTags >= 1.93;
+  else if (btagger==kCSVM  ) return myJetsPF->at(ijet).combinedSecondaryVertexBJetTags >=0.679;
   else{
     cout << "Invalid b tagger!" << endl;
     assert(0);
@@ -1862,63 +1865,62 @@ void EventCalculator::calcCosHel( unsigned int j1i, unsigned int j2i, unsigned i
 
 void EventCalculator::calcTopDecayVariables(float & wmass, float & tmass, float & wcoshel, float & tcoshel) {
 
-
   // cout<<" == event =="<<endl;
 
   double bestM2j=-9999;//, bestM2j_j1pt=0, bestM2j_j2pt=0;
   double bestM3j=-9999;//, bestM3j_j3pt=0;
+  wcoshel = -99;
+  tcoshel = -99;
+  if(myJetsPF->size()){
+    //adopting this code from Owen -- note the loop goes to the second to last jet only
+    for (unsigned int j1i = 0; j1i < myJetsPF->size() -1; j1i++) {
+      if ( isGoodJet30(j1i)) { //owen is using pT>30 cut
 
-  //adopting this code from Owen -- note the loop goes to the second to last jet only
-  for (unsigned int j1i = 0; j1i < myJetsPF->size() -1; j1i++) {
+	//use exactly the same logic as Owen, to avoid bugs
+	if (passBTagger(j1i) ) continue; //veto b jets
 
-    if ( isGoodJet30(j1i)) { //owen is using pT>30 cut
+	//note how owen does the loop indexing here
+	for (unsigned int j2i =j1i+1; j2i<myJetsPF->size(); j2i++) {
+	  if ( isGoodJet10(j2i)) { //owen is using a pT>10 cut here!
 
-      //use exactly the same logic as Owen, to avoid bugs
-      if (passBTagger(j1i) ) continue; //veto b jets
+	    if (isGoodJet30(j2i) && passBTagger(j2i)) continue; //veto b jets with >30 gev
 
-      //note how owen does the loop indexing here
-      for (unsigned int j2i =j1i+1; j2i<myJetsPF->size(); j2i++) {
-	if ( isGoodJet10(j2i)) { //owen is using a pT>10 cut here!
+	    double m2j = calc_mNj(j1i,j2i);
+	    if ( fabs(m2j- mW_) < fabs(bestM2j - mW_) ) {
 
-	  if (isGoodJet30(j2i) && passBTagger(j2i)) continue; //veto b jets with >30 gev
+	      bestM2j = m2j;
+	      // bestM2j_j1pt = getLooseJetPt(j1i);
+	      //bestM2j_j2pt = getLooseJetPt(j2i);
 
-	  double m2j = calc_mNj(j1i,j2i);
-	  if ( fabs(m2j- mW_) < fabs(bestM2j - mW_) ) {
+	      for ( unsigned int j3i=0; j3i<myJetsPF->size(); j3i++) {
+		if (j3i==j1i || j3i==j2i) continue;
 
-	    bestM2j = m2j;
-	    // bestM2j_j1pt = getLooseJetPt(j1i);
-	    //bestM2j_j2pt = getLooseJetPt(j2i);
+		if ( isGoodJet30(j3i) && passBTagger(j3i)) { //owen uses 30 GeV pT cut
 
-	    for ( unsigned int j3i=0; j3i<myJetsPF->size(); j3i++) {
+		  double m3j = calc_mNj(j1i,j2i,j3i);
 
-	      if (j3i==j1i || j3i==j2i) continue;
+		  if ( fabs(m3j-mtop_) < fabs(bestM3j-mtop_) ) {
+		    bestM3j=m3j;
+		    calcCosHel(j1i,j2i,j3i,wcoshel,tcoshel); //update helicity angles
+		    //bestM3j_j3pt = getLooseJetPt(j3i);
+		    //  cout<<"New best!"<<endl;
+		  }
 
-	      if ( isGoodJet30(j3i) && passBTagger(j3i)) { //owen uses 30 GeV pT cut
+		} //is j3 good b jet
+	      } //loop over j3
 
-		double m3j = calc_mNj(j1i,j2i,j3i);
+	    } // compare with W mass
 
-		if ( fabs(m3j-mtop_) < fabs(bestM3j-mtop_) ) {
-		  bestM3j=m3j;
-		  calcCosHel(j1i,j2i,j3i,wcoshel,tcoshel); //update helicity angles
-		  //bestM3j_j3pt = getLooseJetPt(j3i);
-		  //  cout<<"New best!"<<endl;
-		}
+	  } //jet 2 is good
+	} //j2i
 
-	      } //is j3 good b jet
-	    } //loop over j3
+      } //if jet is good
 
-	  } // compare with W mass
-
-	} //jet 2 is good
-      } //j2i
-
-    } //if jet is good
-
-  } //j1i
+    } //j1i
+  }
 
   wmass = bestM2j;
   tmass = bestM3j;
-
 }
 
 float EventCalculator::getMT_Wlep() {
@@ -2693,7 +2695,7 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   UInt_t prescale_utilityHLT_HT300_CentralJet30_BTagIP;
 
   int njets, njets30, nbjets, nElectrons, nMuons;
-  int nbjetsSSVM,nbjetsTCHET,nbjetsSSVHPT,nbjetsTCHPT,nbjetsTCHPM;
+  int nbjetsSSVM,nbjetsTCHET,nbjetsSSVHPT,nbjetsTCHPT,nbjetsTCHPM,nbjetsCSVM;
 
   float jetpt1,jetphi1, jeteta1, jetenergy1, bjetpt1, bjetphi1, bjeteta1, bjetenergy1;
   float jetpt2,jetphi2, jeteta2, jetenergy2, bjetpt2, bjetphi2, bjeteta2, bjetenergy2;
@@ -2838,6 +2840,7 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   reducedTree.Branch("nbjetsTCHPT",&nbjetsTCHPT,"nbjetsTCHPT/I");
   reducedTree.Branch("nbjetsTCHET",&nbjetsTCHET,"nbjetsTCHET/I");
   reducedTree.Branch("nbjetsTCHPM",&nbjetsTCHPM,"nbjetsTCHPM/I");
+  reducedTree.Branch("nbjetsCSVM",&nbjetsCSVM,"nbjetsCSVM/I");
 
   reducedTree.Branch("isRealData",&isRealData,"isRealData/O");
   reducedTree.Branch("pass_utilityHLT_HT300",&pass_utilityHLT_HT300,"pass_utilityHLT_HT300/i");
@@ -3079,7 +3082,7 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
     //very loose skim for reducedTrees (HT, trigger, throw out bad data)
     cutHT = passCut("cutHT");
     if ( passCut("cutLumiMask") && (passCut("cutTrigger") || passCut("cutUtilityTrigger")) && cutHT ) {
-
+    
       weight = getWeight(nevents);
 
       //for scans, fill correctly normalized pdf weights
@@ -3125,7 +3128,6 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
       runNumber = getRunNumber();
       lumiSection = getLumiSection();
       eventNumber = getEventNumber();
-  
 
       HT=getHT();
       hltHTeff = getHLTHTeff(HT);
@@ -3162,6 +3164,7 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
       nbjetsTCHET = nGoodBJets( kTCHET);
       nbjetsTCHPT = nGoodBJets( kTCHPT);
       nbjetsTCHPM = nGoodBJets( kTCHPM);
+      nbjetsCSVM = nGoodBJets( kCSVM);
 
       nElectrons = countEle();
       nMuons = countMu();
@@ -3185,7 +3188,7 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
 
       sumDeltaPhi = maxDeltaPhi + minDeltaPhi;
       diffDeltaPhi = maxDeltaPhi - minDeltaPhi;
-      
+            
       minDeltaPhiN = getMinDeltaPhiMETN(3);
       deltaPhiN1 = getDeltaPhiMETN(0);
       deltaPhiN2 = getDeltaPhiMETN(1);
@@ -3209,7 +3212,7 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
       minDeltaPhiN_DJR_otherEta5 = getMinDeltaPhiMETN(3,50,2.4,true,30,5,  true,true,false);
       minDeltaPhiK_DJR           = getMinDeltaPhiMETN(3,50,2.4,true,30,2.4,true,true,true );
       minDeltaPhiK_DJR_otherEta5 = getMinDeltaPhiMETN(3,50,2.4,true,30,5,  true,true,true );
-
+      
       minDeltaPhiN_Luke = getMinDeltaPhiNMET(3);
       maxDeltaPhiN_Luke = getMaxDeltaPhiNMET(3);
       deltaPhiN1_Luke = getDeltaPhiNMET(0);
@@ -3221,10 +3224,11 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
       transverseMETSignificance1 = getTransverseMETSignificance(0);
       transverseMETSignificance2 = getTransverseMETSignificance(1);
       transverseMETSignificance3 = getTransverseMETSignificance(2);
-
+      
       MT_Wlep = getMT_Wlep();
       
       calcTopDecayVariables(  wMass, topMass, wCosHel, topCosHel);
+      
 
       jetpt1 = jetPtOfN(1);
       jetphi1 = jetPhiOfN(1);
@@ -3235,7 +3239,7 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
       jetphi2 = jetPhiOfN(2);
       jeteta2 = jetEtaOfN(2);
       jetenergy2 = jetEnergyOfN(2);
-      
+
       jetpt3 = jetPtOfN(3);
       jetphi3 = jetPhiOfN(3);
       jeteta3 = jetEtaOfN(3);
@@ -3245,12 +3249,12 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
       bjetphi1 = bjetPhiOfN(1);
       bjeteta1 = bjetEtaOfN(1);
       bjetenergy1 = bjetEnergyOfN(1); 
-      
+
       bjetpt2 = bjetPtOfN(2);
       bjetphi2 = bjetPhiOfN(2);
       bjeteta2 = bjetEtaOfN(2);
       bjetenergy2 = bjetEnergyOfN(2); 
-      
+
       bjetpt3 = bjetPtOfN(3);
       bjetphi3 = bjetPhiOfN(3);
       bjeteta3 = bjetEtaOfN(3);
@@ -3272,9 +3276,10 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
  
       //exclude ra2ecalbefilter for now
       passCleaning = csctighthaloFilter && eenoiseFilter && greedymuonFilter && hbhenoiseFilter && inconsistentmuonFilter && ra2ecaltpFilter && scrapingvetoFilter && trackingfailureFilter;
-      
+
       PBNRcode = doPBNR();
 
+      
       //fill new variables from Luke
       getSphericityJetMET(lambda1_allJets,lambda2_allJets,determinant_allJets,99,false);
       getSphericityJetMET(lambda1_allJetsPlusMET,lambda2_allJetsPlusMET,determinant_allJetsPlusMET,99,true);
@@ -3306,12 +3311,12 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
       transverseMETSignificance2_lostJet = getTransverseMETSignificance(1);
       transverseMETSignificance3_lostJet = getTransverseMETSignificance(2);
       resetVariables();
-
+      
       //Fill the tree
       reducedTree.Fill();
       
 
-    } //end of reduced tree skim
+      } //end of reduced tree skim
   } //end of loop over events
   stopTimer(nevents);
 
@@ -3449,10 +3454,10 @@ void EventCalculator::changeVariables(TRandom3* random, double jetLossProbabilit
   myJetsPF_temp                   = myJetsPF;		  
   myMETPF_temp		          = myMETPF;		  
 
-  myJetsPF                = new std::vector<jet1_s>;	   //jmt -- switch to PF2PAT
+  myJetsPF                = new std::vector<jet2_s>;	   //jmt -- switch to PF2PAT
   myMETPF		  = new std::vector<met1_s>(*myMETPF_temp);	  
 
-  for(vector<jet1_s>::iterator thisJet = myJetsPF_temp->begin(); thisJet != myJetsPF_temp->end(); thisJet++)
+  for(vector<jet2_s>::iterator thisJet = myJetsPF_temp->begin(); thisJet != myJetsPF_temp->end(); thisJet++)
     {
       if(random->Rndm() > jetLossProbability)
 	{
