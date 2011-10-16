@@ -42,7 +42,7 @@ public:
   enum PUuncType {kPUunc0=0,kPUuncDown,kPUuncUp};
   enum BTagEffType {kBTagEff0=0,kBTagEffup,kBTagEffdown,kBTagEff02,kBTagEffup2,kBTagEffdown2,kBTagEff03,kBTagEffup3,kBTagEffdown3};
   enum HLTEffType {kHLTEff0=0,kHLTEffup,kHLTEffdown};
-  enum BTaggerType {kSSVM=0, kTCHET, kSSVHPT, kTCHPT, kTCHPM, Nbtaggers};
+  enum BTaggerType {kSSVM=0, kTCHET, kSSVHPT, kTCHPT, kTCHPM, kCSVM, Nbtaggers};
 
   EventCalculator(const TString & sampleName, jetType theJetType, METType theMETType);
   ~EventCalculator();
@@ -223,8 +223,8 @@ private:
   BTaggerType theBTaggerType_;
 
   //pointers to the critical jet, etc collections
-  std::vector<jet1_s> * myJetsPF;
-  std::vector<jethelper_s> * myJetsPFhelper;
+  std::vector<jet2_s> * myJetsPF;
+  std::vector<jethelper2_s> * myJetsPFhelper;
   
   std::vector<electron1_s> * myElectronsPF;
   std::vector<muon1_s> * myMuonsPF;
@@ -234,7 +234,7 @@ private:
   std::vector<genparticlehelperra2_s> * myGenParticles;
 
   //versions for jet-loss study
-  std::vector<jet1_s> * myJetsPF_temp;
+  std::vector<jet2_s> * myJetsPF_temp;
   std::vector<met1_s> * myMETPF_temp;
 
   double* myGenWeight;
