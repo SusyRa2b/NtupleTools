@@ -472,8 +472,13 @@ bool EventCalculator::passHLT() {
     else if (runnumber >= 165922 && runnumber <= 166300)  passTrig = (triggerresultshelper_HLT_HT300_MHT75_v7 > 0);
     else if (runnumber >= 166301 && runnumber <= 166373)  passTrig = (triggerresultshelper_HLT_HT300_MHT75_v8 > 0);
     else if (runnumber >= 166374 && runnumber <= 166978)  passTrig = (triggerresultshelper_HLT_HT300_MHT75_v7 > 0);
-    //168941 is an arbitrary run during July Tech Stop		      
-    else if (runnumber >= 166979 && runnumber <= 168941)  passTrig = (triggerresultshelper_HLT_HT300_MHT80_v1 > 0);
+    else if (runnumber >= 166979 && runnumber <= 170064)  passTrig = (triggerresultshelper_HLT_HT300_MHT80_v1 > 0);
+    //end of summer 11 result data
+    else if (runnumber >= 170065 && runnumber <= 173211)  passTrig = (triggerresultshelper_HLT_HT300_MHT80_v2 > 0);
+    else if (runnumber >= 173212 && runnumber <= 176544)  passTrig = (triggerresultshelper_HLT_HT300_MHT90_v2 > 0);
+    else if (runnumber >= 176545 && runnumber <= 178410)  passTrig = (triggerresultshelper_HLT_HT350_MHT90_v1 > 0);
+    //else if (runnumber >= 178411) passTrig = (triggerresultshelper_HLT_HT350_MHT110_v3 > 0);//add when we reach 5E33
+
     
     else {cout<<"No trigger assigned for run = "<<runnumber<<endl; assert(0);}
   }
@@ -482,18 +487,79 @@ bool EventCalculator::passHLT() {
   return passTrig;
 }
 
-unsigned int EventCalculator::utilityHLT_HT300() {
-  if( !isSampleRealData()) return 999; //return a *large* dummy value for MC, so that we can use cuts like >=1
+bool EventCalculator::passUtilityHLT(int &version, int &prescale) {
+  if( !isSampleRealData()) return true; 
+  bool passTrig = false;
+
+  ULong64_t runnumber = getRunNumber();
   
-  unsigned int passTrig = 0;
-  if(triggerresultshelper_HLT_HT300_v1>0) passTrig = 1;
-  if(triggerresultshelper_HLT_HT300_v2>0) passTrig = 2;
-  if(triggerresultshelper_HLT_HT300_v3>0) passTrig = 3;
-  if(triggerresultshelper_HLT_HT300_v4>0) passTrig = 4;
-  if(triggerresultshelper_HLT_HT300_v5>0) passTrig = 5;
-  if(triggerresultshelper_HLT_HT300_v6>0) passTrig = 6;
-  if(triggerresultshelper_HLT_HT300_v7>0) passTrig = 7;
-  if(triggerresultshelper_HLT_HT300_v8>0) passTrig = 8;
+  if (runnumber >= 160431 && runnumber <= 161204) {
+    passTrig = (triggerresultshelper_HLT_HT300_v2 > 0);
+    version = 2;
+    prescale = triggerresultshelper_HLT_HT300_v2_prs;
+  }
+  else if (runnumber >= 161205 && runnumber <= 163268){
+    passTrig = (triggerresultshelper_HLT_HT300_v3 > 0);
+    version = 3;
+    prescale = triggerresultshelper_HLT_HT300_v3_prs;
+  }
+  else if (runnumber >= 163269 && runnumber <= 164923){
+    passTrig = (triggerresultshelper_HLT_HT300_v4 > 0);
+    version = 4;
+    prescale = triggerresultshelper_HLT_HT300_v4_prs;
+  }
+  else if (runnumber >= 164924 && runnumber <= 165921){
+    passTrig = (triggerresultshelper_HLT_HT300_v5 > 0);
+    version = 5;
+    prescale = triggerresultshelper_HLT_HT300_v5_prs;
+  }
+  else if (runnumber >= 165922 && runnumber <= 166300){
+    passTrig = (triggerresultshelper_HLT_HT300_v6 > 0);
+    version = 6;
+    prescale = triggerresultshelper_HLT_HT300_v6_prs;
+  }
+  else if (runnumber >= 166301 && runnumber <= 166373){
+    passTrig = (triggerresultshelper_HLT_HT300_v7 > 0);
+    version = 7;
+    prescale = triggerresultshelper_HLT_HT300_v7_prs;
+  }
+  else if (runnumber >= 166374 && runnumber <= 166978){
+    passTrig = (triggerresultshelper_HLT_HT300_v6 > 0);
+    version = 6;
+    prescale = triggerresultshelper_HLT_HT300_v6_prs;
+  }
+  else if (runnumber >= 166979 && runnumber <= 167077){
+    passTrig = (triggerresultshelper_HLT_HT300_v6 > 0);
+    version = 6;
+    prescale = triggerresultshelper_HLT_HT300_v6_prs;
+  }
+  else if (runnumber >= 167078 && runnumber <= 170064){
+    passTrig = (triggerresultshelper_HLT_HT300_v8 > 0);
+    version = 8;
+    prescale = triggerresultshelper_HLT_HT300_v8_prs;
+  }
+  //end of summer 11 result data
+  else if (runnumber >= 170065 && runnumber <= 173211){
+    passTrig = (triggerresultshelper_HLT_HT300_v9 > 0);
+    version = 9;
+    prescale = triggerresultshelper_HLT_HT300_v9_prs;
+  }
+  else if (runnumber >= 173212 && runnumber <= 176544){
+    passTrig = (triggerresultshelper_HLT_HT300_v9 > 0);
+    version = 9;
+    prescale = triggerresultshelper_HLT_HT300_v9_prs;
+  }
+  else if (runnumber >= 176545 && runnumber <= 178410){
+    passTrig = (triggerresultshelper_HLT_HT350_v8 > 0);
+    version = 108;
+    prescale = triggerresultshelper_HLT_HT350_v8_prs;
+  }
+  //else if (runnumber >= 178411){ //add when we reach 5E33
+  //  passTrig = (triggerresultshelper_HLT_HT350_v11 > 0);
+  //  version = 111;
+  //  prescale = triggerresultshelper_HLT_HT350_v11_prs;
+  //}
+
   return passTrig;
 }
 
@@ -741,7 +807,8 @@ bool EventCalculator::passCut(const TString cutTag) {
 
   if (cutTag=="cutLumiMask" ) return passLumiMask();
   if (cutTag=="cutTrigger" ) return passHLT();
-  if (cutTag=="cutUtilityTrigger" ) return ( utilityHLT_HT300()>0 || utilityHLT_HT300_CentralJet30_BTagIP()>0 );
+  int dummyver = 0, dummyprs;
+  if (cutTag=="cutUtilityTrigger" ) return ( passUtilityHLT(dummyver,dummyprs)>0 || utilityHLT_HT300_CentralJet30_BTagIP()>0 );
 
   if (cutTag=="cutPV") return passPV();
   
@@ -2689,8 +2756,9 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   int PBNRcode;
 
   bool isRealData;
-  UInt_t pass_utilityHLT_HT300;
-  UInt_t prescale_utilityHLT_HT300;
+  bool pass_utilityHLT;
+  UInt_t prescaleUtilityHLT;
+  UInt_t versionUtilityHLT;
   UInt_t pass_utilityHLT_HT300_CentralJet30_BTagIP;
   UInt_t prescale_utilityHLT_HT300_CentralJet30_BTagIP;
 
@@ -2843,8 +2911,9 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   reducedTree.Branch("nbjetsCSVM",&nbjetsCSVM,"nbjetsCSVM/I");
 
   reducedTree.Branch("isRealData",&isRealData,"isRealData/O");
-  reducedTree.Branch("pass_utilityHLT_HT300",&pass_utilityHLT_HT300,"pass_utilityHLT_HT300/i");
-  reducedTree.Branch("prescale_utilityHLT_HT300", &prescale_utilityHLT_HT300, "prescale_utilityHLT_HT300/i");
+  reducedTree.Branch("pass_utilityHLT",&pass_utilityHLT,"pass_utilityHLT/i");
+  reducedTree.Branch("prescaleUtilityHLT", &prescaleUtilityHLT, "prescaleUtilityHLT/i");
+  reducedTree.Branch("versionUtilityHLT", &versionUtilityHLT, "versionUtilityHLT/i");
   reducedTree.Branch("pass_utilityHLT_HT300_CentralJet30_BTagIP",&pass_utilityHLT_HT300_CentralJet30_BTagIP,"pass_utilityHLT_HT300_CentralJet30_BTagIP/i");
   reducedTree.Branch("prescale_utilityHLT_HT300_CentralJet30_BTagIP", &prescale_utilityHLT_HT300_CentralJet30_BTagIP, "prescale_utilityHLT_HT300_CentralJet30_BTagIP/i");  
 
@@ -3146,8 +3215,10 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
       calculateTagProb(prob0,probge1,prob1,probge2);
 
       isRealData = isSampleRealData();
-      pass_utilityHLT_HT300 = utilityHLT_HT300();
-      prescale_utilityHLT_HT300 = 0;
+      int version = 0, prescale = 0;
+      pass_utilityHLT = passUtilityHLT(version, prescale);
+      prescaleUtilityHLT = prescale;
+      versionUtilityHLT = version;
       pass_utilityHLT_HT300_CentralJet30_BTagIP = utilityHLT_HT300_CentralJet30_BTagIP();
       prescale_utilityHLT_HT300_CentralJet30_BTagIP = 0;
 

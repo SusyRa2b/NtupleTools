@@ -68,7 +68,7 @@ public:
 
   //  bool passBEFilter(); //TODO migrate this code
   bool passHLT();
-  unsigned int utilityHLT_HT300();
+  bool passUtilityHLT(int &version, int &prescale);
   unsigned int utilityHLT_HT300_CentralJet30_BTagIP();
   float getHLTHTeff(float offHT);
   float getHLTMHTeff(float offMET);
