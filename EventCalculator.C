@@ -111,6 +111,7 @@ void EventCalculator::initEnumNames() {
   theBTaggerNames_[kSSVHPT]="SSVHPT";
   theBTaggerNames_[kTCHPT]="TCHPT";
   theBTaggerNames_[kTCHPM]="TCHPM";
+  theBTaggerNames_[kCSVM]="CSVM";
 
   theMETNames_[kPFMET] = "PFMET";
   theMETNames_[kPFMETTypeI] = "PFMETTypeI";
