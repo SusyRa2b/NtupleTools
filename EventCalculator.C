@@ -808,6 +808,7 @@ bool EventCalculator::passLumiMask(){
 
 bool EventCalculator::passCut(const TString cutTag) {
 
+  if (cutTag=="cutInclusive") return true;
   if (cutTag=="cutLumiMask" ) return passLumiMask();
   if (cutTag=="cutTrigger" ) return passHLT();
   int dummyver = 0, dummyprs;
@@ -815,7 +816,7 @@ bool EventCalculator::passCut(const TString cutTag) {
 
   if (cutTag=="cutPV") return passPV();
   
-  if (cutTag=="cutHT") return getHT()>350;
+  if (cutTag=="cutHT") return getHT()>400;
   
   if (cutTag=="cut3Jets") return (nGoodJets() >= 3);
   
@@ -824,7 +825,7 @@ bool EventCalculator::passCut(const TString cutTag) {
 
   if (cutTag == "cutMET") {
     float mymet = getMET();
-    return mymet >= 200;
+    return mymet >= 250;
   }
 
   if (cutTag == "cutDeltaPhi") {
@@ -848,6 +849,137 @@ bool EventCalculator::passCut(const TString cutTag) {
 
   return true;
 }
+
+
+bool EventCalculator::setCutScheme() {
+
+  //if (cutscheme == nCutSchemes) return false;
+  //theCutScheme_ = cutscheme;
+
+  cutNames_.clear();
+  cutTags_.clear();
+
+  cutTags_.push_back("cutInclusive");cutNames_[ cutTags_.back()] = "Inclusive";
+  
+  //cutTags_.push_back("cut2SUSYb"); cutNames_[ cutTags_.back()] = "==2SUSYb";
+  //cutTags_.push_back("cut4SUSYb"); cutNames_[ cutTags_.back()] = "==4SUSYb";
+  
+  cutTags_.push_back("cutLumiMask"); cutNames_[cutTags_.back()]="LumiMask";
+  cutTags_.push_back("cutTrigger"); cutNames_[cutTags_.back()]="Trigger";
+  cutTags_.push_back("cutPV"); cutNames_[cutTags_.back()]="PV";
+  cutTags_.push_back("cutHT"); cutNames_[cutTags_.back()]="HT";
+  cutTags_.push_back("cut3Jets"); cutNames_[cutTags_.back()]=">=3Jets";
+  //cutTags_.push_back("cutJetPt1");  cutNames_[cutTags_.back()]="JetPt1";
+  //cutTags_.push_back("cutJetPt2");  cutNames_[cutTags_.back()]="JetPt2";
+  //cutTags_.push_back("cutJetPt3");  cutNames_[cutTags_.back()]="JetPt3";
+  
+  cutTags_.push_back("cutEleVeto");  cutNames_[cutTags_.back()]="EleVeto";
+  cutTags_.push_back("cutMuVeto");  cutNames_[cutTags_.back()]="MuVeto";
+  //cutTags_.push_back("cutTauVeto");  cutNames_[cutTags_.back()]="TauVeto";
+  
+  cutTags_.push_back("cutMET");  cutNames_[cutTags_.back()]="MET";
+  
+  //cutTags_.push_back("cutDeltaPhi"); cutNames_[cutTags_.back()]="DeltaPhi";
+  cutTags_.push_back("cutDeltaPhiN"); cutNames_[cutTags_.back()]="DeltaPhiN";
+  //cutTags_.push_back("cutCleaning"); cutNames_[cutTags_.back()]="TailCleaning";
+  
+  cutTags_.push_back("cut1b"); cutNames_[cutTags_.back()]=">=1b";
+  cutTags_.push_back("cut2b"); cutNames_[cutTags_.back()]=">=2b";
+  cutTags_.push_back("cut3b"); cutNames_[cutTags_.back()]=">=3b";
+
+  //  cutTags_.push_back("cutCleaning"); cutNames_[cutTags_.back()]="TailCleaning";
+
+  return true;
+}
+
+void EventCalculator::setIgnoredCut(const TString cutTag) {
+
+  bool ok=false;
+  for (unsigned int i=0; i<cutTags_.size() ; i++) {
+    if (cutTags_[i] == cutTag) {ok=true; break;}
+  }
+  if (!ok) {cout<<"Invalid cutIndex"<<endl; return;}
+
+  ignoredCut_.push_back(cutTag);
+
+}
+
+void EventCalculator::setRequiredCut(const TString cutTag) {
+
+  bool ok=false;
+  for (unsigned int i=0; i<cutTags_.size() ; i++) {
+    if (cutTags_[i] == cutTag) {ok=true; break;}
+  }
+  if (!ok) {cout<<"Invalid cutIndex"<<endl; return;}
+
+  requiredCut_.push_back(cutTag);
+
+}
+
+bool EventCalculator::cutRequired(const TString cutTag) { //should put an & in here to improve performance
+
+  //check if we are *ignoring* this cut (for N-1 studies, etc)
+  for (unsigned int i = 0; i< ignoredCut_.size() ; i++) {
+    if ( cutTag == ignoredCut_.at(i) ) return false;
+  }
+
+  //check if we are *requiring* this cut (special from the normal scheme)
+  for (unsigned int i = 0; i< requiredCut_.size() ; i++) {
+    if ( cutTag == requiredCut_.at(i) ) return true;
+  }
+
+  bool cutIsRequired=false;
+
+
+  if      (cutTag == "cutInclusive")  cutIsRequired =  true;
+
+  //else if (cutTag == "cut2SUSYb")  cutIsRequired = false;
+  //else if (cutTag == "cut4SUSYb")  cutIsRequired = false;
+
+  else if (cutTag == "cutLumiMask")  cutIsRequired = true;
+  else if (cutTag == "cutTrigger")  cutIsRequired = true;
+  else if (cutTag == "cutPV")  cutIsRequired =  true;
+  else if (cutTag == "cutHT")  cutIsRequired =  true;
+  else if (cutTag == "cut3Jets")  cutIsRequired =  true;
+  //else if (cutTag == "cutJetPt1")  cutIsRequired =  false;
+  //else if (cutTag == "cutJetPt2")  cutIsRequired =  false;
+  //else if (cutTag == "cutJetPt3")  cutIsRequired =  false;
+  else if (cutTag == "cutMET")  cutIsRequired =  true; 
+  else if (cutTag == "cutMuVeto") cutIsRequired =  true;
+  else if (cutTag == "cutEleVeto") cutIsRequired =  true;
+  //else if (cutTag == "cutTauVeto") cutIsRequired =  false; //not required for now
+  //else if (cutTag == "cutDeltaPhi") cutIsRequired =  true;
+  else if (cutTag == "cutDeltaPhiN") cutIsRequired =  true;
+  //else if (cutTag == "cutDeltaPhiTaus") cutIsRequired =  false;
+  else if (cutTag == "cut1b") cutIsRequired =  true;
+  else if (cutTag == "cut2b") cutIsRequired =  true;
+  else if (cutTag == "cut3b") cutIsRequired =  true;
+  //  else if (cutTag == "cutCleaning") cutIsRequired = true;
+  //else assert(0);
+
+  return cutIsRequired;
+}
+
+
+int EventCalculator::Cut(unsigned int entry)
+{
+  //be careful...not every function that makes cuts uses this! e.g. ::cutflow()
+
+  for (unsigned int i=0; i< cutTags_.size(); i++) {
+    if (cutRequired( cutTags_[i] ) && !passCut( cutTags_[i]) ) return -1;
+  }
+  
+  return 1;
+}
+
+void EventCalculator::resetIgnoredCut() {
+  ignoredCut_.clear();
+}
+
+void EventCalculator::resetRequiredCut() {
+  requiredCut_.clear();
+}
+
 
 double EventCalculator::getMinDeltaPhiMET(unsigned int maxjets) {
 
@@ -2268,7 +2400,7 @@ void EventCalculator::getPdfWeights(const TString & pdfset, Float_t * pdfWeights
 double EventCalculator::getCrossSection(){
   //from https://twiki.cern.ch/twiki/bin/view/CMS/SusyRA2BJets2011?rev=36
 
-  const double bf = 0.32442;
+  //const double bf = 0.32442;
 
   //V00-02-35
   if (sampleName_.Contains("QCD_Pt-0to5_TuneZ2_7TeV_pythia6") )                    return 4.844e10;
@@ -2409,6 +2541,8 @@ TString EventCalculator::getSampleNameOutputString(){
   if (sampleName_.Contains("ttjets_tunez2_madgraph_tauola_summer11") )               return "TTbarJets";
   if (sampleName_.Contains("TTJets_TuneZ2_7TeV-madgraph-tauola") )                   return "TTbarJets";
   if (sampleName_.Contains("ZJetsToNuNu_200_HT_inf_7TeV-madgraph"))                  return "Zinvisible";
+
+
 
   if (sampleName_.Contains("mSUGRA_tanb40_summer11"))                                return sampleName_;
   if (sampleName_.Contains("T1bbbb"))                                                return sampleName_; //what i want to do here depends on whether the sample needs to be split or not
@@ -3721,3 +3855,107 @@ void EventCalculator::getTransverseThrustVariables(float & thrust, float & thrus
     thrust = -1*negThrustValue.getVal();
     thrustPhi = (phi.getVal()>0) ? phi.getVal()-TMath::Pi() : phi.getVal()+TMath::Pi();
 }
+
+
+void EventCalculator::cutflow(itreestream& stream, int maxevents=-1){
+
+  std::vector<int> npass;
+  std::vector<double> sumw; //sum of weights
+  std::vector<double> sumw2; //sum of weights squared
+  int npass_eq1b=0;
+  double sumw_eq1b=0,sumw2_eq1b=0; //special kludge for eq1b case
+
+  int nevents = stream.size();
+
+  setCutScheme();
+
+  for (unsigned int i=0 ; i<cutTags_.size(); i++) {
+    //std::cout << "cutTags_["<< i<< "]=" << cutTags_.at(i) << std::endl;
+    npass.push_back(0);
+    sumw.push_back(0);
+    sumw2.push_back(0);
+  }
+
+  cout<<"Running..."<<endl;  
+
+
+
+  startTimer();
+  for(int entry=0; entry < nevents; ++entry){
+
+    if(maxevents>0 && entry>=maxevents) break;
+
+    // Read event into memory
+    stream.read(entry);
+    fillObjects();
+
+    //some output to watch while it's running
+    if(entry==0){
+      if(!isSampleRealData()){
+        cout << "MC xsec: " << getCrossSection() << endl;
+      }
+      else{
+        cout << "This is data!"<< endl;
+      }
+      cout << "weight: "<< getWeight(nevents) << endl;
+    }
+    if(entry%100000==0) cout << "  entry: " << entry << ", percent done=" << (int)(entry/(double)nevents*100.)<<  endl;
+    //if (entry%1000000==0) checkTimer(entry,nevents);
+    
+    const double weight = getWeight(nevents); //calculate weight
+      
+    for (unsigned int i=0 ; i<cutTags_.size(); i++) {
+
+      if (cutRequired(cutTags_[i]) && passCut(cutTags_[i]) ) {
+	npass.at(i) = npass.at(i) +1;
+	sumw.at(i) = sumw.at(i) + weight;
+	sumw2.at(i) = sumw2.at(i) + weight*weight;
+      }
+      else if (cutRequired(cutTags_[i]) && !passCut(cutTags_[i]) ) break;
+
+      //special kludge for eq1b
+      //if we reach this point then we have passed the cut. if the cut is >=1b, then we might also
+      //pass the ==1b cut
+      if ( cutRequired(cutTags_[i]) && cutTags_[i]=="cut1b") {
+      	if (passCut("cutEq1b")){
+      	  ++npass_eq1b;
+      	  sumw_eq1b+=weight;
+      	  sumw2_eq1b+= weight*weight;
+      	}
+      }
+
+    }
+  }
+
+  cout<<endl;
+  stopTimer(nevents);
+
+  for (unsigned int i=0 ; i<npass.size(); i++) {
+    
+    if (cutRequired(cutTags_[i])) {
+      
+      double weighted = sumw.at(i);
+      double weighted_error = sqrt(sumw2.at(i));
+      
+      char ccc[150];
+      sprintf(ccc,"%20s %15d | %.2f | Weighted = %f +/- %f",cutNames_[cutTags_[i]].Data(),npass.at(i),100*weighted/sumw.at(0),weighted,weighted_error);
+      cout<<ccc<<endl;
+
+      //special kludge for ==1b case
+      //this is an ugly duplication of code, to be dealt with later
+      if ( cutTags_[i]=="cut1b") {
+	//error = sqrt(npass_eq1b);
+	weighted = sumw_eq1b;
+	weighted_error = sqrt(sumw2_eq1b);
+	sprintf(ccc,"%20s %15d | %.2f | Weighted = %f +/- %f","==1b",npass_eq1b,100*sumw_eq1b/sumw.at(0),weighted,weighted_error);
+	cout<<ccc<<endl;
+	//file <<"==1b"<<"\t"<<setprecision(20) << weighted<<"\t" << weighted_error<<endl;
+	//fileU <<"==1b"<<"\t"<<setprecision(20) << npass_eq1b<<endl;
+
+      }
+    }
+  }
+
+  return;
+}
+

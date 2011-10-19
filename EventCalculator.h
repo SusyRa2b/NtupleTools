@@ -54,6 +54,8 @@ public:
   //loop over events
   void reducedTree(TString outputpath, itreestream& stream);
 
+  void cutflow(itreestream& stream, int maxevents);
+
   // functions that calculate stuff
 
   double getWeight(Long64_t nentries);
@@ -89,6 +91,13 @@ public:
 
 
   bool passCut(const TString cutTag);
+  bool setCutScheme();
+  void setIgnoredCut(const TString cutTag);
+  void setRequiredCut(const TString cutTag);
+  void resetIgnoredCut();
+  void resetRequiredCut();
+  bool cutRequired(const TString cutTag);
+  int Cut(unsigned int entry);
 
   double getMinDeltaPhiMET(unsigned int maxjets);
   double getTransverseMETError(unsigned int thisJet);
@@ -313,6 +322,12 @@ private:
   bool  recalculatedVariables_;
 
   TStopwatch* watch_; //not used for everyday running; just for testing
+
+  std::vector<TString> cutTags_;
+  std::map<TString, TString> cutNames_; //key is a cutTag. these should be "human readable" but should not have any spaces
+  std::vector<TString> ignoredCut_; //allow more than 1 ignored cut!
+  std::vector<TString> requiredCut_; //new feature to *turn on* a cut that is usually not required by a given cut scheme
+
 
 };
 
