@@ -59,6 +59,8 @@ int main(int argc, char** argv)
   ec.setOptions(options);
   ec.reducedTree(outputDir, stream);
 
+  //ec.cutflow(stream, -1);
+
   return 0;
 
 }
