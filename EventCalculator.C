@@ -295,10 +295,11 @@ bool EventCalculator::noPUWeight() {
   //jmt -- i would prefer that this function has *every* sample defined and then asserts if the sample is not found
 
   if (sampleName_.Contains("T1bbbb"))                                                return true;
-  if (sampleName_.Contains("T2bb"))                                                return true; //dunno if it has PU weights or not
-  if (sampleName_.Contains("T2tt"))                                                return true; //dunno if it has PU weights or not
+  if (sampleName_.Contains("T2bb"))                                                  return true; //dunno if it has PU weights or not
+  if (sampleName_.Contains("T2tt"))                                                  return true; //dunno if it has PU weights or not
 
-  //Summer11 QCD
+  /*
+  //Old name for Summer11 QCD. Newer versions should have PU weight.
   if (sampleName_.Contains("qcd_tunez2_pt0to5_summer11") )                           return true;
   if (sampleName_.Contains("qcd_tunez2_pt1000to1400_summer11") )                     return true;
   if (sampleName_.Contains("qcd_tunez2_pt120to170_summer11") )                       return true; 
@@ -325,7 +326,8 @@ bool EventCalculator::noPUWeight() {
   if (sampleName_.Contains("ZZtoAnything_TuneZ2_7TeV-pythia6-tauola") )              return true;
   if (sampleName_.Contains("DYJetsToLL_TuneD6T_M-10To50_7TeV-madgraph-tauola") )     return true;
   if (sampleName_.Contains("DYJetsToLL_TuneD6T_M-50_7TeV-madgraph-tauola") )         return true;
-  
+  */
+
   return false;
 
 }
@@ -2268,12 +2270,47 @@ double EventCalculator::getCrossSection(){
 
   const double bf = 0.32442;
 
+  //V00-02-35
+  if (sampleName_.Contains("QCD_Pt-0to5_TuneZ2_7TeV_pythia6") )                    return 4.844e10;
+  if (sampleName_.Contains("QCD_Pt-1000to1400_TuneZ2_7TeV_pythia6") )                return .3321;
+  if (sampleName_.Contains("QCD_Pt-120to170_TuneZ2_7TeV_pythia6") )                  return 1.151e5;
+  if (sampleName_.Contains("QCD_Pt-1400to1800_TuneZ2_7TeV_pythia6") )              return .01087;
+  if (sampleName_.Contains("QCD_Pt-15to3000_TuneZ2_Flat_7TeV_pythia6") )             return 2.213e10;
+  if (sampleName_.Contains("QCD_Pt-15to30_TuneZ2_7TeV_pythia6") )                    return 8.159e8;
+  if (sampleName_.Contains("QCD_Pt-170to300_TuneZ2_7TeV_pythia6") )                  return 2.426e4;
+  if (sampleName_.Contains("QCD_Pt-1800_TuneZ2_7TeV_pythia6") )                      return .0003575;
+  if (sampleName_.Contains("QCD_Pt-300to470_TuneZ2_7TeV_pythia6") )                  return 1.168e3;
+  if (sampleName_.Contains("QCD_Pt-30to50_TuneZ2_7TeV_pythia6") )                    return 5.312e7;
+  if (sampleName_.Contains("QCD_Pt-470to600_TuneZ2_7TeV_pythia6") )                  return 7.022e1;
+  if (sampleName_.Contains("QCD_Pt-50to80_TuneZ2_7TeV_pythia6") )                    return 6.359e6;
+  if (sampleName_.Contains("QCD_Pt-5to15_TuneZ2_7TeV_pythia6") )                     return 3.675e10;
+  if (sampleName_.Contains("QCD_Pt-600to800_TuneZ2_7TeV_pythia6") )                  return 1.555e1;
+  if (sampleName_.Contains("QCD_Pt-800to1000_TuneZ2_7TeV_pythia6") )                 return 1.844;
+  if (sampleName_.Contains("QCD_Pt-80to120_TuneZ2_7TeV_pythia6") )                   return 7.843e5;
+
+  if (sampleName_.Contains("zjets") )                                                return 32.92 * 1.28; //(This is Zinvisible) confirmed with Colorado
+  if (sampleName_.Contains("ww") )                                                   return 27.83;//from PREP
+  if (sampleName_.Contains("wz") )                                                   return 10.47;//from PREP
+  if (sampleName_.Contains("zz") )                                                   return 4.287;//from PREP
+  if (sampleName_.Contains("t_s-channel") )                                          return 3.19; //from our twiki
+  if (sampleName_.Contains("tbar_s-channel") )                                       return 1.44;
+  if (sampleName_.Contains("t_t-channel") )                                          return 41.92;
+  if (sampleName_.Contains("tbar_t-channel") )                                       return 22.65;
+  if (sampleName_.Contains("t_tW-channel") )                                         return 7.87;
+  if (sampleName_.Contains("tbar_tW-channel") )                                      return 7.87;
+  if (sampleName_.Contains("wjets") )                                                return 31314;
+  if (sampleName_.Contains("ttjets_madgraph") )                                      return 158; // +/- 10 +/- 15 //CMS PAS TOP-11-001
+  if (sampleName_.Contains("DY") )                                                   return 3048;
+  
+  if (sampleName_.Contains("LM9_SUSY_sftsht_7TeV-pythia6") )                         return 7.134 * 1.48; //from ProductionSpring2011 twiki
+
+  /*
   if (sampleName_.Contains("DYJetsToLL_TuneD6T_M-10To50_7TeV-madgraph-tauola") )     return 310;
   if (sampleName_.Contains("DYJetsToLL_TuneD6T_M-50_7TeV-madgraph-tauola") )         return 3048;
   if (sampleName_.Contains("LM13_SUSY_sftsht_7TeV-pythia6") )                        return 6.899;
   if (sampleName_.Contains("LM9_SUSY_sftsht_7TeV-pythia6_2") )                       return 7.134 * 1.48; //from ProductionSpring2011 twiki
   if (sampleName_.Contains("QCD_Pt_0to5_TuneZ2_7TeV_pythia6_3") )                    return 4.844e10;
-  if (sampleName_.Contains("QCD_Pt_1000to1400_TuneZ2_7TeV_pythia6") )               return .3321;
+  if (sampleName_.Contains("QCD_Pt_1000to1400_TuneZ2_7TeV_pythia6") )                return .3321;
   if (sampleName_.Contains("QCD_Pt_120to170_TuneZ2_7TeV_pythia6") )                  return 1.151e5;
   if (sampleName_.Contains("QCD_Pt_1400to1800_TuneZ2_7TeV_pythia6_3") )              return .01087;
   if (sampleName_.Contains("QCD_Pt_15to3000_TuneZ2_Flat_7TeV_pythia6") )             return 2.213e10;
@@ -2298,7 +2335,7 @@ double EventCalculator::getCrossSection(){
   if (sampleName_.Contains("ZinvisibleJets_7TeV-madgraph") )                         return 5760; //NNLO, taken from RA2 note //RA1 uses 5715
   if (sampleName_.Contains("ZZtoAnything_TuneZ2_7TeV-pythia6-tauola") )              return 4.297;
 
-  //Summer11 samples
+  //old name for Summer11 QCD samples
   if (sampleName_.Contains("qcd_tunez2_pt0to5_summer11") )                           return 4.844e10;
   if (sampleName_.Contains("qcd_tunez2_pt1000to1400_summer11") )                     return .3321;
   if (sampleName_.Contains("qcd_tunez2_pt120to170_summer11") )                       return 1.151e5;
@@ -2315,17 +2352,20 @@ double EventCalculator::getCrossSection(){
   if (sampleName_.Contains("qcd_tunez2_pt600to800_summer11") )                       return 1.555e1;
   if (sampleName_.Contains("qcd_tunez2_pt800to1000_summer11") )                      return 1.844;
   if (sampleName_.Contains("qcd_tunez2_pt80to120_summer11") )                        return 7.843e5;
+
   if (sampleName_.Contains("ttjets_tunez2_madgraph_tauola_summer11") )               return 158; // +/- 10 +/- 15 //CMS PAS TOP-11-001
 
   if (sampleName_.Contains("LM9_SUSY_sftsht_7TeV-pythia6") )                         return 7.134 * 1.48; //from ProductionSpring2011 twiki
   if (sampleName_.Contains("TTJets_TuneZ2_7TeV-madgraph-tauola") )                   return 158; // +/- 10 +/- 15 //CMS PAS TOP-11-001
   if (sampleName_.Contains("ZJetsToNuNu_200_HT_inf_7TeV-madgraph"))                  return 32.92 * 1.28; //confirmed with Colorado
-   
+  */   
+
   if (sampleName_.Contains("mSUGRA")) return 1; //NLO cross sections will be specially stored per point
   if (sampleName_.Contains("T1bbbb")) return 1;
   if (sampleName_.Contains("T2bb")) return 1;
   if (sampleName_.Contains("T2tt")) return 1;
 
+  std::cout<<"Hello, Ben."<<std::endl;
   std::cout<<"Cannot find cross section for this sample!"<<std::endl;
   assert(0); 
   return -1;
@@ -2336,26 +2376,25 @@ TString EventCalculator::getSampleNameOutputString(){
   //strategy: as much as possible, give the name that drawReducedTrees expects,
   //and return sampleName for samples that have to be 'hadd'ed afterwards anyway
 
-  if (sampleName_.Contains("DYJetsToLL_TuneD6T_M-10To50_7TeV-madgraph-tauola") )     return sampleName_;
-  if (sampleName_.Contains("DYJetsToLL_TuneD6T_M-50_7TeV-madgraph-tauola") )         return sampleName_;
+  //V00-02-35 (don't do: QCD, )
+  if (sampleName_.Contains("ttjets_madgraph") )                                      return "TTbarJetsCORRECT";
+  if (sampleName_.Contains("zjets") )                                                return "Zinvisible";
+  if (sampleName_.Contains("wjets") )                                                return "WJets";
+  if (sampleName_.Contains("ww") )                                                   return "WW";
+  if (sampleName_.Contains("wz") )                                                   return "WZ";
+  if (sampleName_.Contains("zz") )                                                   return "ZZ";
+  if (sampleName_.Contains("t_s-channel") )                                          return "SingleTop-sChannel";
+  if (sampleName_.Contains("tbar_s-channel") )                                       return "SingleTopBar-sChannel";
+  if (sampleName_.Contains("t_t-channel") )                                          return "SingleTop-tChannel";
+  if (sampleName_.Contains("tbar_t-channel") )                                       return "SingleTopBar-tChannel";
+  if (sampleName_.Contains("t_tW-channel") )                                         return "SingleTop-tWChannel";
+  if (sampleName_.Contains("tbar_tW-channel") )                                      return "SingleTopBar-tWChannel";
+
+  if (sampleName_.Contains("LM9_SUSY_sftsht_7TeV-pythia6") )                         return "LM9";
+
+  /*
   if (sampleName_.Contains("LM13_SUSY_sftsht_7TeV-pythia6") )                        return "LM13";
-  if (sampleName_.Contains("LM9_SUSY_sftsht_7TeV-pythia6") )                       return "LM9";
-  if (sampleName_.Contains("QCD_Pt_0to5_TuneZ2_7TeV_pythia6") )                    return sampleName_;
-  if (sampleName_.Contains("QCD_Pt_1000to1400_TuneZ2_7TeV_pythia6") )                return sampleName_;
-  if (sampleName_.Contains("QCD_Pt_120to170_TuneZ2_7TeV_pythia6") )                  return sampleName_;
-  if (sampleName_.Contains("QCD_Pt_1400to1800_TuneZ2_7TeV_pythia6") )              return sampleName_;
-  if (sampleName_.Contains("QCD_Pt_15to3000_TuneZ2_Flat_7TeV_pythia6") )             return "PythiaPUQCDFlat";
-  if (sampleName_.Contains("QCD_Pt_15to30_TuneZ2_7TeV_pythia6") )                    return sampleName_;
-  if (sampleName_.Contains("QCD_Pt_170to300_TuneZ2_7TeV_pythia6") )                  return sampleName_;
-  if (sampleName_.Contains("QCD_Pt_1800_TuneZ2_7TeV_pythia6") )                      return sampleName_;
-  if (sampleName_.Contains("QCD_Pt_300to470_TuneZ2_7TeV_pythia6") )                  return sampleName_;
-  if (sampleName_.Contains("QCD_Pt_30to50_TuneZ2_7TeV_pythia6") )                    return sampleName_;
-  if (sampleName_.Contains("QCD_Pt_470to600_TuneZ2_7TeV_pythia6") )                  return sampleName_;
-  if (sampleName_.Contains("QCD_Pt_50to80_TuneZ2_7TeV_pythia6") )                    return sampleName_;
-  if (sampleName_.Contains("QCD_Pt_5to15_TuneZ2_7TeV_pythia6") )                     return sampleName_;
-  if (sampleName_.Contains("QCD_Pt_600to800_TuneZ2_7TeV_pythia6") )                  return sampleName_;
-  if (sampleName_.Contains("QCD_Pt_800to1000_TuneZ2_7TeV_pythia6") )                 return sampleName_;
-  if (sampleName_.Contains("QCD_Pt_80to120_TuneZ2_7TeV_pythia6") )                 return sampleName_;
+  if (sampleName_.Contains("LM9_SUSY_sftsht_7TeV-pythia6") )                         return "LM9";
   if (sampleName_.Contains("TTJets_TuneD6T_7TeV-madgraph-tauola") )                  return "TTbarJets";
   if (sampleName_.Contains("TToBLNu_TuneZ2_s-channel_7TeV-madgraph") )               return "SingleTop-sChannel";
   if (sampleName_.Contains("TToBLNu_TuneZ2_t-channel_7TeV-madgraph") )               return "SingleTop-tChannel";
@@ -2365,34 +2404,17 @@ TString EventCalculator::getSampleNameOutputString(){
   if (sampleName_.Contains("WZtoAnything_TuneZ2_7TeV-pythia6-tauola") )              return "WZ";
   if (sampleName_.Contains("ZinvisibleJets_7TeV-madgraph") )                         return "Zinvisible";
   if (sampleName_.Contains("ZZtoAnything_TuneZ2_7TeV-pythia6-tauola") )              return "ZZ";
-
-
+  
   //Summer11 samples
-  if (sampleName_.Contains("qcd_tunez2_pt0to5_summer11") )                           return sampleName_;
-  if (sampleName_.Contains("qcd_tunez2_pt1000to1400_summer11") )                     return sampleName_;
-  if (sampleName_.Contains("qcd_tunez2_pt120to170_summer11") )                       return sampleName_;
-  if (sampleName_.Contains("qcd_tunez2_pt1400to1800_summer11") )                     return sampleName_;
-  if (sampleName_.Contains("qcd_tunez2_pt15to3000_summer11") )                       return sampleName_;
-  if (sampleName_.Contains("qcd_tunez2_pt15to30_summer11") )                         return sampleName_;
-  if (sampleName_.Contains("qcd_tunez2_pt170to300_summer11") )                       return sampleName_;
-  if (sampleName_.Contains("qcd_tunez2_pt1800_summer11") )                           return sampleName_;
-  if (sampleName_.Contains("qcd_tunez2_pt300to470_summer11") )                       return sampleName_;
-  if (sampleName_.Contains("qcd_tunez2_pt30to50_summer11") )                         return sampleName_;
-  if (sampleName_.Contains("qcd_tunez2_pt470to600_summer11") )                       return sampleName_;
-  if (sampleName_.Contains("qcd_tunez2_pt50to80_summer11") )                         return sampleName_;
-  if (sampleName_.Contains("qcd_tunez2_pt5to15_summer11") )                          return sampleName_;
-  if (sampleName_.Contains("qcd_tunez2_pt600to800_summer11") )                       return sampleName_;
-  if (sampleName_.Contains("qcd_tunez2_pt800to1000_summer11") )                      return sampleName_;
-  if (sampleName_.Contains("qcd_tunez2_pt80to120_summer11") )                        return sampleName_;
   if (sampleName_.Contains("ttjets_tunez2_madgraph_tauola_summer11") )               return "TTbarJets";
-
-  if (sampleName_.Contains("TTJets_TuneZ2_7TeV-madgraph-tauola") ) return "TTbarJets";
+  if (sampleName_.Contains("TTJets_TuneZ2_7TeV-madgraph-tauola") )                   return "TTbarJets";
   if (sampleName_.Contains("ZJetsToNuNu_200_HT_inf_7TeV-madgraph"))                  return "Zinvisible";
 
   if (sampleName_.Contains("mSUGRA_tanb40_summer11"))                                return sampleName_;
   if (sampleName_.Contains("T1bbbb"))                                                return sampleName_; //what i want to do here depends on whether the sample needs to be split or not
   if (sampleName_.Contains("T2bb"))                                                  return sampleName_;
   if (sampleName_.Contains("T2tt"))                                                  return sampleName_;
+  */
 
   //if it isn't found, just use the full name 
   return sampleName_;
@@ -2912,7 +2934,7 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   reducedTree.Branch("nbjetsCSVM",&nbjetsCSVM,"nbjetsCSVM/I");
 
   reducedTree.Branch("isRealData",&isRealData,"isRealData/O");
-  reducedTree.Branch("pass_utilityHLT",&pass_utilityHLT,"pass_utilityHLT/i");
+  reducedTree.Branch("pass_utilityHLT",&pass_utilityHLT,"pass_utilityHLT/O");
   reducedTree.Branch("prescaleUtilityHLT", &prescaleUtilityHLT, "prescaleUtilityHLT/i");
   reducedTree.Branch("versionUtilityHLT", &versionUtilityHLT, "versionUtilityHLT/i");
   reducedTree.Branch("pass_utilityHLT_HT300_CentralJet30_BTagIP",&pass_utilityHLT_HT300_CentralJet30_BTagIP,"pass_utilityHLT_HT300_CentralJet30_BTagIP/i");
@@ -3400,72 +3422,118 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
 }
 
 
-unsigned int EventCalculator::getSeed() {
+unsigned int EventCalculator::getSeed(){
 
-  //jmt -- we might want to add an assert(0) at the end here
+  //V00-02-35
 
-  unsigned int seed = 4357;
+  if (sampleName_.Contains("ttjets_madgraph") )                                      return 4381;
+  if (sampleName_.Contains("zjets") )                                                return 4382;
+  if (sampleName_.Contains("ww") )                                                   return 4383;                                                
+  if (sampleName_.Contains("wz") )                                                   return 4384;                                                
+  if (sampleName_.Contains("zz") )                                                   return 4385;
+  if (sampleName_.Contains("t_s-channel") )                                          return 4386;
+  if (sampleName_.Contains("tbar_s-channel") )                                       return 4387;
+  if (sampleName_.Contains("t_t-channel") )                                          return 4388;
+  if (sampleName_.Contains("tbar_t-channel") )                                       return 4389;
+  if (sampleName_.Contains("t_tW-channel") )                                         return 4390;
+  if (sampleName_.Contains("tbar_tW-channel") )                                      return 4391;
+  if (sampleName_.Contains("wjets") )                                                return 4392;
+  if (sampleName_.Contains("DY") )                                                   return 4393;
+    
+  if (sampleName_.Contains("QCD_Pt-0to5_TuneZ2_7TeV_pythia6") )                    return 4361;
+  if (sampleName_.Contains("QCD_Pt-1000to1400_TuneZ2_7TeV_pythia6") )                return 4362;
+  if (sampleName_.Contains("QCD_Pt-120to170_TuneZ2_7TeV_pythia6") )                  return 4363;
+  if (sampleName_.Contains("QCD_Pt-1400to1800_TuneZ2_7TeV_pythia6") )                return 4364;
+  if (sampleName_.Contains("QCD_Pt-15to3000_TuneZ2_Flat_7TeV_pythia6") )             return 4365;
+  if (sampleName_.Contains("QCD_Pt-15to30_TuneZ2_7TeV_pythia6") )                    return 4366;
+  if (sampleName_.Contains("QCD_Pt-170to300_TuneZ2_7TeV_pythia6") )                  return 4367;
+  if (sampleName_.Contains("QCD_Pt-1800_TuneZ2_7TeV_pythia6") )                      return 4368;
+  if (sampleName_.Contains("QCD_Pt-300to470_TuneZ2_7TeV_pythia6") )                  return 4369;
+  if (sampleName_.Contains("QCD_Pt-30to50_TuneZ2_7TeV_pythia6") )                    return 4370;
+  if (sampleName_.Contains("QCD_Pt-470to600_TuneZ2_7TeV_pythia6") )                  return 4371;
+  if (sampleName_.Contains("QCD_Pt-50to80_TuneZ2_7TeV_pythia6") )                    return 4372;
+  if (sampleName_.Contains("QCD_Pt-5to15_TuneZ2_7TeV_pythia6") )                     return 4373;
+  if (sampleName_.Contains("QCD_Pt-600to800_TuneZ2_7TeV_pythia6") )                  return 4374;
+  if (sampleName_.Contains("QCD_Pt-800to1000_TuneZ2_7TeV_pythia6") )                 return 4375;
+  if (sampleName_.Contains("QCD_Pt-80to120_TuneZ2_7TeV_pythia6") )                 return 4376;
+
+  if (sampleName_.Contains("LM9_SUSY_sftsht_7TeV-pythia6") )                         return 4400;
+
+  if (sampleName_.Contains("ht_run2011a_may10rereco") )                              return 4500;
+  if (sampleName_.Contains("ht_run2011a_aug5rereco") )                               return 4501;
+  if (sampleName_.Contains("ht_run2011a_promptrecov6") )                             return 4502;
+  if (sampleName_.Contains("ht_run2011b_promptrecov1") )                             return 4503;
+  if (sampleName_.Contains("ht_run2011b_promptrecov1_oct7") )                        return 4504;
+  if (sampleName_.Contains("ht_run2011b_promptrecov1_oct14") )                       return 4505;
+  if (sampleName_.Contains("ht_run2011a_promptrecov4_try3") )                        return 4506;
+
+  /*
+  if (sampleName_.Contains("DYJetsToLL_TuneD6T_M-10To50_7TeV-madgraph-tauola") )     return 4357;
+  if (sampleName_.Contains("DYJetsToLL_TuneD6T_M-50_7TeV-madgraph-tauola") )         return 4358;
+  if (sampleName_.Contains("LM13_SUSY_sftsht_7TeV-pythia6") )                        return 4359;
+  if (sampleName_.Contains("LM9_SUSY_sftsht_7TeV-pythia6_2") )                       return 4360;
   
-  if (sampleName_.Contains("DYJetsToLL_TuneD6T_M-10To50_7TeV-madgraph-tauola") )     seed = 4357;
-  if (sampleName_.Contains("DYJetsToLL_TuneD6T_M-50_7TeV-madgraph-tauola") )         seed = 4358;
-  if (sampleName_.Contains("LM13_SUSY_sftsht_7TeV-pythia6") )                        seed = 4359;
-  if (sampleName_.Contains("LM9_SUSY_sftsht_7TeV-pythia6_2") )                       seed = 4360;
-  if (sampleName_.Contains("QCD_Pt_0to5_TuneZ2_7TeV_pythia6_3") )                    seed = 4361;
-  if (sampleName_.Contains("QCD_Pt_1000to1400_TuneZ2_7TeV_pythia6") )                seed = 4362;
-  if (sampleName_.Contains("QCD_Pt_120to170_TuneZ2_7TeV_pythia6") )                  seed = 4363;
-  if (sampleName_.Contains("QCD_Pt_1400to1800_TuneZ2_7TeV_pythia6_3") )              seed = 4364;
-  if (sampleName_.Contains("QCD_Pt_15to3000_TuneZ2_Flat_7TeV_pythia6") )             seed = 4365;
-  if (sampleName_.Contains("QCD_Pt_15to30_TuneZ2_7TeV_pythia6") )                    seed = 4366;
-  if (sampleName_.Contains("QCD_Pt_170to300_TuneZ2_7TeV_pythia6") )                  seed = 4367;
-  if (sampleName_.Contains("QCD_Pt_1800_TuneZ2_7TeV_pythia6") )                      seed = 4368;
-  if (sampleName_.Contains("QCD_Pt_300to470_TuneZ2_7TeV_pythia6") )                  seed = 4369;
-  if (sampleName_.Contains("QCD_Pt_30to50_TuneZ2_7TeV_pythia6") )                    seed = 4370;
-  if (sampleName_.Contains("QCD_Pt_470to600_TuneZ2_7TeV_pythia6") )                  seed = 4371;
-  if (sampleName_.Contains("QCD_Pt_50to80_TuneZ2_7TeV_pythia6") )                    seed = 4372;
-  if (sampleName_.Contains("QCD_Pt_5to15_TuneZ2_7TeV_pythia6") )                     seed = 4373;
-  if (sampleName_.Contains("QCD_Pt_600to800_TuneZ2_7TeV_pythia6") )                  seed = 4374;
-  if (sampleName_.Contains("QCD_Pt_800to1000_TuneZ2_7TeV_pythia6") )                 seed = 4375;
-  if (sampleName_.Contains("QCD_Pt_80to120_TuneZ2_7TeV_pythia6_3") )                 seed = 4376;
-  if (sampleName_.Contains("TTJets_TuneD6T_7TeV-madgraph-tauola") )                  seed = 4377;
-  if (sampleName_.Contains("TToBLNu_TuneZ2_s-channel_7TeV-madgraph") )               seed = 4378;
-  if (sampleName_.Contains("TToBLNu_TuneZ2_t-channel_7TeV-madgraph") )               seed = 4379;
-  if (sampleName_.Contains("TToBLNu_TuneZ2_tW-channel_7TeV-madgraph") )              seed = 4380;
-  if (sampleName_.Contains("WJetsToLNu_TuneZ2_7TeV-madgraph-tauola") )               seed = 4381;
-  if (sampleName_.Contains("WWtoAnything_TuneZ2_7TeV-pythia6-tauola") )              seed = 4382;
-  if (sampleName_.Contains("WZtoAnything_TuneZ2_7TeV-pythia6-tauola") )              seed = 4383;
-  if (sampleName_.Contains("ZinvisibleJets_7TeV-madgraph") )                         seed = 4384;
-  if (sampleName_.Contains("ZZtoAnything_TuneZ2_7TeV-pythia6-tauola") )              seed = 4385;  
-
-  if (sampleName_.Contains("qcd_tunez2_pt0to5_summer11") )                           seed = 4384;
-  if (sampleName_.Contains("qcd_tunez2_pt1000to1400_summer11") )                     seed = 4385;
-  if (sampleName_.Contains("qcd_tunez2_pt120to170_summer11") )                       seed = 4386;
-  if (sampleName_.Contains("qcd_tunez2_pt1400to1800_summer11") )                     seed = 4387;
-  if (sampleName_.Contains("qcd_tunez2_pt15to3000_summer11") )                       seed = 4388;
-  if (sampleName_.Contains("qcd_tunez2_pt15to30_summer11") )                         seed = 4389;
-  if (sampleName_.Contains("qcd_tunez2_pt170to300_summer11") )                       seed = 4390;
-  if (sampleName_.Contains("qcd_tunez2_pt1800_summer11") )                           seed = 4391;
-  if (sampleName_.Contains("qcd_tunez2_pt300to470_summer11") )                       seed = 4392;
-  if (sampleName_.Contains("qcd_tunez2_pt30to50_summer11") )                         seed = 4393;
-  if (sampleName_.Contains("qcd_tunez2_pt470to600_summer11") )                       seed = 4394;
-  if (sampleName_.Contains("qcd_tunez2_pt50to80_summer11") )                         seed = 4395;
-  if (sampleName_.Contains("qcd_tunez2_pt5to15_summer11") )                          seed = 4396;
-  if (sampleName_.Contains("qcd_tunez2_pt600to800_summer11") )                       seed = 4397;
-  if (sampleName_.Contains("qcd_tunez2_pt800to1000_summer11") )                      seed = 4398;
-  if (sampleName_.Contains("qcd_tunez2_pt80to120_summer11") )                        seed = 4399;
-  if (sampleName_.Contains("ttjets_tunez2_madgraph_tauola_summer11") )               seed = 4400;
-
-  if (sampleName_.Contains("ht_run2011a_423_jul1.txt") )                             seed = 4401;
-  if (sampleName_.Contains("ht_run2011a_423_jul6.txt") )                             seed = 4402;
-  if (sampleName_.Contains("ht_run2011a_423_jun10.txt") )                            seed = 4403;
-  if (sampleName_.Contains("ht_run2011a_423_jun17.txt") )                            seed = 4404;
-  if (sampleName_.Contains("ht_run2011a_423_jun24.txt") )                            seed = 4405;
-  if (sampleName_.Contains("ht_run2011a_423_jun3.txt") )                             seed = 4406;
-  if (sampleName_.Contains("ht_run2011a_423_may10rereco.txt") )                      seed = 4407;
-  if (sampleName_.Contains("ht_run2011a_423_may10rereco_added.txt") )                seed = 4408;
-  if (sampleName_.Contains("ht_run2011a_423_may10rereco_added_b.txt") )              seed = 4409;
-  if (sampleName_.Contains("ht_run2011a_423_may24.txt") )                            seed = 4410;
-  if (sampleName_.Contains("ht_run2011a_423_may27.txt") )                            seed = 4411;
-  return seed;		
+  if (sampleName_.Contains("QCD_Pt_0to5_TuneZ2_7TeV_pythia6_3") )                    return 4361;
+  if (sampleName_.Contains("QCD_Pt_1000to1400_TuneZ2_7TeV_pythia6") )                return 4362;
+  if (sampleName_.Contains("QCD_Pt_120to170_TuneZ2_7TeV_pythia6") )                  return 4363;
+  if (sampleName_.Contains("QCD_Pt_1400to1800_TuneZ2_7TeV_pythia6_3") )              return 4364;
+  if (sampleName_.Contains("QCD_Pt_15to3000_TuneZ2_Flat_7TeV_pythia6") )             return 4365;
+  if (sampleName_.Contains("QCD_Pt_15to30_TuneZ2_7TeV_pythia6") )                    return 4366;
+  if (sampleName_.Contains("QCD_Pt_170to300_TuneZ2_7TeV_pythia6") )                  return 4367;
+  if (sampleName_.Contains("QCD_Pt_1800_TuneZ2_7TeV_pythia6") )                      return 4368;
+  if (sampleName_.Contains("QCD_Pt_300to470_TuneZ2_7TeV_pythia6") )                  return 4369;
+  if (sampleName_.Contains("QCD_Pt_30to50_TuneZ2_7TeV_pythia6") )                    return 4370;
+  if (sampleName_.Contains("QCD_Pt_470to600_TuneZ2_7TeV_pythia6") )                  return 4371;
+  if (sampleName_.Contains("QCD_Pt_50to80_TuneZ2_7TeV_pythia6") )                    return 4372;
+  if (sampleName_.Contains("QCD_Pt_5to15_TuneZ2_7TeV_pythia6") )                     return 4373;
+  if (sampleName_.Contains("QCD_Pt_600to800_TuneZ2_7TeV_pythia6") )                  return 4374;
+  if (sampleName_.Contains("QCD_Pt_800to1000_TuneZ2_7TeV_pythia6") )                 return 4375;
+  if (sampleName_.Contains("QCD_Pt_80to120_TuneZ2_7TeV_pythia6_3") )                 return 4376;
+  
+  if (sampleName_.Contains("qcd_tunez2_pt0to5_summer11") )                           return 4361;
+  if (sampleName_.Contains("qcd_tunez2_pt1000to1400_summer11") )                     return 4362;
+  if (sampleName_.Contains("qcd_tunez2_pt120to170_summer11") )                       return 4363;
+  if (sampleName_.Contains("qcd_tunez2_pt1400to1800_summer11") )                     return 4364;
+  if (sampleName_.Contains("qcd_tunez2_pt15to3000_summer11") )                       return 4365;
+  if (sampleName_.Contains("qcd_tunez2_pt15to30_summer11") )                         return 4366;
+  if (sampleName_.Contains("qcd_tunez2_pt170to300_summer11") )                       return 4367;
+  if (sampleName_.Contains("qcd_tunez2_pt1800_summer11") )                           return 4368;
+  if (sampleName_.Contains("qcd_tunez2_pt300to470_summer11") )                       return 4369;
+  if (sampleName_.Contains("qcd_tunez2_pt30to50_summer11") )                         return 4370;
+  if (sampleName_.Contains("qcd_tunez2_pt470to600_summer11") )                       return 4371;
+  if (sampleName_.Contains("qcd_tunez2_pt50to80_summer11") )                         return 4372;
+  if (sampleName_.Contains("qcd_tunez2_pt5to15_summer11") )                          return 4373;
+  if (sampleName_.Contains("qcd_tunez2_pt600to800_summer11") )                       return 4374;
+  if (sampleName_.Contains("qcd_tunez2_pt800to1000_summer11") )                      return 4375;
+  if (sampleName_.Contains("qcd_tunez2_pt80to120_summer11") )                        return 4376;
+  
+  if (sampleName_.Contains("TTJets_TuneD6T_7TeV-madgraph-tauola") )                  return 4377;
+  if (sampleName_.Contains("TToBLNu_TuneZ2_s-channel_7TeV-madgraph") )               return 4378;
+  if (sampleName_.Contains("TToBLNu_TuneZ2_t-channel_7TeV-madgraph") )               return 4379;
+  if (sampleName_.Contains("TToBLNu_TuneZ2_tW-channel_7TeV-madgraph") )              return 4380;
+  if (sampleName_.Contains("WJetsToLNu_TuneZ2_7TeV-madgraph-tauola") )               return 4381;
+  if (sampleName_.Contains("WWtoAnything_TuneZ2_7TeV-pythia6-tauola") )              return 4382;
+  if (sampleName_.Contains("WZtoAnything_TuneZ2_7TeV-pythia6-tauola") )              return 4383;
+  if (sampleName_.Contains("ZinvisibleJets_7TeV-madgraph") )                         return 4384;
+  if (sampleName_.Contains("ZZtoAnything_TuneZ2_7TeV-pythia6-tauola") )              return 4385;  
+  
+  if (sampleName_.Contains("ttjets_tunez2_madgraph_tauola_summer11") )               return 4400;
+  
+  if (sampleName_.Contains("ht_run2011a_423_jul1.txt") )                             return 4401;
+  if (sampleName_.Contains("ht_run2011a_423_jul6.txt") )                             return 4402;
+  if (sampleName_.Contains("ht_run2011a_423_jun10.txt") )                            return 4403;
+  if (sampleName_.Contains("ht_run2011a_423_jun17.txt") )                            return 4404;
+  if (sampleName_.Contains("ht_run2011a_423_jun24.txt") )                            return 4405;
+  if (sampleName_.Contains("ht_run2011a_423_jun3.txt") )                             return 4406;
+  if (sampleName_.Contains("ht_run2011a_423_may10rereco.txt") )                      return 4407;
+  if (sampleName_.Contains("ht_run2011a_423_may10rereco_added.txt") )                return 4408;
+  if (sampleName_.Contains("ht_run2011a_423_may10rereco_added_b.txt") )              return 4409;
+  if (sampleName_.Contains("ht_run2011a_423_may24.txt") )                            return 4410;
+  if (sampleName_.Contains("ht_run2011a_423_may27.txt") )                            return 4411;
+  */
+  
+  cout << "Could not find seed for sample!" << endl;
+  assert(0);
 }
 
 double EventCalculator::calc_mNj( std::vector<unsigned int> jNi ) {
