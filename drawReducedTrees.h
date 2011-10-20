@@ -147,10 +147,44 @@ std::vector<SearchRegion > sbRegions_;
 bool searchRegionsSet_=false;
 void setSearchRegions() {
   if (searchRegionsSet_) return;
-
+  
   //nb: some of the code *depends* on the fact that for there are equal numbers of corresponding
   //sbRegions and searchRegions, with the only difference being the MET selection!
-
+  
+  //case 1
+  sbRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=200&&MET<250","case1",false));
+  searchRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=250","case1"));
+  
+  //case 2
+  sbRegions_.push_back( SearchRegion( "ge1b","HT>=500","MET>=200&&MET<250","case2",false));
+  searchRegions_.push_back( SearchRegion( "ge1b","HT>=500","MET>=500","case2"));
+  
+  //case 3
+  //sbRegions_.push_back( SearchRegion( "ge1b","HT>=900","MET>=200&&MET<250","case3_old",false));
+  //searchRegions_.push_back( SearchRegion( "ge1b","HT>=900","MET>=250","case3_old"));
+  
+  //case 3 old
+  //sbRegions_.push_back( SearchRegion( "ge1b","HT>=750","MET>=200&&MET<250","case3",false));
+  //searchRegions_.push_back( SearchRegion( "ge1b","HT>=750","MET>=250","case3"));
+  
+  //case 4
+  sbRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=200&&MET<250","case4",false));
+  searchRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=250","case4"));
+  
+  //case 5 old
+  //sbRegions_.push_back( SearchRegion( "ge2b","HT>=700","MET>=200&&MET<250","case5_old",false));
+  //searchRegions_.push_back( SearchRegion( "ge2b","HT>=700","MET>=300","case5_old"));
+  
+  //case 5
+  sbRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=200&&MET<250","case5",false));
+  searchRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=300","case5"));
+  
+  //case 6
+  sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=200&&MET<250","case6",false));
+  searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=250","case6"));
+    
+  /*
+  //2011 Summer result
   sbRegions_.push_back( SearchRegion( "ge1b","HT>=350","MET>=150&&MET<200","Loose",false)); //loose SB
   searchRegions_.push_back( SearchRegion( "ge1b","HT>=350","MET>=200","Loose")); //loose Sig
 
@@ -162,6 +196,7 @@ void setSearchRegions() {
 
   sbRegions_.push_back( SearchRegion( "ge2b","HT>=500","MET>=150&&MET<200","Tight",false)); //tight SB
   searchRegions_.push_back( SearchRegion( "ge2b","HT>=500","MET>=300","Tight")); //tight Sig
+  */
 
 /* new regions
 

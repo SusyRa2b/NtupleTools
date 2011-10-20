@@ -74,6 +74,8 @@ functionality for TH1F and TH1D e.g. the case of addOverflowBin()
 
 //*** AFTER SUMMER
 //***************************
+
+//-- reducedTrees for Oct 25 SUSY meeting. 3464.581/pb. 
 TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35a/";
 TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35a/";
 
@@ -1352,10 +1354,16 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
   btagselection += isSIG ? "SIG":"SB";
   char output[500];
   if (!datamode) {
-    sprintf(output,"%s & %s & %s & %s & %s & %s \\\\ %% %f ++ %f %% alternate denominator: %f ++ %f",btagselection.Data(),
+    //sprintf(output,"%s & %s & %s & %s & %s & %s \\\\ %% %f ++ %f %% alternate denominator: %f ++ %f",btagselection.Data(),
+    //    jmt::format_nevents(B,Berr).Data(),jmt::format_nevents(A,Aerr).Data(),
+    //    jmt::format_nevents(D,Derr).Data(),jmt::format_nevents(estimate,estimateerr).Data(),
+    //    jmt::format_nevents(SIG,SIGerr).Data(),100*(SIG-estimate)/SIG,closureStat*100,100*(SIG-estimate)/estimate,closureStat2*100);
+      
+    sprintf(output,"%s & %s & %s & %s & %s & %s & $%f \\pm %f$ \\\\ ",btagselection.Data(),
 	    jmt::format_nevents(B,Berr).Data(),jmt::format_nevents(A,Aerr).Data(),
 	    jmt::format_nevents(D,Derr).Data(),jmt::format_nevents(estimate,estimateerr).Data(),
-	    jmt::format_nevents(SIG,SIGerr).Data(),100*(SIG-estimate)/SIG,closureStat*100,100*(SIG-estimate)/estimate,closureStat2*100);
+	    jmt::format_nevents(SIG,SIGerr).Data(),100*(estimate-SIG)/estimate,closureStat2*100);
+ 
   }
   else {
     sprintf(output,"%s & %d & %d & %d & %s & %s   \\\\ %% %f +/- %f",btagselection.Data(),
@@ -1595,6 +1603,8 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
     double ze[2];
  //need to average mu mu and ee estimates
     double zsbsyst=0.5;
+    bool doMean = true;
+    /*
     if ( qcdsubregion.owenId == "Tight" && btagselection=="ge1b") { //i think this should work for now...
       zv[0] = 7.0; ze[0]=2.9; //Tight SB ge1b mumu
       zv[1] = 7.3; ze[1]=3.4; //Tight SB ge1b ee
@@ -1615,39 +1625,46 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
       zv[1] = 0; ze[1]=3.5; //Loose SB ge2b ee (error is bullshit)
       zsbsyst = 0.55;
     }
-    else if (qcdsubregion.owenId == "case1"){
-      zv[0] = 0; ze[0]=0;
-      zv[1] = 0; ze[1]=0;
-      zsbsyst = 0.0;
+    */
+    if (qcdsubregion.owenId == "case1"){
+      doMean=false;//averaging already done
+      zv[0] = 63.9127; ze[0]=10.7967;
+      zsbsyst = 0.3;
     }
     else if (qcdsubregion.owenId == "case2"){
-      zv[0] = 0; ze[0]=0;
-      zv[1] = 0; ze[1]=0;
-      zsbsyst = 0.0;
+      doMean=false;//averaging already done
+      zv[0] = 35.3791; ze[0]=7.95003;
+      zsbsyst = 0.3;
     }
     else if (qcdsubregion.owenId == "case3"){
-      zv[0] = 0; ze[0]=0;
-      zv[1] = 0; ze[1]=0;
-      zsbsyst = 0.0;
+      doMean=false;//averaging already done
+      zv[0] = 4.91838; ze[0]=2.92228;
+      zsbsyst = 0.3;
     }
     else if (qcdsubregion.owenId == "case4"){
-      zv[0] = 0; ze[0]=0;
-      zv[1] = 0; ze[1]=0;
-      zsbsyst = 0.0;
+      doMean=false;//averaging already done
+      zv[0] = 10.7258; ze[0]=2.18597;
+      zsbsyst = 0.5;
     }
     else if (qcdsubregion.owenId == "case5"){
-      zv[0] = 0; ze[0]=0;
-      zv[1] = 0; ze[1]=0;
-      zsbsyst = 0.0;
+      doMean=false;//averaging already done
+      zv[0] = 3.41633; ze[0]=1.08638;
+      zsbsyst = 0.5;
     }
     else if (qcdsubregion.owenId == "case6"){
-      zv[0] = 0; ze[0]=0;
-      zv[1] = 0; ze[1]=0;
-      zsbsyst = 0.0;   
+      doMean=false;//averaging already done
+      zv[0] = 1.48325; ze[0]=0.527006;
+      zsbsyst = 0.7;   
     }
     else {assert(0);}
-    SBsubZ = jmt::weightedMean(2,zv,ze);
-    SBsubZerr = jmt::weightedMean(2,zv,ze,true);
+    if(doMean){
+      SBsubZ = jmt::weightedMean(2,zv,ze);
+      SBsubZerr = jmt::weightedMean(2,zv,ze,true);
+    }
+    else{//if weighted averaging was already done
+      SBsubZ = zv[0];
+      SBsubZerr = ze[0];
+    }
 
     if (mode.Contains("Z")) {
       SBsubZerr = sqrt( SBsubZerr*SBsubZerr + pow(zsbsyst*SBsubZ,2));
@@ -1717,7 +1734,7 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
   TCut dpcut = "minDeltaPhiN>=4";
   //  TCut passOther = "deltaPhiMPTcaloMET<2";
   //  TCut failOther = "deltaPhiMPTcaloMET>=2";
-  TCut failOther = "(((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && MT_Wlep=>0&&MT_Wlep<100)";
+  TCut failOther = "(((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && MT_Wlep>=0&&MT_Wlep<100)";
   TCut passOther = "nElectrons==0 && nMuons==0";
 
   double A,B,D,SIG,Aerr,Berr,Derr,SIGerr;
@@ -1782,11 +1799,15 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
 
   char output[500];
   if (!datamode) {
-    sprintf(output,"%s & %s & %s & %s & %s & %s \\\\ %% %f ++ %f",btagselection.Data(),
+    //sprintf(output,"%s & %s & %s & %s & %s & %s \\\\ %% %f ++ %f",btagselection.Data(),
+    //	    jmt::format_nevents(D,Derr).Data(),jmt::format_nevents(A,Aerr).Data(),
+    //	    jmt::format_nevents(B,Berr).Data(),jmt::format_nevents(estimate,estimateerr).Data(),
+    //	    jmt::format_nevents(SIG,SIGerr).Data(),100*(estimate-SIG)/estimate,100*closureStat);
+
+    sprintf(output,"%s & %s & %s & %s & %s & %s & $%f \\pm %f$ \\\\",btagselection.Data(),
 	    jmt::format_nevents(D,Derr).Data(),jmt::format_nevents(A,Aerr).Data(),
 	    jmt::format_nevents(B,Berr).Data(),jmt::format_nevents(estimate,estimateerr).Data(),
-	    jmt::format_nevents(SIG,SIGerr).Data(),100*(estimate-SIG)/estimate,100*closureStat);
-
+	    jmt::format_nevents(SIG,SIGerr).Data(), 100*(estimate-SIG)/estimate, 100*closureStat);
   }
   else {
     sprintf(output,"ttbar DATA %s & %d & %d & %d & %s & %s  \\\\",btagselection.Data(),
@@ -2421,11 +2442,11 @@ void drawMSugraTest() {
 
 }
 
-void AN2011( TString btagselection="ge1b",const int mode=1  ) {
+void AN2011( TString btagselection="ge1b",const int mode=1, bool logy=false  ) {
   /*
 .L drawReducedTrees.C++
   */
-
+  setLogY(logy);
   loadSamples();
 
   //this mode thing is a bit kludgey
@@ -2540,16 +2561,37 @@ void AN2011( TString btagselection="ge1b",const int mode=1  ) {
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
   nbins = 35; low=150; high=500;
   drawPlots(var,nbins,low,high,xtitle,"Events/10 GeV", "SBandSIG_MET_"+btagselection+modestring);
-  */
-
+  
   //MET distribution with tighter HT cut
   selection_ =TCut("HT>500 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4")&&btagcut;
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
   TString thisytitle = "";
-  if(btagselection=="ge2b") { nbins = 7; low=150; high=500; thisytitle = "Events/50 GeV";}//requested by TK 
+  if(btagselection=="ge2b") { nbins = 7; low=150; high=500; thisytitle = "Events/50 GeV";} 
   else{ nbins = 17; low=150; high=500; thisytitle = "Events/20.6 GeV";}
   drawPlots(var,nbins,low,high,xtitle,thisytitle, "SBandSIG_MET_HT500_"+btagselection+modestring);
- 
+  */ 
+  
+
+  //MET distribution with tighter HT cut
+  selection_ =TCut("HT>400 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4")&&btagcut;
+  var="MET"; xtitle="E_{T}^{miss} [GeV]";
+  TString thisytitle = "";
+  nbins = 20; low=200; high=600; thisytitle = "Events";
+  drawPlots(var,nbins,low,high,xtitle,thisytitle, "SBandSIG_MET_HT400_"+btagselection+modestring);
+
+  selection_ =TCut("HT>500 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4")&&btagcut;
+  var="MET"; xtitle="E_{T}^{miss} [GeV]";
+  TString thisytitle = "";
+  nbins = 20; low=200; high=600; thisytitle = "Events";
+  drawPlots(var,nbins,low,high,xtitle,thisytitle, "SBandSIG_MET_HT400_"+btagselection+modestring);
+
+  selection_ =TCut("HT>600 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4")&&btagcut;
+  var="MET"; xtitle="E_{T}^{miss} [GeV]";
+  TString thisytitle = "";
+  nbins = 20; low=200; high=600; thisytitle = "Events";
+  drawPlots(var,nbins,low,high,xtitle,thisytitle, "SBandSIG_MET_HT400_"+btagselection+modestring);
+
+
   /*
   
   // == finally, draw the signal region only!
