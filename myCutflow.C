@@ -34,22 +34,24 @@ void myCutflow::Loop(bool isTightSelection, bool writeFiles)//:Event_(sampleName
 //by  b_branchname->GetEntry(ientry); //read only this branch
    if (fChain == 0) return;
 
-   const float minHT = isTightSelection ? 500 : 350; 
-   const float minMET = isTightSelection ? 300 : 200;
+   const float minHT = isTightSelection ? 500 : 400; 
+   const float minMET = isTightSelection ? 300 : 250;
    cout<<"HT >= "<<minHT<<", MET >= "<<minMET<<endl;
 
    //some counters for the different stages of cuts
-   int nPassHT=0;
-   int nPass3jets=0;
-   int nPassEleVeto=0;
-   int nPassMuVeto=0;
-   int nPassMET=0;
-   int nPassDPhi=0;
-   int nPassCleaning=0;
-   int nEq1b=0;
-   int nGe1b=0;
-   int nGe2b=0;
-   int nGe3b=0;
+   int nPassTrigger = 0;
+   int nPassPV = 0;
+   int nPassHT = 0;
+   int nPass3jets = 0;
+   int nPassEleVeto = 0;
+   int nPassMuVeto = 0;
+   int nPassMET = 0;
+   int nPassDPhi = 0;
+//   int nPassCleaning = 0;
+   int nEq1b = 0;
+   int nGe1b = 0;
+   int nGe2b = 0;
+   int nGe3b = 0;
 
    vector<double> highestMETevent; 
    vector<double> highestHTevent; 
@@ -69,87 +71,104 @@ void myCutflow::Loop(bool isTightSelection, bool writeFiles)//:Event_(sampleName
 
       int istage=0;
 
-      /*______________________________________________________ HT ____________________________________________*/
+      /*______________________________________________________ trigger ______________________________________*/
 
-//      if (cutHT){
-      if (HT>=minHT){
-	nPassHT++;
+      if (cutTrigger){
+	nPassTrigger++;
 	if (writeFiles) *textfiles[istage]<<runNumber<<" "<<lumiSection<<" "<<eventNumber<<endl;
 	istage++;
 
-      /*______________________________________________________ >= 3 jets______________________________________*/
-
-	if (cut3Jets){
-	  nPass3jets++;
+      /*______________________________________________________ PV ___________________________________________*/
+	
+	if (cutPV){
+	  nPassPV++;
 	  if (writeFiles) *textfiles[istage]<<runNumber<<" "<<lumiSection<<" "<<eventNumber<<endl;
-	  istage++;
+          istage++;
 
-      /*______________________________________________________ Ele veto ______________________________________*/
+      /*______________________________________________________ HT ____________________________________________*/
 
-	  if (cutEleVeto){
-	    nPassEleVeto++;
+//	  if (cutHT){
+	  if (HT>=minHT){
+	    nPassHT++;
 	    if (writeFiles) *textfiles[istage]<<runNumber<<" "<<lumiSection<<" "<<eventNumber<<endl;
 	    istage++;
 
-      /*______________________________________________________ Mu veto _______________________________________*/
+      /*______________________________________________________ >= 3 jets______________________________________*/
 
-	    if (cutMuVeto){
-	      nPassMuVeto++;
+	    if (cut3Jets){
+	      nPass3jets++;
 	      if (writeFiles) *textfiles[istage]<<runNumber<<" "<<lumiSection<<" "<<eventNumber<<endl;
 	      istage++;
 
-      /*______________________________________________________ MET ___________________________________________*/
+      /*______________________________________________________ Ele veto ______________________________________*/
 
-//	      if (cutMET){
-	      if (MET>=minMET){
-		nPassMET++;
+	      if (cutEleVeto){
+		nPassEleVeto++;
 		if (writeFiles) *textfiles[istage]<<runNumber<<" "<<lumiSection<<" "<<eventNumber<<endl;
 		istage++;
 
-      /*______________________________________________________ min dPhi / min dPhiN __________________________*/
+      /*______________________________________________________ Mu veto _______________________________________*/
 
-//		if (cutDeltaPhi){
-		if (minDeltaPhiN>=4){
-		  nPassDPhi++;
+		if (cutMuVeto){
+		  nPassMuVeto++;
 		  if (writeFiles) *textfiles[istage]<<runNumber<<" "<<lumiSection<<" "<<eventNumber<<endl;
 		  istage++;
 
-      /*______________________________________________________ cleaning ______________________________________*/
+      /*______________________________________________________ MET ___________________________________________*/
 
-		  if (cutCleaning){
-		    nPassCleaning++;
+//		  if (cutMET){
+		  if (MET>=minMET){
+		    nPassMET++;
 		    if (writeFiles) *textfiles[istage]<<runNumber<<" "<<lumiSection<<" "<<eventNumber<<endl;
 		    istage++;
 
-      /*______________________________________________________ nB ____________________________________________*/
+      /*______________________________________________________ min dPhi / min dPhiN __________________________*/
 
-		    if (nbjetsSSVHPT>=1) {
-		      nGe1b++;
+//		    if (cutDeltaPhi){
+		    if (minDeltaPhiN>=4){
+		      nPassDPhi++;
 		      if (writeFiles) *textfiles[istage]<<runNumber<<" "<<lumiSection<<" "<<eventNumber<<endl;
 		      istage++;
-		      if (nbjetsSSVHPT==1) {
-			nEq1b++;
-			if (writeFiles) *textfiles[istage]<<runNumber<<" "<<lumiSection<<" "<<eventNumber<<endl;
-		      }
-		      istage++;
-		      if (nbjetsSSVHPT>=2){
-			nGe2b++;
+
+      /*______________________________________________________ cleaning ______________________________________*/
+
+//		  if (cutCleaning){
+//		    nPassCleaning++;
+//		    if (writeFiles) *textfiles[istage]<<runNumber<<" "<<lumiSection<<" "<<eventNumber<<endl;
+//		    istage++;
+
+      /*______________________________________________________ nB ____________________________________________*/
+
+		      if (nbjetsCSVM>=1) {
+			nGe1b++;
 			if (writeFiles) *textfiles[istage]<<runNumber<<" "<<lumiSection<<" "<<eventNumber<<endl;
 			istage++;
-			if (nbjetsSSVHPT>=3) {
-			  nGe3b++;
+			if (nbjetsCSVM==1) {
+			  nEq1b++;
+			  if (writeFiles) *textfiles[istage]<<runNumber<<" "<<lumiSection<<" "<<eventNumber<<endl;
+			}
+			istage++;
+			if (nbjetsCSVM>=2){
+			  nGe2b++;
 			  if (writeFiles) *textfiles[istage]<<runNumber<<" "<<lumiSection<<" "<<eventNumber<<endl;
 			  istage++;
+			  if (nbjetsCSVM>=3) {
+			    nGe3b++;
+			    if (writeFiles) *textfiles[istage]<<runNumber<<" "<<lumiSection<<" "<<eventNumber<<endl;
+			    istage++;
+			  }
 			}
-		      }
-		    }//n b jets
-		  }//cleaning
-		}//deltaPhi
-	      }//MET
-	    }//mu veto
-	  }//ele veto
-	}//ge 3 jets
-      }//HT
+		      }//n b jets
+//		    }//cleaning
+		    }//deltaPhi
+		  }//MET
+		}//mu veto
+	      }//ele veto
+	    }//ge 3 jets
+	  }//HT
+	}//PV
+      }//trigger
+
    }
 
      
@@ -157,13 +176,15 @@ void myCutflow::Loop(bool isTightSelection, bool writeFiles)//:Event_(sampleName
 
    //print cutflow table
    cout<<"unweighted cutflow table"<<endl;
+   cout<<"Trigger | "    <<nPassTrigger  <<" +/- "<<sqrt(nPassTrigger)<<endl;
+   cout<<"PV      | "    <<nPassPV       <<" +/- "<<sqrt(nPassPV)<<endl;
    cout<<"HT | "         <<nPassHT       <<" +/- "<<sqrt(nPassHT)<<endl;
    cout<<">= 3 jets | "  <<nPass3jets    <<" +/- "<<sqrt(nPass3jets)<<endl;
    cout<<"Ele veto | "   <<nPassEleVeto  <<" +/- "<<sqrt(nPassEleVeto)<<endl;
    cout<<"Mu veto | "    <<nPassMuVeto   <<" +/- "<<sqrt(nPassMuVeto)<<endl;
    cout<<"MET | "        <<nPassMET      <<" +/- "<<sqrt(nPassMET)<<endl;
    cout<<"DeltaPhiN | "  <<nPassDPhi     <<" +/- "<<sqrt(nPassDPhi)<<endl;
-   cout<<"Cleaning | "   <<nPassCleaning <<" +/- "<<sqrt(nPassCleaning)<<endl;
+//   cout<<"Cleaning | "   <<nPassCleaning <<" +/- "<<sqrt(nPassCleaning)<<endl;
    cout<<">= 1 b | "     <<nGe1b         <<" +/- "<<sqrt(nGe1b)<<endl;
    cout<<"== 1 b | "     <<nEq1b         <<" +/- "<<sqrt(nGe1b)<<endl;
    cout<<">= 2 b | "     <<nGe2b         <<" +/- "<<sqrt(nGe2b)<<endl;
