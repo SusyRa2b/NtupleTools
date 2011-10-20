@@ -72,6 +72,15 @@ functionality for TH1F and TH1D e.g. the case of addOverflowBin()
 #include <set>
 	
 
+//*** AFTER SUMMER
+//***************************
+TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35a/";
+TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35a/";
+
+
+
+//*** SUMMER RESULT
+//***************************
 //for rerunning the final background estimates...need standard MC and MET cleaning
 //V00-02-24_fullpf2pat was used for 13 Aug update of data results
 //stick with this version for now because 25 is missing one ZJets sample and that takes away one event from the LDP
@@ -79,8 +88,8 @@ functionality for TH1F and TH1D e.g. the case of addOverflowBin()
 //TString dataInputPath = "/cu3/wteo/reducedTrees/V00-02-05_v3-pickevents/"; //includes MET cleaning but uses a tight skim (not good for plots)
 
 //for making the standard set of plots...need standard MC and all data.
-TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-25_fullpf2pat/";//path for MC	     
-TString dataInputPath = "/cu2/ra2b/reducedTrees/V00-02-25_fullpf2pat/";
+//TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-25_fullpf2pat/";//path for MC	     
+//TString dataInputPath = "/cu2/ra2b/reducedTrees/V00-02-25_fullpf2pat/";
 
 //for njet reweighting (needed because not all reducedTrees in nominal V00-02-25 have njets30)
 //TString inputPath = "/cu2/ra2b/reducedTrees/benV00-02-25_fullpf2pat/";
@@ -95,7 +104,8 @@ TString dataInputPath = "/cu2/ra2b/reducedTrees/V00-02-25_fullpf2pat/";
 //the cutdesc string is now defined in loadSamples()
 
 //double lumiScale_ = 1091.891;
-double lumiScale_ = 1143; //official summer conf lumi
+//double lumiScale_ = 1143; //official summer conf lumi
+double lumiScale_ = 3464.581;//oct25
 
 #include "drawReducedTrees.h"
 
@@ -144,6 +154,8 @@ SignalEffData signalSystematics2011(const SearchRegion & region, bool isSL=false
 
   TCut baseline = "cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1";
   if (isSL) baseline = "cutPV==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0))";
+
+  assert(0); //need to decide if SL should have MT cut
 
   TCut passOther = "minDeltaPhiN>=4";
   if (isLDP) passOther="minDeltaPhiN<4";
@@ -461,6 +473,125 @@ void runSystematics2011_LM9(  TString sampleOfInterest="LM9" ) {
   }
 
 }
+
+
+void countInBoxesBreakdown(const SearchRegion & region) {
+  //shows number of events from each background and signal in the 6 boxes
+  
+  useFlavorHistoryWeights_=false;
+  loadSamples();
+
+
+  dodata_=false;
+  savePlots_ =false;
+  setQuiet(true);
+  doOverflowAddition(true);  
+  //region.Print();
+  
+  //for susy scan; harmless for non-susy scan
+  resetSamples();
+  
+  TString btagselection = region.btagSelection;
+  TCut HTcut=region.htSelection.Data(); 
+  TCut SRMET = region.metSelection.Data();
+  bool isSIG = region.isSIG;
+
+   
+  TCut bcut = "1";
+  if (btagselection=="ge1b") {
+    bcut="nbjetsSSVM>=1";
+  }
+  else if (btagselection=="ge2b") {
+    bcut="nbjetsSSVM>=2";
+  }
+  else if (btagselection=="ge3b") {
+    bcut="nbjetsSSVM>=3";
+  }
+  else {assert(0);}
+  
+  usePUweight_=false;
+  useHLTeff_=false;
+  btagSFweight_="1";
+  currentConfig_=configDescriptions_.getDefault(); //completely raw MC
+  
+  /*
+  //block to cross check old cuts
+  TString bweightstring="probge1";
+  if (btagselection=="ge2b") {
+    bweightstring="probge2";
+  }
+  else if (btagselection=="ge1b") {}
+  else if (btagselection=="ge3b") {
+    bweightstring="probge3"; //this one isn't calculated right now, i think
+  }
+  else {assert(0);}
+  //use all of the corrections that are in the AN table
+  currentConfig_=configDescriptions_.getCorrected(); //add  JER bias
+  usePUweight_=true;
+  useHLTeff_=true;
+  btagSFweight_=bweightstring; //use b tag weight instead
+  */
+  
+  TString thisbox="";
+  
+  TCut baseline = "cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1";
+  TCut baselineSL = "cutPV==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0))";
+  TCut passOther = "minDeltaPhiN>=4";
+  TCut failOther="minDeltaPhiN<4";
+
+  TString var="HT"; TString xtitle=var;
+  int  nbins=1; float low=0; float high=1e9;
+  char output[500];
+  //Look at: PythiaPUQCD TTbarJets SingleTop WJets ZJets VV Zinvisible LM9
+  
+  // --- nominal (SB or SIG) selection ---
+  selection_ = baseline && HTcut && passOther && SRMET && bcut; 
+  drawPlots(var,nbins,low,high,xtitle,"events","dummyH");
+  thisbox=""; thisbox+= isSIG ? "$N_{SIG}$":"$N_{SB}$";
+  sprintf(output,"%s & %s & %s & %s & %s & %s & %s & %s & %s & %s \\\\",thisbox.Data(),region.owenId.Data(),
+	  jmt::format_nevents(getIntegral("PythiaPUQCD"),getIntegralErr("PythiaPUQCD")).Data(), jmt::format_nevents(getIntegral("TTbarJets"),getIntegralErr("TTbarJets")).Data(),
+	  jmt::format_nevents(getIntegral("SingleTop"),getIntegralErr("SingleTop")).Data(), jmt::format_nevents(getIntegral("WJets"),getIntegralErr("WJets")).Data(),
+	  jmt::format_nevents(getIntegral("ZJets"),getIntegralErr("ZJets")).Data(), jmt::format_nevents(getIntegral("VV"),getIntegralErr("VV")).Data(),
+	  jmt::format_nevents(getIntegral("Zinvisible"),getIntegralErr("Zinvisible")).Data(), jmt::format_nevents(getIntegral("LM9"),getIntegralErr("LM9")).Data());
+  cout<<output<<endl;  
+
+  // -- SL selection --
+  selection_ = baselineSL && HTcut && passOther && SRMET && bcut;
+  drawPlots(var,nbins,low,high,xtitle,"events","dummyH");
+  thisbox=""; thisbox+= isSIG ? "$N_{SIG,SL}$":"$N_{SB,SL}$";
+  sprintf(output,"%s & %s & %s & %s & %s & %s & %s & %s & %s & %s \\\\",thisbox.Data(),region.owenId.Data(),
+	  jmt::format_nevents(getIntegral("PythiaPUQCD"),getIntegralErr("PythiaPUQCD")).Data(), jmt::format_nevents(getIntegral("TTbarJets"),getIntegralErr("TTbarJets")).Data(),
+	  jmt::format_nevents(getIntegral("SingleTop"),getIntegralErr("SingleTop")).Data(), jmt::format_nevents(getIntegral("WJets"),getIntegralErr("WJets")).Data(),
+	  jmt::format_nevents(getIntegral("ZJets"),getIntegralErr("ZJets")).Data(), jmt::format_nevents(getIntegral("VV"),getIntegralErr("VV")).Data(),
+	  jmt::format_nevents(getIntegral("Zinvisible"),getIntegralErr("Zinvisible")).Data(), jmt::format_nevents(getIntegral("LM9"),getIntegralErr("LM9")).Data());
+  cout<<output<<endl; 
+  
+  
+  // -- LDP selection --
+  selection_ = baseline && HTcut && failOther && SRMET && bcut;
+  drawPlots(var,nbins,low,high,xtitle,"events","dummyH");
+  thisbox=""; thisbox+= isSIG ? "$N_{SIG,LDP}$":"$N_{SB,LDP}$";
+  sprintf(output,"%s & %s & %s & %s & %s & %s & %s & %s & %s & %s \\\\",thisbox.Data(),region.owenId.Data(),
+	  jmt::format_nevents(getIntegral("PythiaPUQCD"),getIntegralErr("PythiaPUQCD")).Data(), jmt::format_nevents(getIntegral("TTbarJets"),getIntegralErr("TTbarJets")).Data(),
+	  jmt::format_nevents(getIntegral("SingleTop"),getIntegralErr("SingleTop")).Data(), jmt::format_nevents(getIntegral("WJets"),getIntegralErr("WJets")).Data(),
+	  jmt::format_nevents(getIntegral("ZJets"),getIntegralErr("ZJets")).Data(), jmt::format_nevents(getIntegral("VV"),getIntegralErr("VV")).Data(),
+	  jmt::format_nevents(getIntegral("Zinvisible"),getIntegralErr("Zinvisible")).Data(), jmt::format_nevents(getIntegral("LM9"),getIntegralErr("LM9")).Data());
+  cout<<output<<endl; 
+}
+
+
+
+
+void runCountInBoxesBreakdown() {
+
+  setSearchRegions();
+  for (unsigned int i=0; i<searchRegions_.size(); i++) {
+    countInBoxesBreakdown(searchRegions_[i]) ;
+    countInBoxesBreakdown(sbRegions_[i]) ;
+  }
+
+}
+
 
 void countInBoxes(const SearchRegion & region,  ofstream * outfile ) {
 
@@ -1061,14 +1192,15 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
   TCut triggerCutLSB = "1";
   TCut triggerCut = "1";
   if (datamode) {
-    triggerCutLSB = "pass_utilityHLT_HT300>=1";
+    triggerCutLSB = "(pass_utilityHLT==1 || !isRealData)"; //because bug in MC for pass_utilityHLT
     triggerCut = "cutTrigger==1";
   }
 
-  TCut ge1b = "nbjetsSSVHPT>=1";
+  TCut ge1b = "nbjetsCSVM>=1";
   btagSFweight_="1";
   TString btagSFweight=""; //we're going to have to switch this one in and out of the global var
   if (useScaleFactors_) {
+    assert(0); //scale factors for CSVM not in yet
     ge1b="1";
     usePUweight_=true;
     useHLTeff_=true;
@@ -1092,11 +1224,11 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
     currentConfig_=configDescriptions_.getDefault(); //completely raw MC
 
     if (btagselection=="ge2b") {
-      ge1b="nbjetsSSVHPT>=2";
+      ge1b="nbjetsCSVM>=2";
     }
     else if (btagselection=="ge1b") {}
     else if (btagselection=="ge3b") {
-      ge1b="nbjetsSSVHPT>=3";
+      ge1b="nbjetsCSVM>=3";
     }
     else {assert(0);}
   }
@@ -1111,7 +1243,7 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
   TCut cleaning = "weight<1000";
 
   char cutstring1[100];
-  sprintf(cutstring1,"MET>= %.0f && MET < %.0f && nbjetsSSVHPT%s", 50+SBshift,100+SBshift,LSBbsel.Data());
+  sprintf(cutstring1,"MET>= %.0f && MET < %.0f && nbjetsCSVM%s", 50+SBshift,100+SBshift,LSBbsel.Data());
   //  cout<<"*** SB cut is "<<cutstring1<<endl<<endl;
   TCut SBMET = TCut(cutstring1)&&triggerCutLSB;
   TCut dpcut = "1";//"minDeltaPhiN>=4";
@@ -1239,54 +1371,68 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
   return make_pair( 100*sqrt(pow((SIG-estimate)/estimate,2) + pow(closureStat2,2)), 0); //estimate in denominator
 }
 
-void runClosureTest2011(std::map<TString, std::vector<double> > & syst)  {
 
+void runClosureTest2011(std::map<TString, std::vector<double> > & syst, bool addReweightedQCDClosureTest = true)  {
+  if(!addReweightedQCDClosureTest) cout << "You are starting closure test without considering njet reweighting!" << endl;
+  
   setSearchRegions();
   assert(sbRegions_.size() == searchRegions_.size());
-
-  //Input from reweight QCD study
-  ifstream inFile("weightedClosure.dat", std::ios::in);//file generated by additionalTools/reweightQCD.C (root -l -b -q reweightQCD.C++)
-  if(!inFile.good()){
-    cout << "could not open weightedClosure.dat" << endl;
-    assert(0);
-  }
+  
   string selString;
   double unweightedClosure, weightedClosure;
   double unweightedClosureA_sb[]={0,0,0,0};
   double weightedClosureA_sb[]={0,0,0,0};
   double unweightedClosureA_sig[]={0,0,0,0};
   double weightedClosureA_sig[]={0,0,0,0};
-  while(inFile>>selString>>unweightedClosure>>weightedClosure){
-    if(selString=="ge1bloosesb")  {unweightedClosureA_sb[0]=unweightedClosure; weightedClosureA_sb[0]=weightedClosure;}
-    if(selString=="ge1btightsb")  {unweightedClosureA_sb[1]=unweightedClosure; weightedClosureA_sb[1]=weightedClosure;}
-    if(selString=="ge2bloosesb")  {unweightedClosureA_sb[2]=unweightedClosure; weightedClosureA_sb[2]=weightedClosure;}
-    if(selString=="ge2btightsb")  {unweightedClosureA_sb[3]=unweightedClosure; weightedClosureA_sb[3]=weightedClosure;}
-    if(selString=="ge1bloosesig") {unweightedClosureA_sig[0]=unweightedClosure; weightedClosureA_sig[0]=weightedClosure;}
-    if(selString=="ge1btightsig") {unweightedClosureA_sig[1]=unweightedClosure; weightedClosureA_sig[1]=weightedClosure;}
-    if(selString=="ge2bloosesig") {unweightedClosureA_sig[2]=unweightedClosure; weightedClosureA_sig[2]=weightedClosure;}
-    if(selString=="ge2btightsig") {unweightedClosureA_sig[3]=unweightedClosure; weightedClosureA_sig[3]=weightedClosure;}
+  
+  if(addReweightedQCDClosureTest){
+    ifstream inFile("weightedClosure.dat", std::ios::in);//file generated by additionalTools/reweightQCD.C (root -l -b -q reweightQCD.C++)
+    if(!inFile.good()){
+      cout << "could not open weightedClosure.dat" << endl;
+      assert(0);
+    }
+    
+    while(inFile>>selString>>unweightedClosure>>weightedClosure){
+      if(selString=="ge1bloosesb")  {unweightedClosureA_sb[0]=unweightedClosure; weightedClosureA_sb[0]=weightedClosure;}
+      if(selString=="ge1btightsb")  {unweightedClosureA_sb[1]=unweightedClosure; weightedClosureA_sb[1]=weightedClosure;}
+      if(selString=="ge2bloosesb")  {unweightedClosureA_sb[2]=unweightedClosure; weightedClosureA_sb[2]=weightedClosure;}
+      if(selString=="ge2btightsb")  {unweightedClosureA_sb[3]=unweightedClosure; weightedClosureA_sb[3]=weightedClosure;}
+      if(selString=="ge1bloosesig") {unweightedClosureA_sig[0]=unweightedClosure; weightedClosureA_sig[0]=weightedClosure;}
+      if(selString=="ge1btightsig") {unweightedClosureA_sig[1]=unweightedClosure; weightedClosureA_sig[1]=weightedClosure;}
+      if(selString=="ge2bloosesig") {unweightedClosureA_sig[2]=unweightedClosure; weightedClosureA_sig[2]=weightedClosure;}
+      if(selString=="ge2btightsig") {unweightedClosureA_sig[3]=unweightedClosure; weightedClosureA_sig[3]=weightedClosure;}
+    }
   }
-
+  
   for (unsigned int i=0; i<sbRegions_.size(); i++) {
     double jsb =   fabs(anotherABCD(sbRegions_[i]).first);
     double jsig =  fabs(anotherABCD(searchRegions_[i]).first);
-    double bsb =  fabs(unweightedClosureA_sb[i]);
-    double bsig = fabs(unweightedClosureA_sig[i]);
-    double wsb =  fabs(weightedClosureA_sb[i]);
-    double wsig = fabs(weightedClosureA_sig[i]);
-    cout << "SB: " << jsb << " " << bsb << endl;
-    cout << "SIG: " << jsig << " " << bsig << endl;
-    assert( fabs(jsb-bsb)   <0.001);
-    assert( fabs(jsig-bsig) <0.001);
-    syst["Closure"].push_back( jsb>wsb ? jsb:wsb );
-    syst["Closure"].push_back( jsig>wsig ? jsig:wsig);
+    
+    double finalsb = jsb;
+    double finalsig = jsig;
+    if(addReweightedQCDClosureTest){
+      double bsb =  fabs(unweightedClosureA_sb[i]);
+      double bsig = fabs(unweightedClosureA_sig[i]);
+      double wsb =  fabs(weightedClosureA_sb[i]);
+      double wsig = fabs(weightedClosureA_sig[i]);
+      cout << "SB: " << jsb << " " << bsb << endl;
+      cout << "SIG: " << jsig << " " << bsig << endl;
+      assert( fabs(jsb-bsb)   <0.001);//should be true if using same ntuples for reweighted study and current running. could take out.
+      assert( fabs(jsig-bsig) <0.001);
+      finalsb = jsb>wsb ? jsb:wsb ;
+      finalsig = jsig>wsig ? jsig:wsig ;
+    }
+    syst["Closure"].push_back( finalsb );
+    syst["Closure"].push_back( finalsig ); 
   }
-
+  
 }
 
 void runClosureTest2011()  {
   std::map<TString, std::vector<double> > dummy;
-  runClosureTest2011(dummy);
+  
+  cout << "You are starting closure test without considering njet reweighting!" << endl;
+  runClosureTest2011(dummy,false);
 
 }
 
@@ -1380,7 +1526,7 @@ void runDataQCD2011(const bool forOwen=false) {
   }
   
   cout<<" == Running QCD closure test =="<<endl;
-  runClosureTest2011(qcdSystErrors);
+  runClosureTest2011(qcdSystErrors,false);
   
   cout<<" == QCD systematics summary =="<<endl;
   for (unsigned int j=0; j<n.size(); j++) {
@@ -1469,6 +1615,36 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
       zv[1] = 0; ze[1]=3.5; //Loose SB ge2b ee (error is bullshit)
       zsbsyst = 0.55;
     }
+    else if (qcdsubregion.owenId == "case1"){
+      zv[0] = 0; ze[0]=0;
+      zv[1] = 0; ze[1]=0;
+      zsbsyst = 0.0;
+    }
+    else if (qcdsubregion.owenId == "case2"){
+      zv[0] = 0; ze[0]=0;
+      zv[1] = 0; ze[1]=0;
+      zsbsyst = 0.0;
+    }
+    else if (qcdsubregion.owenId == "case3"){
+      zv[0] = 0; ze[0]=0;
+      zv[1] = 0; ze[1]=0;
+      zsbsyst = 0.0;
+    }
+    else if (qcdsubregion.owenId == "case4"){
+      zv[0] = 0; ze[0]=0;
+      zv[1] = 0; ze[1]=0;
+      zsbsyst = 0.0;
+    }
+    else if (qcdsubregion.owenId == "case5"){
+      zv[0] = 0; ze[0]=0;
+      zv[1] = 0; ze[1]=0;
+      zsbsyst = 0.0;
+    }
+    else if (qcdsubregion.owenId == "case6"){
+      zv[0] = 0; ze[0]=0;
+      zv[1] = 0; ze[1]=0;
+      zsbsyst = 0.0;   
+    }
     else {assert(0);}
     SBsubZ = jmt::weightedMean(2,zv,ze);
     SBsubZerr = jmt::weightedMean(2,zv,ze,true);
@@ -1513,13 +1689,13 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
   float low,high;
 
  // --  count events
-  TCut ge1b = "nbjetsSSVHPT>=1";
+  TCut ge1b = "nbjetsCSVM>=1";
   if (btagselection=="ge2b") {
-    ge1b="nbjetsSSVHPT>=2";
+    ge1b="nbjetsCSVM>=2";
   }
   else if (btagselection=="ge1b") {}
   else if (btagselection=="ge3b") {
-    ge1b="nbjetsSSVHPT>=3";
+    ge1b="nbjetsCSVM>=3";
   }
   else {assert(0);}
 
@@ -1541,7 +1717,7 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
   TCut dpcut = "minDeltaPhiN>=4";
   //  TCut passOther = "deltaPhiMPTcaloMET<2";
   //  TCut failOther = "deltaPhiMPTcaloMET>=2";
-  TCut failOther = "((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0))";
+  TCut failOther = "(((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && MT_Wlep=>0&&MT_Wlep<100)";
   TCut passOther = "nElectrons==0 && nMuons==0";
 
   double A,B,D,SIG,Aerr,Berr,Derr,SIGerr;
@@ -1886,16 +2062,16 @@ other.
 .L drawReducedTrees.C++
   */
 
-  TCut btagcut = "nbjetsSSVHPT>=1";
+  TCut btagcut = "nbjetsCSVM>=1";
   if ( btagselection=="ge1b") {} //do nothing
   else  if ( btagselection=="ge2b" ) {
-    btagcut = "nbjetsSSVHPT>=2";
+    btagcut = "nbjetsCSVM>=2";
   }
   else if ( btagselection=="eq1b" ) {
-    btagcut = "nbjetsSSVHPT==1";
+    btagcut = "nbjetsCSVM==1";
   }
   else if ( btagselection=="ge0b" ) {
-    btagcut = "nbjetsSSVHPT>=0";
+    btagcut = "nbjetsCSVM>=0";
   }
   else {
     assert(0);
@@ -1939,7 +2115,7 @@ other.
   if(samplename=="TTbarJets") sample = "ttbar";
   else if(samplename=="WJets") sample = "wjets";
 
-  selection_ =TCut("cutPV==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && minDeltaPhiN >= 4")&&btagcut&&HTcut;
+  selection_ =TCut("cutPV==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && minDeltaPhiN >= 4 && MT_Wlep>=0 && MT_Wlep<100")&&btagcut&&HTcut;
   //selection_ =TCut("MET>=150 && cutPV==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && minDeltaPhiN >= 4")&&btagcut&&HTcut; //AN v5
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
   nbins = 40; low=100; high=550; 
@@ -2116,7 +2292,7 @@ void AN2011_r() {
   lumiScale_ = 19.23288; //customize lumiScale_
   resetSamples();
   doData(true);
-  TCut util = "pass_utilityHLT_HT300>=1 && weight<1000";
+  TCut util = "(pass_utilityHLT==1 || !isRealData) && weight<1000";
   selection_ =TCut("HT>=350 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && nbjetsSSVHPT==0")&&util;
   //drawR("minDeltaPhiN",4,10,50,150,"Data_eq0b");
   drawR("minDeltaPhiN",4,15,0,150,"Data_eq0b"); //used in PAS
@@ -2261,6 +2437,7 @@ void AN2011( TString btagselection="ge1b",const int mode=1  ) {
     currentConfig_=configDescriptions_.getDefault(); //completely raw MC
   }
   else if (mode==2 || mode==3) {
+    assert(0); //not ready yet
     usePUweight_=true;
     useHLTeff_=true;
     currentConfig_=configDescriptions_.getCorrected(); //JER bias
@@ -2270,20 +2447,24 @@ void AN2011( TString btagselection="ge1b",const int mode=1  ) {
   else assert(0);
 
 
-  TCut btagcut = "nbjetsSSVHPT>=1";
+  TCut btagcut = "nbjetsCSVM>=1";
   if (mode==1 || mode==2) {
     if ( btagselection=="ge1b") {} //do nothing
     else  if ( btagselection=="ge2b" ) {
-      btagcut = "nbjetsSSVHPT>=2";
+      btagcut = "nbjetsCSVM>=2";
     }
     else if ( btagselection=="eq1b" ) {
-      btagcut = "nbjetsSSVHPT==1";
+      btagcut = "nbjetsCSVM==1";
+    }
+    else if ( btagselection=="ge3b" ) {
+      btagcut = "nbjetsCSVM>=3";
     }
     else {
       assert(0);
     }
   }
   else if (mode==3) {
+    assert(0);//not ready yet
     if ( btagselection=="ge1b") {
       btagcut="1";
       btagSFweight_="probge1";
@@ -2317,13 +2498,13 @@ void AN2011( TString btagselection="ge1b",const int mode=1  ) {
 
   doData(false);
 
-  
+  /*
   var="minDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}";
   nbins = 40; low=0; high=40;
   //no delta phi cut, loose MET window (only good for MC)
   selection_ =TCut("cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=100")&&btagcut;
   drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "minDeltaPhiN_looseMET_MConly_"+btagselection+modestring);
-  
+  */
 
   // ========= regular N-1 plots
 
@@ -2333,7 +2514,7 @@ void AN2011( TString btagselection="ge1b",const int mode=1  ) {
   doData(true);
   drawMCErrors_=true;
   
-  
+  /*
   var="minDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}";
   nbins = 20; low=0; high=40;
   //no delta phi cut
@@ -2351,13 +2532,15 @@ void AN2011( TString btagselection="ge1b",const int mode=1  ) {
   var="HT"; xtitle="H_{T} (GeV)";
   nbins = 20; low=350; high=1050;
   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_HT_"+btagselection+modestring);
-  
+  */
 
+  /*
   //MET
   selection_ =TCut("cutHT==1 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4")&&btagcut;
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
   nbins = 35; low=150; high=500;
   drawPlots(var,nbins,low,high,xtitle,"Events/10 GeV", "SBandSIG_MET_"+btagselection+modestring);
+  */
 
   //MET distribution with tighter HT cut
   selection_ =TCut("HT>500 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4")&&btagcut;
@@ -2366,7 +2549,8 @@ void AN2011( TString btagselection="ge1b",const int mode=1  ) {
   if(btagselection=="ge2b") { nbins = 7; low=150; high=500; thisytitle = "Events/50 GeV";}//requested by TK 
   else{ nbins = 17; low=150; high=500; thisytitle = "Events/20.6 GeV";}
   drawPlots(var,nbins,low,high,xtitle,thisytitle, "SBandSIG_MET_HT500_"+btagselection+modestring);
-
+ 
+  /*
   
   // == finally, draw the signal region only!
   selection_ =TCut("cutHT==1 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=200 && minDeltaPhiN >= 4")&&btagcut;
@@ -2390,7 +2574,7 @@ void AN2011( TString btagselection="ge1b",const int mode=1  ) {
   // ===== single lepton selection
 
   // == MET for the electron sample
-  selection_ =TCut("MET>=150 &&cutHT==1 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && nElectrons==1 && nMuons==0 && minDeltaPhiN >= 4")&&btagcut;
+  selection_ =TCut("MET>=150 &&cutHT==1 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && nElectrons==1 && nMuons==0 && minDeltaPhiN >= 4 && MT_Wlep>=0 && MT_Wlep<100")&&btagcut;
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
   nbins = 15; low=150; high=450;
   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_1e0mu_"+btagselection+modestring);
@@ -2401,7 +2585,7 @@ void AN2011( TString btagselection="ge1b",const int mode=1  ) {
   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_eleET_1e0mu_"+btagselection+modestring);
 
   // == MET for the muon sample
-  selection_ =TCut("MET>=150 &&cutHT==1 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && nElectrons==0 && nMuons==1 && minDeltaPhiN >= 4")&&btagcut;
+  selection_ =TCut("MET>=150 &&cutHT==1 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && nElectrons==0 && nMuons==1 && minDeltaPhiN >= 4 && MT_Wlep>=0 && MT_Wlep<100")&&btagcut;
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
   nbins = 15; low=150; high=450;
   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_0e1mu_"+btagselection+modestring);
@@ -2411,31 +2595,31 @@ void AN2011( TString btagselection="ge1b",const int mode=1  ) {
   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_muonpT_0e1mu_"+btagselection+modestring);
   
   // == MET for the combined sample
-  selection_ =TCut("MET>=150 &&cutHT==1 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && minDeltaPhiN >= 4")&&btagcut;
+  selection_ =TCut("MET>=150 &&cutHT==1 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && minDeltaPhiN >= 4 && MT_Wlep>=0 && MT_Wlep<100")&&btagcut;
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
   nbins = 15; low=150; high=450;
   drawPlots(var,nbins,low,high,xtitle,"Events/20 GeV", "SBandSIG_MET_SL_"+btagselection+modestring);
   
   // == HT for the combined sample
-  selection_ =TCut("MET>=150 &&cutHT==1 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && minDeltaPhiN >= 4")&&btagcut;
+  selection_ =TCut("MET>=150 &&cutHT==1 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && minDeltaPhiN >= 4 && MT_Wlep>=0 && MT_Wlep<100")&&btagcut;
   var="HT"; xtitle="H_{T} [GeV]";
   nbins = 20; low=350; high=1050;
   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_HT_SL_"+btagselection+modestring);
 
   // == njets for the combined sample
-  selection_ =TCut("MET>=150 &&cutHT==1 && cutPV==1 && cutTrigger==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && minDeltaPhiN >= 4")&&btagcut;
+  selection_ =TCut("MET>=150 &&cutHT==1 && cutPV==1 && cutTrigger==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && minDeltaPhiN >= 4 && MT_Wlep>=0 && MT_Wlep<100")&&btagcut;
   var="HT"; xtitle="H_{T} [GeV]";
   nbins = 20; low=350; high=1050;
   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_njets_SL_"+btagselection+modestring);
   
   // == MET for the combined sample (HT>500)
-  selection_ =TCut("MET>=150 && HT>500 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && minDeltaPhiN >= 4")&&btagcut;
+  selection_ =TCut("MET>=150 && HT>500 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && minDeltaPhiN >= 4 && MT_Wlep>=0 && MT_Wlep<100")&&btagcut;
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
   nbins = 15; low=150; high=450;
   drawPlots(var,nbins,low,high,xtitle,"Events/20 GeV", "SBandSIG_MET_SL_HT500_"+btagselection+modestring);
   
   //different scale to compare to Kristen
-  selection_ =TCut("MET>=150 && HT>500 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && minDeltaPhiN >= 4")&&btagcut;
+  selection_ =TCut("MET>=150 && HT>500 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && minDeltaPhiN >= 4 && MT_Wlep>=0 && MT_Wlep<100")&&btagcut;
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
   nbins = 35; low=150; high=500;
   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_SL_HT500_morebins_"+btagselection+modestring);
@@ -2454,7 +2638,7 @@ void AN2011( TString btagselection="ge1b",const int mode=1  ) {
   nbins = 30; low=150; high=450;
   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_ldp_"+btagselection+modestring);
  
-
+  */
 }
 
 // working but not polished code to draw efficiency over mSugra space

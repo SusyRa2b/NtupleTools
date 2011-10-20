@@ -895,6 +895,9 @@ void setColorScheme(const TString & name) {
     sampleColor_["SingleTop-sChannel"] = kMagenta+1; //for special cases
     sampleColor_["SingleTop-tChannel"] = kMagenta+2; //for special cases
     sampleColor_["SingleTop-tWChannel"] = kMagenta+3; //for special cases
+    sampleColor_["SingleTopBar-sChannel"] = kMagenta+4; //for special cases
+    sampleColor_["SingleTopBar-tChannel"] = kMagenta+5; //for special cases
+    sampleColor_["SingleTopBar-tWChannel"] = kMagenta+6; //for special cases
     sampleColor_["TotalSM"] = kBlue+2;
     sampleColor_["Total"] = kGreen+3;
     sampleColor_["VV"] = kCyan+1;
@@ -984,6 +987,9 @@ void loadSamples(bool joinSingleTop=true) {
   samplesAll_.insert("SingleTop-sChannel");
   samplesAll_.insert("SingleTop-tChannel");
   samplesAll_.insert("SingleTop-tWChannel");
+  samplesAll_.insert("SingleTopBar-sChannel");
+  samplesAll_.insert("SingleTopBar-tChannel");
+  samplesAll_.insert("SingleTopBar-tWChannel");
   samplesAll_.insert("HerwigQCDFlat");
   //  samplesAll_.insert("WJetsZ2");
   //  samplesAll_.insert("ZJetsZ2");
@@ -1033,9 +1039,10 @@ void loadSamples(bool joinSingleTop=true) {
   
   //FOR PLOTS
   ////////////
-  configDescriptions_.setDefault("SSVHPT_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
-  configDescriptions_.setCorrected("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
+  configDescriptions_.setDefault("CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
+  //configDescriptions_.setCorrected("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
 
+  /*
   //JES
   configDescriptions_.addVariation("SSVHPT_PF2PATjets_JESdown_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0",
 				   "SSVHPT_PF2PATjets_JESup_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
@@ -1058,7 +1065,7 @@ void loadSamples(bool joinSingleTop=true) {
   //HLT eff
   //    configDescriptions_.addVariation("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffdown",
   //"SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffup");
-
+  */
   ///////////////
   //////////////
  
@@ -1151,6 +1158,9 @@ void loadSamples(bool joinSingleTop=true) {
   sampleLabel_["SingleTop-sChannel"] = "Single-Top (s)";
   sampleLabel_["SingleTop-tChannel"] = "Single-Top (t)";
   sampleLabel_["SingleTop-tWChannel"] = "Single-Top (tW)";
+  sampleLabel_["SingleTopBar-sChannel"] = "Single-TopBar (s)";
+  sampleLabel_["SingleTopBar-tChannel"] = "Single-TopBar (t)";
+  sampleLabel_["SingleTopBar-tWChannel"] = "Single-TopBar (tW)";
   sampleLabel_["VV"] = "Diboson";
   sampleLabel_["HerwigQCDFlat"] = "Herwig QCD";
   sampleLabel_["TotalSM"] = "SM";
@@ -1177,6 +1187,9 @@ void loadSamples(bool joinSingleTop=true) {
   sampleMarkerStyle_["SingleTop-sChannel"] = kOpenSquare;
   sampleMarkerStyle_["SingleTop-tChannel"] = kOpenSquare;
   sampleMarkerStyle_["SingleTop-tWChannel"] = kOpenSquare;
+  sampleMarkerStyle_["SingleTopBar-sChannel"] = kOpenSquare;
+  sampleMarkerStyle_["SingleTopBar-tChannel"] = kOpenSquare;
+  sampleMarkerStyle_["SingleTopBar-tWChannel"] = kOpenSquare;
   sampleMarkerStyle_["TotalSM"] = kOpenCross; //FIXME?
   sampleMarkerStyle_["Total"] = kDot; //FIXME?
 
@@ -1201,6 +1214,9 @@ void loadSamples(bool joinSingleTop=true) {
   sampleOwenName_["SingleTop-sChannel"] = "singletops";
   sampleOwenName_["SingleTop-tChannel"] = "singletopt";
   sampleOwenName_["SingleTop-tWChannel"] = "singletoptw";
+  sampleOwenName_["SingleTopBar-sChannel"] = "singletopbars";
+  sampleOwenName_["SingleTopBar-tChannel"] = "singletopbart";
+  sampleOwenName_["SingleTopBar-tWChannel"] = "singletopbartw";
   sampleOwenName_["TotalSM"] = "totalsm";
   sampleOwenName_["Total"] = "total";  
 
