@@ -796,9 +796,14 @@ bool EventCalculator::passLumiMask(){
   const int lumi =  getLumiSection();
   const int run = getRunNumber();
 
-  if(run == 165525 && lumi>=1 && lumi<=31) return false;
-  if(run == 165537 && lumi>=1 && lumi<=20) return false;
-  if(run == 165537 && lumi>=22 && lumi<295) return false;
+  //for summer analysis ntuples
+  //if(run == 165525 && lumi>=1 && lumi<=31) return false;
+  //if(run == 165537 && lumi>=1 && lumi<=20) return false;
+  //if(run == 165537 && lumi>=22 && lumi<295) return false;
+
+  //for Aug05ReReco dataset (from v2->v3 JSON)
+  if(run ==170722 && lumi >=110 && lumi<=287) return false;
+
 
   return true;
 
@@ -887,7 +892,7 @@ bool EventCalculator::setCutScheme() {
   cutTags_.push_back("cut2b"); cutNames_[cutTags_.back()]=">=2b";
   cutTags_.push_back("cut3b"); cutNames_[cutTags_.back()]=">=3b";
 
-  //  cutTags_.push_back("cutCleaning"); cutNames_[cutTags_.back()]="TailCleaning";
+  //cutTags_.push_back("cutCleaning"); cutNames_[cutTags_.back()]="TailCleaning";
 
   return true;
 }
@@ -954,7 +959,7 @@ bool EventCalculator::cutRequired(const TString cutTag) { //should put an & in h
   else if (cutTag == "cut1b") cutIsRequired =  true;
   else if (cutTag == "cut2b") cutIsRequired =  true;
   else if (cutTag == "cut3b") cutIsRequired =  true;
-  //  else if (cutTag == "cutCleaning") cutIsRequired = true;
+  //else if (cutTag == "cutCleaning") cutIsRequired = true;
   //else assert(0);
 
   return cutIsRequired;
