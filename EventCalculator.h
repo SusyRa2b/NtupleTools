@@ -55,6 +55,7 @@ public:
   void reducedTree(TString outputpath, itreestream& stream);
 
   void cutflow(itreestream& stream, int maxevents);
+  void sampleAnalyzer(itreestream& stream);
 
   // functions that calculate stuff
 
@@ -97,7 +98,7 @@ public:
   void resetIgnoredCut();
   void resetRequiredCut();
   bool cutRequired(const TString cutTag);
-  int Cut(unsigned int entry);
+  int Cut();
 
   double getMinDeltaPhiMET(unsigned int maxjets);
   double getTransverseMETError(unsigned int thisJet);
@@ -192,7 +193,7 @@ public:
 
   double getScanCrossSection( SUSYProcess p, const TString & variation );
   double getSMSScanCrossSection( const double mgluino);
-  void calculateTagProb(float &Prob0, float &ProbGEQ1, float &Prob1, float &ProbGEQ2);
+  void calculateTagProb(float &Prob0, float &ProbGEQ1, float &Prob1, float &ProbGEQ2, float &ProbGEQ3);
 
   //btag stuff
   float getBTagIPWeight(); //this function should be called *after* offline tagging 

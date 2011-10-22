@@ -966,7 +966,7 @@ bool EventCalculator::cutRequired(const TString cutTag) { //should put an & in h
 }
 
 
-int EventCalculator::Cut(unsigned int entry)
+int EventCalculator::Cut()
 {
   //be careful...not every function that makes cuts uses this! e.g. ::cutflow()
 
@@ -2637,10 +2637,10 @@ double EventCalculator::getSMSScanCrossSection( const double mgluino) {
 }
 
 
-void EventCalculator::calculateTagProb(float &Prob0, float &ProbGEQ1, float &Prob1, float &ProbGEQ2) {
+void EventCalculator::calculateTagProb(float &Prob0, float &ProbGEQ1, float &Prob1, float &ProbGEQ2, float &ProbGEQ3) {
 
   //load efficiency maps - get from ~wteo/public/
-  TFile f_tageff("histos_btageff.root","READ");
+  TFile f_tageff("histos_btageff_csvm.root","READ");
   char btageffname[200], ctageffname[200], ltageffname[200];
   std::string sbtageff = "h_btageff";  std::string sctageff = "h_ctageff";  std::string sltageff = "h_ltageff";
   sprintf(btageffname,"%s",sbtageff.c_str());   
@@ -2651,10 +2651,11 @@ void EventCalculator::calculateTagProb(float &Prob0, float &ProbGEQ1, float &Pro
   TH1F * h_ltageff  = (TH1F *)f_tageff.Get(ltageffname);
 
   //must initialize correctly
+  float Prob2 = 0;
   Prob1 = 0; ProbGEQ1 = 1; Prob0 = 1; ProbGEQ2 = 0;
 
   for (unsigned int ijet=0; ijet<myJetsPF->size(); ++ijet) {
-    
+    float subprob1=0;
     if(isGoodJet30(ijet)){
       float effi = jetTagEff(ijet, h_btageff, h_ctageff, h_ltageff);
       Prob0 = Prob0* ( 1 - effi);
@@ -2663,18 +2664,37 @@ void EventCalculator::calculateTagProb(float &Prob0, float &ProbGEQ1, float &Pro
       for (unsigned int kjet=0; kjet<myJetsPF->size(); ++kjet) {
 	if(isGoodJet30(kjet)){
 	  float effk = jetTagEff(kjet, h_btageff, h_ctageff, h_ltageff);
-	  if(kjet != ijet) product = product*(1-effk);
+	  if(kjet != ijet){
+	    product = product*(1-effk);
+	  }
+	  if(kjet > ijet){
+	    double subproduct = 1;
+	    for (unsigned int jjet=0; jjet<myJetsPF->size(); ++jjet) {
+	      //if(jjet > kjet && jjet > ijet){
+	      if(jjet != kjet && jjet != ijet){
+		if(isGoodJet30(jjet)){
+		  float effj = jetTagEff(jjet, h_btageff, h_ctageff, h_ltageff);
+		  subproduct = subproduct*(1-effj);
+		}
+	      }
+	    }//j loop
+	    subprob1 += effk*subproduct;
+	  }
+
 	}
-      }
+      }//k loop
       
       Prob1 += effi*product;
       
+      Prob2 += effi*subprob1;
+
     }
   }
   
+
   ProbGEQ1 = 1 - Prob0;
-  ProbGEQ2 = 1- Prob1 - Prob0;
-  
+  ProbGEQ2 = 1 - Prob1 - Prob0;
+  ProbGEQ3 = 1 - Prob2 - Prob1 - Prob0;
 }
 
 
@@ -2751,7 +2771,10 @@ float EventCalculator::jetTagEff(unsigned int ijet, TH1F* h_btageff, TH1F* h_cta
 
   if(isGoodJet30(ijet)){
 
-    float SF[3] = {0.9,0.9,0.9}; //3 bins of pT (<240, 240 to 350, and >350)
+    //SSVHPT
+    //float SF[3] = {0.9,0.9,0.9}; //3 bins of pT (<240, 240 to 350, and >350)
+    //CSVM
+    float SF[3] = {0.96,0.96,0.96}; //3 bins of pT (<240, 240 to 350, and >350)
     float SFU[3] = {1,1,1};
 
     if (theBTagEffType_ == kBTagEffup) {
@@ -2967,7 +2990,7 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   float minDeltaPhiN_Luke_lostJet, maxDeltaPhiN_Luke_lostJet, deltaPhiN1_Luke_lostJet, deltaPhiN2_Luke_lostJet, deltaPhiN3_Luke_lostJet;
   float minTransverseMETSignificance_lostJet, maxTransverseMETSignificance_lostJet, transverseMETSignificance1_lostJet, transverseMETSignificance2_lostJet, transverseMETSignificance3_lostJet;
 
-  float prob0,probge1,prob1,probge2;
+  float prob0,probge1,prob1,probge2,probge3;
 
   //these are not useful for scans...work fine for LM9, etc
   Float_t pdfWeightsCTEQ[45];
@@ -3031,6 +3054,7 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   reducedTree.Branch("probge1",&probge1,"probge1/F");
   reducedTree.Branch("prob1",&prob1,"prob1/F");
   reducedTree.Branch("probge2",&probge2,"probge2/F");
+  reducedTree.Branch("probge3",&probge3,"probge3/F");
 
   //should consider whether some of these should be killed off
   reducedTree.Branch("cutHT",&cutHT,"cutHT/O");
@@ -3374,7 +3398,7 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
       cutMET = passCut("cutMET");
       cutDeltaPhi = passCut("cutDeltaPhi");
 
-      calculateTagProb(prob0,probge1,prob1,probge2);
+      calculateTagProb(prob0,probge1,prob1,probge2,probge3);
 
       isRealData = isSampleRealData();
       int version = 0, prescale = 0;
@@ -3964,3 +3988,142 @@ void EventCalculator::cutflow(itreestream& stream, int maxevents=-1){
   return;
 }
 
+
+void EventCalculator::sampleAnalyzer(itreestream& stream){
+
+
+  //TFile fout("histos_b.root","RECREATE");
+  
+  ////check the MC efficiencies from Summer11 TTbar
+  ////this histogram has bin edges {30,50,75,100,150,200,240,500,1000}
+  //double bins[10] = {30,50,75,100,150,200,240,350,500,1000};
+  //TH1F * h_bjet = new TH1F("h_bjet","bjet",9,bins);
+  //TH1F * h_cjet = new TH1F("h_cjet","cjet",9,bins);
+  //TH1F * h_ljet = new TH1F("h_ljet","ljet",9,bins);
+  //TH1F * h_btag = new TH1F("h_btag","btag",9,bins);
+  //TH1F * h_ctag = new TH1F("h_ctag","ctag",9,bins);
+  //TH1F * h_ltag = new TH1F("h_ltag","ltag",9,bins);
+  //h_bjet->Sumw2();
+  //h_cjet->Sumw2();
+  //h_ljet->Sumw2();
+  //h_btag->Sumw2();
+  //h_ctag->Sumw2();
+  //h_ltag->Sumw2();
+
+  int nevents = stream.size();
+
+  float prob0,probge1,prob1,probge2,probge3;
+
+  float n0b = 0, nge1b = 0, neq1b = 0, nge2b = 0, nge3b = 0;
+  setCutScheme();
+  setIgnoredCut("cut1b");
+  setIgnoredCut("cut2b");
+  setIgnoredCut("cut3b");
+
+
+  cout<<"Running..."<<endl;  
+  int npass = 0;
+  //int ntaggedjets = 0;
+  //int ntaggedjets_b = 0;
+  //int ntaggedjets_c = 0;
+  //int ntaggedjets_l = 0;
+
+  startTimer();
+  for(int entry=0; entry < nevents; ++entry){
+
+
+    // Read event into memory
+    stream.read(entry);
+    fillObjects();
+
+    if(entry%10000==0) cout << "entry: " << entry << ", percent done=" << (int)(entry/(double)nevents*100.)<<  endl;
+
+    if(Cut()==1){
+      npass++;
+
+
+      calculateTagProb(prob0,probge1,prob1,probge2,probge3);
+      n0b += prob0; 
+      nge1b += probge1; 
+      neq1b += prob1; 
+      nge2b += probge2;      
+      nge3b += probge3;
+
+      //for (unsigned int i = 0; i < myJetsPF->size(); ++i) {
+      //	int flavor = myJetsPF->at(i).partonFlavour;
+      //
+      //	if(isGoodJet(i,30)){
+      //
+      //
+      //	  if(abs(flavor)==5)
+      //	    h_bjet->Fill( getJetPt(i) ) ;
+      //	  else if(abs(flavor)==4)
+      //	    h_cjet->Fill( getJetPt(i) ) ;
+      //	  else if(abs(flavor)==3 ||abs(flavor)==2 ||abs(flavor)==1 ||abs(flavor)==21 )
+      //	    h_ljet->Fill( getJetPt(i) ) ;
+      //
+      //	  if(passBTagger(i)){
+      //	    if(abs(flavor)==5)
+      //	      h_btag->Fill( getJetPt(i) ) ;
+      //	    else if(abs(flavor)==4)
+      //	      h_ctag->Fill( getJetPt(i) ) ;
+      //	    else if(abs(flavor)==3 ||abs(flavor)==2 ||abs(flavor)==1 ||abs(flavor)==21 )
+      //	      h_ltag->Fill( getJetPt(i) ) ;
+      //	  }
+      //
+      //	}
+      //
+      //	if (isGoodJet(i,30) && passBTagger(i) ){
+      //	    ntaggedjets++;
+      //
+      //	    if(abs(flavor)==5)
+      //	      ntaggedjets_b++;
+      //	    else if(abs(flavor)==4)
+      //	      ntaggedjets_c++;
+      //	    else if(abs(flavor)==3 ||abs(flavor)==2 ||abs(flavor)==1 ||abs(flavor)==21 )
+      //	      ntaggedjets_l++;
+      //	}
+      // 
+      //}
+
+
+
+
+      }//end Cut
+
+  }
+
+
+  cout<<endl;
+  stopTimer(nevents);
+
+  std::cout << "n0b = " << n0b << std::endl;
+  std::cout << "nge1b = " << nge1b << std::endl;
+  std::cout << "neq1b = " << neq1b << std::endl;
+  std::cout << "nge2b = " << nge2b << std::endl;
+  std::cout << "nge3b = " << nge3b << std::endl;
+
+  //std::cout << "npass = " << npass << std::endl;
+  //std::cout << "ntaggedjets = "   << ntaggedjets << std::endl;
+  //std::cout << "ntaggedjets_b = " << ntaggedjets_b << std::endl;
+  //std::cout << "ntaggedjets_c = " << ntaggedjets_c << std::endl;
+  //std::cout << "ntaggedjets_l = " << ntaggedjets_l << std::endl;
+  
+  
+  ////TH1F *h_btageff = (TH1F*) h_btag->Clone();
+  //TH1F * h_btageff = new TH1F("h_btageff","btageff",9,bins);
+  //h_btageff->Divide(h_btag,h_bjet,1,1,"B");
+  ////TH1F *h_ctageff = (TH1F*) h_ctag->Clone();
+  //TH1F * h_ctageff = new TH1F("h_ctageff","ctageff",9,bins);
+  //h_ctageff->Divide(h_ctag,h_cjet,1,1,"B");
+  ////TH1F *h_ltageff = (TH1F*) h_ltag->Clone();
+  //TH1F * h_ltageff = new TH1F("h_ltageff","ltageff",9,bins);
+  //h_ltageff->Divide(h_ltag,h_ljet,1,1,"B");
+  //
+  //
+  //fout.Write();
+  //fout.Close();
+
+
+  return;
+}
