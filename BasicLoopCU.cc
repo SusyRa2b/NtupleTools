@@ -60,6 +60,7 @@ int main(int argc, char** argv)
   ec.reducedTree(outputDir, stream);
 
   //ec.cutflow(stream, -1);
+  //ec.sampleAnalyzer(stream);
 
   return 0;
 
