@@ -367,7 +367,7 @@ float EventCalculator::getPUWeight(reweight::LumiReWeighting lumiWeights) {
 
 bool EventCalculator::isGoodMuon(const unsigned int imuon) {
 
-  if(myMuonsPF->at(imuon).pt > 10
+  if(myMuonsPF->at(imuon).pt >= 10
      && fabs(myMuonsPF->at(imuon).eta)<2.4
      && myMuonsPF->at(imuon).GlobalMuonPromptTight == 1
      && myMuonsPF->at(imuon).innerTrack_numberOfValidHits >=11
@@ -407,7 +407,7 @@ bool EventCalculator::isCleanMuon(const unsigned int imuon) {
 
 bool EventCalculator::isGoodElectron(const unsigned int iele) {
   
-  if(myElectronsPF->at(iele).pt > 10
+  if(myElectronsPF->at(iele).pt >= 10
      && fabs(myElectronsPF->at(iele).superCluster_eta) < 2.5 
      && !(fabs(myElectronsPF->at(iele).superCluster_eta) > 1.4442 
 	  && fabs(myElectronsPF->at(iele).superCluster_eta) < 1.566)
@@ -821,7 +821,7 @@ bool EventCalculator::passCut(const TString cutTag) {
 
   if (cutTag=="cutPV") return passPV();
   
-  if (cutTag=="cutHT") return getHT()>400;
+  if (cutTag=="cutHT") return getHT()>=400;
   
   if (cutTag=="cut3Jets") return (nGoodJets() >= 3);
   
