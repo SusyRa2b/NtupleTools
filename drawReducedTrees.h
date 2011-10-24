@@ -150,14 +150,34 @@ void setSearchRegions() {
   
   //nb: some of the code *depends* on the fact that for there are equal numbers of corresponding
   //sbRegions and searchRegions, with the only difference being the MET selection!
+
   
+  //oct25
   //case 1
-  sbRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=200&&MET<250","case1",false));
-  searchRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=250","case1"));
+  sbRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=200&&MET<250","ge1b-Loose",false));
+  searchRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=250","ge1b-Loose"));
+  //case 2
+  sbRegions_.push_back( SearchRegion( "ge1b","HT>=500","MET>=200&&MET<250","ge1b-Tight",false));
+  searchRegions_.push_back( SearchRegion( "ge1b","HT>=500","MET>=500","ge1b-Tight"));
+  //case 4
+  sbRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=200&&MET<250","ge2b-Loose",false));
+  searchRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=250","ge2b-Loose"));
+  //case 5
+  sbRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=200&&MET<250","ge2b-Tight",false));
+  searchRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=300","ge2b-Tight"));
+  //case 6
+  sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=200&&MET<250","ge3b",false));
+  searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=250","ge3b"));
+  
+  
+  /*
+  //case 1
+  sbRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=150&&MET<200","ge1b-Loose",false));
+  searchRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=250","ge1b-Loose"));
   
   //case 2
-  sbRegions_.push_back( SearchRegion( "ge1b","HT>=500","MET>=200&&MET<250","case2",false));
-  searchRegions_.push_back( SearchRegion( "ge1b","HT>=500","MET>=500","case2"));
+  sbRegions_.push_back( SearchRegion( "ge1b","HT>=500","MET>=150&&MET<200","ge1b-Tight",false));
+  searchRegions_.push_back( SearchRegion( "ge1b","HT>=500","MET>=500","ge1b-Tight"));
   
   //case 3
   //sbRegions_.push_back( SearchRegion( "ge1b","HT>=900","MET>=200&&MET<250","case3_old",false));
@@ -168,21 +188,23 @@ void setSearchRegions() {
   //searchRegions_.push_back( SearchRegion( "ge1b","HT>=750","MET>=250","case3"));
   
   //case 4
-  sbRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=200&&MET<250","case4",false));
-  searchRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=250","case4"));
+  sbRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=150&&MET<200","ge2b-Loose",false));
+  searchRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=250","ge2b-Loose"));
   
   //case 5 old
   //sbRegions_.push_back( SearchRegion( "ge2b","HT>=700","MET>=200&&MET<250","case5_old",false));
   //searchRegions_.push_back( SearchRegion( "ge2b","HT>=700","MET>=300","case5_old"));
   
   //case 5
-  sbRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=200&&MET<250","case5",false));
-  searchRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=300","case5"));
+  sbRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=150&&MET<200","ge2b-Tight",false));
+  searchRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=300","ge2b-Tight"));
   
   //case 6
-  sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=200&&MET<250","case6",false));
-  searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=250","case6"));
-    
+  sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=150&&MET<200","ge3b",false));
+  searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=250","ge3b"));
+  */    
+
+
   /*
   //2011 Summer result
   sbRegions_.push_back( SearchRegion( "ge1b","HT>=350","MET>=150&&MET<200","Loose",false)); //loose SB
@@ -489,16 +511,16 @@ void drawPlotHeaderInside() {
 }
 
 void drawPlotHeader() {
-
-  const float ypos = 0.97;
-
+  return;
+  float ypos = 0.97;
+  if(doRatio_) ypos=ypos+0.012;
   // i'm gonna leave this out for now
   if (text1 != 0 ) delete text1;
   text1 = new TLatex(3.570061,23.08044,"CMS Preliminary");
   text1->SetNDC();
   text1->SetTextAlign(13);
   text1->SetX(0.68);
-  text1->SetY(ypos);
+  text1->SetY(ypos+0.007);
   text1->SetTextFont(42);
   text1->SetTextSizePixels(24);
   text1->Draw();
@@ -506,13 +528,14 @@ void drawPlotHeader() {
   if (normalized_ == false) {
     TString astring;
     //astring.Form("%.0f pb^{-1} at #sqrt{s} = 7 TeV",lumiScale_);
-    astring.Form("%.1f fb^{-1} at #sqrt{s} = 7 TeV",lumiScale_/1000.);
+    //astring.Form("%.1f fb^{-1} at #sqrt{s} = 7 TeV",lumiScale_/1000.);
+    astring.Form("L_{int} = %.1f fb^{-1}, #sqrt{s} = 7 TeV",lumiScale_/1000.);
     if (text2 != 0 ) delete text2;
     text2 = new TLatex(3.570061,23.08044,astring);
     text2->SetNDC();
     text2->SetTextAlign(13);
     text2->SetX(0.17);
-    text2->SetY(ypos+0.005);//0.88); //0.005 is a kluge to make things look right. i don't get it
+    text2->SetY(ypos+0.015);
     text2->SetTextFont(42);
     text2->SetTextSizePixels(24);
     text2->Draw();
@@ -1420,6 +1443,7 @@ bool isSampleSM(const TString & name) {
   return true;
 }
 
+
 void drawPlots(const TString var, const int nbins, const float low, const float high, const TString xtitle, TString ytitle, TString filename="", const float* varbins=0) {
   //  cout<<"[drawPlots] var = "<<var<<endl;
 
@@ -1777,7 +1801,7 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
   const TString ytitle="N pass / N fail";
   TString xtitle = var;
   if(var=="MET") xtitle = "E_{T}^{miss} [GeV]"; 
-  bool dataOnly = false;
+  bool dataOnly = true;
 
   //const TString var = "MET"; //hardcoded for now
   cout << "x axis: " << var << endl;

@@ -484,7 +484,7 @@ void countInBoxesBreakdown(const SearchRegion & region) {
   loadSamples();
 
 
-  dodata_=false;
+  //dodata_=false;
   savePlots_ =false;
   setQuiet(true);
   doOverflowAddition(true);  
@@ -501,13 +501,13 @@ void countInBoxesBreakdown(const SearchRegion & region) {
    
   TCut bcut = "1";
   if (btagselection=="ge1b") {
-    bcut="nbjetsSSVM>=1";
+    bcut="nbjetsCSVM>=1";
   }
   else if (btagselection=="ge2b") {
-    bcut="nbjetsSSVM>=2";
+    bcut="nbjetsCSVM>=2";
   }
   else if (btagselection=="ge3b") {
-    bcut="nbjetsSSVM>=3";
+    bcut="nbjetsCSVM>=3";
   }
   else {assert(0);}
   
@@ -537,7 +537,7 @@ void countInBoxesBreakdown(const SearchRegion & region) {
   TString thisbox="";
   
   TCut baseline = "cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1";
-  TCut baselineSL = "cutPV==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0))";
+  TCut baselineSL = "cutPV==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && MT_Wlep>=0 && MT_Wlep<100";
   TCut passOther = "minDeltaPhiN>=4";
   TCut failOther="minDeltaPhiN<4";
 
@@ -546,26 +546,30 @@ void countInBoxesBreakdown(const SearchRegion & region) {
   char output[500];
   //Look at: PythiaPUQCD TTbarJets SingleTop WJets ZJets VV Zinvisible LM9
   
+  //double QCD, QCDerr, ttbar, ttbarerr, singletop, singletoperr, wjets, wjetserr, zjets, zjetserr, vv, vverr, zinv, zinverr, lm9, lm9err, data, dataerr, totalsm, totalsmerr;
+
   // --- nominal (SB or SIG) selection ---
   selection_ = baseline && HTcut && passOther && SRMET && bcut; 
   drawPlots(var,nbins,low,high,xtitle,"events","dummyH");
   thisbox=""; thisbox+= isSIG ? "$N_{SIG}$":"$N_{SB}$";
-  sprintf(output,"%s & %s & %s & %s & %s & %s & %s & %s & %s & %s \\\\",thisbox.Data(),region.owenId.Data(),
+  sprintf(output,"%s & %s & %s & %s & %s & %s & %s & %s & %s & %s& %i & %s \\\\",thisbox.Data(),region.owenId.Data(),
 	  jmt::format_nevents(getIntegral("PythiaPUQCD"),getIntegralErr("PythiaPUQCD")).Data(), jmt::format_nevents(getIntegral("TTbarJets"),getIntegralErr("TTbarJets")).Data(),
 	  jmt::format_nevents(getIntegral("SingleTop"),getIntegralErr("SingleTop")).Data(), jmt::format_nevents(getIntegral("WJets"),getIntegralErr("WJets")).Data(),
 	  jmt::format_nevents(getIntegral("ZJets"),getIntegralErr("ZJets")).Data(), jmt::format_nevents(getIntegral("VV"),getIntegralErr("VV")).Data(),
-	  jmt::format_nevents(getIntegral("Zinvisible"),getIntegralErr("Zinvisible")).Data(), jmt::format_nevents(getIntegral("LM9"),getIntegralErr("LM9")).Data());
+	  jmt::format_nevents(getIntegral("Zinvisible"),getIntegralErr("Zinvisible")).Data(), 	  jmt::format_nevents(getIntegral("totalsm"),getIntegralErr("totalsm")).Data(), 
+	  (int)(getIntegral("data")+0.5), jmt::format_nevents(getIntegral("LM9"),getIntegralErr("LM9")).Data());
   cout<<output<<endl;  
 
   // -- SL selection --
   selection_ = baselineSL && HTcut && passOther && SRMET && bcut;
   drawPlots(var,nbins,low,high,xtitle,"events","dummyH");
   thisbox=""; thisbox+= isSIG ? "$N_{SIG,SL}$":"$N_{SB,SL}$";
-  sprintf(output,"%s & %s & %s & %s & %s & %s & %s & %s & %s & %s \\\\",thisbox.Data(),region.owenId.Data(),
+sprintf(output,"%s & %s & %s & %s & %s & %s & %s & %s & %s & %s& %i & %s \\\\",thisbox.Data(),region.owenId.Data(),
 	  jmt::format_nevents(getIntegral("PythiaPUQCD"),getIntegralErr("PythiaPUQCD")).Data(), jmt::format_nevents(getIntegral("TTbarJets"),getIntegralErr("TTbarJets")).Data(),
 	  jmt::format_nevents(getIntegral("SingleTop"),getIntegralErr("SingleTop")).Data(), jmt::format_nevents(getIntegral("WJets"),getIntegralErr("WJets")).Data(),
 	  jmt::format_nevents(getIntegral("ZJets"),getIntegralErr("ZJets")).Data(), jmt::format_nevents(getIntegral("VV"),getIntegralErr("VV")).Data(),
-	  jmt::format_nevents(getIntegral("Zinvisible"),getIntegralErr("Zinvisible")).Data(), jmt::format_nevents(getIntegral("LM9"),getIntegralErr("LM9")).Data());
+	  jmt::format_nevents(getIntegral("Zinvisible"),getIntegralErr("Zinvisible")).Data(), 	  jmt::format_nevents(getIntegral("totalsm"),getIntegralErr("totalsm")).Data(), 
+	(int)(getIntegral("data")+0.5), jmt::format_nevents(getIntegral("LM9"),getIntegralErr("LM9")).Data());
   cout<<output<<endl; 
   
   
@@ -573,11 +577,12 @@ void countInBoxesBreakdown(const SearchRegion & region) {
   selection_ = baseline && HTcut && failOther && SRMET && bcut;
   drawPlots(var,nbins,low,high,xtitle,"events","dummyH");
   thisbox=""; thisbox+= isSIG ? "$N_{SIG,LDP}$":"$N_{SB,LDP}$";
-  sprintf(output,"%s & %s & %s & %s & %s & %s & %s & %s & %s & %s \\\\",thisbox.Data(),region.owenId.Data(),
+  sprintf(output,"%s & %s & %s & %s & %s & %s & %s & %s & %s & %s& %i & %s \\\\",thisbox.Data(),region.owenId.Data(),
 	  jmt::format_nevents(getIntegral("PythiaPUQCD"),getIntegralErr("PythiaPUQCD")).Data(), jmt::format_nevents(getIntegral("TTbarJets"),getIntegralErr("TTbarJets")).Data(),
 	  jmt::format_nevents(getIntegral("SingleTop"),getIntegralErr("SingleTop")).Data(), jmt::format_nevents(getIntegral("WJets"),getIntegralErr("WJets")).Data(),
 	  jmt::format_nevents(getIntegral("ZJets"),getIntegralErr("ZJets")).Data(), jmt::format_nevents(getIntegral("VV"),getIntegralErr("VV")).Data(),
-	  jmt::format_nevents(getIntegral("Zinvisible"),getIntegralErr("Zinvisible")).Data(), jmt::format_nevents(getIntegral("LM9"),getIntegralErr("LM9")).Data());
+	  jmt::format_nevents(getIntegral("Zinvisible"),getIntegralErr("Zinvisible")).Data(), 	  jmt::format_nevents(getIntegral("totalsm"),getIntegralErr("totalsm")).Data(), 
+	  (int)(getIntegral("data")+0.5), jmt::format_nevents(getIntegral("LM9"),getIntegralErr("LM9")).Data());
   cout<<output<<endl; 
 }
 
@@ -1350,8 +1355,9 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
 //   cout<<" ==== "<<endl
 //       <<"Estimate = "<<estimate<<" +/- "<<estimateerr<<endl
 //       <<" truth   = "<<SIG     <<" +/- "<<SIGerr<<endl;
-  btagselection += region.owenId;
-  btagselection += isSIG ? "SIG":"SB";
+  TString name = "";
+  name += region.owenId;
+  name += isSIG ? ", SIG":", SB";
   char output[500];
   if (!datamode) {
     //sprintf(output,"%s & %s & %s & %s & %s & %s \\\\ %% %f ++ %f %% alternate denominator: %f ++ %f",btagselection.Data(),
@@ -1359,14 +1365,14 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
     //    jmt::format_nevents(D,Derr).Data(),jmt::format_nevents(estimate,estimateerr).Data(),
     //    jmt::format_nevents(SIG,SIGerr).Data(),100*(SIG-estimate)/SIG,closureStat*100,100*(SIG-estimate)/estimate,closureStat2*100);
       
-    sprintf(output,"%s & %s & %s & %s & %s & %s & $%f \\pm %f$ \\\\ ",btagselection.Data(),
+    sprintf(output,"%s & %s & %s & %s & %s & %s & $%f \\pm %f$ \\\\ ",name.Data(),
 	    jmt::format_nevents(B,Berr).Data(),jmt::format_nevents(A,Aerr).Data(),
 	    jmt::format_nevents(D,Derr).Data(),jmt::format_nevents(estimate,estimateerr).Data(),
 	    jmt::format_nevents(SIG,SIGerr).Data(),100*(estimate-SIG)/estimate,closureStat2*100);
  
   }
   else {
-    sprintf(output,"%s & %d & %d & %d & %s & %s   \\\\ %% %f +/- %f",btagselection.Data(),
+    sprintf(output,"%s & %d & %d & %d & %s & %s   \\\\ %% %f +/- %f",name.Data(),
 	    TMath::Nint(B),TMath::Nint(A),
 	    TMath::Nint(D), jmt::format_nevents(Dsub,Dsuberr).Data(),
 	    jmt::format_nevents(estimate,estimateerr).Data(),R0,R0err);
@@ -1603,6 +1609,7 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
     double ze[2];
  //need to average mu mu and ee estimates
     double zsbsyst=0.5;
+    double zinvscale = 3.5/3.2;
     bool doMean = true;
     /*
     if ( qcdsubregion.owenId == "Tight" && btagselection=="ge1b") { //i think this should work for now...
@@ -1626,12 +1633,12 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
       zsbsyst = 0.55;
     }
     */
-    if (qcdsubregion.owenId == "case1"){
+    if (qcdsubregion.owenId == "ge1b-Loose"){
       doMean=false;//averaging already done
       zv[0] = 63.9127; ze[0]=10.7967;
       zsbsyst = 0.3;
     }
-    else if (qcdsubregion.owenId == "case2"){
+    else if (qcdsubregion.owenId == "ge1b-Tight"){
       doMean=false;//averaging already done
       zv[0] = 35.3791; ze[0]=7.95003;
       zsbsyst = 0.3;
@@ -1641,29 +1648,29 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
       zv[0] = 4.91838; ze[0]=2.92228;
       zsbsyst = 0.3;
     }
-    else if (qcdsubregion.owenId == "case4"){
+    else if (qcdsubregion.owenId == "ge2b-Loose"){
       doMean=false;//averaging already done
       zv[0] = 10.7258; ze[0]=2.18597;
       zsbsyst = 0.5;
     }
-    else if (qcdsubregion.owenId == "case5"){
+    else if (qcdsubregion.owenId == "ge2b-Tight"){
       doMean=false;//averaging already done
       zv[0] = 3.41633; ze[0]=1.08638;
       zsbsyst = 0.5;
     }
-    else if (qcdsubregion.owenId == "case6"){
+    else if (qcdsubregion.owenId == "ge3b"){
       doMean=false;//averaging already done
       zv[0] = 1.48325; ze[0]=0.527006;
       zsbsyst = 0.7;   
     }
     else {assert(0);}
     if(doMean){
-      SBsubZ = jmt::weightedMean(2,zv,ze);
-      SBsubZerr = jmt::weightedMean(2,zv,ze,true);
+      SBsubZ = zinvscale*(jmt::weightedMean(2,zv,ze));
+      SBsubZerr = zinvscale*(jmt::weightedMean(2,zv,ze,true));
     }
     else{//if weighted averaging was already done
-      SBsubZ = zv[0];
-      SBsubZerr = ze[0];
+      SBsubZ = zinvscale*zv[0];
+      SBsubZerr = zinvscale*ze[0];
     }
 
     if (mode.Contains("Z")) {
@@ -1795,7 +1802,8 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
 //       <<"Estimate = "<<estimate<<" +/- "<<estimateerr<<endl
 //       <<" truth   = "<<SIG     <<" +/- "<<SIGerr<<endl;
   // btagselection += tight ? " Tight " : " Loose ";
-  btagselection += region.owenId;
+  TString name = "";
+  name += region.owenId;
 
   char output[500];
   if (!datamode) {
@@ -1804,13 +1812,13 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
     //	    jmt::format_nevents(B,Berr).Data(),jmt::format_nevents(estimate,estimateerr).Data(),
     //	    jmt::format_nevents(SIG,SIGerr).Data(),100*(estimate-SIG)/estimate,100*closureStat);
 
-    sprintf(output,"%s & %s & %s & %s & %s & %s & $%f \\pm %f$ \\\\",btagselection.Data(),
+    sprintf(output,"%s & %s & %s & %s & %s & %s & $%f \\pm %f$ \\\\",name.Data(),
 	    jmt::format_nevents(D,Derr).Data(),jmt::format_nevents(A,Aerr).Data(),
 	    jmt::format_nevents(B,Berr).Data(),jmt::format_nevents(estimate,estimateerr).Data(),
 	    jmt::format_nevents(SIG,SIGerr).Data(), 100*(estimate-SIG)/estimate, 100*closureStat);
   }
   else {
-    sprintf(output,"ttbar DATA %s & %d & %d & %d & %s & %s  \\\\",btagselection.Data(),
+    sprintf(output,"ttbar DATA %s & %d & %d & %d & %s & %s  \\\\",name.Data(),
 	    TMath::Nint(D),TMath::Nint(A),
 	    TMath::Nint(B), jmt::format_nevents(SBsubMisc+SBsubQCD+SBsubZ,suberr).Data(),
 	    jmt::format_nevents(estimate,estimateerr).Data());
@@ -1825,8 +1833,12 @@ void runSLClosureTest2011() {
 
   setSearchRegions();
 
+  cout<<"Note that the following is the joint tt+W+t closure test only!"<<endl;
   for (unsigned int j=0; j<searchRegions_.size();j++) slABCD(j);
-  cout<<"Note that this is the joint tt+W+t closure test only!"<<endl;
+
+  cout<<"Note that the following is the tt closure test only!"<<endl;
+  for (unsigned int j=0; j<searchRegions_.size();j++) slABCD(j,false,"",true);
+
 }
 
 vector<double> ttbarClosureSyst;
@@ -1951,6 +1963,7 @@ void AN2011_prescale( TString btagselection="ge1b",const int mode=1 ) {
     currentConfig_=configDescriptions_.getDefault(); //completely raw MC
   }
   else if (mode==2 || mode==3) {
+    assert(0); //not ready
     usePUweight_=true;
     useHLTeff_=true;
     currentConfig_=configDescriptions_.getCorrected(); //JER bias
@@ -1959,14 +1972,20 @@ void AN2011_prescale( TString btagselection="ge1b",const int mode=1 ) {
   }
   else assert(0);
 
-  TCut btagcut = "nbjetsSSVHPT>=1";
+  TCut btagcut = "nbjetsCSVM>=1";
   if (mode==1 || mode==2) {
     if ( btagselection=="ge1b") {} //do nothing
     else  if ( btagselection=="ge2b" ) {
-      btagcut = "nbjetsSSVHPT>=2";
+      btagcut = "nbjetsCSVM>=2";
     }
     else if ( btagselection=="eq1b" ) {
-      btagcut = "nbjetsSSVHPT==1";
+      btagcut = "nbjetsCSVM==1";
+    }
+    else if ( btagselection=="eq0b" ) {
+      btagcut = "nbjetsCSVM==0";
+    }
+    else if (btagselection=="ge3b" ){
+      btagcut = "nbjetsCSVM>=3";
     }
     else {
       assert(0);
@@ -2002,8 +2021,9 @@ void AN2011_prescale( TString btagselection="ge1b",const int mode=1 ) {
 
   // ==========================
 
-  TCut util = "pass_utilityHLT_HT300>=1 && weight<1000";
-  lumiScale_ = 19.23288; //customize lumiScale_
+  TCut util = "(pass_utilityHLT==1 || !isRealData) && weight<1000";
+  //lumiScale_ = 19.23288; //customize lumiScale_
+  lumiScale_ = 30.15471; 
 
   // ========= regular N-1 plots
 
@@ -2013,6 +2033,7 @@ void AN2011_prescale( TString btagselection="ge1b",const int mode=1 ) {
   doData(true);
   drawMCErrors_=true;
 
+  /*
   //MET
   selection_ =TCut("cutHT==1 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4")&&util&&btagcut;
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
@@ -2060,9 +2081,32 @@ void AN2011_prescale( TString btagselection="ge1b",const int mode=1 ) {
   ratioMin=1; ratioMax=1.5;
   selection_ ="cutTrigger==1 && MET>150 && cutHT==1 && cutPV==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN < 4";
   drawPlots(var,nbins,low,high,xtitle,"Events", "unprescaled_METhigh_lowDP");
+  */
 
-
+ 
+  //// ben
   
+  doRatioPlot(true);
+  selection_ =TCut("HT>=400 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1")&&util&&btagcut;
+  var="MET"; xtitle="E_{T}^{miss} [GeV]";
+  nbins = 10; low=0; high=100;
+  setLogY(false); resetPlotMinimum();
+  drawPlots(var,nbins,low,high,xtitle,"Events", "prescaled_MET_"+btagselection+modestring);
+  
+  
+  doRatioPlot(true);
+  selection_ =TCut("HT>=400 && cutPV==1 && MET>=50 && MET<100 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1")&&util&&btagcut;
+  var="minDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}";
+  nbins = 20; low=0; high=40;
+  setLogY(false); resetPlotMinimum();
+  //drawPlots(var,nbins,low,high,xtitle,"Events", "prescaled_minDeltaPhiN_LSB_"+btagselection+modestring);
+  setLogY(true);  setPlotMinimum(1e-1);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "prescaled_minDeltaPhiN_LSB_"+btagselection+modestring);
+  
+
+
+
+ 
 }
 
 
@@ -2099,8 +2143,9 @@ other.
   }
 
 
-  TCut HTcut="HT>=350";
+  TCut HTcut="HT>=400";
   if (HTselection=="Tight")  HTcut="HT>=500";
+  if (HTselection=="VeryTight") HTcut="HT>=600";
 
   loadSamples();
 
@@ -2115,11 +2160,12 @@ other.
 
   //ge1b, Tight
   //const int nvarbins=15;
-  //const float varbins[]={100, 120, 140, 160, 180, 200, 220, 240, 260, 280, 300, 350, 400, 450, 500, 550}; //AN
+  //const float varbins[]={100, 120, 140, 160, 180, 200, 220, 240, 260, 280, 300, 350, 400, 450, 500, 550}; 
   
   //ge2b, Loose and Tight
   const int nvarbins=12;
-  const float varbins[]={100, 125, 150, 175, 200, 225, 250, 275, 300, 350, 400, 450, 550}; //AN and PAS 
+  //const float varbins[]={100, 125, 150, 175, 200, 225, 250, 275, 300, 350, 400, 450, 550,650,750, 850,950};
+  const float varbins[]={200, 225, 250, 275, 300, 350, 400, 450, 550,650,750, 850,950}; 
 
   doOverflowAddition(true);
 
@@ -2281,7 +2327,7 @@ other.
 
 void AN2011_r() {
   TString btagselection="ge1b";
-  TCut btagcut = "nbjetsSSVHPT>=1";
+  TCut btagcut = "nbjetsCSVM>=1";
   loadSamples();
 
   // == draw r(MET)
@@ -2310,11 +2356,11 @@ void AN2011_r() {
   doRatioPlot(true);
   drawLegend(true);
   setPlotMinimum(0); setPlotMaximum(0.5);
-  lumiScale_ = 19.23288; //customize lumiScale_
+  lumiScale_ = 30.15471; //customize lumiScale_
   resetSamples();
   doData(true);
   TCut util = "(pass_utilityHLT==1 || !isRealData) && weight<1000";
-  selection_ =TCut("HT>=350 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && nbjetsSSVHPT==0")&&util;
+  selection_ =TCut("HT>=400 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && nbjetsCSVM==0")&&util;
   //drawR("minDeltaPhiN",4,10,50,150,"Data_eq0b");
   drawR("minDeltaPhiN",4,15,0,150,"Data_eq0b"); //used in PAS
   
@@ -2442,11 +2488,13 @@ void drawMSugraTest() {
 
 }
 
-void AN2011( TString btagselection="ge1b",const int mode=1, bool logy=false  ) {
+void AN2011( TString btagselection="ge1b",const int mode=1, bool logy=false, bool doRatio=false ) {
   /*
 .L drawReducedTrees.C++
-  */
+  */  
+  doRatioPlot(doRatio);
   setLogY(logy);
+  if(logy)  setPlotMinimum(0.5);
   loadSamples();
 
   //this mode thing is a bit kludgey
@@ -2539,15 +2587,17 @@ void AN2011( TString btagselection="ge1b",const int mode=1, bool logy=false  ) {
   var="minDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}";
   nbins = 20; low=0; high=40;
   //no delta phi cut
-  selection_ =TCut("cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=150")&&btagcut;
+  selection_ =TCut("HT>=400 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=200")&&btagcut;
   drawPlots(var,nbins,low,high,xtitle,"Events/2", "SBandSIG_minDeltaPhiN_"+btagselection+modestring);
-  
+  */
+  /*
   // n Jets
-  selection_ =TCut("cutHT==1 && cutPV==1 && cutTrigger==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=150 && minDeltaPhiN >= 4")&&btagcut;
+  selection_ =TCut("HT>=400 && cutPV==1 && cutTrigger==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=200 && minDeltaPhiN >= 4")&&btagcut;
   var="njets"; xtitle="Jet multiplicity";
   nbins = 8; low=1; high=9;
   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_njets_"+btagselection+modestring);
-
+  */
+  /*
   //HT
   selection_ =TCut("cutHT==1 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=150 && minDeltaPhiN >= 4")&&btagcut;
   var="HT"; xtitle="H_{T} (GeV)";
@@ -2571,26 +2621,27 @@ void AN2011( TString btagselection="ge1b",const int mode=1, bool logy=false  ) {
   drawPlots(var,nbins,low,high,xtitle,thisytitle, "SBandSIG_MET_HT500_"+btagselection+modestring);
   */ 
   
-
+  /*
   //MET distribution with tighter HT cut
-  selection_ =TCut("HT>400 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4")&&btagcut;
-  var="MET"; xtitle="E_{T}^{miss} [GeV]";
   TString thisytitle = "";
+  //2011b
+  selection_ =TCut("HT>=400 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4")&&btagcut;
+  var="MET"; xtitle="E_{T}^{miss} [GeV]";
   nbins = 20; low=200; high=600; thisytitle = "Events";
   drawPlots(var,nbins,low,high,xtitle,thisytitle, "SBandSIG_MET_HT400_"+btagselection+modestring);
-
-  selection_ =TCut("HT>500 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4")&&btagcut;
+  
+  //2011b
+  selection_ =TCut("HT>=500 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4")&&btagcut;
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
-  TString thisytitle = "";
   nbins = 20; low=200; high=600; thisytitle = "Events";
-  drawPlots(var,nbins,low,high,xtitle,thisytitle, "SBandSIG_MET_HT400_"+btagselection+modestring);
-
-  selection_ =TCut("HT>600 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4")&&btagcut;
+  drawPlots(var,nbins,low,high,xtitle,thisytitle, "SBandSIG_MET_HT500_"+btagselection+modestring);
+  
+  //2011b
+  selection_ =TCut("HT>=600 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4")&&btagcut;
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
-  TString thisytitle = "";
   nbins = 20; low=200; high=600; thisytitle = "Events";
-  drawPlots(var,nbins,low,high,xtitle,thisytitle, "SBandSIG_MET_HT400_"+btagselection+modestring);
-
+  drawPlots(var,nbins,low,high,xtitle,thisytitle, "SBandSIG_MET_HT600_"+btagselection+modestring);
+  */
 
   /*
   
@@ -2614,24 +2665,27 @@ void AN2011( TString btagselection="ge1b",const int mode=1, bool logy=false  ) {
   drawPlots(var,nbins,low,high,xtitle,"Events", "SIGtight_Meff__"+btagselection+modestring);
 
   // ===== single lepton selection
-
+  */
+  
   // == MET for the electron sample
-  selection_ =TCut("MET>=150 &&cutHT==1 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && nElectrons==1 && nMuons==0 && minDeltaPhiN >= 4 && MT_Wlep>=0 && MT_Wlep<100")&&btagcut;
+  selection_ =TCut("MET>=200 && HT>=400 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && nElectrons==1 && nMuons==0 && minDeltaPhiN >= 4 && MT_Wlep>=0 && MT_Wlep<100")&&btagcut;
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
-  nbins = 15; low=150; high=450;
+  nbins = 15; low=200; high=600;
   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_1e0mu_"+btagselection+modestring);
-
+  /*
   //pT?
   var="eleet1"; xtitle="electron p_{T} [GeV]";
   nbins = 20; low=0; high=200;
   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_eleET_1e0mu_"+btagselection+modestring);
+  */
 
   // == MET for the muon sample
-  selection_ =TCut("MET>=150 &&cutHT==1 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && nElectrons==0 && nMuons==1 && minDeltaPhiN >= 4 && MT_Wlep>=0 && MT_Wlep<100")&&btagcut;
+  selection_ =TCut("MET>=200 && HT>=400 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && nElectrons==0 && nMuons==1 && minDeltaPhiN >= 4 && MT_Wlep>=0 && MT_Wlep<100")&&btagcut;
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
-  nbins = 15; low=150; high=450;
+  nbins = 15; low=200; high=600;
   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_0e1mu_"+btagselection+modestring);
 
+  /*
   var="muonpt1"; xtitle="muon p_{T} [GeV]";
   nbins = 20; low=0; high=200;
   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_muonpT_0e1mu_"+btagselection+modestring);
@@ -4293,19 +4347,19 @@ void studyPrescale_r(int ibtag = 4) {
   doRatioPlot(true);
   doData(true);
 
-  lumiScale_ = 19.23288; //customize lumiScale_
+  lumiScale_ = 30.15471; 
 
   //TString btagselection="antib";
   //TCut btagcut = "nbjetsSSVHPT==0";
   
-  TCut util = "pass_utilityHLT_HT300>=1 && weight<1000";
+  TCut util = "(pass_utilityHLT==1 || !isRealData) && weight<1000";
   TCut LSB = "MET>=50 && MET<100";
 
-  const  TCut ge1b =  "nbjetsSSVHPT >= 1";
-  const  TCut ge2b =  "nbjetsSSVHPT >= 2";
-  const  TCut eq1b =  "nbjetsSSVHPT == 1";
+  const  TCut ge1b =  "nbjetsCSVM >= 1";
+  const  TCut ge2b =  "nbjetsCSVM >= 2";
+  const  TCut eq1b =  "nbjetsCSVM == 1";
   const  TCut pretag =  "1";
-  const  TCut antitag = "nbjetsSSVHPT == 0";
+  const  TCut antitag = "nbjetsCSVM == 0";
  
   //  for (int ibtag = 4; ibtag<5; ibtag++) { 
   TCut theBTaggingCut = ge1b; TString btagstring = "ge1b";
@@ -4353,12 +4407,14 @@ void studyPrescale_r(int ibtag = 4) {
   //drawR("minDeltaPhiN", 4, "nGoodPV", nvarbins, varbins, "nGoodPV_"+btagstring);
   //dependence is seen here
   //
+  
+  /*
   //prescale vs physics check
   selection_ =TCut("HT>=350 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1")&&util&&LSB&&theBTaggingCut;
   drawSimple("nGoodPV",20,0,20,"nGoodPV.root", "nGoodPV_"+btagstring+"tag_prescale_data","data");
   selection_ =TCut("HT>=350 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && cutTrigger==1 && MET>=150")&&theBTaggingCut;
   drawSimple("nGoodPV",20,0,20,"nGoodPV.root", "nGoodPV_"+btagstring+"tag_physics_data","data");
-  
+  */
 
 
   //njets
@@ -4379,9 +4435,9 @@ void studyPrescale_r(int ibtag = 4) {
   //set dataOnly to true
   //should hack after first instance of thecanvas->cd(1); to add:  gPad->SetRightMargin(.1); gPad->Modified();
   doOverflowAddition(false);
-  //setPlotMaximum(0.5); setPlotMinimum(0);
-  selection_ =TCut("HT>=350 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1")&&util&&LSB&&theBTaggingCut;
-  //drawR("minDeltaPhiN", 4, "runNumber", 10, 160403.5, 167913.5, "runNumber_"+btagstring);
+  setPlotMaximum(0.5); setPlotMinimum(0);
+  selection_ =TCut("HT>=400 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1")&&util&&LSB&&theBTaggingCut;
+  drawR("minDeltaPhiN", 4, "runNumber", 30, 160403.5, 180000.5, "runNumber_"+btagstring);
   //const int nvarbins2 = 7;
   //const float varbins2[] = {160403.5, 161000, 162000, 163500, 165000,166000,167000,168000};
   //drawR("minDeltaPhiN", 4, "runNumber", nvarbins2, varbins2, "runNumber_"+btagstring);
@@ -4398,7 +4454,7 @@ void studyPrescale_r(int ibtag = 4) {
   //MET fit?
   doOverflowAddition(false);
   selection_ =TCut("HT>=350 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1")&&util&&theBTaggingCut;
-  drawR("minDeltaPhiN", 4, "MET", 1, 50, 100, "MET_"+btagstring);
+  //drawR("minDeltaPhiN", 4, "MET", 1, 50, 100, "MET_"+btagstring);
 
 }
  
