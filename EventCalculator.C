@@ -339,26 +339,37 @@ float EventCalculator::getPUWeight(reweight::LumiReWeighting lumiWeights) {
   if (noPUWeight()) return 1;
   
   float weight;
-  float sum_nvtx = 0;
+  //float sum_nvtx = 0;
   int npv = 0;
   for ( unsigned int i = 0; i<pileupsummaryinfo.size() ; i++) {
-    npv = pileupsummaryinfo.at(i).addpileupinfo_getPU_NumInteractions;
-    sum_nvtx += float(npv);
+    //npv = pileupsummaryinfo.at(i).addpileupinfo_getPU_NumInteractions;
+    //sum_nvtx += float(npv);
+
+    //consider only in-time PU
+    int BX = pileupsummaryinfo.at(i).addpileupinfo_getBunchCrossing;
+    if(BX == 0) { 
+      npv = pileupsummaryinfo.at(i).addpileupinfo_getPU_NumInteractions;
+      continue;
+    }
+
   }
       
-  float ave_nvtx = sum_nvtx/3.;
-  weight = lumiWeights.ITweight3BX( ave_nvtx );
+  //float ave_nvtx = sum_nvtx/3.;
+  //weight = lumiWeights.ITweight3BX( ave_nvtx );
+  weight = lumiWeights.ITweight3BX( npv );
 
 
   //following: https://twiki.cern.ch/twiki/bin/viewauth/CMS/PileupSystematicErrors
   reweight::PoissonMeanShifter PShift;
   if(thePUuncType_ == kPUuncDown){
     PShift = reweight::PoissonMeanShifter(-0.6);
-    weight = weight * PShift.ShiftWeight( ave_nvtx );
+    //weight = weight * PShift.ShiftWeight( ave_nvtx );
+    weight = weight * PShift.ShiftWeight( npv );
   }
   else if(thePUuncType_ == kPUuncUp){
     PShift = reweight::PoissonMeanShifter(0.6);
-    weight = weight * PShift.ShiftWeight( ave_nvtx );
+    //weight = weight * PShift.ShiftWeight( ave_nvtx );
+    weight = weight * PShift.ShiftWeight( npv );
   }
 
   return weight;
@@ -480,7 +491,7 @@ bool EventCalculator::passHLT() {
     else if (runnumber >= 170065 && runnumber <= 173211)  passTrig = (triggerresultshelper_HLT_HT300_MHT80_v2 > 0);
     else if (runnumber >= 173212 && runnumber <= 176544)  passTrig = (triggerresultshelper_HLT_HT300_MHT90_v2 > 0);
     else if (runnumber >= 176545 && runnumber <= 178410)  passTrig = (triggerresultshelper_HLT_HT350_MHT90_v1 > 0);
-    //else if (runnumber >= 178411) passTrig = (triggerresultshelper_HLT_HT350_MHT110_v3 > 0);//add when we reach 5E33
+    else if (runnumber >= 178411) passTrig = (triggerresultshelper_HLT_HT350_MHT110_v3 > 0);
 
     
     else {cout<<"No trigger assigned for run = "<<runnumber<<endl; assert(0);}
@@ -557,11 +568,11 @@ bool EventCalculator::passUtilityHLT(int &version, int &prescale) {
     version = 108;
     prescale = triggerresultshelper_HLT_HT350_v8_prs;
   }
-  //else if (runnumber >= 178411){ //add when we reach 5E33
-  //  passTrig = (triggerresultshelper_HLT_HT350_v11 > 0);
-  //  version = 111;
-  //  prescale = triggerresultshelper_HLT_HT350_v11_prs;
-  //}
+  else if (runnumber >= 178411){ 
+    passTrig = (triggerresultshelper_HLT_HT350_v11 > 0);
+    version = 111;
+    prescale = triggerresultshelper_HLT_HT350_v11_prs;
+  }
 
   return passTrig;
 }
@@ -2529,6 +2540,7 @@ TString EventCalculator::getSampleNameOutputString(){
 
   if (sampleName_.Contains("LM9_SUSY_sftsht_7TeV-pythia6") )                         return "LM9";
 
+
   /*
   if (sampleName_.Contains("LM13_SUSY_sftsht_7TeV-pythia6") )                        return "LM13";
   if (sampleName_.Contains("LM9_SUSY_sftsht_7TeV-pythia6") )                         return "LM9";
@@ -3020,13 +3032,13 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   if (theScanType_==kSMS) scanSMSngen = new TH2D("scanSMSngen","number of generated events",130,0,1300,120,0,1200); //mgluino,mLSP
 
   //initialize PU things
-  std::vector< float > TrueDist2011;
+  std::vector< float > ObsDist2011;
   std::vector< float > MCDist2011;
-  for( int i=0; i<25; ++i) {
-    TrueDist2011.push_back(pu::TrueDist2011_f[i]);
-    MCDist2011.push_back(pu::PoissonIntDist_f[i]);
+  for( int i=0; i<35; ++i) {
+    ObsDist2011.push_back(pu::ObsDist2011_f[i]);
+    MCDist2011.push_back(pu::PoissonOneXDist_f[i]);
   }  
-  reweight::LumiReWeighting LumiWeights = reweight::LumiReWeighting( MCDist2011, TrueDist2011 );
+  reweight::LumiReWeighting LumiWeights = reweight::LumiReWeighting( MCDist2011, ObsDist2011 );
 
   // ~~~~~~~ define tree branches ~~~~~~~
   reducedTree.Branch("weight",&weight,"weight/D");
@@ -3630,6 +3642,8 @@ unsigned int EventCalculator::getSeed(){
   if (sampleName_.Contains("ht_run2011b_promptrecov1_oct14") )                       return 4505;
   if (sampleName_.Contains("ht_run2011a_promptrecov4_try3") )                        return 4506;
 
+  if (sampleName_.Contains("TTJets_TuneZ2_7TeV-madgraph-tauola") )                   return 4499; // +/- 10 +/- 15 //CMS PAS TOP-11-001
+
   /*
   if (sampleName_.Contains("DYJetsToLL_TuneD6T_M-10To50_7TeV-madgraph-tauola") )     return 4357;
   if (sampleName_.Contains("DYJetsToLL_TuneD6T_M-50_7TeV-madgraph-tauola") )         return 4358;
@@ -3992,8 +4006,11 @@ void EventCalculator::cutflow(itreestream& stream, int maxevents=-1){
 void EventCalculator::sampleAnalyzer(itreestream& stream){
 
 
-  //TFile fout("histos_b.root","RECREATE");
+  //TFile fout("histos.root","RECREATE");
   
+  //TH1F * h_MCPU = new TH1F("h_MCPU","unweighted PU distribution",35,0,35);
+  //TH1F * h_MCPUr = new TH1F("h_MCPUr","reweighted PU distribution",35,0,35);
+
   ////check the MC efficiencies from Summer11 TTbar
   ////this histogram has bin edges {30,50,75,100,150,200,240,500,1000}
   //double bins[10] = {30,50,75,100,150,200,240,350,500,1000};
@@ -4012,13 +4029,22 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
 
   int nevents = stream.size();
 
-  float prob0,probge1,prob1,probge2,probge3;
+  //float prob0,probge1,prob1,probge2,probge3;
 
-  float n0b = 0, nge1b = 0, neq1b = 0, nge2b = 0, nge3b = 0;
+  //float n0b = 0, nge1b = 0, neq1b = 0, nge2b = 0, nge3b = 0;
   setCutScheme();
   setIgnoredCut("cut1b");
   setIgnoredCut("cut2b");
   setIgnoredCut("cut3b");
+
+  ////initialize PU things
+  //std::vector< float > ObsDist2011;
+  //std::vector< float > MCDist2011;
+  //for( int i=0; i<35; ++i) {
+  //  ObsDist2011.push_back(pu::ObsDist2011_f[i]);
+  //  MCDist2011.push_back(pu::PoissonOneXDist_f[i]);
+  //}  
+  //reweight::LumiReWeighting LumiWeights = reweight::LumiReWeighting( MCDist2011, ObsDist2011 );
 
 
   cout<<"Running..."<<endl;  
@@ -4038,16 +4064,42 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
 
     if(entry%10000==0) cout << "entry: " << entry << ", percent done=" << (int)(entry/(double)nevents*100.)<<  endl;
 
-    if(Cut()==1){
+    //if(Cut()==1){
       npass++;
 
+      //int lumi =  getLumiSection();
+      //int run = getRunNumber();
+      //if(run ==170722 && lumi >=110 && lumi<=287) return false;
 
-      calculateTagProb(prob0,probge1,prob1,probge2,probge3);
-      n0b += prob0; 
-      nge1b += probge1; 
-      neq1b += prob1; 
-      nge2b += probge2;      
-      nge3b += probge3;
+
+
+  /*
+      int npv = 0;
+      for ( unsigned int i = 0; i<pileupsummaryinfo.size() ; i++) {
+	//npv = pileupsummaryinfo.at(i).addpileupinfo_getPU_NumInteractions;
+	//sum_nvtx += float(npv);
+	
+	//consider only in-time PU
+	int BX = pileupsummaryinfo.at(i).addpileupinfo_getBunchCrossing;
+	if(BX == 0) { 
+	  npv = pileupsummaryinfo.at(i).addpileupinfo_getPU_NumInteractions;
+	  continue;
+	}
+	
+      }
+      //std::cout << "npv = " << npv << std::endl;
+      h_MCPU->Fill(npv);
+      //std::cout << "weight = " << getPUWeight(LumiWeights) << std::endl;
+      h_MCPUr->Fill(npv, getPUWeight(LumiWeights) );
+  */
+
+
+      //calculateTagProb(prob0,probge1,prob1,probge2,probge3);
+      //n0b += prob0; 
+      //nge1b += probge1; 
+      //neq1b += prob1; 
+      //nge2b += probge2;      
+      //nge3b += probge3;
 
       //for (unsigned int i = 0; i < myJetsPF->size(); ++i) {
       //	int flavor = myJetsPF->at(i).partonFlavour;
@@ -4089,7 +4141,7 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
 
 
 
-      }//end Cut
+      //}//end Cut
 
   }
 
@@ -4097,11 +4149,11 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
   cout<<endl;
   stopTimer(nevents);
 
-  std::cout << "n0b = " << n0b << std::endl;
-  std::cout << "nge1b = " << nge1b << std::endl;
-  std::cout << "neq1b = " << neq1b << std::endl;
-  std::cout << "nge2b = " << nge2b << std::endl;
-  std::cout << "nge3b = " << nge3b << std::endl;
+  //std::cout << "n0b = " << n0b << std::endl;
+  //std::cout << "nge1b = " << nge1b << std::endl;
+  //std::cout << "neq1b = " << neq1b << std::endl;
+  //std::cout << "nge2b = " << nge2b << std::endl;
+  //std::cout << "nge3b = " << nge3b << std::endl;
 
   //std::cout << "npass = " << npass << std::endl;
   //std::cout << "ntaggedjets = "   << ntaggedjets << std::endl;
@@ -4119,8 +4171,8 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
   ////TH1F *h_ltageff = (TH1F*) h_ltag->Clone();
   //TH1F * h_ltageff = new TH1F("h_ltageff","ltageff",9,bins);
   //h_ltageff->Divide(h_ltag,h_ljet,1,1,"B");
-  //
-  //
+  
+  
   //fout.Write();
   //fout.Close();
 
