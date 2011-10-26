@@ -3642,8 +3642,6 @@ unsigned int EventCalculator::getSeed(){
   if (sampleName_.Contains("ht_run2011b_promptrecov1_oct14") )                       return 4505;
   if (sampleName_.Contains("ht_run2011a_promptrecov4_try3") )                        return 4506;
 
-  if (sampleName_.Contains("TTJets_TuneZ2_7TeV-madgraph-tauola") )                   return 4499; // +/- 10 +/- 15 //CMS PAS TOP-11-001
-
   /*
   if (sampleName_.Contains("DYJetsToLL_TuneD6T_M-10To50_7TeV-madgraph-tauola") )     return 4357;
   if (sampleName_.Contains("DYJetsToLL_TuneD6T_M-50_7TeV-madgraph-tauola") )         return 4358;
