@@ -1332,7 +1332,7 @@ sampleType getSampleType(const TString & sample , const TString & planeOrPoint="
 }
 
 //if something is passed to varbins, then low and high will be ignored
-float drawSimple(const TString var, const int nbins, const float low, const float high, const TString filename, 
+float drawSimple(const TString var, const int nbins, const double low, const double high, const TString filename, 
 		 const TString histname , const TString samplename, const float* varbins=0) {
 
   loadSamples();
@@ -1373,6 +1373,7 @@ float drawSimple(const TString var, const int nbins, const float low, const floa
   if (addOverflow_)  addOverflowBin( hh ); //manipulates the TH1D
 
   //at this point i've got a histogram. what more could i want?
+  hinteractive = (TH1D*)hh->Clone("hinteractive");
   TFile fout(filename,"UPDATE");
   hh->Write();
   fout.Close();

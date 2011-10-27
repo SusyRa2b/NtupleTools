@@ -2352,7 +2352,8 @@ void AN2011_r() {
   //now try drawing it in data
   //careful -- there is a bug in the drawR() implementation
   //it doesn't work right unless you turn on doRatioPlot
-  drawTotalSM_=true;
+  drawTotalSM_=true; 
+  //usePUweight_=true;
   doRatioPlot(true);
   drawLegend(true);
   setPlotMinimum(0); setPlotMaximum(0.5);
@@ -2666,25 +2667,27 @@ void AN2011( TString btagselection="ge1b",const int mode=1, bool logy=false, boo
 
   // ===== single lepton selection
   */
-  
+  /*
   // == MET for the electron sample
   selection_ =TCut("MET>=200 && HT>=400 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && nElectrons==1 && nMuons==0 && minDeltaPhiN >= 4 && MT_Wlep>=0 && MT_Wlep<100")&&btagcut;
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
   nbins = 15; low=200; high=600;
   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_1e0mu_"+btagselection+modestring);
-  /*
+  */ 
+
+ /*
   //pT?
   var="eleet1"; xtitle="electron p_{T} [GeV]";
   nbins = 20; low=0; high=200;
   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_eleET_1e0mu_"+btagselection+modestring);
   */
-
+  /*
   // == MET for the muon sample
   selection_ =TCut("MET>=200 && HT>=400 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && nElectrons==0 && nMuons==1 && minDeltaPhiN >= 4 && MT_Wlep>=0 && MT_Wlep<100")&&btagcut;
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
   nbins = 15; low=200; high=600;
   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_0e1mu_"+btagselection+modestring);
-
+  */
   /*
   var="muonpt1"; xtitle="muon p_{T} [GeV]";
   nbins = 20; low=0; high=200;
@@ -2720,14 +2723,14 @@ void AN2011( TString btagselection="ge1b",const int mode=1, bool logy=false, boo
   nbins = 35; low=150; high=500;
   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_SL_HT500_morebins_"+btagselection+modestring);
 
-
+  */
   // == take a look at WJets
   //doesn't work with the fancy b tag SF code. And we're not using it anyway
-//   selection_ ="MET>=150 && cutHT==1 && cutPV==1 && cutTrigger==1 && njets==2 && (nElectrons==0 && nMuons==1) && minDeltaPhiN >= 4 && nbjetsSSVHPT==0";
-//   var="MT_Wlep"; xtitle="M_{T} [GeV]";
-//   nbins = 20; low=0; high=200;
-//   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MT_0e1mu_0b");
-
+  selection_ ="MET>=200 && cutHT==1 && cutPV==1 && cutTrigger==1 && njets==2 && (nElectrons==0 && nMuons==1) && minDeltaPhiN >= 4 && nbjetsCSVM==1";
+  var="MT_Wlep"; xtitle="M_{T} [GeV]";
+   nbins = 20; low=0; high=200;
+   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MT_0e1mu_eq1b");
+/*
   //MET
   selection_ =TCut("cutHT==1 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN < 4")&&btagcut;
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
@@ -4354,9 +4357,11 @@ void studyPrescale_r(int ibtag = 4) {
   
   TCut util = "(pass_utilityHLT==1 || !isRealData) && weight<1000";
   TCut LSB = "MET>=50 && MET<100";
+  TCut runN = "runNumber>=175832";
 
   const  TCut ge1b =  "nbjetsCSVM >= 1";
   const  TCut ge2b =  "nbjetsCSVM >= 2";
+  const  TCut ge3b =  "nbjetsCSVM >= 3";
   const  TCut eq1b =  "nbjetsCSVM == 1";
   const  TCut pretag =  "1";
   const  TCut antitag = "nbjetsCSVM == 0";
@@ -4381,6 +4386,11 @@ void studyPrescale_r(int ibtag = 4) {
     theBTaggingCut = antitag;
     btagstring = "antib";
   }
+  else if (ibtag==5) {
+    theBTaggingCut = ge3b;
+    btagstring = "ge3b";
+  }
+
   else assert(0);
   
   doOverflowAddition(false);
@@ -4400,7 +4410,7 @@ void studyPrescale_r(int ibtag = 4) {
   //nGoodPV
   doOverflowAddition(true);
   //setPlotMaximum(0.5); setPlotMinimum(0);
-  selection_ =TCut("HT>=350 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1")&&util&&LSB&&theBTaggingCut;
+  selection_ =TCut("HT>=400 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1")&&util&&LSB&&theBTaggingCut;
   //drawR("minDeltaPhiN", 4, "nGoodPV", 20, 0.5, 20.5, "nGoodPV_"+btagstring);
   //const int nvarbins=9;
   //const float varbins[]={0.5,1.5,2.5,3.5,4.5,5.5,6.5,8.5,11.5,16.5};
@@ -4408,13 +4418,13 @@ void studyPrescale_r(int ibtag = 4) {
   //dependence is seen here
   //
   
-  /*
+  
   //prescale vs physics check
-  selection_ =TCut("HT>=350 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1")&&util&&LSB&&theBTaggingCut;
-  drawSimple("nGoodPV",20,0,20,"nGoodPV.root", "nGoodPV_"+btagstring+"tag_prescale_data","data");
-  selection_ =TCut("HT>=350 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && cutTrigger==1 && MET>=150")&&theBTaggingCut;
-  drawSimple("nGoodPV",20,0,20,"nGoodPV.root", "nGoodPV_"+btagstring+"tag_physics_data","data");
-  */
+  selection_ =TCut("HT>=400 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1")&&util&&LSB&&theBTaggingCut&&runN;
+  drawSimple("nGoodPV",20,0.5,20.5,"nGoodPV.root", "nGoodPV_"+btagstring+"tag_prescale_data","data");
+  selection_ =TCut("HT>=400 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && cutTrigger==1 && MET>=200")&&theBTaggingCut&&runN;
+  drawSimple("nGoodPV",20,0.5,20.5,"nGoodPV.root", "nGoodPV_"+btagstring+"tag_physics_data","data");
+  
 
 
   //njets
@@ -4437,7 +4447,7 @@ void studyPrescale_r(int ibtag = 4) {
   doOverflowAddition(false);
   setPlotMaximum(0.5); setPlotMinimum(0);
   selection_ =TCut("HT>=400 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1")&&util&&LSB&&theBTaggingCut;
-  drawR("minDeltaPhiN", 4, "runNumber", 30, 160403.5, 180000.5, "runNumber_"+btagstring);
+  //drawR("minDeltaPhiN", 4, "runNumber", 30, 160403.5, 180000.5, "runNumber_"+btagstring);
   //const int nvarbins2 = 7;
   //const float varbins2[] = {160403.5, 161000, 162000, 163500, 165000,166000,167000,168000};
   //drawR("minDeltaPhiN", 4, "runNumber", nvarbins2, varbins2, "runNumber_"+btagstring);
@@ -4458,6 +4468,148 @@ void studyPrescale_r(int ibtag = 4) {
 
 }
  
+void LSB_PVreweight(){
+  loadSamples();
+  doOverflowAddition(true);
+  savePlots_=false;
+
+  TString histfilename = "dummy.root";
+  TFile fh(histfilename,"RECREATE");//will delete old root file if present 
+  fh.Close(); //going to open only when needed 
+
+  TCut HTcut = "HT>=600";
+
+  //PV binning
+  //int pvnbins=12;
+  //double pvlow = 0.5;
+  //double pvhigh = 12.5;
+  
+  int pvnbins=10;
+  float pvbins[]={0.5,2.5,3.5,4.5,5.5,6.5,7.5,8.5,10.5,11.5,12.5};//3.5/fb. used with allPrescale=false and 10 run bins. 10 pv bins.
+  //float pvbins[]=  {0.5,2.5,3.5,4.5,5.5,6.5,7.5,8.5,10.5,11.5,12.5,13.5,14.5,15.5}; //0.150042 +- 0.00443286. 13 pv bins.
+  //float pvbins[]=  {0.5,2.5,3.5,4.5,5.5,6.5,7.5,8.5,10.5,11.5,12.5,13.5,14.5,15.5,16.5,17.5};//0.150014 +- 0.00443216
+  //float pvbins[]=    {0.5,1.5,2.5,3.5,4.5,5.5,6.5,7.5,8.5,9.5,10.5,11.5,12.5,13.5,14.5,15.5,16.5,17.5,18.5};//0.149939 +- 0.00443764
+
+  
+  //make a plot to form the run number binning
+  selection_=TCut("HT>999");
+  drawSimple("runNumber",1, 160403.5, 180000.5,histfilename, "h_binningDummy", "data");
+  TH1D* hbinning = (TH1D*)hinteractive->Clone("hbinning");
+  TH1D* hpf =      (TH1D*)hinteractive->Clone("hpf");
+  TH1D* hpf_RW =   (TH1D*)hinteractive->Clone("hpf_RW");
+  hbinning->Reset(); //because only interested in binning
+  hpf     ->Reset();
+  hpf_RW  ->Reset();
+
+  //PV distribution in physics --> used for reweighting
+  selection_ =TCut("cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && cutTrigger==1 && MET>=200")&&HTcut;//note no mdp or btag
+  //  drawSimple("nGoodPV",pvnbins,pvlow,pvhigh,histfilename, "nGoodPV_physics_data","data");
+  drawSimple("nGoodPV",pvnbins,pvbins,histfilename, "nGoodPV_physics_data","data");
+  TH1D* hPVphysics = (TH1D*)hinteractive->Clone("hPVphysics");
+  for(int j=1; j<=hPVphysics->GetNbinsX();j++){
+    assert(hPVphysics->GetBinContent(j)>0);
+  }
+  bool allPrescale = true;
+  
+  for(int i=1; i<=hbinning->GetNbinsX(); i++){
+    double runlow = hbinning->GetBinLowEdge(i);
+    double runhigh = hbinning->GetBinLowEdge(i+1);
+    TString runCutString = "runNumber>=";
+    runCutString+=runlow;
+    runCutString+=" && runNumber<";
+    runCutString+=runhigh;
+    TCut runCut = TCut(runCutString);
+    
+    
+    if(allPrescale){
+      selection_ =TCut("cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=50 && MET<100 && nbjetsCSVM==0 && (pass_utilityHLT || !isRealData)")&&HTcut;//note no mdp or run cut
+    }
+    else{
+      selection_ =TCut("cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=50 && MET<100 && nbjetsCSVM==0 && (pass_utilityHLT || !isRealData)")&&HTcut&&runCut;//note no mdp
+    }
+    //drawSimple("nGoodPV",pvnbins,pvlow,pvhigh,histfilename, "nGoodPV_prescale_data","data");
+    drawSimple("nGoodPV",pvnbins,pvbins,histfilename, "nGoodPV_prescale_data","data");
+    TH1D* hPVprescale = (TH1D*)hinteractive->Clone("hPVprescale");
+    if(hPVprescale->Integral()<1.) continue;
+    
+    TH1D* hPVprescale_RW = (TH1D*)hPVphysics->Clone("hPVprescale_RW");
+    //hPVprescale_RW->Scale(hPVprescale->Integral()/hPVphysics->Integral());
+    //include error on scaling -- turns out to be negligible but leave it in anyway...
+    double s = hPVprescale->Integral()/hPVphysics->Integral();
+    double serr = jmt::errAoverB(hPVprescale->Integral(),jmt::errOnIntegral(hPVprescale),hPVphysics->Integral(),jmt::errOnIntegral(hPVphysics));
+    for(int j=1; j<=hPVprescale_RW->GetNbinsX(); j++){
+      assert(hPVprescale->GetBinContent(j)>0);
+      hPVprescale_RW->SetBinContent(j,s*hPVprescale_RW->GetBinContent(j));
+      double fillerror = sqrt(serr*serr+hPVprescale_RW->GetBinError(j)*hPVprescale_RW->GetBinError(j));
+      cout << j << " " << hPVprescale_RW->GetBinError(j) << " " << fillerror << endl;
+      hPVprescale_RW->SetBinError(j,fillerror);
+    }
+    
+    TH1D* hPV_W = (TH1D*)hPVphysics->Clone("hPV_W");
+    hPV_W->Reset();
+    hPV_W->Divide(hPVprescale_RW,hPVprescale); 
+    
+    
+    selection_ =TCut("cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=50 && MET<100 && nbjetsCSVM==0 && (pass_utilityHLT || !isRealData) && minDeltaPhiN>=4")&&HTcut&&runCut;
+    //drawSimple("nGoodPV",pvnbins,pvlow,pvhigh,histfilename, "nGoodPVPass_prescale_data","data");
+    drawSimple("nGoodPV",pvnbins,pvbins,histfilename, "nGoodPVPass_prescale_data","data");
+    TH1D* hPVprescalePass = (TH1D*)hinteractive->Clone("hPVprescalePass");
+    
+    selection_ =TCut("cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=50 && MET<100 && nbjetsCSVM==0 && (pass_utilityHLT || !isRealData) && minDeltaPhiN<4")&&HTcut&&runCut;
+    //drawSimple("nGoodPV",pvnbins,pvlow,pvhigh,histfilename, "nGoodPVFail_prescale_data","data");
+    drawSimple("nGoodPV",pvnbins,pvbins,histfilename, "nGoodPVFail_prescale_data","data");
+    TH1D* hPVprescaleFail = (TH1D*)hinteractive->Clone("hPVprescaleFail");
+
+    TH1D* hPVprescalePass_RW = (TH1D*)hPVprescalePass->Clone("hPVprescalePass_RW");
+    TH1D* hPVprescaleFail_RW = (TH1D*)hPVprescaleFail->Clone("hPVprescaleFail_RW");
+    hPVprescalePass_RW->Multiply(hPV_W);
+    hPVprescaleFail_RW->Multiply(hPV_W);
+    
+    double p, perr, f, ferr, pf, pferr;
+    double p_RW, p_RWerr, f_RW, f_RWerr, pf_RW, pf_RWerr;
+    p = hPVprescalePass->Integral();
+    perr = jmt::errOnIntegral(hPVprescalePass);
+    f = hPVprescaleFail->Integral();
+    ferr = jmt::errOnIntegral(hPVprescaleFail);
+    pf = p/f;
+    pferr = jmt::errAoverB(p,perr,f,ferr);
+    if(!(pf>0. && pf<1e9)){
+      pf=0;
+      pferr=0;
+    }
+    hpf->SetBinContent(i,pf);
+    hpf->SetBinError(i,pferr);
+    cout << "PF: " << pf << " +- " << pferr << endl;
+
+    p_RW = hPVprescalePass_RW->Integral();
+    p_RWerr = jmt::errOnIntegral(hPVprescalePass_RW);
+    f_RW = hPVprescaleFail_RW->Integral();
+    f_RWerr = jmt::errOnIntegral(hPVprescaleFail_RW);
+    pf_RW = p_RW/f_RW;
+    pf_RWerr = jmt::errAoverB(p_RW, p_RWerr, f_RW, f_RWerr);
+    if(!(pf_RW>0. && pf_RW<1e9)){
+      pf_RW=0;
+      pf_RWerr=0;
+    }
+    hpf_RW->SetBinContent(i,pf_RW);
+    hpf_RW->SetBinError(i,pf_RWerr);
+    cout << "PF_RW: " << pf_RW << " +- " << pf_RWerr << endl;
+  }
+  
+  hpf_RW->SetLineColor(kRed);
+  hpf_RW->SetMarkerColor(kRed);
+  hpf->GetXaxis()->SetTitle("runNumber");
+  hpf->GetYaxis()->SetTitle("N pass/N fail");
+  hpf->Draw("e1");
+  hpf_RW->Draw("e1 same");
+
+  TFile fh2(histfilename,"UPDATE");
+  hpf_RW->Write();
+  hpf->Write();
+  fh2.Close(); 
+
+}
+
 void lowMETcount(){
   loadSamples();
   doOverflowAddition(false);
