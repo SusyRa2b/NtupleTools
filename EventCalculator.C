@@ -341,6 +341,8 @@ float EventCalculator::getPUWeight(reweight::LumiReWeighting lumiWeights) {
   float weight;
   //float sum_nvtx = 0;
   int npv = 0;
+  int nm1 = -1; int n0 = -1; int np1 = -1;
+
   for ( unsigned int i = 0; i<pileupsummaryinfo.size() ; i++) {
     //npv = pileupsummaryinfo.at(i).addpileupinfo_getPU_NumInteractions;
     //sum_nvtx += float(npv);
@@ -349,14 +351,28 @@ float EventCalculator::getPUWeight(reweight::LumiReWeighting lumiWeights) {
     int BX = pileupsummaryinfo.at(i).addpileupinfo_getBunchCrossing;
     if(BX == 0) { 
       npv = pileupsummaryinfo.at(i).addpileupinfo_getPU_NumInteractions;
-      continue;
+    }
+
+    if(BX == -1) { 
+      nm1 = pileupsummaryinfo.at(i).addpileupinfo_getPU_NumInteractions;
+    }
+    else if(BX == 0) {
+      n0 = pileupsummaryinfo.at(i).addpileupinfo_getPU_NumInteractions;
+    }
+    else if(BX == 1) {
+      np1 = pileupsummaryinfo.at(i).addpileupinfo_getPU_NumInteractions;
     }
 
   }
       
   //float ave_nvtx = sum_nvtx/3.;
   //weight = lumiWeights.ITweight3BX( ave_nvtx );
-  weight = lumiWeights.ITweight3BX( npv );
+
+  //weight = lumiWeights.ITweight( npv );
+
+  //3d reweighting
+  weight = lumiWeights.weight3D( nm1,n0,np1);
+
 
 
   //following: https://twiki.cern.ch/twiki/bin/viewauth/CMS/PileupSystematicErrors
@@ -2540,7 +2556,6 @@ TString EventCalculator::getSampleNameOutputString(){
 
   if (sampleName_.Contains("LM9_SUSY_sftsht_7TeV-pythia6") )                         return "LM9";
 
-
   /*
   if (sampleName_.Contains("LM13_SUSY_sftsht_7TeV-pythia6") )                        return "LM13";
   if (sampleName_.Contains("LM9_SUSY_sftsht_7TeV-pythia6") )                         return "LM9";
@@ -3032,13 +3047,14 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   if (theScanType_==kSMS) scanSMSngen = new TH2D("scanSMSngen","number of generated events",130,0,1300,120,0,1200); //mgluino,mLSP
 
   //initialize PU things
-  std::vector< float > ObsDist2011;
+  std::vector< float > TrueDist2011;
   std::vector< float > MCDist2011;
   for( int i=0; i<35; ++i) {
-    ObsDist2011.push_back(pu::ObsDist2011_f[i]);
-    MCDist2011.push_back(pu::PoissonOneXDist_f[i]);
+    TrueDist2011.push_back(pu::TrueDist2011_f[i]);
+    MCDist2011.push_back(pu::probdistFlat10_f[i]);
   }  
-  reweight::LumiReWeighting LumiWeights = reweight::LumiReWeighting( MCDist2011, ObsDist2011 );
+  reweight::LumiReWeighting LumiWeights = reweight::LumiReWeighting( MCDist2011, TrueDist2011 );
+  LumiWeights.weight3D_init("Weight3D.root");
 
   // ~~~~~~~ define tree branches ~~~~~~~
   reducedTree.Branch("weight",&weight,"weight/D");
@@ -4004,10 +4020,10 @@ void EventCalculator::cutflow(itreestream& stream, int maxevents=-1){
 void EventCalculator::sampleAnalyzer(itreestream& stream){
 
 
-  //TFile fout("histos.root","RECREATE");
+  TFile fout("histos.root","RECREATE");
   
-  //TH1F * h_MCPU = new TH1F("h_MCPU","unweighted PU distribution",35,0,35);
-  //TH1F * h_MCPUr = new TH1F("h_MCPUr","reweighted PU distribution",35,0,35);
+  TH1F * h_MCPU = new TH1F("h_MCPU","unweighted PU distribution",35,0.5,34.5);
+  TH1F * h_MCPUr = new TH1F("h_MCPUr","reweighted PU distribution",35,-0.5,34.5);
 
   ////check the MC efficiencies from Summer11 TTbar
   ////this histogram has bin edges {30,50,75,100,150,200,240,500,1000}
@@ -4044,6 +4060,16 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
   //}  
   //reweight::LumiReWeighting LumiWeights = reweight::LumiReWeighting( MCDist2011, ObsDist2011 );
 
+  //initialize PU things
+  std::vector< float > TrueDist2011;
+  std::vector< float > MCDist2011;
+  for( int i=0; i<35; ++i) {
+    TrueDist2011.push_back(pu::TrueDist2011_f[i]);
+    MCDist2011.push_back(pu::probdistFlat10_f[i]);
+  }  
+  reweight::LumiReWeighting LumiWeights = reweight::LumiReWeighting( MCDist2011, TrueDist2011 );
+  //LumiWeights.weight3D_init();
+  LumiWeights.weight3D_init("Weight3D.root");
 
   cout<<"Running..."<<endl;  
   int npass = 0;
@@ -4062,6 +4088,23 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
 
     if(entry%10000==0) cout << "entry: " << entry << ", percent done=" << (int)(entry/(double)nevents*100.)<<  endl;
 
+    //std::cout << " HT = " << getHT() << std::endl;
+    //
+    //for (unsigned int i = 0; i < myJetsPF->size(); ++i) {
+    //  std::cout << "jet " << i << " pt = " << getJetPt(i)<< ", eta = " << myJetsPF->at(i).eta << ", passID = " << jetPassLooseID(i) <<std::endl;
+    //
+    //  std::cout << "\tneutralHadEnFrac (should be <0.99) = " << myJetsPF->at(i).neutralHadronEnergyFraction << std::endl;
+    //  std::cout << "\tneutralEmEnFrac  (should be <0.99) = " << myJetsPF->at(i).neutralEmEnergyFraction << std::endl;
+    //  std::cout << "\tnumDaughters (should be >1)        = " << myJetsPF->at(i).numberOfDaughters << std::endl;
+    //  std::cout << "\tchargedHadEnFrac (should be >0)    = " << myJetsPF->at(i).chargedHadronEnergyFraction << std::endl;
+    //  std::cout << "\tchargedEmEnFrac  (should be <0.99) = " << myJetsPF->at(i).chargedEmEnergyFraction << std::endl;
+    //  std::cout << "\tchargedMult (should be >0)         = " << myJetsPF->at(i).chargedMultiplicity << std::endl;
+    // 
+    //
+    //
+    //}
+
+
     //if(Cut()==1){
       npass++;
 
@@ -4071,7 +4114,7 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
 
 
 
-  /*
+  
       int npv = 0;
       for ( unsigned int i = 0; i<pileupsummaryinfo.size() ; i++) {
 	//npv = pileupsummaryinfo.at(i).addpileupinfo_getPU_NumInteractions;
@@ -4089,7 +4132,7 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
       h_MCPU->Fill(npv);
       //std::cout << "weight = " << getPUWeight(LumiWeights) << std::endl;
       h_MCPUr->Fill(npv, getPUWeight(LumiWeights) );
-  */
+  
 
 
       //calculateTagProb(prob0,probge1,prob1,probge2,probge3);
@@ -4171,8 +4214,8 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
   //h_ltageff->Divide(h_ltag,h_ljet,1,1,"B");
   
   
-  //fout.Write();
-  //fout.Close();
+  fout.Write();
+  fout.Close();
 
 
   return;

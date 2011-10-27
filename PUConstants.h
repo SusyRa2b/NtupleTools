@@ -8,6 +8,57 @@ namespace pu {
   this data distribution is an hadd of the following histograms:  
   (all in /afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions11/7TeV/PileUp/)
 
+  Cert_160404-163869_7TeV_May10ReReco_Collisions11_JSON_v3.pileupTruth_v2.root
+  Cert_165088-167913_7TeV_PromptReco_JSON.pileupTruth_v2.root
+  Cert_170249-172619_7TeV_ReReco5Aug_Collisions11_JSON_v2.pileupTruth_v2.root
+  Cert_172620-173692_PromptReco_JSON.pileupTruth_v2.root
+  Cert_175832-177515_PromptReco_JSON.pileupTruth_v2.root
+  Cert_177718_178078_7TeV_PromptReco_Collisons11_JSON.pileupTruth_v2.root
+
+  */
+
+  float TrueDist2011_f[35] = {
+    0,
+    279840,
+    5.7742e+06,
+    5.06386e+07,
+    2.68772e+08,
+    5.15883e+08,
+    5.55097e+08,
+    4.69327e+08,
+    3.7975e+08,
+    3.30774e+08,
+    2.69479e+08,
+    2.23542e+08,
+    1.88293e+08,
+    1.46805e+08,
+    9.44437e+07,
+    4.60317e+07,
+    1.69231e+07,
+    5.18161e+06,
+    1.42805e+06,
+    437008,
+    102694,
+    6516.2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  };
+
+  /*
+  this data distribution is an hadd of the following histograms:  
+  (all in /afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions11/7TeV/PileUp/)
+
   Cert_160404-163869_7TeV_May10ReReco_Collisions11_JSON_v3.pileup_v2.root
   Cert_165088-167913_7TeV_PromptReco_JSON.pileup_v2.root
   Cert_170249-172619_7TeV_ReReco5Aug_Collisions11_JSON_v2.pileup_v2.root
@@ -16,6 +67,7 @@ namespace pu {
   Cert_177718_178078_7TeV_PromptReco_Collisons11_JSON.pileup_v2.root
 
   */
+
   float ObsDist2011_f[35] = {
     1.32542e+07,
     5.77956e+07,
@@ -55,7 +107,41 @@ namespace pu {
   };
 
 
-  // Summer11 PU_S4, distribution obtained by only looking at the in-time crossing.  This is the "spike+smear" distribution, RECOMMENDED FOR REWEIGHTING.
+  // Flat10+Tail distribution taken directly from MixingModule input:  
+  //(Can be used for Spring11 and Summer11 if you don't worry about small shifts in the mean) 
+  //SHOULD be used for 3-D Reweighting, as this is the "true" input for all Summer11 samples.
+
+  Double_t probdistFlat10_f[25] = {
+    0.0698146584,
+    0.0698146584,
+    0.0698146584,
+    0.0698146584,
+    0.0698146584,
+    0.0698146584,
+    0.0698146584,
+    0.0698146584,
+    0.0698146584,
+    0.0698146584,
+    0.0698146584,
+    0.0630151648,
+    0.0526654164,
+    0.0402754482,
+    0.0292988928,
+    0.0194384503,
+    0.0122016783,
+    0.007207042,
+    0.004003637,
+    0.0020278322,
+    0.0010739954,
+    0.0004595759,
+    0.0002229748,
+    0.0001028162,
+    4.58337152809607E-05
+  };
+
+
+  // Summer11 PU_S4, distribution obtained by only looking at the in-time crossing.  This is the "spike+smear" distribution
+  // RECOMMENDED FOR REWEIGHTING (if ignoring out-of-time PU)
   float PoissonOneXDist_f[35] = {
     1.45346E-01,
     6.42802E-02,
