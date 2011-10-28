@@ -3055,7 +3055,7 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
     DataDist2011.push_back(pu::ObsDist2011_f[i]);
     MCDist2011.push_back(pu::PoissonOneXDist_f[i]);
     //for 3dPU reweighting 
-    //TrueDist2011.push_back(pu::TrueDist2011_f[i]);
+    //DataDist2011.push_back(pu::TrueDist2011_f[i]);
     //MCDist2011.push_back(pu::probdistFlat10_f[i]);
   }  
   reweight::LumiReWeighting LumiWeights = reweight::LumiReWeighting( MCDist2011, DataDist2011 );
@@ -4073,7 +4073,7 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
     DataDist2011.push_back(pu::ObsDist2011_f[i]);
     MCDist2011.push_back(pu::PoissonOneXDist_f[i]);
     //for 3dPU reweighting 
-    //TrueDist2011.push_back(pu::TrueDist2011_f[i]);
+    //DataDist2011.push_back(pu::TrueDist2011_f[i]);
     //MCDist2011.push_back(pu::probdistFlat10_f[i]);
   }  
   reweight::LumiReWeighting LumiWeights = reweight::LumiReWeighting( MCDist2011, DataDist2011 );
