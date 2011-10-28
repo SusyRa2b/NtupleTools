@@ -368,10 +368,11 @@ float EventCalculator::getPUWeight(reweight::LumiReWeighting lumiWeights) {
   //float ave_nvtx = sum_nvtx/3.;
   //weight = lumiWeights.ITweight3BX( ave_nvtx );
 
-  //weight = lumiWeights.ITweight( npv );
+  //in-time PU only
+  weight = lumiWeights.ITweight( npv );
 
   //3d reweighting
-  weight = lumiWeights.weight3D( nm1,n0,np1);
+  //weight = lumiWeights.weight3D( nm1,n0,np1);
 
 
 
@@ -3047,14 +3048,18 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   if (theScanType_==kSMS) scanSMSngen = new TH2D("scanSMSngen","number of generated events",130,0,1300,120,0,1200); //mgluino,mLSP
 
   //initialize PU things
-  std::vector< float > TrueDist2011;
+  std::vector< float > DataDist2011;
   std::vector< float > MCDist2011;
   for( int i=0; i<35; ++i) {
-    TrueDist2011.push_back(pu::TrueDist2011_f[i]);
-    MCDist2011.push_back(pu::probdistFlat10_f[i]);
+    //for PU_S3 (only in-time)
+    DataDist2011.push_back(pu::ObsDist2011_f[i]);
+    MCDist2011.push_back(pu::PoissonOneXDist_f[i]);
+    //for 3dPU reweighting 
+    //TrueDist2011.push_back(pu::TrueDist2011_f[i]);
+    //MCDist2011.push_back(pu::probdistFlat10_f[i]);
   }  
-  reweight::LumiReWeighting LumiWeights = reweight::LumiReWeighting( MCDist2011, TrueDist2011 );
-  LumiWeights.weight3D_init("Weight3D.root");
+  reweight::LumiReWeighting LumiWeights = reweight::LumiReWeighting( MCDist2011, DataDist2011 );
+  //LumiWeights.weight3D_init("Weight3D.root");
 
   // ~~~~~~~ define tree branches ~~~~~~~
   reducedTree.Branch("weight",&weight,"weight/D");
@@ -4061,15 +4066,19 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
   //reweight::LumiReWeighting LumiWeights = reweight::LumiReWeighting( MCDist2011, ObsDist2011 );
 
   //initialize PU things
-  std::vector< float > TrueDist2011;
+  std::vector< float > DataDist2011;
   std::vector< float > MCDist2011;
   for( int i=0; i<35; ++i) {
-    TrueDist2011.push_back(pu::TrueDist2011_f[i]);
-    MCDist2011.push_back(pu::probdistFlat10_f[i]);
+    //for PU_S3 (only in-time)
+    DataDist2011.push_back(pu::ObsDist2011_f[i]);
+    MCDist2011.push_back(pu::PoissonOneXDist_f[i]);
+    //for 3dPU reweighting 
+    //TrueDist2011.push_back(pu::TrueDist2011_f[i]);
+    //MCDist2011.push_back(pu::probdistFlat10_f[i]);
   }  
-  reweight::LumiReWeighting LumiWeights = reweight::LumiReWeighting( MCDist2011, TrueDist2011 );
+  reweight::LumiReWeighting LumiWeights = reweight::LumiReWeighting( MCDist2011, DataDist2011 );
   //LumiWeights.weight3D_init();
-  LumiWeights.weight3D_init("Weight3D.root");
+  //LumiWeights.weight3D_init("Weight3D.root");
 
   cout<<"Running..."<<endl;  
   int npass = 0;
