@@ -20,8 +20,9 @@ sub trim($)
 
 ######################################################
 #change this!
-#my $inputdir = 'galank/RA2b2011v1/V00-02-33/';
-my $inputdir = 'wteo/RA2b2011v1/V00-02-35/';
+#my $inputdir = 'galank/SUSY/RA2b2011v1/V00-02-33/';
+my $inputdir = 'kreis/RA2b2011v1/V00-02-33/';
+#my $inputdir = 'wteo/RA2b2011v1/V00-02-35/';
 ######################################################
 
 
