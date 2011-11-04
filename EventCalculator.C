@@ -38,7 +38,9 @@ EventCalculator::EventCalculator(const TString & sampleName, jetType theJetType,
   myJetsPF( &jet2),    //selectedPatJetsPF
   myJetsPFhelper( &jethelper2),
   myElectronsPF( &electron1),
+  myElectronsPFhelper( &electronhelper1),
   myMuonsPF(&muon1),
+  myMuonsPFhelper(&muonhelper1),
   myTausPF(&tau),
   myMETPF(&met1),
   myVertex(&vertex),
@@ -369,10 +371,10 @@ float EventCalculator::getPUWeight(reweight::LumiReWeighting lumiWeights) {
   //weight = lumiWeights.ITweight3BX( ave_nvtx );
 
   //in-time PU only
-  weight = lumiWeights.ITweight( npv );
+  //weight = lumiWeights.ITweight( npv );
 
   //3d reweighting
-  //weight = lumiWeights.weight3D( nm1,n0,np1);
+  weight = lumiWeights.weight3D( nm1,n0,np1);
 
 
 
@@ -398,9 +400,11 @@ bool EventCalculator::isGoodMuon(const unsigned int imuon) {
   if(myMuonsPF->at(imuon).pt >= 10
      && fabs(myMuonsPF->at(imuon).eta)<2.4
      && myMuonsPF->at(imuon).GlobalMuonPromptTight == 1
+     && myMuonsPF->at(imuon).isTrackerMuon == 1 
      && myMuonsPF->at(imuon).innerTrack_numberOfValidHits >=11
      && myMuonsPF->at(imuon).track_hitPattern_numberOfValidPixelHits >= 1
-     && fabs(myMuonsPF->at(imuon).dB) < 0.02
+     //&& fabs(myMuonsPF->at(imuon).dB) < 0.02
+     && fabs(myMuonsPFhelper->at(imuon).dxywrtBeamSpot) < 0.02
      && fabs(myMuonsPF->at(imuon).vz - myVertex->at(0).z ) <1
      && (myMuonsPF->at(imuon).chargedHadronIso 
 	 + myMuonsPF->at(imuon).photonIso 
@@ -440,7 +444,8 @@ bool EventCalculator::isGoodElectron(const unsigned int iele) {
      && !(fabs(myElectronsPF->at(iele).superCluster_eta) > 1.4442 
 	  && fabs(myElectronsPF->at(iele).superCluster_eta) < 1.566)
      && myElectronsPF->at(iele).gsfTrack_trackerExpectedHitsInner_numberOfLostHits <= 1
-     && fabs(myElectronsPF->at(iele).dB) < 0.02
+     //&& fabs(myElectronsPF->at(iele).dB) < 0.02
+     && fabs(myElectronsPFhelper->at(iele).dxywrtBeamSpot) < 0.02
      && fabs(myElectronsPF->at(iele).vz - myVertex->at(0).z ) <1
      && (myElectronsPF->at(iele).chargedHadronIso 
 	 + myElectronsPF->at(iele).photonIso 
@@ -3052,14 +3057,14 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   std::vector< float > MCDist2011;
   for( int i=0; i<35; ++i) {
     //for PU_S3 (only in-time)
-    DataDist2011.push_back(pu::ObsDist2011_f[i]);
-    MCDist2011.push_back(pu::PoissonOneXDist_f[i]);
+    //DataDist2011.push_back(pu::ObsDist2011_f[i]);
+    //MCDist2011.push_back(pu::PoissonOneXDist_f[i]);
     //for 3dPU reweighting 
-    //DataDist2011.push_back(pu::TrueDist2011_f[i]);
-    //MCDist2011.push_back(pu::probdistFlat10_f[i]);
+    DataDist2011.push_back(pu::TrueDist2011_f[i]);
+    MCDist2011.push_back(pu::probdistFlat10_f[i]);
   }  
   reweight::LumiReWeighting LumiWeights = reweight::LumiReWeighting( MCDist2011, DataDist2011 );
-  //LumiWeights.weight3D_init("Weight3D.root");
+  LumiWeights.weight3D_init("Weight3D.root");
 
   // ~~~~~~~ define tree branches ~~~~~~~
   reducedTree.Branch("weight",&weight,"weight/D");
@@ -4070,15 +4075,15 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
   std::vector< float > MCDist2011;
   for( int i=0; i<35; ++i) {
     //for PU_S3 (only in-time)
-    DataDist2011.push_back(pu::ObsDist2011_f[i]);
-    MCDist2011.push_back(pu::PoissonOneXDist_f[i]);
+    //DataDist2011.push_back(pu::ObsDist2011_f[i]);
+    //MCDist2011.push_back(pu::PoissonOneXDist_f[i]);
     //for 3dPU reweighting 
-    //DataDist2011.push_back(pu::TrueDist2011_f[i]);
-    //MCDist2011.push_back(pu::probdistFlat10_f[i]);
+    DataDist2011.push_back(pu::TrueDist2011_f[i]);
+    MCDist2011.push_back(pu::probdistFlat10_f[i]);
   }  
   reweight::LumiReWeighting LumiWeights = reweight::LumiReWeighting( MCDist2011, DataDist2011 );
-  //LumiWeights.weight3D_init();
-  //LumiWeights.weight3D_init("Weight3D.root");
+  LumiWeights.weight3D_init();
+  LumiWeights.weight3D_init("Weight3D.root");
 
   cout<<"Running..."<<endl;  
   int npass = 0;
