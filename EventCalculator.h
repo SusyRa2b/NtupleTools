@@ -237,7 +237,9 @@ private:
   std::vector<jethelper2_s> * myJetsPFhelper;
   
   std::vector<electron1_s> * myElectronsPF;
+  std::vector<electronhelper1_s> * myElectronsPFhelper;
   std::vector<muon1_s> * myMuonsPF;
+  std::vector<muonhelper1_s> * myMuonsPFhelper;
   std::vector<tau_s> * myTausPF;
   std::vector<met1_s> * myMETPF;
   std::vector<vertex_s> * myVertex;
