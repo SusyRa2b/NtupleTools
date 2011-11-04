@@ -825,6 +825,7 @@ float EventCalculator::getMHTphi() {
 
 //This is a function which is temporarily hard-coded to remove data that has become uncertified
 bool EventCalculator::passLumiMask(){
+  if( !isSampleRealData()) return true;
 
   const int lumi =  getLumiSection();
   const int run = getRunNumber();
