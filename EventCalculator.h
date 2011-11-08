@@ -57,8 +57,10 @@ public:
   void cutflow(itreestream& stream, int maxevents);
   void sampleAnalyzer(itreestream& stream);
 
-  // functions that calculate stuff
+  //load external list of event ID's
+  void loadEventList(std::vector<int> &vrun, std::vector<int> &vlumi, std::vector<int> &vevent);
 
+  // functions that calculate stuff
   double getWeight(Long64_t nentries);
   bool noPUWeight();
   float getPUWeight(reweight::LumiReWeighting lumiWeights);
