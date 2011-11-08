@@ -2969,6 +2969,8 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   bool	ra2ecaltpFilter;
   bool	scrapingvetoFilter;
   bool	trackingfailureFilter;
+  bool	trackingfailureFilterPFLOW;
+  bool  recovrechitFilter;
   //  bool	ra2ecalbeFilter;
 
   bool passCleaning;
@@ -3113,6 +3115,8 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   reducedTree.Branch("ra2ecaltpFilter",&ra2ecaltpFilter,"ra2ecaltpFilter/O");
   reducedTree.Branch("scrapingvetoFilter",&scrapingvetoFilter,"scrapingvetoFilter/O");
   reducedTree.Branch("trackingfailureFilter",&trackingfailureFilter,"trackingfailureFilter/O");
+  reducedTree.Branch("trackingfailureFilterPFLOW",&trackingfailureFilterPFLOW,"trackingfailureFilterPFLOW/O");
+  reducedTree.Branch("recovrechitFilter",&recovrechitFilter,"recovrechitFilter/0");
   //  reducedTree.Branch("ra2ecalbeFilter",&ra2ecalbeFilter,"ra2ecalbeFilter/O");
   reducedTree.Branch("passCleaning",&passCleaning,"passCleaning/O");
   reducedTree.Branch("PBNRcode",&PBNRcode,"PBNRcode/I");
@@ -3568,10 +3572,12 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
       ra2ecaltpFilter = jmt::doubleToBool(triggerresultshelper1_ra2ecaltpFilter) ;
       scrapingvetoFilter = jmt::doubleToBool(triggerresultshelper1_scrapingvetoFilter) ;
       trackingfailureFilter = jmt::doubleToBool(triggerresultshelper1_trackingfailureFilter) ;
+      trackingfailureFilterPFLOW = jmt::doubleToBool(triggerresultshelper1_trackingfailureFilterPFLOW) ;
+      recovrechitFilter = jmt::doubleToBool(triggerresultshelper1_recovrechitFilter) ;
       //      ra2ecalbeFilter = passBEFilter() ;
  
       //exclude ra2ecalbefilter for now
-      passCleaning = csctighthaloFilter && eenoiseFilter && greedymuonFilter && hbhenoiseFilter && inconsistentmuonFilter && ra2ecaltpFilter && scrapingvetoFilter && trackingfailureFilter;
+      passCleaning = csctighthaloFilter && eenoiseFilter && greedymuonFilter && hbhenoiseFilter && inconsistentmuonFilter && ra2ecaltpFilter && scrapingvetoFilter && trackingfailureFilterPFLOW;
 
       PBNRcode = doPBNR();
 
@@ -4028,6 +4034,46 @@ void EventCalculator::cutflow(itreestream& stream, int maxevents=-1){
 }
 
 
+
+
+void EventCalculator::loadEventList(std::vector<int> &vrun, std::vector<int> &vlumi, std::vector<int> &vevent){
+
+  std::ifstream inFile;
+  inFile.open("eventlist_ht350_r178866_SUM.txt");        
+
+  if(!inFile) {std::cout << "ERROR: can't open event list" << std::endl;  assert(0);}
+  while(!inFile.eof()) {
+    std::string line;
+    getline(inFile,line);
+    std::string field;
+    std::stringstream ss( line );
+    //uint array[3];                                                          
+
+    int value;
+    uint i = 0;
+    while (getline( ss, field, ':')){
+      std::stringstream fs(field);
+      value = 0;
+      fs >> value;
+      //fs >> array[i] ;                                                                       
+
+      if(i==0)vrun.push_back(value);
+      else if (i==1) vlumi.push_back(value);
+      else vevent.push_back(value);
+      i++;
+    }
+    //std::cout << array[0] << ":" << array[1] << ":" << array[2] << std::endl; 
+    //if(event.id().run() == array[0] && event.id().luminosityBlock() == array[1] && event.id().event() == array[2]){ 
+    //  eventPassTrigger = true; break;
+    //}                                                                        
+  }
+  inFile.close();
+
+
+}
+
+
+
 void EventCalculator::sampleAnalyzer(itreestream& stream){
 
 
@@ -4035,6 +4081,9 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
   
   TH1F * h_MCPU = new TH1F("h_MCPU","unweighted PU distribution",35,0.5,34.5);
   TH1F * h_MCPUr = new TH1F("h_MCPUr","reweighted PU distribution",35,-0.5,34.5);
+
+  //TH1F * h_ht = new TH1F("h_ht","HT",1000,0,1000);
+  //TH1F * h_ht_trig = new TH1F("h_ht_trig","HT",1000,0,1000);
 
   ////check the MC efficiencies from Summer11 TTbar
   ////this histogram has bin edges {30,50,75,100,150,200,240,500,1000}
@@ -4052,6 +4101,11 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
   //h_ctag->Sumw2();
   //h_ltag->Sumw2();
 
+  std::vector<int> vrun,vlumi,vevent;
+  loadEventList(vrun, vlumi, vevent);
+
+
+
   int nevents = stream.size();
 
   //float prob0,probge1,prob1,probge2,probge3;
@@ -4061,15 +4115,6 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
   setIgnoredCut("cut1b");
   setIgnoredCut("cut2b");
   setIgnoredCut("cut3b");
-
-  ////initialize PU things
-  //std::vector< float > ObsDist2011;
-  //std::vector< float > MCDist2011;
-  //for( int i=0; i<35; ++i) {
-  //  ObsDist2011.push_back(pu::ObsDist2011_f[i]);
-  //  MCDist2011.push_back(pu::PoissonOneXDist_f[i]);
-  //}  
-  //reweight::LumiReWeighting LumiWeights = reweight::LumiReWeighting( MCDist2011, ObsDist2011 );
 
   //initialize PU things
   std::vector< float > DataDist2011;
@@ -4084,7 +4129,7 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
   }  
   reweight::LumiReWeighting LumiWeights = reweight::LumiReWeighting( MCDist2011, DataDist2011 );
   LumiWeights.weight3D_init();
-  LumiWeights.weight3D_init("Weight3D.root");
+  //LumiWeights.weight3D_init("Weight3D.root");
 
   cout<<"Running..."<<endl;  
   int npass = 0;
@@ -4121,6 +4166,8 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
 
 
     //if(Cut()==1){
+
+
       npass++;
 
       //int lumi =  getLumiSection();
@@ -4128,8 +4175,30 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
       //if(run ==170722 && lumi >=110 && lumi<=287) return false;
 
 
+      //h_ht->Fill(getHT());
+      //
+      //int lumi =  getLumiSection();
+      //int run = getRunNumber();
+      //int event = getEventNumber();
+      //
+      //bool passTrig = false;
+      //for(uint i = 0; i< vevent.size(); ++i){
+      //	if( event == vevent.at(i)){
+      //	  if( lumi == vlumi.at(i)){
+      //	    if( run == vrun.at(i)){
+      //	      passTrig = true;
+      //	      break;
+      //	    }
+      //	  }
+      //	}
+      //}
+      //if(passTrig)
+      //	h_ht_trig->Fill(getHT());
 
-  
+
+
+
+        
       int npv = 0;
       for ( unsigned int i = 0; i<pileupsummaryinfo.size() ; i++) {
 	//npv = pileupsummaryinfo.at(i).addpileupinfo_getPU_NumInteractions;
@@ -4147,7 +4216,7 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
       h_MCPU->Fill(npv);
       //std::cout << "weight = " << getPUWeight(LumiWeights) << std::endl;
       h_MCPUr->Fill(npv, getPUWeight(LumiWeights) );
-  
+      
 
 
       //calculateTagProb(prob0,probge1,prob1,probge2,probge3);
