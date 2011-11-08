@@ -65,7 +65,7 @@ namespace pu {
   Cert_172620-173692_PromptReco_JSON.pileup_v2.root
   Cert_175832-177515_PromptReco_JSON.pileup_v2.root
   Cert_177718_178078_7TeV_PromptReco_Collisons11_JSON.pileup_v2.root
-
+  Cert_178098-180252_7TeV_PromptReco_Collisions11_JSON.pileup_v2.root
   */
 
   float ObsDist2011_f[35] = {
