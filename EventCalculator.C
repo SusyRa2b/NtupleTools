@@ -2549,7 +2549,7 @@ TString EventCalculator::getSampleNameOutputString(){
   //and return sampleName for samples that have to be 'hadd'ed afterwards anyway
 
   //V00-02-35 (don't do: QCD, )
-  if (sampleName_.Contains("ttjets_madgraph") )                                      return "TTbarJetsCORRECT";
+  if (sampleName_.Contains("ttjets_madgraph") )                                      return "TTbarJets";
   if (sampleName_.Contains("zjets") )                                                return "Zinvisible";
   if (sampleName_.Contains("wjets") )                                                return "WJets";
   if (sampleName_.Contains("DYJetsToLL_TuneZ2_M-50_7TeV-madgraph-tauola") )          return "ZJets";
