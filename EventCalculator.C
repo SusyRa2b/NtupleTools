@@ -2471,7 +2471,8 @@ double EventCalculator::getCrossSection(){
   if (sampleName_.Contains("tbar_tW-channel") )                                      return 7.87;
   if (sampleName_.Contains("wjets") )                                                return 31314;
   if (sampleName_.Contains("ttjets_madgraph") )                                      return 158; // +/- 10 +/- 15 //CMS PAS TOP-11-001
-  if (sampleName_.Contains("DY") )                                                   return 3048;
+  //if (sampleName_.Contains("DY") )                                                   return 3048;
+  if (sampleName_.Contains("DYJetsToLL_TuneZ2_M-50_7TeV-madgraph-tauola") )          return 3048;
   
   if (sampleName_.Contains("LM9_SUSY_sftsht_7TeV-pythia6") )                         return 7.134 * 1.48; //from ProductionSpring2011 twiki
 
@@ -2551,6 +2552,7 @@ TString EventCalculator::getSampleNameOutputString(){
   if (sampleName_.Contains("ttjets_madgraph") )                                      return "TTbarJetsCORRECT";
   if (sampleName_.Contains("zjets") )                                                return "Zinvisible";
   if (sampleName_.Contains("wjets") )                                                return "WJets";
+  if (sampleName_.Contains("DYJetsToLL_TuneZ2_M-50_7TeV-madgraph-tauola") )          return "ZJets";
   if (sampleName_.Contains("ww") )                                                   return "WW";
   if (sampleName_.Contains("wz") )                                                   return "WZ";
   if (sampleName_.Contains("zz") )                                                   return "ZZ";
@@ -3116,7 +3118,7 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   reducedTree.Branch("scrapingvetoFilter",&scrapingvetoFilter,"scrapingvetoFilter/O");
   reducedTree.Branch("trackingfailureFilter",&trackingfailureFilter,"trackingfailureFilter/O");
   reducedTree.Branch("trackingfailureFilterPFLOW",&trackingfailureFilterPFLOW,"trackingfailureFilterPFLOW/O");
-  reducedTree.Branch("recovrechitFilter",&recovrechitFilter,"recovrechitFilter/0");
+  reducedTree.Branch("recovrechitFilter",&recovrechitFilter,"recovrechitFilter/O");
   //  reducedTree.Branch("ra2ecalbeFilter",&ra2ecalbeFilter,"ra2ecalbeFilter/O");
   reducedTree.Branch("passCleaning",&passCleaning,"passCleaning/O");
   reducedTree.Branch("PBNRcode",&PBNRcode,"PBNRcode/I");
@@ -3646,7 +3648,8 @@ unsigned int EventCalculator::getSeed(){
   if (sampleName_.Contains("t_tW-channel") )                                         return 4390;
   if (sampleName_.Contains("tbar_tW-channel") )                                      return 4391;
   if (sampleName_.Contains("wjets") )                                                return 4392;
-  if (sampleName_.Contains("DY") )                                                   return 4393;
+  //if (sampleName_.Contains("DY") )                                                   return 4393;
+  if (sampleName_.Contains("DYJetsToLL_TuneZ2_M-50_7TeV-madgraph-tauola") )          return 4393;
     
   if (sampleName_.Contains("QCD_Pt-0to5_TuneZ2_7TeV_pythia6") )                    return 4361;
   if (sampleName_.Contains("QCD_Pt-1000to1400_TuneZ2_7TeV_pythia6") )                return 4362;
@@ -4101,8 +4104,8 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
   //h_ctag->Sumw2();
   //h_ltag->Sumw2();
 
-  std::vector<int> vrun,vlumi,vevent;
-  loadEventList(vrun, vlumi, vevent);
+  //std::vector<int> vrun,vlumi,vevent;
+  //loadEventList(vrun, vlumi, vevent);
 
 
 
@@ -4128,8 +4131,8 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
     MCDist2011.push_back(pu::probdistFlat10_f[i]);
   }  
   reweight::LumiReWeighting LumiWeights = reweight::LumiReWeighting( MCDist2011, DataDist2011 );
-  LumiWeights.weight3D_init();
-  //LumiWeights.weight3D_init("Weight3D.root");
+  //LumiWeights.weight3D_init();
+  LumiWeights.weight3D_init("Weight3D.root");
 
   cout<<"Running..."<<endl;  
   int npass = 0;
