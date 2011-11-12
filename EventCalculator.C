@@ -56,10 +56,14 @@ EventCalculator::EventCalculator(const TString & sampleName, jetType theJetType,
   crossSectionTanb40_05_(0),
   crossSectionTanb40_20_(0),
   smsCrossSectionFile_(0),
-  f_eff_(0),
-  htgraph_(0),
-  htgraphPlus_(0),
-  htgraphMinus_(0),
+  f_eff_ht300_(0),
+  f_eff_ht350_(0),
+  htgraph_ht300_(0),
+  htgraphPlus_ht300_(0),
+  htgraphMinus_ht300_(0),
+  htgraph_ht350_(0),
+  htgraphPlus_ht350_(0),
+  htgraphMinus_ht350_(0),
   f_eff_mht_(0),
   mhtgraph_(0),
   mhtgraphPlus_(0),
@@ -97,7 +101,7 @@ EventCalculator::EventCalculator(const TString & sampleName, jetType theJetType,
 
   checkConsistency();
 
-  loadHLTMHTeff();
+  //loadHLTMHTeff();
   loadHLTHTeff();
   loadDataJetRes();
   
@@ -644,46 +648,96 @@ void EventCalculator::loadHLTMHTeff() {
 
 float EventCalculator::getHLTMHTeff(float offMET) {
 
-  float eff=100;
+  float eff=1;
 
-  TGraphAsymmErrors * gr=mhtgraph_;
+  //TGraphAsymmErrors * gr=mhtgraph_;
   //if ( theHLTEffType_ ==kHLTEffup) gr=htgraphPlus;
   //else if ( theHLTEffType_ ==kHLTEffdown) gr=htgraphMinus;
 
-  eff = gr->Eval(offMET);
+  //for prelim summer result
+  //eff = gr->Eval(offMET);
+
+  //for 2011 full result
+  if(offMET>=200 && offMET<250){
+    eff = 0.94;
+
+    //assign a 3% error in the SB region
+    if ( theHLTEffType_ ==kHLTEffup){
+      eff = eff*1.03;
+    }
+    else if ( theHLTEffType_ ==kHLTEffdown){
+      eff = eff*0.97;
+    }
+
+  }
+  else if(offMET>250){
+    eff = 0.998;
+
+    //assign a +0.1%(-0.5%) error in the SIG region
+    if ( theHLTEffType_ ==kHLTEffup){
+      eff = eff*1.001;
+    }
+    else if ( theHLTEffType_ ==kHLTEffdown){
+      eff = eff*0.995;
+    }
+
+  }
+
 
   return eff;
 }
 
 void EventCalculator::loadHLTHTeff() {
-  if (f_eff_==0) {
+  if (f_eff_ht300_==0 && f_eff_ht350_==0) {
 
     /*
 there is a horrible hack here where i have manually set the error on the trigger eff to 1.5% at high HT
     */
 
   //get this file from ~/public/wteo/
-    f_eff_ = new TFile("ht300_out_166864_eff_histogram.root","READ");
-    htgraph_  = (TGraphAsymmErrors *) f_eff_->Get("myeff");
+    f_eff_ht300_ = new TFile("ht300_out_166864_eff_histogram.root","READ");
+    f_eff_ht350_ = new TFile("ht350_out_178866_eff_histogram.root","READ");
+
+    htgraph_ht300_  = (TGraphAsymmErrors *) f_eff_ht300_->Get("myeff");
+    htgraph_ht350_  = (TGraphAsymmErrors *) f_eff_ht350_->Get("ht350eff");
 
     //fill the graphs with plus and minus variations
-    htgraphPlus_ = new TGraphAsymmErrors(htgraph_->GetN());
-    htgraphMinus_ = new TGraphAsymmErrors(htgraph_->GetN());
-    for (int i=0; i<htgraph_->GetN(); i++) {
+    htgraphPlus_ht300_ = new TGraphAsymmErrors(htgraph_ht300_->GetN());
+    htgraphMinus_ht300_ = new TGraphAsymmErrors(htgraph_ht300_->GetN());
+    htgraphPlus_ht350_ = new TGraphAsymmErrors(htgraph_ht350_->GetN());
+    htgraphMinus_ht350_ = new TGraphAsymmErrors(htgraph_ht350_->GetN());
+    for (int i=0; i<htgraph_ht300_->GetN(); i++) {
       double x,y;
-      htgraph_->GetPoint(i,x,y);
-      double exl= htgraph_->GetErrorXlow(i);
-      double exh= htgraph_->GetErrorXhigh(i);
-      double eyl= htgraph_->GetErrorYlow(i);
-      double eyh= htgraph_->GetErrorYhigh(i);
+      htgraph_ht300_->GetPoint(i,x,y);
+      double exl= htgraph_ht300_->GetErrorXlow(i);
+      double exh= htgraph_ht300_->GetErrorXhigh(i);
+      double eyl= htgraph_ht300_->GetErrorYlow(i);
+      double eyh= htgraph_ht300_->GetErrorYhigh(i);
       //shift y
       double yup = y+eyh > 1? 1: y+eyh;
       double ydown = y-eyl < 0 ? 0: y-eyl;
-      if (x>500) ydown=0.985; //Horrible hack!
-      htgraphPlus_->SetPoint(i,x,yup);
-      htgraphMinus_->SetPoint(i,x,ydown);
-      htgraphPlus_->SetPointError(i,exl,exh,eyl,eyh); //the errors don't matter
-      htgraphMinus_->SetPointError(i,exl,exh,eyl,eyh);
+      //if (x>500) ydown=0.985; //Horrible hack!
+      htgraphPlus_ht300_->SetPoint(i,x,yup);
+      htgraphMinus_ht300_->SetPoint(i,x,ydown);
+      htgraphPlus_ht300_->SetPointError(i,exl,exh,eyl,eyh); //the errors don't matter
+      htgraphMinus_ht300_->SetPointError(i,exl,exh,eyl,eyh);
+
+      double x2,y2;
+      htgraph_ht350_->GetPoint(i,x2,y2);
+      double ex2l= htgraph_ht350_->GetErrorXlow(i);
+      double ex2h= htgraph_ht350_->GetErrorXhigh(i);
+      double ey2l= htgraph_ht350_->GetErrorYlow(i);
+      double ey2h= htgraph_ht350_->GetErrorYhigh(i);
+      //shift y
+      double y2up = y2+ey2h > 1? 1: y2+ey2h;
+      double y2down = y2-ey2l < 0 ? 0: y2-ey2l;
+      //if (x>500) ydown=0.985; //Horrible hack!
+      htgraphPlus_ht350_->SetPoint(i,x2,y2up);
+      htgraphMinus_ht350_->SetPoint(i,x2,y2down);
+      htgraphPlus_ht350_->SetPointError(i,ex2l,ex2h,ey2l,ey2h); //the errors don't matter
+      htgraphMinus_ht350_->SetPointError(i,ex2l,ex2h,ey2l,ey2h);
+
+
     }
   }
 
@@ -693,11 +747,19 @@ float EventCalculator::getHLTHTeff(float offHT) {
 
   float eff=100;
 
-  TGraphAsymmErrors * gr=htgraph_;
-  if ( theHLTEffType_ ==kHLTEffup) gr=htgraphPlus_;
-  else if ( theHLTEffType_ ==kHLTEffdown) gr=htgraphMinus_;
+  TGraphAsymmErrors * gr1=htgraph_ht300_;
+  TGraphAsymmErrors * gr2=htgraph_ht350_;
+  if ( theHLTEffType_ ==kHLTEffup){
+    gr1=htgraphPlus_ht300_;
+    gr2=htgraphPlus_ht350_;
+  }
+  else if ( theHLTEffType_ ==kHLTEffdown){
+    gr1=htgraphMinus_ht300_;
+    gr2=htgraphMinus_ht350_;
+  }
 
-  eff = gr->Eval(offHT);
+  //2011 dataset - weighted average of HT efficiencies
+  eff = 0.076*1.0 + 0.464*gr1->Eval(offHT) + 0.460*gr2->Eval(offHT);
 
   return eff;
 }
@@ -2474,7 +2536,7 @@ double EventCalculator::getCrossSection(){
   //if (sampleName_.Contains("DY") )                                                   return 3048;
   if (sampleName_.Contains("DYJetsToLL_TuneZ2_M-50_7TeV-madgraph-tauola") )          return 3048;
   
-  if (sampleName_.Contains("LM9_SUSY_sftsht_7TeV-pythia6") )                         return 7.134 * 1.48; //from ProductionSpring2011 twiki
+  if (sampleName_.Contains("LM9_SUSY_sftsht_7TeV-pythia6_v2") )                         return 7.134 * 1.48; //from ProductionSpring2011 twiki
 
   /*
   if (sampleName_.Contains("DYJetsToLL_TuneD6T_M-10To50_7TeV-madgraph-tauola") )     return 310;
@@ -2563,7 +2625,7 @@ TString EventCalculator::getSampleNameOutputString(){
   if (sampleName_.Contains("t_tW-channel") )                                         return "SingleTop-tWChannel";
   if (sampleName_.Contains("tbar_tW-channel") )                                      return "SingleTopBar-tWChannel";
 
-  if (sampleName_.Contains("LM9_SUSY_sftsht_7TeV-pythia6") )                         return "LM9";
+  if (sampleName_.Contains("LM9_SUSY_sftsht_7TeV-pythia6_v2") )                         return "LM9";
 
   /*
   if (sampleName_.Contains("LM13_SUSY_sftsht_7TeV-pythia6") )                        return "LM13";
@@ -2944,6 +3006,7 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   float btagIPweight;//, pfmhtweight; //TODO
   float PUweight;
   float hltHTeff;
+  float hltMHTeff;
 
   double scanCrossSection,scanCrossSectionPlus,scanCrossSectionMinus;
   int m0,m12;
@@ -3087,6 +3150,7 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   //  reducedTree.Branch("pfmhtweight",&pfmhtweight,"pfmhtweight/F");
   reducedTree.Branch("PUweight",&PUweight,"PUweight/F");
   reducedTree.Branch("hltHTeff",&hltHTeff,"hltHTeff/F");
+  reducedTree.Branch("hltMHTeff",&hltMHTeff,"hltMHTeff/F");
 
   //got to store the whole vector. very big, unfortunately
   reducedTree.Branch("pdfWeightsCTEQ",&pdfWeightsCTEQ,"pdfWeightsCTEQ[45]/F");
@@ -3471,6 +3535,7 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
       nElectrons = countEle();
       nMuons = countMu();
       MET=getMET();
+      hltMHTeff = getHLTMHTeff(MET);
       METsig = myMETPF->at(0).mEtSig; //FIXME hard coded for PF
       MHT=getMHT();
       METphi = getMETphi();
@@ -3668,7 +3733,7 @@ unsigned int EventCalculator::getSeed(){
   if (sampleName_.Contains("QCD_Pt-800to1000_TuneZ2_7TeV_pythia6") )                 return 4375;
   if (sampleName_.Contains("QCD_Pt-80to120_TuneZ2_7TeV_pythia6") )                 return 4376;
 
-  if (sampleName_.Contains("LM9_SUSY_sftsht_7TeV-pythia6") )                         return 4400;
+  if (sampleName_.Contains("LM9_SUSY_sftsht_7TeV-pythia6_v2") )                         return 4400;
 
   if (sampleName_.Contains("ht_run2011a_may10rereco") )                              return 4500;
   if (sampleName_.Contains("ht_run2011a_aug5rereco") )                               return 4501;
@@ -4042,7 +4107,8 @@ void EventCalculator::cutflow(itreestream& stream, int maxevents=-1){
 void EventCalculator::loadEventList(std::vector<int> &vrun, std::vector<int> &vlumi, std::vector<int> &vevent){
 
   std::ifstream inFile;
-  inFile.open("eventlist_ht350_r178866_SUM.txt");        
+  //inFile.open("eventlist_ht350_r178866_SUM.txt");        
+  inFile.open("eventlist_ht350l1fastjet_r178866_SUM.txt");        
 
   if(!inFile) {std::cout << "ERROR: can't open event list" << std::endl;  assert(0);}
   while(!inFile.eof()) {
@@ -4080,13 +4146,22 @@ void EventCalculator::loadEventList(std::vector<int> &vrun, std::vector<int> &vl
 void EventCalculator::sampleAnalyzer(itreestream& stream){
 
 
-  TFile fout("histos.root","RECREATE");
+  //TFile fout("histos.root","RECREATE");
   
-  TH1F * h_MCPU = new TH1F("h_MCPU","unweighted PU distribution",35,0.5,34.5);
-  TH1F * h_MCPUr = new TH1F("h_MCPUr","reweighted PU distribution",35,-0.5,34.5);
+  //TH1F * h_MCPU = new TH1F("h_MCPU","unweighted PU distribution",35,0.5,34.5);
+  //TH1F * h_MCPUr = new TH1F("h_MCPUr","reweighted PU distribution",35,-0.5,34.5);
 
   //TH1F * h_ht = new TH1F("h_ht","HT",1000,0,1000);
   //TH1F * h_ht_trig = new TH1F("h_ht_trig","HT",1000,0,1000);
+
+  //TH1F * h_met_den_mht80 = new TH1F("h_met_den_mht80","HT",1000,0,1000);
+  //TH1F * h_met_trig_mht80 = new TH1F("h_met_trig_mht80","HT",1000,0,1000);
+  //TH1F * h_met_den_mht90_ht300 = new TH1F("h_met_den_mht90_ht300","HT",1000,0,1000);
+  //TH1F * h_met_trig_mht90_ht300 = new TH1F("h_met_trig_mht90_ht300","HT",1000,0,1000);
+  //TH1F * h_met_den_mht90_ht350 = new TH1F("h_met_den_mht90_ht350","HT",1000,0,1000);
+  //TH1F * h_met_trig_mht90_ht350 = new TH1F("h_met_trig_mht90_ht350","HT",1000,0,1000);
+  //TH1F * h_met_den_mht110 = new TH1F("h_met_den_mht110","HT",1000,0,1000);
+  //TH1F * h_met_trig_mht110 = new TH1F("h_met_trig_mht110","HT",1000,0,1000);
 
   ////check the MC efficiencies from Summer11 TTbar
   ////this histogram has bin edges {30,50,75,100,150,200,240,500,1000}
@@ -4119,20 +4194,20 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
   setIgnoredCut("cut2b");
   setIgnoredCut("cut3b");
 
-  //initialize PU things
-  std::vector< float > DataDist2011;
-  std::vector< float > MCDist2011;
-  for( int i=0; i<35; ++i) {
-    //for PU_S3 (only in-time)
-    //DataDist2011.push_back(pu::ObsDist2011_f[i]);
-    //MCDist2011.push_back(pu::PoissonOneXDist_f[i]);
-    //for 3dPU reweighting 
-    DataDist2011.push_back(pu::TrueDist2011_f[i]);
-    MCDist2011.push_back(pu::probdistFlat10_f[i]);
-  }  
-  reweight::LumiReWeighting LumiWeights = reweight::LumiReWeighting( MCDist2011, DataDist2011 );
-  //LumiWeights.weight3D_init();
-  LumiWeights.weight3D_init("Weight3D.root");
+  ////initialize PU things
+  //std::vector< float > DataDist2011;
+  //std::vector< float > MCDist2011;
+  //for( int i=0; i<35; ++i) {
+  //  //for PU_S3 (only in-time)
+  //  //DataDist2011.push_back(pu::ObsDist2011_f[i]);
+  //  //MCDist2011.push_back(pu::PoissonOneXDist_f[i]);
+  //  //for 3dPU reweighting 
+  //  DataDist2011.push_back(pu::TrueDist2011_f[i]);
+  //  MCDist2011.push_back(pu::probdistFlat10_f[i]);
+  //}  
+  //reweight::LumiReWeighting LumiWeights = reweight::LumiReWeighting( MCDist2011, DataDist2011 );
+  ////LumiWeights.weight3D_init();
+  //LumiWeights.weight3D_init("Weight3D.root");
 
   cout<<"Running..."<<endl;  
   int npass = 0;
@@ -4171,37 +4246,94 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
     //if(Cut()==1){
 
 
+    //std::cout << "ngood jets = " << nGoodJets() << std::endl;
+    //for (unsigned int i=0; i < myJetsPF->size(); ++i) {
+    //  if(getJetPt(i)<30) continue;
+    //  if (isGoodJet30(i) ){
+    //	std::cout << "found good jet" << std::endl;
+    //  }
+    //  else{
+    //	std::cout << "jet failed id" << std::endl;
+    //	std::cout << "\tneutralHadEnFrac (should be <0.99) = " << myJetsPF->at(i).neutralHadronEnergyFraction << std::endl;
+    //	std::cout << "\tneutralEmEnFrac  (should be <0.99) = " << myJetsPF->at(i).neutralEmEnergyFraction << std::endl;
+    //	std::cout << "\tnumDaughters (should be >1)        = " << myJetsPF->at(i).numberOfDaughters << std::endl;
+    //	std::cout << "\tchargedHadEnFrac (should be >0)    = " << myJetsPF->at(i).chargedHadronEnergyFraction << std::endl;
+    //	std::cout << "\tchargedEmEnFrac  (should be <0.99) = " << myJetsPF->at(i).chargedEmEnergyFraction << std::endl;
+    //	std::cout << "\tchargedMult (should be >0)         = " << myJetsPF->at(i).chargedMultiplicity << std::endl;
+    //
+    //  }
+    //  std::cout << "\tjet pt = " << getJetPt(i) << ", eta = " << myJetsPF->at(i).eta << ", phi = " << myJetsPF->at(i).phi;
+    //  std::cout << ", CSV disc = " <<  myJetsPF->at(i).combinedSecondaryVertexBJetTags << std::endl;
+    //
+    //}
+
+
       npass++;
 
+      std::cout << "MET = " << getMET() << ", eff = " << getHLTMHTeff(getMET()) << std::endl;
+      std::cout << "HT = " << getHT() << ", eff = " << getHLTHTeff(getHT()) << std::endl;
+
+      /*      
       //int lumi =  getLumiSection();
-      //int run = getRunNumber();
+      int run = getRunNumber();
       //if(run ==170722 && lumi >=110 && lumi<=287) return false;
+      if(passLumiMask()){
+	int version = 0, prescale = 0;
+	if(run>=166979 && run<=173211){
+	  if(passUtilityHLT(version,prescale)){
+	    h_met_den_mht80->Fill(getMET());	
+	    if(passHLT())
+	      h_met_trig_mht80->Fill(getMET());
+	  }
+	}
+	if(run>=173212 && run<=176544){
+	  if(passUtilityHLT(version,prescale)){
+	    h_met_den_mht90_ht300->Fill(getMET());	
+	    if(passHLT())
+	      h_met_trig_mht90_ht300->Fill(getMET());
+	  }
+	}
+	if(run>=176545 && run<=178410){
+	  if(passUtilityHLT(version,prescale)){
+	    h_met_den_mht90_ht350->Fill(getMET());	
+	    if(passHLT())
+	      h_met_trig_mht90_ht350->Fill(getMET());
+	  }
+	}
+	if(run>=178411 && run<=180252){
+	  if(passUtilityHLT(version,prescale)){
+	    h_met_den_mht110->Fill(getMET());	
+	    if(passHLT())
+	      h_met_trig_mht110->Fill(getMET());
+	  }
+	}
+	}
+      */
+      /*
+      h_ht->Fill(getHT());
+      
+      int lumi =  getLumiSection();
+      int run = getRunNumber();
+      int event = getEventNumber();
+      
+      bool passTrig = false;
+      for(uint i = 0; i< vevent.size(); ++i){
+      	if( event == vevent.at(i)){
+      	  if( lumi == vlumi.at(i)){
+      	    if( run == vrun.at(i)){
+      	      passTrig = true;
+      	      break;
+      	    }
+      	  }
+      	}
+      }
+      if(passTrig)
+      	h_ht_trig->Fill(getHT());
+      */
 
 
-      //h_ht->Fill(getHT());
-      //
-      //int lumi =  getLumiSection();
-      //int run = getRunNumber();
-      //int event = getEventNumber();
-      //
-      //bool passTrig = false;
-      //for(uint i = 0; i< vevent.size(); ++i){
-      //	if( event == vevent.at(i)){
-      //	  if( lumi == vlumi.at(i)){
-      //	    if( run == vrun.at(i)){
-      //	      passTrig = true;
-      //	      break;
-      //	    }
-      //	  }
-      //	}
-      //}
-      //if(passTrig)
-      //	h_ht_trig->Fill(getHT());
 
-
-
-
-        
+	/*        
       int npv = 0;
       for ( unsigned int i = 0; i<pileupsummaryinfo.size() ; i++) {
 	//npv = pileupsummaryinfo.at(i).addpileupinfo_getPU_NumInteractions;
@@ -4219,7 +4351,7 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
       h_MCPU->Fill(npv);
       //std::cout << "weight = " << getPUWeight(LumiWeights) << std::endl;
       h_MCPUr->Fill(npv, getPUWeight(LumiWeights) );
-      
+	*/
 
 
       //calculateTagProb(prob0,probge1,prob1,probge2,probge3);
@@ -4301,8 +4433,8 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
   //h_ltageff->Divide(h_ltag,h_ljet,1,1,"B");
   
   
-  fout.Write();
-  fout.Close();
+  //fout.Write();
+  //fout.Close();
 
 
   return;

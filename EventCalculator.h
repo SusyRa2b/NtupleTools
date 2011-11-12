@@ -264,10 +264,14 @@ private:
 
   TFile *smsCrossSectionFile_;
   //stuff for the HT turn-on
-  TFile *f_eff_;
-  TGraphAsymmErrors *htgraph_;
-  TGraphAsymmErrors *htgraphPlus_;
-  TGraphAsymmErrors *htgraphMinus_;
+  TFile *f_eff_ht300_;
+  TFile *f_eff_ht350_;
+  TGraphAsymmErrors *htgraph_ht300_;
+  TGraphAsymmErrors *htgraphPlus_ht300_;
+  TGraphAsymmErrors *htgraphMinus_ht300_;
+  TGraphAsymmErrors *htgraph_ht350_;
+  TGraphAsymmErrors *htgraphPlus_ht350_;
+  TGraphAsymmErrors *htgraphMinus_ht350_;
   TFile *f_eff_mht_;
   TGraphAsymmErrors *mhtgraph_;
   TGraphAsymmErrors *mhtgraphPlus_;
