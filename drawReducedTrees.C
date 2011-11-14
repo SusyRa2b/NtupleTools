@@ -4816,7 +4816,7 @@ void studyRqcd(int ibtag = 4){
 
 }
 
-
+/* jmt -- deprecated Nov 2011
 void drawVJets() {
   
   useFlavorHistoryWeights_=true;
@@ -5015,7 +5015,9 @@ void drawVJets() {
  }
 
 }
+*/
 
+/* deprecated function (jmt -- November 2011)
 void countABCD() {
 
   double fitResult[]={52.6, 40.5, 14.1};
@@ -5084,6 +5086,7 @@ void countABCD() {
 
   }
 }
+*/
 
 //jmt -- don't feel like fixing getCutString here and we're not doing flvHistReweighting anyway...
 /*
@@ -5182,6 +5185,8 @@ void flvHistReweighting() {
 
 }
 */
+
+/* jmt -- 14 Nov 2011 -- commenting out a huge chunk that is very old (2010 analysis)
 
 void countQCDMC(){
   useFlavorHistoryWeights_=false;
@@ -5362,10 +5367,6 @@ void countILV() {
 
 void drawOwen(TCut extracut="") {
 
-  /*
-.L drawReducedTrees.C++
-  */
-  
   //can't handle a tighter MET cut this way, because it affects the method differently than, say, a tighter HT cut
   assert( !TString(extracut.GetTitle()).Contains("MET"));
 
@@ -5526,7 +5527,7 @@ void drawOwen(TCut extracut="") {
 	TString nameOfHist;
 	nameOfHist.Form( "bestM3j_met_%d_%d_%stag_",metCutLow,metCutHigh,btagstring.Data());
 	
-	//*** nominal selection ***//
+	//  *** nominal selection ***   
 	if (vb) {
 	  //plot all samples
 	  for (unsigned int isample=0; isample<samples_.size(); isample++) {
@@ -5560,7 +5561,7 @@ void drawOwen(TCut extracut="") {
 	totalsm->Write();
 	fh4.Close();
 	
-	//*** T2 selection ***//
+	//  *** T2 selection 
 	selection_ = theT2Selection.GetTitle(); //change to t2 selection
 	if (vb) {
 	  drawSimple("bestTopMass",nvarbins,varbins,histfilename, nameOfT2Hist+"data","data");
@@ -5579,7 +5580,7 @@ void drawOwen(TCut extracut="") {
 	totalewk->Write();          
 	fh44.Close(); 
 
-	//*** fail mdp selection ***//
+	//   *** fail mdp selection ***
       	theSelection = baseSelection && passCleaning && failMinDeltaPhi && theBTaggingCut && METselection && extracut;
 	selection_ = theSelection.GetTitle();
 	nameOfHist.Form( "bestM3j_met_%d_%d_invdphi_%stag_",metCutLow,metCutHigh,btagstring.Data());
@@ -5607,3 +5608,4 @@ void drawOwen(TCut extracut="") {
 
 }
 
+//end of large commented out region */
