@@ -1,4 +1,13 @@
 /*
+to compile:
+
+must have symlink to MiscUtil.cxx in the working directory.
+TSelectorMultiDraw and CrossSectionTable need to be compiled only when they are changed.
+
+gSystem->Load("TSelectorMultiDraw_C.so");
+gSystem->Load("CrossSectionTable_cxx.so");
+.L drawReducedTrees.C++
+
 ====== this is the nominal code for drawing RA2b data/MC comparison plots =======
 2011 updates -- runDataQCD2011() computes all numbers needed for QCD estimate including systematics
 
@@ -1343,7 +1352,7 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
   double num = B*(D-Dsub);
   double estimate = num / A;
   double estimateerr= jmt::errAoverB(num,numerr,A,Aerr);
-  double closureStat= datamode? 0: jmt::errAoverB(estimate,estimateerr,SIG,SIGerr);
+  //  double closureStat= datamode? 0: jmt::errAoverB(estimate,estimateerr,SIG,SIGerr); //comment out unused var
 
   double closureStat2 = datamode? 0: jmt::errAoverB(SIG,SIGerr,estimate,estimateerr);
 
