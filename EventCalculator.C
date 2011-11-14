@@ -2737,16 +2737,23 @@ double EventCalculator::getSMSScanCrossSection( const double mgluino) {
 
 void EventCalculator::calculateTagProb(float &Prob0, float &ProbGEQ1, float &Prob1, float &ProbGEQ2, float &ProbGEQ3) {
 
-  //load efficiency maps - get from ~wteo/public/
-  TFile f_tageff("histos_btageff_csvm.root","READ");
+  //load efficiency maps
+  //if this is a qcd sample, load the qcd map
+  if (sampleName_.Contains("QCD") )
+    f_tageff_ = new TFile("histos_btageff_csvm_qcd.root","READ");
+  //otherwise load the ttbar one
+  else
+    f_tageff_ = new TFile("histos_btageff_csvm.root","READ");
+
+
   char btageffname[200], ctageffname[200], ltageffname[200];
   std::string sbtageff = "h_btageff";  std::string sctageff = "h_ctageff";  std::string sltageff = "h_ltageff";
   sprintf(btageffname,"%s",sbtageff.c_str());   
   sprintf(ctageffname,"%s",sctageff.c_str());   
   sprintf(ltageffname,"%s",sltageff.c_str());   
-  TH1F * h_btageff  = (TH1F *)f_tageff.Get(btageffname);
-  TH1F * h_ctageff  = (TH1F *)f_tageff.Get(ctageffname);
-  TH1F * h_ltageff  = (TH1F *)f_tageff.Get(ltageffname);
+  TH1F * h_btageff  = (TH1F *)f_tageff_->Get(btageffname);
+  TH1F * h_ctageff  = (TH1F *)f_tageff_->Get(ctageffname);
+  TH1F * h_ltageff  = (TH1F *)f_tageff_->Get(ltageffname);
 
   //must initialize correctly
   float Prob2 = 0;
@@ -2755,6 +2762,7 @@ void EventCalculator::calculateTagProb(float &Prob0, float &ProbGEQ1, float &Pro
   for (unsigned int ijet=0; ijet<myJetsPF->size(); ++ijet) {
     float subprob1=0;
     if(isGoodJet30(ijet)){
+
       float effi = jetTagEff(ijet, h_btageff, h_ctageff, h_ltageff);
       Prob0 = Prob0* ( 1 - effi);
       
@@ -2788,11 +2796,14 @@ void EventCalculator::calculateTagProb(float &Prob0, float &ProbGEQ1, float &Pro
 
     }
   }
-  
+
+  //std::cout << "prob0 = " << Prob0 << ", prob1 = " << Prob1 << ", prob2 = " << Prob2 << std::endl;  
 
   ProbGEQ1 = 1 - Prob0;
   ProbGEQ2 = 1 - Prob1 - Prob0;
   ProbGEQ3 = 1 - Prob2 - Prob1 - Prob0;
+
+  delete f_tageff_;
 }
 
 
@@ -4108,7 +4119,8 @@ void EventCalculator::loadEventList(std::vector<int> &vrun, std::vector<int> &vl
 
   std::ifstream inFile;
   //inFile.open("eventlist_ht350_r178866_SUM.txt");        
-  inFile.open("eventlist_ht350l1fastjet_r178866_SUM.txt");        
+  //inFile.open("eventlist_ht350l1fastjet_r178866_SUM.txt");        
+  inFile.open("eventlist_pfht350_r178866_SUM.txt");        
 
   if(!inFile) {std::cout << "ERROR: can't open event list" << std::endl;  assert(0);}
   while(!inFile.eof()) {
@@ -4186,9 +4198,9 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
 
   int nevents = stream.size();
 
-  //float prob0,probge1,prob1,probge2,probge3;
+  float prob0,probge1,prob1,probge2,probge3;
 
-  //float n0b = 0, nge1b = 0, neq1b = 0, nge2b = 0, nge3b = 0;
+  float n0b = 0, nge1b = 0, neq1b = 0, nge2b = 0, nge3b = 0;
   setCutScheme();
   setIgnoredCut("cut1b");
   setIgnoredCut("cut2b");
@@ -4211,6 +4223,7 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
 
   cout<<"Running..."<<endl;  
   int npass = 0;
+
   //int ntaggedjets = 0;
   //int ntaggedjets_b = 0;
   //int ntaggedjets_c = 0;
@@ -4226,6 +4239,9 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
 
     if(entry%10000==0) cout << "entry: " << entry << ", percent done=" << (int)(entry/(double)nevents*100.)<<  endl;
 
+    //int event = getEventNumber();
+    //if(event !=86684 ) continue;
+    
     //std::cout << " HT = " << getHT() << std::endl;
     //
     //for (unsigned int i = 0; i < myJetsPF->size(); ++i) {
@@ -4243,7 +4259,7 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
     //}
 
 
-    //if(Cut()==1){
+    if(Cut()==1){
 
 
     //std::cout << "ngood jets = " << nGoodJets() << std::endl;
@@ -4270,10 +4286,10 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
 
       npass++;
 
-      std::cout << "MET = " << getMET() << ", eff = " << getHLTMHTeff(getMET()) << std::endl;
-      std::cout << "HT = " << getHT() << ", eff = " << getHLTHTeff(getHT()) << std::endl;
+      //std::cout << "MET = " << getMET() << ", eff = " << getHLTMHTeff(getMET()) << std::endl;
+      //std::cout << "HT = " << getHT() << ", eff = " << getHLTHTeff(getHT()) << std::endl;
 
-      /*      
+      /*            
       //int lumi =  getLumiSection();
       int run = getRunNumber();
       //if(run ==170722 && lumi >=110 && lumi<=287) return false;
@@ -4309,7 +4325,7 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
 	}
 	}
       */
-      /*
+      /*      
       h_ht->Fill(getHT());
       
       int lumi =  getLumiSection();
@@ -4329,8 +4345,8 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
       }
       if(passTrig)
       	h_ht_trig->Fill(getHT());
+     
       */
-
 
 
 	/*        
@@ -4354,54 +4370,57 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
 	*/
 
 
-      //calculateTagProb(prob0,probge1,prob1,probge2,probge3);
-      //n0b += prob0; 
-      //nge1b += probge1; 
-      //neq1b += prob1; 
-      //nge2b += probge2;      
-      //nge3b += probge3;
-
-      //for (unsigned int i = 0; i < myJetsPF->size(); ++i) {
-      //	int flavor = myJetsPF->at(i).partonFlavour;
-      //
-      //	if(isGoodJet(i,30)){
-      //
-      //
-      //	  if(abs(flavor)==5)
-      //	    h_bjet->Fill( getJetPt(i) ) ;
-      //	  else if(abs(flavor)==4)
-      //	    h_cjet->Fill( getJetPt(i) ) ;
-      //	  else if(abs(flavor)==3 ||abs(flavor)==2 ||abs(flavor)==1 ||abs(flavor)==21 )
-      //	    h_ljet->Fill( getJetPt(i) ) ;
-      //
-      //	  if(passBTagger(i)){
-      //	    if(abs(flavor)==5)
-      //	      h_btag->Fill( getJetPt(i) ) ;
-      //	    else if(abs(flavor)==4)
-      //	      h_ctag->Fill( getJetPt(i) ) ;
-      //	    else if(abs(flavor)==3 ||abs(flavor)==2 ||abs(flavor)==1 ||abs(flavor)==21 )
-      //	      h_ltag->Fill( getJetPt(i) ) ;
-      //	  }
-      //
-      //	}
-      //
-      //	if (isGoodJet(i,30) && passBTagger(i) ){
-      //	    ntaggedjets++;
-      //
-      //	    if(abs(flavor)==5)
-      //	      ntaggedjets_b++;
-      //	    else if(abs(flavor)==4)
-      //	      ntaggedjets_c++;
-      //	    else if(abs(flavor)==3 ||abs(flavor)==2 ||abs(flavor)==1 ||abs(flavor)==21 )
-      //	      ntaggedjets_l++;
-      //	}
-      // 
-      //}
 
 
+      calculateTagProb(prob0,probge1,prob1,probge2,probge3);
+      n0b += prob0; 
+      nge1b += probge1; 
+      neq1b += prob1; 
+      nge2b += probge2;      
+      nge3b += probge3;
+
+      /*
+      for (unsigned int i = 0; i < myJetsPF->size(); ++i) {
+      	int flavor = myJetsPF->at(i).partonFlavour;
+      
+      	if(isGoodJet(i,30)){
+      
+      
+      	  if(abs(flavor)==5)
+      	    h_bjet->Fill( getJetPt(i) ) ;
+      	  else if(abs(flavor)==4)
+      	    h_cjet->Fill( getJetPt(i) ) ;
+      	  else if(abs(flavor)==3 ||abs(flavor)==2 ||abs(flavor)==1 ||abs(flavor)==21 )
+      	    h_ljet->Fill( getJetPt(i) ) ;
+      
+      	  if(passBTagger(i)){
+      	    if(abs(flavor)==5)
+      	      h_btag->Fill( getJetPt(i) ) ;
+      	    else if(abs(flavor)==4)
+      	      h_ctag->Fill( getJetPt(i) ) ;
+      	    else if(abs(flavor)==3 ||abs(flavor)==2 ||abs(flavor)==1 ||abs(flavor)==21 )
+      	      h_ltag->Fill( getJetPt(i) ) ;
+      	  }
+      
+      	}
+      
+      	if (isGoodJet(i,30) && passBTagger(i) ){
+      	    ntaggedjets++;
+      
+      	    if(abs(flavor)==5)
+      	      ntaggedjets_b++;
+      	    else if(abs(flavor)==4)
+      	      ntaggedjets_c++;
+      	    else if(abs(flavor)==3 ||abs(flavor)==2 ||abs(flavor)==1 ||abs(flavor)==21 )
+      	      ntaggedjets_l++;
+      	}
+       
+      }
+      */
 
 
-      //}//end Cut
+
+      }//end Cut
 
   }
 
@@ -4409,11 +4428,11 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
   cout<<endl;
   stopTimer(nevents);
 
-  //std::cout << "n0b = " << n0b << std::endl;
-  //std::cout << "nge1b = " << nge1b << std::endl;
-  //std::cout << "neq1b = " << neq1b << std::endl;
-  //std::cout << "nge2b = " << nge2b << std::endl;
-  //std::cout << "nge3b = " << nge3b << std::endl;
+  std::cout << "n0b = " << n0b << std::endl;
+  std::cout << "nge1b = " << nge1b << std::endl;
+  std::cout << "neq1b = " << neq1b << std::endl;
+  std::cout << "nge2b = " << nge2b << std::endl;
+  std::cout << "nge3b = " << nge3b << std::endl;
 
   //std::cout << "npass = " << npass << std::endl;
   //std::cout << "ntaggedjets = "   << ntaggedjets << std::endl;

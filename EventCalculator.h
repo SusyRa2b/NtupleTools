@@ -277,6 +277,9 @@ private:
   TGraphAsymmErrors *mhtgraphPlus_;
   TGraphAsymmErrors *mhtgraphMinus_;
 
+  //stuff for the btag probability 
+  TFile *f_tageff_;
+
   void loadHLTHTeff();
   void loadHLTMHTeff();
 
