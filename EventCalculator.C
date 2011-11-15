@@ -104,7 +104,7 @@ EventCalculator::EventCalculator(const TString & sampleName, jetType theJetType,
   //loadHLTMHTeff();
   loadHLTHTeff();
   loadDataJetRes();
-  
+  loadJetTagEffMaps();  
 }
 
 EventCalculator::~EventCalculator() {}
@@ -2531,7 +2531,8 @@ double EventCalculator::getCrossSection(){
   if (sampleName_.Contains("tbar_t-channel") )                                       return 22.65;
   if (sampleName_.Contains("t_tW-channel") )                                         return 7.87;
   if (sampleName_.Contains("tbar_tW-channel") )                                      return 7.87;
-  if (sampleName_.Contains("wjets") )                                                return 31314;
+  //if (sampleName_.Contains("wjets") )                                                return 31314;
+  if (sampleName_.Contains("WJetsToLNu_TuneZ2_7TeV-madgraph-tauola") )               return 31314;
   if (sampleName_.Contains("ttjets_madgraph") )                                      return 158; // +/- 10 +/- 15 //CMS PAS TOP-11-001
   //if (sampleName_.Contains("DY") )                                                   return 3048;
   if (sampleName_.Contains("DYJetsToLL_TuneZ2_M-50_7TeV-madgraph-tauola") )          return 3048;
@@ -2613,7 +2614,8 @@ TString EventCalculator::getSampleNameOutputString(){
   //V00-02-35 (don't do: QCD, )
   if (sampleName_.Contains("ttjets_madgraph") )                                      return "TTbarJets";
   if (sampleName_.Contains("zjets") )                                                return "Zinvisible";
-  if (sampleName_.Contains("wjets") )                                                return "WJets";
+  //if (sampleName_.Contains("wjets") )                                                return "WJets";
+  if (sampleName_.Contains("WJetsToLNu_TuneZ2_7TeV-madgraph-tauola") )               return "WJets";
   if (sampleName_.Contains("DYJetsToLL_TuneZ2_M-50_7TeV-madgraph-tauola") )          return "ZJets";
   if (sampleName_.Contains("ww") )                                                   return "WW";
   if (sampleName_.Contains("wz") )                                                   return "WZ";
@@ -2735,16 +2737,39 @@ double EventCalculator::getSMSScanCrossSection( const double mgluino) {
 }
 
 
-void EventCalculator::calculateTagProb(float &Prob0, float &ProbGEQ1, float &Prob1, float &ProbGEQ2, float &ProbGEQ3) {
-
-  //load efficiency maps
-  //if this is a qcd sample, load the qcd map
-  if (sampleName_.Contains("QCD") )
+void EventCalculator::loadJetTagEffMaps() {
+  //load the sample's efficiency maps
+  if (sampleName_.Contains("QCD"))
     f_tageff_ = new TFile("histos_btageff_csvm_qcd.root","READ");
-  //otherwise load the ttbar one
-  else
+  else if(sampleName_.Contains("t_s-channel"))
+    f_tageff_ = new TFile("histos_btageff_csvm_singletop_s.root","READ");
+  else if(sampleName_.Contains("tbar_s-channel"))
+    f_tageff_ = new TFile("histos_btageff_csvm_singletopbar_s.root","READ");
+  else if(sampleName_.Contains("t_t-channel"))
+    f_tageff_ = new TFile("histos_btageff_csvm_singletop_t.root","READ");
+  else if(sampleName_.Contains("tbar_t-channel"))
+    f_tageff_ = new TFile("histos_btageff_csvm_singletopbar_t.root","READ");
+  else if(sampleName_.Contains("t_tW-channel"))
+    f_tageff_ = new TFile("histos_btageff_csvm_singletop_tW.root","READ");
+  else if(sampleName_.Contains("tbar_tW-channel"))
+    f_tageff_ = new TFile("histos_btageff_csvm_singletopbar_tW.root","READ");
+  else if (sampleName_.Contains("zjets"))   
+    f_tageff_ = new TFile("histos_btageff_csvm_zinvisible.root","READ");
+  else if (sampleName_.Contains("ww") )  
+    f_tageff_ = new TFile("histos_btageff_csvm_ww.root","READ");
+  else if (sampleName_.Contains("wz") )  
+    f_tageff_ = new TFile("histos_btageff_csvm_wz.root","READ");
+  else if (sampleName_.Contains("zz") )  
+    f_tageff_ = new TFile("histos_btageff_csvm_zz.root","READ");
+  else if (sampleName_.Contains("DYJetsToLL_TuneZ2_M-50_7TeV-madgraph-tauola") )
+    f_tageff_ = new TFile("histos_btageff_csvm_dyjets.root","READ");
+  else if(sampleName_.Contains("LM9_SUSY_sftsht_7TeV-pythia6_v2"))   
+    f_tageff_ = new TFile("histos_btageff_csvm_lm9.root","READ");
+  else //if all else fails, use ttbar
     f_tageff_ = new TFile("histos_btageff_csvm.root","READ");
+}
 
+void EventCalculator::calculateTagProb(float &Prob0, float &ProbGEQ1, float &Prob1, float &ProbGEQ2, float &ProbGEQ3) {
 
   char btageffname[200], ctageffname[200], ltageffname[200];
   std::string sbtageff = "h_btageff";  std::string sctageff = "h_ctageff";  std::string sltageff = "h_ltageff";
@@ -2803,7 +2828,6 @@ void EventCalculator::calculateTagProb(float &Prob0, float &ProbGEQ1, float &Pro
   ProbGEQ2 = 1 - Prob1 - Prob0;
   ProbGEQ3 = 1 - Prob2 - Prob1 - Prob0;
 
-  delete f_tageff_;
 }
 
 
@@ -3052,6 +3076,8 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   bool passCleaning;
   int PBNRcode;
 
+  bool buggyEvent;
+
   bool isRealData;
   bool pass_utilityHLT;
   UInt_t prescaleUtilityHLT;
@@ -3103,6 +3129,10 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   float minTransverseMETSignificance_lostJet, maxTransverseMETSignificance_lostJet, transverseMETSignificance1_lostJet, transverseMETSignificance2_lostJet, transverseMETSignificance3_lostJet;
 
   float prob0,probge1,prob1,probge2,probge3;
+
+  std::vector<int> vrun,vlumi,vevent;
+  loadEventList(vrun, vlumi, vevent);
+
 
   //these are not useful for scans...work fine for LM9, etc
   Float_t pdfWeightsCTEQ[45];
@@ -3197,6 +3227,8 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   //  reducedTree.Branch("ra2ecalbeFilter",&ra2ecalbeFilter,"ra2ecalbeFilter/O");
   reducedTree.Branch("passCleaning",&passCleaning,"passCleaning/O");
   reducedTree.Branch("PBNRcode",&PBNRcode,"PBNRcode/I");
+
+  reducedTree.Branch("buggyEvent",&buggyEvent,"buggyEvent/O");
 
   reducedTree.Branch("nGoodPV",&nGoodPV,"nGoodPV/I");
 
@@ -3659,6 +3691,7 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
 
       PBNRcode = doPBNR();
 
+      buggyEvent = inEventList(vrun, vlumi, vevent);
       
       //fill new variables from Luke
       getSphericityJetMET(lambda1_allJets,lambda2_allJets,determinant_allJets,99,false);
@@ -3723,7 +3756,8 @@ unsigned int EventCalculator::getSeed(){
   if (sampleName_.Contains("tbar_t-channel") )                                       return 4389;
   if (sampleName_.Contains("t_tW-channel") )                                         return 4390;
   if (sampleName_.Contains("tbar_tW-channel") )                                      return 4391;
-  if (sampleName_.Contains("wjets") )                                                return 4392;
+  //if (sampleName_.Contains("wjets") )                                                return 4392;
+  if (sampleName_.Contains("WJetsToLNu_TuneZ2_7TeV-madgraph-tauola") )               return 4392;
   //if (sampleName_.Contains("DY") )                                                   return 4393;
   if (sampleName_.Contains("DYJetsToLL_TuneZ2_M-50_7TeV-madgraph-tauola") )          return 4393;
     
@@ -4120,7 +4154,10 @@ void EventCalculator::loadEventList(std::vector<int> &vrun, std::vector<int> &vl
   std::ifstream inFile;
   //inFile.open("eventlist_ht350_r178866_SUM.txt");        
   //inFile.open("eventlist_ht350l1fastjet_r178866_SUM.txt");        
-  inFile.open("eventlist_pfht350_r178866_SUM.txt");        
+  //inFile.open("eventlist_pfht350_r178866_SUM.txt"); 
+  if (sampleName_.Contains("ttjets_madgraph") )                     
+    inFile.open("badeventlist_pythia6bug_ttjets_madgraph.txt"); 
+
 
   if(!inFile) {std::cout << "ERROR: can't open event list" << std::endl;  assert(0);}
   while(!inFile.eof()) {
@@ -4153,7 +4190,24 @@ void EventCalculator::loadEventList(std::vector<int> &vrun, std::vector<int> &vl
 
 }
 
-
+bool EventCalculator::inEventList(std::vector<int> &vrun, std::vector<int> &vlumi, std::vector<int> &vevent){
+  int lumi =  getLumiSection();
+  int run = getRunNumber();
+  int event = getEventNumber();
+  
+  bool onList = false;
+  for(uint i = 0; i< vevent.size(); ++i){
+    if( event == vevent.at(i)){
+      if( lumi == vlumi.at(i)){
+	if( run == vrun.at(i)){
+	  onList = true;
+	  break;
+	}
+      }
+    }
+  }
+  return onList; 
+}
 
 void EventCalculator::sampleAnalyzer(itreestream& stream){
 
@@ -4434,13 +4488,13 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
   std::cout << "nge2b = " << nge2b << std::endl;
   std::cout << "nge3b = " << nge3b << std::endl;
 
-  //std::cout << "npass = " << npass << std::endl;
+  std::cout << "npass = " << npass << std::endl;
   //std::cout << "ntaggedjets = "   << ntaggedjets << std::endl;
   //std::cout << "ntaggedjets_b = " << ntaggedjets_b << std::endl;
   //std::cout << "ntaggedjets_c = " << ntaggedjets_c << std::endl;
   //std::cout << "ntaggedjets_l = " << ntaggedjets_l << std::endl;
-  
-  
+  //
+  //
   ////TH1F *h_btageff = (TH1F*) h_btag->Clone();
   //TH1F * h_btageff = new TH1F("h_btageff","btageff",9,bins);
   //h_btageff->Divide(h_btag,h_bjet,1,1,"B");
@@ -4450,8 +4504,8 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
   ////TH1F *h_ltageff = (TH1F*) h_ltag->Clone();
   //TH1F * h_ltageff = new TH1F("h_ltageff","ltageff",9,bins);
   //h_ltageff->Divide(h_ltag,h_ljet,1,1,"B");
-  
-  
+  //
+  //
   //fout.Write();
   //fout.Close();
 

@@ -59,6 +59,7 @@ public:
 
   //load external list of event ID's
   void loadEventList(std::vector<int> &vrun, std::vector<int> &vlumi, std::vector<int> &vevent);
+  bool inEventList(std::vector<int> &vrun, std::vector<int> &vlumi, std::vector<int> &vevent);
 
   // functions that calculate stuff
   double getWeight(Long64_t nentries);
@@ -279,6 +280,7 @@ private:
 
   //stuff for the btag probability 
   TFile *f_tageff_;
+  void loadJetTagEffMaps();
 
   void loadHLTHTeff();
   void loadHLTMHTeff();
