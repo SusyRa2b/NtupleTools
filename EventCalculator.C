@@ -1468,8 +1468,8 @@ int EventCalculator::doPBNR() {
   
   for (unsigned int i=0; i< myJetsPF->size(); i++) {
     if (getJetPt(i) >30 ) {
-      if (myJetsPF->at(i).neutralHadronEnergyFraction >=0.95) nhBad=true;
-      if (myJetsPF->at(i).photonEnergy / myJetsPF->at(i).energy >= 0.95) phBad=true;
+      if (myJetsPF->at(i).neutralHadronEnergyFraction >0.90) nhBad=true;
+      if (myJetsPF->at(i).photonEnergy / myJetsPF->at(i).energy > 0.95) phBad=true;
     }
   }
   
@@ -2533,6 +2533,8 @@ double EventCalculator::getCrossSection(){
   if (sampleName_.Contains("tbar_tW-channel") )                                      return 7.87;
   //if (sampleName_.Contains("wjets") )                                                return 31314;
   if (sampleName_.Contains("WJetsToLNu_TuneZ2_7TeV-madgraph-tauola") )               return 31314;
+  if (sampleName_.Contains("WJetsToLNu_250_HT_300_TuneZ2_7TeV-madgraph-tauola") )    return 34.8;
+  if (sampleName_.Contains("WJetsToLNu_300_HT_inf_TuneZ2_7TeV-madgraph-tauola") )    return 48.49;
   if (sampleName_.Contains("ttjets_madgraph") )                                      return 158; // +/- 10 +/- 15 //CMS PAS TOP-11-001
   //if (sampleName_.Contains("DY") )                                                   return 3048;
   if (sampleName_.Contains("DYJetsToLL_TuneZ2_M-50_7TeV-madgraph-tauola") )          return 3048;
@@ -2616,6 +2618,8 @@ TString EventCalculator::getSampleNameOutputString(){
   if (sampleName_.Contains("zjets") )                                                return "Zinvisible";
   //if (sampleName_.Contains("wjets") )                                                return "WJets";
   if (sampleName_.Contains("WJetsToLNu_TuneZ2_7TeV-madgraph-tauola") )               return "WJets";
+  if (sampleName_.Contains("WJetsToLNu_250_HT_300_TuneZ2_7TeV-madgraph-tauola") )    return "WJetsHT250";
+  if (sampleName_.Contains("WJetsToLNu_300_HT_inf_TuneZ2_7TeV-madgraph-tauola") )    return "WJetsHT300";
   if (sampleName_.Contains("DYJetsToLL_TuneZ2_M-50_7TeV-madgraph-tauola") )          return "ZJets";
   if (sampleName_.Contains("ww") )                                                   return "WW";
   if (sampleName_.Contains("wz") )                                                   return "WZ";
@@ -2755,6 +2759,10 @@ void EventCalculator::loadJetTagEffMaps() {
     f_tageff_ = new TFile("histos_btageff_csvm_singletopbar_tW.root","READ");
   else if (sampleName_.Contains("zjets"))   
     f_tageff_ = new TFile("histos_btageff_csvm_zinvisible.root","READ");
+  else if (sampleName_.Contains("WJetsToLNu_250_HT_300_TuneZ2_7TeV-madgraph-tauola") )
+    f_tageff_ = new TFile("histos_btageff_csvm_wjetsHT250.root","READ");
+  else if (sampleName_.Contains("WJetsToLNu_300_HT_inf_TuneZ2_7TeV-madgraph-tauola") )    
+    f_tageff_ = new TFile("histos_btageff_csvm_wjetsHT300.root","READ");
   else if (sampleName_.Contains("ww") )  
     f_tageff_ = new TFile("histos_btageff_csvm_ww.root","READ");
   else if (sampleName_.Contains("wz") )  
@@ -2763,7 +2771,13 @@ void EventCalculator::loadJetTagEffMaps() {
     f_tageff_ = new TFile("histos_btageff_csvm_zz.root","READ");
   else if (sampleName_.Contains("DYJetsToLL_TuneZ2_M-50_7TeV-madgraph-tauola") )
     f_tageff_ = new TFile("histos_btageff_csvm_dyjets.root","READ");
-  else if(sampleName_.Contains("LM9_SUSY_sftsht_7TeV-pythia6_v2"))   
+  else if(sampleName_.Contains("LM9")	
+	  ||sampleName_.Contains("SUGRA")
+	  ||sampleName_.Contains("T1bbbb") 
+	  ||sampleName_.Contains("T2bb") 
+	  ||sampleName_.Contains("T2tt") 
+	  ||sampleName_.Contains("T1tttt") 
+	  )   
     f_tageff_ = new TFile("histos_btageff_csvm_lm9.root","READ");
   else //if all else fails, use ttbar
     f_tageff_ = new TFile("histos_btageff_csvm.root","READ");
@@ -3758,6 +3772,8 @@ unsigned int EventCalculator::getSeed(){
   if (sampleName_.Contains("tbar_tW-channel") )                                      return 4391;
   //if (sampleName_.Contains("wjets") )                                                return 4392;
   if (sampleName_.Contains("WJetsToLNu_TuneZ2_7TeV-madgraph-tauola") )               return 4392;
+  if (sampleName_.Contains("WJetsToLNu_250_HT_300_TuneZ2_7TeV-madgraph-tauola") )    return 4401;
+  if (sampleName_.Contains("WJetsToLNu_300_HT_inf_TuneZ2_7TeV-madgraph-tauola") )    return 4402;
   //if (sampleName_.Contains("DY") )                                                   return 4393;
   if (sampleName_.Contains("DYJetsToLL_TuneZ2_M-50_7TeV-madgraph-tauola") )          return 4393;
     
@@ -4157,7 +4173,7 @@ void EventCalculator::loadEventList(std::vector<int> &vrun, std::vector<int> &vl
   //inFile.open("eventlist_pfht350_r178866_SUM.txt"); 
   if (sampleName_.Contains("ttjets_madgraph") )                     
     inFile.open("badeventlist_pythia6bug_ttjets_madgraph.txt"); 
-
+  else return;
 
   if(!inFile) {std::cout << "ERROR: can't open event list" << std::endl;  assert(0);}
   while(!inFile.eof()) {
