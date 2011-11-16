@@ -144,6 +144,7 @@ public:
   bool passBTagger(int ijet, BTaggerType btagger=Nbtaggers );
 
   unsigned int nGoodJets();
+  //  unsigned int nGoodJets(TH2D* count,TH2D* unc,TH2D* l2l3); //for a test
   unsigned int nGoodJets30();
   unsigned int nGoodBJets( BTaggerType btagger=Nbtaggers);
 
@@ -332,6 +333,7 @@ private:
 
   unsigned int getSeed();
   void changeVariables(TRandom3* random, double jetLossProbability, int& nLostJets);
+  void changeVariablesGenSmearing(TRandom3* random);
   void resetVariables();
   bool  recalculatedVariables_;
 

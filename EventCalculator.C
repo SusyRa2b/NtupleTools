@@ -68,11 +68,11 @@ EventCalculator::EventCalculator(const TString & sampleName, jetType theJetType,
   mhtgraph_(0),
   mhtgraphPlus_(0),
   mhtgraphMinus_(0),
-  ResJetPar_(0),
-  L3JetPar_(0),
-  L2JetPar_(0),
-  L1JetPar_(0),
-  JetCorrector_(0),
+  ResJetPar_(new JetCorrectorParameters("START42_V13_AK5PFchs_L2L3Residual.txt") ),
+  L3JetPar_( new JetCorrectorParameters("START42_V13_AK5PFchs_L3Absolute.txt") ),
+  L2JetPar_(new JetCorrectorParameters("START42_V13_AK5PFchs_L2Relative.txt") ),
+  L1JetPar_(new JetCorrectorParameters("START42_V13_AK5PFchs_L1FastJet.txt") ),
+  JetCorrector_(0 ),
   jecUnc_(new JetCorrectionUncertainty("START42_V13_AK5PFchs_Uncertainty.txt")),
   starttime_(0),
   recalculatedVariables_(false),
@@ -104,6 +104,14 @@ EventCalculator::EventCalculator(const TString & sampleName, jetType theJetType,
   //loadHLTMHTeff();
   loadHLTHTeff();
   loadDataJetRes();
+
+  vPar_.clear(); //should be overkill
+  vPar_.push_back(*L1JetPar_);
+  vPar_.push_back(*L2JetPar_);
+  vPar_.push_back(*L3JetPar_);
+  vPar_.push_back(*ResJetPar_);
+  JetCorrector_ =  new FactorizedJetCorrector(vPar_);
+
   loadJetTagEffMaps();  
 }
 
@@ -1565,6 +1573,32 @@ unsigned int EventCalculator::nGoodJets() {
   return njets;
 }
 
+//this was for testing only...to fill these special histograms
+/*
+unsigned int EventCalculator::nGoodJets(TH2D* count,TH2D* unc,TH2D* l2l3) {
+  
+  unsigned int njets=0;
+  for (unsigned int i=0; i < myJetsPF->size(); ++i) {
+    if (isGoodJet(i) )   {
+      njets++;
+      
+      count->Fill(myJetsPF->at(i).eta, myJetsPF->at(i).pt);
+      unc->Fill(myJetsPF->at(i).eta, myJetsPF->at(i).pt,100*0.5*( myJetsPFhelper->at(i).jetUncPlus +myJetsPFhelper->at(i).jetUncMinus ));
+
+      JetCorrector_->setJetEta( myJetsPF->at(i).eta);
+      JetCorrector_->setJetPt( myJetsPF->at(i).uncor_pt );
+      JetCorrector_->setJetA( myJetsPF->at(i).jetArea );
+      JetCorrector_->setRho( sdouble_kt6pfjets_rho_value ); 
+      std::vector<float> factors = JetCorrector_->getSubCorrections();
+      float L2L3Residualonly = factors[3]/factors[2];
+      
+      l2l3->Fill(myJetsPF->at(i).eta, myJetsPF->at(i).pt, 100*(L2L3Residualonly-1));
+    }
+  }
+  return njets;
+}
+*/
+
 unsigned int EventCalculator::nGoodJets30() {
   
   unsigned int njets=0;
@@ -1761,15 +1795,13 @@ float EventCalculator::getJESUncertainty( unsigned int ijet ) {
   return uncertainty;
 }
 
-
 float EventCalculator::getJetPt( unsigned int ijet ) {
 
   //i am going to write this to allow simultaneous use of JER and JES
   //(hence use if repeated 'if' instead of 'else if')
-  //I hope this is sensible!
 
   float pt = myJetsPF->at(ijet).pt;
-  //  if ( theJESType_ == kJES0 && theJERType_ == kJER0) return pt;
+  //if ( theJESType_ == kJES0 && theJERType_ == kJER0) return pt;
 
   if (theJESType_ == kJESFLY) {
     JetCorrector_->setJetEta( myJetsPF->at(ijet).eta);
@@ -1787,12 +1819,15 @@ float EventCalculator::getJetPt( unsigned int ijet ) {
     float L2L3Residualonly = factors[3]/factors[2];
     pt = myJetsPF->at(ijet).uncor_pt * factors[2]/L2L3Residualonly;
 
+    //for study of L2L3Res
+	    //if (pt>30)  cout<<ijet<<" pT L2L3Residual Unc+ Unc- : "<<pt<<"\t"<<1-L2L3Residualonly<<" "<<myJetsPFhelper->at(ijet).jetUncPlus<<" "<<myJetsPFhelper->at(ijet).jetUncMinus <<" "<< sqrt( pow(1-L2L3Residualonly,2) + pow(myJetsPFhelper->at(ijet).jetUncPlus,2) ) <<endl;
+
   }
 
   
  //first JER
   if ( theJERType_ != kJER0 ) {
-    float genpt = myJetsPF->at(ijet).genJet_pt; //not sure what it will be called
+    float genpt = myJetsPF->at(ijet).genJet_pt;
     if (genpt > 15) {
       float factor = getJERbiasFactor(ijet);
       float deltapt = (pt - genpt) * factor;
@@ -3156,6 +3191,13 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   TH1D pdfWeightSumMSTW("pdfWeightSumMSTW","pdfWeightSumMSTW",41,0,41);
   TH1D pdfWeightSumNNPDF("pdfWeightSumNNPDF","pdfWeightSumNNPDF",100,0,100);
 
+  //for testing
+//   double maxeta=2.5;
+//   double ptbins[]={50,70,100,150,250,1000}; //5 bins
+//   TH2D jetCounting("jetCounting","n jets",5,-maxeta,maxeta,5,ptbins);
+//   TH2D jetUncertainty("jetUncertainty","JES uncertainty",5,-maxeta,maxeta,5,ptbins);
+//   TH2D jetL2L3Residual("jetL2L3Residual","L2L3 Residual",5,-maxeta,maxeta,5,ptbins);
+
   // bookkeeping for screen output only
   pair<int,int> lastpoint = make_pair(0,0);
 
@@ -3718,6 +3760,8 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
 
       changeVariables(&random,0.05,nLostJet);
 
+      //changeVariablesGenSmearing(&random);
+
       njets_lostJet = nGoodJets();
       nbjets_lostJet = nGoodBJets();
 
@@ -3748,6 +3792,10 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   stopTimer(nevents);
 
   if (watch_!=0) watch_->Print();
+
+  //for a special test
+//   jetUncertainty.Divide(&jetCounting);
+//   jetL2L3Residual.Divide(&jetCounting);
 
   fout.Write();
   fout.Close();
@@ -3871,6 +3919,7 @@ unsigned int EventCalculator::getSeed(){
   
   cout << "Could not find seed for sample!" << endl;
   assert(0);
+  return 123455;
 }
 
 double EventCalculator::calc_mNj( std::vector<unsigned int> jNi ) {
@@ -3923,6 +3972,91 @@ double EventCalculator::calc_mNj( unsigned int j1i, unsigned int j2i, unsigned i
   return calc_mNj(v);
 }
 
+
+void EventCalculator::changeVariablesGenSmearing(TRandom3* random) {
+  //this code is very much a work in progress
+  //the goal is still far away...
+
+  //goal: starting with gen jets, fill jet list from scratch with smeared gen jets
+  //two ways to proceed:
+  // (1) start with gen particle list, looking for (status 3?) quarks and gluons
+  // (2) start with genPartons associated with reco'd jets
+  //version (2) is where i will start
+  /*
+Let me explain it with a pseudo-algorithm.
+1) take truly balanced QCD events (gen-level partons, or even better
+rebalanced events like in R+S)
+
+2) smear exactly 1 jet in a way that can give a large mismeasurement
+[maybe a double or triple Gaussian smearing, with the tail functions having
+a very large width]
+
+3) smear the other jets with a 0.10*pT Gaussian
+[simple Gaussian smearing, so that virtually no jets get a large
+mismeasurement]
+
+4) compute MET, DeltaPhiN and study the r(MET) plot
+
+  */
+  if(recalculatedVariables_) return;
+  recalculatedVariables_=true;
+  myJetsPF_temp                   = myJetsPF;		  
+  myMETPF_temp		          = myMETPF;		  
+
+  myJetsPF                = new std::vector<jet2_s>;	   //jmt -- switch to PF2PAT
+  myMETPF		  = new std::vector<met1_s>(*myMETPF_temp);	  
+
+/*
+  //as a cross-check, let's calculate a jet-only gen-level MET
+//this didn't work very well....
+  double genMETx=0;
+  double genMETy=0;
+  for (unsigned int i=0; i<myJetsPF_temp->size(); i++) {
+    double genpt =  jet2_genParton_pt .at( i);
+    double geneta=  jet2_genParton_eta.at( i);
+    double genphi=  jet2_genParton_phi.at( i);
+
+    if (fabs(geneta)<5) {
+      genMETx -= genpt * cos(genphi);
+      genMETy -= genpt * sin(genphi);
+
+      myJetsPF->push_back( myJetsPF_temp->at(i)); //temp
+    }
+  }
+  cout<<"genMET = "<<sqrt(genMETx*genMETx + genMETy*genMETy)<<" "<<met1_genMET_et.at(0)<<endl;
+*/
+
+  cout<<"=="<<endl;
+
+//start with MET
+  double METx = myMETPF_temp->at(0).pt * cos(myMETPF_temp->at(0).phi);
+  double METy = myMETPF_temp->at(0).pt * sin(myMETPF_temp->at(0).phi);
+//remove the jets from the MET  
+  for (unsigned int i=0; i<myJetsPF_temp->size(); i++) {
+    METx += myJetsPF_temp->at(i).uncor_pt * cos(myJetsPF_temp->at(i).uncor_phi);
+    METy += myJetsPF_temp->at(i).uncor_pt * sin(myJetsPF_temp->at(i).uncor_phi);
+  }
+  cout<<myMETPF_temp->at(0).pt<<" "<<sqrt(METx*METx + METy*METy)<<flush;
+  for (unsigned int i=0; i<myElectronsPF->size(); i++) {
+    METx += myElectronsPF->at(i).pt * cos(myElectronsPF->at(i).phi);
+    METy += myElectronsPF->at(i).pt * sin(myElectronsPF->at(i).phi);
+  }
+  for (unsigned int i=0; i<myMuonsPF->size(); i++) {
+    METx += myMuonsPF->at(i).pt * cos(myMuonsPF->at(i).phi);
+    METy += myMuonsPF->at(i).pt * sin(myMuonsPF->at(i).phi);
+  }
+
+  cout<<" "<<sqrt(METx*METx + METy*METy)<<endl;
+  
+  //now try the hail mary approach
+
+  for (unsigned int i=0 ; i<myGenParticles->size(); i++) {
+    if (TMath::Nint(   myGenParticles->at(i).status)==3) cout<<i<<"  "<<myGenParticles->at(i).firstMother<<"\t"<<myGenParticles->at(i).pdgId
+							     <<"\t"<<myGenParticles->at(i).firstDaughter<<endl;
+  }
+
+
+}
 
 void EventCalculator::changeVariables(TRandom3* random, double jetLossProbability, int& nLostJets)
 {
