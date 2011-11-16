@@ -1456,13 +1456,17 @@ void EventCalculator::getUncorrectedMET(float& uncorrectedMET, float& uncorrecte
   double METx = uncorrectedMET * cos(uncorrectedMETPhi);
   double METy = uncorrectedMET * sin(uncorrectedMETPhi);
 
+  //  cout<<endl<< " == computing MET "<<endl; //JMT DEBUG
+
   for(unsigned int thisJet = 0; thisJet < myJetsPF->size(); thisJet++)
     {
       if (isCleanJet(thisJet) ){//this only has an effect for recopfjets
-	METx += myJetsPF->at(thisJet).uncor_pt * cos(myJetsPF->at(thisJet).uncor_phi);
-	METx -= getUncorrectedJetPt(thisJet) * cos(myJetsPF->at(thisJet).uncor_phi);
-	METy += myJetsPF->at(thisJet).uncor_pt * sin(myJetsPF->at(thisJet).uncor_phi);
-	METy -= getUncorrectedJetPt(thisJet) * sin(myJetsPF->at(thisJet).uncor_phi);
+	if ( myJetsPF->at(thisJet).pt >10) {
+	  METx += myJetsPF->at(thisJet).uncor_pt * cos(myJetsPF->at(thisJet).uncor_phi);
+	  METx -= getUncorrectedJetPt(thisJet,true) * cos(myJetsPF->at(thisJet).uncor_phi);
+	  METy += myJetsPF->at(thisJet).uncor_pt * sin(myJetsPF->at(thisJet).uncor_phi);
+	  METy -= getUncorrectedJetPt(thisJet,true) * sin(myJetsPF->at(thisJet).uncor_phi);
+	}
       }
     }
   uncorrectedMET = sqrt(METx*METx + METy*METy);
@@ -1639,9 +1643,10 @@ void EventCalculator::getSmearedUnclusteredMET(float & myMET, float & myMETphi) 
   for (unsigned int i=0; i<myJetsPF->size(); i++) {
     //    if (isCleanJet(i) ){//this only has an effect for recopfjets    
       //remove the uncorrected jet pT from the raw MET
-    myMETx += getUncorrectedJetPt(i) * cos(myJetsPF->at(i).uncor_phi);
-    myMETy += getUncorrectedJetPt(i) * sin(myJetsPF->at(i).uncor_phi);
-    //    }
+    if (myJetsPF->at(i).pt >10 ) {
+      myMETx += getUncorrectedJetPt(i) * cos(myJetsPF->at(i).uncor_phi);
+      myMETy += getUncorrectedJetPt(i) * sin(myJetsPF->at(i).uncor_phi);
+    }
   }
   //then muons
   for ( unsigned int i = 0; i<myMuonsPF->size() ; i++) {
@@ -1678,9 +1683,10 @@ void EventCalculator::getSmearedUnclusteredMET(float & myMET, float & myMETphi) 
   for (unsigned int i=0; i<myJetsPF->size(); i++) {
     //    if (isCleanJet(i) ){//this only has an effect for recopfjets    
       //remove the corrected jet pT from MET
+    if (myJetsPF->at(i).pt >10 ) {
       myMETx -= getUncorrectedJetPt(i) * cos(myJetsPF->at(i).phi);
       myMETy -= getUncorrectedJetPt(i) * sin(myJetsPF->at(i).phi);
-      //    }
+    }
   }
   //muons
   for ( unsigned int i = 0; i<myMuonsPF->size() ; i++) {
@@ -1759,8 +1765,8 @@ float EventCalculator::getJERbiasFactor(unsigned int ijet) {
 }
 
 
-float EventCalculator::getJESUncertainty( unsigned int ijet ) {
-
+float EventCalculator::getJESUncertainty( unsigned int ijet, bool addL2L3toJES ) {
+  assert ( theJESType_ != kJES0 );
 
   float uncertainty = -1000;
 
@@ -1792,10 +1798,26 @@ float EventCalculator::getJESUncertainty( unsigned int ijet ) {
 
   //  watch_->Stop(); //for timing tests only
 
+  if (fabs(uncertainty) > 1) uncertainty=0; //important sanity check
+
+  //  cout<<"\t JES unc ("<< myJetsPF->at(ijet).pt <<") = "<<uncertainty;//JMT DEBUG
+
+  if (addL2L3toJES ) {
+    JetCorrector_->setJetEta( myJetsPF->at(ijet).eta);
+    JetCorrector_->setJetPt( myJetsPF->at(ijet).uncor_pt );
+    JetCorrector_->setJetA( myJetsPF->at(ijet).jetArea );
+    JetCorrector_->setRho( sdouble_kt6pfjets_rho_value ); 
+    std::vector<float> factors = JetCorrector_->getSubCorrections();
+    float L2L3Residual = factors[3]/factors[2] - 1;
+
+    uncertainty = sqrt(uncertainty*uncertainty + pow(L2L3Residual,2) );
+    //    cout<<" ++ "<<L2L3Residual<<" = "<<uncertainty<<endl; //JMT DEBUG
+  }
+
   return uncertainty;
 }
 
-float EventCalculator::getJetPt( unsigned int ijet ) {
+float EventCalculator::getJetPt( unsigned int ijet, bool addL2L3toJES ) {
 
   //i am going to write this to allow simultaneous use of JER and JES
   //(hence use if repeated 'if' instead of 'else if')
@@ -1838,17 +1860,16 @@ float EventCalculator::getJetPt( unsigned int ijet ) {
     
   }
   
+  //  cout<<endl<< " == computing jet pT "<<endl; //JMT DEBUG
   //then JES
   if ( theJESType_ == kJESup ) {
-    //in 2010 there was an extra term added in quadrature. 
-    //i will not implement that because i don't know if that term should exist in 2011
-    //note that this if statement is important because there are dummy values like -1000 sometimes
-    const    float unc = getJESUncertainty(ijet);
-    if (  fabs(unc)<1 )   pt *= (1+ unc);
+    //sanity check on unc is now moved inside of getJESUncertainty
+    const    float unc = getJESUncertainty(ijet,addL2L3toJES);
+    pt *= (1+ unc);
   }
   else if (theJESType_ == kJESdown) {
-    const    float unc = getJESUncertainty(ijet);
-    if (  fabs( unc)<1 ) pt *= (1- unc);
+    const    float unc = getJESUncertainty(ijet,addL2L3toJES);
+    pt *= (1- unc);
   }
   
   return pt;
@@ -1857,7 +1878,7 @@ float EventCalculator::getJetPt( unsigned int ijet ) {
 
 
 //code here largely copied and pasted from getJetPt(). could be done better
-float EventCalculator::getUncorrectedJetPt( unsigned int ijet ) {
+float EventCalculator::getUncorrectedJetPt( unsigned int ijet, bool addL2L3toJES ) {
 
   //i am going to write this to allow simultaneous use of JER and JES
   //(hence use if repeated 'if' instead of 'else if')
@@ -1880,15 +1901,14 @@ float EventCalculator::getUncorrectedJetPt( unsigned int ijet ) {
   }
   //then JES
   if ( theJESType_ == kJESup ) {
-    //in 2010 there was an extra term added in quadrature. 
-    //i will not implement that because i don't know if that term should exist in 2011
-    //note that this if statement is important because there are dummy values like -1000 sometimes
-    const    float unc = getJESUncertainty(ijet);
-    if (  fabs(unc)<1 )   pt *= (1+unc);
+    //sanity check on unc is now moved inside of getJESUncertainty.
+    //it will return 0 in case of failed sanity check
+    const    float unc = getJESUncertainty(ijet,addL2L3toJES);
+    pt *= (1+unc);
   }
   else if (theJESType_ == kJESdown) {
-    const    float unc = getJESUncertainty(ijet);
-    if (  fabs( unc)<1 ) pt *= (1- unc);
+    const    float unc = getJESUncertainty(ijet,addL2L3toJES);
+    pt *= (1- unc);
   }
 
   return pt;

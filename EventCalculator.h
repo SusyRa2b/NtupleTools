@@ -152,10 +152,10 @@ public:
 
 
   float getJERbiasFactor(unsigned int ijet);
-  float getJESUncertainty( unsigned int ijet );
+  float getJESUncertainty( unsigned int ijet, bool addL2L3toJES );
 
-  float getJetPt( unsigned int ijet );
-  float getUncorrectedJetPt( unsigned int ijet );
+  float getJetPt( unsigned int ijet, bool addL2L3toJES=false );
+  float getUncorrectedJetPt( unsigned int ijet, bool addL2L3toJES=false );
   float getJetPx( unsigned int ijet ) ;
   float getJetPy( unsigned int ijet ) ;
   float getJetPz( unsigned int ijet ) ;
