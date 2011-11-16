@@ -151,24 +151,26 @@ void setSearchRegions() {
   //nb: some of the code *depends* on the fact that for there are equal numbers of corresponding
   //sbRegions and searchRegions, with the only difference being the MET selection!
 
-  
+  //also, for style reasons the 'owenId' should not contain the number of b tags.
+  //everywhere that we use the owenId as an identifier, we combine with the number of b tags
+  /*
   //oct25
   //case 1
-  sbRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=200&&MET<250","ge1b-Loose",false));
-  searchRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=250","ge1b-Loose"));
+  sbRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=200&&MET<250","Loose",false));
+  searchRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=250","Loose"));
   //case 2
-  sbRegions_.push_back( SearchRegion( "ge1b","HT>=500","MET>=200&&MET<250","ge1b-Tight",false));
-  searchRegions_.push_back( SearchRegion( "ge1b","HT>=500","MET>=500","ge1b-Tight"));
+  sbRegions_.push_back( SearchRegion( "ge1b","HT>=500","MET>=200&&MET<250","Tight",false));
+  searchRegions_.push_back( SearchRegion( "ge1b","HT>=500","MET>=500","Tight"));
   //case 4
-  sbRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=200&&MET<250","ge2b-Loose",false));
-  searchRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=250","ge2b-Loose"));
+  sbRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=200&&MET<250","Loose",false));
+  searchRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=250","Loose"));
   //case 5
-  sbRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=200&&MET<250","ge2b-Tight",false));
-  searchRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=300","ge2b-Tight"));
+  sbRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=200&&MET<250","Tight",false));
+  searchRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=300","Tight"));
   //case 6
-  sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=200&&MET<250","ge3b",false));
-  searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=250","ge3b"));
-  
+  sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=200&&MET<250","Loose",false));
+  searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=250","Loose"));
+  */
   
   /*
   //case 1
@@ -205,7 +207,7 @@ void setSearchRegions() {
   */    
 
 
-  /*
+  
   //2011 Summer result
   sbRegions_.push_back( SearchRegion( "ge1b","HT>=350","MET>=150&&MET<200","Loose",false)); //loose SB
   searchRegions_.push_back( SearchRegion( "ge1b","HT>=350","MET>=200","Loose")); //loose Sig
@@ -218,42 +220,185 @@ void setSearchRegions() {
 
   sbRegions_.push_back( SearchRegion( "ge2b","HT>=500","MET>=150&&MET<200","Tight",false)); //tight SB
   searchRegions_.push_back( SearchRegion( "ge2b","HT>=500","MET>=300","Tight")); //tight Sig
-  */
+  
 
-/* new regions
-
-  sbRegions_.push_back( SearchRegion( "ge1b","HT>=1100","MET>=150&&MET<200","HighHT",false));
-  searchRegions_.push_back( SearchRegion( "ge1b","HT>=1100","MET>=200","HighHT"));
-
-  sbRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=150&&MET<200","HighMET",false));
-  searchRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=400","HighMET"));
-
-  sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=150&&MET<200","Threeb",false));
-  searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=200","Threeb"));
-*/
 
   searchRegionsSet_=true;
 }
 
-struct SignalEffData {
-  double rawYield;
+//very simple data container used by the SignalEffData class
+class SystInfo {
+public:
+  SystInfo(double p=0, double m=0, int s=0);
+  ~SystInfo();
 
-  double effCorr;
-  double totalSystematic;
+  double plus;
+  double minus;
+  //convention:
+  //use 0 for numbers that are completely unset
+  //use 1 for numbers that are fixed by SignalEffData
+  //use 2 for numbers that are set by some actual event counts
+  int status;
+};
 
-  //extra info for mariarosaria
-  double btagSystematic;
-  double jesSystematic;
-  double pdfSystematic;
-  double metSystematic;
+SystInfo::SystInfo(double p, double m, int s) :
+  plus(p),  minus(m),  status(s) {}
+SystInfo::~SystInfo() {}
 
-  double otherSystematic;
+class SignalEffData {
+  //keep all of the relevant numbers for signal efficiency for =one point=
+  // by one point i mean one sample and one selection
+public:
+  SignalEffData();
+  ~SignalEffData();
 
-  //  double lumiSystematic;
-  //  double triggerSystematic;
-  //  double jerSystematic;
+  double rawYield; //yield in lumiScale_ invpb, or for SMS really the raw yield
+
+  double effCorr; //factor including all corrections to the efficiency
+  double totalSystematic(); 
+  double symmetrize(const TString & which);
+
+  double value(const TString &which) {return symmetrize(which);}
+
+  void set(const TString & which, double valminus, double valplus);
+
+  void setFixedForScan();
+
+    //pair is for + / -
+  //important convention notes:
+  //  values must be fractional ( i.e. 2% is 0.02)
+  //  values should preserve sign (not after fabs())
+  map<TString, SystInfo > systematics;
+  //motivation for using a map:
+  //  want to be able to clear() it and *regain* the memory footprint, without getting rid of the class object itself
+  TString translateVariation(const TString & which) ;
 
 };
+
+SignalEffData::SignalEffData() : 
+  rawYield(0),
+  effCorr(1)
+{ 
+
+  systematics["JES"] = SystInfo();             
+  systematics["btag"] = SystInfo();            
+  systematics["PDF"] = SystInfo();             
+  systematics["MET"] = SystInfo();             
+  systematics["PU"] = SystInfo();              
+  systematics["JER"] = SystInfo();             
+  systematics["kFactor"] = SystInfo();         
+  systematics["cleaning"] = SystInfo(1e-2,1e-2,1);  
+  systematics["LepVeto"] = SystInfo(2e-2,2e-2,1);   
+  systematics["trigger"] = SystInfo(2.5e-2,2.5e-2,1);
+  systematics["lumi"] = SystInfo(4.5e-2 , 4.5e-2,1);  
+  //we don't really want this one this time.
+  //keep it for now just for the sake of comparison with old results
+  systematics["L2L3"] = SystInfo(1e-2 , 1e-2,1);
+
+  //list of signal systematics:
+  //  JES
+  // btag efficiency
+  // PDFs (acceptance)
+  // [not done] PDFs (cross-section) -- not considered last time and not relevant for SMS
+  //  unc energy (MET)
+
+  // PU
+  //  JER
+  //  trigger eff
+  //  MET cleaning
+  //  lepton veto eff
+  // lumi
+  // for mSugra, NLO cross section (k factor)
+
+}
+
+SignalEffData::~SignalEffData() 
+{
+  systematics.clear();
+}
+
+void SignalEffData::setFixedForScan() {
+  systematics["PU"].plus = 4e-2;
+  systematics["PU"].minus = -systematics["PU"].plus;
+  systematics["PU"].status = 1;
+
+  systematics["JER"].plus = 2e-2;
+  systematics["JER"].minus = -systematics["JER"].plus;
+  systematics["JER"].status = 1;
+
+}
+
+
+TString SignalEffData::translateVariation(const TString & which) {
+  //this is a nasty hack that i do not like
+  //the variations are known only by their differences in name
+  //these are easily human-readable but don't fit in well with the names I chose to use
+  //in this class SignalEffData
+
+  //for now I will just "translate" them here in a hard-coded way.
+  //maybe i should use .Contains() but that can be dangerous
+
+  if (which == "BTagEff02") return "btag";
+  else if (which=="JERbias") return "JER";
+  else if (which=="JES0") return "JES";
+  else if (which=="METunc0") return "MET";
+  else if (which =="PUunc0") return "PU";
+
+  return which;
+
+}
+
+void SignalEffData::set(const TString & which, double valminus, double valplus) {
+
+  TString translatedWhich=  translateVariation(which);
+  
+  map<TString, SystInfo >::iterator it=systematics.find(translatedWhich);
+  if (it==systematics.end() ) {
+    cout<<"ERROR -- cannot find in systematics list: "<<translatedWhich<<endl;
+    return;
+  }
+
+  it->second.minus = valminus;
+  it->second.plus = valplus;
+  it->second.status = 2;
+  
+}
+
+double SignalEffData::symmetrize(const TString & which) {
+
+  double s=-1;
+
+ map<TString, SystInfo >::iterator it=systematics.find(which);
+  if (it==systematics.end() ) {
+    cout<<"ERROR -- cannot find in systematics list: "<<which<<endl;
+  }
+  //realizing now that i symmetrized different results differently!
+  //for now maintain strict consistency
+  else  if ( it->first=="kFactor" ) { //average the 2 parts of the pair
+    s = 0.5* (fabs(it->second.plus) + fabs(it->second.minus));
+  }
+  else { //return the larger deviation
+    //for PDF uncertainties for now just store the pre-processed results
+    double var1= fabs( it->second.plus);
+    double var2= fabs( it->second.minus);
+    s = var2>var1? var2:var1;
+  }
+  
+  return s;
+}
+
+double SignalEffData::totalSystematic() {
+
+  double total2=0;
+  for (map<TString, SystInfo >::iterator isyst=systematics.begin(); isyst!=systematics.end(); ++isyst) {
+    if ( isyst->second.status == 0) { 
+      cout<<"WARNING -- systematic is unset! "<<isyst->first<<endl;
+    }
+    total2 += pow( symmetrize(isyst->first),2);
+  }
+
+  return 100*sqrt(total2);
+}
 
 struct OwenData {
   double Nsig; //number in signal region , data //done
@@ -1062,45 +1207,15 @@ void loadSamples(bool joinSingleTop=true) {
   samplesAll_.insert("T2bb");
   samplesAll_.insert("T2tt");
 
-  //  configDescriptions_.push_back("SSVHPT");
-  //  old btageff prescription
-
-  /*
-  configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
-  configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
-
-  //JES
-  configDescriptions_.push_back("SSVHPT_PF2PATjets_JESdown_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
-  configDescriptions_.push_back("SSVHPT_PF2PATjets_JESup_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
-  //JER
-  //  configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERdown_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
-  //  configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERup_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
-
-  //unclustered MET
-  configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METuncDown_PUunc0_BTagEff0_HLTEff0");
-  configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METuncUp_PUunc0_BTagEff0_HLTEff0");
-
-  //PU
-  //    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncDown_BTagEff0_HLTEff0");
-  //    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncUp_BTagEff0_HLTEff0");
-
-  //btag eff
-  configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffdown_HLTEff0");
-  configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffup_HLTEff0");
-
-  //HLT eff
-  //    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffdown");
-  //    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffup");
-  */
-
-
+ 
   
   //FOR PLOTS
   ////////////
-  configDescriptions_.setDefault("CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
-  //configDescriptions_.setCorrected("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
+/*
+    configDescriptions_.setDefault("CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
+  configDescriptions_.setCorrected("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
 
-  /*
+  
   //JES
   configDescriptions_.addVariation("SSVHPT_PF2PATjets_JESdown_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0",
 				   "SSVHPT_PF2PATjets_JESup_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
@@ -1123,7 +1238,7 @@ void loadSamples(bool joinSingleTop=true) {
   //HLT eff
   //    configDescriptions_.addVariation("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffdown",
   //"SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffup");
-  */
+ */ 
   ///////////////
   //////////////
  
@@ -1160,8 +1275,9 @@ void loadSamples(bool joinSingleTop=true) {
   //    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEffup");
 */
 
-  /*
+  
   //new btag eff prescription
+
   configDescriptions_.setDefault("SSVHPT_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
   configDescriptions_.setCorrected("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
   //comment here to save time
@@ -1170,16 +1286,16 @@ void loadSamples(bool joinSingleTop=true) {
   configDescriptions_.addVariation("SSVHPT_PF2PATjets_JESdown_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0",
 				   "SSVHPT_PF2PATjets_JESup_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
   //JER - out for SMS
-  //configDescriptions_.addVariation("SSVHPT_PF2PATjets_JES0_JERdown_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0",
-  //				   "SSVHPT_PF2PATjets_JES0_JERup_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
+//   configDescriptions_.addVariation("SSVHPT_PF2PATjets_JES0_JERdown_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0",
+//   				   "SSVHPT_PF2PATjets_JES0_JERup_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
 
   //unclustered MET
   configDescriptions_.addVariation("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METuncDown_PUunc0_BTagEff02_HLTEff0",
 				   "SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METuncUp_PUunc0_BTagEff02_HLTEff0");
 
   //PU - out for SMS
-  //configDescriptions_.addVariation("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncDown_BTagEff02_HLTEff0",
-  //				   "SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncUp_BTagEff02_HLTEff0");
+//   configDescriptions_.addVariation("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncDown_BTagEff02_HLTEff0",
+//   				   "SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncUp_BTagEff02_HLTEff0");
 
   //btag eff
   configDescriptions_.addVariation("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffdown2_HLTEff0",
@@ -1188,7 +1304,7 @@ void loadSamples(bool joinSingleTop=true) {
   //HLT eff
   //    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEffdown");
   //    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEffup");
-  */
+  
 
 
   currentConfig_=configDescriptions_.getDefault();
