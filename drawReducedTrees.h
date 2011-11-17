@@ -1556,9 +1556,11 @@ float drawSimple(const TString var, const int nbins, const double low, const dou
 
   //at this point i've got a histogram. what more could i want?
   hinteractive = (TH1D*)hh->Clone("hinteractive");
-  TFile fout(filename,"UPDATE");
-  hh->Write();
-  fout.Close();
+  if(savePlots_){
+    TFile fout(filename,"UPDATE");
+    hh->Write();
+    fout.Close();
+  }
   delete hh; //deleting ROOT objects can be dangerous...but i've tried carefully to avoid a double deletion here by doing gROOT->cd() before the creation of hh
   return theIntegral;
 }

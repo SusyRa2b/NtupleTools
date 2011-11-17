@@ -1167,6 +1167,7 @@ void averageZ() {
 
 }
 
+const bool reweightLSBdata_=false; //whether or not LSB data is reweighted based on PV distribution
 const bool useScaleFactors_=false; //whether or not to use MC scale factors when doing subtraction for data-driven estimates
 
 std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode=false, float subscale=1,float SBshift=0, const TString LSBbsel="==0") {
@@ -1195,7 +1196,7 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
 
   TString sampleOfInterest = "PythiaPUQCD";
   if (datamode) {
-    sampleOfInterest = "data";//"PythiaPUQCD";
+    sampleOfInterest = "data";
     clearSamples();
     addSample("TTbarJets");
     addSample("WJets");
@@ -1227,7 +1228,6 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
   btagSFweight_="1";
   TString btagSFweight=""; //we're going to have to switch this one in and out of the global var
   if (useScaleFactors_) {
-    assert(0); //scale factors for CSVM not in yet
     ge1b="1";
     usePUweight_=true;
     useHLTeff_=true;
@@ -1243,6 +1243,7 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
       btagSFweight="probge3";
     }
     else {assert(0);}
+    btagSFweight_=btagSFweight;
   }
   else {
     usePUweight_=false;
@@ -1279,22 +1280,77 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
   TCut passOther = "minDeltaPhiN>=4";
   TCut failOther = "minDeltaPhiN<4";
 
-  double A,B,D,SIG,Aerr,Berr,Derr,SIGerr;
-  //50 - 100 and high MPT,MET ("A")
-  selection_ = baseline && cleaning && dpcut  && SBMET && failOther; //auto cast to TString seems to work
-
   var="HT"; xtitle=var;
   nbins=10; low=0; high=5000;
-  drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_A");
-  A=getIntegral(sampleOfInterest);
-  Aerr=getIntegralErr(sampleOfInterest);
-  //B
-  selection_ = baseline && cleaning && dpcut  && SBMET && passOther; //auto cast to TString seems to work
-  drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_B");
-  B=getIntegral(sampleOfInterest);
-  Berr=getIntegralErr(sampleOfInterest);
+  double A,B,D,SIG,Aerr,Berr,Derr,SIGerr;
+  if(datamode &&  reweightLSBdata_){
+    assert(0);//error is wrong
+    int pvnbins=18;
+    float pvbins[]={0.5,1.5,2.5,3.5,4.5,5.5,6.5,7.5,8.5,9.5,10.5,11.5,12.5,13.5,14.5,15.5,16.5,17.5,18.5};
+    
+    //physics triggers control sample -- physics triggers, 0b
+    //--consider varying MET and HT cuts and PV binning!!
+    selection_ = TCut("cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && nbjetsCSVM==0") && triggerCut;
+    drawSimple("nGoodPV",pvnbins,pvbins,"dummy", "","data");
+    TH1D* hPVphysics = (TH1D*)hinteractive->Clone("hPVphysics");
+    for(int j=1; j<=hPVphysics->GetNbinsX();j++){
+      assert(hPVphysics->GetBinContent(j)>0);
+    }
+    
+    //LSB unweighted
+    selection_ = baseline && SBMET;
+    drawSimple("nGoodPV",pvnbins,pvbins,"dummy", "","data");
+    TH1D* hPVprescale = (TH1D*)hinteractive->Clone("hPVprescale");
+
+    //calculate weights (physics shape with prescale integral divided by prescale)
+    TH1D* hPVprescale_RW = (TH1D*)hPVphysics->Clone("hPVprescale_RW");
+    //Now essentially do "hPVprescale_RW->Scale(hPVprescale->Integral()/hPVphysics->Integral());" but with correct error (small usually)
+    double s = hPVprescale->Integral()/hPVphysics->Integral();
+    double serr = jmt::errAoverB(hPVprescale->Integral(),jmt::errOnIntegral(hPVprescale),hPVphysics->Integral(),jmt::errOnIntegral(hPVphysics));
+    for(int j=1; j<=hPVprescale_RW->GetNbinsX(); j++){
+      assert(hPVprescale->GetBinContent(j)>0);
+      hPVprescale_RW->SetBinContent(j,s*hPVprescale_RW->GetBinContent(j));
+      double fillerror = sqrt(serr*serr+hPVprescale_RW->GetBinError(j)*hPVprescale_RW->GetBinError(j));
+      hPVprescale_RW->SetBinError(j,fillerror);
+    }
+    TH1D* hPV_W = (TH1D*)hPVphysics->Clone("hPV_W");
+    hPV_W->Reset();
+    hPV_W->Divide(hPVprescale_RW,hPVprescale); 
+    
+    //LSB pass mdp unweighted
+    selection_ = baseline && SBMET && passOther;
+    drawSimple("nGoodPV",pvnbins,pvbins,"dummy", "","data");
+    TH1D* hPVprescalePass = (TH1D*)hinteractive->Clone("hPVprescalePass");
+    
+    //LSB fail mdp unweighted
+    selection_ = baseline && SBMET && failOther;
+    drawSimple("nGoodPV",pvnbins,pvbins,"dummy", "","data");
+    TH1D* hPVprescaleFail = (TH1D*)hinteractive->Clone("hPVprescaleFail");
+
+    //weighted LSB pass and fail mdp
+    TH1D* hPVprescalePass_RW = (TH1D*)hPVprescalePass->Clone("hPVprescalePass_RW");
+    TH1D* hPVprescaleFail_RW = (TH1D*)hPVprescaleFail->Clone("hPVprescaleFail_RW");
+    hPVprescalePass_RW->Multiply(hPV_W);
+    hPVprescaleFail_RW->Multiply(hPV_W);
+
+    A = hPVprescaleFail_RW->Integral();
+    Aerr = jmt::errOnIntegral(hPVprescaleFail_RW);    
+    B = hPVprescalePass_RW->Integral();
+    Berr = jmt::errOnIntegral(hPVprescalePass_RW);
+  }
+  else{
+    //A   -- aka 50 - 100 and high MPT,MET
+    selection_ = baseline && cleaning && dpcut  && SBMET && failOther; //auto cast to TString seems to work
+    drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_A");
+    A=getIntegral(sampleOfInterest);
+    Aerr=getIntegralErr(sampleOfInterest);
+    //B
+    selection_ = baseline && cleaning && dpcut  && SBMET && passOther; //auto cast to TString seems to work
+    drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_B");
+    B=getIntegral(sampleOfInterest);
+    Berr=getIntegralErr(sampleOfInterest);
+  }
   //D
-  if (useScaleFactors_) btagSFweight_=btagSFweight; //for region D only, use btag SF
   selection_ = baseline && cleaning && dpcut  && SRMET && failOther; //auto cast to TString seems to work
   drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_D");
   D=getIntegral(sampleOfInterest);
@@ -1610,49 +1666,20 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
       //factor 0.01 to convert from human-readable % to fractional
       double qcdsbsyst=0.01*qcdSystErrors["Total"].at(2*searchRegionIndex);
       cout<<"Found a QCD systematic of "<<100*qcdsbsyst<<endl;
-//       if (tight) {
-// 	if ( btagselection=="ge1b")     qcdsbsyst=0.37;
-// 	else if (btagselection=="ge2b") qcdsbsyst=0.54;
-//       }
-//       else {
-// 	if ( btagselection=="ge1b")     qcdsbsyst=0.16;
-// 	else if (btagselection=="ge2b") qcdsbsyst=0.20;
-//       }
       SBsubQCDerr = sqrt( SBsubQCDerr*SBsubQCDerr + pow(qcdsbsyst*SBsubQCD,2));
       
       if (mode=="QCDup") SBsubQCD += SBsubQCDerr;
       if (mode=="QCDdown") SBsubQCD -= SBsubQCDerr;
     }
-
+    
     //now hard-coded Z->nunu
     double zv[2];
     double ze[2];
- //need to average mu mu and ee estimates
+    //sometimes need to average mu mu and ee estimates
     double zsbsyst=0.5;
     double zinvscale = 3.5/3.2;
     bool doMean = true;
-    /*
-    if ( qcdsubregion.owenId == "Tight" && btagselection=="ge1b") { //i think this should work for now...
-      zv[0] = 7.0; ze[0]=2.9; //Tight SB ge1b mumu
-      zv[1] = 7.3; ze[1]=3.4; //Tight SB ge1b ee
-      zsbsyst = 0.55;
-    }
-    else    if ( qcdsubregion.owenId == "Loose"&&btagselection=="ge1b") {//    else {
-      zv[0] = 16.0; ze[0]=11.4; //Loose SB ge1b mumu
-      zv[1] = 30.2; ze[1]=17.8; //Loose SB ge1b ee
-      zsbsyst=0.2;
-    }
-    else if (qcdsubregion.owenId == "Tight" && btagselection=="ge2b") {
-      zv[0] = 1.6; ze[0]=0.8; //Tight SB ge2b mumu
-      zv[1] = 0; ze[1]=0.8; //Tight SB ge2b ee (error is bullshit)
-      zsbsyst=1.03;
-    }
-    else if (qcdsubregion.owenId == "Loose" && btagselection=="ge2b") {
-      zv[0] = 6.7; ze[0]=3.5; //Loose SB ge2b mumu
-      zv[1] = 0; ze[1]=3.5; //Loose SB ge2b ee (error is bullshit)
-      zsbsyst = 0.55;
-    }
-    */
+
     if (qcdsubregion.owenId == "Loose" && qcdsubregion.btagSelection=="ge1b") {
       doMean=false;//averaging already done
       zv[0] = 63.9127; ze[0]=10.7967;
@@ -1705,7 +1732,7 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
   doData(true);
   setQuiet(true);
 
-  TString sampleOfInterest = "totalsm";//"PythiaPUQCD";
+  TString sampleOfInterest = "totalsm";
   useFlavorHistoryWeights_=false;
   loadSamples(); //needs to come first! this is why this should be turned into a class, with this guy in the ctor
   setColorScheme("nostack");
@@ -1723,49 +1750,62 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
     }
   }
 
-  //  TString sampleOfInterest = "PythiaPUQCD";
-
   savePlots_=false;
 
   setLogY(false);
   TString var,xtitle;
   int nbins;
   float low,high;
-
- // --  count events
+  
+  // --  count events
   TCut ge1b = "nbjetsCSVM>=1";
-  if (btagselection=="ge2b") {
-    ge1b="nbjetsCSVM>=2";
+  btagSFweight_="1";
+  TString btagSFweight=""; //we're going to have to switch this one in and out of the global var
+  if (useScaleFactors_) {
+    ge1b="1";
+    usePUweight_=true;
+    useHLTeff_=true;
+    currentConfig_=configDescriptions_.getCorrected(); //add JERbias
+    
+    if (btagselection=="ge2b") {
+      btagSFweight="probge2";
+    }
+    else if (btagselection=="ge1b") {
+      btagSFweight="probge1";
+    }
+    else if (btagselection=="ge3b") {
+      btagSFweight="probge3";
+    }
+    else {assert(0);}
+    btagSFweight_=btagSFweight;
   }
-  else if (btagselection=="ge1b") {}
-  else if (btagselection=="ge3b") {
-    ge1b="nbjetsCSVM>=3";
+  else {
+    usePUweight_=false;
+    useHLTeff_=false;
+    btagSFweight_="1";
+    currentConfig_=configDescriptions_.getDefault(); //completely raw MC
+    
+    if (btagselection=="ge2b") {
+      ge1b="nbjetsCSVM>=2";
+    }
+    else if (btagselection=="ge1b") {}
+    else if (btagselection=="ge3b") {
+      ge1b="nbjetsCSVM>=3";
+    }
+    else {assert(0);}
   }
-  else {assert(0);}
 
   TCut HTcut=region.htSelection.Data(); 
   TCut SRMET = region.metSelection.Data();
-//   if (tight) {
-//     HTcut = "HT>=500";
-//     SRMET = "MET >= 300";
-//   }
-//   else {
-//     HTcut = "HT>=350";
-//     SRMET = "MET >= 200";
-//   }
-
   TCut baseline = "cutPV==1 && cut3Jets==1 && cutTrigger==1";
   baseline = baseline&&HTcut&&ge1b;
   TCut cleaning = "weight<1000";
   TCut SBMET = qcdsubregion.metSelection.Data();//"MET>=150 && MET<200";
   TCut dpcut = "minDeltaPhiN>=4";
-  //  TCut passOther = "deltaPhiMPTcaloMET<2";
-  //  TCut failOther = "deltaPhiMPTcaloMET>=2";
   TCut failOther = "(((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && MT_Wlep>=0&&MT_Wlep<100)";
   TCut passOther = "nElectrons==0 && nMuons==0";
 
   double A,B,D,SIG,Aerr,Berr,Derr,SIGerr;
-  //  double dA,dB,dD,dSIG,dAerr,dBerr,dDerr,dSIGerr;
   //A = SB, SL
   selection_ = baseline && cleaning && dpcut  && SBMET && failOther; //auto cast to TString seems to work
   var="HT"; xtitle=var;
