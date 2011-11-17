@@ -85,7 +85,7 @@ functionality for TH1F and TH1D e.g. the case of addOverflowBin()
 //***************************
 
 //-- reducedTrees for Oct 25 SUSY meeting. 3464.581/pb. 
-  //TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35a/";
+TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35a/";
 TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35a/";
 
 
@@ -107,7 +107,7 @@ TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35a/";
 //TString dataInputPath = "/cu2/ra2b/reducedTrees/benV00-02-25_fullpf2pat/";
 
 //for signal systematics
- TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-25c_fullpf2pat/"; //LM9 with correct pdf weights
+  // TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-25c_fullpf2pat/"; //LM9 with correct pdf weights
 //TString inputPath = "/cu2/joshmt/reducedTrees/V00-02-25c_fullpf2pat/"; //with correct pdf weights
 //TString inputPath = "/home/joshmt/";//path for MC
 //TString dataInputPath = "/cu2/ra2b/reducedTrees/V00-02-24_fullpf2pat/"; //sym links to V00-02-05_v3
@@ -115,7 +115,7 @@ TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35a/";
 //the cutdesc string is now defined in loadSamples()
 
 //double lumiScale_ = 1091.891;
-//double lumiScale_ = 1143; //official summer conf lumi
+  //double lumiScale_ = 1143; //official summer conf lumi
 double lumiScale_ = 3464.581;//oct25
 
 #include "drawReducedTrees.h"
@@ -434,6 +434,58 @@ each of the systematics variations was done with JERbias turned on.
   return results;
 }
 
+/* example of how to use the new file-writing feature
+void runSystematics2011_LM9_test1( TString sampleOfInterest="LM9" ) {
+  setSearchRegions();
+
+  for (ULong_t i=0; i<searchRegions_.size(); i++) {
+    SignalEffData SB =  signalSystematics2011(sbRegions_[i],false,false,sampleOfInterest);
+    SignalEffData SIG=  signalSystematics2011(searchRegions_[i],false,false,sampleOfInterest);
+
+    SignalEffData SBSL= signalSystematics2011(sbRegions_[i],true,false,sampleOfInterest);
+    SignalEffData SIGSL=signalSystematics2011(searchRegions_[i],true,false,sampleOfInterest);
+
+    SignalEffData SBLDP= signalSystematics2011(sbRegions_[i],false,true,sampleOfInterest);
+    SignalEffData SIGLDP=signalSystematics2011(searchRegions_[i],false,true,sampleOfInterest);
+
+    //using ULong_t above because it aids the compiler in this concatenation
+    SB.write(TString("SB")+i);
+    SIG.write(TString("SIG")+i);
+
+    SBSL.write(TString("SBSL")+i);
+    SIGSL.write(TString("SIGSL")+i);
+
+    SBLDP.write(TString("SBLDP")+i);
+    SIGLDP.write(TString("SIGLDP")+i);
+  }
+}
+
+void runSystematics2011_LM9_test2( TString sampleOfInterest="LM9" ) {
+  setSearchRegions();
+
+  for (ULong_t i=0; i<searchRegions_.size(); i++) {
+    char effoutput[500];
+    sprintf(effoutput,"signalSyst.%s.%s%s.dat",sampleOfInterest.Data(),searchRegions_[i].btagSelection.Data(),searchRegions_[i].owenId.Data());
+
+    ofstream    textfiles(effoutput);
+    textfiles<<m0_<<" "<<m12_<<" "<<0<<" ";
+    SignalEffData SB(TString("SB")+i);
+    SignalEffData SIG(TString("SIG")+i);
+    SignalEffData SBSL(TString("SBSL")+i);
+    SignalEffData SIGSL(TString("SIGSL")+i);
+
+    SignalEffData SBLDP(TString("SBLDP")+i);
+    SignalEffData SIGLDP(TString("SIGLDP")+i);
+
+    textfiles<<SIG.rawYield<<" "<<SB.rawYield<<" "<<SIGSL.rawYield<<" "<<SBSL.rawYield<<" "<<SIGLDP.rawYield<<" "<<SBLDP.rawYield<<" "
+	     <<SIG.effCorr<<" "<<SB.effCorr<<" "<<SIGSL.effCorr<<" "<<SBSL.effCorr<<" "<<SIGLDP.effCorr<<" "<<SBLDP.effCorr<<" "
+	     <<SIG.totalSystematic()<<" "<<SB.totalSystematic()<<" "<<SIGSL.totalSystematic()<<" "<<SBSL.totalSystematic()<<" "<<SIGLDP.totalSystematic()<<" "<<SBLDP.totalSystematic()<<endl;
+    textfiles.close();
+  }
+  
+}
+end example */
+
 //not only for LM9; can also be used for other samples e.g. ttbar. Just change sampleOfInterest
 void runSystematics2011_LM9(  TString sampleOfInterest="LM9" ) {
   setSearchRegions();
@@ -466,12 +518,12 @@ void runSystematics2011_LM9(  TString sampleOfInterest="LM9" ) {
 		   <<SIG.effCorr<<" "<<SB.effCorr<<" "<<SIGSL.effCorr<<" "<<SBSL.effCorr<<" "<<SIGLDP.effCorr<<" "<<SBLDP.effCorr<<" "
 		   <<SIG.totalSystematic()<<" "<<SB.totalSystematic()<<" "<<SIGSL.totalSystematic()<<" "<<SBSL.totalSystematic()<<" "<<SIGLDP.totalSystematic()<<" "<<SBLDP.totalSystematic()<<endl;
 
-    cout<<" == Signed JES systematic in SB and SIG "<<endl;
-    cout<<"["<<100*SB.systematics["JES"].minus<<" "<<100*SB.systematics["JES"].plus<<"]"
-	<<"\t"
-	<<"["<<100*SIG.systematics["JES"].minus<<" "<<100*SIG.systematics["JES"].plus<<"]"
-	<<endl;
-    cout<<" ====================================== "<<endl;
+//     cout<<" == Signed JES systematic in SB and SIG "<<endl;
+//     cout<<"["<<100*SB.systematics["JES"].minus<<" "<<100*SB.systematics["JES"].plus<<"]"
+// 	<<"\t"
+// 	<<"["<<100*SIG.systematics["JES"].minus<<" "<<100*SIG.systematics["JES"].plus<<"]"
+// 	<<endl;
+//     cout<<" ====================================== "<<endl;
   }
 
   for (unsigned int i=0; i<searchRegions_.size(); i++) {

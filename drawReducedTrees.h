@@ -153,7 +153,7 @@ void setSearchRegions() {
 
   //also, for style reasons the 'owenId' should not contain the number of b tags.
   //everywhere that we use the owenId as an identifier, we combine with the number of b tags
-  /*
+
   //oct25
   //case 1
   sbRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=200&&MET<250","Loose",false));
@@ -170,7 +170,7 @@ void setSearchRegions() {
   //case 6
   sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=200&&MET<250","Loose",false));
   searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=250","Loose"));
-  */
+
   
   /*
   //case 1
@@ -207,7 +207,7 @@ void setSearchRegions() {
   */    
 
 
-  
+/*  
   //2011 Summer result
   sbRegions_.push_back( SearchRegion( "ge1b","HT>=350","MET>=150&&MET<200","Loose",false)); //loose SB
   searchRegions_.push_back( SearchRegion( "ge1b","HT>=350","MET>=200","Loose")); //loose Sig
@@ -220,7 +220,7 @@ void setSearchRegions() {
 
   sbRegions_.push_back( SearchRegion( "ge2b","HT>=500","MET>=150&&MET<200","Tight",false)); //tight SB
   searchRegions_.push_back( SearchRegion( "ge2b","HT>=500","MET>=300","Tight")); //tight Sig
-  
+  */
 
 
   searchRegionsSet_=true;
@@ -231,6 +231,7 @@ class SystInfo {
 public:
   SystInfo(double p=0, double m=0, int s=0);
   ~SystInfo();
+  SystInfo( ifstream* input);
 
   double plus;
   double minus;
@@ -239,7 +240,23 @@ public:
   //use 1 for numbers that are fixed by SignalEffData
   //use 2 for numbers that are set by some actual event counts
   int status;
+
+  void write(ofstream* outfile);
 };
+
+void SystInfo::write(ofstream* outfile) {
+
+  (*outfile)<<status<<" "<<minus<<" "<<plus<<endl;
+
+}
+
+SystInfo::SystInfo(ifstream* input) :
+  plus(0),minus(0),status(99)
+{
+
+  (*input)>>status>>minus>>plus;
+  cout<< "  Loaded status,minus,plus = "<<status<<" "<<minus<<" "<<plus<<endl; //DEBUG
+}
 
 SystInfo::SystInfo(double p, double m, int s) :
   plus(p),  minus(m),  status(s) {}
@@ -250,7 +267,10 @@ class SignalEffData {
   // by one point i mean one sample and one selection
 public:
   SignalEffData();
+  SignalEffData(TString idtoload);
   ~SignalEffData();
+
+  //  TString id;
 
   double rawYield; //yield in lumiScale_ invpb, or for SMS really the raw yield
 
@@ -273,9 +293,55 @@ public:
   //  want to be able to clear() it and *regain* the memory footprint, without getting rid of the class object itself
   TString translateVariation(const TString & which) ;
 
+  void write(TString id); //write the SignalEffData contents to a file
+
 };
 
+void SignalEffData::write(TString id) {
+  //goal: be able to write to an ascii file all of the important data members,
+  //such that I can destroy the object, and recreate it later using the content of the file
+
+  //filename constructed from id
+  TString filename = "SignalEffData.";
+  filename += id;
+
+  ofstream output(filename.Data());
+  output<<rawYield<<endl<<effCorr<<endl;
+
+  for (map<TString, SystInfo >::iterator isyst=systematics.begin(); isyst!=systematics.end(); ++isyst) {
+    output << isyst->first<<" ";
+    isyst->second.write( &output );
+  }
+
+  output.close();
+  cout<<" == done writing output file: "<<filename<<endl;
+
+}
+
+SignalEffData::SignalEffData(TString idtoload) :
+  //  id(idtoload),
+  rawYield(0),
+  effCorr(1)
+{
+  //filename constructed from id
+  TString filename = "SignalEffData.";
+  filename += idtoload;
+
+  ifstream input(filename.Data()); //should check that this is good
+  input>>rawYield;
+  input>>effCorr;
+
+  TString akey;
+  while (input>>akey) {
+    //load the SystInfo from the file using the special ctor
+    cout<<"==loading key "<<akey<<endl; //DEBUG
+    systematics[akey] = SystInfo(&input);
+  }
+  input.close();
+}
+
 SignalEffData::SignalEffData() : 
+  //  id("noname"),
   rawYield(0),
   effCorr(1)
 { 
@@ -1211,7 +1277,7 @@ void loadSamples(bool joinSingleTop=true) {
   
   //FOR PLOTS
   ////////////
-/*
+
     configDescriptions_.setDefault("CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
   configDescriptions_.setCorrected("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
 
@@ -1238,7 +1304,7 @@ void loadSamples(bool joinSingleTop=true) {
   //HLT eff
   //    configDescriptions_.addVariation("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffdown",
   //"SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffup");
- */ 
+ 
   ///////////////
   //////////////
  
@@ -1277,7 +1343,7 @@ void loadSamples(bool joinSingleTop=true) {
 
   
   //new btag eff prescription
-
+/* //for summer11 signal systematics!
   configDescriptions_.setDefault("SSVHPT_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
   configDescriptions_.setCorrected("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
   //comment here to save time
@@ -1286,16 +1352,16 @@ void loadSamples(bool joinSingleTop=true) {
   configDescriptions_.addVariation("SSVHPT_PF2PATjets_JESdown_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0",
 				   "SSVHPT_PF2PATjets_JESup_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
   //JER - out for SMS
-//   configDescriptions_.addVariation("SSVHPT_PF2PATjets_JES0_JERdown_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0",
-//   				   "SSVHPT_PF2PATjets_JES0_JERup_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
+   configDescriptions_.addVariation("SSVHPT_PF2PATjets_JES0_JERdown_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0",
+   				   "SSVHPT_PF2PATjets_JES0_JERup_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
 
   //unclustered MET
   configDescriptions_.addVariation("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METuncDown_PUunc0_BTagEff02_HLTEff0",
 				   "SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METuncUp_PUunc0_BTagEff02_HLTEff0");
 
   //PU - out for SMS
-//   configDescriptions_.addVariation("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncDown_BTagEff02_HLTEff0",
-//   				   "SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncUp_BTagEff02_HLTEff0");
+   configDescriptions_.addVariation("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncDown_BTagEff02_HLTEff0",
+   				   "SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncUp_BTagEff02_HLTEff0");
 
   //btag eff
   configDescriptions_.addVariation("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffdown2_HLTEff0",
@@ -1304,7 +1370,7 @@ void loadSamples(bool joinSingleTop=true) {
   //HLT eff
   //    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEffdown");
   //    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEffup");
-  
+  */
 
 
   currentConfig_=configDescriptions_.getDefault();
