@@ -84,10 +84,12 @@ functionality for TH1F and TH1D e.g. the case of addOverflowBin()
 //*** AFTER SUMMER
 //***************************
 
-//-- reducedTrees for Oct 25 SUSY meeting. 3464.581/pb. 
-TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35d/";
-TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35c/";
+//TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35b/";
+//TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35c/";
 
+//-- reducedTrees for Oct 25 SUSY meeting. 3464.581/pb. 
+TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35a/";
+TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35a/";
 
 
 //*** SUMMER RESULT
@@ -1169,10 +1171,11 @@ void averageZ() {
 
 }
 
-const bool reweightLSBdata_=false; //whether or not LSB data is reweighted based on PV distribution
-const bool useScaleFactors_=true; //whether or not to use MC scale factors when doing subtraction for data-driven estimates
 
-std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode=false, float subscale=1,float SBshift=0, const TString LSBbsel="==0") {
+const bool reweightLSBdata_=false; //whether or not LSB data is reweighted based on PV distribution
+const bool useScaleFactors_=false; //whether or not to use MC scale factors when doing subtraction for data-driven estimates
+
+std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode=false, float subscale=1,float SBshift=0, const TString LSBbsel="==0", float PVCorFactor = 0) {
   //kind of awful, but we'll return the estimate for datamode=true but the closure test bias for datamode=false
 
   /*
@@ -1285,19 +1288,17 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
   var="HT"; xtitle=var;
   nbins=10; low=0; high=5000;
   double A,B,D,SIG,Aerr,Berr,Derr,SIGerr;
+  double RLSB_RW = 0;
+  double dRLSB_RW = 0;
   if(datamode &&  reweightLSBdata_){
-    assert(0);//error is wrong
-    int pvnbins=18;
-    float pvbins[]={0.5,1.5,2.5,3.5,4.5,5.5,6.5,7.5,8.5,9.5,10.5,11.5,12.5,13.5,14.5,15.5,16.5,17.5,18.5};
+    int pvnbins=12;
+    float pvbins[]={0.5,2.5,4.5,5.5,6.5,7.5,8.5,9.5,10.5,12.5,14.5,16.5,18.5};
     
     //physics triggers control sample -- physics triggers, 0b
-    //--consider varying MET and HT cuts and PV binning!!
-    selection_ = TCut("cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && nbjetsCSVM==0") && triggerCut;
+    //--consider varying MET cut and PV binning!!
+    selection_ = TCut("cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && nbjetsCSVM==0 && MET>200") && triggerCut && HTcut;
     drawSimple("nGoodPV",pvnbins,pvbins,"dummy", "","data");
     TH1D* hPVphysics = (TH1D*)hinteractive->Clone("hPVphysics");
-    for(int j=1; j<=hPVphysics->GetNbinsX();j++){
-      assert(hPVphysics->GetBinContent(j)>0);
-    }
     
     //LSB unweighted
     selection_ = baseline && SBMET;
@@ -1306,15 +1307,7 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
 
     //calculate weights (physics shape with prescale integral divided by prescale)
     TH1D* hPVprescale_RW = (TH1D*)hPVphysics->Clone("hPVprescale_RW");
-    //Now essentially do "hPVprescale_RW->Scale(hPVprescale->Integral()/hPVphysics->Integral());" but with correct error (small usually)
-    double s = hPVprescale->Integral()/hPVphysics->Integral();
-    double serr = jmt::errAoverB(hPVprescale->Integral(),jmt::errOnIntegral(hPVprescale),hPVphysics->Integral(),jmt::errOnIntegral(hPVphysics));
-    for(int j=1; j<=hPVprescale_RW->GetNbinsX(); j++){
-      assert(hPVprescale->GetBinContent(j)>0);
-      hPVprescale_RW->SetBinContent(j,s*hPVprescale_RW->GetBinContent(j));
-      double fillerror = sqrt(serr*serr+hPVprescale_RW->GetBinError(j)*hPVprescale_RW->GetBinError(j));
-      hPVprescale_RW->SetBinError(j,fillerror);
-    }
+    hPVprescale_RW->Scale(hPVprescale->Integral()/hPVphysics->Integral());
     TH1D* hPV_W = (TH1D*)hPVphysics->Clone("hPV_W");
     hPV_W->Reset();
     hPV_W->Divide(hPVprescale_RW,hPVprescale); 
@@ -1328,17 +1321,80 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
     selection_ = baseline && SBMET && failOther;
     drawSimple("nGoodPV",pvnbins,pvbins,"dummy", "","data");
     TH1D* hPVprescaleFail = (TH1D*)hinteractive->Clone("hPVprescaleFail");
-
+    
+    //check for zero entries
+    for(int j=1; j<=hPVphysics->GetNbinsX();j++){
+      assert(hPVphysics->GetBinContent(j)>0);
+      assert(hPVprescalePass->GetBinContent(j)>0);
+      assert(hPVprescaleFail->GetBinContent(j)>0);
+    }
+    
     //weighted LSB pass and fail mdp
     TH1D* hPVprescalePass_RW = (TH1D*)hPVprescalePass->Clone("hPVprescalePass_RW");
     TH1D* hPVprescaleFail_RW = (TH1D*)hPVprescaleFail->Clone("hPVprescaleFail_RW");
     hPVprescalePass_RW->Multiply(hPV_W);
     hPVprescaleFail_RW->Multiply(hPV_W);
 
-    A = hPVprescaleFail_RW->Integral();
-    Aerr = jmt::errOnIntegral(hPVprescaleFail_RW);    
-    B = hPVprescalePass_RW->Integral();
-    Berr = jmt::errOnIntegral(hPVprescalePass_RW);
+    ///////////////////////////////////////////////////////////////////////////////stat///////
+    double dR2 = 0;
+    double myA=0, myB=0;
+    for(int k=1; k<=hPVphysics->GetNbinsX(); k++){
+      double dNk = hPVphysics->GetBinError(k);
+      double dPk = hPVprescalePass->GetBinError(k);
+      double dFk = hPVprescaleFail->GetBinError(k);
+      double Nk = hPVphysics->GetBinContent(k);
+      double Pk = hPVprescalePass->GetBinContent(k);
+      double Fk = hPVprescaleFail->GetBinContent(k);
+      double Ntot = hPVphysics->Integral();
+      double PFtot = hPVprescalePass->Integral()+hPVprescaleFail->Integral();
+      
+      //pX means derivative w.r.t. X
+      double ApN=0, BpN=0;
+      double ApP=0, BpP=0;
+      double ApF=0, BpF=0;
+      double Nterm=0, Pterm=0, Fterm=0;
+      for(int i=1; i<=hPVphysics->GetNbinsX(); i++){
+	double Ni = hPVphysics->GetBinContent(i);
+	double Pi = hPVprescalePass->GetBinContent(i);
+	double Fi = hPVprescaleFail->GetBinContent(i);
+	
+	myB += Ni/Ntot*PFtot/(Pi+Fi)*Pi;
+	myA += Ni/Ntot*PFtot/(Pi+Fi)*Fi;
+
+	//part without k
+	if(i==k) continue;
+	BpN += (-1.)*PFtot/(Pi+Fi)*Pi*Ni/(Ntot*Ntot);
+	ApN += (-1.)*PFtot/(Pi+Fi)*Fi*Ni/(Ntot*Ntot);
+	BpP += Ni/Ntot*Pi/(Pi+Fi);
+	ApP += Ni/Ntot*Fi/(Pi+Fi);
+	BpF += Ni/Ntot*Pi/(Pi+Fi);
+	ApF += Ni/Ntot*Fi/(Pi+Fi);
+      }//i loop
+      
+      //part with k
+      BpN += PFtot/(Pk+Fk)*Pk*(Ntot-Nk)/(Ntot*Ntot);
+      ApN += PFtot/(Pk+Fk)*Fk*(Ntot-Nk)/(Ntot*Ntot);
+      BpP += Nk/Ntot/(Pk+Fk)/(Pk+Fk)*((Pk+Fk)*(PFtot+Pk)-PFtot*Pk);
+      ApP += Nk/Ntot*Fk/(Pk+Fk)/(Pk+Fk)*(Pk+Fk-PFtot);
+      BpF += Nk/Ntot*Pk/(Pk+Fk)/(Pk+Fk)*(Pk+Fk-PFtot);
+      ApF += Nk/Ntot/(Pk+Fk)/(Pk+Fk)*((Pk+Fk)*(PFtot+Fk)-PFtot*Fk);      
+      
+      //quotient rule!
+      Nterm = (myA*BpN-myB*ApN)/(myA*myA);
+      Pterm = (myA*BpP-myB*ApP)/(myA*myA);
+      Fterm = (myA*BpF-myB*ApF)/(myA*myA);
+      
+      dR2 += Nterm*Nterm*dNk*dNk + Pterm*Pterm*dPk*dPk + Fterm*Fterm*dFk*dFk;
+      
+    }//k loop
+    RLSB_RW = myB/myA; //matches hPVprescalePass_RW->Integral()/hPVprescaleFail_RW->Integral()
+    dRLSB_RW = sqrt(dR2);
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    //unweighted
+    A = hPVprescalePass->Integral();
+    Aerr = jmt::errOnIntegral(hPVprescalePass); 
+    B = hPVprescaleFail->Integral();
+    Berr = jmt::errOnIntegral(hPVprescaleFail);
   }
   else{
     //A   -- aka 50 - 100 and high MPT,MET
@@ -1411,28 +1467,45 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
   SIG=getIntegral(sampleOfInterest);
   SIGerr=getIntegralErr(sampleOfInterest);
 
-  if (datamode) { //for owen
+  if (datamode) { //for owen 
     if (isSIG)  myOwen->Nsig = SIG;
     else        myOwen->Nsb  = SIG;
   }
 
+  /*
   //now calculate B*D/A
   double numerr=jmt::errAtimesB(B,Berr,D-Dsub,sqrt(Derr*Derr+Dsuberr*Dsuberr));
   double num = B*(D-Dsub);
   double estimate = num / A;
   double estimateerr= jmt::errAoverB(num,numerr,A,Aerr);
-  //  double closureStat= datamode? 0: jmt::errAoverB(estimate,estimateerr,SIG,SIGerr); //comment out unused var
-
   double closureStat2 = datamode? 0: jmt::errAoverB(SIG,SIGerr,estimate,estimateerr);
 
   //for a cross-check
   double R0 = B/A;
   double R0err = jmt::errAoverB(B,Berr,A,Aerr);
+  */
 
+  //now calculate (B/A)*D=R*D
+  double RLSB_UW = B/A; //unweighted
+  double myR, myRerr;
+  if(datamode &&  reweightLSBdata_){
+    myR = PVCorFactor*(RLSB_RW-RLSB_UW)+RLSB_RW; //PVCorFactor=0 for reweighted, +/-1 for +/-100% correction
+    myRerr = dRLSB_RW;
+  }
+  else{
+    myR = RLSB_UW;
+    myRerr = jmt::errAoverB(B,Berr,A,Aerr);
+  }
+  double estimate = myR*D;
+  double estimateerr = jmt::errAtimesB(myR, myRerr, D-Dsub, sqrt(Derr*Derr+Dsuberr*Dsuberr));
+  double closureStat2 = datamode? 0: jmt::errAoverB(SIG,SIGerr,estimate,estimateerr);
+  double R0 = myR;
+  double R0err = myRerr;
+  
 
-//   cout<<" ==== "<<endl
-//       <<"Estimate = "<<estimate<<" +/- "<<estimateerr<<endl
-//       <<" truth   = "<<SIG     <<" +/- "<<SIGerr<<endl;
+  //   cout<<" ==== "<<endl
+  //       <<"Estimate = "<<estimate<<" +/- "<<estimateerr<<endl
+  //       <<" truth   = "<<SIG     <<" +/- "<<SIGerr<<endl;
   TString name = region.btagSelection;
   name += region.owenId;
   name += isSIG ? ", SIG":", SB";
@@ -1459,7 +1532,6 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
   cout<<output<<endl;
 
   if (datamode)  return make_pair(estimate,estimateerr);
-  //return make_pair( 100*sqrt(pow((SIG-estimate)/SIG,2) + pow(closureStat,2)), 0); //MC truth in denominator
   return make_pair( 100*sqrt(pow((SIG-estimate)/estimate,2) + pow(closureStat2,2)), 0); //estimate in denominator
 }
 
@@ -1547,6 +1619,9 @@ void runDataQCD2011(const bool forOwen=false) {
   vector<std::pair<double,double> > sbp;
   vector<std::pair<double,double> > sbm;
 
+  vector<std::pair<double,double> > lsbp;
+  vector<std::pair<double,double> > lsbm;
+
   cout<<" ==== Nominal data results === "<<endl;
   for (unsigned int i=0; i<sbRegions_.size(); i++) {
     n.push_back( anotherABCD(sbRegions_[i],true));
@@ -1611,6 +1686,31 @@ void runDataQCD2011(const bool forOwen=false) {
   }
   cout<<" =END systematics for SB shift ==== "<<endl;
   
+  if(reweightLSBdata_){
+    //do it with LSB RW correction +100%
+    for (unsigned int i=0; i<sbRegions_.size(); i++) {
+      lsbp.push_back( anotherABCD(sbRegions_[i],true,1,0,"==0",1));
+      lsbp.push_back( anotherABCD(searchRegions_[i],true,1,0,"==0",1));
+    }
+    
+    //do it with LSB RW correction -100%
+    for (unsigned int i=0; i<sbRegions_.size(); i++) {
+      lsbm.push_back( anotherABCD(sbRegions_[i],true,1,0,"==0",-1));
+      lsbm.push_back( anotherABCD(searchRegions_[i],true,1,0,"==0",-1));
+    }
+    
+    cout<<" ==== systematics for LSB reweighting ==== "<<endl;
+    for (unsigned int j=0; j<n.size(); j++) {
+      double var1 = 100*(n[j].first  -lsbp[j].first)/n[j].first;
+      double var2 = 100*(n[j].first -lsbm[j].first)/n[j].first;
+      cout<<var1<<"\t"<<var2<<endl;
+      //expect these to be different...no sanity check is warranted
+      qcdSystErrors["LSBrw"].push_back( fabs(var1)>fabs(var2) ? fabs(var1) : fabs(var2));
+    }
+    cout<<" ==== END systematics for LSB reweighting ==== "<<endl;
+  }
+
+
   cout<<"== Cross check with >=1 b instead of exactly 0 b =="<<endl;
   for (unsigned int i=0; i<sbRegions_.size(); i++) {
     anotherABCD(sbRegions_[i],true,1,0,">=1");
@@ -1622,11 +1722,15 @@ void runDataQCD2011(const bool forOwen=false) {
   
   cout<<" == QCD systematics summary =="<<endl;
   for (unsigned int j=0; j<n.size(); j++) {
-    qcdSystErrors["Total"].push_back( sqrt( pow(qcdSystErrors["MCsub"].at(j),2) +  pow(qcdSystErrors["Closure"].at(j),2)+ pow(qcdSystErrors["SBshift"].at(j),2)));
-    cout<<j<<"\t&"<<qcdSystErrors["MCsub"].at(j)<<" & "<<qcdSystErrors["Closure"].at(j)<<" & "<<qcdSystErrors["SBshift"].at(j)<<" & "<<qcdSystErrors["Total"].at(j)<<endl;
+    if( reweightLSBdata_){
+      qcdSystErrors["Total"].push_back( sqrt( pow(qcdSystErrors["MCsub"].at(j),2) +  pow(qcdSystErrors["Closure"].at(j),2) + pow(qcdSystErrors["SBshift"].at(j),2) +  pow(qcdSystErrors["LSBrw"].at(j),2)  ));
+      cout<<j<<"\t&"<<qcdSystErrors["MCsub"].at(j)<<" & "<<qcdSystErrors["Closure"].at(j)<<" & "<<qcdSystErrors["SBshift"].at(j)<<" & "<<qcdSystErrors["LSBrw"].at(j) << " & " <<qcdSystErrors["Total"].at(j)<<endl;
+    }
+    else{
+      qcdSystErrors["Total"].push_back( sqrt( pow(qcdSystErrors["MCsub"].at(j),2) +  pow(qcdSystErrors["Closure"].at(j),2)+ pow(qcdSystErrors["SBshift"].at(j),2)));
+      cout<<j<<"\t&"<<qcdSystErrors["MCsub"].at(j)<<" & "<<qcdSystErrors["Closure"].at(j)<<" & "<<qcdSystErrors["SBshift"].at(j)<<" & "<<qcdSystErrors["Total"].at(j)<<endl;
+    }
   }
-  
-
 }
 
 //i don't like passing the index instead of the region itself, but it makes some things easier.
