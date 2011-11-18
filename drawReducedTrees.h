@@ -1557,8 +1557,8 @@ float drawSimple(const TString var, const int nbins, const double low, const dou
   if (addOverflow_)  addOverflowBin( hh ); //manipulates the TH1D
 
   //at this point i've got a histogram. what more could i want?
+  hinteractive = (TH1D*)hh->Clone("hinteractive");
   if(savePlots_){
-    hinteractive = (TH1D*)hh->Clone("hinteractive");
     TFile fout(filename,"UPDATE");
     hh->Write();
     fout.Close();
