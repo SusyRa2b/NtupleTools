@@ -933,12 +933,14 @@ for legacy purposes I am keeping all of the weight and selection TStrings, altho
   }
   if (useHLTeff_ &&  type!=kData) {
     weightedcut +="*hltHTeff";
+    weightedcut +="*hltMHTeff";
   }
 
   if (btagSFweight_=="") btagSFweight_="1";
   if ( type==kData) {
     if (btagSFweight_=="probge1") weightedcut += "*(nbjets>=1)";
     else if (btagSFweight_=="probge2") weightedcut += "*(nbjets>=2)";
+    else if (btagSFweight_=="probge3") weightedcut += "*(nbjets>=3)";
     else if (btagSFweight_=="prob1") weightedcut += "*(nbjets==1)";
     else if (btagSFweight_=="prob0") weightedcut += "*(nbjets==0)";
     else if (btagSFweight_=="1") {} //do nothing
@@ -1278,32 +1280,32 @@ void loadSamples(bool joinSingleTop=true) {
   //FOR PLOTS
   ////////////
 
-    configDescriptions_.setDefault("CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
-  configDescriptions_.setCorrected("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
+  configDescriptions_.setDefault("CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
+  configDescriptions_.setCorrected("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
 
   
   //JES
-  configDescriptions_.addVariation("SSVHPT_PF2PATjets_JESdown_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0",
-				   "SSVHPT_PF2PATjets_JESup_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
+  //configDescriptions_.addVariation("CSVM_PF2PATjets_JESdown_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0",
+  //				   "CSVM_PF2PATjets_JESup_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
   //JER
-  //  configDescriptions_.addVariation("SSVHPT_PF2PATjets_JES0_JERdown_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0",
+  //  configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERdown_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0",
   //"SSVHPT_PF2PATjets_JES0_JERup_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
 
   //unclustered MET
-  configDescriptions_.addVariation("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METuncDown_PUunc0_BTagEff0_HLTEff0", 
-				   "SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METuncUp_PUunc0_BTagEff0_HLTEff0");
+  //configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERbias_PFMET_METuncDown_PUunc0_BTagEff0_HLTEff0", 
+  //				   "CSVM_PF2PATjets_JES0_JERbias_PFMET_METuncUp_PUunc0_BTagEff0_HLTEff0");
 
   //PU
-  //    configDescriptions_.addVariation("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncDown_BTagEff0_HLTEff0",
-  //"SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncUp_BTagEff0_HLTEff0");
+  //    configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncDown_BTagEff0_HLTEff0",
+  //"CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncUp_BTagEff0_HLTEff0");
 
   //btag eff
-  configDescriptions_.addVariation("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffdown_HLTEff0",
-				   "SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffup_HLTEff0");
+  //configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffdown_HLTEff0",
+  //				   "CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffup_HLTEff0");
 
   //HLT eff
-  //    configDescriptions_.addVariation("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffdown",
-  //"SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffup");
+  //    configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffdown",
+  //"CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffup");
  
   ///////////////
   //////////////
@@ -1313,63 +1315,63 @@ void loadSamples(bool joinSingleTop=true) {
 
 /*
   //new btag eff prescription
-  configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
-  configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
+  configDescriptions_.push_back("CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
+  configDescriptions_.push_back("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
   //comment here to save time
   
   //JES
-  configDescriptions_.push_back("SSVHPT_PF2PATjets_JESdown_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
-  configDescriptions_.push_back("SSVHPT_PF2PATjets_JESup_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
+  configDescriptions_.push_back("CSVM_PF2PATjets_JESdown_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
+  configDescriptions_.push_back("CSVM_PF2PATjets_JESup_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
   //JER
-    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERdown_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
-    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERup_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
+    configDescriptions_.push_back("CSVM_PF2PATjets_JES0_JERdown_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
+    configDescriptions_.push_back("CSVM_PF2PATjets_JES0_JERup_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
 
   //unclustered MET
-  configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METuncDown_PUunc0_BTagEff02_HLTEff0");
-  configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METuncUp_PUunc0_BTagEff02_HLTEff0");
+  configDescriptions_.push_back("CSVM_PF2PATjets_JES0_JERbias_PFMET_METuncDown_PUunc0_BTagEff02_HLTEff0");
+  configDescriptions_.push_back("CSVM_PF2PATjets_JES0_JERbias_PFMET_METuncUp_PUunc0_BTagEff02_HLTEff0");
 
   //PU
-      configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncDown_BTagEff02_HLTEff0");
-      configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncUp_BTagEff02_HLTEff0");
+      configDescriptions_.push_back("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncDown_BTagEff02_HLTEff0");
+      configDescriptions_.push_back("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncUp_BTagEff02_HLTEff0");
 
   //btag eff
-  configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffdown2_HLTEff0");
-  configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffup2_HLTEff0");
+  configDescriptions_.push_back("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffdown2_HLTEff0");
+  configDescriptions_.push_back("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffup2_HLTEff0");
 
   //HLT eff
-  //    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEffdown");
-  //    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEffup");
+  //    configDescriptions_.push_back("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEffdown");
+  //    configDescriptions_.push_back("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEffup");
 */
 
   
   //new btag eff prescription
 /* //for summer11 signal systematics!
-  configDescriptions_.setDefault("SSVHPT_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
-  configDescriptions_.setCorrected("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
+  configDescriptions_.setDefault("CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
+  configDescriptions_.setCorrected("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
   //comment here to save time
   
   //JES
-  configDescriptions_.addVariation("SSVHPT_PF2PATjets_JESdown_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0",
-				   "SSVHPT_PF2PATjets_JESup_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
+  configDescriptions_.addVariation("CSVM_PF2PATjets_JESdown_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0",
+				   "CSVM_PF2PATjets_JESup_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
   //JER - out for SMS
-   configDescriptions_.addVariation("SSVHPT_PF2PATjets_JES0_JERdown_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0",
-   				   "SSVHPT_PF2PATjets_JES0_JERup_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
+   configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERdown_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0",
+   				   "CSVM_PF2PATjets_JES0_JERup_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
 
   //unclustered MET
-  configDescriptions_.addVariation("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METuncDown_PUunc0_BTagEff02_HLTEff0",
-				   "SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METuncUp_PUunc0_BTagEff02_HLTEff0");
+  configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERbias_PFMET_METuncDown_PUunc0_BTagEff02_HLTEff0",
+				   "CSVM_PF2PATjets_JES0_JERbias_PFMET_METuncUp_PUunc0_BTagEff02_HLTEff0");
 
   //PU - out for SMS
-   configDescriptions_.addVariation("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncDown_BTagEff02_HLTEff0",
-   				   "SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncUp_BTagEff02_HLTEff0");
+   configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncDown_BTagEff02_HLTEff0",
+   				   "CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncUp_BTagEff02_HLTEff0");
 
   //btag eff
-  configDescriptions_.addVariation("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffdown2_HLTEff0",
-				   "SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffup2_HLTEff0");
+  configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffdown2_HLTEff0",
+				   "CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffup2_HLTEff0");
 
   //HLT eff
-  //    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEffdown");
-  //    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEffup");
+  //    configDescriptions_.push_back("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEffdown");
+  //    configDescriptions_.push_back("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEffup");
   */
 
 
@@ -1555,8 +1557,8 @@ float drawSimple(const TString var, const int nbins, const double low, const dou
   if (addOverflow_)  addOverflowBin( hh ); //manipulates the TH1D
 
   //at this point i've got a histogram. what more could i want?
-  hinteractive = (TH1D*)hh->Clone("hinteractive");
   if(savePlots_){
+    hinteractive = (TH1D*)hh->Clone("hinteractive");
     TFile fout(filename,"UPDATE");
     hh->Write();
     fout.Close();
@@ -2738,7 +2740,7 @@ void getCutStringForCutflow(vector<TString> &vectorOfCuts, vector<TString> &stag
 
   //define the HT and MET thresholds
   TString minHT; TString minMET;
-  if (!isTightSelection) {minHT = "350"; minMET = "200";}
+  if (!isTightSelection) {minHT = "400"; minMET = "250";}
   else {minHT = "500"; minMET = "300";}
 
   TString cut;
@@ -2747,7 +2749,7 @@ void getCutStringForCutflow(vector<TString> &vectorOfCuts, vector<TString> &stag
   TString selectionEq1bLoose;
   TString selectionGe1bLoose;
   TString selectionGe2bLoose;
-  //  TString selectionGe3b;
+  TString selectionGe3bLoose;
   TString selectionEq1bTight;
   TString selectionGe1bTight;
   TString selectionGe2bTight;  
@@ -2781,7 +2783,7 @@ void getCutStringForCutflow(vector<TString> &vectorOfCuts, vector<TString> &stag
   vectorOfCuts.push_back(cut);
   if (latexMode_) stageCut.push_back("HT$\\ge$"+minHT);
   else stageCut.push_back("HT>="+minHT);
-
+  
   //3 or more jets
   if (thisSelection=="") thisSelection += "cut3Jets==1";
   else thisSelection += " && cut3Jets==1";
@@ -2853,11 +2855,11 @@ void getCutStringForCutflow(vector<TString> &vectorOfCuts, vector<TString> &stag
   //>= 1 b
   selectionGe1bLoose=selectionPreB;
   if (btagSF) btagSFweight_="probge1";
-  else selectionGe1bLoose += " && nbjetsSSVHPT>=1";
+  else selectionGe1bLoose += " && nbjetsCSVM>=1";
   cut=getCutString(kMC,selectionGe1bLoose);
   vectorOfCuts.push_back(cut);
-  if (latexMode_) stageCut.push_back("HT$\\ge$350, \\MET$\\ge$200, $\\ge$1 b");
-  else stageCut.push_back("HT>=350, MET>=200, >= 1 b");
+  if (latexMode_) stageCut.push_back("HT$\\ge$400, \\MET$\\ge$250, $\\ge$1 b");
+  else stageCut.push_back("HT>=400, MET>=250, >= 1 b");
 
   //==1b
   //jmt -- don't bother with this
@@ -2870,29 +2872,32 @@ void getCutStringForCutflow(vector<TString> &vectorOfCuts, vector<TString> &stag
   //>= 2 b
   selectionGe2bLoose=selectionPreB; 
   if (btagSF) btagSFweight_="probge2";
-  else selectionGe2bLoose += " && nbjetsSSVHPT>=2";
+  else selectionGe2bLoose += " && nbjetsCSVM>=2";
   cut=getCutString(kMC,selectionGe2bLoose);
   vectorOfCuts.push_back(cut);
-  if (latexMode_) stageCut.push_back("HT$\\ge$350, \\MET$\\ge$200, $\\ge$2 b");
-  else stageCut.push_back("HT>=350, MET>=200, >= 2 b");
+  if (latexMode_) stageCut.push_back("HT$\\ge$400, \\MET$\\ge$250, $\\ge$2 b");
+  else stageCut.push_back("HT>=400, MET>=250, >= 2 b");
 
-  //  //>= 3 b
-  //  selectionGe3bLoose=selectionPreB; selectionGe3bLoose +=" && nbjetsSSVHPT>=3";
-  //  cut=getCutString(lumiScale_,selectionGe3bLoose);
-  //  vectorOfCuts.push_back(cut);
-  //  if (latexMode_) stageCut.push_back("HT$\\ge$350, \\MET$\\ge$200, $\\ge$3 b");
-  //  else stageCut.push_back("HT>=350, MET>=200, >= 3 b");
+  //>= 3 b
+  selectionGe3bLoose=selectionPreB; 
+  if (btagSF) btagSFweight_="probge3";
+  else selectionGe2bLoose += " && nbjetsCSVM>=3";
+  cut=getCutString(kMC,selectionGe3bLoose);
+  vectorOfCuts.push_back(cut);
+  if (latexMode_) stageCut.push_back("HT$\\ge$400, \\MET$\\ge$250, $\\ge$3 b");
+  else stageCut.push_back("HT>=400, MET>=250, >= 3 b");
+
 
   //tight selection
   if (!isTightSelection){ //print out the results for the tight selection anyway
     //>=1 b
     selectionGe1bTight=selectionPreB; 
-    if (btagSF) {btagSFweight_="probge1"; selectionGe1bTight += " && HT>=500 && MET>=300";}
-    else selectionGe1bTight += " && nbjetsSSVHPT>=1 && HT>=500 && MET>=300"; //hard-coded!
+    if (btagSF) {btagSFweight_="probge1"; selectionGe1bTight += " && HT>=500 && MET>=500";}
+    else selectionGe1bTight += " && nbjetsCSVM>=1 && HT>=500 && MET>=500"; //hard-coded!
     cut=getCutString(kMC,selectionGe1bTight);
     vectorOfCuts.push_back(cut);
-    if (latexMode_) stageCut.push_back("HT$\\ge$500, \\MET$\\ge$300, $\\ge$1 b");
-    else stageCut.push_back("HT>=500, MET>=300, >= 1 b");
+    if (latexMode_) stageCut.push_back("HT$\\ge$500, \\MET$\\ge$500, $\\ge$1 b");
+    else stageCut.push_back("HT>=500, MET>=500, >= 1 b");
     
     //==1 b
 //     selectionGe1bTight=selectionPreB; selectionGe1bTight += " && nbjetsSSVHPT==1 && HT>=500 && MET>=300"; //hard-coded!
@@ -2903,12 +2908,12 @@ void getCutStringForCutflow(vector<TString> &vectorOfCuts, vector<TString> &stag
     
     //>=2 b
     selectionGe1bTight=selectionPreB;
-    if (btagSF) {btagSFweight_="probge2"; selectionGe1bTight += " && HT>=500 && MET>=300";}
-    else selectionGe1bTight += " && nbjetsSSVHPT>=2 && HT>=500 && MET>=300"; //hard-coded!
+    if (btagSF) {btagSFweight_="probge2"; selectionGe1bTight += " && HT>=600 && MET>=300";}
+    else selectionGe1bTight += " && nbjetsCSVM>=2 && HT>=600 && MET>=300"; //hard-coded!
     cut=getCutString(kMC,selectionGe1bTight);
     vectorOfCuts.push_back(cut);
-    if (latexMode_) stageCut.push_back("HT$\\ge$500, \\MET$\\ge$300, $\\ge$2 b");
-    else stageCut.push_back("HT>=500, MET>=300, >= 2 b");  
+    if (latexMode_) stageCut.push_back("HT$\\ge$600, \\MET$\\ge$300, $\\ge$2 b");
+    else stageCut.push_back("HT>=600, MET>=300, >= 2 b");  
   }
   
   //  //check output
@@ -2916,7 +2921,7 @@ void getCutStringForCutflow(vector<TString> &vectorOfCuts, vector<TString> &stag
   //    cout<<stageCut[istage]<<endl;
   //    cout<<vectorOfCuts[istage]<<endl;
   //  }
-  
+    
 }
 
 void cutflow(bool isTightSelection){
@@ -2950,7 +2955,7 @@ void cutflow(bool isTightSelection){
     resetHistos();
 
     vector<float> nPass; //number of events passing current cut in each sample
-    vector<float> nPassE; //error on events passing cuts
+    vector<float> nPassE; //error on events passing cuts    
 
     //for total background
     if (totalsm!=0) delete totalsm;
@@ -2994,7 +2999,7 @@ void cutflow(bool isTightSelection){
 
   //now print out the cutflow table
   if (isTightSelection) cout<<"tight selection (HT>=500, MET>=300)"<<endl;
-  else cout<<"baseline selection (HT>=350, MET>=200)"<<endl; 
+  else cout<<"baseline selection (HT>=400, MET>=250)"<<endl; 
 
   TString col_start; TString col; TString col_end; TString hline; TString hhline;
 
@@ -3056,10 +3061,10 @@ void cutflow(bool isTightSelection){
     if (stageCut[istage]=="Cleaning") cout<<hline<<endl;
 
     if (latexMode_){
-      if (stageCut[istage]=="HT$\\ge$350, \\MET$\\ge$200, $\\ge$2 b" && !isTightSelection) cout<<hline<<endl;
+      if (stageCut[istage]=="HT$\\ge$400, \\MET$\\ge$250, $\\ge$3 b" && !isTightSelection) cout<<hline<<endl;
     }
     else {
-      if (stageCut[istage]=="HT>=350, MET>=200, >= 2 b" && !isTightSelection) cout<<hline<<endl;
+      if (stageCut[istage]=="HT>=400, MET>=250, >= 2 b" && !isTightSelection) cout<<hline<<endl;
     }
 
   }//end loop over cuts
