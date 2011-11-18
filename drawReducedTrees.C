@@ -85,8 +85,8 @@ functionality for TH1F and TH1D e.g. the case of addOverflowBin()
 //***************************
 
 //-- reducedTrees for Oct 25 SUSY meeting. 3464.581/pb. 
-TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35a/";
-TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35a/";
+TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35d/";
+TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35c/";
 
 
 
@@ -116,7 +116,8 @@ TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35a/";
 
 //double lumiScale_ = 1091.891;
   //double lumiScale_ = 1143; //official summer conf lumi
-double lumiScale_ = 3464.581;//oct25
+//double lumiScale_ = 3464.581;//oct25
+double lumiScale_ = 4683.719;//nov4
 
 #include "drawReducedTrees.h"
 
@@ -1168,7 +1169,7 @@ void averageZ() {
 }
 
 const bool reweightLSBdata_=false; //whether or not LSB data is reweighted based on PV distribution
-const bool useScaleFactors_=false; //whether or not to use MC scale factors when doing subtraction for data-driven estimates
+const bool useScaleFactors_=true; //whether or not to use MC scale factors when doing subtraction for data-driven estimates
 
 std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode=false, float subscale=1,float SBshift=0, const TString LSBbsel="==0") {
   //kind of awful, but we'll return the estimate for datamode=true but the closure test bias for datamode=false
@@ -2198,14 +2199,17 @@ other.
   else if ( btagselection=="ge0b" ) {
     btagcut = "nbjetsCSVM>=0";
   }
+  else if ( btagselection=="ge3b" ) {
+    btagcut = "nbjetsCSVM>=3";
+  }
   else {
     assert(0);
   }
 
 
   TCut HTcut="HT>=400";
-  if (HTselection=="Tight")  HTcut="HT>=500";
-  if (HTselection=="VeryTight") HTcut="HT>=600";
+  if (btagselection=="ge1b" && HTselection=="Tight")  HTcut="HT>=500";
+  if (btagselection=="ge2b" && HTselection=="Tight")  HTcut="HT>=600";
 
   loadSamples();
 
@@ -2223,9 +2227,10 @@ other.
   //const float varbins[]={100, 120, 140, 160, 180, 200, 220, 240, 260, 280, 300, 350, 400, 450, 500, 550}; 
   
   //ge2b, Loose and Tight
-  const int nvarbins=12;
-  //const float varbins[]={100, 125, 150, 175, 200, 225, 250, 275, 300, 350, 400, 450, 550,650,750, 850,950};
-  const float varbins[]={200, 225, 250, 275, 300, 350, 400, 450, 550,650,750, 850,950}; 
+  const int nvarbins=13;
+  const float varbins[]={100, 125, 150, 175, 200, 225, 250, 275, 300, 350, 400, 450, 500, 550}; //AN and PAS 
+  //const int nvarbins=12;
+  //const float varbins[]={200, 225, 250, 275, 300, 350, 400, 450, 550,650,750, 850,950}; 
 
   doOverflowAddition(true);
 
@@ -2241,11 +2246,13 @@ other.
   TString sample;
   if(samplename=="TTbarJets") sample = "ttbar";
   else if(samplename=="WJets") sample = "wjets";
+  else if(samplename=="SingleTop") sample = "singletop";
 
   selection_ =TCut("cutPV==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && minDeltaPhiN >= 4 && MT_Wlep>=0 && MT_Wlep<100")&&btagcut&&HTcut;
   //selection_ =TCut("MET>=150 && cutPV==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && minDeltaPhiN >= 4")&&btagcut&&HTcut; //AN v5
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
   nbins = 40; low=100; high=550; 
+  //nbins = 40; low=200; high=600; 
   //nbins = 40; low=150; high=550; //AN v5
   //nbins = 20; low=150; high=550;
   //nbins = 16; low=150; high=550;
@@ -2255,11 +2262,12 @@ other.
   int lowbin = hinteractive->FindBin(low);
   int boundarybin_sb = 0, boundarybin_sig=0;
 
-  boundarybin_sb = hinteractive->FindBin(200);
+  boundarybin_sb = hinteractive->FindBin(250);
 
   //MET Signal region depends on "Loose" or "Tight" selection
-  if (HTselection=="Tight")  boundarybin_sig = hinteractive->FindBin(300);
-  else boundarybin_sig = hinteractive->FindBin(200);
+  if (HTselection=="Tight" && btagselection=="ge1b")  boundarybin_sig = hinteractive->FindBin(500);
+  else if (HTselection=="Tight" && btagselection=="ge2b")  boundarybin_sig = hinteractive->FindBin(300);
+  else boundarybin_sig = hinteractive->FindBin(250);
 
   int highbin = hinteractive->FindBin(high);
 
@@ -2366,8 +2374,18 @@ other.
   myLegend->SetTextFont(42);
   myLegend->SetFillStyle(0);
   myLegend->SetTextSize(0.045);
-  myLegend->AddEntry(SIGplot,"t#bar{t}, 0 leptons", "lp");
-  myLegend->AddEntry(SLplot, "t#bar{t}, 1 lepton", "lp");
+  if(sample=="ttbar"){
+    myLegend->AddEntry(SIGplot,"t#bar{t}, 0 leptons", "lp");
+    myLegend->AddEntry(SLplot, "t#bar{t}, 1 lepton", "lp");
+  }
+  else if(sample=="wjets"){
+    myLegend->AddEntry(SIGplot,"wjets, 0 leptons", "lp");
+    myLegend->AddEntry(SLplot, "wjets, 1 lepton", "lp");
+  }
+  else if(sample=="singletop"){
+    myLegend->AddEntry(SIGplot,"single-top, 0 leptons", "lp");
+    myLegend->AddEntry(SLplot, "singletop, 1 lepton", "lp");
+  }
   myLegend->Draw();
   myC->Print("METshape_logAndRatio_"+sample+"_SLandStandard_"+btagselection+"_"+HTselection+".pdf");
 
@@ -2612,13 +2630,13 @@ void AN2011( TString btagselection="ge1b",const int mode=1, bool logy=false, boo
   }
 
   loadSamples();
-
+  
   int nbins;
   float low,high;
   TString var,xtitle;
   
   doOverflowAddition(true);
-
+  
   setStackMode(false,true); //normalized
   setColorScheme("nostack");
   clearSamples();
@@ -2636,7 +2654,7 @@ void AN2011( TString btagselection="ge1b",const int mode=1, bool logy=false, boo
   drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "minDeltaPhiN_looseMET_MConly_"+btagselection+modestring);
   
   return;
-
+  
   // ========= regular N-1 plots
 
   resetSamples(); //use all samples
@@ -2645,7 +2663,7 @@ void AN2011( TString btagselection="ge1b",const int mode=1, bool logy=false, boo
   doData(true);
   drawMCErrors_=true;
   
-  /*
+  /*  
   var="minDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}";
   nbins = 20; low=0; high=40;
   //no delta phi cut
@@ -2736,7 +2754,7 @@ void AN2011( TString btagselection="ge1b",const int mode=1, bool logy=false, boo
   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_1e0mu_"+btagselection+modestring);
   */ 
 
- /*
+  /*
   //pT?
   var="eleet1"; xtitle="electron p_{T} [GeV]";
   nbins = 20; low=0; high=200;
@@ -2753,7 +2771,8 @@ void AN2011( TString btagselection="ge1b",const int mode=1, bool logy=false, boo
   var="muonpt1"; xtitle="muon p_{T} [GeV]";
   nbins = 20; low=0; high=200;
   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_muonpT_0e1mu_"+btagselection+modestring);
-  
+  */
+  /*  
   // == MET for the combined sample
   selection_ =TCut("MET>=150 &&cutHT==1 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && minDeltaPhiN >= 4 && MT_Wlep>=0 && MT_Wlep<100")&&btagcut;
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
