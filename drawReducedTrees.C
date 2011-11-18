@@ -151,15 +151,15 @@ SignalEffData signalSystematics2011(const SearchRegion & region, bool isSL=false
   TString btagselection = region.btagSelection;
   TCut HTcut=region.htSelection.Data(); 
   TCut SRMET = region.metSelection.Data();
-  TCut bcut = "nbjetsSSVHPT>=1";
+  TCut bcut = "nbjets>=1";
   TString bweightstring="probge1";
   if (btagselection=="ge2b") {
-    bcut="nbjetsSSVHPT>=2";
+    bcut="nbjets>=2";
     bweightstring="probge2";
   }
   else if (btagselection=="ge1b") {}
   else if (btagselection=="ge3b") {
-    bcut="nbjetsSSVHPT>=3";
+    bcut="nbjets>=3";
     bweightstring="probge3"; //this one isn't calculated right now, i think
   }
   else {assert(0);}
@@ -685,15 +685,15 @@ owen asked for total MC event counts in the 6 boxes, output in a particular form
   TCut HTcut=region.htSelection.Data(); 
   TCut SRMET = region.metSelection.Data();
   bool isSIG = region.isSIG;
-  TCut bcut = "nbjetsSSVHPT>=1";
+  TCut bcut = "nbjets>=1";
   TString bweightstring="probge1";
   if (btagselection=="ge2b") {
-    bcut="nbjetsSSVHPT>=2";
+    bcut="nbjets>=2";
     bweightstring="probge2";
   }
   else if (btagselection=="ge1b") {}
   else if (btagselection=="ge3b") {
-    bcut="nbjetsSSVHPT>=3";
+    bcut="nbjets>=3";
     bweightstring="probge3"; //this one isn't calculated right now, i think
   }
   else {assert(0);}
@@ -813,15 +813,15 @@ map<pair<int,int>, SignalEffData>  runTH2Syst2011_mSugra(const SearchRegion & re
   TString btagselection = region.btagSelection;
   TCut HTcut=region.htSelection.Data(); 
   TCut SRMET = region.metSelection.Data();
-  TCut bcut = "nbjetsSSVHPT>=1";
+  TCut bcut = "nbjets>=1";
   TString bweightstring="probge1";
   if (btagselection=="ge2b") {
-    bcut="nbjetsSSVHPT>=2";
+    bcut="nbjets>=2";
     bweightstring="probge2";
   }
   else if (btagselection=="ge1b") {}
   else if (btagselection=="ge3b") {
-    bcut="nbjetsSSVHPT>=3";
+    bcut="nbjets>=3";
     bweightstring="probge3"; //this one isn't calculated right now, i think
   }
   else {assert(0);}
@@ -984,8 +984,9 @@ map<pair<int,int>, SignalEffData>  runTH2Syst2011_mSugra(const SearchRegion & re
 }
 
 
+
 void runSystematics2011_scan(TString sampleOfInterest, const unsigned int i) {
-  //now converting this to work also on mSugra "mSUGRAtanb40"
+  //now converting this to work also on mSugra "mSUGRAtanb40" as well as simplified models e.g. T1bbbb
   
   loadSamples();
   clearSamples();
@@ -2424,7 +2425,7 @@ void AN2011_r() {
   //drawR("minDeltaPhi",0.3,15,50,350,"old_"+btagselection);
   //drawR("minDeltaPhiN",4,15,50,350,btagselection);
 
-  selection_ ="cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && nbjetsSSVHPT==0&&weight<1000";
+  selection_ ="cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && nbjets==0&&weight<1000";
   //drawR("minDeltaPhiN",4,15,50,350,"eq0b");
 
   //now try drawing it in data
@@ -2466,10 +2467,10 @@ void AN2011_r_SLreq() {
   const int nvarbins=13;
   const float varbins[]={0,15,30,45,80,110,140,170,200,230,260,290,320,350}; //use for PAS
   
-  selection_ ="cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && nbjetsSSVHPT==0&&weight<1000";
+  selection_ ="cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && nbjets==0&&weight<1000";
   drawR("minDeltaPhiN",4, "MET", nvarbins, varbins,"eq0b");
   
-  selection_ ="cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && nbjetsSSVHPT>=1&&weight<1000";
+  selection_ ="cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && nbjets>=1&&weight<1000";
   drawR("minDeltaPhiN",4, "MET", nvarbins, varbins,"ge1b");
   
   setPlotMaximum(5); setPlotMinimum(0);
@@ -2478,12 +2479,12 @@ void AN2011_r_SLreq() {
   
   /*
   //other plots looked at, but not in PAS, for example.
-  selection_ ="cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && nbjetsSSVHPT==1&&weight<1000";
+  selection_ ="cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && nbjets==1&&weight<1000";
   drawR("minDeltaPhiN",4, "MET", nvarbins, varbins,"eq1b");
   
   const int nvarbins2=8;
   const float varbins2[]={0,15,30,45,75,125,175,225, 350};
-  selection_ ="cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && nbjetsSSVHPT>=2&&weight<1000";
+  selection_ ="cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && nbjets>=2&&weight<1000";
   drawR("minDeltaPhiN",4, "MET", nvarbins2, varbins2,"ge2b");
   */
 }
@@ -2491,9 +2492,9 @@ void AN2011_r_SLreq() {
 
 void AN2011_opt() {
 
-  TCut ge1b = "nbjetsSSVHPT>=1";
-  TCut ge2b = "nbjetsSSVHPT>=2";
-  TCut ge3b = "nbjetsSSVHPT>=3";
+  TCut ge1b = "nbjets>=1";
+  TCut ge2b = "nbjets>=2";
+  TCut ge3b = "nbjets>=3";
 
   lumiScale_=1800;
 
@@ -4173,11 +4174,11 @@ void qcdFit(bool loose = true){
   TCut HTcut;
   if(loose) HTcut = "HT>=350";
   else HTcut = "HT>=500";
-  const  TCut ge1b =  "nbjetsSSVHPT >= 1";
-  const  TCut ge2b =  "nbjetsSSVHPT >= 2";
-  const  TCut eq1b =  "nbjetsSSVHPT == 1";
+  const  TCut ge1b =  "nbjets >= 1";
+  const  TCut ge2b =  "nbjets >= 2";
+  const  TCut eq1b =  "nbjets == 1";
   const  TCut pretag =  "1";
-  const  TCut antitag = "nbjetsSSVHPT == 0";
+  const  TCut antitag = "nbjets == 0";
   const TCut passmdpn = "minDeltaPhiN>=4";
   const TCut failmdpn = "minDeltaPhiN<4";
   TCut base = HTcut&&TCut("cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && weight<1000");// no trigger, met, minDeltaPhiN, btagger
@@ -4232,11 +4233,11 @@ void drawQCDreweight(bool loose = true, bool njets50 = false){
   TCut HTcut;
   if(loose) HTcut = "HT>=350";
   else HTcut = "HT>=500";
-  const  TCut ge1b =  "nbjetsSSVHPT >= 1";
-  const  TCut ge2b =  "nbjetsSSVHPT >= 2";
-  const  TCut eq1b =  "nbjetsSSVHPT == 1";
+  const  TCut ge1b =  "nbjets >= 1";
+  const  TCut ge2b =  "nbjets >= 2";
+  const  TCut eq1b =  "nbjets == 1";
   const  TCut pretag =  "1";
-  const  TCut antitag = "nbjetsSSVHPT == 0";
+  const  TCut antitag = "nbjets == 0";
   const TCut passmdpn = "minDeltaPhiN>=4";
   const TCut failmdpn = "minDeltaPhiN<4";
   TCut base = HTcut&&TCut("cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && weight<1000");// no trigger, met, minDeltaPhiN, btagger
@@ -4354,11 +4355,11 @@ void ptresABCD(bool loose = true){
   TCut HTcut;
   if(loose) HTcut = "HT>=350";
   else HTcut = "HT>=500";
-  const  TCut ge1b =  "nbjetsSSVHPT >= 1";
-  const  TCut ge2b =  "nbjetsSSVHPT >= 2";
-  const  TCut eq1b =  "nbjetsSSVHPT == 1";
+  const  TCut ge1b =  "nbjets >= 1";
+  const  TCut ge2b =  "nbjets >= 2";
+  const  TCut eq1b =  "nbjets == 1";
   const  TCut pretag =  "1";
-  const  TCut antitag = "nbjetsSSVHPT == 0";
+  const  TCut antitag = "nbjets == 0";
   const TCut passmdpn = "minDeltaPhiN>=4";
   const TCut failmdpn = "minDeltaPhiN<4";//.1412212
   //const TCut passmdpn = "minDeltaPhiN15>=2.7";
@@ -4433,7 +4434,7 @@ void studyPrescale_r(int ibtag = 4) {
   lumiScale_ = 30.15471; 
 
   //TString btagselection="antib";
-  //TCut btagcut = "nbjetsSSVHPT==0";
+  //TCut btagcut = "nbjets==0";
   
   TCut util = "(pass_utilityHLT==1 || !isRealData) && weight<1000";
   TCut LSB = "MET>=50 && MET<100";
@@ -4517,9 +4518,9 @@ void studyPrescale_r(int ibtag = 4) {
   //nbjets -- does not depend on theBTaggingCut!!!
   doOverflowAddition(false);
   selection_ =TCut("HT>=350 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1")&&util&&LSB;
-  //drawR("minDeltaPhiN", 4, "nbjetsSSVHPT", 4, -0.5, 3.5, "nbjets_"+btagstring);
+  //drawR("minDeltaPhiN", 4, "nbjets", 4, -0.5, 3.5, "nbjets_"+btagstring);
   selection_ =TCut("HT>=350 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && cutTrigger==1 && MET>=150");
-  //drawR("minDeltaPhiN", 4, "nbjetsSSVHPT", 4, -0.5, 3.5, "nbjets_physics_"+btagstring);
+  //drawR("minDeltaPhiN", 4, "nbjets", 4, -0.5, 3.5, "nbjets_physics_"+btagstring);
    
   //runnumber
   //set dataOnly to true
@@ -4702,7 +4703,7 @@ void lowMETcount(){
   lumiScale_ = 19.23288; //customize lumiScale_
   
   TString btagselection="antib";
-  TCut theBTaggingCut = "nbjetsSSVHPT==0";
+  TCut theBTaggingCut = "nbjets==0";
   TCut util = "pass_utilityHLT_HT300>=1 && weight<1000";
   
   selection_ =TCut("HT>=350 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1")&&util&&theBTaggingCut;
@@ -4739,16 +4740,16 @@ void studyNjet(int ibtag=3){
 
   //lumiScale_ = 19.23288; //customize lumiScale_
   //TString btagselection="antib"; 
-  //TCut btagcut = "nbjetsSSVHPT==0"; 
+  //TCut btagcut = "nbjets==0"; 
 
   TCut util = "pass_utilityHLT_HT300>=1 && weight<1000";
   TCut LSB = "MET>=50 && MET<100";
 
-  const  TCut ge1b =  "nbjetsSSVHPT >= 1";
-  const  TCut ge2b =  "nbjetsSSVHPT >= 2";
-  const  TCut eq1b =  "nbjetsSSVHPT == 1";
+  const  TCut ge1b =  "nbjets >= 1";
+  const  TCut ge2b =  "nbjets >= 2";
+  const  TCut eq1b =  "nbjets == 1";
   const  TCut pretag =  "1";
-  const  TCut antitag = "nbjetsSSVHPT == 0";
+  const  TCut antitag = "nbjets == 0";
 
   //  for (int ibtag = 4; ibtag<5; ibtag++) {
   TCut theBTaggingCut = ge1b; TString btagstring = "ge1b";
@@ -4812,7 +4813,7 @@ void studyRqcd(int ibtag = 4){
   lumiScale_ = 19.23288; //customize lumiScale_
 
   //TString btagselection="antib";
-  //TCut btagcut = "nbjetsSSVHPT==0";
+  //TCut btagcut = "nbjets==0";
   
   TCut util = "pass_utilityHLT_HT300>=1 && weight<1000";
   TCut LSB = "MET>=50 && MET<100";
@@ -4820,11 +4821,11 @@ void studyRqcd(int ibtag = 4){
   TCut SIG = "MET>=200";
   TCut highMET = "MET>=150";
 
-  const  TCut ge1b =  "nbjetsSSVHPT >= 1";
-  const  TCut ge2b =  "nbjetsSSVHPT >= 2";
-  const  TCut eq1b =  "nbjetsSSVHPT == 1";
+  const  TCut ge1b =  "nbjets >= 1";
+  const  TCut ge2b =  "nbjets >= 2";
+  const  TCut eq1b =  "nbjets == 1";
   const  TCut pretag =  "1";
-  const  TCut antitag = "nbjetsSSVHPT == 0";
+  const  TCut antitag = "nbjets == 0";
  
   //  for (int ibtag = 4; ibtag<5; ibtag++) { 
   TCut theBTaggingCut = ge1b; TString btagstring = "ge1b";
