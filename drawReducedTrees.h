@@ -153,7 +153,7 @@ void setSearchRegions() {
 
   //also, for style reasons the 'owenId' should not contain the number of b tags.
   //everywhere that we use the owenId as an identifier, we combine with the number of b tags
-
+/*
   //oct25
   //case 1
   sbRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=200&&MET<250","Loose",false));
@@ -170,7 +170,7 @@ void setSearchRegions() {
   //case 6
   sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=200&&MET<250","Loose",false));
   searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=250","Loose"));
-
+*/
   
   /*
   //case 1
@@ -207,7 +207,6 @@ void setSearchRegions() {
   */    
 
 
-/*  
   //2011 Summer result
   sbRegions_.push_back( SearchRegion( "ge1b","HT>=350","MET>=150&&MET<200","Loose",false)); //loose SB
   searchRegions_.push_back( SearchRegion( "ge1b","HT>=350","MET>=200","Loose")); //loose Sig
@@ -220,7 +219,6 @@ void setSearchRegions() {
 
   sbRegions_.push_back( SearchRegion( "ge2b","HT>=500","MET>=150&&MET<200","Tight",false)); //tight SB
   searchRegions_.push_back( SearchRegion( "ge2b","HT>=500","MET>=300","Tight")); //tight Sig
-  */
 
 
   searchRegionsSet_=true;
@@ -241,10 +239,10 @@ public:
   //use 2 for numbers that are set by some actual event counts
   int status;
 
-  void write(ofstream* outfile);
+  void write(ofstream* outfile) const;
 };
 
-void SystInfo::write(ofstream* outfile) {
+void SystInfo::write(ofstream* outfile) const {
 
   (*outfile)<<status<<" "<<minus<<" "<<plus<<endl;
 
@@ -293,22 +291,25 @@ public:
   //  want to be able to clear() it and *regain* the memory footprint, without getting rid of the class object itself
   TString translateVariation(const TString & which) ;
 
-  void write(TString id); //write the SignalEffData contents to a file
+  void write(TString id) const; //write the SignalEffData contents to a file
 
 };
 
-void SignalEffData::write(TString id) {
+const TString SignalEffDataSuffix_ = "sedf";
+void SignalEffData::write(TString id) const {
   //goal: be able to write to an ascii file all of the important data members,
   //such that I can destroy the object, and recreate it later using the content of the file
 
   //filename constructed from id
   TString filename = "SignalEffData.";
   filename += id;
+  filename +=".";
+  filename += SignalEffDataSuffix_;
 
   ofstream output(filename.Data());
   output<<rawYield<<endl<<effCorr<<endl;
 
-  for (map<TString, SystInfo >::iterator isyst=systematics.begin(); isyst!=systematics.end(); ++isyst) {
+  for (map<TString, SystInfo >::const_iterator isyst=systematics.begin(); isyst!=systematics.end(); ++isyst) {
     output << isyst->first<<" ";
     isyst->second.write( &output );
   }
@@ -500,6 +501,51 @@ struct OwenData {
 
   //don't need DataLumi...that's just lumiScale_
 } ;
+
+
+//ok, i would rather implement this as a C++ style class instead of a C style function, but for now I'll do the easiest thing
+void writeSignalEffDataMapToFiles(const  map<pair<int,int>, SignalEffData> & thedata, const TString & id ) {
+
+  //goal -- write thedata to a set of files
+  //SignalEffData already has a method to write its contents to a file
+
+  for ( map<pair<int,int>, SignalEffData>::const_iterator iscan = thedata.begin(); iscan!= thedata.end(); ++iscan) {
+
+    TString fileid;
+    fileid.Form("%s_%d_%d",id.Data(), iscan->first.first, iscan->first.second);
+
+    iscan->second.write(fileid);
+  }
+}
+map<pair<int,int>, SignalEffData> loadSignalEffDataMapFromFiles( const TString & id ) {
+
+  map<pair<int,int>, SignalEffData> datamap;
+
+  //this is more tricky. we have to loop over all files that contain (not begin with) id
+  TChain dummychain("dummychain");
+  TString searchfor ="*.";
+  searchfor += SignalEffDataSuffix_;
+  dummychain.Add(searchfor);
+  TObjArray* dir1list = dummychain.GetListOfFiles();
+  int nfiles1=dir1list->GetEntries();
+  
+  for (int ifile1=0; ifile1<nfiles1; ifile1++) {
+    TString fullname=dir1list->At(ifile1)->GetTitle();
+    if (fullname.Contains(id)) {
+      TString justMasses = fullname(fullname.Index(id)+id.Length()+1,fullname.Length());
+      //now extract the mass values
+      int m1=TString(justMasses(0,justMasses.Index("_"))).Atoi();
+      int m2=TString(justMasses(justMasses.Index("_")+1,justMasses.Length() )).Atoi();
+      justMasses.Prepend("_");
+      justMasses.Prepend(id);
+      SignalEffData data(justMasses);
+      datamap[make_pair(m1,m2)] = data;
+    }
+  }
+
+  return datamap;
+}
+
 
 std::map<TString, OwenData> owenMap_;
 
@@ -933,7 +979,7 @@ for legacy purposes I am keeping all of the weight and selection TStrings, altho
   }
   if (useHLTeff_ &&  type!=kData) {
     weightedcut +="*hltHTeff";
-    weightedcut +="*hltMHTeff";
+    //    weightedcut +="*hltMHTeff"; //needs to be there now, but not compatible with Summer reducedTrees
   }
 
   if (btagSFweight_=="") btagSFweight_="1";
@@ -1279,7 +1325,7 @@ void loadSamples(bool joinSingleTop=true) {
   
   //FOR PLOTS
   ////////////
-
+/*
   configDescriptions_.setDefault("CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
   configDescriptions_.setCorrected("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
 
@@ -1306,7 +1352,7 @@ void loadSamples(bool joinSingleTop=true) {
   //HLT eff
   //    configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffdown",
   //"CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffup");
- 
+ */
   ///////////////
   //////////////
  
@@ -1345,34 +1391,34 @@ void loadSamples(bool joinSingleTop=true) {
 
   
   //new btag eff prescription
-/* //for summer11 signal systematics!
-  configDescriptions_.setDefault("CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
-  configDescriptions_.setCorrected("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
+ //for summer11 signal systematics!
+  configDescriptions_.setDefault("SSVHPT_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
+  configDescriptions_.setCorrected("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
   //comment here to save time
   
   //JES
-  configDescriptions_.addVariation("CSVM_PF2PATjets_JESdown_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0",
-				   "CSVM_PF2PATjets_JESup_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
-  //JER - out for SMS
-   configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERdown_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0",
-   				   "CSVM_PF2PATjets_JES0_JERup_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
+  configDescriptions_.addVariation("SSVHPT_PF2PATjets_JESdown_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0",
+				   "SSVHPT_PF2PATjets_JESup_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
+  //JER - out for scans
+  //  configDescriptions_.addVariation("SSVHPT_PF2PATjets_JES0_JERdown_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0",
+				    //  				   "SSVHPT_PF2PATjets_JES0_JERup_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
 
   //unclustered MET
-  configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERbias_PFMET_METuncDown_PUunc0_BTagEff02_HLTEff0",
-				   "CSVM_PF2PATjets_JES0_JERbias_PFMET_METuncUp_PUunc0_BTagEff02_HLTEff0");
+  configDescriptions_.addVariation("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METuncDown_PUunc0_BTagEff02_HLTEff0",
+				   "SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METuncUp_PUunc0_BTagEff02_HLTEff0");
 
-  //PU - out for SMS
-   configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncDown_BTagEff02_HLTEff0",
-   				   "CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncUp_BTagEff02_HLTEff0");
+  //PU - out for scans
+  //   configDescriptions_.addVariation("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncDown_BTagEff02_HLTEff0",
+  //  				   "SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncUp_BTagEff02_HLTEff0");
 
   //btag eff
-  configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffdown2_HLTEff0",
-				   "CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffup2_HLTEff0");
+  configDescriptions_.addVariation("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffdown2_HLTEff0",
+				   "SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffup2_HLTEff0");
 
   //HLT eff
-  //    configDescriptions_.push_back("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEffdown");
-  //    configDescriptions_.push_back("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEffup");
-  */
+  //    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEffdown");
+  //    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEffup");
+  
 
 
   currentConfig_=configDescriptions_.getDefault();
