@@ -153,24 +153,24 @@ void setSearchRegions() {
 
   //also, for style reasons the 'owenId' should not contain the number of b tags.
   //everywhere that we use the owenId as an identifier, we combine with the number of b tags
-/*
+
   //oct25
   //case 1
   sbRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=200&&MET<250","Loose",false));
-  searchRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=250","Loose"));
+  searchRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=250","Loose")); //1BL
   //case 2
   sbRegions_.push_back( SearchRegion( "ge1b","HT>=500","MET>=200&&MET<250","Tight",false));
-  searchRegions_.push_back( SearchRegion( "ge1b","HT>=500","MET>=500","Tight"));
+  searchRegions_.push_back( SearchRegion( "ge1b","HT>=500","MET>=500","Tight")); //1BT
   //case 4
   sbRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=200&&MET<250","Loose",false));
-  searchRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=250","Loose"));
+  searchRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=250","Loose")); //2BL
   //case 5
   sbRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=200&&MET<250","Tight",false));
-  searchRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=300","Tight"));
+  searchRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=300","Tight")); //2BT
   //case 6
   sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=200&&MET<250","Loose",false));
-  searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=250","Loose"));
-*/
+  searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=250","Loose")); //3B
+
   
   /*
   //case 1
@@ -206,7 +206,7 @@ void setSearchRegions() {
   searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=250","ge3b"));
   */    
 
-
+  /*
   //2011 Summer result
   sbRegions_.push_back( SearchRegion( "ge1b","HT>=350","MET>=150&&MET<200","Loose",false)); //loose SB
   searchRegions_.push_back( SearchRegion( "ge1b","HT>=350","MET>=200","Loose")); //loose Sig
@@ -219,7 +219,7 @@ void setSearchRegions() {
 
   sbRegions_.push_back( SearchRegion( "ge2b","HT>=500","MET>=150&&MET<200","Tight",false)); //tight SB
   searchRegions_.push_back( SearchRegion( "ge2b","HT>=500","MET>=300","Tight")); //tight Sig
-
+  */
 
   searchRegionsSet_=true;
 }
@@ -360,7 +360,7 @@ SignalEffData::SignalEffData() :
   systematics["lumi"] = SystInfo(4.5e-2 , 4.5e-2,1);  
   //we don't really want this one this time.
   //keep it for now just for the sake of comparison with old results
-  systematics["L2L3"] = SystInfo(1e-2 , 1e-2,1);
+  //  systematics["L2L3"] = SystInfo(1e-2 , 1e-2,1);
 
   //list of signal systematics:
   //  JES
@@ -1325,7 +1325,7 @@ void loadSamples(bool joinSingleTop=true) {
   
   //FOR PLOTS
   ////////////
-/*
+
   configDescriptions_.setDefault("CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
   configDescriptions_.setCorrected("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
 
@@ -1352,7 +1352,7 @@ void loadSamples(bool joinSingleTop=true) {
   //HLT eff
   //    configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffdown",
   //"CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffup");
- */
+
   ///////////////
   //////////////
  
@@ -1389,7 +1389,7 @@ void loadSamples(bool joinSingleTop=true) {
   //    configDescriptions_.push_back("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEffup");
 */
 
-  
+/*  
   //new btag eff prescription
  //for summer11 signal systematics!
   configDescriptions_.setDefault("SSVHPT_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
@@ -1419,7 +1419,7 @@ void loadSamples(bool joinSingleTop=true) {
   //    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEffdown");
   //    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEffup");
   
-
+*/
 
   currentConfig_=configDescriptions_.getDefault();
 
@@ -1810,7 +1810,6 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
     }
 
     if (dostack_) { //add histo to stack
-      leg->AddEntry(histos_[samples_[isample]], sampleLabel_[samples_[isample]]);
       thestack->Add(histos_[samples_[isample]] );
     }
     else { //draw non-stacked histo
@@ -1819,17 +1818,21 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
       if (!drawSusyOnly_ || samples_[isample].Contains("LM")|| samples_[isample].Contains("SUGRA")) { //drawSusyOnly_ means don't draw SM
 	//set max
 	if ( findOverallMax( histos_[samples_[isample]]) > histMax) histMax = findOverallMax(histos_[samples_[isample]]);
-	
-	leg->AddEntry(histos_[samples_[isample]], sampleLabel_[samples_[isample]]);
-
+       
 	histos_[samples_[isample]]->Draw(opt);
 	if (!opt.Contains("same")) opt+=" same";
       }
     }
   } //loop over samples and fill histograms
 
-  if (drawTotalSM_) leg->AddEntry(totalsm, sampleLabel_["TotalSM"]);
+  //fill legend
   if (drawTotalSMSusy_) leg->AddEntry(totalsmsusy, sampleLabel_["Total"]);
+  if (drawTotalSM_) leg->AddEntry(totalsm, sampleLabel_["TotalSM"]);
+  for (int isample=int(samples_.size())-1; isample>=0; isample--) {
+    if (dostack_ || (!drawSusyOnly_ || samples_[isample].Contains("LM")|| samples_[isample].Contains("SUGRA"))) { //drawSusyOnly_ means don't draw SM
+      leg->AddEntry(histos_[samples_[isample]], sampleLabel_[samples_[isample]]);
+    }
+  }
 
   if (!dostack_) {
     //this is all a re-implemenataion of stuff done is HistHolder. Oh well.
