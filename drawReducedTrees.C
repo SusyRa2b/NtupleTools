@@ -2868,6 +2868,14 @@ void AN2011( TString btagselection="ge1b",const int mode=1, bool logy=false, boo
   doData(true);
   drawMCErrors_=true;
   
+  //ben's experience with the Summer11 analysis is that this mod was necessary for this set of plots, for style reasons
+  //since these variables are global, we can just set them here.
+  //they are reset down at the bottom with resetLegendPosition()
+  //but for now I'm not going to do it
+  //  leg_x1 = 0.6; leg_x2=0.96; leg_y1=0.4; leg_y2=0.88;//bensep28 - for data/mc stack comparison
+  //  leg_x1 = 0.6; leg_x2=0.96; leg_y1=0.4; leg_y2=0.88;//bensep28 - for data/mc stack comparison
+  //leg_x1 = 0.6; leg_x2=0.96; leg_y1=0.42; leg_y2=0.9;//bensep28 -for data/mc stack comparison NJETS
+
   /*
   var="minDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}";
   nbins = 20; low=0; high=40;
@@ -3018,6 +3026,8 @@ void AN2011( TString btagselection="ge1b",const int mode=1, bool logy=false, boo
   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_ldp_"+btagselection+modestring);
  
   */
+
+  resetLegendPosition();
 }
 
 // working but not polished code to draw efficiency over mSugra space

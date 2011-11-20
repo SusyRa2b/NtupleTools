@@ -30,7 +30,14 @@ TString currentConfig_;
 //default selection
 TString selection_ ="cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1";
 
-float leg_x1 = 0.696, leg_x2=0.94, leg_y1=0.5, leg_y2=0.92;
+float leg_x1 , leg_x2, leg_y1, leg_y2;
+void resetLegendPosition() {
+  leg_x1 = 0.696;
+  leg_x2=0.94;
+  leg_y1=0.5;
+  leg_y2=0.92;
+}
+
 
 class ConfigurationDescriptions {
 public:
@@ -733,7 +740,7 @@ void drawPlotHeaderInside() {
 }
 
 void drawPlotHeader() {
-  return;
+  //  return;
   float ypos = 0.97;
   if(doRatio_) ypos=ypos+0.012;
   // i'm gonna leave this out for now
@@ -745,6 +752,7 @@ void drawPlotHeader() {
   text1->SetY(ypos+0.007);
   text1->SetTextFont(42);
   text1->SetTextSizePixels(24);
+  text1->SetTextSize(0.045); //copied from ben's code. maybe needs a switch so it is only used for AN2011()
   text1->Draw();
 
   if (normalized_ == false) {
@@ -760,6 +768,7 @@ void drawPlotHeader() {
     text2->SetY(ypos+0.015);
     text2->SetTextFont(42);
     text2->SetTextSizePixels(24);
+    text2->SetTextSize(0.045); //copied from ben's code. maybe needs a switch so it is only used for AN2011()
     text2->Draw();
   }
 
@@ -1251,6 +1260,7 @@ void loadSamples(bool joinSingleTop=true) {
   loaded_=true;
 
   resetPadDimensions();
+  resetLegendPosition();
 
   resetSamples(joinSingleTop);
   //samplesAll_ should have *every* available sample
