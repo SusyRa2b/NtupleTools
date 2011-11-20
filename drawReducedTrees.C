@@ -84,12 +84,12 @@ functionality for TH1F and TH1D e.g. the case of addOverflowBin()
 //*** AFTER SUMMER
 //***************************
 
-//TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35b/";
-//TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35c/";
+TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35d/";
+TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35c/";
 
 //-- reducedTrees for Oct 25 SUSY meeting. 3464.581/pb. 
-TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35a/";
-TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35a/";
+//TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35a/";
+//TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35a/";
 
 
 //*** SUMMER RESULT
@@ -117,7 +117,7 @@ TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35a/";
 //the cutdesc string is now defined in loadSamples()
 
 //double lumiScale_ = 1091.891;
-  //  double lumiScale_ = 1143; //official summer conf lumi
+//double lumiScale_ = 1143; //official summer conf lumi
 //double lumiScale_ = 3464.581;//oct25
 double lumiScale_ = 4683.719;//nov4
 
@@ -1261,7 +1261,7 @@ void averageZ() {
 }
 
 
-const bool reweightLSBdata_=false; //whether or not LSB data is reweighted based on PV distribution
+const bool reweightLSBdata_=true; //whether or not LSB data is reweighted based on PV distribution
 const bool useScaleFactors_=false; //whether or not to use MC scale factors when doing subtraction for data-driven estimates
 
 std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode=false, float subscale=1,float SBshift=0, const TString LSBbsel="==0", float PVCorFactor = 0) {
@@ -1380,8 +1380,10 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
   double RLSB_RW = 0;
   double dRLSB_RW = 0;
   if(datamode &&  reweightLSBdata_){
-    int pvnbins=12;
-    float pvbins[]={0.5,2.5,4.5,5.5,6.5,7.5,8.5,9.5,10.5,12.5,14.5,16.5,18.5};
+    //int pvnbins=12;
+    //float pvbins[]={0.5,2.5,4.5,5.5,6.5,7.5,8.5,9.5,10.5,12.5,14.5,16.5,18.5};
+    int pvnbins=11;
+    float pvbins[]={0.5,2.5,4.5,5.5,6.5,7.5,8.5,9.5,10.5,12.5,14.5,16.5};
     
     //physics triggers control sample -- physics triggers, 0b
     //--consider varying MET cut and PV binning!!
@@ -1480,10 +1482,10 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
     dRLSB_RW = sqrt(dR2);
     ///////////////////////////////////////////////////////////////////////////////////////////
     //unweighted
-    A = hPVprescalePass->Integral();
-    Aerr = jmt::errOnIntegral(hPVprescalePass); 
-    B = hPVprescaleFail->Integral();
-    Berr = jmt::errOnIntegral(hPVprescaleFail);
+    B = hPVprescalePass->Integral();
+    Berr = jmt::errOnIntegral(hPVprescalePass); 
+    A = hPVprescaleFail->Integral();
+    Aerr = jmt::errOnIntegral(hPVprescaleFail);
   }
   else{
     //A   -- aka 50 - 100 and high MPT,MET
@@ -1580,12 +1582,13 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
   if(datamode &&  reweightLSBdata_){
     myR = PVCorFactor*(RLSB_RW-RLSB_UW)+RLSB_RW; //PVCorFactor=0 for reweighted, +/-1 for +/-100% correction
     myRerr = dRLSB_RW;
+    cout << "RLSB_UW=" << RLSB_UW << ", RLSB_RW="<< RLSB_RW << ", PVCorFactor=" << PVCorFactor << ", myR=" << myR << endl;
   }
   else{
     myR = RLSB_UW;
     myRerr = jmt::errAoverB(B,Berr,A,Aerr);
   }
-  double estimate = myR*D;
+  double estimate = myR*(D-Dsub);
   double estimateerr = jmt::errAtimesB(myR, myRerr, D-Dsub, sqrt(Derr*Derr+Dsuberr*Dsuberr));
   double closureStat2 = datamode? 0: jmt::errAoverB(SIG,SIGerr,estimate,estimateerr);
   double R0 = myR;
@@ -1612,11 +1615,20 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
  
   }
   else {
-    sprintf(output,"%s & %d & %d & %d & %s & %s   \\\\ %% %f +/- %f",name.Data(),
-	    TMath::Nint(B),TMath::Nint(A),
-	    TMath::Nint(D), jmt::format_nevents(Dsub,Dsuberr).Data(),
-	    jmt::format_nevents(estimate,estimateerr).Data(),R0,R0err);
-    cout<<"(qcd) DATA\t";
+    if(reweightLSBdata_){
+      sprintf(output,"%s & %f \\pm %f & %d & %s & %s   \\\\ %% %f +/- %f",name.Data(),
+	      RLSB_RW,dRLSB_RW,
+	      TMath::Nint(D), jmt::format_nevents(Dsub,Dsuberr).Data(),
+	      jmt::format_nevents(estimate,estimateerr).Data(),R0,R0err);
+      cout<<"(qcd) DATA\t";
+    }
+    else{
+      sprintf(output,"%s & %d & %d & %d & %s & %s   \\\\ %% %f +/- %f",name.Data(),
+	      TMath::Nint(B),TMath::Nint(A),
+	      TMath::Nint(D), jmt::format_nevents(Dsub,Dsuberr).Data(),
+	      jmt::format_nevents(estimate,estimateerr).Data(),R0,R0err);
+      cout<<"(qcd) DATA\t";
+    }
   }
   cout<<output<<endl;
 
@@ -1777,12 +1789,14 @@ void runDataQCD2011(const bool forOwen=false) {
   
   if(reweightLSBdata_){
     //do it with LSB RW correction +100%
+    cout << "LSB RW correction +100%" << endl;
     for (unsigned int i=0; i<sbRegions_.size(); i++) {
       lsbp.push_back( anotherABCD(sbRegions_[i],true,1,0,"==0",1));
       lsbp.push_back( anotherABCD(searchRegions_[i],true,1,0,"==0",1));
     }
     
     //do it with LSB RW correction -100%
+    cout << "LSB RW correction -100%" << endl;
     for (unsigned int i=0; i<sbRegions_.size(); i++) {
       lsbm.push_back( anotherABCD(sbRegions_[i],true,1,0,"==0",-1));
       lsbm.push_back( anotherABCD(searchRegions_[i],true,1,0,"==0",-1));
@@ -1792,8 +1806,8 @@ void runDataQCD2011(const bool forOwen=false) {
     for (unsigned int j=0; j<n.size(); j++) {
       double var1 = 100*(n[j].first  -lsbp[j].first)/n[j].first;
       double var2 = 100*(n[j].first -lsbm[j].first)/n[j].first;
+      if ( fabs(var1)-fabs(var2) > 0.1 ) cout<<j<<" found LSB reweighting systematic size discrepancy"<<endl;
       cout<<var1<<"\t"<<var2<<endl;
-      //expect these to be different...no sanity check is warranted
       qcdSystErrors["LSBrw"].push_back( fabs(var1)>fabs(var2) ? fabs(var1) : fabs(var2));
     }
     cout<<" ==== END systematics for LSB reweighting ==== "<<endl;
