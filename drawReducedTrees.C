@@ -1262,7 +1262,7 @@ void averageZ() {
 
 
 const bool reweightLSBdata_=true; //whether or not LSB data is reweighted based on PV distribution
-const bool useScaleFactors_=false; //whether or not to use MC scale factors when doing subtraction for data-driven estimates
+const bool useScaleFactors_=true; //whether or not to use MC scale factors when doing subtraction for data-driven estimates
 
 std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode=false, float subscale=1,float SBshift=0, const TString LSBbsel="==0", float PVCorFactor = 0) {
   //kind of awful, but we'll return the estimate for datamode=true but the closure test bias for datamode=false
@@ -1337,7 +1337,6 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
       btagSFweight="probge3";
     }
     else {assert(0);}
-    btagSFweight_=btagSFweight;
   }
   else {
     usePUweight_=false;
@@ -1364,10 +1363,23 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
   baseline = baseline&&HTcut;
   TCut cleaning = "weight<1000";
 
+
+  //LSB b-tagging is independent of search region
+  TString LSBbtagSFweight="";
+  char cutstring0[100];
+  sprintf(cutstring0,"nbjetsCSVM%s",LSBbsel.Data());
+  TCut LSBbtag = TCut(cutstring0);
+  if(useScaleFactors_){
+    LSBbtag = "1";
+    if(LSBbsel=="==0"){ LSBbtagSFweight = "prob0"; }
+    else if(LSBbsel==">=1"){ LSBbtagSFweight = "probge1"; }
+    else{ assert(0);}
+  }
+  btagSFweight_ =  LSBbtagSFweight;
   char cutstring1[100];
-  sprintf(cutstring1,"MET>= %.0f && MET < %.0f && nbjetsCSVM%s", 50+SBshift,100+SBshift,LSBbsel.Data());
-  //  cout<<"*** SB cut is "<<cutstring1<<endl<<endl;
-  TCut SBMET = TCut(cutstring1)&&triggerCutLSB;
+  sprintf(cutstring1,"MET>= %.0f && MET < %.0f", 50+SBshift,100+SBshift);
+  TCut SBMET = TCut(cutstring1)&&triggerCutLSB&&LSBbtag;
+
   TCut dpcut = "1";//"minDeltaPhiN>=4";
   //  TCut passOther = "deltaPhiMPTcaloMET<2";
   //  TCut failOther = "deltaPhiMPTcaloMET>=2";
@@ -1379,18 +1391,20 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
   double A,B,D,SIG,Aerr,Berr,Derr,SIGerr;
   double RLSB_RW = 0;
   double dRLSB_RW = 0;
+
+
   if(datamode &&  reweightLSBdata_){
-    //int pvnbins=12;
-    //float pvbins[]={0.5,2.5,4.5,5.5,6.5,7.5,8.5,9.5,10.5,12.5,14.5,16.5,18.5};
     int pvnbins=11;
     float pvbins[]={0.5,2.5,4.5,5.5,6.5,7.5,8.5,9.5,10.5,12.5,14.5,16.5};
     
     //physics triggers control sample -- physics triggers, 0b
     //--consider varying MET cut and PV binning!!
+    if(useScaleFactors_) btagSFweight_ = "prob0";
     selection_ = TCut("cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && nbjetsCSVM==0 && MET>200") && triggerCut && HTcut;
     drawSimple("nGoodPV",pvnbins,pvbins,"dummy", "","data");
     TH1D* hPVphysics = (TH1D*)hinteractive->Clone("hPVphysics");
-    
+    btagSFweight_ =  LSBbtagSFweight;
+
     //LSB unweighted
     selection_ = baseline && SBMET;
     drawSimple("nGoodPV",pvnbins,pvbins,"dummy", "","data");
@@ -1499,6 +1513,10 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
     B=getIntegral(sampleOfInterest);
     Berr=getIntegralErr(sampleOfInterest);
   }
+
+  //Now that we've moved on from the LSB, use search region b-tag requirement
+  if(useScaleFactors_) btagSFweight_ = btagSFweight;
+  
   //D
   selection_ = baseline && cleaning && dpcut  && SRMET && failOther; //auto cast to TString seems to work
   drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_D");
@@ -1582,7 +1600,6 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
   if(datamode &&  reweightLSBdata_){
     myR = PVCorFactor*(RLSB_RW-RLSB_UW)+RLSB_RW; //PVCorFactor=0 for reweighted, +/-1 for +/-100% correction
     myRerr = dRLSB_RW;
-    cout << "RLSB_UW=" << RLSB_UW << ", RLSB_RW="<< RLSB_RW << ", PVCorFactor=" << PVCorFactor << ", myR=" << myR << endl;
   }
   else{
     myR = RLSB_UW;
@@ -2227,7 +2244,6 @@ void AN2011_prescale( TString btagselection="ge1b",const int mode=1 ) {
     currentConfig_=configDescriptions_.getDefault(); //completely raw MC
   }
   else if (mode==2 || mode==3) {
-    assert(0); //not ready
     usePUweight_=true;
     useHLTeff_=true;
     currentConfig_=configDescriptions_.getCorrected(); //JER bias
@@ -2349,7 +2365,7 @@ void AN2011_prescale( TString btagselection="ge1b",const int mode=1 ) {
 
  
   //// ben
-  
+  /*
   doRatioPlot(true);
   selection_ =TCut("HT>=400 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1")&&util&&btagcut;
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
@@ -2366,9 +2382,14 @@ void AN2011_prescale( TString btagselection="ge1b",const int mode=1 ) {
   //drawPlots(var,nbins,low,high,xtitle,"Events", "prescaled_minDeltaPhiN_LSB_"+btagselection+modestring);
   setLogY(true);  setPlotMinimum(1e-1);
   drawPlots(var,nbins,low,high,xtitle,"Events", "prescaled_minDeltaPhiN_LSB_"+btagselection+modestring);
-  
+  */
 
 
+  doRatioPlot(true);
+  selection_ =TCut("HT>=400 && cutPV==1 && MET>=50 && MET<100 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN < 4 &&passCleaning==1")&&btagcut&&util;
+  var="njets"; xtitle="Jet multiplicity";
+  nbins = 7; low=2; high=9;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "prescaled_njets_"+btagselection+modestring);
 
  
 }
@@ -2811,7 +2832,11 @@ void AN2011( TString btagselection="ge1b",const int mode=1, bool logy=false, boo
     }
   }
   else if (mode==3) {
-    if ( btagselection=="ge1b") {
+    if ( btagselection=="eq0b") {
+      btagcut="1";
+      btagSFweight_="prob0";
+    }
+    else if ( btagselection=="ge1b") {
       btagcut="1";
       btagSFweight_="probge1";
     }
@@ -2879,8 +2904,17 @@ void AN2011( TString btagselection="ge1b",const int mode=1, bool logy=false, boo
   drawPlots(var,nbins,low,high,xtitle,"Events/2", "SBandSIG_minDeltaPhiN_"+btagselection+modestring);
   */
   
+  /*
   // n Jets
   selection_ =TCut("HT>=400 && cutPV==1 && cutTrigger==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=200 && minDeltaPhiN >= 4 &&passCleaning==1")&&btagcut;
+  var="njets"; xtitle="Jet multiplicity";
+  nbins = 7; low=2; high=9;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_njets_"+btagselection+modestring);
+  return;
+  */
+
+  // n Nets - QCD dominated 
+  selection_ =TCut("HT>=400 && cutPV==1 && cutTrigger==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=200 && minDeltaPhiN < 4 &&passCleaning==1")&&btagcut;
   var="njets"; xtitle="Jet multiplicity";
   nbins = 7; low=2; high=9;
   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_njets_"+btagselection+modestring);
