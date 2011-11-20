@@ -155,57 +155,22 @@ void setSearchRegions() {
   //everywhere that we use the owenId as an identifier, we combine with the number of b tags
 
   //oct25
-  //case 1
   sbRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=200&&MET<250","Loose",false));
   searchRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=250","Loose")); //1BL
-  //case 2
+
   sbRegions_.push_back( SearchRegion( "ge1b","HT>=500","MET>=200&&MET<250","Tight",false));
   searchRegions_.push_back( SearchRegion( "ge1b","HT>=500","MET>=500","Tight")); //1BT
-  //case 4
+
   sbRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=200&&MET<250","Loose",false));
   searchRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=250","Loose")); //2BL
-  //case 5
+
   sbRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=200&&MET<250","Tight",false));
   searchRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=300","Tight")); //2BT
-  //case 6
+
   sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=200&&MET<250","Loose",false));
   searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=250","Loose")); //3B
 
   
-  /*
-  //case 1
-  sbRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=150&&MET<200","ge1b-Loose",false));
-  searchRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=250","ge1b-Loose"));
-  
-  //case 2
-  sbRegions_.push_back( SearchRegion( "ge1b","HT>=500","MET>=150&&MET<200","ge1b-Tight",false));
-  searchRegions_.push_back( SearchRegion( "ge1b","HT>=500","MET>=500","ge1b-Tight"));
-  
-  //case 3
-  //sbRegions_.push_back( SearchRegion( "ge1b","HT>=900","MET>=200&&MET<250","case3_old",false));
-  //searchRegions_.push_back( SearchRegion( "ge1b","HT>=900","MET>=250","case3_old"));
-  
-  //case 3 old
-  //sbRegions_.push_back( SearchRegion( "ge1b","HT>=750","MET>=200&&MET<250","case3",false));
-  //searchRegions_.push_back( SearchRegion( "ge1b","HT>=750","MET>=250","case3"));
-  
-  //case 4
-  sbRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=150&&MET<200","ge2b-Loose",false));
-  searchRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=250","ge2b-Loose"));
-  
-  //case 5 old
-  //sbRegions_.push_back( SearchRegion( "ge2b","HT>=700","MET>=200&&MET<250","case5_old",false));
-  //searchRegions_.push_back( SearchRegion( "ge2b","HT>=700","MET>=300","case5_old"));
-  
-  //case 5
-  sbRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=150&&MET<200","ge2b-Tight",false));
-  searchRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=300","ge2b-Tight"));
-  
-  //case 6
-  sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=150&&MET<200","ge3b",false));
-  searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=250","ge3b"));
-  */    
-
   /*
   //2011 Summer result
   sbRegions_.push_back( SearchRegion( "ge1b","HT>=350","MET>=150&&MET<200","Loose",false)); //loose SB
