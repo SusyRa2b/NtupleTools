@@ -1886,38 +1886,33 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
     double ze[2];
     //sometimes need to average mu mu and ee estimates
     double zsbsyst=0.5;
-    double zinvscale = 3.5/3.2;
+    double zinvscale = 4.68/4.65;
     bool doMean = true;
 
     if (qcdsubregion.owenId == "Loose" && qcdsubregion.btagSelection=="ge1b") {
       doMean=false;//averaging already done
-      zv[0] = 63.9127; ze[0]=10.7967;
-      zsbsyst = 0.3;
+      zv[0] = 82; ze[0]=20;
+      zsbsyst = 0.0;//ze is stat+syst error combined
     }
     else if (qcdsubregion.owenId == "Tight" && qcdsubregion.btagSelection=="ge1b") {
       doMean=false;//averaging already done
-      zv[0] = 35.3791; ze[0]=7.95003;
-      zsbsyst = 0.3;
-    }
-    else if (qcdsubregion.owenId == "case3" ) {
-      doMean=false;//averaging already done
-      zv[0] = 4.91838; ze[0]=2.92228;
-      zsbsyst = 0.3;
+      zv[0] = 44; ze[0]=13;
+      zsbsyst = 0.0;
     }
     else if (qcdsubregion.owenId == "Loose" && qcdsubregion.btagSelection=="ge2b") {
       doMean=false;//averaging already done
-      zv[0] = 10.7258; ze[0]=2.18597;
-      zsbsyst = 0.5;
+      zv[0] = 51; ze[0]=37;
+      zsbsyst = 0.0;
     }
     else if (qcdsubregion.owenId == "Tight" && qcdsubregion.btagSelection=="ge2b") {
       doMean=false;//averaging already done
-      zv[0] = 3.41633; ze[0]=1.08638;
-      zsbsyst = 0.5;
+      zv[0] = 14; ze[0]=11;
+      zsbsyst = 0.0;
     }
     else if (qcdsubregion.owenId == "Loose" && qcdsubregion.btagSelection=="ge3b") {
       doMean=false;//averaging already done
-      zv[0] = 1.48325; ze[0]=0.527006;
-      zsbsyst = 0.7;   
+      zv[0] = 1.9; ze[0]=2.8;
+      zsbsyst = 0.0;   
     }
     else {assert(0);}
     if(doMean){
