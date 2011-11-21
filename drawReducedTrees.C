@@ -1361,7 +1361,7 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
 
   TCut baseline = "cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1";
   baseline = baseline&&HTcut;
-  TCut cleaning = "weight<1000";
+  TCut cleaning = "weight<1000 && passCleaning==1";
 
 
   //LSB b-tagging is independent of search region
@@ -1400,13 +1400,13 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
     //physics triggers control sample -- physics triggers, 0b
     //--consider varying MET cut and PV binning!!
     if(useScaleFactors_) btagSFweight_ = "prob0";
-    selection_ = TCut("cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && nbjetsCSVM==0 && MET>200") && triggerCut && HTcut;
+    selection_ = TCut("cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && nbjetsCSVM==0 && MET>200") && triggerCut && HTcut && cleaning;
     drawSimple("nGoodPV",pvnbins,pvbins,"dummy", "","data");
     TH1D* hPVphysics = (TH1D*)hinteractive->Clone("hPVphysics");
     btagSFweight_ =  LSBbtagSFweight;
 
     //LSB unweighted
-    selection_ = baseline && SBMET;
+    selection_ = baseline && SBMET && cleaning;
     drawSimple("nGoodPV",pvnbins,pvbins,"dummy", "","data");
     TH1D* hPVprescale = (TH1D*)hinteractive->Clone("hPVprescale");
 
@@ -1418,12 +1418,12 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
     hPV_W->Divide(hPVprescale_RW,hPVprescale); 
     
     //LSB pass mdp unweighted
-    selection_ = baseline && SBMET && passOther;
+    selection_ = baseline && SBMET && passOther && cleaning;
     drawSimple("nGoodPV",pvnbins,pvbins,"dummy", "","data");
     TH1D* hPVprescalePass = (TH1D*)hinteractive->Clone("hPVprescalePass");
     
     //LSB fail mdp unweighted
-    selection_ = baseline && SBMET && failOther;
+    selection_ = baseline && SBMET && failOther && cleaning;
     drawSimple("nGoodPV",pvnbins,pvbins,"dummy", "","data");
     TH1D* hPVprescaleFail = (TH1D*)hinteractive->Clone("hPVprescaleFail");
     
@@ -1633,7 +1633,7 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
   }
   else {
     if(reweightLSBdata_){
-      sprintf(output,"%s & %f \\pm %f & %d & %s & %s   \\\\ %% %f +/- %f",name.Data(),
+      sprintf(output,"%s & $%f \\pm %f$ & %d & %s & %s   \\\\ %% %f +/- %f",name.Data(),
 	      RLSB_RW,dRLSB_RW,
 	      TMath::Nint(D), jmt::format_nevents(Dsub,Dsuberr).Data(),
 	      jmt::format_nevents(estimate,estimateerr).Data(),R0,R0err);
@@ -1844,11 +1844,11 @@ void runDataQCD2011(const bool forOwen=false) {
   for (unsigned int j=0; j<n.size(); j++) {
     if( reweightLSBdata_){
       qcdSystErrors["Total"].push_back( sqrt( pow(qcdSystErrors["MCsub"].at(j),2) +  pow(qcdSystErrors["Closure"].at(j),2) + pow(qcdSystErrors["SBshift"].at(j),2) +  pow(qcdSystErrors["LSBrw"].at(j),2)  ));
-      cout<<j<<"\t&"<<qcdSystErrors["MCsub"].at(j)<<" & "<<qcdSystErrors["Closure"].at(j)<<" & "<<qcdSystErrors["SBshift"].at(j)<<" & "<<qcdSystErrors["LSBrw"].at(j) << " & " <<qcdSystErrors["Total"].at(j)<<endl;
+      cout<<j<<"\t& $"<<qcdSystErrors["MCsub"].at(j)<<"$ & $"<<qcdSystErrors["Closure"].at(j)<<"$ & $"<<qcdSystErrors["SBshift"].at(j)<<"$ & $"<<qcdSystErrors["LSBrw"].at(j) << "$ & $" <<qcdSystErrors["Total"].at(j)<< "$ \\\\" << endl;
     }
     else{
       qcdSystErrors["Total"].push_back( sqrt( pow(qcdSystErrors["MCsub"].at(j),2) +  pow(qcdSystErrors["Closure"].at(j),2)+ pow(qcdSystErrors["SBshift"].at(j),2)));
-      cout<<j<<"\t&"<<qcdSystErrors["MCsub"].at(j)<<" & "<<qcdSystErrors["Closure"].at(j)<<" & "<<qcdSystErrors["SBshift"].at(j)<<" & "<<qcdSystErrors["Total"].at(j)<<endl;
+      cout<<j<<"\t& $"<<qcdSystErrors["MCsub"].at(j)<<"$ & $"<<qcdSystErrors["Closure"].at(j)<<"$ & $"<<qcdSystErrors["SBshift"].at(j)<<"$ & $"<<qcdSystErrors["Total"].at(j)<< "$ \\\\"<< endl;
     }
   }
 }
@@ -2020,7 +2020,7 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
   TCut SRMET = region.metSelection.Data();
   TCut baseline = "cutPV==1 && cut3Jets==1 && cutTrigger==1";
   baseline = baseline&&HTcut&&ge1b;
-  TCut cleaning = "weight<1000";
+  TCut cleaning = "weight<1000 && passCleaning==1";
   TCut SBMET = qcdsubregion.metSelection.Data();//"MET>=150 && MET<200";
   TCut dpcut = "minDeltaPhiN>=4";
   TCut failOther = "(((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && MT_Wlep>=0&&MT_Wlep<100)";
@@ -2187,7 +2187,7 @@ void runTtbarEstimate2011(const bool forOwen=false) {
   cout<<"\tClosure\tQCD\tZ\tMC\tTotal"<<endl;
   for (unsigned int j=0; j<searchRegions_.size();j++) {
     double totalsyst = sqrt(closure[j]*closure[j] + qcd[j]*qcd[j] + znn[j]*znn[j] + mc[j]*mc[j]);
-    cout<<j<<"\t"<<closure[j]<<"\t"<<qcd[j]<<"\t"<<znn[j]<<"\t"<<mc[j]<<"\t"<<totalsyst <<endl;
+    cout<<j<<"\t & $"<<closure[j]<<"$ & $"<<qcd[j]<<"$ & $"<<znn[j]<<"$ & $"<<mc[j]<<"$ & $"<<totalsyst << "$ \\\\ " << endl;
     ttbarClosureSyst.push_back(closure[j]);
   }
 
