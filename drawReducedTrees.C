@@ -2126,16 +2126,16 @@ vector<double> ttbarClosureSyst;
 void runTtbarEstimate2011(const bool forOwen=false) {
   setSearchRegions();
 
-  double ttw[4];
-  double p[4];
-  double m[4];
-
-  double qcd[4];
-  double znn[4];
-  double mc[4];
+  std::vector<double> ttw;
+  std::vector<double> p;
+  std::vector<double> m;
+  
+  std::vector<double> qcd;
+  std::vector<double> znn;
+  std::vector<double> mc;
   //  int i=0;
   cout<<"nominal ttbar"<<endl;
-  for (unsigned int j=0; j<searchRegions_.size();j++) ttw[j]=slABCD(j,true);
+  for (unsigned int j=0; j<searchRegions_.size();j++) ttw.push_back(slABCD(j,true));
  
   if (forOwen) return;
 
@@ -2145,37 +2145,41 @@ void runTtbarEstimate2011(const bool forOwen=false) {
 
   cout<<"vary QCD subtraction"<<endl;
   for (unsigned int j=0; j<searchRegions_.size();j++) {
-    p[j]=slABCD(j,true,"QCDup");
-    m[j]=slABCD(j,true,"QCDdown");
+    p.push_back(slABCD(j,true,"QCDup"));
+    m.push_back(slABCD(j,true,"QCDdown"));
     if (fabs(p[j]-ttw[j])/ttw[j] - fabs(m[j]-ttw[j])/ttw[j] > 0.01) cout<<"** Difference in size of QCD sub syst!"<<endl;
-    qcd[j] = 100*fabs(p[j]-ttw[j])/ttw[j];
+    qcd.push_back(100*fabs(p[j]-ttw[j])/ttw[j]);
   }
 
+  p.clear(); m.clear();
   //for Znunu subtraction systematics
   cout<<"vary Znn subtraction"<<endl;
   for (unsigned int j=0; j<searchRegions_.size();j++) {
-    p[j]=slABCD(j,true,"Zup");
-    m[j]=slABCD(j,true,"Zdown");
+    p.push_back(slABCD(j,true,"Zup"));
+    m.push_back(slABCD(j,true,"Zdown"));
     if (fabs(p[j]-ttw[j])/ttw[j] - fabs(m[j]-ttw[j])/ttw[j] > 0.01) cout<<"** Difference in size of Znn sub syst!"<<endl;
-    znn[j] = 100*fabs(p[j]-ttw[j])/ttw[j];
+    znn.push_back(100*fabs(p[j]-ttw[j])/ttw[j]);
   }
 
+  p.clear(); m.clear();
   //for MC subtraction systematics
   cout<<"vary MC subtraction"<<endl;
   for (unsigned int j=0; j<searchRegions_.size();j++) {
-    p[j]=slABCD(j,true,"MCup");
-    m[j]=slABCD(j,true,"MCdown");
+    p.push_back(slABCD(j,true,"MCup"));
+    m.push_back(slABCD(j,true,"MCdown"));
     if (fabs(p[j]-ttw[j])/ttw[j] - fabs(m[j]-ttw[j])/ttw[j] > 0.01) cout<<"** Difference in size of MC sub syst!"<<endl;
-    mc[j] = 100*fabs(p[j]-ttw[j])/ttw[j];
+    mc.push_back(100*fabs(p[j]-ttw[j])/ttw[j]);
   }
 
   //finally, run the closure test
-  double closure[4];
+  std::vector<double> closure;
   cout<<"Running closure tests"<<endl;
   for (unsigned int j=0; j<searchRegions_.size();j++) {
     double allsamples=fabs(slABCD(j)); //mix of samples
     double ttbaronly=fabs(slABCD(j,false,"",true)); //just ttbar
-    closure[j] = (allsamples>ttbaronly) ? allsamples : ttbaronly;
+    if(allsamples>ttbaronly)
+      closure.push_back(allsamples);
+    else closure.push_back(ttbaronly);
   }
 
   ttbarClosureSyst.clear();
