@@ -166,10 +166,9 @@ SignalEffData signalSystematics2011(const SearchRegion & region, bool isSL=false
   }
   else {assert(0);}
 
-  TCut baseline = "cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1";
-  if (isSL) baseline = "cutPV==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0))";
+  TCut baseline = "cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && passCleaning";
+  if (isSL) baseline = "cutPV==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && MT_Wlep>=0 && MT_Wlep<100 && passCleaning";
 
-  //  assert(0); //need to decide if SL should have MT cut
 
   TCut passOther = "minDeltaPhiN>=4";
   if (isLDP) passOther="minDeltaPhiN<4";
@@ -543,7 +542,7 @@ void countInBoxesBreakdown(const SearchRegion & region) {
   
   TString thisbox="";
   
-  TCut baseline = "cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1";
+  TCut baseline = "cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && passCleaning==1";
   TCut baselineSL = "cutPV==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && MT_Wlep>=0 && MT_Wlep<100";
   TCut passOther = "minDeltaPhiN>=4";
   TCut failOther="minDeltaPhiN<4";
