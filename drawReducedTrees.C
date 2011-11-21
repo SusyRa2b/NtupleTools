@@ -1917,12 +1917,12 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
     }
     else if (qcdsubregion.owenId == "Loose" && qcdsubregion.btagSelection=="ge2b") {
       doMean=false;//averaging already done
-      zv[0] = 51; ze[0]=37;
+      zv[0] = 14; ze[0]=9;
       zsbsyst = 0.0;
     }
     else if (qcdsubregion.owenId == "Tight" && qcdsubregion.btagSelection=="ge2b") {
       doMean=false;//averaging already done
-      zv[0] = 14; ze[0]=11;
+      zv[0] = 3.8; ze[0]=2.7;
       zsbsyst = 0.0;
     }
     else if (qcdsubregion.owenId == "Loose" && qcdsubregion.btagSelection=="ge3b") {
