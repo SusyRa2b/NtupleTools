@@ -16,11 +16,11 @@
 using namespace std;
 
 //void drawBinsOfMet(const TString var = "minDeltaPhiN", const TString treestring = "/cu2/ra2b/reducedTrees/V00-02-25_fullpf2pat/reducedTree.SSVHPT_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.PythiaPUQCD.root")
-void drawBinsOfMet(const TString var = "minDeltaPhiN", bool logy = false, const TString treestring = "/cu2/kreis/reducedTrees/test/reducedTree.SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.PythiaPUQCD.root")
+void drawBinsOfMet(const TString var = "minDeltaPhiN", bool logy = false, const TString treestring = "/cu2/ra2b/reducedTrees/V00-02-35d/reducedTree.CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.PythiaPUQCD.root")
 {
   gROOT->SetStyle("CMS");
   
-  const TCut btag = "nbjetsSSVHPT>=1";
+  const TCut btag = "nbjets>=1";
   //const TCut btag = "nbjetsSSVHPT>=2";
   //const TCut btag = "nbjetsSSVHPT==0";
   //const TCut btag = "nbjetsSSV0>=1";
@@ -260,8 +260,8 @@ void drawBinsOfMet(const TString var = "minDeltaPhiN", bool logy = false, const 
 //   cout<<"Hand chi^2 = "<<chi2<<endl;
 //   Hlow->Chi2Test(Hmh,"WW p");
 
-  if(logy) thecanvas->Print("METcorrelation_"+var+"_logy.png");
-  else {thecanvas->Print("METcorrelation_"+var+".png");}
+  if(logy) {thecanvas->Print("METcorrelation_"+var+"_logy.png");thecanvas->Print("METcorrelation_"+var+"_logy.pdf");}
+  else {thecanvas->Print("METcorrelation_"+var+".png"); thecanvas->Print("METcorrelation_"+var+".pdf"); }
   
   delete pypu;
   delete Hlow;
