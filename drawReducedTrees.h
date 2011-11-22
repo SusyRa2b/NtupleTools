@@ -1558,7 +1558,7 @@ float drawSimple(const TString var, const int nbins, const double low, const dou
       }
     }
   }
-  if (tree==0) {cout<<"Something went wrong finding your sample!"<<endl; return 0;}
+  if (tree==0) {cout<<"Something went wrong finding your sample (" << samplename <<")!"<<endl; return 0;}
   gROOT->cd();
   
   TH1D* hh=0;
