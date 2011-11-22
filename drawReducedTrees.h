@@ -35,7 +35,7 @@ void resetLegendPosition() {
   leg_x1 = 0.696;
   leg_x2=0.94;
   leg_y1=0.5;
-  leg_y2=0.92;
+  leg_y2=0.9;
 }
 
 
@@ -1651,8 +1651,46 @@ bool isSampleSM(const TString & name) {
   return true;
 }
 
+// // overkill?
+// class AxisInfo {
+// public:
+//   AxisInfo(int low, int high, TString title, TString unit="");
+//   ~AxisInfo();
 
-void drawPlots(const TString var, const int nbins, const float low, const float high, const TString xtitle, TString ytitle, TString filename="", const float* varbins=0) {
+//   int low() const {return low_;}
+//   int high() const {return high_;}
+//   TString title() const {return title_;}
+//   TString unit() const {return unit_;}
+
+// private:
+//   int low_;
+//   int high_;
+//   TString title_;
+//   TString unit_;
+// };
+// AxisInfo::AxisInfo(int low, int high, TString title, TString unit) :
+//   low_(low),
+//   high_(high),
+//   title(title_),
+//   unit(unit_)
+// {}
+// AxisInfo::~AxisInfo() {}
+TString appendBinWidth(const TString & ytitle, const double low,const double high,const int nbins,TString unit) {
+
+  if (ytitle=="Arbitrary units") return ytitle; //oh this is so ugly
+
+  double w = (high - low)/nbins;
+
+  if (unit!="") unit.Prepend(" "); //if and only if unit is not null, prepend a space
+
+  TString fulltitle;
+  fulltitle.Form("%s/%.0f%s",ytitle.Data(),w,unit.Data());
+
+  return fulltitle;
+}
+
+
+void drawPlots(const TString var, const int nbins, const float low, const float high, const TString xtitle, TString ytitle, TString filename="", const float* varbins=0, TString unit="") {
   //  cout<<"[drawPlots] var = "<<var<<endl;
 
   loadSamples();
@@ -1713,6 +1751,8 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
   totalsmsusy->SetLineWidth(2);
   totalsmsusy->SetMarkerStyle(sampleMarkerStyle_["Total"]);
   if (!drawMarkers_)  totalsmsusy->SetMarkerSize(0); //no marker for this one
+
+  if (varbins==0 && !renormalizeBins_) {ytitle = appendBinWidth(ytitle,low,high,nbins,unit);} //add the " / 10 GeV" part to the title
 
   //here is the part that is really different from the previous implementation
   //need to make new histograms
@@ -2012,7 +2052,7 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
   const TString ytitle="N pass / N fail";
   TString xtitle = var;
   if(var=="MET") xtitle = "E_{T}^{miss} [GeV]"; 
-  bool dataOnly = true;
+  //  bool dataOnly = false;
 
   //const TString var = "MET"; //hardcoded for now
   cout << "x axis: " << var << endl;
@@ -2022,14 +2062,6 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
   cstring1 += cutVal;
   cstring2 += cutVal;
 
-  //terrible hack to decide if bias correction should be calculated
-  bool calcBiasCorr = false;
-  if(nbins==4 && low>-0.01 && low<0.01 && high>199.99 && high<200.01) calcBiasCorr=true;
-  float cb_qcd=0, cb_qcd_err=0, cb_sm=0, cb_sm_err=0, cb_data=0, cb_data_err=0;
-  float cp_qcd=0, cp_qcd_err=0, cp_sm=0, cp_sm_err=0, cp_data=0, cp_data_err=0;
-  float n_qcd_sb = 0, n_qcd_sb_err = 0, n_qcd_sig = 0, n_qcd_sig_err = 0;
-  float n_qcd_a = 0, n_qcd_a_err = 0, n_qcd_d = 0, n_qcd_d_err = 0;
-
   loadSamples();
 
   gROOT->SetStyle("CMS");
@@ -2037,32 +2069,9 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
   TString opt=doRatio_? "ratio":"";
   renewCanvas(opt);
 
-  //in first incarnation, make a separate r(MET) plot for each sample in the list
-
-//   TH1D* qcdPass = new TH1D("qcdPass","",nbins,low,high);
-//   TH1D* qcdFail = new TH1D("qcdFail","",nbins,low,high);
-//   TH1D* qcdRatio = new TH1D("qcdRatio","",nbins,low,high);
-
-//   qcdPass->Sumw2();
-//   qcdFail->Sumw2();
-//   qcdRatio->Sumw2();
-
   resetHistos(); //delete existing histograms
 
   renewLegend();
-
-
-  // === begin correlation hack ====
-  gROOT->cd();
-  TH2D totalsm2d_50("totalsm2d_50","",50,50,100,50,0,TMath::Pi());
-  TH2D totalsm2d_SB("totalsm2d_SB","",50,100,150,50,0,TMath::Pi());
-  totalsm2d_50.Sumw2();
-  totalsm2d_SB.Sumw2();
-  TH2D data2d_50("data2d_50","",50,50,100,50,0,TMath::Pi());
-  TH2D data2d_SB("data2d_SB","",50,100,150,50,0,TMath::Pi());
-  data2d_50.Sumw2();
-  data2d_SB.Sumw2();
-  // === end correlation hack ===
 
   TH1D * totalsm_pass = (varbins==0) ? new TH1D("totalsm_pass","",nbins,low,high) : new TH1D("totalsm_pass","",nbins,varbins);
   TH1D * totalsm_fail = (varbins==0) ? new TH1D("totalsm_fail","",nbins,low,high) : new TH1D("totalsm_fail","",nbins,varbins);
@@ -2123,15 +2132,6 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
     if (isSampleSM(samples_[isample])) {
       totalsm_pass->Add(histos_[hnameP]);
       totalsm_fail->Add(histos_[hnameF]);
-
-      //comment out filling of these for now to save time
-      TH2D this2d_SB("this2d_SB","",50,100,150,50,0,TMath::Pi());
-      //      tree->Project("this2d_SB","minDeltaPhi:MET",getCutString().Data());
-      TH2D this2d_50("this2d_50","",50,50,100,50,0,TMath::Pi());
-      //      tree->Project("this2d_50","minDeltaPhi:MET",getCutString().Data());
-
-      totalsm2d_SB.Add(&this2d_SB);
-      totalsm2d_50.Add(&this2d_50);
     }
 
     //   cout<<"content of bin 2: "<<histos_[hnameP]->GetBinContent(2)<<" / "<< histos_[hnameF]->GetBinContent(2)<<" = "<<histos_[hnameR]->GetBinContent(2)<<endl;
@@ -2149,63 +2149,39 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
     //ad hoc additions
     histos_[hnameR]->SetLineWidth(2);
 
+
     //draw
     thecanvas->cd(1);
     gPad->SetRightMargin(0.1);
     gPad->Modified();
 
     if(dodata_) drawPlotHeader();
+    else  drawPlotHeaderInside(); //for qcd only plots, this works.
 
-    if (hnameR.Contains("QCD") && !dataOnly) { //HACK draw only qcd
+    if (hnameR.Contains("QCD") /*&& !dataOnly*/) { //HACK draw only qcd
       histos_[hnameR]->Draw(drawopt);
       if (!drawopt.Contains("same")) drawopt+=" same";
       
-      //hack to save
-      //TH1D* hQCD = (TH1D*)histos_[hnameR]->Clone(savename+"_qcd");
-      //hQCD->SaveAs(savename+"_qcd.root");
-     
-      //drawPlotHeaderInside(); //for qcd only plots, this works.
-      
-      if (firsthist="") firsthist = hnameR;
+      if (firsthist=="") firsthist = hnameR;
       if (histos_[hnameR]->GetMaximum() > max) max = histos_[hnameR]->GetMaximum();
       leg->AddEntry(histos_[hnameR], sampleLabel_[samples_[isample]]);
-      
-      if(calcBiasCorr){
-	cp_qcd = histos_[hnameR]->GetBinContent(3)/ histos_[hnameR]->GetBinContent(2);
-	cp_qcd_err = jmt::errAoverB( histos_[hnameR]->GetBinContent(3), histos_[hnameR]->GetBinError(3), histos_[hnameR]->GetBinContent(2), histos_[hnameR]->GetBinError(2)); 
-	cb_qcd = histos_[hnameR]->GetBinContent(4)/ histos_[hnameR]->GetBinContent(3);
-	cb_qcd_err = jmt::errAoverB( histos_[hnameR]->GetBinContent(4), histos_[hnameR]->GetBinError(4), histos_[hnameR]->GetBinContent(3), histos_[hnameR]->GetBinError(3)); 
-	n_qcd_sb = histos_[hnameP]->GetBinContent(3);
-	n_qcd_sb_err = histos_[hnameP]->GetBinError(3);
-	n_qcd_sig = histos_[hnameP]->GetBinContent(4);
-	n_qcd_sig_err = histos_[hnameP]->GetBinError(4);
-     	n_qcd_a = histos_[hnameF]->GetBinContent(3);
-	n_qcd_a_err = histos_[hnameF]->GetBinError(3);
-	n_qcd_d = histos_[hnameF]->GetBinContent(4);
-	n_qcd_d_err = histos_[hnameF]->GetBinError(4);
-      }
+  
     }
     
   }
 
-  if(!dataOnly){
+  //  if(!dataOnly){
     histos_[firsthist]->SetMaximum( max*maxScaleFactor_);
     hinteractive =  histos_[firsthist];
-  }
+    //  }
 
   totalsm->Divide(totalsm_pass,totalsm_fail);
-  if (drawTotalSM_ && !dataOnly) {
+  if (drawTotalSM_ /*&& !dataOnly*/) {
+
     totalsm->Draw("hist e same");
     //    leg->Clear();
     leg->AddEntry(totalsm,sampleLabel_["TotalSM"]);
   }
-  if(calcBiasCorr){
-    cp_sm = totalsm->GetBinContent(3)/totalsm->GetBinContent(2);
-    cp_sm_err = jmt::errAoverB(totalsm->GetBinContent(3),totalsm->GetBinError(3),totalsm->GetBinContent(2),totalsm->GetBinError(2));
-    cb_sm = totalsm->GetBinContent(4)/totalsm->GetBinContent(3);
-    cb_sm_err = jmt::errAoverB(totalsm->GetBinContent(4),totalsm->GetBinError(4),totalsm->GetBinContent(3),totalsm->GetBinError(3));
-  }
-
 
   if (dodata_) {
     gROOT->cd();
@@ -2232,8 +2208,8 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
     //compute ratio
     hdata->Divide(histos_[hnameP], histos_[hnameF]);
 
-    dtree->Project("data2d_SB","minDeltaPhi:MET",getCutString(kData,"",selection_).Data());
-    dtree->Project("data2d_50","minDeltaPhi:MET",getCutString(kData,"",selection_).Data());
+//     dtree->Project("data2d_SB","minDeltaPhi:MET",getCutString(kData,"",selection_).Data());
+//     dtree->Project("data2d_50","minDeltaPhi:MET",getCutString(kData,"",selection_).Data());
 
     //    hdata->UseCurrentStyle(); //maybe not needed anymore
     hdata->SetMarkerColor(kBlack);
@@ -2244,37 +2220,41 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
     thecanvas->cd(1);
     hdata->SetYTitle(ytitle);
     hdata->SetXTitle(xtitle);
-    hdata->GetYaxis()->SetLabelSize(0.04); //make y label bigger
-    hdata->GetXaxis()->SetLabelSize(0.04); //make x label bigger
-    if(dataOnly) hdata->Draw();
-    else hdata->Draw("SAME");
+
+    //jmt may need to add this back
+    //    hdata->GetYaxis()->SetLabelSize(0.04); //make y label bigger
+    //    hdata->GetXaxis()->SetLabelSize(0.04); //make x label bigger
+
+    //   if(dataOnly) hdata->Draw();
+    /*else*/ hdata->Draw("SAME");
     leg->AddEntry(hdata,"Data");
 
-    if (hdata->GetMaximum() > max && !dataOnly)  {
+    if (hdata->GetMaximum() > max/* && !dataOnly*/)  {
       histos_[firsthist]->SetMaximum( maxScaleFactor_*hdata->GetMaximum());
       totalsm->SetMaximum(maxScaleFactor_*hdata->GetMaximum());
     }
-    else if (doCustomPlotMax_ && dataOnly) {
-      hdata->SetMaximum(customPlotMax_);
-    }
+//     else if (doCustomPlotMax_ && dataOnly) {
+//       hdata->SetMaximum(customPlotMax_);
+//     }
     else if (doCustomPlotMax_) {
       histos_[firsthist]->SetMaximum( customPlotMax_);
       totalsm->SetMaximum(customPlotMax_);
     }
-    if (doCustomPlotMin_ && dataOnly) {
-      hdata->SetMinimum(customPlotMin_);
-    }
+//     if (doCustomPlotMin_ && dataOnly) {
+//       hdata->SetMinimum(customPlotMin_);
+//     }
     else if (doCustomPlotMin_) {
       histos_[firsthist]->SetMinimum( customPlotMin_);
       totalsm->SetMinimum(customPlotMin_);
     }
     
     //    cratio->cd();
-    thecanvas->cd(2);
-    gPad->SetRightMargin(0.1);
-    gPad->Modified();
-    if (ratio!=0) delete ratio;
-    if(!dataOnly){
+    if (doRatio_) {
+      thecanvas->cd(2);
+      gPad->SetRightMargin(0.1);
+      gPad->Modified();
+      if (ratio!=0) delete ratio;
+      //    if(!dataOnly){
       ratio = (varbins==0) ? new TH1D("ratio","data/(SM MC)",nbins,low,high) : new TH1D("ratio","data/(SM MC)",nbins,varbins);
       ratio->Sumw2();
       ratio->Divide(hdata,totalsm); 
@@ -2284,17 +2264,15 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
       ratio->GetYaxis()->SetLabelSize(0.1); //make y label bigger
       ratio->GetXaxis()->SetLabelSize(0.1); //make x label bigger
       ratio->Draw();
+      //    }
+      cout<<"KS Test results (shape only): "<<hdata->KolmogorovTest(totalsm)<<endl;;
     }
-    cout<<"KS Test results (shape only): "<<hdata->KolmogorovTest(totalsm)<<endl;;
 
-    if(calcBiasCorr){
-      cp_data = hdata->GetBinContent(3)/hdata->GetBinContent(2);
-      cp_data_err = jmt::errAoverB(hdata->GetBinContent(3),hdata->GetBinError(3),hdata->GetBinContent(2),hdata->GetBinError(2)); 
-      cb_data = hdata->GetBinContent(4)/hdata->GetBinContent(3);
-      cb_data_err = jmt::errAoverB(hdata->GetBinContent(4),hdata->GetBinError(4),hdata->GetBinContent(3),hdata->GetBinError(3)); 
-    }
-  }
+  } // end of if (dodata_)
   else {
+    //    cout<<"setting custom plot ranges"<<endl;//jmt debug
+    cout<<firsthist<<endl;
+    cout<<histos_[firsthist]<<endl;
     if (doCustomPlotMax_) {
       histos_[firsthist]->SetMaximum( customPlotMax_);
       totalsm->SetMaximum(customPlotMax_);
@@ -2304,47 +2282,19 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
       totalsm->SetMinimum(customPlotMin_);
     }
   }
-  thecanvas->cd(1);
+
+  //  cout<<"about to cd canvas and draw leg"<<endl;//jmt debug
+
+  if (doRatio_)  thecanvas->cd(1);
    if (doleg_)  leg->Draw();
 
   thecanvas->SaveAs("mindpPassOverFail-"+savename+".eps");
   thecanvas->SaveAs("mindpPassOverFail-"+savename+".pdf");
   thecanvas->SaveAs("mindpPassOverFail-"+savename+".png");
 
-//   TCanvas* c2d=new TCanvas("c2d","2d",800,800);
-//   c2d->Divide(2,2);
-//   c2d->cd(1);
-//   totalsm2d_50.DrawCopy("colz");
-//   c2d->cd(2);
-//   totalsm2d_SB.DrawCopy("colz");
-//   c2d->cd(3);
-//   data2d_50.DrawCopy("colz");
-//   c2d->cd(4);
-//   data2d_SB.DrawCopy("colz");
-  cout<<"Total SM MC correlation [50<MET<100]  = "<<totalsm2d_50.GetCorrelationFactor()<<endl;
-  cout<<"Total SM MC correlation [100<MET<150] = "<<totalsm2d_SB.GetCorrelationFactor()<<endl;
-  cout<<"Data correlation [50<MET<100]         = "<<data2d_50.GetCorrelationFactor()<<endl;
-  cout<<"Data correlation [100<MET<150]        = "<<data2d_SB.GetCorrelationFactor()<<endl;
-  if(calcBiasCorr){
-    cout<<endl;
-    cout<<"Pseudo bias correction (using 50<MET<100 and 100<MET<150):" << endl;
-    cout<<"QCD MC: "<<cp_qcd<<" +/- "<<cp_qcd_err<<endl;
-    cout<<"SM MC: "<<cp_sm<<" +/- "<<cp_sm_err<<endl;
-    cout<<"Data: "<<cp_data<<" +/- "<<cp_data_err<<endl;
-    cout<<endl;
-    cout<<"True bias correction (using 100<MET<150 and 150<MET):" << endl;
-    cout<<"QCD MC: "<<cb_qcd<<" \\pm "<<cb_qcd_err<<endl;
-    cout<<"SM MC: "<<cb_sm<<" \\pm "<<cb_sm_err<<endl;
-    cout<<"Data: "<<cb_data<<" \\pm "<<cb_data_err<<endl;
-    cout << endl;
-    cout << "QCD Event Counts" << endl;
-    cout << "SB: " << n_qcd_sb << " +- " << n_qcd_sb_err << endl;
-    cout << "SIG: " << n_qcd_sig << " +- " << n_qcd_sig_err << endl;
-    cout << "A: " << n_qcd_a << " +- " << n_qcd_a_err << endl;
-    cout << "D: " << n_qcd_d << " +- " << n_qcd_d_err << endl;
-    cout << endl;
-  }
-  cout<<"End of drawR()"<<endl;
+  delete totalsm_pass;
+  delete totalsm_fail;
+
 }
 
 void drawR(const TString vary, const float cutVal, const int nbins, const float low, const float high, const TString& savename) {//for backwards compatibility
