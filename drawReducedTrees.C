@@ -123,6 +123,8 @@ double lumiScale_ = 4683.719;//nov4
 
 #include "drawReducedTrees.h"
 
+const bool reweightLSBdata_=true; //whether or not LSB data is reweighted based on PV distribution
+const bool useScaleFactors_=true; //whether or not to use MC scale factors when doing subtraction for data-driven estimates
 
 //this is the original implementation, using the traditional method of drawing a 1 bin histo to count events
 //works fine for small samples, completely unusable for mSugra
@@ -521,6 +523,26 @@ void countInBoxesBreakdown(const SearchRegion & region) {
   useHLTeff_=false;
   btagSFweight_="1";
   currentConfig_=configDescriptions_.getDefault(); //completely raw MC
+
+
+  if (useScaleFactors_) {
+    bcut="1";
+    usePUweight_=true;
+    useHLTeff_=true;
+    currentConfig_=configDescriptions_.getCorrected(); //add JERbias
+
+    if (btagselection=="ge2b") {
+      btagSFweight_="probge2";
+    }
+    else if (btagselection=="ge1b") {
+      btagSFweight_="probge1";
+    }
+    else if (btagselection=="ge3b") {
+      btagSFweight_="probge3";
+    }
+    else {assert(0);}
+  }
+
   
   /*
   //block to cross check old cuts
@@ -1260,8 +1282,6 @@ void averageZ() {
 }
 
 
-const bool reweightLSBdata_=true; //whether or not LSB data is reweighted based on PV distribution
-const bool useScaleFactors_=true; //whether or not to use MC scale factors when doing subtraction for data-driven estimates
 
 std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode=false, float subscale=1,float SBshift=0, const TString LSBbsel="==0", float PVCorFactor = 0) {
   //kind of awful, but we'll return the estimate for datamode=true but the closure test bias for datamode=false
