@@ -2495,7 +2495,7 @@ double EventCalculator::checkPdfWeightSanity( double a) {
   return a;
 }
 
-
+/*
 void EventCalculator::getPdfWeights(const TString & pdfset, Float_t * pdfWeights, TH1D * sumofweights) {
 
   //there are only 3 choices, so no fancy pointer manipulation
@@ -2537,7 +2537,7 @@ void EventCalculator::getPdfWeights(const TString & pdfset, Float_t * pdfWeights
     //   if (i==1) cout<<pdfset<<" "<<pdfWeights[i]<<endl;
   }
 }
-
+*/
 
 // double EventCalculator::getPFMHTWeight() {
 //   double pfmhtweight = 1;
@@ -3204,39 +3204,98 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   loadEventList(vrun, vlumi, vevent);
 
 
-  //these are not useful for scans...work fine for LM9, etc
   Float_t pdfWeightsCTEQ[45];
   Float_t pdfWeightsMSTW[41];
   Float_t pdfWeightsNNPDF[100];
-  TH1D pdfWeightSumCTEQ("pdfWeightSumCTEQ","pdfWeightSumCTEQ",45,0,45);
-  TH1D pdfWeightSumMSTW("pdfWeightSumMSTW","pdfWeightSumMSTW",41,0,41);
-  TH1D pdfWeightSumNNPDF("pdfWeightSumNNPDF","pdfWeightSumNNPDF",100,0,100);
-
-  //for testing
-//   double maxeta=2.5;
-//   double ptbins[]={50,70,100,150,250,1000}; //5 bins
-//   TH2D jetCounting("jetCounting","n jets",5,-maxeta,maxeta,5,ptbins);
-//   TH2D jetUncertainty("jetUncertainty","JES uncertainty",5,-maxeta,maxeta,5,ptbins);
-//   TH2D jetL2L3Residual("jetL2L3Residual","L2L3 Residual",5,-maxeta,maxeta,5,ptbins);
+  //these are not useful for scans...work fine for LM9, etc
+//   TH1D pdfWeightSumCTEQ("pdfWeightSumCTEQ","pdfWeightSumCTEQ",45,0,45);
+//   TH1D pdfWeightSumMSTW("pdfWeightSumMSTW","pdfWeightSumMSTW",41,0,41);
+//   TH1D pdfWeightSumNNPDF("pdfWeightSumNNPDF","pdfWeightSumNNPDF",100,0,100);
 
   // bookkeeping for screen output only
   pair<int,int> lastpoint = make_pair(0,0);
 
+  /*
+new idea:
+
+scanProcessTotalsMap to be extended to handle PDF weight sums.
+
+TH1[process] -> TH2[process, pdf index]
+
+3 scanProcessTotalsMaps (one per pdf set)
+
+should make a scanProcessTotalsMap for any kind of scan (mSugra or SMS)
+
+~~~ things to deal with later ~~~
+This scheme seems to make scanSMSngen redundant.
+Also the pdfWeightSum* histograms that are used for LM9.
+  */
+
   //for scans, I want to keep track of how many of each susy process are generated at each point
   //probably could have been done as a TH3, instead I made a whole map of TH1s
-  map<pair<int,int>, TH1D* >  scanProcessTotalsMap;
-  if (crossSectionTanb40_10_ != 0) {
+  //  map<pair<int,int>, TH1D* >  scanProcessTotalsMap; 
+  map<pair<int,int>, TH2D* >  scanProcessTotalsMapCTEQ;
+  map<pair<int,int>, TH2D* >  scanProcessTotalsMapMSTW;
+  map<pair<int,int>, TH2D* >  scanProcessTotalsMapNNPDF;
+  if (!sampleIsSignal_) {} //don't create any of these histograms
+  else if (theScanType_ == kmSugra) {// should be equiv to below
+    //  if (crossSectionTanb40_10_ != 0) {
     for (map<pair<int, int>, map<SUSYProcess, double> >::iterator iscanpoint=crossSectionTanb40_10_->begin(); iscanpoint!=crossSectionTanb40_10_->end(); ++iscanpoint) {
       TString histoname = "scanProcessTotals"; 
       histoname += "_";
       histoname +=iscanpoint->first.first; // m0
       histoname += "_";
       histoname +=iscanpoint->first.second; // m12
-      scanProcessTotalsMap[iscanpoint->first] = new TH1D(histoname,histoname,int(NotFound),int(ng),int(NotFound));
+      //      scanProcessTotalsMap[iscanpoint->first] = new TH1D(histoname,histoname,int(NotFound),int(ng),int(NotFound));
+
+      //new 2D variations
+      histoname.ReplaceAll("scanProcessTotals","scanProcessTotalsCTEQ");
+      scanProcessTotalsMapCTEQ[iscanpoint->first] = new TH2D(histoname,histoname,int(NotFound),int(ng),int(NotFound),45,0,45);
+      histoname.ReplaceAll("scanProcessTotalsCTEQ","scanProcessTotalsMSTW");
+      scanProcessTotalsMapMSTW[iscanpoint->first] = new TH2D(histoname,histoname,int(NotFound),int(ng),int(NotFound),41,0,41);
+      histoname.ReplaceAll("scanProcessTotalsMSTW","scanProcessTotalsNNPDF");
+      scanProcessTotalsMapNNPDF[iscanpoint->first] = new TH2D(histoname,histoname,int(NotFound),int(ng),int(NotFound),100,0,100);
     }
   }
-  TH2D* scanSMSngen=0;
-  if (theScanType_==kSMS) scanSMSngen = new TH2D("scanSMSngen","number of generated events",130,0,1300,120,0,1200); //mgluino,mLSP
+  else if (theScanType_==kSMS) {
+    //will need a loop over scan points. probably i need to do the loop by hand.
+    //for each scan point generate a histogram, as above
+    for (int im0= 0; im0<=1500; im0+=10) {
+      for (int im12= 0; im12<=1500; im12+=10) {
+	TString histoname = "scanProcessTotals"; 
+	histoname += "_";
+	histoname +=im0;
+	histoname += "_";
+	histoname +=im12;
+
+	pair<int,int> iscanpoint = make_pair(im0,im12);
+
+	//new 2D variations
+	//for SMS we have a choice -- do we leave the histo with 10 bins in x and only just bin NotFound? or do we just make it 1 bin? TODO
+	histoname.ReplaceAll("scanProcessTotals","scanProcessTotalsCTEQ");
+	scanProcessTotalsMapCTEQ[iscanpoint] = new TH2D(histoname,histoname,int(NotFound),int(ng),int(NotFound),45,0,45);
+	histoname.ReplaceAll("scanProcessTotalsCTEQ","scanProcessTotalsMSTW");
+	scanProcessTotalsMapMSTW[iscanpoint] = new TH2D(histoname,histoname,int(NotFound),int(ng),int(NotFound),41,0,41);
+	histoname.ReplaceAll("scanProcessTotalsMSTW","scanProcessTotalsNNPDF");
+	scanProcessTotalsMapNNPDF[iscanpoint] = new TH2D(histoname,histoname,int(NotFound),int(ng),int(NotFound),100,0,100);
+      }
+    }
+  }
+  else if (theScanType_==kNotScan) {
+    pair<int,int> iscanpoint = make_pair(0,0);
+    TString histoname = "scanProcessTotals"; 
+    //same question here -- do we leave the histo with 10 bins in x and only just bin NotFound? or do we just make it 1 bin? TODO
+    histoname.ReplaceAll("scanProcessTotals","scanProcessTotalsCTEQ");
+    scanProcessTotalsMapCTEQ[iscanpoint] = new TH2D(histoname,histoname,int(NotFound),int(ng),int(NotFound),45,0,45);
+    histoname.ReplaceAll("scanProcessTotalsCTEQ","scanProcessTotalsMSTW");
+    scanProcessTotalsMapMSTW[iscanpoint] = new TH2D(histoname,histoname,int(NotFound),int(ng),int(NotFound),41,0,41);
+    histoname.ReplaceAll("scanProcessTotalsMSTW","scanProcessTotalsNNPDF");
+    scanProcessTotalsMapNNPDF[iscanpoint] = new TH2D(histoname,histoname,int(NotFound),int(ng),int(NotFound),100,0,100);
+  }
+  else assert(0);
+
+  TH2D* scanSMSngen=0; //should be redundant to the scanProcessTotals histograms, but let's keep it for now
+  if (theScanType_==kSMS) scanSMSngen = new TH2D("scanSMSngen","number of generated events",150,0,1500,150,0,1500); //mgluino,mLSP
 
   //initialize PU things
   std::vector< float > DataDist2011;
@@ -3488,9 +3547,11 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
 
   //unfortunately, for the scans I need to loop over events twice in order to store the correct
   //normalization. There are probably clever ways around this but this is what we're going to do for the moment.
+/*
   map<SUSYProcess, map<pair<int,int>, vector<double> > > scanPdfWeightsCTEQ;
   map<SUSYProcess, map<pair<int,int>, vector<double> > > scanPdfWeightsMSTW;
   map<SUSYProcess, map<pair<int,int>, vector<double> > > scanPdfWeightsNNPDF;
+  // NEW i think this loop will be deprecated by the new 2D scanProcessTotalsMap
   if (theScanType_ != kNotScan) {
     for(int entry=0; entry < nevents; ++entry) {
       // Read event into memory
@@ -3520,6 +3581,7 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
       }
     }
   }
+*/
 
   startTimer();
   // ~~~~ now start the real event loop
@@ -3550,32 +3612,94 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
       if (theScanType_==kmSugra)    cout<<"At mSugra point m0  = "<<thispoint.first<<" m12 = "<<thispoint.second<<endl;
       else  if (theScanType_==kSMS) cout<<"At SMS point m_gluino = "<<thispoint.first<<" m_LSP = "<<thispoint.second<<endl;
       lastpoint=thispoint;
-      if ( theScanType_==kmSugra && scanProcessTotalsMap.count(thispoint)==0 )	cout<<"m0 m12 = "<<thispoint.first<<" "<<thispoint.second<<" does not exist in NLO map!"<<endl;
+      if ( theScanType_==kmSugra && scanProcessTotalsMapCTEQ.count(thispoint)==0 )	cout<<"m0 m12 = "<<thispoint.first<<" "<<thispoint.second<<" does not exist in NLO map!"<<endl;
     }
 
     // ~~~~ special stuff that must be done on all events (whether it passes the skim cuts or not)
     //all of it is for MC. if it was needed for data, we'd want to put the lumi mask cut out here
-    SUSYProcess prodprocess= (theScanType_==kmSugra || sampleName_.Contains("LM")) ? getSUSYProcess() : NotFound;
+    SUSYProcess prodprocess= (theScanType_==kmSugra ) ? getSUSYProcess() : NotFound; //don't do LM here, at least not for now
     SUSY_process = int(prodprocess);
     m0 = thispoint.first;
     m12=thispoint.second;
 
     if (theScanType_==kmSugra) {
-      if ( scanProcessTotalsMap.count(thispoint) )
-	scanProcessTotalsMap[thispoint]->SetBinContent( int(prodprocess), scanProcessTotalsMap[thispoint]->GetBinContent(int(prodprocess))+1);
+      if ( scanProcessTotalsMapCTEQ.count(thispoint) ) {
+	//	scanProcessTotalsMap[thispoint]->SetBinContent( int(prodprocess), scanProcessTotalsMap[thispoint]->GetBinContent(int(prodprocess))+1);
+	//do the new 2D maps as well
+	for (int ipdf=0 ; ipdf<45; ipdf++) {
+	  pdfWeightsCTEQ[ipdf] = checkPdfWeightSanity(geneventinfoproducthelper1.at(ipdf).pdfweight);
+	  scanProcessTotalsMapCTEQ[thispoint]->SetBinContent( int(prodprocess),  ipdf,
+							      scanProcessTotalsMapCTEQ[thispoint]->GetBinContent( int(prodprocess),  ipdf) 
+							      + pdfWeightsCTEQ[ipdf] );
+	}
+	for (int ipdf=0 ; ipdf<41; ipdf++) { 
+	  pdfWeightsMSTW[ipdf] = checkPdfWeightSanity(geneventinfoproducthelper2.at(ipdf).pdfweight);
+	  scanProcessTotalsMapMSTW[thispoint]->SetBinContent( int(prodprocess),  ipdf,
+							      scanProcessTotalsMapMSTW[thispoint]->GetBinContent( int(prodprocess),  ipdf) 
+							      + pdfWeightsMSTW[ipdf] );
+	}
+	for (int ipdf=0 ; ipdf<100; ipdf++) { 
+	  pdfWeightsNNPDF[ipdf] = checkPdfWeightSanity(geneventinfoproducthelper.at(ipdf).pdfweight);
+	  scanProcessTotalsMapNNPDF[thispoint]->SetBinContent( int(prodprocess),  ipdf,
+							       scanProcessTotalsMapNNPDF[thispoint]->GetBinContent( int(prodprocess),  ipdf) 
+							       + pdfWeightsNNPDF[ipdf] );
+	}
+      }
       else 	continue; // skip this event
     }
     else if (theScanType_==kSMS) {
       //increment a 2d histogram of mGL, mLSP
       //we know 10k were generated everywhere, but what if we have failed jobs?
-      scanSMSngen->Fill(m0,m12);
+      scanSMSngen->Fill(m0,m12); //we can probably kill this 
+
+      //do the new 2D maps as well
+      for (int ipdf=0 ; ipdf<45; ipdf++) {
+	pdfWeightsCTEQ[ipdf] = checkPdfWeightSanity(geneventinfoproducthelper1.at(ipdf).pdfweight);
+	  scanProcessTotalsMapCTEQ[thispoint]->SetBinContent( int(prodprocess),  ipdf,
+							      scanProcessTotalsMapCTEQ[thispoint]->GetBinContent( int(prodprocess),  ipdf) 
+							      + pdfWeightsCTEQ[ipdf] );
+      }
+      for (int ipdf=0 ; ipdf<41; ipdf++) { 
+	pdfWeightsMSTW[ipdf] = checkPdfWeightSanity(geneventinfoproducthelper2.at(ipdf).pdfweight);
+	scanProcessTotalsMapMSTW[thispoint]->SetBinContent( int(prodprocess),  ipdf,
+							    scanProcessTotalsMapMSTW[thispoint]->GetBinContent( int(prodprocess),  ipdf) 
+							    + pdfWeightsMSTW[ipdf] );
+      }
+      for (int ipdf=0 ; ipdf<100; ipdf++) { 
+	pdfWeightsNNPDF[ipdf] = checkPdfWeightSanity(geneventinfoproducthelper.at(ipdf).pdfweight);
+	scanProcessTotalsMapNNPDF[thispoint]->SetBinContent( int(prodprocess),  ipdf,
+							     scanProcessTotalsMapNNPDF[thispoint]->GetBinContent( int(prodprocess),  ipdf) 
+							     + pdfWeightsNNPDF[ipdf] );
+      }
+    }
+    else if (theScanType_==kNotScan && sampleIsSignal_) {
+      //do the new 2D maps as well
+      for (int ipdf=0 ; ipdf<45; ipdf++) {
+	pdfWeightsCTEQ[ipdf] = checkPdfWeightSanity(geneventinfoproducthelper1.at(ipdf).pdfweight);
+	  scanProcessTotalsMapCTEQ[thispoint]->SetBinContent( int(prodprocess),  ipdf,
+							      scanProcessTotalsMapCTEQ[thispoint]->GetBinContent( int(prodprocess),  ipdf) 
+							      + pdfWeightsCTEQ[ipdf] );
+      }
+      for (int ipdf=0 ; ipdf<41; ipdf++) { 
+	pdfWeightsMSTW[ipdf] = checkPdfWeightSanity(geneventinfoproducthelper2.at(ipdf).pdfweight);
+	scanProcessTotalsMapMSTW[thispoint]->SetBinContent( int(prodprocess),  ipdf,
+							    scanProcessTotalsMapMSTW[thispoint]->GetBinContent( int(prodprocess),  ipdf) 
+							    + pdfWeightsMSTW[ipdf] );
+      }
+      for (int ipdf=0 ; ipdf<100; ipdf++) { 
+	pdfWeightsNNPDF[ipdf] = checkPdfWeightSanity(geneventinfoproducthelper.at(ipdf).pdfweight);
+	scanProcessTotalsMapNNPDF[thispoint]->SetBinContent( int(prodprocess),  ipdf,
+							     scanProcessTotalsMapNNPDF[thispoint]->GetBinContent( int(prodprocess),  ipdf) 
+							     + pdfWeightsNNPDF[ipdf] );
+      }
     }
 
-    if (theScanType_ == kNotScan) {
-      getPdfWeights("CTEQ",pdfWeightsCTEQ,&pdfWeightSumCTEQ);
-      getPdfWeights("MSTW",pdfWeightsMSTW,&pdfWeightSumMSTW);
-      getPdfWeights("NNPDF",pdfWeightsNNPDF,&pdfWeightSumNNPDF);
-    }
+    //code to hopefully be deprecated
+//     if (theScanType_ == kNotScan) {
+//       getPdfWeights("CTEQ",pdfWeightsCTEQ,&pdfWeightSumCTEQ);
+//       getPdfWeights("MSTW",pdfWeightsMSTW,&pdfWeightSumMSTW);
+//       getPdfWeights("NNPDF",pdfWeightsNNPDF,&pdfWeightSumNNPDF);
+//     }
 
     //very loose skim for reducedTrees (HT, trigger, throw out bad data)
     cutHT = passCut("cutHT");
@@ -3584,32 +3708,32 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
       weight = getWeight(nevents);
 
       //for scans, fill correctly normalized pdf weights
-      if (theScanType_ != kNotScan) {
-	//for T1bbbb, prodprocess will always be NotFound
-	for ( unsigned int j=0; j<scanPdfWeightsCTEQ[prodprocess][thispoint].size(); j++) {
-	  //this event's weight divided by the sum of the weights
-	  if (scanPdfWeightsCTEQ[prodprocess][thispoint][j] == 0) {
-	    cout<<"Something screwy in CTEQ weights!"<<endl;
-	    assert(0);
-	  }
-	  pdfWeightsCTEQ[j] = scanPdfWeightsCTEQ[prodprocess][thispoint][0]*checkPdfWeightSanity(geneventinfoproducthelper1.at(j).pdfweight) / scanPdfWeightsCTEQ[prodprocess][thispoint][j];
-	}
-	for ( unsigned int j=0; j<scanPdfWeightsMSTW[prodprocess][thispoint].size(); j++) {
-	  if (scanPdfWeightsMSTW[prodprocess][thispoint][j] == 0) {
-	    cout<<"Something screwy in MSTW weights!"<<endl;
-	    assert(0);
-	  }
+//       if (theScanType_ != kNotScan) {
+// 	//for T1bbbb, prodprocess will always be NotFound
+// 	for ( unsigned int j=0; j<scanPdfWeightsCTEQ[prodprocess][thispoint].size(); j++) {
+// 	  //this event's weight divided by the sum of the weights
+// 	  if (scanPdfWeightsCTEQ[prodprocess][thispoint][j] == 0) {
+// 	    cout<<"Something screwy in CTEQ weights!"<<endl;
+// 	    assert(0);
+// 	  }
+// 	  pdfWeightsCTEQ[j] = scanPdfWeightsCTEQ[prodprocess][thispoint][0]*checkPdfWeightSanity(geneventinfoproducthelper1.at(j).pdfweight) / scanPdfWeightsCTEQ[prodprocess][thispoint][j];
+// 	}
+// 	for ( unsigned int j=0; j<scanPdfWeightsMSTW[prodprocess][thispoint].size(); j++) {
+// 	  if (scanPdfWeightsMSTW[prodprocess][thispoint][j] == 0) {
+// 	    cout<<"Something screwy in MSTW weights!"<<endl;
+// 	    assert(0);
+// 	  }
 
-	  pdfWeightsMSTW[j] = scanPdfWeightsMSTW[prodprocess][thispoint][0]*checkPdfWeightSanity(geneventinfoproducthelper2.at(j).pdfweight) / scanPdfWeightsMSTW[prodprocess][thispoint][j];
-	}
-	for ( unsigned int j=0; j<scanPdfWeightsNNPDF[prodprocess][thispoint].size(); j++) {
-	  if (scanPdfWeightsNNPDF[prodprocess][thispoint][j] == 0) {
-	    cout<<"Something screwy in NNPDF weights!"<<endl;
-	    assert(0);
-	  }
-	  pdfWeightsNNPDF[j] = scanPdfWeightsNNPDF[prodprocess][thispoint][0]*checkPdfWeightSanity(geneventinfoproducthelper.at(j).pdfweight) / scanPdfWeightsNNPDF[prodprocess][thispoint][j];
-	}
-      }
+// 	  pdfWeightsMSTW[j] = scanPdfWeightsMSTW[prodprocess][thispoint][0]*checkPdfWeightSanity(geneventinfoproducthelper2.at(j).pdfweight) / scanPdfWeightsMSTW[prodprocess][thispoint][j];
+// 	}
+// 	for ( unsigned int j=0; j<scanPdfWeightsNNPDF[prodprocess][thispoint].size(); j++) {
+// 	  if (scanPdfWeightsNNPDF[prodprocess][thispoint][j] == 0) {
+// 	    cout<<"Something screwy in NNPDF weights!"<<endl;
+// 	    assert(0);
+// 	  }
+// 	  pdfWeightsNNPDF[j] = scanPdfWeightsNNPDF[prodprocess][thispoint][0]*checkPdfWeightSanity(geneventinfoproducthelper.at(j).pdfweight) / scanPdfWeightsNNPDF[prodprocess][thispoint][j];
+// 	}
+//       }
 
       
       if (theScanType_!=kSMS) {
@@ -3827,10 +3951,6 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   stopTimer(nevents);
 
   if (watch_!=0) watch_->Print();
-
-  //for a special test
-//   jetUncertainty.Divide(&jetCounting);
-//   jetL2L3Residual.Divide(&jetCounting);
 
   fout.Write();
   fout.Close();

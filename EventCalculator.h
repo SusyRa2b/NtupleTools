@@ -192,7 +192,7 @@ public:
   SUSYProcess getSUSYProcess();
   std::pair<int,int> getSMSmasses();
   double checkPdfWeightSanity( double a) ;
-  void getPdfWeights(const TString & pdfset, Float_t * pdfWeights, TH1D * sumofweights) ;
+  //  void getPdfWeights(const TString & pdfset, Float_t * pdfWeights, TH1D * sumofweights) ;
   double getCrossSection();
 
   //  double getPFMHTWeight(); //TODO
