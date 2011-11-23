@@ -1281,32 +1281,197 @@ void averageZ() {
 
 }
 
+std::pair<double,double> ABCD_njetRW(TString phys0bcontrol, TString Acutjm, TString Bcutjm, TString Ccutjm, TString Dcutjm){
+  cout << "Running closure with MC jet multiplicity reweighted to match data." << endl;
+  
+  TString histfilename = "dummy.root";
+  TFile fh(histfilename,"RECREATE");//will delete old root file if present 
+  fh.Close(); //going to open only when needed 
+
+  double holdlumiscale = lumiScale_;
+  TString btagSFweight_nom = btagSFweight_;
+
+  //going to use the same binning for the physics and prescaled samples
+  //this isn't necessary, but it is simpler
+  int jmnbins = 4;
+  float jmbins[] = {2.5,3.5,4.5,5.5,6.5};
+
+  //0b control physics
+  if(useScaleFactors_) btagSFweight_ = "prob0";
+  phys0bcontrol+= " && minDeltaPhiN<4";
+  selection_ = phys0bcontrol;
+  drawSimple("njets30",jmnbins,jmbins,"dummy.root", "","data");
+  TH1D* hJMphysicsData = (TH1D*)hinteractive->Clone("hJMphysicsData");
+  drawSimple("njets30",jmnbins,jmbins,"dummy.root", "","PythiaPUQCD");
+  TH1D* hJMphysicsQCD = (TH1D*)hinteractive->Clone("hJMphysicsQCD");
+  drawPlots("njets30",jmnbins,jmbins, "", "", "deleteme");
+  TH1D* hJMphysicsNonQCD = (TH1D*)totalnonqcd->Clone("hJMphysicsNonQCD");
+  
+  
+
+  //LSB-failmdpn
+  lumiScale_ = 30.15471; 
+  selection_ = Acutjm;
+  drawSimple("njets30",jmnbins,jmbins,"dummy.root", "","PythiaPUQCD");
+  TH1D* hJMAqcd = (TH1D*)hinteractive->Clone("hJMAqcd");
+  drawSimple("njets30",jmnbins,jmbins,"dummy.root", "","data");
+  TH1D* hJMAdata = (TH1D*)hinteractive->Clone("hJMAdata");
+  
+  //LSB-passmdpn
+  lumiScale_ = 30.15471; 
+  selection_ = Bcutjm;
+  drawSimple("njets30",jmnbins,jmbins,"dummy.root", "","PythiaPUQCD");
+  TH1D* hJMBqcd = (TH1D*)hinteractive->Clone("hJMBqcd");
+
+  //D and SIG (aka C)
+  lumiScale_ = holdlumiscale;
+  btagSFweight_ = btagSFweight_nom;
+
+  selection_ = Dcutjm;
+  drawSimple("njets30",jmnbins,jmbins,"dummy.root", "","PythiaPUQCD");
+  TH1D* hJMDqcd = (TH1D*)hinteractive->Clone("hJMDqcd");
+
+  selection_ = Ccutjm;
+  drawSimple("njets30",jmnbins,jmbins,"dummy.root", "","PythiaPUQCD");
+  TH1D* hJMCqcd = (TH1D*)hinteractive->Clone("hJMCqcd");
+
+  //Now we have all the input we need to do the reweighting..
+
+  //weights////////////////////////////////////////////////
+  for(int k=1; k<=hJMphysicsData->GetNbinsX(); k++){
+    assert(hJMphysicsData->GetBinContent(k)>0);
+    assert(hJMphysicsQCD->GetBinContent(k)>0);
+    assert(hJMAdata->GetBinContent(k)>0);
+    assert(hJMAqcd->GetBinContent(k)>0);
+    assert((hJMphysicsData->GetBinContent(k)- hJMphysicsNonQCD->GetBinContent(k))>0);//need to think about this more
+  }
+  TH1D* hphysW = (TH1D*)hJMphysicsData->Clone("hphysW");
+  hphysW->Add(hJMphysicsNonQCD,-1);
+  hphysW->Divide(hJMphysicsQCD);
+  TH1D* hpresW = (TH1D*)hJMAdata->Clone("hpresW"); //assume no contamination for LSB
+  hpresW->Divide(hJMAqcd);
+      
+  TFile fh1(histfilename, "UPDATE");
+  hphysW->Write();
+  hpresW->Write();
+  fh1.Close();
+
+  //reweighted boxes
+  TH1D* hJMAqcdRW = (TH1D*)hJMAqcd->Clone("hJMAqcdRW");
+  TH1D* hJMBqcdRW = (TH1D*)hJMBqcd->Clone("hJMBqcdRW");
+  TH1D* hJMCqcdRW = (TH1D*)hJMCqcd->Clone("hJMCqcdRW"); 
+  TH1D* hJMDqcdRW = (TH1D*)hJMDqcd->Clone("hJMDqcdRW");
+  hJMAqcdRW->Multiply(hpresW);
+  hJMBqcdRW->Multiply(hpresW);
+  hJMCqcdRW->Multiply(hphysW);
+  hJMDqcdRW->Multiply(hphysW);
+
+  double Arw, Brw, Crw, Drw;
+  Arw = hJMAqcdRW->Integral();
+  Brw = hJMBqcdRW->Integral();
+  Crw = hJMCqcdRW->Integral();
+  Drw = hJMDqcdRW->Integral();
 
 
-std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode=false, float subscale=1,float SBshift=0, const TString LSBbsel="==0", float PVCorFactor = 0) {
+  ////////////////////////////////////////////////////////////stat//
+  double rwErr2 = 0;
+  for(int k=1; k<=hJMphysicsData->GetNbinsX(); k++){
+    double QAk = hJMAqcdRW->GetBinContent(k);
+    double QBk = hJMBqcdRW->GetBinContent(k);
+    double QCk = hJMCqcdRW->GetBinContent(k);
+    double QDk = hJMDqcdRW->GetBinContent(k);
+    double Qk =  hJMphysicsQCD->GetBinContent(k);
+    double nk = hJMphysicsNonQCD->GetBinContent(k);
+    double Rk = hJMAdata->GetBinContent(k);
+    double Pk = hJMphysicsData->GetBinContent(k);
+
+    double QAkerr = hJMAqcdRW->GetBinError(k);
+    double QBkerr = hJMBqcdRW->GetBinError(k);
+    double QCkerr = hJMCqcdRW->GetBinError(k);
+    double QDkerr = hJMDqcdRW->GetBinError(k);
+    double Qkerr =  hJMphysicsQCD->GetBinError(k);
+    double nkerr = hJMphysicsNonQCD->GetBinError(k);
+    double Rkerr = hJMAdata->GetBinError(k);
+    double Pkerr = hJMphysicsData->GetBinError(k);
+
+    double QAterm=0,QBterm=0,QCterm=0,QDterm=0,Qterm=0, nterm=0, Rterm=0, Pterm=0;
+    double X_toppQ=0, X_botpQ=0, X_toppn=0, X_botpn=0, X_toppR=0, X_botpR=0, X_toppP=0, X_botpP=0;
+    double X_top = Crw*Arw;
+    double X_bot = Drw*Brw;
+    
+    QAterm = Crw*Arw/Drw/Brw/Brw*QBk*Rk/QAk/QAk;
+    QBterm = - Crw*Arw/Drw/Brw/Brw*Rk/QAk;
+    QCterm = Arw/Drw/Brw*(Pk-nk)/Qk;
+    QDterm = - Crw*Arw/Brw/Drw/Drw*(Pk-nk)/Qk; 
+
+    X_toppQ = - Arw*QCk/Qk/Qk*(Pk-nk);
+    X_botpQ = - Brw*QDk/Qk/Qk*(Pk-nk);
+
+    X_toppn = - Arw*QCk/Qk;
+    X_botpn = - Brw*QDk/Qk;
+
+    X_toppR = Crw;
+    X_botpR = Drw*QBk/QAk;
+
+    X_toppP = Arw*QCk/Qk;
+    X_botpP = Brw*QDk/Qk;
+
+    //quotient rule!
+    Qterm = (X_bot*X_toppQ - X_top*X_botpQ)/X_bot/X_bot;
+    nterm = (X_bot*X_toppn - X_top*X_botpn)/X_bot/X_bot;
+    Rterm = (X_bot*X_toppR - X_top*X_botpR)/X_bot/X_bot;
+    Pterm = (X_bot*X_toppP - X_top*X_botpP)/X_bot/X_bot;
+    
+    cout << "njetrw: QA: " << QAterm*QAterm*QAkerr*QAkerr << endl;
+    cout << "njetrw: QB: " << QBterm*QBterm*QBkerr*QBkerr << endl;
+    cout << "njetrw: QC: " << QCterm*QCterm*QCkerr*QCkerr << endl;
+    cout << "njetrw: QD: " << QDterm*QDterm*QDkerr*QDkerr << endl;
+    cout << "njetrw: Q: " << Qterm*Qterm*Qkerr*Qkerr << endl;
+    cout << "njetrw: n: " << nterm*nterm*nkerr*nkerr << endl;
+    cout << "njetrw: R: " << Rterm*Rterm*Rkerr*Rkerr << endl;
+    cout << "njetrw: P: " << Pterm*Pterm*Pkerr*Pkerr << endl;
+
+    rwErr2 += QAterm*QAterm*QAkerr*QAkerr + QBterm*QBterm*QBkerr*QBkerr + QCterm*QCterm*QCkerr*QCkerr + QDterm*QDterm*QDkerr*QDkerr;
+    rwErr2 += Qterm*Qterm*Qkerr*Qkerr + nterm*nterm*nkerr*nkerr + Rterm*Rterm*Rkerr*Rkerr + Pterm*Pterm*Pkerr*Pkerr;
+  }
+  //////////////////////////////////////////////////////////////////
+  cout << "njetrw: ABCD: " << Arw << " " << Brw << " " << Crw << " " << Drw << endl; 
+  cout << "njetrw: BD/A (rw): " << Brw*Drw/Arw << endl;
+  cout << "njetrw: C (rw): " << Crw << endl;
+  double closure = fabs(1.0-Crw*Arw/Drw/Brw);
+  double closurestat = sqrt(rwErr2);
+  cout << "njetrw: closure (rw): " << 100.*closure << " +- " << 100.*closurestat << endl;
+  cout << "njetrw: Table: $" << Brw << "$ & $" << Arw << "$ & $" << Drw << "$ & $" << Brw*Drw/Arw << "$ & $" << Crw << "$ & $" <<  100.*closure << " \\pm " << 100.*closurestat << "$ \\\\" << endl;
+  
+  return make_pair( 100*sqrt(pow(closure,2) + pow(closurestat,2)), 0); //estimate in denominator
+}
+
+std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode=false, float subscale=1,float SBshift=0, const TString LSBbsel="==0", float PVCorFactor = 0, bool doNjetRW = false) {
   //kind of awful, but we'll return the estimate for datamode=true but the closure test bias for datamode=false
-
+  
   /*
-.L drawReducedTrees.C++
+    .L drawReducedTrees.C++
   */
-
+  doOverflowAddition(true);
+  
   TString btagselection = region.btagSelection;
-
+  
   TString owenKey = btagselection;
   owenKey += region.owenId;
   OwenData * myOwen = &(owenMap_[owenKey]);
   const  bool isSIG = region.isSIG;
-
+  
   setStackMode(false);
-  doData(datamode);
+  doData(true);
   setQuiet(true);
-
+  
   useFlavorHistoryWeights_=false;
+  
   loadSamples(); //needs to come first! this is why this should be turned into a class, with this guy in the ctor
   setColorScheme("nostack");
-//   clearSamples();
-//   addSample("PythiaPUQCD");
-
+  //clearSamples();
+  //addSample("PythiaPUQCD");
+  
   TString sampleOfInterest = "PythiaPUQCD";
   if (datamode) {
     sampleOfInterest = "data";
@@ -1321,22 +1486,20 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
   else {
     resetSamples();
   }
-
+  
   savePlots_=false;
-
+  
   setLogY(false);
   TString var,xtitle;
   int nbins;
   float low,high;
-
- // --  count events
+  
+  // --  count events
   TCut triggerCutLSB = "1";
   TCut triggerCut = "1";
-  if (datamode) {
-    triggerCutLSB = "(pass_utilityHLT==1 || !isRealData)"; //because bug in MC for pass_utilityHLT
-    triggerCut = "cutTrigger==1";
-  }
-
+  triggerCutLSB = "(pass_utilityHLT==1 || isRealData==1)"; //because bug in MC for pass_utilityHLT
+  triggerCut = "cutTrigger==1";
+  
   TCut ge1b = "nbjetsCSVM>=1";
   btagSFweight_="1";
   TString btagSFweight=""; //we're going to have to switch this one in and out of the global var
@@ -1345,7 +1508,7 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
     usePUweight_=true;
     useHLTeff_=true;
     currentConfig_=configDescriptions_.getCorrected(); //add JERbias
-
+    
     if (btagselection=="ge2b") {
       btagSFweight="probge2";
     }
@@ -1362,7 +1525,7 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
     useHLTeff_=false;
     btagSFweight_="1";
     currentConfig_=configDescriptions_.getDefault(); //completely raw MC
-
+    
     if (btagselection=="ge2b") {
       ge1b="nbjetsCSVM>=2";
     }
@@ -1372,17 +1535,17 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
     }
     else {assert(0);}
   }
-
+  
   TCut HTcut=region.htSelection.Data(); 
   TCut SRMET = region.metSelection.Data();
-
+  
   SRMET = SRMET && ge1b && triggerCut; //apply physics trigger and physics b cut in high MET region
-
+  
   TCut baseline = "cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1";
   baseline = baseline&&HTcut;
   TCut cleaning = "weight<1000 && passCleaning==1";
-
-
+  
+  
   //LSB b-tagging is independent of search region
   TString LSBbtagSFweight="";
   char cutstring0[100];
@@ -1398,20 +1561,26 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
   char cutstring1[100];
   sprintf(cutstring1,"MET>= %.0f && MET < %.0f", 50+SBshift,100+SBshift);
   TCut SBMET = TCut(cutstring1)&&triggerCutLSB&&LSBbtag;
-
+  
   TCut dpcut = "1";//"minDeltaPhiN>=4";
   //  TCut passOther = "deltaPhiMPTcaloMET<2";
   //  TCut failOther = "deltaPhiMPTcaloMET>=2";
   TCut passOther = "minDeltaPhiN>=4";
   TCut failOther = "minDeltaPhiN<4";
-
+  
   var="HT"; xtitle=var;
   nbins=10; low=0; high=5000;
   double A,B,D,SIG,Aerr,Berr,Derr,SIGerr;
   double RLSB_RW = 0;
   double dRLSB_RW = 0;
-
-
+  
+  //used for jet multiplicity reweighting closure test
+  TString Acutjm, Bcutjm, Dcutjm, SIGcutjm;
+  
+  //used in lsb and njet reweighting (the latter adds mdpN<4)
+  TCut phys0bcontrol =  TCut("cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && nbjetsCSVM==0 && MET>200") && triggerCut && HTcut && cleaning;
+  TString phys0bcontrolstring;
+  phys0bcontrolstring += phys0bcontrol;
   if(datamode &&  reweightLSBdata_){
     int pvnbins=11;
     float pvbins[]={0.5,2.5,4.5,5.5,6.5,7.5,8.5,9.5,10.5,12.5,14.5,16.5};
@@ -1419,16 +1588,16 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
     //physics triggers control sample -- physics triggers, 0b
     //--consider varying MET cut and PV binning!!
     if(useScaleFactors_) btagSFweight_ = "prob0";
-    selection_ = TCut("cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && nbjetsCSVM==0 && MET>200") && triggerCut && HTcut && cleaning;
+    selection_ = phys0bcontrol;
     drawSimple("nGoodPV",pvnbins,pvbins,"dummy", "","data");
     TH1D* hPVphysics = (TH1D*)hinteractive->Clone("hPVphysics");
     btagSFweight_ =  LSBbtagSFweight;
-
+    
     //LSB unweighted
     selection_ = baseline && SBMET && cleaning;
     drawSimple("nGoodPV",pvnbins,pvbins,"dummy", "","data");
     TH1D* hPVprescale = (TH1D*)hinteractive->Clone("hPVprescale");
-
+    
     //calculate weights (physics shape with prescale integral divided by prescale)
     TH1D* hPVprescale_RW = (TH1D*)hPVphysics->Clone("hPVprescale_RW");
     hPVprescale_RW->Scale(hPVprescale->Integral()/hPVphysics->Integral());
@@ -1458,7 +1627,7 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
     TH1D* hPVprescaleFail_RW = (TH1D*)hPVprescaleFail->Clone("hPVprescaleFail_RW");
     hPVprescalePass_RW->Multiply(hPV_W);
     hPVprescaleFail_RW->Multiply(hPV_W);
-
+    
     ///////////////////////////////////////////////////////////////////////////////stat///////
     double dR2 = 0;
     double myA=0, myB=0;
@@ -1523,64 +1692,67 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
   else{
     //A   -- aka 50 - 100 and high MPT,MET
     selection_ = baseline && cleaning && dpcut  && SBMET && failOther; //auto cast to TString seems to work
+    Acutjm = selection_;
     drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_A");
     A=getIntegral(sampleOfInterest);
     Aerr=getIntegralErr(sampleOfInterest);
     //B
     selection_ = baseline && cleaning && dpcut  && SBMET && passOther; //auto cast to TString seems to work
+    Bcutjm = selection_;
     drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_B");
     B=getIntegral(sampleOfInterest);
     Berr=getIntegralErr(sampleOfInterest);
   }
-
+  
   //Now that we've moved on from the LSB, use search region b-tag requirement
   if(useScaleFactors_) btagSFweight_ = btagSFweight;
   
   //D
   selection_ = baseline && cleaning && dpcut  && SRMET && failOther; //auto cast to TString seems to work
   drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_D");
+  Dcutjm = selection_;
   D=getIntegral(sampleOfInterest);
   Derr=getIntegralErr(sampleOfInterest);
-
+  
   double Dsub = 0,Dsuberr=0;
   if (datamode) {
     Dsub = subscale*getIntegral("totalsm");
     Dsuberr = subscale*getIntegralErr("totalsm");
-
+    
     //special stuff for owen
     myOwen->Nlsb_0b_ldp = A;
     myOwen->Nlsb_0b     = B;
     if (isSIG) myOwen->Nsig_ldp = D;
     else       myOwen->Nsb_ldp = D;
-
+    
     if (isSIG) {
       myOwen->Nttbarmc_sig_ldp = getIntegral("TTbarJets");
       myOwen->Nsingletopmc_sig_ldp = getIntegral("SingleTop");
       double lsfw = getIntegral("WJets") > 0 ?  pow(getIntegralErr("WJets"),2)/getIntegral("WJets"): -1;
       double lsfzj = getIntegral("ZJets") > 0 ?  pow(getIntegralErr("ZJets"),2)/getIntegral("ZJets"): -1;
       double lsfz = getIntegral("Zinvisible") > 0 ?  pow(getIntegralErr("Zinvisible"),2)/getIntegral("Zinvisible"): -1;
-
+      
       if (lsfw>0) myOwen->lsf_WJmc=lsfw;
       if (lsfz>0) myOwen->lsf_Znnmc=lsfz;
       if (lsfzj>0) myOwen->lsf_Zjmc=lsfzj;
-
+      
       myOwen->NWJmc_sig_ldp = getIntegral("WJets")/lsfw;
       myOwen->NZnnmc_sig_ldp = getIntegral("Zinvisible")/lsfz;
       myOwen->NZjmc_sig_ldp = getIntegral("ZJets")/lsfzj;
-
+      
     }
     else {
       myOwen->Nttbarmc_sb_ldp = getIntegral("TTbarJets");
       myOwen->Nsingletopmc_sb_ldp = getIntegral("SingleTop");
-
+      
       double lsfw = getIntegral("WJets") > 0 ?  pow(getIntegralErr("WJets"),2)/getIntegral("WJets"): -1;
       double lsfz = getIntegral("Zinvisible") > 0 ?  pow(getIntegralErr("Zinvisible"),2)/getIntegral("Zinvisible"): -1;
       double lsfzj = getIntegral("ZJets") > 0 ?  pow(getIntegralErr("ZJets"),2)/getIntegral("ZJets"): -1;
-
+      
       if (lsfw>0) myOwen->lsf_WJmc=lsfw;
       if (lsfz>0) myOwen->lsf_Znnmc=lsfz;
       if (lsfzj>0) myOwen->lsf_Zjmc=lsfzj;
-
+      
       myOwen->NWJmc_sb_ldp = getIntegral("WJets")/lsfw;
       myOwen->NZnnmc_sb_ldp = getIntegral("Zinvisible")/lsfz;
       myOwen->NZjmc_sb_ldp = getIntegral("ZJets")/lsfzj;
@@ -1588,33 +1760,26 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
     //end of special stuff for owen
   }
   if (Dsub>D) {Dsub=D-0.00001; cout<<"Subtraction in D is as big as D!"<<endl;}
-
+  
   //SIG
   selection_ = baseline && cleaning && dpcut  && SRMET && passOther; //auto cast to TString seems to work
+  SIGcutjm = selection_;
   drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_C");
   SIG=getIntegral(sampleOfInterest);
   SIGerr=getIntegralErr(sampleOfInterest);
-
+  
   if (datamode) { //for owen 
     if (isSIG)  myOwen->Nsig = SIG;
     else        myOwen->Nsb  = SIG;
   }
 
-  /*
-  //now calculate B*D/A
-  double numerr=jmt::errAtimesB(B,Berr,D-Dsub,sqrt(Derr*Derr+Dsuberr*Dsuberr));
-  double num = B*(D-Dsub);
-  double estimate = num / A;
-  double estimateerr= jmt::errAoverB(num,numerr,A,Aerr);
-  double closureStat2 = datamode? 0: jmt::errAoverB(SIG,SIGerr,estimate,estimateerr);
-
-  //for a cross-check
-  double R0 = B/A;
-  double R0err = jmt::errAoverB(B,Berr,A,Aerr);
-  */
-
+  
+  if(doNjetRW){ return ABCD_njetRW(phys0bcontrolstring, Acutjm, Bcutjm, SIGcutjm, Dcutjm);}
+  
   //now calculate (B/A)*D=R*D
   double RLSB_UW = B/A; //unweighted
+  double RLSB_UWerr = jmt::errAoverB(B,Berr,A,Aerr);
+  
   double myR, myRerr;
   if(datamode &&  reweightLSBdata_){
     myR = PVCorFactor*(RLSB_RW-RLSB_UW)+RLSB_RW; //PVCorFactor=0 for reweighted, +/-1 for +/-100% correction
@@ -1622,7 +1787,7 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
   }
   else{
     myR = RLSB_UW;
-    myRerr = jmt::errAoverB(B,Berr,A,Aerr);
+    myRerr = RLSB_UWerr; 
   }
   double estimate = myR*(D-Dsub);
   double estimateerr = jmt::errAtimesB(myR, myRerr, D-Dsub, sqrt(Derr*Derr+Dsuberr*Dsuberr));
@@ -1630,25 +1795,16 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
   double R0 = myR;
   double R0err = myRerr;
   
-
-  //   cout<<" ==== "<<endl
-  //       <<"Estimate = "<<estimate<<" +/- "<<estimateerr<<endl
-  //       <<" truth   = "<<SIG     <<" +/- "<<SIGerr<<endl;
   TString name = region.btagSelection;
   name += region.owenId;
   name += isSIG ? ", SIG":", SB";
   char output[500];
   if (!datamode) {
-    //sprintf(output,"%s & %s & %s & %s & %s & %s \\\\ %% %f ++ %f %% alternate denominator: %f ++ %f",btagselection.Data(),
-    //    jmt::format_nevents(B,Berr).Data(),jmt::format_nevents(A,Aerr).Data(),
-    //    jmt::format_nevents(D,Derr).Data(),jmt::format_nevents(estimate,estimateerr).Data(),
-    //    jmt::format_nevents(SIG,SIGerr).Data(),100*(SIG-estimate)/SIG,closureStat*100,100*(SIG-estimate)/estimate,closureStat2*100);
-      
     sprintf(output,"%s & %s & %s & %s & %s & %s & $%f \\pm %f$ \\\\ ",name.Data(),
 	    jmt::format_nevents(B,Berr).Data(),jmt::format_nevents(A,Aerr).Data(),
 	    jmt::format_nevents(D,Derr).Data(),jmt::format_nevents(estimate,estimateerr).Data(),
 	    jmt::format_nevents(SIG,SIGerr).Data(),100*(estimate-SIG)/estimate,closureStat2*100);
- 
+    
   }
   else {
     if(reweightLSBdata_){
@@ -1667,62 +1823,39 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
     }
   }
   cout<<output<<endl;
-
+  
   if (datamode)  return make_pair(estimate,estimateerr);
   return make_pair( 100*sqrt(pow((SIG-estimate)/estimate,2) + pow(closureStat2,2)), 0); //estimate in denominator
 }
 
 
-void runClosureTest2011(std::map<TString, std::vector<double> > & syst, bool addReweightedQCDClosureTest = true)  {
-  if(!addReweightedQCDClosureTest) cout << "You are starting closure test without considering njet reweighting!" << endl;
+void runClosureTest2011(std::map<TString, std::vector<double> > & syst, bool addnjetrw = true)  {
   
   setSearchRegions();
   assert(sbRegions_.size() == searchRegions_.size());
-  
-  string selString;
-  double unweightedClosure, weightedClosure;
-  double unweightedClosureA_sb[]={0,0,0,0};
-  double weightedClosureA_sb[]={0,0,0,0};
-  double unweightedClosureA_sig[]={0,0,0,0};
-  double weightedClosureA_sig[]={0,0,0,0};
-  
-  if(addReweightedQCDClosureTest){
-    ifstream inFile("weightedClosure.dat", std::ios::in);//file generated by additionalTools/reweightQCD.C (root -l -b -q reweightQCD.C++)
-    if(!inFile.good()){
-      cout << "could not open weightedClosure.dat" << endl;
-      assert(0);
-    }
-    
-    while(inFile>>selString>>unweightedClosure>>weightedClosure){
-      if(selString=="ge1bloosesb")  {unweightedClosureA_sb[0]=unweightedClosure; weightedClosureA_sb[0]=weightedClosure;}
-      if(selString=="ge1btightsb")  {unweightedClosureA_sb[1]=unweightedClosure; weightedClosureA_sb[1]=weightedClosure;}
-      if(selString=="ge2bloosesb")  {unweightedClosureA_sb[2]=unweightedClosure; weightedClosureA_sb[2]=weightedClosure;}
-      if(selString=="ge2btightsb")  {unweightedClosureA_sb[3]=unweightedClosure; weightedClosureA_sb[3]=weightedClosure;}
-      if(selString=="ge1bloosesig") {unweightedClosureA_sig[0]=unweightedClosure; weightedClosureA_sig[0]=weightedClosure;}
-      if(selString=="ge1btightsig") {unweightedClosureA_sig[1]=unweightedClosure; weightedClosureA_sig[1]=weightedClosure;}
-      if(selString=="ge2bloosesig") {unweightedClosureA_sig[2]=unweightedClosure; weightedClosureA_sig[2]=weightedClosure;}
-      if(selString=="ge2btightsig") {unweightedClosureA_sig[3]=unweightedClosure; weightedClosureA_sig[3]=weightedClosure;}
-    }
-  }
-  
+
   for (unsigned int i=0; i<sbRegions_.size(); i++) {
-    double jsb =   fabs(anotherABCD(sbRegions_[i]).first);
-    double jsig =  fabs(anotherABCD(searchRegions_[i]).first);
-    
-    double finalsb = jsb;
-    double finalsig = jsig;
-    if(addReweightedQCDClosureTest){
-      double bsb =  fabs(unweightedClosureA_sb[i]);
-      double bsig = fabs(unweightedClosureA_sig[i]);
-      double wsb =  fabs(weightedClosureA_sb[i]);
-      double wsig = fabs(weightedClosureA_sig[i]);
-      cout << "SB: " << jsb << " " << bsb << endl;
-      cout << "SIG: " << jsig << " " << bsig << endl;
-      assert( fabs(jsb-bsb)   <0.001);//should be true if using same ntuples for reweighted study and current running. could take out.
-      assert( fabs(jsig-bsig) <0.001);
-      finalsb = jsb>wsb ? jsb:wsb ;
-      finalsig = jsig>wsig ? jsig:wsig ;
+
+    double sb =   fabs(anotherABCD(sbRegions_[i]).first);
+    double sig =  fabs(anotherABCD(searchRegions_[i]).first);
+    double sb_rw = 0, sig_rw = 0;
+    double finalsb = sb;
+    double finalsig = sig;
+
+    if(addnjetrw){
+      sb_rw = fabs(anotherABCD(sbRegions_[i],false,1,0,"==0",0,true).first);
+      sig_rw = fabs(anotherABCD(searchRegions_[i],false,1,0,"==0",0,true).first);
+
+      finalsb = (sb_rw>sb) ? sb_rw: sb;
+      finalsig = (sig_rw>sig) ? sig_rw: sig;
+
+      cout << "njetrw: ************** int " << i << " ****************" << endl;
+      cout << "njetrw: sb: " << sb << ", sb_rw: " << sb_rw << endl;
+      cout << "njetrw: sig: " << sig << ", sig_rw: " << sig_rw << endl;
+      cout << "njetrw: ******************************************" << endl;
     }
+    
+
     syst["Closure"].push_back( finalsb );
     syst["Closure"].push_back( finalsig ); 
   }
@@ -1733,7 +1866,7 @@ void runClosureTest2011()  {
   std::map<TString, std::vector<double> > dummy;
   
   cout << "You are starting closure test without considering njet reweighting!" << endl;
-  runClosureTest2011(dummy,false);
+  runClosureTest2011(dummy,true);
 
 }
 
@@ -1857,7 +1990,7 @@ void runDataQCD2011(const bool forOwen=false) {
   }
   
   cout<<" == Running QCD closure test =="<<endl;
-  runClosureTest2011(qcdSystErrors,false);
+  runClosureTest2011(qcdSystErrors,true);
   
   cout<<" == QCD systematics summary =="<<endl;
   for (unsigned int j=0; j<n.size(); j++) {
