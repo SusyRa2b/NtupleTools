@@ -953,7 +953,7 @@ for legacy purposes I am keeping all of the weight and selection TStrings, altho
   }
   if (useHLTeff_ &&  type!=kData) {
     weightedcut +="*hltHTeff";
-    //    weightedcut +="*hltMHTeff"; //needs to be there now, but not compatible with Summer reducedTrees
+    weightedcut +="*hltMHTeff"; //not compatible with Summer reducedTrees
   }
 
   if (btagSFweight_=="") btagSFweight_="1";
