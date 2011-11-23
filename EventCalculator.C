@@ -347,7 +347,8 @@ bool EventCalculator::noPUWeight() {
 }
 
 //FIXME can we make this const & ???
-float EventCalculator::getPUWeight(reweight::LumiReWeighting lumiWeights) {
+//float EventCalculator::getPUWeight(reweight::LumiReWeighting lumiWeights) {
+float EventCalculator::getPUWeight(Lumi3DReWeighting lumiWeights) {
 
   if (isSampleRealData() ) return 1;
   if (noPUWeight()) return 1;
@@ -389,19 +390,19 @@ float EventCalculator::getPUWeight(reweight::LumiReWeighting lumiWeights) {
   weight = lumiWeights.weight3D( nm1,n0,np1);
 
 
-
-  //following: https://twiki.cern.ch/twiki/bin/viewauth/CMS/PileupSystematicErrors
-  reweight::PoissonMeanShifter PShift;
-  if(thePUuncType_ == kPUuncDown){
-    PShift = reweight::PoissonMeanShifter(-0.6);
-    //weight = weight * PShift.ShiftWeight( ave_nvtx );
-    weight = weight * PShift.ShiftWeight( npv );
-  }
-  else if(thePUuncType_ == kPUuncUp){
-    PShift = reweight::PoissonMeanShifter(0.6);
-    //weight = weight * PShift.ShiftWeight( ave_nvtx );
-    weight = weight * PShift.ShiftWeight( npv );
-  }
+  //Outdated.  PU systematics now done via scale-factor in reducedTree()
+  ////following: https://twiki.cern.ch/twiki/bin/viewauth/CMS/PileupSystematicErrors
+  //reweight::PoissonMeanShifter PShift;
+  //if(thePUuncType_ == kPUuncDown){
+  //  PShift = reweight::PoissonMeanShifter(-0.6);
+  //  //weight = weight * PShift.ShiftWeight( ave_nvtx );
+  //  weight = weight * PShift.ShiftWeight( npv );
+  //}
+  //else if(thePUuncType_ == kPUuncUp){
+  //  PShift = reweight::PoissonMeanShifter(0.6);
+  //  //weight = weight * PShift.ShiftWeight( ave_nvtx );
+  //  weight = weight * PShift.ShiftWeight( npv );
+  //}
 
   return weight;
 
@@ -3248,8 +3249,22 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
     DataDist2011.push_back(pu::TrueDist2011_f[i]);
     MCDist2011.push_back(pu::probdistFlat10_f[i]);
   }  
-  reweight::LumiReWeighting LumiWeights = reweight::LumiReWeighting( MCDist2011, DataDist2011 );
-  LumiWeights.weight3D_init("Weight3D.root");
+  //reweight::LumiReWeighting LumiWeights = reweight::LumiReWeighting( MCDist2011, DataDist2011 );
+  //LumiWeights.weight3D_init("Weight3D.root");
+  Lumi3DReWeighting LumiWeights = Lumi3DReWeighting( MCDist2011, DataDist2011);
+  if(thePUuncType_ == kPUunc0){
+    LumiWeights.weight3D_init(1);    
+  }
+  //8% uncertainty in total inelastic cross-section (68 mb vs 73.5 mb)
+  //see https://hypernews.cern.ch/HyperNews/CMS/get/physics-validation/1479/3/1/1.html
+  else if(thePUuncType_ == kPUuncDown){
+    LumiWeights.weight3D_init(0.92);    
+  }
+  else if(thePUuncType_ == kPUuncUp){
+    LumiWeights.weight3D_init(1.08);    
+  }
+
+
 
   // ~~~~~~~ define tree branches ~~~~~~~
   reducedTree.Branch("weight",&weight,"weight/D");
@@ -4382,10 +4397,14 @@ bool EventCalculator::inEventList(std::vector<int> &vrun, std::vector<int> &vlum
 void EventCalculator::sampleAnalyzer(itreestream& stream){
 
 
-  //TFile fout("histos.root","RECREATE");
+  TFile fout("histos.root","RECREATE");
   
-  //TH1F * h_MCPU = new TH1F("h_MCPU","unweighted PU distribution",35,0.5,34.5);
-  //TH1F * h_MCPUr = new TH1F("h_MCPUr","reweighted PU distribution",35,-0.5,34.5);
+  TH1F * h_MCPU = new TH1F("h_MCPU","unweighted PU distribution",35,0.5,34.5);
+  TH1F * h_MCPUr = new TH1F("h_MCPUr","reweighted PU distribution",35,-0.5,34.5);
+  TH1F * h_MCPUBXp1 = new TH1F("h_MCPUBXp1","unweighted PU distribution",35,0.5,34.5);
+  TH1F * h_MCPUrBXp1 = new TH1F("h_MCPUrBxp1","reweighted PU distribution",35,-0.5,34.5);
+  TH1F * h_MCPUBXm1 = new TH1F("h_MCPUBXm1","unweighted PU distribution",35,0.5,34.5);
+  TH1F * h_MCPUrBXm1 = new TH1F("h_MCPUrBXm1","reweighted PU distribution",35,-0.5,34.5);
 
   //TH1F * h_ht = new TH1F("h_ht","HT",1000,0,1000);
   //TH1F * h_ht_trig = new TH1F("h_ht_trig","HT",1000,0,1000);
@@ -4422,27 +4441,35 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
 
   int nevents = stream.size();
 
-  float prob0,probge1,prob1,probge2,probge3;
+  //float prob0,probge1,prob1,probge2,probge3;
 
-  float n0b = 0, nge1b = 0, neq1b = 0, nge2b = 0, nge3b = 0;
+  //float n0b = 0, nge1b = 0, neq1b = 0, nge2b = 0, nge3b = 0;
   setCutScheme();
   setIgnoredCut("cut1b");
   setIgnoredCut("cut2b");
   setIgnoredCut("cut3b");
 
-  ////initialize PU things
-  //std::vector< float > DataDist2011;
-  //std::vector< float > MCDist2011;
-  //for( int i=0; i<35; ++i) {
-  //  //for PU_S3 (only in-time)
-  //  //DataDist2011.push_back(pu::ObsDist2011_f[i]);
-  //  //MCDist2011.push_back(pu::PoissonOneXDist_f[i]);
-  //  //for 3dPU reweighting 
-  //  DataDist2011.push_back(pu::TrueDist2011_f[i]);
-  //  MCDist2011.push_back(pu::probdistFlat10_f[i]);
-  //}  
+  //initialize PU things
+  std::vector< float > DataDist2011;
+  std::vector< float > MCDist2011;
+  for( int i=0; i<35; ++i) {
+    //for PU_S3 (only in-time)
+    //DataDist2011.push_back(pu::ObsDist2011_f[i]);
+    //MCDist2011.push_back(pu::PoissonOneXDist_f[i]);
+    //for 3dPU reweighting 
+    DataDist2011.push_back(pu::TrueDist2011_f[i]);
+    MCDist2011.push_back(pu::probdistFlat10_f[i]);
+  }  
+  //for( int i=0; i<1000; ++i) {
+  //  DataDist2011.push_back(pu::TrueDist2011_finebin_f[i]);
+  //}
   //reweight::LumiReWeighting LumiWeights = reweight::LumiReWeighting( MCDist2011, DataDist2011 );
-  ////LumiWeights.weight3D_init();
+  //Lumi3DReWeighting LumiWeights = Lumi3DReWeighting("Summer11MC_PUDistTruth.root", "PileupTruth_finebin_data_SUM_upto180252.root", "mcpileup", "pileup");
+  Lumi3DReWeighting LumiWeights = Lumi3DReWeighting( MCDist2011, DataDist2011);
+
+
+  LumiWeights.weight3D_init(1);
+  //LumiWeights.weight3D_init();
   //LumiWeights.weight3D_init("Weight3D.root");
 
   cout<<"Running..."<<endl;  
@@ -4483,7 +4510,7 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
     //}
 
 
-    if(Cut()==1){
+    //if(Cut()==1){
 
 
     //std::cout << "ngood jets = " << nGoodJets() << std::endl;
@@ -4573,8 +4600,8 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
       */
 
 
-	/*        
-      int npv = 0;
+               
+      int npv = 0, npvbxp1 = 0, npvbxm1 = 0;
       for ( unsigned int i = 0; i<pileupsummaryinfo.size() ; i++) {
 	//npv = pileupsummaryinfo.at(i).addpileupinfo_getPU_NumInteractions;
 	//sum_nvtx += float(npv);
@@ -4583,7 +4610,15 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
 	int BX = pileupsummaryinfo.at(i).addpileupinfo_getBunchCrossing;
 	if(BX == 0) { 
 	  npv = pileupsummaryinfo.at(i).addpileupinfo_getPU_NumInteractions;
-	  continue;
+	  //continue;
+	}
+	else if(BX == 1) { 
+	  npvbxp1 = pileupsummaryinfo.at(i).addpileupinfo_getPU_NumInteractions;
+	  //continue;
+	}
+	else if(BX == -1) { 
+	  npvbxm1 = pileupsummaryinfo.at(i).addpileupinfo_getPU_NumInteractions;
+	  //continue;
 	}
 	
       }
@@ -4591,17 +4626,19 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
       h_MCPU->Fill(npv);
       //std::cout << "weight = " << getPUWeight(LumiWeights) << std::endl;
       h_MCPUr->Fill(npv, getPUWeight(LumiWeights) );
-	*/
+	
+      h_MCPUBXp1->Fill(npvbxp1);
+      h_MCPUrBXp1->Fill(npvbxp1, getPUWeight(LumiWeights) );
+      h_MCPUBXm1->Fill(npvbxm1);
+      h_MCPUrBXm1->Fill(npvbxm1, getPUWeight(LumiWeights) );
 
 
-
-
-      calculateTagProb(prob0,probge1,prob1,probge2,probge3);
-      n0b += prob0; 
-      nge1b += probge1; 
-      neq1b += prob1; 
-      nge2b += probge2;      
-      nge3b += probge3;
+      //calculateTagProb(prob0,probge1,prob1,probge2,probge3);
+      //n0b += prob0; 
+      //nge1b += probge1; 
+      //neq1b += prob1; 
+      //nge2b += probge2;      
+      //nge3b += probge3;
 
       /*
       for (unsigned int i = 0; i < myJetsPF->size(); ++i) {
@@ -4644,7 +4681,7 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
 
 
 
-      }//end Cut
+      //}//end Cut
 
   }
 
@@ -4652,13 +4689,13 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
   cout<<endl;
   stopTimer(nevents);
 
-  std::cout << "n0b = " << n0b << std::endl;
-  std::cout << "nge1b = " << nge1b << std::endl;
-  std::cout << "neq1b = " << neq1b << std::endl;
-  std::cout << "nge2b = " << nge2b << std::endl;
-  std::cout << "nge3b = " << nge3b << std::endl;
-
-  std::cout << "npass = " << npass << std::endl;
+  //std::cout << "n0b = " << n0b << std::endl;
+  //std::cout << "nge1b = " << nge1b << std::endl;
+  //std::cout << "neq1b = " << neq1b << std::endl;
+  //std::cout << "nge2b = " << nge2b << std::endl;
+  //std::cout << "nge3b = " << nge3b << std::endl;
+  //
+  //std::cout << "npass = " << npass << std::endl;
   //std::cout << "ntaggedjets = "   << ntaggedjets << std::endl;
   //std::cout << "ntaggedjets_b = " << ntaggedjets_b << std::endl;
   //std::cout << "ntaggedjets_c = " << ntaggedjets_c << std::endl;
@@ -4676,8 +4713,8 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
   //h_ltageff->Divide(h_ltag,h_ljet,1,1,"B");
   //
   //
-  //fout.Write();
-  //fout.Close();
+  fout.Write();
+  fout.Close();
 
 
   return;
