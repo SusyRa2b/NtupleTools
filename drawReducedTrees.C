@@ -3127,6 +3127,25 @@ void AN2011( TString btagselection="ge1b",const int mode=1, bool logy=false, boo
  
   */
 
+  /*
+  //SB njet
+  selection_ =TCut("HT>=400 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=200 && MET<250 && minDeltaPhiN >= 4 &&passCleaning==1")&&btagcut;
+  var="njets"; xtitle="Jet multiplicity";
+  nbins = 7; low=2; high=9;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "SB_njets_"+btagselection+modestring);
+  //SB HT
+  selection_ =TCut("HT>=400 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=200 && MET<250 && minDeltaPhiN >= 4 &&passCleaning==1")&&btagcut;
+  var="HT"; xtitle="H_{T} [GeV]";
+  nbins = 20; low=350; high=1050;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "SB_HT_"+btagselection+modestring);
+  //SB mindphin
+  selection_ =TCut("HT>=400 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=200 && MET<250 && minDeltaPhiN >= 4 &&passCleaning==1")&&btagcut;
+  var="minDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}";
+  nbins = 20; low=0; high=40;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "SB_mindphin_"+btagselection+modestring);
+  */
+
+
   resetLegendPosition();
 }
 
