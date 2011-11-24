@@ -1497,7 +1497,7 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
   // --  count events
   TCut triggerCutLSB = "1";
   TCut triggerCut = "1";
-  triggerCutLSB = "(pass_utilityHLT==1 || isRealData==1)"; //because bug in MC for pass_utilityHLT
+  triggerCutLSB = "pass_utilityHLT==1";
   triggerCut = "cutTrigger==1";
   
   TCut ge1b = "nbjetsCSVM>=1";
@@ -2455,7 +2455,7 @@ void AN2011_prescale( TString btagselection="ge1b",const int mode=1 ) {
 
   // ==========================
 
-  TCut util = "(pass_utilityHLT==1 || !isRealData) && weight<1000";
+  TCut util = "pass_utilityHLT==1 && weight<1000";
   //lumiScale_ = 19.23288; //customize lumiScale_
   lumiScale_ = 30.15471; 
 
@@ -2808,7 +2808,7 @@ void AN2011_r() { //for paper, data+MC plots at low MET
   lumiScale_ = 30.15471; //customize lumiScale_
   resetSamples();
   doData(true);
-  TCut util = "(pass_utilityHLT==1 || !isRealData) && weight<2"; //don't use weight<1 when plotting data!
+  TCut util = "pass_utilityHLT==1 && weight<2"; //don't use weight<1 when plotting data!
   selection_ =TCut("HT>=400 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && nbjetsCSVM==0 &&passCleaning==1")&&util;
   //drawR("minDeltaPhiN",4,10,50,150,"Data_eq0b");
   drawR("minDeltaPhiN",4,15,0,150,"Data_eq0b");
@@ -4897,7 +4897,7 @@ void studyPrescale_r(int ibtag = 4) {
   //TString btagselection="antib";
   //TCut btagcut = "nbjets==0";
   
-  TCut util = "(pass_utilityHLT==1 || !isRealData) && weight<1000";
+  TCut util = "pass_utilityHLT==1 && weight<1000";
   TCut LSB = "MET>=50 && MET<100";
   TCut runN = "runNumber>=175832";
 
@@ -5064,10 +5064,10 @@ void LSB_PVreweight(){
     
     
     if(allPrescale){
-      selection_ =TCut("cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=50 && MET<100 && nbjetsCSVM==0 && (pass_utilityHLT || !isRealData)")&&HTcut;//note no mdp or run cut
+      selection_ =TCut("cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=50 && MET<100 && nbjetsCSVM==0 && pass_utilityHLT==1")&&HTcut;//note no mdp or run cut
     }
     else{
-      selection_ =TCut("cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=50 && MET<100 && nbjetsCSVM==0 && (pass_utilityHLT || !isRealData)")&&HTcut&&runCut;//note no mdp
+      selection_ =TCut("cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=50 && MET<100 && nbjetsCSVM==0 && pass_utilityHLT==1")&&HTcut&&runCut;//note no mdp
     }
     //drawSimple("nGoodPV",pvnbins,pvlow,pvhigh,histfilename, "nGoodPV_prescale_data","data");
     drawSimple("nGoodPV",pvnbins,pvbins,histfilename, "nGoodPV_prescale_data","data");
@@ -5092,12 +5092,12 @@ void LSB_PVreweight(){
     hPV_W->Divide(hPVprescale_RW,hPVprescale); 
     
     
-    selection_ =TCut("cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=50 && MET<100 && nbjetsCSVM==0 && (pass_utilityHLT || !isRealData) && minDeltaPhiN>=4")&&HTcut&&runCut;
+    selection_ =TCut("cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=50 && MET<100 && nbjetsCSVM==0 && pass_utilityHLT==1 && minDeltaPhiN>=4")&&HTcut&&runCut;
     //drawSimple("nGoodPV",pvnbins,pvlow,pvhigh,histfilename, "nGoodPVPass_prescale_data","data");
     drawSimple("nGoodPV",pvnbins,pvbins,histfilename, "nGoodPVPass_prescale_data","data");
     TH1D* hPVprescalePass = (TH1D*)hinteractive->Clone("hPVprescalePass");
     
-    selection_ =TCut("cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=50 && MET<100 && nbjetsCSVM==0 && (pass_utilityHLT || !isRealData) && minDeltaPhiN<4")&&HTcut&&runCut;
+    selection_ =TCut("cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=50 && MET<100 && nbjetsCSVM==0 && pass_utilityHLT==1 && minDeltaPhiN<4")&&HTcut&&runCut;
     //drawSimple("nGoodPV",pvnbins,pvlow,pvhigh,histfilename, "nGoodPVFail_prescale_data","data");
     drawSimple("nGoodPV",pvnbins,pvbins,histfilename, "nGoodPVFail_prescale_data","data");
     TH1D* hPVprescaleFail = (TH1D*)hinteractive->Clone("hPVprescaleFail");
