@@ -2728,27 +2728,27 @@ void getCutStringForCutflow(vector<TString> &vectorOfCuts, vector<TString> &stag
   TString selectionGe1bTight;
   TString selectionGe2bTight;  
 
-  /*
+  
   //inclusive
   thisSelection="";
-  cut=getCutString(lumiScale_,thisSelection);
+  cut=getCutString(kMC,thisSelection);
   vectorOfCuts.push_back(cut);
   stageCut.push_back("Inclusive");
 
   //trigger
   if (thisSelection=="") thisSelection += "cutTrigger==1";
   else thisSelection += " && cutTrigger";
-  cut=getCutString(lumiScale_,thisSelection);
+  cut=getCutString(kMC,thisSelection);
   vectorOfCuts.push_back(cut);
   stageCut.push_back("Trigger");
-
+  
   //PV
   if (thisSelection=="") thisSelection += "cutPV==1";
   else thisSelection += " && cutPV==1";
-  cut=getCutString(lumiScale_,thisSelection);
+  cut=getCutString(kMC,thisSelection);
   vectorOfCuts.push_back(cut);
   stageCut.push_back("PV");
-  */
+  
 
   //HT
   if (thisSelection=="") {thisSelection += "HT>="; thisSelection += minHT;}
@@ -2895,7 +2895,7 @@ void getCutStringForCutflow(vector<TString> &vectorOfCuts, vector<TString> &stag
   //    cout<<stageCut[istage]<<endl;
   //    cout<<vectorOfCuts[istage]<<endl;
   //  }
-    
+      
 }
 
 void cutflow(bool isTightSelection){
