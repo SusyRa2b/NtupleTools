@@ -84,7 +84,7 @@ functionality for TH1F and TH1D e.g. the case of addOverflowBin()
 //*** AFTER SUMMER
 //***************************
 
-TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35d/";
+TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35e/";
 TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35d/";
 
 //-- reducedTrees for Oct 25 SUSY meeting. 3464.581/pb. 
@@ -2592,10 +2592,30 @@ other.
 
   loadSamples();
 
+  if (useScaleFactors_) {
+    usePUweight_=true;
+    useHLTeff_=true;
+    currentConfig_=configDescriptions_.getCorrected(); //add JERbias
+
+    //when making the MET comparison plots for the AN, disable b-tag SF for now
+    //btagcut="1";   
+    //if (btagselection=="ge2b") {
+    //  btagSFweight_="probge2";
+    //}
+    //else if (btagselection=="ge1b") {
+    //  btagSFweight_="probge1";
+    //}
+    //else if (btagselection=="ge3b") {
+    //  btagSFweight_="probge3";
+    //}
+    //else {assert(0);}
+  }
+
+
   int nbins;
   float low,high;
   TString var,xtitle;
-  bool vb = true;
+  bool vb = false;
   
   //ge1b, Loose
   //const int nvarbins=18;
@@ -2606,8 +2626,8 @@ other.
   //const float varbins[]={100, 120, 140, 160, 180, 200, 220, 240, 260, 280, 300, 350, 400, 450, 500, 550}; 
   
   //ge2b, Loose and Tight
-  const int nvarbins=13;
-  const float varbins[]={100, 125, 150, 175, 200, 225, 250, 275, 300, 350, 400, 450, 500, 550}; //AN and PAS 
+  const int nvarbins=15;
+  const float varbins[]={100, 125, 150, 175, 200, 225, 250, 275, 300, 350, 400, 450, 500, 550, 600, 650}; //AN and PAS 
   //const int nvarbins=12;
   //const float varbins[]={200, 225, 250, 275, 300, 350, 400, 450, 550,650,750, 850,950}; 
 
@@ -2630,8 +2650,9 @@ other.
   selection_ =TCut("cutPV==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && minDeltaPhiN >= 4 && MT_Wlep>=0 && MT_Wlep<100")&&btagcut&&HTcut;
   //selection_ =TCut("MET>=150 && cutPV==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && minDeltaPhiN >= 4")&&btagcut&&HTcut; //AN v5
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
-  nbins = 40; low=100; high=550; 
-  //nbins = 40; low=200; high=600; 
+  //nbins = 40; low=100; high=550; 
+  //nbins = 45; low=100; high=650; 
+  nbins = 40; low=200; high=600; 
   //nbins = 40; low=150; high=550; //AN v5
   //nbins = 20; low=150; high=550;
   //nbins = 16; low=150; high=550;
@@ -2674,10 +2695,8 @@ other.
   SLplot->Draw("SAME");
   
   thecanvas->SaveAs("METshape_"+sample+"_SLandStandard_"+btagselection+"_"+HTselection+".pdf");
-  //not enough stats in WJets to really show anything
 
   //Hack to get it plotted with ratio plot
-   //Hack to get it plotted with ratio plot
   TCanvas* myC = 0;
   myC = new TCanvas("myC", "myC", 600,700);
   gStyle->SetPadBorderMode(0);
@@ -2763,7 +2782,7 @@ other.
   }
   else if(sample=="singletop"){
     myLegend->AddEntry(SIGplot,"single-top, 0 leptons", "lp");
-    myLegend->AddEntry(SLplot, "singletop, 1 lepton", "lp");
+    myLegend->AddEntry(SLplot, "single-top, 1 lepton", "lp");
   }
   myLegend->Draw();
   myC->Print("METshape_logAndRatio_"+sample+"_SLandStandard_"+btagselection+"_"+HTselection+".pdf");
