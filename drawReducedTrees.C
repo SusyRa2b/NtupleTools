@@ -77,6 +77,7 @@ functionality for TH1F and TH1D e.g. the case of addOverflowBin()
 #include <fstream>
 
 #include <iostream>
+#include <iomanip>
 #include <map>
 #include <set>
 	
@@ -84,6 +85,8 @@ functionality for TH1F and TH1D e.g. the case of addOverflowBin()
 //*** AFTER SUMMER
 //***************************
 
+  //TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35d/";
+  //TString inputPath = "/cu1/joshmt/reducedTrees/test/";
 TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35e/";
 TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35d/";
 
@@ -164,12 +167,12 @@ SignalEffData signalSystematics2011(const SearchRegion & region, bool isSL=false
   else if (btagselection=="ge1b") {}
   else if (btagselection=="ge3b") {
     bcut="nbjets>=3";
-    bweightstring="probge3"; //this one isn't calculated right now, i think
+    bweightstring="probge3"; 
   }
   else {assert(0);}
 
-  TCut baseline = "cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && passCleaning";
-  if (isSL) baseline = "cutPV==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && MT_Wlep>=0 && MT_Wlep<100 && passCleaning";
+  TCut baseline = "cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && passCleaning==1";
+  if (isSL) baseline = "cutPV==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && MT_Wlep>=0 && MT_Wlep<100 && passCleaning==1";
 
 
   TCut passOther = "minDeltaPhiN>=4";
@@ -204,14 +207,14 @@ each of the systematics variations was done with JERbias turned on.
   double raw0=  getIntegral(sampleOfInterest);
   double rawerr0=  getIntegralErr(sampleOfInterest);
   cout<<"raw yield = "<<raw0<<" +/- "<<rawerr0<<endl;
-  TH1D* totalPdfWeightsCTEQ = (TH1D*) files_[currentConfig_][sampleOfInterest]->Get("pdfWeightSumCTEQ");
-  const  float nominalweight=   totalPdfWeightsCTEQ->GetBinContent(1);
+  TH2D* totalPdfWeightsCTEQ = (TH2D*) files_[currentConfig_][sampleOfInterest]->Get("scanProcessTotalsCTEQ");
+  const  float nominalweight=   totalPdfWeightsCTEQ->GetBinContent(10,0);
 
-  TH1D* totalPdfWeightsMSTW = (TH1D*) files_[currentConfig_][sampleOfInterest]->Get("pdfWeightSumMSTW");
-  cout<< nominalweight<<"\t"<<   totalPdfWeightsMSTW->GetBinContent(1)<<endl;
+  TH2D* totalPdfWeightsMSTW = (TH2D*) files_[currentConfig_][sampleOfInterest]->Get("scanProcessTotalsMSTW");
+  cout<< nominalweight<<"\t"<<   totalPdfWeightsMSTW->GetBinContent(10,0)<<endl;
 
-  TH1D* totalPdfWeightsNNPDF = (TH1D*) files_[currentConfig_][sampleOfInterest]->Get("pdfWeightSumNNPDF");
-  cout<< nominalweight<<"\t"<<   totalPdfWeightsNNPDF->GetBinContent(1)<<endl;
+  TH2D* totalPdfWeightsNNPDF = (TH2D*) files_[currentConfig_][sampleOfInterest]->Get("scanProcessTotalsNNPDF");
+  cout<< nominalweight<<"\t"<<   totalPdfWeightsNNPDF->GetBinContent(10,0)<<endl;
 
   currentConfig_=configDescriptions_.getCorrected(); //add  JER bias
   //the logic here used to be very fragile, so try to ensure that this is the correct thing
@@ -221,6 +224,7 @@ each of the systematics variations was done with JERbias turned on.
 
   drawPlots(var,nbins,low,high,xtitle,"events","dummyH");
   cout<<"add JER = "<<getIntegral(sampleOfInterest)<<" +/- "<<getIntegralErr(sampleOfInterest) <<endl;
+  results.yield_JER = getIntegral(sampleOfInterest);
 
   //this will be used for PDF uncertainties
   TTree* thetree = (TTree*) files_[currentConfig_][sampleOfInterest]->Get("reducedTree");
@@ -228,10 +232,12 @@ each of the systematics variations was done with JERbias turned on.
   usePUweight_=true;
   drawPlots(var,nbins,low,high,xtitle,"events","dummyH");
   cout<<"add PU weight yield = "<<getIntegral(sampleOfInterest)<<" +/- "<<getIntegralErr(sampleOfInterest) <<endl;
+  results.yield_JER_PU = getIntegral(sampleOfInterest);
 
   useHLTeff_=true;
   drawPlots(var,nbins,low,high,xtitle,"events","dummyH");
   cout<<"add HLT eff = "<<getIntegral(sampleOfInterest)<<" +/- "<<getIntegralErr(sampleOfInterest) <<endl;
+  results.yield_JER_PU_HLT = getIntegral(sampleOfInterest);
 
   selection_ = baseline && HTcut && passOther && SRMET; //remove b tag
   btagSFweight_=bweightstring;
@@ -297,7 +303,7 @@ each of the systematics variations was done with JERbias turned on.
   double Xminus[22];// Xminus[0]=0;
   for (int i=1; i<=44; i++) { //there are 44+1 pdf weights
     //get the sum of weight[i] for the whole sample with no cuts
-    float totalweight=   totalPdfWeightsCTEQ->GetBinContent(i+1);
+    float totalweight=   totalPdfWeightsCTEQ->GetBinContent(10,i); //used to be i+1
     TString extraWeight=""; extraWeight+=nominalweight; extraWeight+="/"; extraWeight+=totalweight;
     //then get the yield after cuts with extra weight pdfWeights[i]/sum
     TH1D pdfEventCounter("pdfEventCounter","pdfEventCounter",1,0,1e9);
@@ -352,7 +358,7 @@ each of the systematics variations was done with JERbias turned on.
   double Xminus[20];// Xminus[0]=0;
   for (int i=1; i<=40; i++) { //there are 40+1 pdf weights
     //get the sum of weight[i] for the whole sample with no cuts
-    float totalweight=   totalPdfWeightsMSTW->GetBinContent(i+1);
+    float totalweight=   totalPdfWeightsMSTW->GetBinContent(10,i);//was i+1
     TString extraWeight=""; extraWeight+=nominalweight; extraWeight+="/"; extraWeight+=totalweight;
     //then get the yield after cuts with extra weight pdfWeights[i]/sum
     TH1D pdfEventCounter("pdfEventCounter","pdfEventCounter",1,0,1e9);
@@ -400,7 +406,7 @@ each of the systematics variations was done with JERbias turned on.
     TH1D nnpdfYields("nnpdfYields","nnpdf yields",2,0,1e9); //the limits really don't matter (root finds the RMS in an unbinned way)
     for (int i=1; i<=99; i++) { //0 is just weight 1. there are 99 others
       //get the sum of weight[i] for the whole sample with no cuts
-      float totalweight=   totalPdfWeightsNNPDF->GetBinContent(i+1); //i really did store the total in bin i+1
+      float totalweight=   totalPdfWeightsNNPDF->GetBinContent(10,i); //used to be i+1
       TString extraWeight=""; extraWeight+=nominalweight; extraWeight+="/"; extraWeight+=totalweight;
       //then get the yield after cuts with extra weight pdfWeights[i]/sum
       TH1D pdfEventCounter("pdfEventCounter","pdfEventCounter",1,0,1e9);
@@ -448,14 +454,17 @@ void runSystematics2011_LM9(  TString sampleOfInterest="LM9" ) {
   
 
   vector<ofstream*> textfiles;
+  vector<ofstream*> textfiles_human;
   for (unsigned int i=0; i<searchRegions_.size(); i++) {
     char effoutput[500];
     sprintf(effoutput,"signalSyst.%s.%s%s.dat",sampleOfInterest.Data(),searchRegions_[i].btagSelection.Data(),searchRegions_[i].owenId.Data());
 
     textfiles.push_back( new ofstream(effoutput));
+    sprintf(effoutput,"signalSystDetails.%s.%s%s.dat",sampleOfInterest.Data(),searchRegions_[i].btagSelection.Data(),searchRegions_[i].owenId.Data());
+    textfiles_human.push_back( new ofstream(effoutput));
   }
 
-  for (unsigned int i=0; i<searchRegions_.size(); i++) {
+  for (unsigned int i=0; i< searchRegions_.size(); i++) {
     (*textfiles[i])<<m0_<<" "<<m12_<<" "<<0<<" ";
     SignalEffData SB =  signalSystematics2011(sbRegions_[i],false,false,sampleOfInterest);
     SignalEffData SIG=  signalSystematics2011(searchRegions_[i],false,false,sampleOfInterest);
@@ -476,10 +485,35 @@ void runSystematics2011_LM9(  TString sampleOfInterest="LM9" ) {
 // 	<<"["<<100*SIG.systematics["JES"].minus<<" "<<100*SIG.systematics["JES"].plus<<"]"
 // 	<<endl;
 //     cout<<" ====================================== "<<endl;
+    (*textfiles_human[i])<<" Raw yield                &"<<TMath::Nint(SIG.rawYield)<<endl;
+    (*textfiles_human[i])<<" After JER correction     &"<<TMath::Nint(SIG.yield_JER)<<endl;
+    (*textfiles_human[i])<<" After PU reweighting     &"<<TMath::Nint(SIG.yield_JER_PU)<<endl;
+    (*textfiles_human[i])<<" After HLT correction     &"<<TMath::Nint(SIG.yield_JER_PU_HLT)<<endl;
+    (*textfiles_human[i])<<" After btag SF            &"<<TMath::Nint(SIG.rawYield * SIG.effCorr)<<endl;
+    (*textfiles_human[i])<<" \\hline                   &"<<endl;
+    (*textfiles_human[i])<<" Total correction         &"<< setprecision(2)<<SIG.effCorr<<endl;
+    (*textfiles_human[i])<<" \\hline \\hline            &"<<endl;
+    (*textfiles_human[i])<<"   JES                    &"<<setprecision(3)<<100*SIG.value("JES")<<endl;
+    (*textfiles_human[i])<<"   JER                    &"<<100*SIG.value("JER")<<endl;
+    (*textfiles_human[i])<<"   Unclustered energy     &"<<100*SIG.value("MET")<<endl;
+    (*textfiles_human[i])<<"   PU                     &"<<100*SIG.value("PU")<<endl;
+    (*textfiles_human[i])<<"  \\b tag efficiency       &"<<100*SIG.value("btag")<<endl;
+    (*textfiles_human[i])<<"   PDF                    &"<<100*SIG.value("PDF")<<endl;
+    (*textfiles_human[i])<<"   kFactor                &"<<100*SIG.value("kFactor")<<endl;
+    (*textfiles_human[i])<<"   Trigger efficiency     &"<<100*SIG.value("trigger")<<endl;
+    (*textfiles_human[i])<<"   \\MET cleaning          &"<<100*SIG.value("cleaning")<<endl;
+    (*textfiles_human[i])<<"   Lepton Veto            &"<<100*SIG.value("LepVeto")<<endl;
+    (*textfiles_human[i])<<"   Luminosity             &"<<100*SIG.value("lumi")<<endl;
+    (*textfiles_human[i])<<" \\hline                   &"<<endl;
+    (*textfiles_human[i])<<" Total systematic         &"<<setprecision(3)<<SIG.totalSystematic()<<endl;
+    (*textfiles_human[i])<<" \\hline                   &"<<endl;
+
   }
 
   for (unsigned int i=0; i<searchRegions_.size(); i++) {
     textfiles.at(i)->close();
+    textfiles_human.at(i)->close();
+
   }
 
 }
@@ -794,8 +828,8 @@ map<pair<int,int>, SignalEffData>  runTH2Syst2011_mSugra(const SearchRegion & re
     bweightstring="probge3"; //this one isn't calculated right now, i think
   }
   else {assert(0);}
-  TCut baseline = "cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1";
-  if (isSL) baseline = "cutPV==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0))";
+  TCut baseline = "cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && passCleaning==1";
+  if (isSL) baseline = "cutPV==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && MT_Wlep>=0 && MT_Wlep<100 && passCleaning==1";
   TCut passOther = "minDeltaPhiN>=4";
   if (isLDP) passOther="minDeltaPhiN<4";
   selection_ = baseline && HTcut && passOther && SRMET && bcut;
@@ -3691,243 +3725,6 @@ void drawrplots() {
 
 }
 
-void drawForPreAp_smonly() {
-  /*
-comment out LM13
-
-.L drawReducedTrees.C++
-  */
-  setStackMode(false,false);
-  doData(true);
-  doRatioPlot(false);
-  //  setPadDimensions(700,500);
-  setLogY(true);
-
-  int nbins;
-  float low,high;
-  TString var,xtitle;
-
-  doOverflowAddition(true);
-  drawTotalSM_=true;
-  drawMarkers_=false;
-
-  var="MET"; xtitle="E_{T}^{miss} [GeV]";
-
-  //log scale, no stack, full MET range
-  nbins=35; low=0; high=350;
-  setPlotMinimum(0.1);
-  selection_ ="nbjets>=1 && cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && cutDeltaPhi==1 && passInconsistentMuon==1 && passBadPFMuon==1 &&weight<1000";
-  drawPlots(var,nbins,low,high,xtitle,"Events", "met_ge1b");
-  selection_ ="nbjets==1 && cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && cutDeltaPhi==1 && passInconsistentMuon==1 && passBadPFMuon==1 &&weight<1000";
-  drawPlots(var,nbins,low,high,xtitle,"Events", "met_eq1b");
-  selection_ ="nbjets>=2 && cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && cutDeltaPhi==1 && passInconsistentMuon==1 && passBadPFMuon==1 &&weight<1000";
-  drawPlots(var,nbins,low,high,xtitle,"Events", "met_ge2b");
-
-  //now linear scale with custom y range
-  resetPlotMinimum();
-  setLogY(false);
-
-  selection_ ="nbjets>=1 && cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && cutDeltaPhi==1 && passInconsistentMuon==1 && passBadPFMuon==1 &&weight<1000";
-  setPlotMaximum(35);
-  drawPlots(var,nbins,low,high,xtitle,"Events", "met_ge1b");
-  selection_ ="nbjets==1 && cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && cutDeltaPhi==1 && passInconsistentMuon==1 && passBadPFMuon==1 &&weight<1000";
-  setPlotMaximum(25);
-  drawPlots(var,nbins,low,high,xtitle,"Events", "met_eq1b");
-  selection_ ="nbjets>=2 && cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && cutDeltaPhi==1 && passInconsistentMuon==1 && passBadPFMuon==1 &&weight<1000";
-  setPlotMaximum(11);
-  drawPlots(var,nbins,low,high,xtitle,"Events", "met_ge2b");
-
-  //now fail minDeltaPhi for high-ish MET
-  resetPlotMinimum();
-  setLogY(false);
-  nbins=35; low=0; high=350;
-  selection_ ="nbjets>=1 && cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && cutDeltaPhi==0 && passInconsistentMuon==1 && passBadPFMuon==1 && MET>0";
-  setPlotMaximum(125);
-  drawPlots(var,nbins,low,high,xtitle,"Events", "met_IDP_ge1b");
-  selection_ ="nbjets==1 && cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && cutDeltaPhi==0 && passInconsistentMuon==1 && passBadPFMuon==1 && MET>0";
-  setPlotMaximum(105);
-  drawPlots(var,nbins,low,high,xtitle,"Events", "met_IDP_eq1b");
-  selection_ ="nbjets>=2 && cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && cutDeltaPhi==0 && passInconsistentMuon==1 && passBadPFMuon==1 && MET>0";
-  setPlotMaximum(23);
-  drawPlots(var,nbins,low,high,xtitle,"Events", "met_IDP_ge2b");
-
-  setLogY(true);
-  setPlotMinimum(0.1);
-  selection_ ="nbjets>=1 && cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && cutDeltaPhi==0 && passInconsistentMuon==1 && passBadPFMuon==1 && MET>0";
-  setPlotMaximum(150);
-  drawPlots(var,nbins,low,high,xtitle,"Events", "met_IDP_ge1b");
-  selection_ ="nbjets==1 && cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && cutDeltaPhi==0 && passInconsistentMuon==1 && passBadPFMuon==1 && MET>0";
-  setPlotMaximum(130);
-  drawPlots(var,nbins,low,high,xtitle,"Events", "met_IDP_eq1b");
-  selection_ ="nbjets>=2 && cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && cutDeltaPhi==0 && passInconsistentMuon==1 && passBadPFMuon==1 && MET>0";
-  setPlotMaximum(50);
-  drawPlots(var,nbins,low,high,xtitle,"Events", "met_IDP_ge2b");
-
-}
-
-void drawForPreAp_susy() {
-
-  /*
-uncomment LM13
-
-.L drawReducedTrees.C++
-  */
-  setStackMode(false,false);
-  doData(true);
-  doRatioPlot(false);
-  //  setPadDimensions(700,500);
-  setLogY(true);
-
-  int nbins;
-  float low,high;
-  TString var,xtitle;
-
-  doOverflowAddition(true);
-  drawTotalSM_=true;
-  drawTotalSMSusy_=true;
-  drawSusyOnly_=true;
-  drawMarkers_=false;
-
-  nbins=60; low=0; high=600;
-  setPlotMinimum(0.1);
-  var="MET"; xtitle="E_{T}^{miss} [GeV]";
-  selection_ ="nbjets>=1 && cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && cutDeltaPhi==1 && passInconsistentMuon==1 && passBadPFMuon==1 &&weight<1000";
-  drawPlots(var,nbins,low,high,xtitle,"Events", "met_withSusy_ge1b");
-
-  selection_ ="nbjets==1 && cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && cutDeltaPhi==1 && passInconsistentMuon==1 && passBadPFMuon==1 &&weight<1000";
-  drawPlots(var,nbins,low,high,xtitle,"Events", "met_withSusy_eq1b");
-
-  selection_ ="nbjets>=2 && cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && cutDeltaPhi==1 && passInconsistentMuon==1 && passBadPFMuon==1 &&weight<1000";
-  drawPlots(var,nbins,low,high,xtitle,"Events", "met_withSusy_ge2b");
-
-  setLogY(false);
-  resetPlotMinimum();
-
-  selection_ ="nbjets>=1 && cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && cutDeltaPhi==1 && passInconsistentMuon==1 && passBadPFMuon==1 &&weight<1000";
-  setPlotMaximum(11);
-  drawPlots(var,nbins,low,high,xtitle,"Events", "met_withSusy_ge1b");
-
-  selection_ ="nbjets==1 && cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && cutDeltaPhi==1 && passInconsistentMuon==1 && passBadPFMuon==1 &&weight<1000";
-  setPlotMaximum(7);
-  drawPlots(var,nbins,low,high,xtitle,"Events", "met_withSusy_eq1b");
-
-  selection_ ="nbjets>=2 && cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && cutDeltaPhi==1 && passInconsistentMuon==1 && passBadPFMuon==1 &&weight<1000";
-  setPlotMaximum(5);
-  drawPlots(var,nbins,low,high,xtitle,"Events", "met_withSusy_ge2b");
-
-
-
-}
-
-void drawForANandPAS () {
-  /*
-.L drawReducedTrees.C++
-  */
-  setStackMode(true);
-  doData(true);
-  doRatioPlot(false);
-  resetPlotMinimum();
-  setPadDimensions(700,500);
-  setLogY(false);
-
-  int nbins;
-  float low,high;
-  TString var,xtitle;
-
-  doOverflowAddition(false);
-
-  var="bestTopMass"; xtitle="best 3-jet mass (GeV)";
-  // === plots for AN and PAS (aspect ratio adjusted)
-  const int nvarbins=5;
-  const float varbins[]={0.,160.,180.,260.,400.,800.};
-  //SB region
-  selection_ ="nbjets>=1 && cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && cutDeltaPhi==1 && passInconsistentMuon==1 && passBadPFMuon==1 && MET>=100 && MET<150";
-  renormalizeBins_=false;
-  setPlotMaximum(25);
-  drawPlots(var,nvarbins,varbins,xtitle,"Events", "mcdata_bestM3j_met_100_150_ge1btag_vb");
-  renormalizeBins_=true;
-  resetPlotMaximum();
-  drawPlots(var,nvarbins,varbins,xtitle,"Events", "mcdata_bestM3j_met_100_150_ge1btag_vbrn");
-
-  selection_ ="nbjets==1 && cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && cutDeltaPhi==1 && passInconsistentMuon==1 && passBadPFMuon==1 && MET>=100 && MET<150";
-  renormalizeBins_=false;
-  setPlotMaximum(20);
-  drawPlots(var,nvarbins,varbins,xtitle,"Events", "mcdata_bestM3j_met_100_150_eq1btag_vb");
-  renormalizeBins_=true;
-  resetPlotMaximum();
-  drawPlots(var,nvarbins,varbins,xtitle,"Events", "mcdata_bestM3j_met_100_150_eq1btag_vbrn");
-
-  selection_ ="nbjets>=2 && cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && cutDeltaPhi==1 && passInconsistentMuon==1 && passBadPFMuon==1 && MET>=100 && MET<150";
-  renormalizeBins_=false;
-  //  setPlotMaximum(8);
-  drawPlots(var,nvarbins,varbins,xtitle,"Events", "mcdata_bestM3j_met_100_150_ge2btag_vb");
-  renormalizeBins_=true;
-  resetPlotMaximum();
-  drawPlots(var,nvarbins,varbins,xtitle,"Events", "mcdata_bestM3j_met_100_150_ge2btag_vbrn");
-
-  //-------------- signal region ---------------
-  nbins=10; low=0; high=800;
-
-  selection_ ="nbjets>=1 && cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && cutDeltaPhi==1 && passInconsistentMuon==1 && passBadPFMuon==1 && cutMET==1";
-  renormalizeBins_=false;
-  drawPlots(var,nvarbins,varbins,xtitle,"Events", "mcdata_bestM3j_met_50_inf_ge1btag_vb");
-  drawPlots(var,nbins,low,high,xtitle,"Events", "mcdata_bestM3j_met_50_inf_ge1btag");
-  renormalizeBins_=true;
-  drawPlots(var,nvarbins,varbins,xtitle,"Events", "mcdata_bestM3j_met_50_inf_ge1btag_vbrn");
-
-
-  selection_ ="nbjets==1 && cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && cutDeltaPhi==1 && passInconsistentMuon==1 && passBadPFMuon==1 && cutMET==1";
-  renormalizeBins_=false;
-  drawPlots(var,nvarbins,varbins,xtitle,"Events", "mcdata_bestM3j_met_50_inf_eq1btag_vb");
-  drawPlots(var,nbins,low,high,xtitle,"Events", "mcdata_bestM3j_met_50_inf_eq1btag");
-  renormalizeBins_=true;
-  drawPlots(var,nvarbins,varbins,xtitle,"Events", "mcdata_bestM3j_met_50_inf_eq1btag_vbrn");
-
-  selection_ ="nbjets>=2 && cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && cutDeltaPhi==1 && passInconsistentMuon==1 && passBadPFMuon==1 && cutMET==1";
-  renormalizeBins_=false;
-  drawPlots(var,nvarbins,varbins,xtitle,"Events", "mcdata_bestM3j_met_50_inf_ge2btag_vb");
-  drawPlots(var,nbins,low,high,xtitle,"Events", "mcdata_bestM3j_met_50_inf_ge2btag");
-  renormalizeBins_=true;
-  drawPlots(var,nvarbins,varbins,xtitle,"Events", "mcdata_bestM3j_met_50_inf_ge2btag_vbrn");
-
-  // -- SB region, compare shapes --
-  setStackMode(false);
-  renormalizeBins_=false;
-  nbins=10; low=0; high=800;
-  selection_ ="nbjets>=1 && cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && cutDeltaPhi==1 && passInconsistentMuon==1 && passBadPFMuon==1 && MET>=100 && MET<150";
-  drawPlots(var,nbins,low,high,xtitle,"Arbitrary Units", "m3j_shapesInMC_SB_ge1btag");
-  drawPlots(var,nvarbins,varbins,xtitle,"Arbitrary Units", "m3j_shapesInMC_SB_ge1btag_vb");
-
-
-  resetPadDimensions();
-
-}
-
-
-void drawSoftJets() {
-/*
-.L drawReducedTrees.C++
-*/
-
-//this seems completely uninteresting!
-
-  setStackMode(true);
-  doData(true);
-  int nbins;
-  float low,high;
-  TString var,xtitle;
-  doRatioPlot(false);
-  setLogY(false);
-
-  nbins=10; low=0; high=10;
-  var="nLooseJets20_30"; xtitle="Soft Jet multiplicity";
-  //ratioMin = 0; ratioMax = 2;
-  selection_ ="nbjets>=1 && cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 &&cutMET==1 && cutDeltaPhi==1 && passInconsistentMuon==1 && passBadPFMuon==1 &&weight<1000";
-  drawPlots(var,nbins,low,high,xtitle,"Events", "nsoftjets_ge1b");
-  
-
-}
-
 void drawSomething() {
   /* for reference, here is all cuts (>=0 b)
 selection_ ="nbjets>=0 && cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && cutMET==1 && cutDeltaPhi==1 && cutCleaning==1";
@@ -5475,797 +5272,3 @@ void studyRqcd(int ibtag = 4){
   //drawR("minDeltaPhiN", 4, "MET", 6, 50, 350, "MET_njetsge5_"+btagstring);
 
 }
-
-/* jmt -- deprecated Nov 2011
-void drawVJets() {
-  
-  useFlavorHistoryWeights_=true;
-
-  doOverflowAddition(true);
-  setStackMode(true);
-  doData(true);
-  doRatioPlot(true);
-  setLogY(false);
-  
-  setQuiet(true);
-
-  int nbins;
-  float low,high;
-  TString var,xtitle;
-
-  TCut baseSelection ="cutHT==1 && cutPV==1 && cutTrigger==1 && passInconsistentMuon==1 && passBadPFMuon==1 && cutDeltaPhi==1 && (nElectrons==0 && nMuons==1)";// && bestTopMass>350" ;
-  TString extraName = ""; //"_m3jGT350";
-  TCut njetCut = "njets ==2";  
-
-  const TCut METcut = "MET>40";
-  const TCut METcut2 = "MET>60";
-  const TCut METcut3 = "MET>100";
-  const TCut MTcut = "MT_Wlep>30";
-
-  const  TCut ge1b =  "nbjets >= 1";
-  const  TCut ge2b =  "nbjets >= 2";
-  const  TCut eq1b =  "nbjets == 1";
-  const  TCut pretagCut =  "1";
-  for (int ibtag = 0; ibtag<4; ibtag++) { //do this an ugly way for now
-    TCut theBTaggingCut = ge1b; TString btagstring = "ge1b";
-    if (ibtag==0) { //nothing to do
-    }
-    else if (ibtag==1) {
-      theBTaggingCut = eq1b; 
-      btagstring = "eq1b";
-    }
-    else if (ibtag==2) {
-      theBTaggingCut = ge2b; 
-      btagstring = "ge2b";
-    }
-    else if(ibtag==3) {
-      theBTaggingCut = pretagCut;
-      btagstring = "pre";
-    }
-    else assert(0);
-   
-    resetPlotMinimum();
-    nbins=10; low=0; high = 10;
-    var="njets"; xtitle="njets";
-    
-
-    selection_ = baseSelection && theBTaggingCut;
-    drawPlots(var,nbins,low,high,xtitle,"Events", btagstring+extraName+"_1muon_njets");
-
-
-    selection_ = baseSelection && njetCut && theBTaggingCut;  
-
-    resetPlotMinimum();
-    nbins=10; low=0; high = 200;
-    var="MET"; xtitle="MET (GeV)"; 
-    drawPlots(var,nbins,low,high,xtitle,"Events", btagstring+extraName+"_1muon2jet_met");
-   
-    resetPlotMinimum();
-    nbins=20; low=10; high = 300;
-    var="muonpt1"; xtitle="muonpt1"; 
-    drawPlots(var,nbins,low,high,xtitle,"Events", btagstring+extraName+"_1muon2jet_muonpt1");
-    
-    { //give this its own scope
-      cout<<"no extra cuts"<<endl;
-      double ndata= hdata->Integral();
-      double nnonW=0,nW=0;
-      double nnonW_err=0,nW_err=0;
-      for ( std::map<TString, TH1D*>::iterator ihist = histos_.begin(); ihist!=histos_.end(); ++ihist) {
-	if (ihist->second != 0) {
-	  if (TString(ihist->second->GetName()).Contains("WJets")) {
-	    nW = ihist->second->Integral();
-	    nW_err = jmt::errOnIntegral(ihist->second);
-	  }
-	  else {
-	    nnonW += ihist->second->Integral();
-	    nnonW_err += pow(jmt::errOnIntegral(ihist->second),2);
-	  }
-	}
-      }
-      cout<<"(data - nonW)/W = ("<<ndata<<" - "<<nnonW<<") / "<<nW<<endl;
-      double err = jmt::errAoverB( ndata-nnonW, sqrt(ndata+nnonW_err), nW,nW_err);
-      cout<<"                = "<<(ndata-nnonW)/nW<<" +/- "<<err<<endl;
-    }
-
-    selection_ = baseSelection && njetCut && theBTaggingCut && METcut;  
-    drawPlots(var,nbins,low,high,xtitle,"Events", btagstring+extraName+"_1muon2jet_muonpt1_MET40");
-    { //give this its own scope
-      cout<<"MET>40"<<endl;
-      double ndata= hdata->Integral();
-      double nnonW=0,nW=0;
-      double nnonW_err=0,nW_err=0;
-      for ( std::map<TString, TH1D*>::iterator ihist = histos_.begin(); ihist!=histos_.end(); ++ihist) {
-	if (ihist->second != 0) {
-	  if (TString(ihist->second->GetName()).Contains("WJets")) {
-	    nW = ihist->second->Integral();
-	    nW_err = jmt::errOnIntegral(ihist->second);
-	  }
-	  else {
-	    nnonW += ihist->second->Integral();
-	    nnonW_err += pow(jmt::errOnIntegral(ihist->second),2);
-	  }
-	}
-      }
-      cout<<"(data - nonW)/W = ("<<ndata<<" - "<<nnonW<<") / "<<nW<<endl;
-      double err = jmt::errAoverB( ndata-nnonW, sqrt(ndata+nnonW_err), nW,nW_err);
-      cout<<"                = "<<(ndata-nnonW)/nW<<" +/- "<<err<<endl;
-    }
-
-    selection_ = baseSelection && njetCut && theBTaggingCut && METcut2;  
-    drawPlots(var,nbins,low,high,xtitle,"Events", btagstring+extraName+"_1muon2jet_muonpt1_MET60");
-    { //give this its own scope
-      cout<<"MET>60"<<endl;
-      double ndata= hdata->Integral();
-      double nnonW=0,nW=0;
-      double nnonW_err=0,nW_err=0;
-      for ( std::map<TString, TH1D*>::iterator ihist = histos_.begin(); ihist!=histos_.end(); ++ihist) {
-	if (ihist->second != 0) {
-	  if (TString(ihist->second->GetName()).Contains("WJets")) {
-	    nW = ihist->second->Integral();
-	    nW_err = jmt::errOnIntegral(ihist->second);
-	  }
-	  else {
-	    nnonW += ihist->second->Integral();
-	    nnonW_err += pow(jmt::errOnIntegral(ihist->second),2);
-	  }
-	}
-      }
-      cout<<"(data - nonW)/W = ("<<ndata<<" - "<<nnonW<<") / "<<nW<<endl;
-      double err = jmt::errAoverB( ndata-nnonW, sqrt(ndata+nnonW_err), nW,nW_err);
-      cout<<"                = "<<(ndata-nnonW)/nW<<" +/- "<<err<<endl;
-    }
-
-    selection_ = baseSelection && njetCut && theBTaggingCut && METcut3;  
-    drawPlots(var,nbins,low,high,xtitle,"Events", btagstring+extraName+"_1muon2jet_muonpt1_MET100");
-    { //give this its own scope
-      cout<<"MET>100"<<endl;
-      double ndata= hdata->Integral();
-      double nnonW=0,nW=0;
-      double nnonW_err=0,nW_err=0;
-      for ( std::map<TString, TH1D*>::iterator ihist = histos_.begin(); ihist!=histos_.end(); ++ihist) {
-	if (ihist->second != 0) {
-	  if (TString(ihist->second->GetName()).Contains("WJets")) {
-	    nW = ihist->second->Integral();
-	    nW_err = jmt::errOnIntegral(ihist->second);
-	  }
-	  else {
-	    nnonW += ihist->second->Integral();
-	    nnonW_err += pow(jmt::errOnIntegral(ihist->second),2);
-	  }
-	}
-      }
-      cout<<"(data - nonW)/W = ("<<ndata<<" - "<<nnonW<<") / "<<nW<<endl;
-      double err = jmt::errAoverB( ndata-nnonW, sqrt(ndata+nnonW_err), nW,nW_err);
-      cout<<"                = "<<(ndata-nnonW)/nW<<" +/- "<<err<<endl;
-    }
-
-
-    selection_ = baseSelection && njetCut && theBTaggingCut && MTcut;  
-    drawPlots(var,nbins,low,high,xtitle,"Events", btagstring+extraName+"_1muon2jet_muonpt1_MT15");
-    { //give this its own scope
-      cout<<"MT>30"<<endl;
-      double ndata= hdata->Integral();
-      double nnonW=0,nW=0;
-      double nnonW_err=0,nW_err=0;
-      for ( std::map<TString, TH1D*>::iterator ihist = histos_.begin(); ihist!=histos_.end(); ++ihist) {
-	if (ihist->second != 0) {
-	  if (TString(ihist->second->GetName()).Contains("WJets")) {
-	    nW = ihist->second->Integral();
-	    nW_err = jmt::errOnIntegral(ihist->second);
-	  }
-	  else {
-	    nnonW += ihist->second->Integral();
-	    nnonW_err += pow(jmt::errOnIntegral(ihist->second),2);
-	  }
-	}
-      }
-      cout<<"(data - nonW)/W = ("<<ndata<<" - "<<nnonW<<") / "<<nW<<endl;
-      double err = jmt::errAoverB( ndata-nnonW, sqrt(ndata+nnonW_err), nW,nW_err);
-      cout<<"                = "<<(ndata-nnonW)/nW<<" +/- "<<err<<endl;
-      cout<<"W / SM = "<<nW/(nW+nnonW)<<endl;
-    }
-
-
-    selection_ = baseSelection && njetCut && theBTaggingCut;  
-    nbins=20; low=0; high=300;
-    //nbins=25; low=-5; high=10;
-    var="MT_Wlep"; xtitle="leptonic W M_{T}";
-    drawPlots(var,nbins,low,high,xtitle,"Events", btagstring+extraName+"_1muon2jet_MT");
-
- }
-
-}
-*/
-
-/* deprecated function (jmt -- November 2011)
-void countABCD() {
-
-  double fitResult[]={52.6, 40.5, 14.1};
-  double fitResultErr[]={15.1, 15.9, 8.0};
-
-  loadSamples();
-
-  const  TCut baseSelection = "cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1"; //no MET, no minDeltaPhi, no cleaning, no b tag
-  const  TCut passCleaning ="passInconsistentMuon == 1 && passBadPFMuon==1 && weight<1000"; //apply cleaning but without ECAL dead cells
-  const  TCut passMinDeltaPhi = "cutDeltaPhi==1";
-  const  TCut failMinDeltaPhi = "cutDeltaPhi==0";
-  const  TCut ge1b =  "nbjets >= 1";
-  const  TCut ge2b =  "nbjets >= 2";
-  const  TCut eq1b =  "nbjets == 1";
-
-  for (int ibtag = 0; ibtag<3; ibtag++) { //do this an ugly way for now
-    TCut theBTaggingCut = ge1b; TString btagstring = "ge1b";
-    if (ibtag==0) { //nothing to do
-    }
-    else if (ibtag==1) {
-      theBTaggingCut = eq1b; 
-      btagstring = "eq1b";
-    }
-    else if (ibtag==2) {
-      theBTaggingCut = ge2b; 
-      btagstring = "ge2b";
-    }
-    else assert(0);
-
-    TTree* tree= dtree;//(TTree*) fdata->Get("reducedTree");
-    TH1D dummyhist("dummyhist","",1,0,1e9); //kludge!
-    dummyhist.Sumw2(); //not really needed for data
-
-    cout<<" ---- "<<btagstring<<" ---- "<<endl;
-
-    TCut METC = "MET>=150 && MET<5000";
-    TCut theSIGSelection = baseSelection && passCleaning && passMinDeltaPhi && theBTaggingCut && METC;
-    selection_ = theSIGSelection.GetTitle();
-    tree->Project("dummyhist","HT",getCutString(true).Data());
-    cout<<"N_SIG = "<<dummyhist.Integral()<<endl;
-
-    dummyhist.Reset();
-    if (dummyhist.Integral() != 0) assert(0);
-
-    TCut METD = "MET>=150 && MET<5000";
-    TCut theDSelection = baseSelection && passCleaning && failMinDeltaPhi && theBTaggingCut && METD;
-    selection_ = theDSelection.GetTitle();
-    tree->Project("dummyhist","HT",getCutString(true).Data());
-    double nd = dummyhist.Integral();
-    cout<<"N_D = "<<nd<<endl;
-
-    TCut META = "MET>=100 && MET<150";
-    TCut theASelection = baseSelection && passCleaning && failMinDeltaPhi && theBTaggingCut && META;
-    selection_ = theASelection.GetTitle();
-    tree->Project("dummyhist","HT",getCutString(true).Data());
-    double na = dummyhist.Integral();
-    cout<<"N_A = "<<na<<endl;
-
-    double R = nd/na;
-    double Rerr = R*sqrt(1/nd + 1/na);
-    cout<<"R   = "<<R<<" +/- "<<Rerr<<endl;
-
-    double est=R*fitResult[ibtag];
-    double estErr = est*sqrt( pow(Rerr/R,2) + pow(fitResultErr[ibtag]/fitResult[ibtag],2));
-    cout<<"estimate = "<<est<<" +/- "<<estErr<<endl;
-
-  }
-}
-*/
-
-//jmt -- don't feel like fixing getCutString here and we're not doing flvHistReweighting anyway...
-/*
-void flvHistReweighting() {
-
-  //we want to make a way to apply the k-factors 
-
-  //can use the extraSelection part of the getCutString()
-
-  dodata_=false;
-  const TString samplename = "WJets"; //if this is changed to data, lumiScale_ should not be applied
-  setQuiet(true);
-  loadSamples();
-  
-  selection_ ="nbjets>=2 && cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && cutMET==1 && cutDeltaPhi==1 && passInconsistentMuon==1 && passBadPFMuon==1 && weight<1000";
-
-  TTree* tree=0;
-  if (samplename=="data") {
-    tree = dtree;//(TTree*) fdata->Get("reducedTree");
-  }
-  else {
-    for (unsigned int isample=0; isample<samples_.size(); isample++) {
-      if ( samples_[isample].Contains(samplename)) {
-	tree = (TTree*) files_[currentConfig_][samples_[isample]]->Get("reducedTree");
-      }
-    }
-  }
-  if (tree==0) {cout<<"Something went wrong finding your sample!"<<endl; return;}
-
-  gROOT->cd();
-
-  TH1D dummyhist("dummyhist","",1,0,1e9); //the typical kludge to count events; 1 bin histogram with large range
-  dummyhist.Sumw2();
-
-  //nominal case
-  tree->Project("dummyhist","HT",getCutString(lumiScale_,"",selection_,"",0).Data());
-  float n_nom = dummyhist.GetBinContent(1);
-  float nerr_nom = dummyhist.GetBinError(1);
-  cout<<" nominal     = "<<n_nom<<" +/- "<<nerr_nom<<endl;
-  dummyhist.Reset();
-
-  //with flv hist
-  tree->Project("dummyhist","HT",getCutString(lumiScale_,"flavorHistoryWeight",selection_,"",0).Data());
-  float  n_fh = dummyhist.GetBinContent(1);
-  float  nerr_fh = dummyhist.GetBinError(1);
-  cout<<" full reweight    = "<<n_fh<<" +/- "<<nerr_fh<<endl;
-
-  const int ncat=11;
-  const float kfactors[]  = {2,2,1,1,2,1,2,1,2,1,1};
-  const float kerr_up[]   = {1,1,1,1,1,1,1,1,1,1,0};
-  const float kerr_down[] = {1,1,0.5,0.5,1,0.5,1,0.5,1,0.5,0};
-
-  float total_up=0;
-  float total_down=0;
-
-  //loop over the variations and up/down
-  for (int iupdown = 0; iupdown<=1; iupdown++ ) {
-    for (int ivariations = 0; ivariations<ncat; ivariations++) {
-      dummyhist.Reset();
-      TString manualreweight="";
-      for (int ii=0; ii<ncat; ii++) {
-	float k = kfactors[ii];
-	//vary only one at a time
-	if (ivariations == ii) {
-	  if (iupdown==0) k += kerr_up[ii];
-	  else            k -= kerr_down[ii];
-	}
-	TString thisterm;
-	thisterm.Form( "((flavorHistory==%d) * %f)", ii+1, k);
-	manualreweight += thisterm;
-	if (ii+1 != ncat) manualreweight += " + ";
-      }
-      tree->Project("dummyhist","HT",getCutString(lumiScale_,manualreweight,selection_,"",0).Data()); //this will be normalized *wrong* because it doesn't have the N/sum(k_i) factor
-      float  n = dummyhist.GetBinContent(1);
-      float  nerr = dummyhist.GetBinError(1);
-      dummyhist.Reset();
-      assert(0);//please double check that the following few lines of code have the weights and cuts handled correctly
-      tree->Project("dummyhist","HT","1"); //weight of 1
-      double unweighted = dummyhist.GetBinContent(1);
-      dummyhist.Reset();
-      tree->Project("dummyhist","HT",manualreweight); //weighted with just the k factors
-      double reweighted = dummyhist.GetBinContent(1);
-
-      n *= unweighted/reweighted;
-      nerr *= unweighted/reweighted;
-
-      TString uddesc= iupdown==0 ? " up " : "down";
-      cout<<"reweight "<< uddesc<<" [" << ivariations+1<<"] = "<<n<<" +/- "<<nerr<<" ; "<<n-n_fh<<endl;
-      if (iupdown==0) total_up += pow(n-n_fh,2);
-      else total_down += pow(n-n_fh,2);
-    }
-  }
-
-  cout<<" up  syst = "<<sqrt(total_up)<<endl;
-  cout<<"down syst = "<<sqrt(total_down)<<endl;
-
-}
-*/
-
-/* jmt -- 14 Nov 2011 -- commenting out a huge chunk that is very old (2010 analysis)
-
-void countQCDMC(){
-  useFlavorHistoryWeights_=false;
-  setStackMode(true);
-  doData(true);
-  doRatioPlot(true);
-  setQuiet(false);
-  doOverflowAddition(true);
-
-  loadSamples();
- 
-  const TCut myBase ="cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && passInconsistentMuon==1 && passBadPFMuon==1"; //no MET, no mdp, no b-tag
-
-  const TCut mdpCut = "cutDeltaPhi==1";
-  const TCut invertedmdpCut = "cutDeltaPhi==0";
-
-  const  TCut ge1b =  "nbjets >= 1";
-  const  TCut ge2b =  "nbjets >= 2";
-  const  TCut eq1b =  "nbjets == 1";
-  const  TCut pretag =  "1";
-  const  TCut antitag = "nbjets == 0";
-
-  //now for a flexible MET region
-  for (int metCutLow = 125; metCutLow <=150; metCutLow+=25) {
-    //int metCutHigh=metCutLow+50;
-    for(int metCutHigh=175; metCutHigh <= 225; metCutHigh+=25){
-      
-      int metCutHighSB = metCutLow+50;
-
-      TString SBmetCutString;
-      SBmetCutString.Form("MET >= %d && MET < %d",metCutLow,metCutHighSB);
-      TCut SBMETselection(SBmetCutString.Data());
-      TString SIGmetCutString; 
-      SIGmetCutString.Form("MET >= %d",metCutHigh);
-      TCut SIGMETselection(SIGmetCutString.Data());
-
-      
-      for (int ibtag = 0; ibtag<3; ibtag++) { //for now, skip pre and antib
-	TCut theBTaggingCut = ge1b; TString btagstring = "ge1b";
-	if (ibtag==0) { //nothing to do
-	}
-	else if (ibtag==1) {
-	  theBTaggingCut = eq1b; 
-	  btagstring = "eq1b";
-	}
-	else if (ibtag==2) {
-	  theBTaggingCut = ge2b; 
-	  btagstring = "ge2b";
-	}
-	else if (ibtag==3) {
-	  theBTaggingCut = pretag;
-	  btagstring = "pre";
-	}
-	else if (ibtag==4) {
-	  theBTaggingCut = antitag;
-	  btagstring = "antib";
-	}
-	else assert(0);
-	
-	double nA, nD, nSB, nSIG, nABCD, c_bias;
-	double nA_err, nD_err, nSB_err, nSIG_err, nABCD_err, c_bias_err;
-	TCut Aselection = myBase && theBTaggingCut && invertedmdpCut && SBMETselection;
-	TCut Dselection = myBase && theBTaggingCut && invertedmdpCut && SIGMETselection;
-	TCut SBselection = myBase && theBTaggingCut && mdpCut && SBMETselection;    
-	TCut SIGselection = myBase && theBTaggingCut && mdpCut && SIGMETselection;
-	
-	selection_=Aselection.GetTitle();
-	drawPlots("HT",1,0,10000,"","","deleteme");
-	nA = totalqcd->GetBinContent(1);
-	nA_err = totalqcd->GetBinError(1);
-	
-	selection_=Dselection.GetTitle();
-	drawPlots("HT",1,0,10000,"","","deleteme");
-	nD = totalqcd->GetBinContent(1);
-	nD_err = totalqcd->GetBinError(1);
-	
-	selection_=SBselection.GetTitle();
-	drawPlots("HT",1,0,10000,"","","deleteme");
-	nSB = totalqcd->GetBinContent(1);
-	nSB_err = totalqcd->GetBinError(1);
-	
-	selection_=SIGselection.GetTitle();
-	drawPlots("HT",1,0,10000,"","","deleteme");
-	nSIG = totalqcd->GetBinContent(1);
-	nSIG_err = totalqcd->GetBinError(1);
-	
-	
-	double up, down, up_err, down_err;
-	nABCD = nD*nSB/nA;
-	up = nD*nSIG;
-	up_err = jmt::errAtimesB(nD, nD_err, nSB, nSB_err);
-	down = nA;
-	down_err = nA_err;
-	nABCD_err = jmt::errAoverB(up, up_err, down, down_err);
-	
-	c_bias = nSIG*nA/(nSB*nD);
-	up = nSIG*nA;
-	up_err = jmt::errAtimesB(nSIG, nSIG_err, nA, nA_err);
-	down = nSB*nD;
-	down_err = jmt::errAtimesB(nSB, nSB_err, nD, nD_err);
-	c_bias_err = jmt::errAoverB(up, up_err, down, down_err);
-	
-	double pSys, mSys;
-	pSys = nABCD*(c_bias+fabs(1.0-c_bias)/2.0) - nABCD*c_bias;
-	mSys = nABCD*c_bias - nABCD*(c_bias-fabs(1-c_bias)/2.0);
-	
-
-	cout << "countQCDMC: ******************************************" << endl;
-	cout << "countQCDMC: SB is " << metCutLow << " GeV <= MET < " << metCutHighSB << " GeV, and SIG is MET >= " << metCutHigh << " GeV" << endl;
-	cout << "countQCDMC: " << theBTaggingCut.GetTitle() << endl;
-	cout << "countQCDMC: " << metCutLow <<"-"<<metCutHighSB<<" >" << metCutHigh << " " << nA << "+-" << nA_err << " " << nD << "+-" << nD_err << " " << nSB << " +-" << nSB_err << " " << nSIG << "+-" << nSIG_err << " " << nABCD << "+-" << nABCD_err << " " << c_bias << "+-" << c_bias_err << " +" << pSys <<"-"<<mSys << endl;
-	cout << "countQCDMC: ******************************************" << endl;
-	
-      }//end b-tag loop
-    }//end met high loop
-  }//end met low loop
-}// end countQCDMC()
-
-
-void countILV() {
-  setQuiet(true);
-  loadSamples();
-  const  TCut baseSelection = "cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutDeltaPhi==1 && cutMET==1"; //no cleaning, no b tag
-  const  TCut passCleaning ="passInconsistentMuon == 1 && passBadPFMuon==1 && weight<1000"; //apply cleaning but without ECAL dead cells
-
-  const  TCut ge1b =  "nbjets >= 1";
-  const  TCut ge2b =  "nbjets >= 2";
-  const  TCut eq1b =  "nbjets == 1";
-
-  const TCut muVeto = "nMuons==0";
-  const TCut eVeto = "nElectrons==0";
-
-  const TCut IMV = "nMuons==1";
-  const TCut IEV = "nElectrons==1";
-
-  //want to compare SM MC to data
-  TCut IMVselection = baseSelection && passCleaning && eVeto && IMV;
-  TCut IEVselection = baseSelection && passCleaning && muVeto && IEV;
-
-  TCut IMV_ge1b = IMVselection && ge1b;
-  TCut IMV_eq1b = IMVselection && eq1b;
-  TCut IMV_ge2b = IMVselection && ge2b;
-
-  TCut IEV_ge1b = IEVselection && ge1b;
-  TCut IEV_eq1b = IEVselection && eq1b;
-  TCut IEV_ge2b = IEVselection && ge2b;
-
-  doOverflowAddition(false);
-  bool oldSaveSetting = savePlots_;
-  savePlots_=false;
-
-  selection_=IMV_ge1b.GetTitle();
-  drawPlots("HT",1,0,10000,"","","deleteme");
-  cout<<"[IMV ge1b] Integral of data, total SM: "<<hdata->GetBinContent(1)<<" ; "<<totalsm->GetBinContent(1)<< " +/- "<<totalsm->GetBinError(1)<<endl;
-
-  selection_=IMV_eq1b.GetTitle();
-  drawPlots("HT",1,0,10000,"","","deleteme");
-  cout<<"[IMV eq1b] Integral of data, total SM: "<<hdata->GetBinContent(1)<<" ; "<<totalsm->GetBinContent(1)<< " +/- "<<totalsm->GetBinError(1)<<endl;
-
-  selection_=IMV_ge2b.GetTitle();
-  drawPlots("HT",1,0,10000,"","","deleteme");
-  cout<<"[IMV ge2b] Integral of data, total SM: "<<hdata->GetBinContent(1)<<" ; "<<totalsm->GetBinContent(1)<< " +/- "<<totalsm->GetBinError(1)<<endl;
-
-  selection_=IEV_ge1b.GetTitle();
-  drawPlots("HT",1,0,10000,"","","deleteme");
-  cout<<"[IEV ge1b] Integral of data, total SM: "<<hdata->GetBinContent(1)<<" ; "<<totalsm->GetBinContent(1)<< " +/- "<<totalsm->GetBinError(1)<<endl;
-
-  selection_=IEV_eq1b.GetTitle();
-  drawPlots("HT",1,0,10000,"","","deleteme");
-  cout<<"[IEV eq1b] Integral of data, total SM: "<<hdata->GetBinContent(1)<<" ; "<<totalsm->GetBinContent(1)<< " +/- "<<totalsm->GetBinError(1)<<endl;
-
-  selection_=IEV_ge2b.GetTitle();
-  drawPlots("HT",1,0,10000,"","","deleteme");
-  cout<<"[IEV ge2b] Integral of data, total SM: "<<hdata->GetBinContent(1)<<" ; "<<totalsm->GetBinContent(1)<< " +/- "<<totalsm->GetBinError(1)<<endl;
-
-  savePlots_=oldSaveSetting;
-}
-
-void drawOwen(TCut extracut="") {
-
-  //can't handle a tighter MET cut this way, because it affects the method differently than, say, a tighter HT cut
-  assert( !TString(extracut.GetTitle()).Contains("MET"));
-
-  savePlots_=false; //don't save eps,png,pdf files
-
-  loadSamples(false); //make sure to load single top as 3 pieces
-  //this only works if loadSamples() hasn't been called yet in this root session!
-
-  doOverflowAddition(false);
-
-  const  int nbins = 35;
-  const  float min=0;
-  const  float max=800;
-
-  bool vb = true;//variable binning ON or OFF
-  const int nvarbins=5;
-  const float varbins[]={0.,160.,180.,260.,400.,800.};
-  //use like this drawSimple("bestTopMass",nvarbins,varbins,histfilename, "bestM3j_met_150_10000_"+btagstring+"tag_qcd","PythiaPUQCDFlat");
-
-
-  const  TCut baseSelection = "cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1"; //no MET, no minDeltaPhi, no cleaning, no b tag
-  // "cutCleaning==1"; //apply all cleaning 
-  const  TCut passCleaning ="passInconsistentMuon == 1 && passBadPFMuon==1 && weight<1000"; //apply cleaning but without ECAL dead cells.  Notice the weight cut!
-  const  TCut passMinDeltaPhi = "cutDeltaPhi==1";
-  const  TCut failMinDeltaPhi = "cutDeltaPhi==0";
-  const  TCut ge1b =  "nbjets >= 1";
-  const  TCut ge2b =  "nbjets >= 2";
-  const  TCut eq1b =  "nbjets == 1";
-
-  //
-  TString histfilename;
-  histfilename.Form("bestM3j-%s.%s.root", vb ? "vb" : "bins", TString(extracut.GetTitle())=="" ? "baseline" : jmt::fortranize(extracut.GetTitle()).Data());
-  TString textfilename=  "drawOwen.output";
-
-  ofstream ofile(textfilename.Data());
-
-  for (int ibtag = 0; ibtag<3; ibtag++) { //do this an ugly way for now
-    TCut theBTaggingCut = ge1b; TString btagstring = "ge1b";
-    if (ibtag==0) { //nothing to do
-    }
-    else if (ibtag==1) {
-      theBTaggingCut = eq1b; 
-      btagstring = "eq1b";
-    }
-    else if (ibtag==2) {
-      theBTaggingCut = ge2b; 
-      btagstring = "ge2b";
-    }
-    else assert(0);
-    ofile<<" == "<<btagstring<<" == "<<endl;
- 
-   //these regions define the PDFs (templates)
-    const TCut LSBMET = "MET>=0 && MET<50";
-    TCut theLSBSelection = baseSelection && passCleaning && passMinDeltaPhi && theBTaggingCut && LSBMET && extracut;
-    selection_ = theLSBSelection.GetTitle();
-    if(vb){
-     drawSimple("bestTopMass",nvarbins,varbins,histfilename, "bestM3j_met_0_50_"+btagstring+"tag_data","data");
-     drawPlots("bestTopMass",nvarbins,varbins,"","","deleteme");
-    }
-    else{
-      drawSimple("bestTopMass",nbins,min,max,histfilename, "bestM3j_met_0_50_"+btagstring+"tag_data","data");
-      drawPlots("bestTopMass",nbins,min,max,"","","deleteme");
-    }
-    TFile fh(histfilename,"UPDATE");  
-    totalsm->SetName("bestM3j_met_0_50_"+btagstring+"tag_allsm");
-    totalsm->Write();          
-    fh.Close();   
-        
-    TCut T2MET = "MET>=50 && MET<5000";
-    const  TCut baseT2Selection = "cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1) || (nElectrons==1 && nMuons==0))"; //no MET, no minDeltaPhi, no cleaning, no b tag
-    TCut theT2Selection = baseT2Selection && passCleaning && passMinDeltaPhi && theBTaggingCut && T2MET && extracut;
-    selection_ = theT2Selection.GetTitle();
-    if (vb) {
-      drawSimple("bestTopMass",nvarbins,varbins,histfilename, "bestM3j_met_50_5000_t2_"+btagstring+"tag_data","data");
-      drawPlots("bestTopMass",nvarbins,varbins,"","","deleteme");
-    }
-    else{
-      drawSimple("bestTopMass",nbins,min,max,histfilename, "bestM3j_met_50_5000_t2_"+btagstring+"tag_data","data");
-      drawPlots("bestTopMass",nbins,min,max,"","","deleteme");
-    }
-    TFile fh2(histfilename,"UPDATE");  
-    totalsm->SetName("bestM3j_met_50_5000_t2_"+btagstring+"tag_allsm");
-    totalsm->Write();          
-    fh2.Close(); 
-
-    //need T2 in data,ttbar in the SR
-    const TCut SRMET = "MET>=150 && MET<5000";
-    theT2Selection = baseT2Selection && passCleaning && passMinDeltaPhi && theBTaggingCut && SRMET && extracut;
-    selection_ = theT2Selection.GetTitle();
-    if (vb) {
-      drawSimple("bestTopMass",nvarbins,varbins,histfilename, "bestM3j_met_150_5000_t2_"+btagstring+"tag_ttbar","TTbarJets");
-      drawSimple("bestTopMass",nvarbins,varbins,histfilename, "bestM3j_met_150_5000_t2_"+btagstring+"tag_data","data");
-      drawPlots("bestTopMass",nvarbins,varbins,"","","deleteme");
-    }
-    else{
-      drawSimple("bestTopMass",nbins,min,max,histfilename, "bestM3j_met_150_5000_t2_"+btagstring+"tag_ttbar","TTbarJets");
-      drawSimple("bestTopMass",nbins,min,max,histfilename, "bestM3j_met_150_5000_t2_"+btagstring+"tag_data","data");
-      drawPlots("bestTopMass",nbins,min,max,"","","deleteme");
-    }
-    TFile fh22(histfilename,"UPDATE");  
-    totalnonttbar->SetName("bestM3j_met_150_5000_t2_"+btagstring+"tag_nonttbar");
-    totalewk->SetName("bestM3j_met_150_5000_t2_"+btagstring+"tag_allewk");
-    totalnonttbar->Write();          
-    totalewk->Write();          
-    fh22.Close(); 
-    
-    // == signal region ==
-    TCut theSRSelection = baseSelection && passCleaning && passMinDeltaPhi && theBTaggingCut && SRMET && extracut;
-    selection_ = theSRSelection.GetTitle();
-    if (vb) {
-      //plot all samples
-      for (unsigned int isample=0; isample<samples_.size(); isample++) {
-	TString oname=sampleOwenName_[samples_[isample]];
-	drawSimple("bestTopMass",nvarbins,varbins,histfilename, "bestM3j_met_150_5000_"+btagstring+"tag_"+oname,samples_[isample]);
-      }
-    }
-    else {
-      //plot all samples
-      for (unsigned int isample=0; isample<samples_.size(); isample++) {
-	TString oname=sampleOwenName_[samples_[isample]];
-	drawSimple("bestTopMass",nbins,min,max,histfilename, "bestM3j_met_150_5000_"+btagstring+"tag_"+oname,samples_[isample]);
-      }
-    }
-
-    //need invdphi in data in the SR
-    TCut invdpSelection = baseSelection && passCleaning && failMinDeltaPhi && theBTaggingCut && SRMET && extracut;
-    TString nameOfIDPhist = "bestM3j_met_150_5000_invdphi_";
-    nameOfIDPhist+=btagstring; nameOfIDPhist+="tag_";
-    selection_ = invdpSelection.GetTitle();
-    if (vb) {
-      drawSimple("bestTopMass",nvarbins,varbins,histfilename, nameOfIDPhist+"qcd" ,"PythiaPUQCD");
-      drawSimple("bestTopMass",nvarbins,varbins,histfilename, nameOfIDPhist+"data" ,"data");
-      drawPlots("bestTopMass",nvarbins,varbins,"","","deleteme");
-    }
-    else {
-      drawSimple("bestTopMass",nbins,min,max,histfilename, nameOfIDPhist+"qcd" ,"PythiaPUQCD");
-      drawSimple("bestTopMass",nbins,min,max,histfilename, nameOfIDPhist+"data" ,"data");
-      drawPlots("bestTopMass",nbins,min,max,"","","deleteme");
-    }
-    TFile fh3(histfilename,"UPDATE");
-    totalnonqcd->SetName(nameOfIDPhist+"nonqcd");
-    totalnonqcd->Write();
-    fh3.Close();
-
-    //now for a flexible MET region
-    for (int metCutLow = 80; metCutLow <=100; metCutLow+=10) {
-      for (int metCutHigh = 150; metCutHigh <=150; metCutHigh+=5) {
-	TString metCutString; metCutString.Form("MET >= %d && MET < %d",metCutLow,metCutHigh);
-	ofile<<metCutString<<endl;
-	TCut METselection(metCutString.Data());
-
-	theT2Selection = baseT2Selection && passCleaning && passMinDeltaPhi && theBTaggingCut && METselection && extracut;
-	TString nameOfT2Hist;
-	nameOfT2Hist.Form( "bestM3j_met_%d_%d_t2_%stag_",metCutLow,metCutHigh,btagstring.Data());
-
-	TCut theSelection = baseSelection && passCleaning && passMinDeltaPhi && theBTaggingCut && METselection && extracut;
-	selection_ = theSelection.GetTitle();
-	TString nameOfHist;
-	nameOfHist.Form( "bestM3j_met_%d_%d_%stag_",metCutLow,metCutHigh,btagstring.Data());
-	
-	//  *** nominal selection ***   
-	if (vb) {
-	  //plot all samples
-	  for (unsigned int isample=0; isample<samples_.size(); isample++) {
-	    TString oname=sampleOwenName_[samples_[isample]];
-	    ofile<<oname<<" = "<<drawSimple("bestTopMass",nvarbins,varbins,histfilename, nameOfHist+oname,samples_[isample])<<endl;
-	  }
-	  //plot data
-	  drawSimple("bestTopMass",nvarbins,varbins,histfilename, nameOfHist+"data","data");
-	  //fills plots that are combinations of various samples (to be accessed via global pointers)
-	  drawPlots("bestTopMass",nvarbins,varbins,"","","deleteme");
-	}
-	else {
-	  //plot all samples
-	  for (unsigned int isample=0; isample<samples_.size(); isample++) {
-	    TString oname=sampleOwenName_[samples_[isample]];
-	    ofile<<oname<<" = "<<drawSimple("bestTopMass",nbins,min,max,histfilename, nameOfHist+oname,samples_[isample])<<endl;
-	  }
-	  //plot data
-	  drawSimple("bestTopMass",nbins,min,max,histfilename, nameOfHist+"data","data");
-	  //fills plots that are combinations of various samples (to be accessed via global pointers)
-	  drawPlots("bestTopMass",nbins,min,max,"","","deleteme");
-	}
-	TFile fh4(histfilename,"UPDATE");
-	totalnonttbar->SetName(nameOfHist+"nonttbar");
-	totalnonqcd->SetName(nameOfHist+"nonqcd");
-	totalewk->SetName(nameOfHist+"allewk");
-	totalsm->SetName(nameOfHist+"allsm");
-	totalnonttbar->Write();
-	totalnonqcd->Write();
-	totalewk->Write();
-	totalsm->Write();
-	fh4.Close();
-	
-	//  *** T2 selection 
-	selection_ = theT2Selection.GetTitle(); //change to t2 selection
-	if (vb) {
-	  drawSimple("bestTopMass",nvarbins,varbins,histfilename, nameOfT2Hist+"data","data");
-	  drawSimple("bestTopMass",nvarbins,varbins,histfilename, nameOfT2Hist+"ttbar","TTbarJets");
-	  drawPlots("bestTopMass",nvarbins,varbins,"","","deleteme");
-	}
-	else {
-	  drawSimple("bestTopMass",nbins,min,max,histfilename, nameOfT2Hist+"data","data");
-	  drawSimple("bestTopMass",nbins,min,max,histfilename, nameOfT2Hist+"ttbar","TTbarJets");
-	  drawPlots("bestTopMass",nbins,min,max,"","","deleteme");
-	}
-	TFile fh44(histfilename,"UPDATE");  
-	totalnonttbar->SetName(nameOfT2Hist+"nonttbar");
-	totalewk->SetName(nameOfT2Hist+"allewk");
-	totalnonttbar->Write();          
-	totalewk->Write();          
-	fh44.Close(); 
-
-	//   *** fail mdp selection ***
-      	theSelection = baseSelection && passCleaning && failMinDeltaPhi && theBTaggingCut && METselection && extracut;
-	selection_ = theSelection.GetTitle();
-	nameOfHist.Form( "bestM3j_met_%d_%d_invdphi_%stag_",metCutLow,metCutHigh,btagstring.Data());
-	if(vb){
-	  drawSimple("bestTopMass",nvarbins,varbins,histfilename, nameOfHist+"data","data");
-	  drawSimple("bestTopMass",nvarbins,varbins,histfilename, nameOfHist+"qcd","PythiaPUQCD");
-	  drawPlots("bestTopMass",nvarbins,varbins,"","","deleteme");
-	}
-	else{
-	  drawSimple("bestTopMass",nbins,min,max,histfilename, nameOfHist+"data","data");
-	  drawSimple("bestTopMass",nbins,min,max,histfilename, nameOfHist+"qcd","PythiaPUQCD");
-	  drawPlots("bestTopMass",nbins,min,max,"","","deleteme");
-	}
-	TFile fh5(histfilename,"UPDATE");
-	totalnonqcd->SetName(nameOfHist+"nonqcd");
-	totalsm->SetName(nameOfHist+"allsm");
-	totalnonqcd->Write();
-	totalsm->Write();
-	fh5.Close();
-      }
-    }
-     
-  }
-  ofile.close();
-
-}
-
-//end of large commented out region */

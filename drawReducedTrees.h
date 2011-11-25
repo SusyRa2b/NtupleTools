@@ -243,8 +243,12 @@ public:
   //  TString id;
 
   double rawYield; //yield in lumiScale_ invpb, or for SMS really the raw yield
-
   double effCorr; //factor including all corrections to the efficiency
+
+  double yield_JER;         //NOT persisted when object is saved to file
+  double yield_JER_PU;      //NOT persisted when object is saved to file
+  double yield_JER_PU_HLT;  //NOT persisted when object is saved to file
+
   double totalSystematic(); 
   double symmetrize(const TString & which);
 
@@ -294,7 +298,8 @@ void SignalEffData::write(TString id) const {
 SignalEffData::SignalEffData(TString idtoload) :
   //  id(idtoload),
   rawYield(0),
-  effCorr(1)
+  effCorr(1),
+  yield_JER(0), yield_JER_PU(0),yield_JER_PU_HLT(0)
 {
   //filename constructed from id
   TString filename = "SignalEffData.";
@@ -316,7 +321,8 @@ SignalEffData::SignalEffData(TString idtoload) :
 SignalEffData::SignalEffData() : 
   //  id("noname"),
   rawYield(0),
-  effCorr(1)
+  effCorr(1),
+  yield_JER(0), yield_JER_PU(0),yield_JER_PU_HLT(0)
 { 
 
   systematics["JES"] = SystInfo();             
@@ -326,10 +332,10 @@ SignalEffData::SignalEffData() :
   systematics["PU"] = SystInfo();              
   systematics["JER"] = SystInfo();             
   systematics["kFactor"] = SystInfo();         
-  systematics["cleaning"] = SystInfo(1e-2,1e-2,1);  
-  systematics["LepVeto"] = SystInfo(2e-2,2e-2,1);   
-  systematics["trigger"] = SystInfo(2.5e-2,2.5e-2,1);
-  systematics["lumi"] = SystInfo(4.5e-2 , 4.5e-2,1);  
+  systematics["cleaning"] = SystInfo(1e-2,1e-2,1);    //FIXME
+  systematics["LepVeto"] = SystInfo(2e-2,2e-2,1);     //FIXME
+  systematics["trigger"] = SystInfo(2.5e-2,2.5e-2,1); //FIXME
+  systematics["lumi"] = SystInfo(6e-2 , 6e-2,1);   //full dataset seems to be 6%, at least for now
   //we don't really want this one this time.
   //keep it for now just for the sake of comparison with old results
   //  systematics["L2L3"] = SystInfo(1e-2 , 1e-2,1);
@@ -338,7 +344,7 @@ SignalEffData::SignalEffData() :
   //  JES
   // btag efficiency
   // PDFs (acceptance)
-  // [not done] PDFs (cross-section) -- not considered last time and not relevant for SMS
+  // (RA2 says they don't do PDF uncertainties on the cross section. so i won't either)
   //  unc energy (MET)
 
   // PU
@@ -1301,30 +1307,33 @@ void loadSamples(bool joinSingleTop=true) {
   //FOR PLOTS
   ////////////
 
-  configDescriptions_.setDefault("CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
-  configDescriptions_.setCorrected("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
+   configDescriptions_.setDefault("CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
+   configDescriptions_.setCorrected("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
 
-  
-  //JES
-  //configDescriptions_.addVariation("CSVM_PF2PATjets_JESdown_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0",
-  //				   "CSVM_PF2PATjets_JESup_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
-  //JER
-  //  configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERdown_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0",
-  //"SSVHPT_PF2PATjets_JES0_JERup_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
+  //Only for signal systematics
+   /*
+  configDescriptions_.setDefault("CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
+  configDescriptions_.setCorrected("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
+  //JES //LM9 and scans
+  configDescriptions_.addVariation("CSVM_PF2PATjets_JESdown_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0",
+				   "CSVM_PF2PATjets_JESup_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
+  //JER //LM9 only
+  configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERdown_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0",
+				   "CSVM_PF2PATjets_JES0_JERup_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
 
-  //unclustered MET
-  //configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERbias_PFMET_METuncDown_PUunc0_BTagEff0_HLTEff0", 
-  //				   "CSVM_PF2PATjets_JES0_JERbias_PFMET_METuncUp_PUunc0_BTagEff0_HLTEff0");
+  //unclustered MET //LM9 and scans
+  configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERbias_PFMET_METuncDown_PUunc0_BTagEff02_HLTEff0", 
+  				   "CSVM_PF2PATjets_JES0_JERbias_PFMET_METuncUp_PUunc0_BTagEff02_HLTEff0");
 
-  //PU
-  //    configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncDown_BTagEff0_HLTEff0",
-  //"CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncUp_BTagEff0_HLTEff0");
+  //PU //LM9 only
+  configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncDown_BTagEff02_HLTEff0",
+				   "CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncUp_BTagEff02_HLTEff0");
 
-  //btag eff
-  //configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffdown_HLTEff0",
-  //				   "CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffup_HLTEff0");
-
-  //HLT eff
+  //btag eff //LM9 and scans
+  configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffdown2_HLTEff0",
+  				   "CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffup2_HLTEff0");
+   */
+  //HLT eff //never use this one
   //    configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffdown",
   //"CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffup");
 
@@ -1332,44 +1341,11 @@ void loadSamples(bool joinSingleTop=true) {
   //////////////
  
 
-
-
-/*
-  //new btag eff prescription
-  configDescriptions_.push_back("CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
-  configDescriptions_.push_back("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
-  //comment here to save time
-  
-  //JES
-  configDescriptions_.push_back("CSVM_PF2PATjets_JESdown_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
-  configDescriptions_.push_back("CSVM_PF2PATjets_JESup_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
-  //JER
-    configDescriptions_.push_back("CSVM_PF2PATjets_JES0_JERdown_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
-    configDescriptions_.push_back("CSVM_PF2PATjets_JES0_JERup_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
-
-  //unclustered MET
-  configDescriptions_.push_back("CSVM_PF2PATjets_JES0_JERbias_PFMET_METuncDown_PUunc0_BTagEff02_HLTEff0");
-  configDescriptions_.push_back("CSVM_PF2PATjets_JES0_JERbias_PFMET_METuncUp_PUunc0_BTagEff02_HLTEff0");
-
-  //PU
-      configDescriptions_.push_back("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncDown_BTagEff02_HLTEff0");
-      configDescriptions_.push_back("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncUp_BTagEff02_HLTEff0");
-
-  //btag eff
-  configDescriptions_.push_back("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffdown2_HLTEff0");
-  configDescriptions_.push_back("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffup2_HLTEff0");
-
-  //HLT eff
-  //    configDescriptions_.push_back("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEffdown");
-  //    configDescriptions_.push_back("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEffup");
-*/
-
 /*  
   //new btag eff prescription
  //for summer11 signal systematics!
   configDescriptions_.setDefault("SSVHPT_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
   configDescriptions_.setCorrected("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
-  //comment here to save time
   
   //JES
   configDescriptions_.addVariation("SSVHPT_PF2PATjets_JESdown_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0",
@@ -2305,29 +2281,7 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
   drawR(vary, cutVal, var, nbins, 0, 1, savename, varbins);
 }
 
-//utility function for making output more readable
-TString format_nevents(double n,double e) {
 
-  //  const bool moreDigits = false;
-  const bool moreDigits = true;
-  const int eCutoff = moreDigits ? 10 : 1;
-  const int extraDigits = moreDigits ? 1:0;
-
-  TString mathmode = latexMode_ ? "$" : "";
-  
-  char out[100];
-  if (e >= eCutoff || e < 0.00001) { //show whole numbers only
-    sprintf(out,"%s%.0f%s%.0f%s",mathmode.Data(),n,pm.Data(),e,mathmode.Data());
-  }
-  else {
-    int nfig = ceil(fabs(log10(e))) + extraDigits;
-    TString form="%s%.";
-    form+=nfig; form+="f%s%.";
-    form+=nfig; form+="f%s";
-    sprintf(out,form.Data(),mathmode.Data(),n,pm.Data(),e,mathmode.Data());
-  }
-  return TString(out);
-}
 
 typedef map<pair<int,int>, pair<double,double> > susyScanYields;
 TH2D* scanSMSngen=0;
@@ -3023,13 +2977,13 @@ void cutflow(bool isTightSelection){
     cout<<col_start<<stageCut[istage]<<col;
     for (unsigned int isample=0; isample<samples_.size(); isample++){
       if ( isSampleSM(samples_[isample]) ) {
-	cout<<format_nevents(cutflowEntries[istage][isample],cutflowEntriesE[istage][isample])<<col;
+	cout<<jmt::format_nevents(cutflowEntries[istage][isample],cutflowEntriesE[istage][isample])<<col;
       }
     }//end loop over samples
     //now add total background, LM
-    cout<<format_nevents(nSumSM[istage],nSumSME[istage]);
+    cout<<jmt::format_nevents(nSumSM[istage],nSumSME[istage]);
     for (unsigned int isample=0; isample<samples_.size(); isample++) {
-      if ( !isSampleSM(samples_[isample]) ) cout<<col<<format_nevents(cutflowEntries[istage][isample],cutflowEntriesE[istage][isample]);
+      if ( !isSampleSM(samples_[isample]) ) cout<<col<<jmt::format_nevents(cutflowEntries[istage][isample],cutflowEntriesE[istage][isample]);
     }
     cout<<col_end<<endl;
     if (stageCut[istage]=="Cleaning") cout<<hline<<endl;
