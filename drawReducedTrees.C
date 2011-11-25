@@ -2553,16 +2553,17 @@ void AN2011_prescale( TString btagselection="ge1b",const int mode=1 ) {
 }
 
 
-void AN2011_ttbarw( TString btagselection="ge1b", TString HTselection="Loose" , TString samplename="TTbarJets") {
+void AN2011_ttbarw( double& r_sl, double& r_sl_err, double& r_nom, double& r_nom_err, 
+		    TString btagselection="ge1b", TString HTselection="Loose" , TString samplename="TTbarJets") {
 
   /*
 goal:
 
-show MET distributions for w+jets, ttbar
+show MET distributions for w+jets, ttbar, singletop
 in both the SL and nominal samples
 
 this is going to require some serious kludgey stuff because this code has
-never been used to plot the sample sample with different cuts on top of each 
+never been used to plot the same sample with different cuts on top of each 
 other.
   */
 
@@ -2618,7 +2619,7 @@ other.
   int nbins;
   float low,high;
   TString var,xtitle;
-  bool vb = false;
+  bool vb = true;
   
   //ge1b, Loose
   //const int nvarbins=18;
@@ -2654,30 +2655,40 @@ other.
   //selection_ =TCut("MET>=150 && cutPV==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && minDeltaPhiN >= 4")&&btagcut&&HTcut; //AN v5
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
   //nbins = 40; low=100; high=550; 
-  //nbins = 45; low=100; high=650; 
-  nbins = 40; low=200; high=600; 
+  nbins = 55; low=100; high=650; 
+  //nbins = 40; low=200; high=600; 
   //nbins = 40; low=150; high=550; //AN v5
   //nbins = 20; low=150; high=550;
   //nbins = 16; low=150; high=550;
   if(vb) drawPlots(var,nvarbins, varbins, xtitle,"Arbitrary units", "SBandSIG_MET_SL_"+sample+"_"+btagselection+"_"+HTselection);
   else drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "SBandSIG_MET_SL_"+sample+"_"+btagselection+"_"+HTselection);
 
-  int lowbin = hinteractive->FindBin(low);
-  int boundarybin_sb = 0, boundarybin_sig=0;
+  ////////////////////////////////////////////////
+  //This part sets up the SIG/SB ratio computation
+  ////////////////////////////////////////////////
 
+  //the lower boundary on the SB should be set to 200 GeV
+  int lowbin = hinteractive->FindBin(200);
+  int boundarybin_sb = 0, boundarybin_sig=0;
+  //the upper boundary on the SB should be set to 250 GeV
   boundarybin_sb = hinteractive->FindBin(250);
 
-  //MET Signal region depends on "Loose" or "Tight" selection
+  //the lower boundary on the SR depends on the selection
   if (HTselection=="Tight" && btagselection=="ge1b")  boundarybin_sig = hinteractive->FindBin(500);
   else if (HTselection=="Tight" && btagselection=="ge2b")  boundarybin_sig = hinteractive->FindBin(300);
   else boundarybin_sig = hinteractive->FindBin(250);
 
-  int highbin = hinteractive->FindBin(high);
+  //the upper boundary on the SR region should be the last bin on the plot
+  int highbin= hinteractive->GetNbinsX();
 
-  //get the SIG/SB Ratio
+
+  ////////////////////////////////////////
+  //This part computes the SL SIG/SB ratio
+  ////////////////////////////////////////
+
   double sl_sb_err=0, sl_sig_err=0;
-  double sl_sb = hinteractive->IntegralAndError(lowbin,boundarybin_sb-1,sl_sb_err);
-  double sl_sig = hinteractive->IntegralAndError(boundarybin_sig,highbin-1,sl_sig_err);
+  double sl_sb = hinteractive->IntegralAndError(lowbin,boundarybin_sb-1,sl_sb_err);//integral from 200 to <250
+  double sl_sig = hinteractive->IntegralAndError(boundarybin_sig,highbin,sl_sig_err);//integral from e.g. 300 to last bin
   double r_sl_sigoversb = sl_sig/sl_sb;
   double r_sl_sigoversb_err = jmt::errAoverB(sl_sig,sl_sig_err,sl_sb,sl_sb_err);
 
@@ -2685,7 +2696,9 @@ other.
   std::cout << "SL: SIG content= " << sl_sig << " +/- " << sl_sig_err << std::endl;
   std::cout << "SL: SIG/SB ratio = " << r_sl_sigoversb << " +/- " << r_sl_sigoversb_err << std::endl;
 
-
+  r_sl = r_sl_sigoversb;
+  r_sl_err = r_sl_sigoversb_err;
+  
   TH1D* SLplot = (TH1D*)hinteractive->Clone("SLplot");
   //now switch to the normal selection
   selection_ =TCut("cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4")&&btagcut&&HTcut;
@@ -2698,6 +2711,24 @@ other.
   SLplot->Draw("SAME");
   
   thecanvas->SaveAs("METshape_"+sample+"_SLandStandard_"+btagselection+"_"+HTselection+".pdf");
+
+
+  ////////////////////////////////////////
+  //This part computes the nominal SIG/SB ratio
+  ////////////////////////////////////////
+
+  double lv_sb_err=0, lv_sig_err=0;
+  double lv_sb = hinteractive->IntegralAndError(lowbin,boundarybin_sb-1,lv_sb_err);
+  double lv_sig = hinteractive->IntegralAndError(boundarybin_sig,highbin,lv_sig_err);
+  double r_lv_sigoversb = lv_sig/lv_sb;
+  double r_lv_sigoversb_err = jmt::errAoverB(lv_sig,lv_sig_err,lv_sb,lv_sb_err);
+
+  std::cout << "LV: SB content= " << lv_sb << " +/- " << lv_sb_err << std::endl;
+  std::cout << "LV: SIG content= " << lv_sig << " +/- " << lv_sig_err << std::endl;
+  std::cout << "LV: SIG/SB ratio = " << r_lv_sigoversb << " +/- " << r_lv_sigoversb_err << std::endl;
+
+  r_nom = r_lv_sigoversb;
+  r_nom_err = r_lv_sigoversb_err;
 
   //Hack to get it plotted with ratio plot
   TCanvas* myC = 0;
@@ -2790,19 +2821,93 @@ other.
   myLegend->Draw();
   myC->Print("METshape_logAndRatio_"+sample+"_SLandStandard_"+btagselection+"_"+HTselection+".pdf");
 
-  //get the SIG/SB Ratio
-  double lv_sb_err=0, lv_sig_err=0;
-  double lv_sb = hinteractive->IntegralAndError(lowbin,boundarybin_sb-1,lv_sb_err);
-  double lv_sig = hinteractive->IntegralAndError(boundarybin_sig,highbin-1,lv_sig_err);
-  double r_lv_sigoversb = lv_sig/lv_sb;
-  double r_lv_sigoversb_err = jmt::errAoverB(lv_sig,lv_sig_err,lv_sb,lv_sb_err);
+}
 
-  std::cout << "LV: SB content= " << lv_sb << " +/- " << lv_sb_err << std::endl;
-  std::cout << "LV: SIG content= " << lv_sig << " +/- " << lv_sig_err << std::endl;
-  std::cout << "LV: SIG/SB ratio = " << r_lv_sigoversb << " +/- " << r_lv_sigoversb_err << std::endl;
+//kludgy , but it suffices for now
+void makeTTbarWMETPlots() {
+
+  double ratio_sl = 0, ratio_sl_err = 0, ratio_nom = 0, ratio_nom_err = 0;
+  std::vector<double> ratios_sl, ratios_sl_err, ratios_nom, ratios_nom_err;
+  std::vector<string> selections;
+
+  std::cout << "TTbarJets" << std::endl;
+
+  AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Loose" , "TTbarJets");
+  selections.push_back("1BL");
+  ratios_sl.push_back(ratio_sl);  ratios_sl_err.push_back(ratio_sl_err);  ratios_nom.push_back(ratio_nom);  ratios_nom_err.push_back(ratio_nom_err);
+
+  AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Tight" , "TTbarJets");
+  selections.push_back("1BT");
+  ratios_sl.push_back(ratio_sl);  ratios_sl_err.push_back(ratio_sl_err);  ratios_nom.push_back(ratio_nom);  ratios_nom_err.push_back(ratio_nom_err);
+
+  AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Loose" , "TTbarJets");
+  selections.push_back("2BL");
+  ratios_sl.push_back(ratio_sl);  ratios_sl_err.push_back(ratio_sl_err);  ratios_nom.push_back(ratio_nom);  ratios_nom_err.push_back(ratio_nom_err);
+
+  AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Tight" , "TTbarJets");
+  selections.push_back("2BT");
+  ratios_sl.push_back(ratio_sl);  ratios_sl_err.push_back(ratio_sl_err);  ratios_nom.push_back(ratio_nom);  ratios_nom_err.push_back(ratio_nom_err);
+
+  AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge3b", "Loose" , "TTbarJets");
+  selections.push_back("3B");
+  ratios_sl.push_back(ratio_sl);  ratios_sl_err.push_back(ratio_sl_err);  ratios_nom.push_back(ratio_nom);  ratios_nom_err.push_back(ratio_nom_err);
+
+  std::cout << "WJets" << std::endl;
+
+  AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Loose" , "WJets");
+  selections.push_back("1BL");
+  ratios_sl.push_back(ratio_sl);  ratios_sl_err.push_back(ratio_sl_err);  ratios_nom.push_back(ratio_nom);  ratios_nom_err.push_back(ratio_nom_err);
+
+  AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Tight" , "WJets");
+  selections.push_back("1BT");
+  ratios_sl.push_back(ratio_sl);  ratios_sl_err.push_back(ratio_sl_err);  ratios_nom.push_back(ratio_nom);  ratios_nom_err.push_back(ratio_nom_err);
+
+  AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Loose" , "WJets");
+  selections.push_back("2BL");
+  ratios_sl.push_back(ratio_sl);  ratios_sl_err.push_back(ratio_sl_err);  ratios_nom.push_back(ratio_nom);  ratios_nom_err.push_back(ratio_nom_err);
+
+  AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Tight" , "WJets");
+  selections.push_back("2BT");
+  ratios_sl.push_back(ratio_sl);  ratios_sl_err.push_back(ratio_sl_err);  ratios_nom.push_back(ratio_nom);  ratios_nom_err.push_back(ratio_nom_err);
+
+  AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge3b", "Loose" , "WJets");
+  selections.push_back("3B");
+  ratios_sl.push_back(ratio_sl);  ratios_sl_err.push_back(ratio_sl_err);  ratios_nom.push_back(ratio_nom);  ratios_nom_err.push_back(ratio_nom_err);
+
+  std::cout << "SingleTop" << std::endl;
+
+  AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Loose" , "SingleTop");
+  selections.push_back("1BL");
+  ratios_sl.push_back(ratio_sl);  ratios_sl_err.push_back(ratio_sl_err);  ratios_nom.push_back(ratio_nom);  ratios_nom_err.push_back(ratio_nom_err);
+
+  AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Tight" , "SingleTop");
+  selections.push_back("1BT");
+  ratios_sl.push_back(ratio_sl);  ratios_sl_err.push_back(ratio_sl_err);  ratios_nom.push_back(ratio_nom);  ratios_nom_err.push_back(ratio_nom_err);
+
+  AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Loose" , "SingleTop");
+  selections.push_back("2BL");
+  ratios_sl.push_back(ratio_sl);  ratios_sl_err.push_back(ratio_sl_err);  ratios_nom.push_back(ratio_nom);  ratios_nom_err.push_back(ratio_nom_err);
+
+  AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Tight" , "SingleTop");
+  selections.push_back("2BT");
+  ratios_sl.push_back(ratio_sl);  ratios_sl_err.push_back(ratio_sl_err);  ratios_nom.push_back(ratio_nom);  ratios_nom_err.push_back(ratio_nom_err);
+
+  AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge3b", "Loose" , "SingleTop");
+  selections.push_back("3B");
+  ratios_sl.push_back(ratio_sl);  ratios_sl_err.push_back(ratio_sl_err);  ratios_nom.push_back(ratio_nom);  ratios_nom_err.push_back(ratio_nom_err);
+
+
+  for(uint i = 0; i<selections.size(); ++i){
+    if(i==0) std::cout << "TTbarJets" << std::endl;
+    if(i==5) std::cout << "WJets" << std::endl;
+    if(i==10) std::cout << "SingleTop" << std::endl;
+    std::cout << " & "<< selections.at(i) <<" & " << ratios_nom.at(i) << "$\\pm$" << ratios_nom_err.at(i) << "\t & " << ratios_sl.at(i) << "$\\pm$" << ratios_sl_err.at(i) << " \\\\" << std::endl; 
+  }
 
 
 }
+
+
 
 void AN2011_r() { //for paper, data+MC plots at low MET
   TString btagselection="ge1b";
