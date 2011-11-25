@@ -2972,6 +2972,8 @@ float EventCalculator::jetTagEff(unsigned int ijet, TH1F* h_btageff, TH1F* h_cta
   //float eta = myJetsPF->at(ijet).eta;
   int flavor = myJetsPF->at(ijet).partonFlavour;
 
+  float noEfficiencyThreshold=350; //threshold for the highest SF bin, which we sometimes set to 0 efficiency
+
   if(isGoodJet30(ijet)){
 
     //SSVHPT
@@ -2991,7 +2993,7 @@ float EventCalculator::jetTagEff(unsigned int ijet, TH1F* h_btageff, TH1F* h_cta
       SFU[2] = 0.8;
     }
 
-    //Jeff's prescription 1
+    //Prescription used for Summer 2011 result (PAS)
     if (theBTagEffType_ == kBTagEff02 || theBTagEffType_ == kBTagEffup2 || theBTagEffType_ == kBTagEffdown2) {
       SF[2]=0; // assume no efficiency for pt>350 GeV
     }
@@ -3006,20 +3008,20 @@ float EventCalculator::jetTagEff(unsigned int ijet, TH1F* h_btageff, TH1F* h_cta
       SFU[2] = 0.68;
     }
 
-    //Jeff's prescription 2
+    //Fall 2011 preliminary prescription
     if (theBTagEffType_ == kBTagEff03 || theBTagEffType_ == kBTagEffup3 || theBTagEffType_ == kBTagEffdown3) {
-      SF[1]=0; // assume no efficiency for pt in [240,350] GeV
-      SF[2]=0; // assume no efficiency for pt>350 GeV
+      noEfficiencyThreshold=500;
+      SF[2]=0; // assume no efficiency for pt>500 GeV
     }
     if (theBTagEffType_ == kBTagEffup3) {
       SFU[0] = 1.10; // 10% uncertainty on SF from BTV-11-001
-      SFU[1] = 1.32; // this number is irrelevant
-      SFU[2] = 1.32; // this number is irrelevant
+      SFU[1] = 1.36; // 36% choice made on 25 Nov 2011
+      SFU[2] = 1.36; // this number is irrelevant
     }
     else if (theBTagEffType_ == kBTagEffdown3) {
       SFU[0] = 0.9;
-      SFU[1] = 0.68; 
-      SFU[2] = 0.68;
+      SFU[1] = 0.64; 
+      SFU[2] = 0.64;
     }
 
    
@@ -3030,7 +3032,7 @@ float EventCalculator::jetTagEff(unsigned int ijet, TH1F* h_btageff, TH1F* h_cta
       tageff = h_btageff->GetBinContent( h_btageff->FindBin( pt ) );
       
       if(pt<240) tageff *= SF[0]*SFU[0];
-      else if (pt>240 && pt<350) tageff *= SF[1]*SFU[1];
+      else if (pt>240 && pt<noEfficiencyThreshold) tageff *= SF[1]*SFU[1];
       else tageff *= SF[2]*SFU[2];
 
       //std::cout << "b: tag eff = " << tageff << std::endl;
