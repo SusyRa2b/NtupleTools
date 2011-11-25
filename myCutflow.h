@@ -38,6 +38,7 @@ public :
    Float_t         probge1;
    Float_t         prob1;
    Float_t         probge2;
+   Float_t         probge3;
    Bool_t          cutHT;
    Bool_t          cutPV;
    Bool_t          cutTrigger;
@@ -54,6 +55,7 @@ public :
    Bool_t          ra2ecaltpFilter;
    Bool_t          scrapingvetoFilter;
    Bool_t          trackingfailureFilter;
+   Bool_t          trackingfailureFilterPFLOW;
    Bool_t          passCleaning;
    Int_t           PBNRcode;
    Int_t           nGoodPV;
@@ -208,6 +210,7 @@ public :
    TBranch        *b_probge1;   //!
    TBranch        *b_prob1;   //!
    TBranch        *b_probge2;   //!
+   TBranch        *b_probge3;   //!
    TBranch        *b_cutHT;   //!
    TBranch        *b_cutPV;   //!
    TBranch        *b_cutTrigger;   //!
@@ -224,6 +227,7 @@ public :
    TBranch        *b_ra2ecaltpFilter;   //!
    TBranch        *b_scrapingvetoFilter;   //!
    TBranch        *b_trackingfailureFilter;   //!
+   TBranch        *b_trackingfailureFilterPFLOW;   //!
    TBranch        *b_passCleaning;   //!
    TBranch        *b_PBNRcode;   //!
    TBranch        *b_nGoodPV;   //!
@@ -405,45 +409,48 @@ myCutflow::myCutflow(TString sampleName, TTree *tree):Event_(sampleName)
       TChain * chain = new TChain("reducedTree","");
 
       if (sampleName=="TTbarJets"){
-	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35a/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.TTbarJets.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35e/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.TTbarJets.root/reducedTree");
       }
 
       else if (sampleName=="SingleTop"){
-	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35a/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.SingleTop.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35e/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.SingleTop.root/reducedTree");
       }
 
       else if (sampleName=="WJets"){
-	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35a/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.WJets.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35e/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.WJets.root/reducedTree");
       }
 
       else if (sampleName=="ZJets"){
-	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35a/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.ZJets.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35e/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.ZJets.root/reducedTree");
       }
 
       else if (sampleName=="Zinvisible"){
-	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35a/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.Zinvisible.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35e/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.Zinvisible.root/reducedTree");
       }
 
       else if (sampleName=="VV"){
-	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35a/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.VV.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35e/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.VV.root/reducedTree");
       }
 
       else if (sampleName=="PythiaPUQCD"){
-	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35a/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.PythiaPUQCD.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35e/reducedTree.CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.PythiaPUQCD.root/reducedTree");
       }
 
       else if (sampleName=="LM9"){
-	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35a/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.LM9.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35e/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.LM9.root/reducedTree");	
       }
 
       else if (sampleName=="Data"){
-	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35a/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.ht_run2011a_aug5rereco.root/reducedTree");
-	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35a/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.ht_run2011a_may10rereco.root/reducedTree");
-	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35a/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.ht_run2011a_promptrecov4_try3.root/reducedTree");
-	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35a/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.ht_run2011a_promptrecov6.root/reducedTree");
-	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35a/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.ht_run2011b_promptrecov1_oct14.root/reducedTree");
-	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35a/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.ht_run2011b_promptrecov1_oct7.root/reducedTree");
-	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35a/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.ht_run2011b_promptrecov1.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35d/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.ht_run2011a_may10rereco.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35d/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.ht_run2011a_aug5rereco.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35d/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.ht_run2011a_promptrecov4_try3.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35d/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.ht_run2011a_promptrecov6.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35d/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.ht_run2011b_promptrecov1_nov4_try2.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35d/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.ht_run2011b_promptrecov1_oct21.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35d/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.ht_run2011b_promptrecov1_oct14.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35d/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.ht_run2011b_promptrecov1_oct7.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35d/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.ht_run2011b_promptrecov1_oct28_plusLostJobs.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35d/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.ht_run2011b_promptrecov1.root/reducedTree");
 
       }
 
@@ -517,6 +524,7 @@ void myCutflow::Init(TTree *tree)
    fChain->SetBranchAddress("probge1", &probge1, &b_probge1);
    fChain->SetBranchAddress("prob1", &prob1, &b_prob1);
    fChain->SetBranchAddress("probge2", &probge2, &b_probge2);
+   fChain->SetBranchAddress("probge3", &probge3, &b_probge3);
    fChain->SetBranchAddress("cutHT", &cutHT, &b_cutHT);
    fChain->SetBranchAddress("cutPV", &cutPV, &b_cutPV);
    fChain->SetBranchAddress("cutTrigger", &cutTrigger, &b_cutTrigger);
@@ -533,6 +541,7 @@ void myCutflow::Init(TTree *tree)
    fChain->SetBranchAddress("ra2ecaltpFilter", &ra2ecaltpFilter, &b_ra2ecaltpFilter);
    fChain->SetBranchAddress("scrapingvetoFilter", &scrapingvetoFilter, &b_scrapingvetoFilter);
    fChain->SetBranchAddress("trackingfailureFilter", &trackingfailureFilter, &b_trackingfailureFilter);
+   fChain->SetBranchAddress("trackingfailureFilterPFLOW", &trackingfailureFilterPFLOW, &b_trackingfailureFilterPFLOW);
    fChain->SetBranchAddress("passCleaning", &passCleaning, &b_passCleaning);
    fChain->SetBranchAddress("PBNRcode", &PBNRcode, &b_PBNRcode);
    fChain->SetBranchAddress("nGoodPV", &nGoodPV, &b_nGoodPV);
