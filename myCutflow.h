@@ -433,7 +433,7 @@ myCutflow::myCutflow(TString sampleName, TTree *tree):Event_(sampleName)
       }
 
       else if (sampleName=="PythiaPUQCD"){
-	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35e/reducedTree.CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.PythiaPUQCD.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35e/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.PythiaPUQCD.root/reducedTree");
       }
 
       else if (sampleName=="LM9"){
