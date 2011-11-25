@@ -1438,7 +1438,7 @@ std::pair<double,double> ABCD_njetRW(TString phys0bcontrol, TString Acutjm, TStr
   cout << "njetrw: ABCD: " << Arw << " " << Brw << " " << Crw << " " << Drw << endl; 
   cout << "njetrw: BD/A (rw): " << Brw*Drw/Arw << endl;
   cout << "njetrw: C (rw): " << Crw << endl;
-  double closure = fabs(1.0-Crw*Arw/Drw/Brw);
+  double closure = 1.0-Crw*Arw/Drw/Brw;
   double closurestat = sqrt(rwErr2);
   cout << "njetrw: closure (rw): " << 100.*closure << " +- " << 100.*closurestat << endl;
   cout << "njetrw: Table: $" << Brw << "$ & $" << Arw << "$ & $" << Drw << "$ & $" << Brw*Drw/Arw << "$ & $" << Crw << "$ & $" <<  100.*closure << " \\pm " << 100.*closurestat << "$ \\\\" << endl;
@@ -1504,11 +1504,11 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
   btagSFweight_="1";
   TString btagSFweight=""; //we're going to have to switch this one in and out of the global var
   if (useScaleFactors_) {
-    ge1b="1";
     usePUweight_=true;
     useHLTeff_=true;
     currentConfig_=configDescriptions_.getCorrected(); //add JERbias
     
+    ge1b="1";
     if (btagselection=="ge2b") {
       btagSFweight="probge2";
     }
@@ -1794,7 +1794,7 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
   double closureStat2 = datamode? 0: jmt::errAoverB(SIG,SIGerr,estimate,estimateerr);
   double R0 = myR;
   double R0err = myRerr;
-  
+  A
   TString name = region.btagSelection;
   name += region.owenId;
   name += isSIG ? ", SIG":", SB";
@@ -1865,7 +1865,10 @@ void runClosureTest2011(std::map<TString, std::vector<double> > & syst, bool add
 void runClosureTest2011()  {
   std::map<TString, std::vector<double> > dummy;
   
-  cout << "You are starting closure test without considering njet reweighting!" << endl;
+  //cout << "You are starting closure test without considering njet reweighting!" << endl;
+  //runClosureTest2011(dummy,false);
+
+  cout << "You are starting closure test that also considers njet reweighting! (this will do both)" << endl;
   runClosureTest2011(dummy,true);
 
 }
