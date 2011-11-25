@@ -1794,7 +1794,7 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
   double closureStat2 = datamode? 0: jmt::errAoverB(SIG,SIGerr,estimate,estimateerr);
   double R0 = myR;
   double R0err = myRerr;
-  A
+
   TString name = region.btagSelection;
   name += region.owenId;
   name += isSIG ? ", SIG":", SB";
