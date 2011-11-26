@@ -4075,7 +4075,7 @@ unsigned int EventCalculator::getSeed(){
   */
   
   cout << "Could not find seed for sample!" << endl;
-  assert(0);
+  //  assert(0);
   return 123455;
 }
 
