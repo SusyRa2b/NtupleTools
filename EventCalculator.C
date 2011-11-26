@@ -668,26 +668,30 @@ float EventCalculator::getHLTMHTeff(float offMET) {
 
   //for 2011 full result
   if(offMET>=200 && offMET<250){
-    eff = 0.94;
+    //    eff = 0.94;
+    eff = 0.859362; //after HT cut
+
+    //errors are wrong!
 
     //assign a 3% error in the SB region
     if ( theHLTEffType_ ==kHLTEffup){
-      eff = eff*1.03;
+      eff = eff*1.03; assert(0);
     }
     else if ( theHLTEffType_ ==kHLTEffdown){
-      eff = eff*0.97;
+      eff = eff*0.97; assert(0);
     }
 
   }
   else if(offMET>250){
-    eff = 0.998;
+    //    eff = 0.998;
+    eff = 0.975299; //after HT cut
 
     //assign a +0.1%(-0.5%) error in the SIG region
     if ( theHLTEffType_ ==kHLTEffup){
-      eff = eff*1.001;
+      eff = eff*1.001; assert(0);
     }
     else if ( theHLTEffType_ ==kHLTEffdown){
-      eff = eff*0.995;
+      eff = eff*0.995; assert(0);
     }
 
   }
