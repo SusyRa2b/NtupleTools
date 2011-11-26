@@ -3262,8 +3262,8 @@ Also the pdfWeightSum* histograms that are used for LM9.
   else if (theScanType_==kSMS) {
     //will need a loop over scan points. probably i need to do the loop by hand.
     //for each scan point generate a histogram, as above
-    for (int im0= 0; im0<=1500; im0+=10) {
-      for (int im12= 0; im12<=1500; im12+=10) {
+    for (int im0= 0; im0<=1500; im0+=5) {
+      for (int im12= 0; im12<=1500; im12+=5) {
 	TString histoname = "scanProcessTotals"; 
 	histoname += "_";
 	histoname +=im0;
