@@ -3122,6 +3122,8 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   double scanCrossSection,scanCrossSectionPlus,scanCrossSectionMinus;
   int m0,m12;
 
+  int W1decayType = -1, W2decayType = -1;
+
   ULong64_t lumiSection, eventNumber, runNumber;
   float METsig;
   float HT, MHT, MET, METphi, minDeltaPhi, minDeltaPhiAll, minDeltaPhiAll30,minDeltaPhi30_eta5_noIdAll;
@@ -3342,6 +3344,9 @@ Also the pdfWeightSum* histograms that are used for LM9.
 
   reducedTree.Branch("m0",&m0,"m0/I");
   reducedTree.Branch("m12",&m12,"m12/I");
+
+  reducedTree.Branch("W1decayType",&W1decayType,"W1decayType/I");
+  reducedTree.Branch("W2decayType",&W2decayType,"W2decayType/I");
 
   reducedTree.Branch("btagIPweight",&btagIPweight,"btagIPweight/F");
   //  reducedTree.Branch("pfmhtweight",&pfmhtweight,"pfmhtweight/F");
@@ -3756,6 +3761,11 @@ Also the pdfWeightSum* histograms that are used for LM9.
       runNumber = getRunNumber();
       lumiSection = getLumiSection();
       eventNumber = getEventNumber();
+
+      //if we are running over ttbar, fill info on decay mode
+      if (sampleName_.Contains("ttjets_madgraph") ){
+	getTTbarDecayType(W1decayType, W2decayType);
+      }
 
       HT=getHT();
       hltHTeff = getHLTHTeff(HT);
@@ -4520,17 +4530,335 @@ bool EventCalculator::inEventList(std::vector<int> &vrun, std::vector<int> &vlum
   return onList; 
 }
 
+//return the number of tops found (and the indices of the two top quarks)
+int EventCalculator::findTop(int& top1, int& top2)
+{
+  bool foundOneTop = false;
+  unsigned int maxParticles = myGenParticles->size();
+  for(unsigned int thisParticle = 0; thisParticle<maxParticles; thisParticle++)
+    {
+      if(abs(TMath::Nint(myGenParticles->at(thisParticle).pdgId)) == 6)
+	{
+	  if(!foundOneTop){
+	    top1 = thisParticle;
+	    foundOneTop=true;
+	  }
+	  else{
+	    top2 = thisParticle;
+	    return 2;
+	  }
+	}
+    }
+  if (foundOneTop) return 1;
+  return 0;
+}
+
+//returns the decay mode of the W
+//if W->enu, returns 11
+//if W->munu, returns 13
+//if W->taunu->enunu, returns 1511
+//if W->taunu->mununu, returns 1513
+//if W->taunu->hadrnic decay, return 15
+//else if W->hadrons, returns 1
+int EventCalculator::WDecayType(const int Wparent,int& Wdaughter)
+{
+  int thisParticle = TMath::Nint(myGenParticles->at(Wparent).firstDaughter); 
+  int maxParticle = TMath::Nint(myGenParticles->at(Wparent).lastDaughter)+1;
+  if(thisParticle==-1||maxParticle==0) return -1;
+  for(; thisParticle < maxParticle ; thisParticle++)
+    {
+      if( abs(TMath::Nint(myGenParticles->at(thisParticle).pdgId)) == 11) {Wdaughter = thisParticle; return 11;}
+      if( abs(TMath::Nint(myGenParticles->at(thisParticle).pdgId)) == 13) {Wdaughter = thisParticle; return 13;} 
+      if( abs(TMath::Nint(myGenParticles->at(thisParticle).pdgId)) == 15)
+	{
+	  int tauDaughter = TMath::Nint(myGenParticles->at(thisParticle).firstDaughter);
+	  int lastTauDaughter =  TMath::Nint(myGenParticles->at(thisParticle).lastDaughter);
+	  if(tauDaughter == -1 || lastTauDaughter == -1) {Wdaughter = thisParticle; return -15;}
+	  if(lastTauDaughter>=(int)myGenParticles->size()) {
+	    cout << "tau daughters fall off the end of the generated particle list.  Tau daughter ranges from " 
+		 << tauDaughter << " to " << lastTauDaughter << ". Size of the list is " << myGenParticles->size() 
+		 << endl; 
+	    Wdaughter = thisParticle; return -15;}
+	  int currentTauDaughter = 0;
+	  int WTauDaughterLastTauDaughterPlaceHolder = 0;
+	  while(tauDaughter <= lastTauDaughter)
+	    {
+	      int tauDaugterPdgId = abs(TMath::Nint(myGenParticles->at(tauDaughter).pdgId));
+	      if( tauDaugterPdgId != 11 && tauDaugterPdgId != 12 && tauDaugterPdgId != 13 && tauDaugterPdgId != 14 && tauDaugterPdgId != 15 && tauDaugterPdgId != 16 && tauDaugterPdgId != 22 && tauDaugterPdgId != 24 ){Wdaughter = tauDaughter; return 15;}
+	      if(tauDaugterPdgId == 11) {Wdaughter = tauDaughter; return 1511;}
+	      if(tauDaugterPdgId == 13) {Wdaughter = tauDaughter; return 1513;}
+	      if(tauDaugterPdgId == 15) 
+		{
+		  lastTauDaughter =  TMath::Nint(myGenParticles->at(tauDaughter).lastDaughter);
+		  tauDaughter = TMath::Nint(myGenParticles->at(tauDaughter).firstDaughter);
+		  if(tauDaughter == -1 || lastTauDaughter == -1) {Wdaughter = tauDaughter; return -15;}
+		  if(lastTauDaughter>(int)myGenParticles->size()) {
+		    cout << "tau daughters fall off the end of the generated particle list.  Tau daughter ranges from " 
+			 << tauDaughter << " to " << lastTauDaughter << ". Size of the list is " << myGenParticles->size() 
+			 << endl; 
+		    Wdaughter = thisParticle; return -15;}
+		}
+	      if(tauDaugterPdgId == 24) 
+		{
+		  currentTauDaughter =  tauDaughter;			    
+		  WTauDaughterLastTauDaughterPlaceHolder = lastTauDaughter;
+		  lastTauDaughter= TMath::Nint(myGenParticles->at(tauDaughter).lastDaughter);
+		  tauDaughter = TMath::Nint(myGenParticles->at(tauDaughter).firstDaughter);
+		}
+	      else tauDaughter++;
+	      if(tauDaughter > lastTauDaughter && WTauDaughterLastTauDaughterPlaceHolder!=0)
+		{			    
+		  tauDaughter = currentTauDaughter+1;
+		  lastTauDaughter = WTauDaughterLastTauDaughterPlaceHolder;
+		}
+	    }
+	  Wdaughter = thisParticle;
+	  return -15;
+	}
+    }
+  {Wdaughter = Wparent;return 1;}
+}
+
+int EventCalculator::findW(int& W, int& Wdaughter,int parent=0)
+{
+   int thisParticle;
+   int maxParticle;
+   if(parent == 0)
+     {
+       thisParticle = 0;
+       maxParticle = myGenParticles->size();
+     }
+   else
+     {
+       thisParticle = TMath::Nint(myGenParticles->at(parent).firstDaughter);
+       maxParticle =  min(TMath::Nint(myGenParticles->at(parent).lastDaughter)+1, (int)myGenParticles->size()); 
+     }
+   for(;thisParticle < maxParticle;thisParticle++)
+     {
+       if(abs(TMath::Nint(myGenParticles->at(thisParticle).pdgId)) == 24)
+	 {
+	   int nextDaughter = TMath::Nint(myGenParticles->at(thisParticle).firstDaughter);
+	   if(abs(TMath::Nint(myGenParticles->at(nextDaughter).pdgId)) == 24)
+	     {
+	       W = nextDaughter;
+	       return WDecayType(W,Wdaughter);
+	     }
+	   else
+	     {
+	       W = thisParticle;
+	       return WDecayType(W,Wdaughter);
+	     }
+	 }
+     }
+   return -1;
+}
+
+int EventCalculator::muonMatch(const int trueMuon)
+{
+  //cout << "muon match" << endl;
+  unsigned int maxMuons = myMuonsPF->size(); 
+  for(unsigned int thisMuon = 0;thisMuon < maxMuons ; thisMuon++)
+    {
+      //cout << "deltaR " << deltaR(myMuonsPF->at(thisMuon).eta,myMuonsPF->at(thisMuon).phi,myGenParticles->at(trueMuon).eta,myGenParticles->at(trueMuon).phi) << endl;
+      //if(isGoodMuon(thisMuon)) cout << "is good" << endl;
+      //else cout << "is bad" << endl;
+      if( isGoodMuon(thisMuon) && jmt::deltaR(myMuonsPF->at(thisMuon).eta,myMuonsPF->at(thisMuon).phi,myGenParticles->at(trueMuon).eta,myGenParticles->at(trueMuon).phi) < 0.3 )
+	{ 
+	  return thisMuon;
+	}
+    }
+  for(unsigned int thisMuon = 0;thisMuon < maxMuons ; thisMuon++)
+    {
+      //check proximity to any reconstructed muon at deltaR<0.3
+      if( jmt::deltaR(myMuonsPF->at(thisMuon).eta,myMuonsPF->at(thisMuon).phi,myGenParticles->at(trueMuon).eta,myGenParticles->at(trueMuon).phi) < 0.3 )
+	{ 
+	  return thisMuon;
+	}
+    }
+  return -1;
+}
+
+int EventCalculator::electronMatch(const int trueElectron)
+{
+  unsigned int maxElectrons = myElectronsPF->size(); 
+  for(unsigned int thisElectron = 0;thisElectron < maxElectrons ; thisElectron++)
+    {
+      //check proximity to any reconstructed muon at deltaR<0.3
+      if( isGoodElectron(thisElectron) && jmt::deltaR(myElectronsPF->at(thisElectron).eta,myElectronsPF->at(thisElectron).phi,myGenParticles->at(trueElectron).eta,myGenParticles->at(trueElectron).phi) < 0.3 )
+	{ 
+	  return thisElectron;
+	}
+    }
+  for(unsigned int thisElectron = 0;thisElectron < maxElectrons ; thisElectron++)
+    {
+      //check proximity to any reconstructed muon at deltaR<0.3
+      if( jmt::deltaR(myElectronsPF->at(thisElectron).eta,myElectronsPF->at(thisElectron).phi,myGenParticles->at(trueElectron).eta,myGenParticles->at(trueElectron).phi) < 0.3 )
+	{ 
+	  return thisElectron;
+	}
+    }
+  return -1;
+}
+
+int EventCalculator::tauMatch(const int trueTau)
+{
+  unsigned int maxJets = myJetsPF->size(); 
+  for(unsigned int thisJet = 0;thisJet < maxJets ; thisJet++)
+    {
+      //check proximity to any reconstructed muon at deltaR<0.4
+      if( jmt::deltaR(myJetsPF->at(thisJet).eta,myJetsPF->at(thisJet).phi,myGenParticles->at(trueTau).eta,myGenParticles->at(trueTau).phi) < 0.4 )
+	{ 
+	  return thisJet;
+	}
+    }
+  return -1;
+}
+
+
+int EventCalculator::daughterMatch(const int Wdaughter, const int WdecayType)
+{
+  if(WdecayType == 11 || WdecayType == 1511)
+    {
+      return electronMatch(Wdaughter);
+    }
+  if(WdecayType == 13 || WdecayType == 1513)
+    {
+      return muonMatch(Wdaughter);
+    }
+  if(WdecayType == 15)
+    {
+      return tauMatch(Wdaughter);
+    }
+  if(WdecayType == 1)
+    {
+      return 0;
+    }
+  return -1;
+}
+
+int EventCalculator::getTTbarDecayType(int& W1decayType, int& W2decayType)
+{
+  if(myGenParticles == 0 || myGenParticles->size() == 0) return -1;
+  int top1=-1;
+  int top2=-1;
+  int nTops = findTop(top1,top2);
+  int W1 = 0;
+  int W2 = 0;
+  int W1daughter = 0;
+  int W2daughter = 0;
+  //int W1decayType = 0;
+  //int W2decayType = 0;
+  if(nTops>0)
+    {
+      W1decayType = findW(W1,W1daughter,top1);
+      if(nTops>1) W2decayType = findW(W2,W2daughter,top2);
+    }
+
+  //std::cout << "W1decayType = " << W1decayType << ", W2decayType = " << W2decayType << std::endl;
+  //std::cout << "W1daughter = " << W1daughter << ", W2daughter = " << W2daughter << std::endl;
+  /*
+  int W1daughterMatch = -1;
+  int W2daughterMatch = -1;
+  if( W1decayType > 0 ) W1daughterMatch = daughterMatch(W1daughter,W1decayType);
+  if( W2decayType > 0 ) W2daughterMatch = daughterMatch(W2daughter,W2decayType);
+
+  //cout << "done with matching" << endl;
+
+  if((W1decayType == 1 || W2decayType == 1 || W1decayType == 15 || W2decayType == 15) && !(W1decayType == 15 && W2decayType == 15)) //hadronic decay
+    {
+      int WdecayType, Wdaughter,WdaughterMatch;
+	  if(W1decayType!=1) 
+	    {
+	      WdecayType =  W1decayType;
+	      Wdaughter = W1daughter;
+	      WdaughterMatch = W1daughterMatch;
+	    }
+	  else if(W2decayType!=1)
+	    {
+	      WdecayType =  W2decayType;
+	      Wdaughter = W2daughter;
+	      WdaughterMatch = W2daughterMatch;
+	    }
+	  else if(W1decayType!=15)
+	    {
+	      WdecayType =  W1decayType;
+	      Wdaughter = W1daughter;
+	      WdaughterMatch = W1daughterMatch;
+	    }
+	  else
+	    {
+	      WdecayType =  W2decayType;
+	      Wdaughter = W2daughter;
+	      WdaughterMatch = W2daughterMatch;
+	    }
+      if(WdecayType == 11 || WdecayType == 1511) //electron
+	{
+	  //cout << "electron match" << endl;
+	  if( WdaughterMatch > -1 ) // electron on electron list
+	    {
+	      if( isGoodElectron(WdaughterMatch) ) return 101100;
+	      else if( myElectronsPF->at(WdaughterMatch).eta > 2.4 || myGenParticles->at(Wdaughter).eta > 2.4 ) return 101101;
+	      else if( myElectronsPF->at(WdaughterMatch).pt < 10 || myGenParticles->at(Wdaughter).pt < 10 ) return 101102;
+	      else return 101103;
+	    }
+	  else
+	    {
+	      if(myGenParticles->at(Wdaughter).eta > 2.4) return 201101;//
+	      else if(myGenParticles->at(Wdaughter).pt < 10) return 201102;//
+	      else return 201103;
+	    }
+	}
+      if(WdecayType == 13 || WdecayType == 1513) //muon
+	{
+	  //cout << "muon match" << endl;
+	  if( WdaughterMatch > -1 ) // muon on muon list
+	    {
+	      //cout << "matched daughter" << endl;
+	      //cout << "true index " << Wdaughter << endl;
+	      //cout << "match index " << WdaughterMatch << endl;
+	      if( isGoodMuon(WdaughterMatch) ) return 101300;
+	      else if( myMuonsPF->at(WdaughterMatch).eta > 2.4 || myGenParticles->at(Wdaughter).eta > 2.4 ) return 101301;
+	      else if( myMuonsPF->at(WdaughterMatch).pt < 10 || myGenParticles->at(Wdaughter).pt < 10 ) return 101302;
+	      else return 101303;
+	    }
+	  else
+	    {
+	      //cout << "unmatched daughter" << endl;
+	      //cout << "true index " << Wdaughter << endl;
+	      if(myGenParticles->at(Wdaughter).eta > 2.4) return 201301;//
+	      else if(myGenParticles->at(Wdaughter).pt < 10) return 201302;//
+	      else return 201303;
+	    }
+	}
+      if(WdecayType == 15)//tau
+	{
+	  //cout << "tau match" << endl;
+	  if( WdaughterMatch > -1 ) // tau on jet list
+	    {
+	      if( isGoodJet(WdaughterMatch) ) return 101500;
+	      else return 101501;
+	    }
+	  else
+	    {
+	      return 201500;
+	    }
+	}
+    }
+  */
+  return 0;
+}
+
 void EventCalculator::sampleAnalyzer(itreestream& stream){
 
 
-  TFile fout("histos.root","RECREATE");
+  //TFile fout("histos.root","RECREATE");
   
-  TH1F * h_MCPU = new TH1F("h_MCPU","unweighted PU distribution",35,0.5,34.5);
-  TH1F * h_MCPUr = new TH1F("h_MCPUr","reweighted PU distribution",35,-0.5,34.5);
-  TH1F * h_MCPUBXp1 = new TH1F("h_MCPUBXp1","unweighted PU distribution",35,0.5,34.5);
-  TH1F * h_MCPUrBXp1 = new TH1F("h_MCPUrBxp1","reweighted PU distribution",35,-0.5,34.5);
-  TH1F * h_MCPUBXm1 = new TH1F("h_MCPUBXm1","unweighted PU distribution",35,0.5,34.5);
-  TH1F * h_MCPUrBXm1 = new TH1F("h_MCPUrBXm1","reweighted PU distribution",35,-0.5,34.5);
+  //TH1F * h_MCPU = new TH1F("h_MCPU","unweighted PU distribution",35,0.5,34.5);
+  //TH1F * h_MCPUr = new TH1F("h_MCPUr","reweighted PU distribution",35,-0.5,34.5);
+  //TH1F * h_MCPUBXp1 = new TH1F("h_MCPUBXp1","unweighted PU distribution",35,0.5,34.5);
+  //TH1F * h_MCPUrBXp1 = new TH1F("h_MCPUrBxp1","reweighted PU distribution",35,-0.5,34.5);
+  //TH1F * h_MCPUBXm1 = new TH1F("h_MCPUBXm1","unweighted PU distribution",35,0.5,34.5);
+  //TH1F * h_MCPUrBXm1 = new TH1F("h_MCPUrBXm1","reweighted PU distribution",35,-0.5,34.5);
 
   //TH1F * h_ht = new TH1F("h_ht","HT",1000,0,1000);
   //TH1F * h_ht_trig = new TH1F("h_ht_trig","HT",1000,0,1000);
@@ -4575,26 +4903,26 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
   setIgnoredCut("cut2b");
   setIgnoredCut("cut3b");
 
-  //initialize PU things
-  std::vector< float > DataDist2011;
-  std::vector< float > MCDist2011;
-  for( int i=0; i<35; ++i) {
-    //for PU_S3 (only in-time)
-    //DataDist2011.push_back(pu::ObsDist2011_f[i]);
-    //MCDist2011.push_back(pu::PoissonOneXDist_f[i]);
-    //for 3dPU reweighting 
-    DataDist2011.push_back(pu::TrueDist2011_f[i]);
-    MCDist2011.push_back(pu::probdistFlat10_f[i]);
-  }  
-  //for( int i=0; i<1000; ++i) {
-  //  DataDist2011.push_back(pu::TrueDist2011_finebin_f[i]);
-  //}
-  //reweight::LumiReWeighting LumiWeights = reweight::LumiReWeighting( MCDist2011, DataDist2011 );
-  //Lumi3DReWeighting LumiWeights = Lumi3DReWeighting("Summer11MC_PUDistTruth.root", "PileupTruth_finebin_data_SUM_upto180252.root", "mcpileup", "pileup");
-  Lumi3DReWeighting LumiWeights = Lumi3DReWeighting( MCDist2011, DataDist2011);
+  ////initialize PU things
+  //std::vector< float > DataDist2011;
+  //std::vector< float > MCDist2011;
+  //for( int i=0; i<35; ++i) {
+  //  //for PU_S3 (only in-time)
+  //  //DataDist2011.push_back(pu::ObsDist2011_f[i]);
+  //  //MCDist2011.push_back(pu::PoissonOneXDist_f[i]);
+  //  //for 3dPU reweighting 
+  //  DataDist2011.push_back(pu::TrueDist2011_f[i]);
+  //  MCDist2011.push_back(pu::probdistFlat10_f[i]);
+  //}  
+  ////for( int i=0; i<1000; ++i) {
+  ////  DataDist2011.push_back(pu::TrueDist2011_finebin_f[i]);
+  ////}
+  ////reweight::LumiReWeighting LumiWeights = reweight::LumiReWeighting( MCDist2011, DataDist2011 );
+  ////Lumi3DReWeighting LumiWeights = Lumi3DReWeighting("Summer11MC_PUDistTruth.root", "PileupTruth_finebin_data_SUM_upto180252.root", "mcpileup", "pileup");
+  //Lumi3DReWeighting LumiWeights = Lumi3DReWeighting( MCDist2011, DataDist2011);
 
 
-  LumiWeights.weight3D_init(1);
+  //LumiWeights.weight3D_init(1);
   //LumiWeights.weight3D_init();
   //LumiWeights.weight3D_init("Weight3D.root");
 
@@ -4605,6 +4933,9 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
   //int ntaggedjets_b = 0;
   //int ntaggedjets_c = 0;
   //int ntaggedjets_l = 0;
+
+  int decayType;
+  int W1decayType, W2decayType;
 
   startTimer();
   for(int entry=0; entry < nevents; ++entry){
@@ -4634,7 +4965,8 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
     //
     //
     //}
-
+    decayType = getTTbarDecayType(W1decayType, W2decayType);
+    std::cout << "decaytype = " << decayType << ", W1decayType = " << W1decayType << ", W2decayType = " << W2decayType << std::endl;
 
     //if(Cut()==1){
 
@@ -4726,7 +5058,7 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
       */
 
 
-               
+      /*               
       int npv = 0, npvbxp1 = 0, npvbxm1 = 0;
       for ( unsigned int i = 0; i<pileupsummaryinfo.size() ; i++) {
 	//npv = pileupsummaryinfo.at(i).addpileupinfo_getPU_NumInteractions;
@@ -4757,7 +5089,7 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
       h_MCPUrBXp1->Fill(npvbxp1, getPUWeight(LumiWeights) );
       h_MCPUBXm1->Fill(npvbxm1);
       h_MCPUrBXm1->Fill(npvbxm1, getPUWeight(LumiWeights) );
-
+      */
 
       //calculateTagProb(prob0,probge1,prob1,probge2,probge3);
       //n0b += prob0; 
@@ -4839,8 +5171,8 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
   //h_ltageff->Divide(h_ltag,h_ljet,1,1,"B");
   //
   //
-  fout.Write();
-  fout.Close();
+  //fout.Write();
+  //fout.Close();
 
 
   return;

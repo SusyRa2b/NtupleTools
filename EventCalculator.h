@@ -193,6 +193,16 @@ public:
   std::pair<int,int> getSMSmasses();
   double checkPdfWeightSanity( double a) ;
   //  void getPdfWeights(const TString & pdfset, Float_t * pdfWeights, TH1D * sumofweights) ;
+  int findTop(int& top1, int& top2);
+  
+  int WDecayType(const int Wparent,int& Wdaughter);
+  int findW(int& W, int& Wdaughter, int parent);
+  int muonMatch(const int trueMuon);
+  int electronMatch(const int trueElectron);
+  int tauMatch(const int trueTau);
+  int daughterMatch(const int Wdaughter, const int WdecayType);
+  int getTTbarDecayType(int& W1decayType, int& W2decayType);
+
   double getCrossSection();
 
   //  double getPFMHTWeight(); //TODO
