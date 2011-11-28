@@ -86,8 +86,8 @@ functionality for TH1F and TH1D e.g. the case of addOverflowBin()
 //***************************
 
   //TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35d/";
-TString inputPath = "/cu1/joshmt/reducedTrees/test/"; 
-//TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35e/";
+  //TString inputPath = "/cu1/joshmt/reducedTrees/test/"; 
+TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35e/";
 TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35d/";
 
 //-- reducedTrees for Oct 25 SUSY meeting. 3464.581/pb. 
