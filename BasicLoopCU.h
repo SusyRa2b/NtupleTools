@@ -313,17 +313,17 @@ std::vector<double>	geneventinfoproducthelper_pdf1(201,0);
 std::vector<double>	geneventinfoproducthelper_pdf2(201,0);
 std::vector<double>	geneventinfoproducthelper_pdfweight(201,0);
 std::vector<double>	geneventinfoproducthelper_pdfweightsum(201,0);
-std::vector<double>	genparticlehelperra2_charge(73,0);
-std::vector<double>	genparticlehelperra2_eta(73,0);
-std::vector<double>	genparticlehelperra2_firstDaughter(73,0);
-std::vector<double>	genparticlehelperra2_firstMother(73,0);
-std::vector<double>	genparticlehelperra2_lastDaughter(73,0);
-std::vector<double>	genparticlehelperra2_lastMother(73,0);
-std::vector<double>	genparticlehelperra2_mass(73,0);
-std::vector<double>	genparticlehelperra2_pdgId(73,0);
-std::vector<double>	genparticlehelperra2_phi(73,0);
-std::vector<double>	genparticlehelperra2_pt(73,0);
-std::vector<double>	genparticlehelperra2_status(73,0);
+std::vector<double>	genparticlehelperra2_charge(5000,0);
+std::vector<double>	genparticlehelperra2_eta(5000,0);
+std::vector<double>	genparticlehelperra2_firstDaughter(5000,0);
+std::vector<double>	genparticlehelperra2_firstMother(5000,0);
+std::vector<double>	genparticlehelperra2_lastDaughter(5000,0);
+std::vector<double>	genparticlehelperra2_lastMother(5000,0);
+std::vector<double>	genparticlehelperra2_mass(5000,0);
+std::vector<double>	genparticlehelperra2_pdgId(5000,0);
+std::vector<double>	genparticlehelperra2_phi(5000,0);
+std::vector<double>	genparticlehelperra2_pt(5000,0);
+std::vector<double>	genparticlehelperra2_status(5000,0);
 double	genruninfoproduct_externalXSecLO_error;
 double	genruninfoproduct_externalXSecLO_value;
 double	genruninfoproduct_filterEfficiency;
@@ -2454,7 +2454,7 @@ struct genparticlehelperra2_s
   double	pt;
   double	status;
 };
-std::vector<genparticlehelperra2_s> genparticlehelperra2(73);
+std::vector<genparticlehelperra2_s> genparticlehelperra2(5000);
 
 std::ostream& operator<<(std::ostream& os, const genparticlehelperra2_s& o)
 {
