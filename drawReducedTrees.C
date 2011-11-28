@@ -86,8 +86,8 @@ functionality for TH1F and TH1D e.g. the case of addOverflowBin()
 //***************************
 
   //TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35d/";
-  //TString inputPath = "/cu1/joshmt/reducedTrees/test/";
-TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35e/";
+TString inputPath = "/cu1/joshmt/reducedTrees/test/"; 
+//TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35e/";
 TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35d/";
 
 //-- reducedTrees for Oct 25 SUSY meeting. 3464.581/pb. 
@@ -147,6 +147,11 @@ SignalEffData signalSystematics2011(const SearchRegion & region, bool isSL=false
   assert ( !( isSL&&isLDP));
   if (isLDP) cout<<"   == LDP "<<endl;
   if (isSL) cout<<"   == SL "<<endl;
+
+  //take care of trigger efficiency systematics, which differs between SB and SIG
+  if (region.isSIG) results.set("trigger",3.8e-2,3.8e-2);
+  else results.set("trigger",8.6e-2,8.6e-2); //since we don't have a facility for asymmetric systematics, use the largest one
+
 
   //for susy scan; harmless for non-susy scan
   m0_=m0;
@@ -699,12 +704,12 @@ owen asked for total MC event counts in the 6 boxes, output in a particular form
   else if (btagselection=="ge1b") {}
   else if (btagselection=="ge3b") {
     bcut="nbjets>=3";
-    bweightstring="probge3"; //this one isn't calculated right now, i think
+    bweightstring="probge3"; 
   }
   else {assert(0);}
 
-  TCut baseline = "cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1";
-  TCut baselineSL = "cutPV==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0))";
+  TCut baseline = "cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 &&passCleaning==1";
+  TCut baselineSL = "cutPV==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) &&passCleaning==1";
 
   TCut passOther = "minDeltaPhiN>=4";
   TCut failOther="minDeltaPhiN<4";
@@ -804,7 +809,7 @@ map<pair<int,int>, SignalEffData>  runTH2Syst2011_mSugra(const SearchRegion & re
 
   setSearchRegions();
   const bool ismSugra= sampleOfInterest.Contains("mSUGRA");
-  if (ismSugra)  loadSusyScanHistograms();
+  loadSusyScanHistograms();
 
 
   region.Print();
@@ -913,6 +918,10 @@ map<pair<int,int>, SignalEffData>  runTH2Syst2011_mSugra(const SearchRegion & re
   for (  susyScanYields::iterator imsugra=rawYields.begin(); imsugra!=rawYields.end(); ++imsugra) {
     SignalEffData theseResults;
 
+    //take care of trigger efficiency systematics, which differs between SB and SIG
+    if (region.isSIG) theseResults.set("trigger",3.8e-2,3.8e-2);
+    else theseResults.set("trigger",8.6e-2,8.6e-2); //since we don't have a facility for asymmetric systematics, use the largest one
+
     if (rawYields[imsugra->first].first >0) {
       cout<<imsugra->first.first<<" "<<imsugra->first.second<<" " //m0 and m12
  	  <<rawYields[imsugra->first].first<<" "<<nominalYields[imsugra->first].first<<" "
@@ -995,7 +1004,8 @@ void runSystematics2011_scanBoxByBox(TString sampleOfInterest, const unsigned in
   
   setSearchRegions();
 
-  if (sampleOfInterest.Contains("SUGRA"))  loadSusyScanHistograms();
+  if (!sampleOfInterest.Contains("SUGRA")) loadScanSMSngen(sampleOfInterest);
+  loadSusyScanHistograms();
   
   if (iregion>=searchRegions_.size() ) { cout<<"There are only "<<searchRegions_.size()<<" search regions!"<<endl; return;}
  
@@ -1021,7 +1031,9 @@ void loadSystematics2011_scanBoxByBox(TString sampleOfInterest, const unsigned i
   clearSamples();
   addSample(sampleOfInterest);
   setSearchRegions();
-  if (sampleOfInterest.Contains("SUGRA"))  loadSusyScanHistograms();
+  if (!sampleOfInterest.Contains("SUGRA")) loadScanSMSngen(sampleOfInterest);
+  loadSusyScanHistograms();
+
   if (iregion>=searchRegions_.size() ) { cout<<"There are only "<<searchRegions_.size()<<" search regions!"<<endl; return;}
   //open the output files
   //-- these are the text, root files for Owen et al
@@ -1069,7 +1081,7 @@ void loadSystematics2011_scanBoxByBox(TString sampleOfInterest, const unsigned i
   
   for (map<pair<int,int>, SignalEffData >::iterator iscanpoint = SB.begin(); iscanpoint!= SB.end(); ++iscanpoint) {
     int nentries=  sampleOfInterest.Contains("mSUGRA") ?
-      scanProcessTotalsMap[iscanpoint->first]->GetEntries() :
+      scanProcessTotalsMap[iscanpoint->first]["CTEQ"]->Integral(0,10,0,0) : //this is supposed to integrate over the subprocesses but not the pdf indices
       TMath::Nint(scanSMSngen->GetBinContent(scanSMSngen->FindBin(iscanpoint->first.first,iscanpoint->first.second ))); 
     
     (*textfiles)<<iscanpoint->first.first <<" "<<iscanpoint->first.second <<" "<<nentries<<" "
@@ -1131,6 +1143,7 @@ void loadSystematics2011_scanBoxByBox(TString sampleOfInterest, const unsigned i
 
 }
 
+/* the version that runs all 6 boxes serially
 void runSystematics2011_scan(TString sampleOfInterest, const unsigned int i) {
   //now converting this to work also on mSugra "mSUGRAtanb40" as well as simplified models e.g. T1bbbb
   
@@ -1140,7 +1153,7 @@ void runSystematics2011_scan(TString sampleOfInterest, const unsigned int i) {
   
   setSearchRegions();
 
-  if (sampleOfInterest.Contains("SUGRA"))  loadSusyScanHistograms();
+  loadSusyScanHistograms();
   
   if (i>=searchRegions_.size() ) { cout<<"There are only "<<searchRegions_.size()<<" search regions!"<<endl; return;}
   
@@ -1244,7 +1257,7 @@ void runSystematics2011_scan(TString sampleOfInterest, const unsigned int i) {
 
 
 }
-
+*/
 /* hope to deprecate this function
 //run mSugra systematics in the efficient way
 void runSystematics2011_mSugra(const unsigned int i) {
@@ -1762,34 +1775,34 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
     if (isSIG) {
       myOwen->Nttbarmc_sig_ldp = getIntegral("TTbarJets");
       myOwen->Nsingletopmc_sig_ldp = getIntegral("SingleTop");
-      double lsfw = getIntegral("WJets") > 0 ?  pow(getIntegralErr("WJets"),2)/getIntegral("WJets"): -1;
-      double lsfzj = getIntegral("ZJets") > 0 ?  pow(getIntegralErr("ZJets"),2)/getIntegral("ZJets"): -1;
-      double lsfz = getIntegral("Zinvisible") > 0 ?  pow(getIntegralErr("Zinvisible"),2)/getIntegral("Zinvisible"): -1;
+      //      double lsfw = getIntegral("WJets") > 0 ?  pow(getIntegralErr("WJets"),2)/getIntegral("WJets"): -1;
+      //      double lsfzj = getIntegral("ZJets") > 0 ?  pow(getIntegralErr("ZJets"),2)/getIntegral("ZJets"): -1;
+      //      double lsfz = getIntegral("Zinvisible") > 0 ?  pow(getIntegralErr("Zinvisible"),2)/getIntegral("Zinvisible"): -1;
       
-      if (lsfw>0) myOwen->lsf_WJmc=lsfw;
-      if (lsfz>0) myOwen->lsf_Znnmc=lsfz;
-      if (lsfzj>0) myOwen->lsf_Zjmc=lsfzj;
+      //      if (lsfw>0) myOwen->lsf_WJmc=lsfw;
+      //      if (lsfz>0) myOwen->lsf_Znnmc=lsfz;
+      //      if (lsfzj>0) myOwen->lsf_Zjmc=lsfzj;
       
-      myOwen->NWJmc_sig_ldp = getIntegral("WJets")/lsfw;
-      myOwen->NZnnmc_sig_ldp = getIntegral("Zinvisible")/lsfz;
-      myOwen->NZjmc_sig_ldp = getIntegral("ZJets")/lsfzj;
+      myOwen->NWJmc_sig_ldp = getIntegral("WJets");// /lsfw;
+      myOwen->NZnnmc_sig_ldp = getIntegral("Zinvisible");// /lsfz;
+      myOwen->NZjmc_sig_ldp = getIntegral("ZJets");// /lsfzj;
       
     }
     else {
       myOwen->Nttbarmc_sb_ldp = getIntegral("TTbarJets");
       myOwen->Nsingletopmc_sb_ldp = getIntegral("SingleTop");
       
-      double lsfw = getIntegral("WJets") > 0 ?  pow(getIntegralErr("WJets"),2)/getIntegral("WJets"): -1;
-      double lsfz = getIntegral("Zinvisible") > 0 ?  pow(getIntegralErr("Zinvisible"),2)/getIntegral("Zinvisible"): -1;
-      double lsfzj = getIntegral("ZJets") > 0 ?  pow(getIntegralErr("ZJets"),2)/getIntegral("ZJets"): -1;
+      //      double lsfw = getIntegral("WJets") > 0 ?  pow(getIntegralErr("WJets"),2)/getIntegral("WJets"): -1;
+      //      double lsfz = getIntegral("Zinvisible") > 0 ?  pow(getIntegralErr("Zinvisible"),2)/getIntegral("Zinvisible"): -1;
+      //      double lsfzj = getIntegral("ZJets") > 0 ?  pow(getIntegralErr("ZJets"),2)/getIntegral("ZJets"): -1;
       
-      if (lsfw>0) myOwen->lsf_WJmc=lsfw;
-      if (lsfz>0) myOwen->lsf_Znnmc=lsfz;
-      if (lsfzj>0) myOwen->lsf_Zjmc=lsfzj;
+      //      if (lsfw>0) myOwen->lsf_WJmc=lsfw;
+      //      if (lsfz>0) myOwen->lsf_Znnmc=lsfz;
+      //      if (lsfzj>0) myOwen->lsf_Zjmc=lsfzj;
       
-      myOwen->NWJmc_sb_ldp = getIntegral("WJets")/lsfw;
-      myOwen->NZnnmc_sb_ldp = getIntegral("Zinvisible")/lsfz;
-      myOwen->NZjmc_sb_ldp = getIntegral("ZJets")/lsfzj;
+      myOwen->NWJmc_sb_ldp = getIntegral("WJets");// /lsfw;
+      myOwen->NZnnmc_sb_ldp = getIntegral("Zinvisible");// /lsfz;
+      myOwen->NZjmc_sb_ldp = getIntegral("ZJets");// /lsfzj;
     }
     //end of special stuff for owen
   }
@@ -3505,12 +3518,12 @@ void drawmSugraEfficiency() {
     
     //loop over i and histo bins
     for (int i=0; i<=nsubprocesses; i++) {
-      for (map<pair<int,int>, TH1D* >::iterator iscanpoint = scanProcessTotalsMap.begin(); iscanpoint!=scanProcessTotalsMap.end(); ++iscanpoint) {
+      for (map<pair<int,int>, map<TString,TH2D*> >::iterator iscanpoint = scanProcessTotalsMap.begin(); iscanpoint!=scanProcessTotalsMap.end(); ++iscanpoint) {
 	int m0=iscanpoint->first.first;
 	int m12=iscanpoint->first.second;
 	
-	TH1D* thishist = scanProcessTotalsMap[make_pair(m0,m12)];
-	int thisn = TMath::Nint(thishist->GetBinContent(i)); // n gen
+	TH2D* thishist = scanProcessTotalsMap[make_pair(m0,m12)]["CTEQ"];
+	int thisn = TMath::Nint(thishist->GetBinContent(i,0)); // n gen
 	int bin=  raw0[i]->FindBin(m0,m12);
 	double N_i_thispoint = raw0[i]->GetBinContent(bin); // Npass * sigma * L
 	double this_sigma = CrossSectionTable_mSUGRAtanb40_->getCrossSection(m0,m12,SUSYProcess(i));
@@ -3528,8 +3541,8 @@ void drawmSugraEfficiency() {
     //now we have Npass_i * sigma_i * lumi / Ngen_i 
     //all that is left is to make the sum over i
     susyScanYields theEff;
-    for (map<pair<int,int>, TH1D* >::iterator iscanpoint = scanProcessTotalsMap.begin(); iscanpoint!=scanProcessTotalsMap.end(); ++iscanpoint) {
-      int nentries=    iscanpoint->second->GetEntries();
+    for (map<pair<int,int>, map<TString,TH2D*> >::iterator iscanpoint = scanProcessTotalsMap.begin(); iscanpoint!=scanProcessTotalsMap.end(); ++iscanpoint) {
+      int nentries=    iscanpoint->second["CTEQ"]->Integral(0,10,0,0); //integrate over subprocesses but not pdf indices
       if (nentries >10000 || nentries<9500) continue;
       
       double Nraw = 0;
