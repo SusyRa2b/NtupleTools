@@ -2600,6 +2600,133 @@ void AN2011_prescale( TString btagselection="ge1b",const int mode=1 ) {
 }
 
 
+void AN2011_PUQCD( TString btagselection="ge1b",const int mode=1 ) {
+  
+  loadSamples();
+
+  
+  //this mode thing is kludgey
+  TString modestring="";
+  if (mode==1) {
+    usePUweight_=false;
+    useHLTeff_=false;
+    btagSFweight_="1";
+    currentConfig_=configDescriptions_.getDefault(); //completely raw MC
+  }
+  else if (mode==2 || mode==3) {
+    usePUweight_=true;
+    useHLTeff_=true;
+    currentConfig_=configDescriptions_.getCorrected(); //JER bias
+    if (mode==2) modestring="-JER-PU-HLT";
+    else if(mode==3) modestring="-JER-PU-HLT-bSF";
+  }
+  else assert(0);
+  
+  TCut btagcut = "nbjetsCSVM>=1";
+  if (mode==1 || mode==2) {
+    if ( btagselection=="ge1b") {} //do nothing
+    else  if ( btagselection=="ge2b" ) {
+      btagcut = "nbjetsCSVM>=2";
+    }
+    else if ( btagselection=="eq1b" ) {
+      btagcut = "nbjetsCSVM==1";
+    }
+    else if ( btagselection=="eq0b" ) {
+      btagcut = "nbjetsCSVM==0";
+    }
+    else if (btagselection=="ge3b" ){
+      btagcut = "nbjetsCSVM>=3";
+    }
+    else {
+      assert(0);
+    }
+  }
+  else if (mode==3) {
+    if ( btagselection=="ge1b") {
+      btagcut="1";
+      btagSFweight_="probge1";
+    }
+    else  if ( btagselection=="ge2b" ) {
+      btagcut = "1";
+      btagSFweight_="probge2";
+    }
+    else if ( btagselection=="eq0b" ) {
+      btagcut = "1";
+      btagSFweight_="prob0";
+    }
+    else {
+      assert(0);
+    }
+  }
+  
+  
+  int nbins;
+  float low,high;
+  TString var,xtitle;
+  
+  doOverflowAddition(true);
+  setQuiet(false);
+
+  // ==========================
+
+  TCut util = "pass_utilityHLT==1 && weight<1000";
+  double holdLumiScale = lumiScale_;
+  lumiScale_ = 30.15471; 
+
+  resetSamples(); //use all samples
+
+
+  doData(true);
+  drawMCErrors_=true;
+
+  setStackMode(false); //regular stack
+  setColorScheme("nostack");
+  drawTotalSM_=true;  
+
+  setPlotMaximum(0.5); setPlotMinimum(0);
+  selection_ =TCut("HT>=400 && MET >=50 && MET <100 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 &&passCleaning==1")&&util&&btagcut;
+  drawR("minDeltaPhiN", 4, "nGoodPV", 14, 0.5, 14.5, "nGoodPV"+modestring);
+  
+  drawTotalSM_=false;  
+  doOverflowAddition(false);
+  setPlotMaximum(0.5); setPlotMinimum(0);
+  selection_ =TCut("HT>=400 && MET >=50 && MET <100 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && passCleaning==1")&&util&&btagcut;
+  drawR("minDeltaPhiN", 4, "runNumber", 10, 160300, 180300, "runNumber"+modestring,0,true);
+
+  lumiScale_ = holdLumiScale;
+  selection_ =TCut("HT>=400 && MET >=50 && MET <100 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && passCleaning==1")&&util&&btagcut;
+  drawSimple("nGoodPV",14,0.5,14.5,"dummy", "","data");
+  TH1D* PVpres = (TH1D*)hinteractive->Clone("PVpres");
+  selection_ =TCut("HT>=400 && MET >=200 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && passCleaning==1 && cutTrigger==1")&&btagcut;
+  drawSimple("nGoodPV",14,0.5,14.5,"dummy", "","data");
+  TH1D* PVphys = (TH1D*)hinteractive->Clone("PVphys");
+  TCanvas * Cpv = new TCanvas("myC", "myC", mainpadWidth, mainpadHeight);
+  Cpv->cd();
+  gPad->SetRightMargin(0.04);
+  gPad->SetTopMargin(0.07);
+  PVpres->SetLineColor(kRed);
+  PVpres->SetMarkerColor(kRed);
+  PVpres->GetXaxis()->SetTitle("nGoodPV");
+  PVpres->GetYaxis()->SetTitle("Arbitrary Units");
+  PVpres->DrawNormalized();
+  PVphys->DrawNormalized("SAME");
+  TLegend * myLegend = new TLegend(0.53,0.9,0.81,0.83); 
+  myLegend->SetFillColor(0);
+  myLegend->SetBorderSize(0);
+  myLegend->SetLineStyle(0);
+  myLegend->SetTextFont(42);
+  myLegend->SetFillStyle(0);
+  myLegend->SetTextSize(0.035);
+  myLegend->AddEntry(PVpres,"data, prescaled triggers", "p");
+  myLegend->AddEntry(PVphys, "data, physics triggers", "p");
+  myLegend->Draw();
+  drawPlotHeader();
+  Cpv->Print("PV_phys_pres" + modestring =".pdf");
+  Cpv->Print("PV_phys_pres" + modestring =".png");
+  
+
+}
+
 void AN2011_ttbarw( double& r_sl, double& r_sl_err, double& r_nom, double& r_nom_err, 
 		    TString btagselection="ge1b", TString HTselection="Loose" , TString samplename="TTbarJets") {
 

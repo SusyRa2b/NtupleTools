@@ -38,6 +38,12 @@ void resetLegendPosition() {
   leg_y1=0.5;
   leg_y2=0.9;
 }
+void resetLegendPositionR() {
+  leg_x1 = 0.2;
+  leg_x2=0.45;
+  leg_y1=0.65;
+  leg_y2=0.9;
+}
 
 
 class ConfigurationDescriptions {
@@ -778,7 +784,7 @@ void drawPlotHeaderInside() {
   text1->Draw();
 }
 
-void drawPlotHeader() {
+void drawPlotHeader(double xoffset = 0) {
   //  return;
   float ypos = 0.97;
   if(doRatio_) ypos=ypos+0.012;
@@ -787,7 +793,7 @@ void drawPlotHeader() {
   text1 = new TLatex(3.570061,23.08044,"CMS"); //no more preliminary!
   text1->SetNDC();
   text1->SetTextAlign(13);
-  text1->SetX(0.68 + 0.2); //this 0.2 is because we got rid of the "Preliminary"
+  text1->SetX(0.68 + 0.2 + xoffset); //this 0.2 is because we got rid of the "Preliminary"
   text1->SetY(ypos+0.007);
   text1->SetTextFont(42);
   text1->SetTextSizePixels(24);
@@ -2048,30 +2054,83 @@ void drawSignificance(const TString & var, const int nbins, const float low, con
 }
 
 //could add xtitle and ytitle
-void drawR(const TString vary, const float cutVal, const TString var, const int nbins, const float low, const float high, const TString& savename, const float* varbins=0) {
+void drawR(const TString vary, const float cutVal, const TString var, const int nbins, const float low, const float high, const TString& savename, const float* varbins=0, bool dataOnly=false) {
   const TString ytitle="N pass / N fail";
   TString xtitle = var;
   if(var=="MET") xtitle = "E_{T}^{miss} [GeV]"; 
-  //  bool dataOnly = false;
 
-  //const TString var = "MET"; //hardcoded for now
   cout << "x axis: " << var << endl;
   TString cstring1 = vary, cstring2=vary;
   cstring1 += " >= ";
   cstring2 += " < ";
   cstring1 += cutVal;
   cstring2 += cutVal;
-
+  
   loadSamples();
-
+  
   gROOT->SetStyle("CMS");
-
+  
   TString opt=doRatio_? "ratio":"";
   renewCanvas(opt);
-
+  
   resetHistos(); //delete existing histograms
 
+  resetLegendPositionR();
   renewLegend();
+  
+  if(dodata_){
+    if (hdata != 0) delete hdata;
+    
+    TString hname = var; hname += "_"; hname += "data";
+    hdata = (varbins==0) ? new TH1D(hname,"",nbins,low,high) : new TH1D(hname,"",nbins,varbins);
+    hdata->Sumw2();
+    
+    TString hnameP = var; hnameP += "_"; hnameP += "dataPass";
+    histos_[hnameP] = (varbins==0) ? new TH1D(hnameP,"",nbins,low,high) : new TH1D(hnameP,"",nbins,varbins);
+    histos_[hnameP]->Sumw2();
+    
+    TString hnameF = var; hnameF += "_"; hnameF += "dataFail";
+    histos_[hnameF] = (varbins==0) ? new TH1D(hnameF,"",nbins,low,high) : new TH1D(hnameF,"",nbins,varbins);
+    histos_[hnameF]->Sumw2();
+    
+    gROOT->cd();
+    dtree->Project(hnameP,var,getCutString(kData,"",selection_,cstring1).Data());
+    dtree->Project(hnameF,var,getCutString(kData,"",selection_,cstring2).Data());
+    if (addOverflow_)  addOverflowBin( histos_[hnameP] );
+    if (addOverflow_)  addOverflowBin( histos_[hnameF] );
+    //compute ratio
+    hdata->Divide(histos_[hnameP], histos_[hnameF]);
+
+    hdata->SetMarkerColor(kBlack);
+    hdata->SetLineWidth(2);
+    hdata->SetMarkerStyle(kFullCircle);
+    hdata->SetMarkerSize(1);
+    hdata->SetYTitle(ytitle);
+    hdata->SetXTitle(xtitle);
+    
+    leg->AddEntry(hdata,"Data");
+  }
+  if(dataOnly){
+    if(doRatio_ || dodata_) cout << "drawR inconsistent arguments" << endl;
+    if (doCustomPlotMax_) {
+      hdata->SetMaximum(customPlotMax_);
+    }
+    if (doCustomPlotMin_) {
+      hdata->SetMinimum(customPlotMin_);
+    }
+    gROOT->cd();//what does this do?
+    thecanvas->cd();
+    gPad->SetRightMargin(0.1);
+    gPad->Modified();
+    hdata->Draw();
+    drawPlotHeader(-.1);
+    if (doleg_)  leg->Draw();
+    thecanvas->SaveAs("mindpPassOverFail-"+savename+".eps");
+    thecanvas->SaveAs("mindpPassOverFail-"+savename+".pdf");
+    thecanvas->SaveAs("mindpPassOverFail-"+savename+".png");
+    return;
+  }
+  
 
   TH1D * totalsm_pass = (varbins==0) ? new TH1D("totalsm_pass","",nbins,low,high) : new TH1D("totalsm_pass","",nbins,varbins);
   TH1D * totalsm_fail = (varbins==0) ? new TH1D("totalsm_fail","",nbins,low,high) : new TH1D("totalsm_fail","",nbins,varbins);
@@ -2148,113 +2207,60 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
 
     //ad hoc additions
     histos_[hnameR]->SetLineWidth(2);
-
-
+    
     //draw
     thecanvas->cd(1);
     gPad->SetRightMargin(0.1);
     gPad->Modified();
-
-    if(dodata_) drawPlotHeader();
+    
+    if(dodata_) drawPlotHeader(-.1);
     else  drawPlotHeaderInside(); //for qcd only plots, this works.
-
-    if (hnameR.Contains("QCD") /*&& !dataOnly*/) { //HACK draw only qcd
+    
+    if (hnameR.Contains("QCD")) { //HACK draw only qcd
       histos_[hnameR]->Draw(drawopt);
       if (!drawopt.Contains("same")) drawopt+=" same";
       
       if (firsthist=="") firsthist = hnameR;
       if (histos_[hnameR]->GetMaximum() > max) max = histos_[hnameR]->GetMaximum();
       leg->AddEntry(histos_[hnameR], sampleLabel_[samples_[isample]]);
-  
     }
     
   }
-
-  //  if(!dataOnly){
-    histos_[firsthist]->SetMaximum( max*maxScaleFactor_);
-    hinteractive =  histos_[firsthist];
-    //  }
-
+  
+  histos_[firsthist]->SetMaximum( max*maxScaleFactor_);
+  hinteractive =  histos_[firsthist];
+  
   totalsm->Divide(totalsm_pass,totalsm_fail);
-  if (drawTotalSM_ /*&& !dataOnly*/) {
-
+  if (drawTotalSM_) {
     totalsm->Draw("hist e same");
-    //    leg->Clear();
     leg->AddEntry(totalsm,sampleLabel_["TotalSM"]);
   }
-
+  
   if (dodata_) {
     gROOT->cd();
     if (!quiet_)   cout<<"Drawing data!"<<endl;
-    if (hdata != 0) delete hdata;
-
-    TString hname = var; hname += "_"; hname += "data";
-    hdata = (varbins==0) ? new TH1D(hname,"",nbins,low,high) : new TH1D(hname,"",nbins,varbins);
-    hdata->Sumw2();
-
-    TString hnameP = var; hnameP += "_"; hnameP += "dataPass";
-    histos_[hnameP] = (varbins==0) ? new TH1D(hnameP,"",nbins,low,high) : new TH1D(hnameP,"",nbins,varbins);
-    histos_[hnameP]->Sumw2();
-
-    TString hnameF = var; hnameF += "_"; hnameF += "dataFail";
-    histos_[hnameF] = (varbins==0) ? new TH1D(hnameF,"",nbins,low,high) : new TH1D(hnameF,"",nbins,varbins);
-    histos_[hnameF]->Sumw2();
-
-    gROOT->cd();
-    dtree->Project(hnameP,var,getCutString(kData,"",selection_,cstring1).Data());
-    dtree->Project(hnameF,var,getCutString(kData,"",selection_,cstring2).Data());
-    if (addOverflow_)  addOverflowBin( histos_[hnameP] );
-    if (addOverflow_)  addOverflowBin( histos_[hnameF] );
-    //compute ratio
-    hdata->Divide(histos_[hnameP], histos_[hnameF]);
-
-//     dtree->Project("data2d_SB","minDeltaPhi:MET",getCutString(kData,"",selection_).Data());
-//     dtree->Project("data2d_50","minDeltaPhi:MET",getCutString(kData,"",selection_).Data());
-
-    //    hdata->UseCurrentStyle(); //maybe not needed anymore
-    hdata->SetMarkerColor(kBlack);
-    hdata->SetLineWidth(2);
-    hdata->SetMarkerStyle(kFullCircle);
-    hdata->SetMarkerSize(1);
-
+    
     thecanvas->cd(1);
-    hdata->SetYTitle(ytitle);
-    hdata->SetXTitle(xtitle);
-
-    //jmt may need to add this back
-    //    hdata->GetYaxis()->SetLabelSize(0.04); //make y label bigger
-    //    hdata->GetXaxis()->SetLabelSize(0.04); //make x label bigger
-
-    //   if(dataOnly) hdata->Draw();
-    /*else*/ hdata->Draw("SAME");
-    leg->AddEntry(hdata,"Data");
-
-    if (hdata->GetMaximum() > max/* && !dataOnly*/)  {
+    hdata->Draw("SAME");
+    
+    if (hdata->GetMaximum() > max)  {
       histos_[firsthist]->SetMaximum( maxScaleFactor_*hdata->GetMaximum());
       totalsm->SetMaximum(maxScaleFactor_*hdata->GetMaximum());
     }
-//     else if (doCustomPlotMax_ && dataOnly) {
-//       hdata->SetMaximum(customPlotMax_);
-//     }
-    else if (doCustomPlotMax_) {
+    if (doCustomPlotMax_) {
       histos_[firsthist]->SetMaximum( customPlotMax_);
       totalsm->SetMaximum(customPlotMax_);
     }
-//     if (doCustomPlotMin_ && dataOnly) {
-//       hdata->SetMinimum(customPlotMin_);
-//     }
-    else if (doCustomPlotMin_) {
+    if (doCustomPlotMin_) {
       histos_[firsthist]->SetMinimum( customPlotMin_);
       totalsm->SetMinimum(customPlotMin_);
     }
     
-    //    cratio->cd();
     if (doRatio_) {
       thecanvas->cd(2);
       gPad->SetRightMargin(0.1);
       gPad->Modified();
       if (ratio!=0) delete ratio;
-      //    if(!dataOnly){
       ratio = (varbins==0) ? new TH1D("ratio","data/(SM MC)",nbins,low,high) : new TH1D("ratio","data/(SM MC)",nbins,varbins);
       ratio->Sumw2();
       ratio->Divide(hdata,totalsm); 
@@ -2264,10 +2270,9 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
       ratio->GetYaxis()->SetLabelSize(0.1); //make y label bigger
       ratio->GetXaxis()->SetLabelSize(0.1); //make x label bigger
       ratio->Draw();
-      //    }
-      cout<<"KS Test results (shape only): "<<hdata->KolmogorovTest(totalsm)<<endl;;
+      //cout<<"KS Test results (shape only): "<<hdata->KolmogorovTest(totalsm)<<endl;;
     }
-
+    
   } // end of if (dodata_)
   else {
     //    cout<<"setting custom plot ranges"<<endl;//jmt debug
@@ -2282,12 +2287,12 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
       totalsm->SetMinimum(customPlotMin_);
     }
   }
-
+  
   //  cout<<"about to cd canvas and draw leg"<<endl;//jmt debug
-
+  
   if (doRatio_)  thecanvas->cd(1);
-   if (doleg_)  leg->Draw();
-
+  if (doleg_)  leg->Draw();
+  
   thecanvas->SaveAs("mindpPassOverFail-"+savename+".eps");
   thecanvas->SaveAs("mindpPassOverFail-"+savename+".pdf");
   thecanvas->SaveAs("mindpPassOverFail-"+savename+".png");
