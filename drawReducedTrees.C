@@ -2775,18 +2775,18 @@ other.
     useHLTeff_=true;
     currentConfig_=configDescriptions_.getCorrected(); //add JERbias
 
-    //when making the MET comparison plots for the AN, disable b-tag SF for now
-    //btagcut="1";   
-    //if (btagselection=="ge2b") {
-    //  btagSFweight_="probge2";
-    //}
-    //else if (btagselection=="ge1b") {
-    //  btagSFweight_="probge1";
-    //}
-    //else if (btagselection=="ge3b") {
-    //  btagSFweight_="probge3";
-    //}
-    //else {assert(0);}
+    //The MET comparison plots for the AN had the b-tag SF stuff below commented out!
+    btagcut="1";   
+    if (btagselection=="ge2b") {
+      btagSFweight_="probge2";
+    }
+    else if (btagselection=="ge1b") {
+      btagSFweight_="probge1";
+    }
+    else if (btagselection=="ge3b") {
+      btagSFweight_="probge3";
+    }
+    else {assert(0);}
   }
 
 
@@ -2794,7 +2794,48 @@ other.
   float low,high;
   TString var,xtitle;
   bool vb = true;
-  
+
+  if(samplename=="datamode"){
+
+    resetSamples(); //use all samples
+    setStackMode(true); //regular stack
+    setColorScheme("stack");
+    doData(true);
+    drawMCErrors_=true;
+    doOverflowAddition(false);
+
+    selection_ =TCut("MET>=200 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && minDeltaPhiN >= 4 && MT_Wlep>=0 && MT_Wlep<100 &&passCleaning==1")&&btagcut&&HTcut;;
+    var="MET"; xtitle="E_{T}^{miss} [GeV]";
+    nbins = 1; low=200; high=250;
+    //nbins = 15; low=200; high=500;
+    drawPlots(var,nbins,low,high,xtitle,"Events", "test_"+btagselection);
+
+    double dataSB = dataIntegral_; 
+    double MCSB = MCIntegral_, MCSBErr = MCIntegralErr_;
+
+    doOverflowAddition(true);
+    nbins = 1; low=250; high=600;
+    if (HTselection=="Tight" && btagselection=="ge1b")  low=500;
+    else if (HTselection=="Tight" && btagselection=="ge2b")  low=300;
+    drawPlots(var,nbins,low,high,xtitle,"Events", "test_"+btagselection);
+
+    double dataSIG = dataIntegral_; 
+    double MCSIG = MCIntegral_, MCSIGErr = MCIntegralErr_;
+
+    std::cout << "dataSB = " << dataSB << ", MCSB = " << MCSB << std::endl;
+    std::cout << "dataSIG = " << dataSIG << ", MCSIG = " << MCSIG << std::endl;
+
+    double dataRatioSL = dataSIG/dataSB;
+    double dataRatioSL_err = jmt::errAoverB(dataSIG,sqrt(dataSIG),dataSB,sqrt(dataSB));
+
+    double MCRatioSL = MCSIG/MCSB;
+    double MCRatioSL_err = jmt::errAoverB(MCSIG, MCSIGErr ,MCSB, MCSBErr);
+
+    std::cout << btagselection << "," << HTselection << ":" << "R_SL(data) = " << dataRatioSL << " +/- " << dataRatioSL_err 
+	      << ", R_SL(MC) = " << MCRatioSL << " +/- " << MCRatioSL_err << std::endl;
+
+  }
+  else{
   //ge1b, Loose
   //const int nvarbins=18;
   //const float varbins[]={100, 120, 140, 160, 180, 200, 220, 240, 260, 280, 300, 320, 340, 360, 380, 400, 450, 500, 550}; //AN and PAS
@@ -2995,15 +3036,16 @@ other.
   myLegend->Draw();
   myC->Print("METshape_logAndRatio_"+sample+"_SLandStandard_"+btagselection+"_"+HTselection+".pdf");
 
+  }
 }
 
 //kludgy , but it suffices for now
 void makeTTbarWMETPlots() {
-
+  
   double ratio_sl = 0, ratio_sl_err = 0, ratio_nom = 0, ratio_nom_err = 0;
   std::vector<double> ratios_sl, ratios_sl_err, ratios_nom, ratios_nom_err;
   std::vector<string> selections;
-
+  
   std::cout << "TTbarJets" << std::endl;
 
   AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Loose" , "TTbarJets");
@@ -3077,6 +3119,16 @@ void makeTTbarWMETPlots() {
     if(i==10) std::cout << "SingleTop" << std::endl;
     std::cout << " & "<< selections.at(i) <<" & " << ratios_nom.at(i) << "$\\pm$" << ratios_nom_err.at(i) << "\t & " << ratios_sl.at(i) << "$\\pm$" << ratios_sl_err.at(i) << " \\\\" << std::endl; 
   }
+ 
+  //print out the SIG/SB ratio in the SL region for data and full MC
+  savePlots_ = false;
+  TString mode = "datamode";
+  AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Loose" , mode);
+  AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Tight" , mode);
+  AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Loose" , mode);
+  AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Tight" , mode);
+  AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge3b", "Loose" , mode);
+
 
 
 }
@@ -3362,7 +3414,7 @@ void AN2011( TString btagselection="ge1b",const int mode=1, bool logy=false, boo
   leg_x2=0.96; leg_y1=0.4; //leg_y2=0.88;//bensep28 - for data/mc stack comparison
   //leg_x1 = 0.6; leg_x2=0.96; leg_y1=0.42; leg_y2=0.9;//bensep28 -for data/mc stack comparison NJETS
 
-  
+   
   var="minDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}";
   nbins = 20; low=0; high=40;
   //no delta phi cut
@@ -3508,7 +3560,7 @@ void AN2011( TString btagselection="ge1b",const int mode=1, bool logy=false, boo
   var="muonpt1"; xtitle="muon p_{T} [GeV]";
   nbins = 20; low=0; high=200;
   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_muonpT_0e1mu_"+btagselection+modestring,0,"GeV");
-  
+   
   
   // == MET for the combined sample
   selection_ =TCut("MET>=200 &&cutHT==1 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && minDeltaPhiN >= 4 && MT_Wlep>=0 && MT_Wlep<100 &&passCleaning==1")&&btagcut;
@@ -3539,7 +3591,8 @@ void AN2011( TString btagselection="ge1b",const int mode=1, bool logy=false, boo
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
   nbins = 15; low=200; high=500;
   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_SL_HT600_"+btagselection+modestring,0,"GeV");
-  
+
+
   //different scale to compare to Kristen
 //   selection_ =TCut("MET>=150 && HT>500 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && minDeltaPhiN >= 4 && MT_Wlep>=0 && MT_Wlep<100")&&btagcut;
 //   var="MET"; xtitle="E_{T}^{miss} [GeV]";

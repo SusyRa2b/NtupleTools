@@ -1695,7 +1695,7 @@ TString appendBinWidth(const TString & ytitle, const double low,const double hig
   return fulltitle;
 }
 
-
+double dataIntegral_, MCIntegral_, MCIntegralErr_;
 void drawPlots(const TString var, const int nbins, const float low, const float high, const TString xtitle, TString ytitle, TString filename="", const float* varbins=0, TString unit="") {
   //  cout<<"[drawPlots] var = "<<var<<endl;
 
@@ -1937,6 +1937,9 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
       cout<<"Integral of data, EW, total SM: "<<hdata->Integral()<<" ; "<<totalewk->Integral()<<" ; "<<totalsm->Integral()<<endl;
       cout<<"Chi^2 Test results: "<<hdata->Chi2Test(totalsm,"UW P")<<endl;
       cout<<"KS Test results: "<<hdata->KolmogorovTest(totalsm,"N")<<endl;;
+
+      dataIntegral_ = hdata->Integral();
+      MCIntegral_ = totalsm->IntegralAndError(totalsm->GetXaxis()->GetFirst(),totalsm->GetXaxis()->GetLast(),MCIntegralErr_);
     }
     if (doRatio_) {
       thecanvas->cd(2);
