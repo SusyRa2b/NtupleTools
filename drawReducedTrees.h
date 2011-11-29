@@ -2808,12 +2808,12 @@ void getCutStringForCutflow(vector<TString> &vectorOfCuts, vector<TString> &stag
   //  vectorOfCuts.push_back(cut);
   //  stageCut.push_back("DeltaPhiTaus");
   
-  //Cleaning
-//   if (thisSelection=="") thisSelection += "cutCleaning==1";
-//   else thisSelection +=" && cutCleaning==1";
-//   cut=getCutString(lumiScale_,thisSelection);
-//   vectorOfCuts.push_back(cut);
-//   stageCut.push_back("Cleaning");
+  // //Cleaning
+  //  if (thisSelection=="") thisSelection += "passCleaning==1";
+  //  else thisSelection +=" && passCleaning==1";
+  //  cut=getCutString(kMC,thisSelection);
+  //  vectorOfCuts.push_back(cut);
+  //  stageCut.push_back("Cleaning");
 
   //store selection string pre b cut
   selectionPreB=thisSelection;
