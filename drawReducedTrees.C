@@ -4415,10 +4415,13 @@ void studyRqcd(int ibtag = 4){
 
 void studyRtt_0lep() {
 
+  const  float exval=  gStyle->GetErrorX();
+
    loadSamples();
 
    usePUweight_=true;
    useHLTeff_=true;
+   currentConfig_=configDescriptions_.getCorrected(); //add JERbias
 
    //   setSearchRegions();
 
@@ -4445,7 +4448,11 @@ void studyRtt_0lep() {
   TCut HTcut = "HT>400";
   TCut SIG="MET>250";
   TCut SB = "MET>200 && MET<=250";
-  TCut bcut = "nbjets>=1";
+  //  TCut bcut = "nbjets>=1";
+  TCut bcut="1";      btagSFweight_="probge2"; //use b tag SF
+
+  //  float rmin=0.6; float rmax=1.1; //ge1b
+  float rmin=0.5; float rmax=1.5; //ge2b
 
   int nbins = 5;
   double runs[]={160000,166000,169000,175000,177500,181000};
@@ -4487,7 +4494,7 @@ void studyRtt_0lep() {
   SL_R_nPV.SetMarkerStyle(4);
 
   savePlots_=false;
-  drawMarkers_=true;
+  drawMarkers_=false;
 
   selection_ = baselineSL && HTcut && SIG && bcut; //SIG
   dtree->Project("SL_SIG_nPV",var,getCutString(true).Data());
@@ -4504,11 +4511,35 @@ void studyRtt_0lep() {
   SL_R_nPV_MC->Reset(); //prob not needed
   SL_R_nPV_MC->Divide(SL_SIG_nPV_MC,SL_SB_nPV_MC);
 
+  //ok, now do it all again for the SL sample WITH ONLY tt+W+t
+  clearSamples();
+  addSample("TTbarJets");
+  addSample("WJets");
+  addSample("SingleTop");
+
+  selection_ = baselineSL && HTcut && SIG && bcut; //SIG
+  drawPlots(var,nbins,0,30,var,"R_SL","dummy",npv);
+  TH1D* SL_ttWt_SIG_nPV_MC = (TH1D*) totalsm->Clone("SL_ttWt_SIG_nPV_MC");
+
+  selection_ = baselineSL && HTcut && SB && bcut; //SB
+  drawPlots(var,nbins,0,30,var,"R_SL","dummy",npv);
+  TH1D* SL_ttWt_SB_nPV_MC = (TH1D*) totalsm->Clone("SL_ttWt_SB_nPV_MC");
+
+  TH1D*  SL_ttWt_R_nPV_MC= (TH1D*) SL_ttWt_SB_nPV_MC->Clone("SL_ttWt_R_nPV_MC");
+  SL_ttWt_R_nPV_MC->Reset(); //prob not needed
+  SL_ttWt_R_nPV_MC->Divide(SL_ttWt_SIG_nPV_MC,SL_ttWt_SB_nPV_MC);
+
+
   renewCanvas();
   SL_R_nPV.SetLineColor(kBlack);
   SL_R_nPV_MC->SetLineColor(sampleColor_["TotalSM"]);
-  SL_R_nPV_MC->SetMarkerColor(sampleColor_["TotalSM"]);
+  SL_ttWt_R_nPV_MC->SetLineColor(sampleColor_["TTbarJets"]);
+  gStyle->SetErrorX(exval);
+
+  SL_R_nPV_MC->SetMaximum(rmax);
+  SL_R_nPV_MC->SetMinimum(rmin);
   SL_R_nPV_MC->Draw();
+  SL_ttWt_R_nPV_MC->Draw("SAME");
   SL_R_nPV.Draw("same");
 
   thecanvas->SaveAs("SL_R_nPV.eps");
@@ -4516,6 +4547,7 @@ void studyRtt_0lep() {
   thecanvas->SaveAs("SL_R_nPV.pdf");
 
   //ok, now do it all again for the 0 lepton sample
+  resetSamples(); //all samples
   TH1D zL_SIG_nPV("zL_SIG_nPV","0 lep SIG versus nPV",nbins,npv);
   TH1D zL_SB_nPV("zL_SB_nPV","0 lep SB versus nPV",nbins,npv);
   TH1D zL_R_nPV("zL_R_nPV","R_zl versus nPV",nbins,npv);
@@ -4523,7 +4555,7 @@ void studyRtt_0lep() {
   zL_SIG_nPV.Sumw2();
   zL_SB_nPV.Sumw2();
   zL_R_nPV.Sumw2();
-  zL_R_nPV.SetMarkerStyle(4);
+  //  zL_R_nPV.SetMarkerStyle(4);
 
   selection_ = baseline && HTcut && SIG && bcut; //SIG
   dtree->Project("zL_SIG_nPV",var,getCutString(true).Data());
@@ -4543,14 +4575,52 @@ void studyRtt_0lep() {
   renewCanvas();
   zL_R_nPV.SetLineColor(kBlack);
   zL_R_nPV_MC->SetLineColor(sampleColor_["TotalSM"]);
-  zL_R_nPV_MC->SetMarkerColor(sampleColor_["TotalSM"]);
+  //  zL_R_nPV_MC->SetMarkerColor(sampleColor_["TotalSM"]);
+
+  //ok, now do it all again for the 0 lepton sample WITH ONLY tt+W+t
+  clearSamples();
+  addSample("TTbarJets");
+  addSample("WJets");
+  addSample("SingleTop");
+//   TH1D zL_ttWt_SIG_nPV("zL_ttWt_SIG_nPV","0 lep SIG (ttWt) versus nPV",nbins,npv);
+//   TH1D zL_ttWt_SB_nPV("zL_ttWt_SB_nPV","0 lep SB (ttWt) versus nPV",nbins,npv);
+//   TH1D zL_ttWt_R_nPV("zL_ttWt_R_nPV","R_zl (ttWt) versus nPV",nbins,npv);
+
+//   zL_ttWt_SIG_nPV.Sumw2();
+//   zL_ttWt_SB_nPV.Sumw2();
+//   zL_ttWt_R_nPV.Sumw2();
+  //  zL_ttWt_R_nPV.SetMarkerStyle(4);
+
+  selection_ = baseline && HTcut && SIG && bcut; //SIG
+  drawPlots(var,nbins,0,30,var,"R_zL","dummy",npv);
+  TH1D* zL_ttWt_SIG_nPV_MC = (TH1D*) totalsm->Clone("zL_ttWt_SIG_nPV_MC");
+
+  selection_ = baseline && HTcut && SB && bcut; //SB
+  drawPlots(var,nbins,0,30,var,"R_zL","dummy",npv);
+  TH1D* zL_ttWt_SB_nPV_MC = (TH1D*) totalsm->Clone("zL_ttWt_SB_nPV_MC");
+
+  TH1D*  zL_ttWt_R_nPV_MC= (TH1D*) zL_ttWt_SB_nPV_MC->Clone("zL_ttWt_R_nPV_MC");
+  zL_ttWt_R_nPV_MC->Reset(); //prob not needed
+  zL_ttWt_R_nPV_MC->Divide(zL_ttWt_SIG_nPV_MC,zL_ttWt_SB_nPV_MC);
+
+  //now draw
+
+  renewCanvas();
+  zL_ttWt_R_nPV_MC->SetLineColor(sampleColor_["TTbarJets"]);
+
+  gStyle->SetErrorX(exval);
+
+  zL_R_nPV_MC->SetMaximum(rmax);
+  zL_R_nPV_MC->SetMinimum(rmin);
   zL_R_nPV_MC->Draw();
+  zL_ttWt_R_nPV_MC->Draw("same");
   zL_R_nPV.Draw("same");
 
   thecanvas->SaveAs("zL_R_nPV.eps");
   thecanvas->SaveAs("zL_R_nPV.png");
   thecanvas->SaveAs("zL_R_nPV.pdf");
 
+  resetSamples();
   //now draw data/data comparison of nPv for 0L and SL samples
   //add SL SB and SIG together to get pv distribution in whole SL sample
   TH1D* SL_SIGSB_nPV = (TH1D*) SL_SIG_nPV.Clone("SL_SIGSB_nPV");
@@ -4566,17 +4636,56 @@ void studyRtt_0lep() {
 
   renewCanvas();
   zL_SIGSB_nPV->SetLineColor(kBlack);
-  zL_SIGSB_nPV->SetMarkerColor(kBlack);
+  //  zL_SIGSB_nPV->SetMarkerColor(kBlack);
   SL_SIGSB_nPV->SetLineColor(kBlue);
-  SL_SIGSB_nPV->SetMarkerColor(kBlue);
-  SL_SIGSB_nPV->SetMarkerStyle(25);
-  zL_SIGSB_nPV->SetMarkerStyle(4);
+  //  SL_SIGSB_nPV->SetMarkerColor(kBlue);
+  //  SL_SIGSB_nPV->SetMarkerStyle(25);
+  //  zL_SIGSB_nPV->SetMarkerStyle(4);
+
+  gStyle->SetErrorX(exval);
+  zL_SIGSB_nPV->SetMinimum(0.1);
+  zL_SIGSB_nPV->SetMaximum(0.7);
+
   zL_SIGSB_nPV->Draw();
   SL_SIGSB_nPV->Draw("SAME");
 
   thecanvas->SaveAs("nPV_SL0L_data.eps");
   thecanvas->SaveAs("nPV_SL0L_data.png");
   thecanvas->SaveAs("nPV_SL0L_data.pdf");
+
+//   TH1D SL_SIG_nPV("SL_SIG_nPV","SL SIG versus nPV",nbins,npv);
+//   TH1D SL_SB_nPV("SL_SB_nPV","SL SB versus nPV",nbins,npv);
+//   TH1D SL_R_nPV("SL_R_nPV","R_SL versus nPV",nbins,npv);
+  //now do a quick rescaling of R_SL
+
+  double n_sig_prime=0;
+  double n_sb_prime=0;
+
+  //for x check
+  double n_sig=0;
+  double n_sb=0;
+
+  for (int ii=0; ii<3; ii++) {
+    n_sig_prime += SL_SIG_nPV.GetBinContent(ii+1) * zL_SIGSB_nPV->GetBinContent(ii+1)/SL_SIGSB_nPV->GetBinContent(ii+1);
+    n_sb_prime += SL_SB_nPV.GetBinContent(ii+1) * zL_SIGSB_nPV->GetBinContent(ii+1)/SL_SIGSB_nPV->GetBinContent(ii+1);
+
+    n_sig += SL_SIG_nPV.GetBinContent(ii+1);
+    n_sb += SL_SB_nPV.GetBinContent(ii+1);
+  }
+
+  cout<<"R_SL nominal  = "<<n_sig/n_sb<<endl;
+  cout<<"R_SL reweight = "<<n_sig_prime/n_sb_prime<<endl;
+
+}
+
+
+void studyRtt_distributions() {
+
+   loadSamples();
+
+   usePUweight_=true;
+   useHLTeff_=true;
+   currentConfig_=configDescriptions_.getCorrected(); //add JERbias
 
 }
 
