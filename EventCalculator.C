@@ -3314,7 +3314,8 @@ Also the pdfWeightSum* histograms that are used for LM9.
     //MCDist2011.push_back(pu::PoissonOneXDist_f[i]);
     //for 3dPU reweighting 
     DataDist2011.push_back(pu::TrueDist2011_f[i]);
-    MCDist2011.push_back(pu::probdistFlat10_f[i]);
+    if(i<25)
+      MCDist2011.push_back(pu::probdistFlat10_f[i]);
   }  
   //reweight::LumiReWeighting LumiWeights = reweight::LumiReWeighting( MCDist2011, DataDist2011 );
   //LumiWeights.weight3D_init("Weight3D.root");
@@ -4851,7 +4852,7 @@ int EventCalculator::getTTbarDecayType(int& W1decayType, int& W2decayType)
 void EventCalculator::sampleAnalyzer(itreestream& stream){
 
 
-  //TFile fout("histos.root","RECREATE");
+  TFile fout("histos.root","RECREATE");
   
   //TH1F * h_MCPU = new TH1F("h_MCPU","unweighted PU distribution",35,0.5,34.5);
   //TH1F * h_MCPUr = new TH1F("h_MCPUr","reweighted PU distribution",35,-0.5,34.5);
@@ -4863,14 +4864,60 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
   //TH1F * h_ht = new TH1F("h_ht","HT",1000,0,1000);
   //TH1F * h_ht_trig = new TH1F("h_ht_trig","HT",1000,0,1000);
 
-  //TH1F * h_met_den_mht80 = new TH1F("h_met_den_mht80","HT",1000,0,1000);
-  //TH1F * h_met_trig_mht80 = new TH1F("h_met_trig_mht80","HT",1000,0,1000);
-  //TH1F * h_met_den_mht90_ht300 = new TH1F("h_met_den_mht90_ht300","HT",1000,0,1000);
-  //TH1F * h_met_trig_mht90_ht300 = new TH1F("h_met_trig_mht90_ht300","HT",1000,0,1000);
-  //TH1F * h_met_den_mht90_ht350 = new TH1F("h_met_den_mht90_ht350","HT",1000,0,1000);
-  //TH1F * h_met_trig_mht90_ht350 = new TH1F("h_met_trig_mht90_ht350","HT",1000,0,1000);
-  //TH1F * h_met_den_mht110 = new TH1F("h_met_den_mht110","HT",1000,0,1000);
-  //TH1F * h_met_trig_mht110 = new TH1F("h_met_trig_mht110","HT",1000,0,1000);
+  TH1F * h_met_den_mht75 = new TH1F("h_met_den_mht75","HT",1000,0,1000);
+  TH1F * h_met_trig_mht75 = new TH1F("h_met_trig_mht75","HT",1000,0,1000);
+  TH1F * h_met_den_mht80 = new TH1F("h_met_den_mht80","HT",1000,0,1000);
+  TH1F * h_met_trig_mht80 = new TH1F("h_met_trig_mht80","HT",1000,0,1000);
+  TH1F * h_met_den_mht90_ht300 = new TH1F("h_met_den_mht90_ht300","HT",1000,0,1000);
+  TH1F * h_met_trig_mht90_ht300 = new TH1F("h_met_trig_mht90_ht300","HT",1000,0,1000);
+  TH1F * h_met_den_mht90_ht350 = new TH1F("h_met_den_mht90_ht350","HT",1000,0,1000);
+  TH1F * h_met_trig_mht90_ht350 = new TH1F("h_met_trig_mht90_ht350","HT",1000,0,1000);
+  TH1F * h_met_den_mht110 = new TH1F("h_met_den_mht110","HT",1000,0,1000);
+  TH1F * h_met_trig_mht110 = new TH1F("h_met_trig_mht110","HT",1000,0,1000);
+
+  TH1F * h_met_0L_den_mht75       = new TH1F("h_met_0L_den_mht75","HT",1000,0,1000);
+  TH1F * h_met_0L_trig_mht75      = new TH1F("h_met_0L_trig_mht75","HT",1000,0,1000);
+  TH1F * h_met_0L_den_mht80       = new TH1F("h_met_0L_den_mht80","HT",1000,0,1000);
+  TH1F * h_met_0L_trig_mht80      = new TH1F("h_met_0L_trig_mht80","HT",1000,0,1000);
+  TH1F * h_met_0L_den_mht90_ht300 = new TH1F("h_met_0L_den_mht90_ht300","HT",1000,0,1000);
+  TH1F * h_met_0L_trig_mht90_ht300= new TH1F("h_met_0L_trig_mht90_ht300","HT",1000,0,1000);
+  TH1F * h_met_0L_den_mht90_ht350 = new TH1F("h_met_0L_den_mht90_ht350","HT",1000,0,1000);
+  TH1F * h_met_0L_trig_mht90_ht350= new TH1F("h_met_0L_trig_mht90_ht350","HT",1000,0,1000);
+  TH1F * h_met_0L_den_mht110      = new TH1F("h_met_0L_den_mht110","HT",1000,0,1000);
+  TH1F * h_met_0L_trig_mht110     = new TH1F("h_met_0L_trig_mht110","HT",1000,0,1000);
+
+  TH1F * h_met_1L_den_mht75       = new TH1F("h_met_1L_den_mht75","HT",1000,0,1000);
+  TH1F * h_met_1L_trig_mht75      = new TH1F("h_met_1L_trig_mht75","HT",1000,0,1000);
+  TH1F * h_met_1L_den_mht80       = new TH1F("h_met_1L_den_mht80","HT",1000,0,1000);
+  TH1F * h_met_1L_trig_mht80      = new TH1F("h_met_1L_trig_mht80","HT",1000,0,1000);
+  TH1F * h_met_1L_den_mht90_ht300 = new TH1F("h_met_1L_den_mht90_ht300","HT",1000,0,1000);
+  TH1F * h_met_1L_trig_mht90_ht300= new TH1F("h_met_1L_trig_mht90_ht300","HT",1000,0,1000);
+  TH1F * h_met_1L_den_mht90_ht350 = new TH1F("h_met_1L_den_mht90_ht350","HT",1000,0,1000);
+  TH1F * h_met_1L_trig_mht90_ht350= new TH1F("h_met_1L_trig_mht90_ht350","HT",1000,0,1000);
+  TH1F * h_met_1L_den_mht110      = new TH1F("h_met_1L_den_mht110","HT",1000,0,1000);
+  TH1F * h_met_1L_trig_mht110     = new TH1F("h_met_1L_trig_mht110","HT",1000,0,1000);
+
+  TH1F * h_met_1e0mu_den_mht75       = new TH1F("h_met_1e0mu_den_mht75","HT",1000,0,1000);
+  TH1F * h_met_1e0mu_trig_mht75      = new TH1F("h_met_1e0mu_trig_mht75","HT",1000,0,1000);
+  TH1F * h_met_1e0mu_den_mht80       = new TH1F("h_met_1e0mu_den_mht80","HT",1000,0,1000);
+  TH1F * h_met_1e0mu_trig_mht80      = new TH1F("h_met_1e0mu_trig_mht80","HT",1000,0,1000);
+  TH1F * h_met_1e0mu_den_mht90_ht300 = new TH1F("h_met_1e0mu_den_mht90_ht300","HT",1000,0,1000);
+  TH1F * h_met_1e0mu_trig_mht90_ht300= new TH1F("h_met_1e0mu_trig_mht90_ht300","HT",1000,0,1000);
+  TH1F * h_met_1e0mu_den_mht90_ht350 = new TH1F("h_met_1e0mu_den_mht90_ht350","HT",1000,0,1000);
+  TH1F * h_met_1e0mu_trig_mht90_ht350= new TH1F("h_met_1e0mu_trig_mht90_ht350","HT",1000,0,1000);
+  TH1F * h_met_1e0mu_den_mht110      = new TH1F("h_met_1e0mu_den_mht110","HT",1000,0,1000);
+  TH1F * h_met_1e0mu_trig_mht110     = new TH1F("h_met_1e0mu_trig_mht110","HT",1000,0,1000);
+
+  TH1F * h_met_1mu0e_den_mht75       = new TH1F("h_met_1mu0e_den_mht75","HT",1000,0,1000);
+  TH1F * h_met_1mu0e_trig_mht75      = new TH1F("h_met_1mu0e_trig_mht75","HT",1000,0,1000);
+  TH1F * h_met_1mu0e_den_mht80       = new TH1F("h_met_1mu0e_den_mht80","HT",1000,0,1000);
+  TH1F * h_met_1mu0e_trig_mht80      = new TH1F("h_met_1mu0e_trig_mht80","HT",1000,0,1000);
+  TH1F * h_met_1mu0e_den_mht90_ht300 = new TH1F("h_met_1mu0e_den_mht90_ht300","HT",1000,0,1000);
+  TH1F * h_met_1mu0e_trig_mht90_ht300= new TH1F("h_met_1mu0e_trig_mht90_ht300","HT",1000,0,1000);
+  TH1F * h_met_1mu0e_den_mht90_ht350 = new TH1F("h_met_1mu0e_den_mht90_ht350","HT",1000,0,1000);
+  TH1F * h_met_1mu0e_trig_mht90_ht350= new TH1F("h_met_1mu0e_trig_mht90_ht350","HT",1000,0,1000);
+  TH1F * h_met_1mu0e_den_mht110      = new TH1F("h_met_1mu0e_den_mht110","HT",1000,0,1000);
+  TH1F * h_met_1mu0e_trig_mht110     = new TH1F("h_met_1mu0e_trig_mht110","HT",1000,0,1000);
 
   ////check the MC efficiencies from Summer11 TTbar
   ////this histogram has bin edges {30,50,75,100,150,200,240,500,1000}
@@ -4912,7 +4959,9 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
   //  //MCDist2011.push_back(pu::PoissonOneXDist_f[i]);
   //  //for 3dPU reweighting 
   //  DataDist2011.push_back(pu::TrueDist2011_f[i]);
-  //  MCDist2011.push_back(pu::probdistFlat10_f[i]);
+  //  if(i<25)
+  //    MCDist2011.push_back(pu::probdistFlat10_f[i]);
+  //  //std::cout << i << " " << pu::probdistFlat10_f[i] << std::endl;
   //}  
   ////for( int i=0; i<1000; ++i) {
   ////  DataDist2011.push_back(pu::TrueDist2011_finebin_f[i]);
@@ -4920,11 +4969,11 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
   ////reweight::LumiReWeighting LumiWeights = reweight::LumiReWeighting( MCDist2011, DataDist2011 );
   ////Lumi3DReWeighting LumiWeights = Lumi3DReWeighting("Summer11MC_PUDistTruth.root", "PileupTruth_finebin_data_SUM_upto180252.root", "mcpileup", "pileup");
   //Lumi3DReWeighting LumiWeights = Lumi3DReWeighting( MCDist2011, DataDist2011);
-
-
+  //
+  //std::cout << "size of MC = " << MCDist2011.size() << ", size of Data = " << DataDist2011.size() << std::endl;
   //LumiWeights.weight3D_init(1);
-  //LumiWeights.weight3D_init();
-  //LumiWeights.weight3D_init("Weight3D.root");
+  ////LumiWeights.weight3D_init();
+  ////LumiWeights.weight3D_init("Weight3D.root");
 
   cout<<"Running..."<<endl;  
   int npass = 0;
@@ -4934,8 +4983,8 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
   //int ntaggedjets_c = 0;
   //int ntaggedjets_l = 0;
 
-  int decayType;
-  int W1decayType, W2decayType;
+  //int decayType;
+  //int W1decayType, W2decayType;
 
   startTimer();
   for(int entry=0; entry < nevents; ++entry){
@@ -4965,8 +5014,8 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
     //
     //
     //}
-    decayType = getTTbarDecayType(W1decayType, W2decayType);
-    std::cout << "decaytype = " << decayType << ", W1decayType = " << W1decayType << ", W2decayType = " << W2decayType << std::endl;
+    //decayType = getTTbarDecayType(W1decayType, W2decayType);
+    //std::cout << "decaytype = " << decayType << ", W1decayType = " << W1decayType << ", W2decayType = " << W2decayType << std::endl;
 
     //if(Cut()==1){
 
@@ -4998,42 +5047,215 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
       //std::cout << "MET = " << getMET() << ", eff = " << getHLTMHTeff(getMET()) << std::endl;
       //std::cout << "HT = " << getHT() << ", eff = " << getHLTHTeff(getHT()) << std::endl;
 
-      /*            
+
+      bool cutEleVeto,cutMuVeto;
+      cutEleVeto = passCut("cutEleVeto");
+      cutMuVeto = passCut("cutMuVeto");
+      int nElectrons, nMuons;
+      nElectrons = countEle();
+      nMuons = countMu();
+                  
       //int lumi =  getLumiSection();
       int run = getRunNumber();
       //if(run ==170722 && lumi >=110 && lumi<=287) return false;
       if(passLumiMask()){
 	int version = 0, prescale = 0;
+
+	/////////////
+	//HT300_MHT75
+	/////////////
+	if(run>=165922 && run<=166978){
+	  if(passUtilityHLT(version,prescale)){
+	    h_met_den_mht75->Fill(getMET());	
+	    if(passHLT())
+	      h_met_trig_mht75->Fill(getMET());
+
+	    //0L sample
+	    if(cutEleVeto && cutMuVeto){
+	      h_met_0L_den_mht75->Fill(getMET());	
+	      if(passHLT())
+		h_met_0L_trig_mht75->Fill(getMET());
+	    }
+	    //1L sample
+	    if( (nElectrons==1 && nMuons ==0)||(nElectrons==0 && nMuons==1) ){
+	      h_met_1L_den_mht75->Fill(getMET());	
+	      if(passHLT())
+		h_met_1L_trig_mht75->Fill(getMET());
+	    }
+	    //1e0mu sample
+	    if( nElectrons==1 && nMuons ==0 ){
+	      h_met_1e0mu_den_mht75->Fill(getMET());	
+	      if(passHLT())
+		h_met_1e0mu_trig_mht75->Fill(getMET());	      
+	    }
+	    //1mu0e sample
+	    if( nElectrons==0 && nMuons ==1){
+	      h_met_1mu0e_den_mht75->Fill(getMET());	
+	      if(passHLT())
+		h_met_1mu0e_trig_mht75->Fill(getMET());
+	    }
+
+	  }
+	}
+
+	/////////////
+	//HT300_MHT80
+	/////////////
 	if(run>=166979 && run<=173211){
 	  if(passUtilityHLT(version,prescale)){
 	    h_met_den_mht80->Fill(getMET());	
 	    if(passHLT())
 	      h_met_trig_mht80->Fill(getMET());
+
+
+	    //0L sample
+	    if(cutEleVeto && cutMuVeto){
+	      h_met_0L_den_mht80->Fill(getMET());	
+	      if(passHLT())
+		h_met_0L_trig_mht80->Fill(getMET());
+	    }
+	    //1L sample
+	    if( (nElectrons==1 && nMuons ==0)||(nElectrons==0 && nMuons==1) ){
+	      h_met_1L_den_mht80->Fill(getMET());	
+	      if(passHLT())
+		h_met_1L_trig_mht80->Fill(getMET());
+	    }
+	    //1e0mu sample
+	    if( nElectrons==1 && nMuons ==0 ){
+	      h_met_1e0mu_den_mht80->Fill(getMET());	
+	      if(passHLT())
+		h_met_1e0mu_trig_mht80->Fill(getMET());	      
+	    }
+	    //1mu0e sample
+	    if( nElectrons==0 && nMuons ==1){
+	      h_met_1mu0e_den_mht80->Fill(getMET());	
+	      if(passHLT())
+		h_met_1mu0e_trig_mht80->Fill(getMET());
+	    }
+
+
 	  }
 	}
+
+	/////////////
+	//HT300_MHT90
+	/////////////
+
 	if(run>=173212 && run<=176544){
 	  if(passUtilityHLT(version,prescale)){
 	    h_met_den_mht90_ht300->Fill(getMET());	
 	    if(passHLT())
 	      h_met_trig_mht90_ht300->Fill(getMET());
+
+
+	    //0L sample
+	    if(cutEleVeto && cutMuVeto){
+	      h_met_0L_den_mht90_ht300->Fill(getMET());	
+	      if(passHLT())
+		h_met_0L_trig_mht90_ht300->Fill(getMET());
+	    }
+	    //1L sample
+	    if( (nElectrons==1 && nMuons ==0)||(nElectrons==0 && nMuons==1) ){
+	      h_met_1L_den_mht90_ht300->Fill(getMET());	
+	      if(passHLT())
+		h_met_1L_trig_mht90_ht300->Fill(getMET());
+	    }
+	    //1e0mu sample
+	    if( nElectrons==1 && nMuons ==0 ){
+	      h_met_1e0mu_den_mht90_ht300->Fill(getMET());	
+	      if(passHLT())
+		h_met_1e0mu_trig_mht90_ht300->Fill(getMET());	      
+	    }
+	    //1mu0e sample
+	    if( nElectrons==0 && nMuons ==1){
+	      h_met_1mu0e_den_mht90_ht300->Fill(getMET());	
+	      if(passHLT())
+		h_met_1mu0e_trig_mht90_ht300->Fill(getMET());
+	    }
+
+
 	  }
 	}
+
+	/////////////
+	//HT350_MHT90
+	/////////////
+
 	if(run>=176545 && run<=178410){
 	  if(passUtilityHLT(version,prescale)){
 	    h_met_den_mht90_ht350->Fill(getMET());	
 	    if(passHLT())
 	      h_met_trig_mht90_ht350->Fill(getMET());
+
+	    //0L sample
+	    if(cutEleVeto && cutMuVeto){
+	      h_met_0L_den_mht90_ht350->Fill(getMET());	
+	      if(passHLT())
+		h_met_0L_trig_mht90_ht350->Fill(getMET());
+	    }
+	    //1L sample
+	    if( (nElectrons==1 && nMuons ==0)||(nElectrons==0 && nMuons==1) ){
+	      h_met_1L_den_mht90_ht350->Fill(getMET());	
+	      if(passHLT())
+		h_met_1L_trig_mht90_ht350->Fill(getMET());
+	    }
+	    //1e0mu sample
+	    if( nElectrons==1 && nMuons ==0 ){
+	      h_met_1e0mu_den_mht90_ht350->Fill(getMET());	
+	      if(passHLT())
+		h_met_1e0mu_trig_mht90_ht350->Fill(getMET());	      
+	    }
+	    //1mu0e sample
+	    if( nElectrons==0 && nMuons ==1){
+	      h_met_1mu0e_den_mht90_ht350->Fill(getMET());	
+	      if(passHLT())
+		h_met_1mu0e_trig_mht90_ht350->Fill(getMET());
+	    }
+
+
+
 	  }
 	}
+
+	//////////////
+	//HT350_MHT110
+	//////////////
+
 	if(run>=178411 && run<=180252){
 	  if(passUtilityHLT(version,prescale)){
 	    h_met_den_mht110->Fill(getMET());	
 	    if(passHLT())
 	      h_met_trig_mht110->Fill(getMET());
+
+	    //0L sample
+	    if(cutEleVeto && cutMuVeto){
+	      h_met_0L_den_mht110->Fill(getMET());	
+	      if(passHLT())
+		h_met_0L_trig_mht110->Fill(getMET());
+	    }
+	    //1L sample
+	    if( (nElectrons==1 && nMuons ==0)||(nElectrons==0 && nMuons==1) ){
+	      h_met_1L_den_mht110->Fill(getMET());	
+	      if(passHLT())
+		h_met_1L_trig_mht110->Fill(getMET());
+	    }
+	    //1e0mu sample
+	    if( nElectrons==1 && nMuons ==0 ){
+	      h_met_1e0mu_den_mht110->Fill(getMET());	
+	      if(passHLT())
+		h_met_1e0mu_trig_mht110->Fill(getMET());	      
+	    }
+	    //1mu0e sample
+	    if( nElectrons==0 && nMuons ==1){
+	      h_met_1mu0e_den_mht110->Fill(getMET());	
+	      if(passHLT())
+		h_met_1mu0e_trig_mht110->Fill(getMET());
+	    }
+
 	  }
 	}
-	}
-      */
+      }
+      
       /*      
       h_ht->Fill(getHT());
       
@@ -5098,7 +5320,7 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
       //nge2b += probge2;      
       //nge3b += probge3;
 
-      /*
+      /*      
       for (unsigned int i = 0; i < myJetsPF->size(); ++i) {
       	int flavor = myJetsPF->at(i).partonFlavour;
       
@@ -5135,7 +5357,7 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
       	}
        
       }
-      */
+      */      
 
 
 
@@ -5152,14 +5374,14 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
   //std::cout << "neq1b = " << neq1b << std::endl;
   //std::cout << "nge2b = " << nge2b << std::endl;
   //std::cout << "nge3b = " << nge3b << std::endl;
-  //
+  
   //std::cout << "npass = " << npass << std::endl;
   //std::cout << "ntaggedjets = "   << ntaggedjets << std::endl;
   //std::cout << "ntaggedjets_b = " << ntaggedjets_b << std::endl;
   //std::cout << "ntaggedjets_c = " << ntaggedjets_c << std::endl;
   //std::cout << "ntaggedjets_l = " << ntaggedjets_l << std::endl;
-  //
-  //
+  
+  
   ////TH1F *h_btageff = (TH1F*) h_btag->Clone();
   //TH1F * h_btageff = new TH1F("h_btageff","btageff",9,bins);
   //h_btageff->Divide(h_btag,h_bjet,1,1,"B");
@@ -5169,10 +5391,10 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
   ////TH1F *h_ltageff = (TH1F*) h_ltag->Clone();
   //TH1F * h_ltageff = new TH1F("h_ltageff","ltageff",9,bins);
   //h_ltageff->Divide(h_ltag,h_ljet,1,1,"B");
-  //
-  //
-  //fout.Write();
-  //fout.Close();
+  
+  
+  fout.Write();
+  fout.Close();
 
 
   return;
