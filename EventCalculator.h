@@ -149,6 +149,7 @@ public:
   //  unsigned int nGoodJets(TH2D* count,TH2D* unc,TH2D* l2l3); //for a test
   unsigned int nGoodJets30();
   unsigned int nGoodBJets( BTaggerType btagger=Nbtaggers);
+  unsigned int nTrueBJets();
 
   void getSmearedUnclusteredMET(float & myMET, float & myMETphi);
 

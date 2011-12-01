@@ -1627,6 +1627,15 @@ unsigned int EventCalculator::nGoodBJets( BTaggerType btagger) {
   return nb;
 }
 
+unsigned int EventCalculator::nTrueBJets() {
+  unsigned int nb=0;
+  for (unsigned int i = 0; i < myJetsPF->size(); ++i) {
+    if (isGoodJet(i,30) ) {
+      if ( abs(myJetsPF->at(i).partonFlavour)==5 ) nb++;
+    }
+  }
+  return nb;
+}
 
 void EventCalculator::getSmearedUnclusteredMET(float & myMET, float & myMETphi) {
   assert(theJetType_ == kPF2PAT);
@@ -3163,7 +3172,7 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   UInt_t pass_utilityHLT_HT300_CentralJet30_BTagIP;
   UInt_t prescale_utilityHLT_HT300_CentralJet30_BTagIP;
 
-  int njets, njets30, nbjets, nElectrons, nMuons;
+  int njets, njets30, nbjets, ntruebjets, nElectrons, nMuons;
   int nbjetsSSVM,nbjetsTCHET,nbjetsSSVHPT,nbjetsTCHPT,nbjetsTCHPM,nbjetsCSVM;
 
   float jetpt1,jetphi1, jeteta1, jetenergy1, bjetpt1, bjetphi1, bjeteta1, bjetenergy1;
@@ -3400,6 +3409,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("njets",&njets,"njets/I");
   reducedTree.Branch("njets30",&njets30,"njets30/I");
   reducedTree.Branch("nbjets",&nbjets,"nbjets/I");
+  reducedTree.Branch("ntruebjets",&ntruebjets,"ntruebjets/I");
   reducedTree.Branch("nElectrons",&nElectrons,"nElectrons/I");
   reducedTree.Branch("nMuons",&nMuons,"nMuons/I");
 
@@ -3799,6 +3809,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
       njets = nGoodJets();
       njets30 = nGoodJets30();
 
+      ntruebjets = nTrueBJets();
       nbjets = nGoodBJets();
       nbjetsSSVM = nGoodBJets( kSSVM);
       nbjetsSSVHPT = nGoodBJets( kSSVHPT);
