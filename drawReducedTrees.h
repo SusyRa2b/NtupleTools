@@ -22,6 +22,7 @@ std::map<TString, UInt_t> sampleColor_;
 std::map<TString, TString> sampleOwenName_;
 std::map<TString, TString> sampleLabel_;
 std::map<TString, UInt_t> sampleMarkerStyle_;
+std::map<TString, float> sampleScaleFactor_; //1 by default //implemented only for drawPlots!
 TChain* dtree=0;
 TH1D* hdata=0;
 
@@ -947,7 +948,7 @@ void fillFlavorHistoryScaling() {
 enum sampleType {kData, kMC, kmSugraPoint, kmSugraPlane, kSMSPoint, kSMSPlane};
 //for more rationality, should make a data struct (or class) to hold the options, so that fewer arguments need to be passed
 //TString getCutString(double lumiscale, TString extraWeight="", TString thisSelection="", TString extraSelection="", int pdfWeightIndex=0,TString pdfSet="CTEQ", bool isSusyScan=false, int susySubProcess=-1, const bool isData=false) {
-TString getCutString(sampleType type, TString extraWeight="", TString thisSelection="", TString extraSelection="", int pdfWeightIndex=0,TString pdfSet="CTEQ", int susySubProcess=-1) {
+TString getCutString(sampleType type, TString extraWeight="", TString thisSelection="", TString extraSelection="", int pdfWeightIndex=0,TString pdfSet="CTEQ", int susySubProcess=-1,const float scalefactor=1) {
 
   //an explanation of the options
   /*
@@ -974,6 +975,11 @@ for legacy purposes I am keeping all of the weight and selection TStrings, altho
   
   weightedcut += "*(";
   weightedcut +=lumiscale;
+  weightedcut+=")";
+
+  //new scale factor
+  weightedcut += "*(";
+  weightedcut +=scalefactor;
   weightedcut+=")";
   
   //this flavorHistoryWeight business is too kludgey...someday should fix it
@@ -1190,6 +1196,20 @@ void addSample(const TString & newsample) {
   else {
     cout<<"Could not find sample with name "<<newsample<<endl;
   }
+}
+
+void resetSampleScaleFactors() {
+  for (std::set<TString>::iterator isample=samplesAll_.begin(); isample!=samplesAll_.end(); ++isample) {
+    sampleScaleFactor_[*isample] = 1;
+  }
+}
+
+void setSampleScaleFactor(const TString & sample, const float sf) {
+  bool done=false;
+  for (std::set<TString>::iterator isample=samplesAll_.begin(); isample!=samplesAll_.end(); ++isample) {
+    if (*isample == sample) {sampleScaleFactor_[*isample] = sf; done=true;}
+  }
+  if (!done) cout<<"Failed to find the sample "<<sample<<endl;
 }
 
 void clearSamples() {
@@ -1498,6 +1518,9 @@ void loadSamples(bool joinSingleTop=true) {
   sampleOwenName_["TotalSM"] = "totalsm";
   sampleOwenName_["Total"] = "total";  
 
+  //set all scale factors to 1 to start with.
+  resetSampleScaleFactors();
+
   //  for (std::vector<TString>::iterator iconfig=configDescriptions_.begin(); iconfig!=configDescriptions_.end(); ++iconfig) {
   for (unsigned int iconfig=0; iconfig<configDescriptions_.size(); ++iconfig) {
     for (std::set<TString>::iterator isample=samplesAll_.begin(); isample!=samplesAll_.end(); ++isample) {
@@ -1777,7 +1800,7 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
     TTree* tree = (TTree*) files_[currentConfig_][samples_[isample]]->Get("reducedTree");
     gROOT->cd();
     TString weightopt= useFlavorHistoryWeights_ && samples_[isample].Contains("WJets") ? "flavorHistoryWeight" : "";
-    tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,"",0,"").Data());
+    tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,"",0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());
     
     //now the histo is filled
     
@@ -2938,8 +2961,6 @@ void cutflow(bool isTightSelection){
       TString hname = jmt::fortranize(var); hname += "_"; hname += samples_[isample];
       histos_[samples_[isample]] = (varbins==0) ? new TH1D(hname,"",nbins,low,high) : new TH1D(hname,"",nbins,varbins);
       histos_[samples_[isample]]->Sumw2();
-
-      //qcd reweighting not implemented yet
 
       TTree* tree = (TTree*) files_[currentConfig_][samples_[isample]]->Get("reducedTree");
       gROOT->cd();

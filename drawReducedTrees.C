@@ -2528,7 +2528,7 @@ void AN2011( TString btagselection="ge1b",const int mode=1, bool logy=false, boo
   // n Jets
   selection_ =TCut("HT>=400 && cutPV==1 && cutTrigger==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=200 && minDeltaPhiN >= 4 &&passCleaning==1")&&btagcut;
   var="njets"; xtitle="Jet multiplicity";
-  nbins = 7; low=2; high=9;
+  nbins = 6; low=2; high=8;
   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_njets_"+btagselection+modestring);
   
   // n Nets - QCD dominated (LDP)
@@ -4444,12 +4444,15 @@ void studyRtt_0lep() {
    gStyle->SetOptStat(0);
 
   TCut baselineSL = "cutTrigger==1 && minDeltaPhiN>4 && passCleaning==1 && cutPV==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && MT_Wlep>=0 && MT_Wlep<100";
+  TCut baselineEle = "cutTrigger==1 && minDeltaPhiN>4 && passCleaning==1 && cutPV==1 && cut3Jets==1 && (nElectrons==1 && nMuons==0) && MT_Wlep>=0 && MT_Wlep<100";
+  TCut baselineMu = "cutTrigger==1 && minDeltaPhiN>4 && passCleaning==1 && cutPV==1 && cut3Jets==1 && (nElectrons==0 && nMuons==1) && MT_Wlep>=0 && MT_Wlep<100";
   TCut baseline = "cutTrigger==1 && minDeltaPhiN>4 && passCleaning==1 && cutPV==1 && cut3Jets==1 && nElectrons==0 && nMuons==0";
   TCut HTcut = "HT>400";
   TCut SIG="MET>250";
   TCut SB = "MET>200 && MET<=250";
   //  TCut bcut = "nbjets>=1";
   TCut bcut="1";      btagSFweight_="probge2"; //use b tag SF
+  //TCut bcut="1";//no b tag
 
   //  float rmin=0.6; float rmax=1.1; //ge1b
   float rmin=0.5; float rmax=1.5; //ge2b
@@ -4480,6 +4483,30 @@ void studyRtt_0lep() {
   thecanvas->SaveAs("SL_R_vTime.png");
   thecanvas->SaveAs("SL_R_vTime.pdf");
 */
+  TH1D zL_SB_vTime("zL_SB_vTime","zL SB versus run number",nbins,runs);
+  TH1D SL_SB_vTime("SL_SB_vTime","SL SB versus run number",nbins,runs);
+  TH1D zSL_R_vTime("zSL_R_vTime","SB r_(0L/SL) versus run number",nbins,runs);
+
+  zL_SB_vTime.Sumw2();
+  SL_SB_vTime.Sumw2();
+  zSL_R_vTime.Sumw2();
+
+  selection_ = baseline && HTcut && SB && bcut; //SIG
+  dtree->Project("zL_SB_vTime","runNumber",getCutString(true).Data());
+
+  selection_ = baselineMu && HTcut && SB && bcut; //SB
+  dtree->Project("SL_SB_vTime","runNumber",getCutString(true).Data());
+
+  zSL_R_vTime.Divide(&zL_SB_vTime,&SL_SB_vTime);
+
+  renewCanvas();
+  zSL_R_vTime.Draw();
+
+  thecanvas->SaveAs("zSL_r_vTime.eps");
+  thecanvas->SaveAs("zSL_r_vTime.png");
+  thecanvas->SaveAs("zSL_r_vTime.pdf");
+  return;
+
   //now do it by nPV
   TString var ="nGoodPV";
   nbins = 3;
