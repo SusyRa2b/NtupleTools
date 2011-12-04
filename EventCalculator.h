@@ -68,8 +68,8 @@ public:
   //float getPUWeight(reweight::LumiReWeighting lumiWeights);
   float getPUWeight(Lumi3DReWeighting lumiWeights);
 
-  bool isGoodMuon(const unsigned int imuon);
-  bool isGoodElectron(const unsigned int iele);
+  bool isGoodMuon(const unsigned int imuon, const bool disableRelIso=false);
+  bool isGoodElectron(const unsigned int iele, const bool disableRelIso=false);
   unsigned int countEle() ;
   bool isCleanMuon(const unsigned int imuon);
   unsigned int countMu();
@@ -179,6 +179,9 @@ public:
 
   float muonPtOfN(unsigned int n);
   float muonPhiOfN(unsigned int n);
+
+  float getRelIsoForIsolationStudyEle();
+  float getRelIsoForIsolationStudyMuon();
 
   float getMT_Wlep();
   void calcTopDecayVariables(float & wmass, float & tmass, float & wcoshel, float & tcoshel);

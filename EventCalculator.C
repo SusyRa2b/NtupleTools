@@ -408,9 +408,9 @@ float EventCalculator::getPUWeight(Lumi3DReWeighting lumiWeights) {
 
 }
 
-bool EventCalculator::isGoodMuon(const unsigned int imuon) {
+bool EventCalculator::isGoodMuon(const unsigned int imuon, const bool disableRelIso) {
 
-  if(myMuonsPF->at(imuon).pt >= 10
+  if (myMuonsPF->at(imuon).pt >= 10
      && fabs(myMuonsPF->at(imuon).eta)<2.4
      && myMuonsPF->at(imuon).GlobalMuonPromptTight == 1
      && myMuonsPF->at(imuon).isTrackerMuon == 1 
@@ -419,10 +419,10 @@ bool EventCalculator::isGoodMuon(const unsigned int imuon) {
      //&& fabs(myMuonsPF->at(imuon).dB) < 0.02
      && fabs(myMuonsPFhelper->at(imuon).dxywrtBeamSpot) < 0.02
      && fabs(myMuonsPF->at(imuon).vz - myVertex->at(0).z ) <1
-     && (myMuonsPF->at(imuon).chargedHadronIso 
-	 + myMuonsPF->at(imuon).photonIso 
-	 + myMuonsPF->at(imuon).neutralHadronIso)/myMuonsPF->at(imuon).pt <0.2 
-     ){
+      && ((myMuonsPF->at(imuon).chargedHadronIso 
+	   + myMuonsPF->at(imuon).photonIso 
+	   + myMuonsPF->at(imuon).neutralHadronIso)/myMuonsPF->at(imuon).pt <0.2 ||disableRelIso)
+      ) {
     return true;
   }
   
@@ -449,10 +449,10 @@ bool EventCalculator::isCleanMuon(const unsigned int imuon) {
 
 }
 
-
-bool EventCalculator::isGoodElectron(const unsigned int iele) {
+//this bool could be turned into a more powerful selector for N-1 studies. keep it simple for now
+bool EventCalculator::isGoodElectron(const unsigned int iele, const bool disableRelIso) {
   
-  if(myElectronsPF->at(iele).pt >= 10
+  if (myElectronsPF->at(iele).pt >= 10
      && fabs(myElectronsPF->at(iele).superCluster_eta) < 2.5 
      && !(fabs(myElectronsPF->at(iele).superCluster_eta) > 1.4442 
 	  && fabs(myElectronsPF->at(iele).superCluster_eta) < 1.566)
@@ -460,10 +460,10 @@ bool EventCalculator::isGoodElectron(const unsigned int iele) {
      //&& fabs(myElectronsPF->at(iele).dB) < 0.02
      && fabs(myElectronsPFhelper->at(iele).dxywrtBeamSpot) < 0.02
      && fabs(myElectronsPF->at(iele).vz - myVertex->at(0).z ) <1
-     && (myElectronsPF->at(iele).chargedHadronIso 
+     && ((myElectronsPF->at(iele).chargedHadronIso 
 	 + myElectronsPF->at(iele).photonIso 
-	 + myElectronsPF->at(iele).neutralHadronIso)/myElectronsPF->at(iele).pt <0.2 
-       ){
+	  + myElectronsPF->at(iele).neutralHadronIso)/myElectronsPF->at(iele).pt <0.2 || disableRelIso)
+       ) {
     return true;
   }
   
@@ -1965,6 +1965,48 @@ bool EventCalculator::jetPassLooseID( unsigned int ijet ) {
   return false;
 }
 
+float EventCalculator::getRelIsoForIsolationStudyEle() {
+
+  //loop over electrons
+  //consider any electron that passes all cuts except reliso
+  //return the most isolated reliso of that group
+
+  float bestRelIso=1e9;
+
+  for (unsigned int iele=0; iele < myElectronsPF->size(); ++iele) {
+    if ( isGoodElectron(iele,true)) { //true means disable RelIso cut
+      float reliso = (myElectronsPF->at(iele).chargedHadronIso 
+		      + myElectronsPF->at(iele).photonIso 
+		      + myElectronsPF->at(iele).neutralHadronIso)/myElectronsPF->at(iele).pt;
+      if (reliso < bestRelIso) bestRelIso = reliso;
+    }
+  }
+
+  //if there are no good electrons we'll get 1e9 as the return value
+  return bestRelIso;
+}
+
+float EventCalculator::getRelIsoForIsolationStudyMuon() {
+
+  //loop over muon
+  //consider any muon that passes all cuts except reliso
+  //return the most isolated reliso of that group
+
+  float bestRelIso=1e9;
+
+  for (unsigned int imu=0; imu < myMuonsPF->size(); ++imu) {
+    if ( isGoodMuon(imu,true)) { //true means disable RelIso cut
+      float reliso = (myMuonsPF->at(imu).chargedHadronIso 
+		      + myMuonsPF->at(imu).photonIso 
+		      + myMuonsPF->at(imu).neutralHadronIso)/myMuonsPF->at(imu).pt;
+      if (reliso < bestRelIso) bestRelIso = reliso;
+    }
+  }
+
+  //if there are no good muons we'll get 1e9 as the return value
+  return bestRelIso;
+}
+
 float EventCalculator::elePtOfN(unsigned int n) {
 
   unsigned int ngood=0;
@@ -3180,6 +3222,7 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   float jetpt3,jetphi3, jeteta3, jetenergy3, bjetpt3, bjetphi3, bjeteta3, bjetenergy3;
   float eleet1;
   float muonpt1;
+  float eleRelIso,muonRelIso;
 
   float MT_Wlep;
   float wMass, topMass, wCosHel, topCosHel;
@@ -3515,6 +3558,9 @@ Also the pdfWeightSum* histograms that are used for LM9.
 
   reducedTree.Branch("eleet1",&eleet1,"eleet1/F");
   reducedTree.Branch("muonpt1",&muonpt1,"muonpt1/F");
+
+  reducedTree.Branch("eleRelIso",&eleRelIso,"eleRelIso/F");
+  reducedTree.Branch("muonRelIso",&muonRelIso,"muonRelIso/F");
 
   reducedTree.Branch("lambda1_allJets",&lambda1_allJets,"lambda1_allJets/F");
   reducedTree.Branch("lambda2_allJets",&lambda2_allJets,"lambda2_allJets/F");
@@ -3916,6 +3962,9 @@ Also the pdfWeightSum* histograms that are used for LM9.
       eleet1 = elePtOfN(1);
       muonpt1 = muonPtOfN(1);     
       
+      //i'm giving these awkward names on purpose, so that they won't be used without understanding what they do
+      eleRelIso = getRelIsoForIsolationStudyEle();
+      muonRelIso = getRelIsoForIsolationStudyMuon();
 
       csctighthaloFilter = jmt::doubleToBool(triggerresultshelper1_csctighthaloFilter);
       eenoiseFilter = jmt::doubleToBool(triggerresultshelper1_eenoiseFilter) ;
