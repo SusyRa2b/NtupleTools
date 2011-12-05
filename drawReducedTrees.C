@@ -1133,14 +1133,15 @@ void runDataQCD2011(const bool forOwen=false) {
 
 //i don't like passing the index instead of the region itself, but it makes some things easier.
 //this code is all around a big kludge...
-double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const TString & mode="", const bool justttbar=false ) {
+//double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const TString & mode="", const bool justttbar=false ) {
+double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const TString & mode="", const TString & closureMode="nominal" ) {
   //in datamode, return the estimate; in non-datamode, return the Closure Test results (true-pred)/pred
 
-  if (justttbar == true) cout<<"Will run closure test in ttbar only mode!"<<endl;
+  assert( closureMode=="nominal" || closureMode=="justttbar" || closureMode=="wtplus" ||closureMode=="wtminus" ||closureMode=="slonlywtplus" ||closureMode=="slonlywtminus" ||closureMode=="0lonlywtplus" ||closureMode=="0lonlywtminus");
 
-  /*
-.L drawReducedTrees.C++
-  */
+  if (closureMode=="justttbar") cout<<"Will run closure test in ttbar only mode!"<<endl;
+  else if (closureMode=="nominal") {}
+  else cout<<"Running closure test in mode: "<<closureMode<<endl;
 
   const SearchRegion region = searchRegions_[searchRegionIndex];
   const SearchRegion qcdsubregion = sbRegions_[searchRegionIndex];
@@ -1243,7 +1244,7 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
   }
   else {
     addSample("TTbarJets");
-    if (!justttbar) {
+    if (closureMode!="justttbar") {
       addSample("WJets");
       addSample("SingleTop");
     }
@@ -1306,12 +1307,49 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
 
   double A,B,D,SIG,Aerr,Berr,Derr,SIGerr;
   //A = SB, SL
+  if (!datamode && (closureMode=="wtplus" || closureMode=="slonlywtplus")) {
+    setSampleScaleFactor("WJets",1.5);
+    setSampleScaleFactor("SingleTop",1.5);
+  }
+  else if (!datamode && (closureMode=="wtminus" || closureMode=="slonlywtminus")) {
+    setSampleScaleFactor("WJets",0.5);
+    setSampleScaleFactor("SingleTop",0.5);
+  }
+
   selection_ = baseline && cleaning && dpcut  && SBMET && failOther; //auto cast to TString seems to work
   var="HT"; xtitle=var;
   nbins=10; low=0; high=5000;
   drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_A");
   A=getIntegral(sampleOfInterest);
   Aerr=getIntegralErr(sampleOfInterest);
+
+  //D = SIG,SL
+  //keep the scaling on W, t as set for region A
+  selection_ = baseline && cleaning && dpcut  && SRMET && failOther; //auto cast to TString seems to work
+  drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_D");
+  D=getIntegral(sampleOfInterest);
+  Derr=getIntegralErr(sampleOfInterest);
+
+  if (datamode) { //for owen
+    myOwen->Nsig_sl = D;
+    myOwen->Nsb_sl = A;
+  }
+
+  //for wtplus, wtminus the scale factor is already set
+  //for slonly modes, reset them to 1
+  if (!datamode && ( closureMode=="slonlywtplus" || closureMode=="slonlywtminus")) {
+    setSampleScaleFactor("WJets",1.0);
+    setSampleScaleFactor("SingleTop",1.0);
+  }
+  else if (!datamode && ( closureMode=="0lonlywtplus")) {
+    setSampleScaleFactor("WJets",1.5);
+    setSampleScaleFactor("SingleTop",1.5);
+  }
+  else if (!datamode && (closureMode=="0lonlywtminus")) {
+    setSampleScaleFactor("WJets",0.5);
+    setSampleScaleFactor("SingleTop",0.5);
+  }
+
   //B = SB
   selection_ = baseline && cleaning && dpcut  && SBMET && passOther; //auto cast to TString seems to work
   drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_B");
@@ -1329,16 +1367,7 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
       else if (mode=="MCdown") SBsubMisc -= SBsubMiscerr;
     }
   }
-  //D = SIG,SL
-  selection_ = baseline && cleaning && dpcut  && SRMET && failOther; //auto cast to TString seems to work
-  drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_D");
-  D=getIntegral(sampleOfInterest);
-  Derr=getIntegralErr(sampleOfInterest);
 
-  if (datamode) { //for owen
-    myOwen->Nsig_sl = D;
-    myOwen->Nsb_sl = A;
-  }
 
   //SIG
   selection_ = baseline && cleaning && dpcut  && SRMET && passOther; //auto cast to TString seems to work
@@ -1384,6 +1413,8 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
   }
   cout<<output<<endl;
 
+  resetSampleScaleFactors();
+
   if (datamode) return estimate;
   return 100*sqrt(pow((SIG-estimate)/estimate,2) + pow(closureStat,2));
 }
@@ -1396,8 +1427,18 @@ void runSLClosureTest2011() {
   for (unsigned int j=0; j<searchRegions_.size();j++) slABCD(j);
 
   cout<<"Note that the following is the tt closure test only!"<<endl;
-  for (unsigned int j=0; j<searchRegions_.size();j++) slABCD(j,false,"",true);
+  for (unsigned int j=0; j<searchRegions_.size();j++) slABCD(j,false,"","justttbar");
 
+/*
+  for (unsigned int j=0; j<searchRegions_.size();j++) slABCD(j,false,"","wtplus");
+  for (unsigned int j=0; j<searchRegions_.size();j++) slABCD(j,false,"","wtminus");
+
+  for (unsigned int j=0; j<searchRegions_.size();j++) slABCD(j,false,"","slonlywtplus");
+  for (unsigned int j=0; j<searchRegions_.size();j++) slABCD(j,false,"","slonlywtminus");
+
+  for (unsigned int j=0; j<searchRegions_.size();j++) slABCD(j,false,"","0lonlywtplus");
+  for (unsigned int j=0; j<searchRegions_.size();j++) slABCD(j,false,"","0lonlywtminus");
+*/
 }
 
 vector<double> ttbarClosureSyst;
@@ -1454,7 +1495,7 @@ void runTtbarEstimate2011(const bool forOwen=false) {
   cout<<"Running closure tests"<<endl;
   for (unsigned int j=0; j<searchRegions_.size();j++) {
     double allsamples=fabs(slABCD(j)); //mix of samples
-    double ttbaronly=fabs(slABCD(j,false,"",true)); //just ttbar
+    double ttbaronly=fabs(slABCD(j,false,"","justttbar")); //just ttbar
     if(allsamples>ttbaronly)
       closure.push_back(allsamples);
     else closure.push_back(ttbaronly);
