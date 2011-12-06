@@ -2764,7 +2764,6 @@ void getCutStringForCutflow(vector<TString> &vectorOfCuts, vector<TString> &stag
   cut=getCutString(kMC,thisSelection);
   vectorOfCuts.push_back(cut);
   stageCut.push_back("PV");
-  
 
   //HT
   if (thisSelection=="") {thisSelection += "HT>="; thisSelection += minHT;}
@@ -2831,12 +2830,12 @@ void getCutStringForCutflow(vector<TString> &vectorOfCuts, vector<TString> &stag
   //  vectorOfCuts.push_back(cut);
   //  stageCut.push_back("DeltaPhiTaus");
   
-  // //Cleaning
-  //  if (thisSelection=="") thisSelection += "passCleaning==1";
-  //  else thisSelection +=" && passCleaning==1";
-  //  cut=getCutString(kMC,thisSelection);
-  //  vectorOfCuts.push_back(cut);
-  //  stageCut.push_back("Cleaning");
+  //Cleaning
+  if (thisSelection=="") thisSelection += "passCleaning==1";
+  else thisSelection +=" && passCleaning==1";
+  cut=getCutString(kMC,thisSelection);
+  vectorOfCuts.push_back(cut);
+  stageCut.push_back("Cleaning");
 
   //store selection string pre b cut
   selectionPreB=thisSelection;
@@ -2871,7 +2870,7 @@ void getCutStringForCutflow(vector<TString> &vectorOfCuts, vector<TString> &stag
   //>= 3 b
   selectionGe3bLoose=selectionPreB; 
   if (btagSF) btagSFweight_="probge3";
-  else selectionGe2bLoose += " && nbjetsCSVM>=3";
+  else selectionGe3bLoose += " && nbjetsCSVM>=3";
   cut=getCutString(kMC,selectionGe3bLoose);
   vectorOfCuts.push_back(cut);
   if (latexMode_) stageCut.push_back("HT$\\ge$400, \\MET$\\ge$250, $\\ge$3 b");
