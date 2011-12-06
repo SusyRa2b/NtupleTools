@@ -1921,7 +1921,12 @@ other.
     drawMCErrors_=true;
     doOverflowAddition(false);
 
+    //SL
     selection_ =TCut("MET>=200 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && minDeltaPhiN >= 4 && MT_Wlep>=0 && MT_Wlep<100 &&passCleaning==1")&&btagcut&&HTcut;;
+    //SE
+    //selection_ =TCut("MET>=200 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && (nElectrons==1 && nMuons==0) && minDeltaPhiN >= 4 && MT_Wlep>=0 && MT_Wlep<100 &&passCleaning==1")&&btagcut&&HTcut;;
+    //SMU
+    //selection_ =TCut("MET>=200 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && (nElectrons==0 && nMuons==1) && minDeltaPhiN >= 4 && MT_Wlep>=0 && MT_Wlep<100 &&passCleaning==1")&&btagcut&&HTcut;;
     var="MET"; xtitle="E_{T}^{miss} [GeV]";
     nbins = 1; low=200; high=250;
     //nbins = 15; low=200; high=500;
@@ -2162,7 +2167,7 @@ void makeTTbarWMETPlots() {
   double ratio_sl = 0, ratio_sl_err = 0, ratio_nom = 0, ratio_nom_err = 0;
   std::vector<double> ratios_sl, ratios_sl_err, ratios_nom, ratios_nom_err;
   std::vector<string> selections;
-  
+    
   std::cout << "TTbarJets" << std::endl;
 
   AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Loose" , "TTbarJets");
@@ -2236,7 +2241,7 @@ void makeTTbarWMETPlots() {
     if(i==10) std::cout << "SingleTop" << std::endl;
     std::cout << " & "<< selections.at(i) <<" & " << ratios_nom.at(i) << "$\\pm$" << ratios_nom_err.at(i) << "\t & " << ratios_sl.at(i) << "$\\pm$" << ratios_sl_err.at(i) << " \\\\" << std::endl; 
   }
- 
+   
   //print out the SIG/SB ratio in the SL region for data and full MC
   savePlots_ = false;
   TString mode = "datamode";
@@ -2531,7 +2536,7 @@ void AN2011( TString btagselection="ge1b",const int mode=1, bool logy=false, boo
   leg_x2=0.96; leg_y1=0.4; //leg_y2=0.88;//bensep28 - for data/mc stack comparison
   //leg_x1 = 0.6; leg_x2=0.96; leg_y1=0.42; leg_y2=0.9;//bensep28 -for data/mc stack comparison NJETS
 
-    
+  
   var="minDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}";
   nbins = 20; low=0; high=40;
   //no delta phi cut
@@ -2757,7 +2762,6 @@ void AN2011( TString btagselection="ge1b",const int mode=1, bool logy=false, boo
   nbins = 7; low=2; high=9;
   drawPlots(var,nbins,low,high,xtitle,"Events", "SL_njets_"+btagselection+modestring);
   */
-
 
   resetLegendPosition();
 }
@@ -4778,18 +4782,169 @@ void drawTrigEff() {
 
 
   //output file 
-  TString histfilename = "mhteff_nov29.root";
+  TString histfilename = "mhteff_dec4.root";
   TFile fh(histfilename,"RECREATE");//will delete old root file if present 
   fh.Close(); //going to open only when needed 
 
   //TCut HTcut = "HT>=400";
   //TCut HTcut = "HT>=400";  TCut njetCut = "njets >=3";    TCut dpcut = "minDeltaPhiN>=4";
+  //TCut HTcut = "HT>=400";  TCut njetCut = "nbjetsCSVM>=1";    TCut dpcut = "";
   TCut HTcut = "HT>=400";  TCut njetCut = "";    TCut dpcut = "";
   //TCut dpcut = "";
   
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
   nbins = 100; low=0; high=1000;
   setLogY(false); resetPlotMinimum();
+
+
+  /////////////////
+  // HT260_MHT60_v2
+  /////////////////
+  //all
+  selection_ =TCut("pass_utilityHLT==1   && runNumber>=160431 && runNumber<=161204")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht260mht60v2_den", "data");
+  selection_ =TCut("cutTrigger==1 && pass_utilityHLT==1  && runNumber>=160431 && runNumber<=161204")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht260mht60v2", "data");
+  //all - pass cleaning
+  selection_ =TCut("pass_utilityHLT==1   && passCleaning==1 && runNumber>=160431 && runNumber<=161204")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht260mht60v2_clean_den", "data");
+  selection_ =TCut("cutTrigger==1 && pass_utilityHLT==1  && passCleaning==1 && runNumber>=160431 && runNumber<=161204")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht260mht60v2_clean", "data");
+  //SL
+  selection_ =TCut("pass_utilityHLT==1   && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && runNumber>=160431 && runNumber<=161204")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht260mht60v2_SL_den", "data");
+  selection_ =TCut("cutTrigger==1 && pass_utilityHLT==1  && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && runNumber>=160431 && runNumber<=161204")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht260mht60v2_SL", "data");
+  //NoLep
+  selection_ =TCut("pass_utilityHLT==1   && cutEleVeto==1 && cutMuVeto==1 && runNumber>=160431 && runNumber<=161204")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht260mht60v2_NoLep_den", "data");
+  selection_ =TCut("cutTrigger==1 && pass_utilityHLT==1  && cutEleVeto==1 && cutMuVeto==1 && runNumber>=160431 && runNumber<=161204")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht260mht60v2_NoLep", "data");
+  //highdp
+  selection_ =TCut("pass_utilityHLT==1   && minDeltaPhiN >= 4 && runNumber>=160431 && runNumber<=161204")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht260mht60v2_HDP_den", "data");
+  selection_ =TCut("cutTrigger==1 && pass_utilityHLT==1  && minDeltaPhiN >= 4 && runNumber>=160431 && runNumber<=161204")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht260mht60v2_HDP", "data");
+  //ldp
+  selection_ =TCut("pass_utilityHLT==1   && minDeltaPhiN < 4 && runNumber>=160431 && runNumber<=161204")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht260mht60v2_LDP_den", "data");
+  selection_ =TCut("cutTrigger==1 && pass_utilityHLT==1  && minDeltaPhiN < 4 && runNumber>=160431 && runNumber<=161204")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht260mht60v2_LDP", "data");
+  //SL - hdp
+  selection_ =TCut("pass_utilityHLT==1   && minDeltaPhiN >= 4 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && runNumber>=160431 && runNumber<=161204")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht260mht60v2_SLHDP_den", "data");
+  selection_ =TCut("cutTrigger==1 && pass_utilityHLT==1  && minDeltaPhiN >= 4 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && runNumber>=160431 && runNumber<=161204")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht260mht60v2_SLHDP", "data");
+  //NoLep - hdp
+  selection_ =TCut("pass_utilityHLT==1   && minDeltaPhiN >= 4 && cutEleVeto==1 && cutMuVeto==1 && runNumber>=160431 && runNumber<=161204")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht260mht60v2_NoLepHDP_den", "data");
+  selection_ =TCut("cutTrigger==1 && pass_utilityHLT==1  && minDeltaPhiN >= 4 && cutEleVeto==1 && cutMuVeto==1 && runNumber>=160431 && runNumber<=161204")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht260mht60v2_NoLepHDP", "data");
+  //NoLep - ldp
+  selection_ =TCut("pass_utilityHLT==1   && minDeltaPhiN < 4 && cutEleVeto==1 && cutMuVeto==1 && runNumber>=160431 && runNumber<=161204")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht260mht60v2_NoLepLDP_den", "data");
+  selection_ =TCut("cutTrigger==1 && pass_utilityHLT==1  && minDeltaPhiN < 4 && cutEleVeto==1 && cutMuVeto==1 && runNumber>=160431 && runNumber<=161204")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht260mht60v2_NoLepLDP", "data");
+
+  /////////////////
+  // HT250_MHT60_v*
+  /////////////////
+  //all
+  selection_ =TCut("pass_utilityHLT==1   && runNumber>=161205 && runNumber<=164923")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht250mht60v2and3_den", "data");
+  selection_ =TCut("cutTrigger==1 && pass_utilityHLT==1  && runNumber>=161205 && runNumber<=164923")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht250mht60v2and3", "data");
+  //all - pass cleaning
+  selection_ =TCut("pass_utilityHLT==1   && passCleaning==1 && runNumber>=161205 && runNumber<=164923")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht250mht60v2and3_clean_den", "data");
+  selection_ =TCut("cutTrigger==1 && pass_utilityHLT==1  && passCleaning==1 && runNumber>=161205 && runNumber<=164923")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht250mht60v2and3_clean", "data");
+  //SL
+  selection_ =TCut("pass_utilityHLT==1   && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && runNumber>=161205 && runNumber<=164923")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht250mht60v2and3_SL_den", "data");
+  selection_ =TCut("cutTrigger==1 && pass_utilityHLT==1  && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && runNumber>=161205 && runNumber<=164923")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht250mht60v2and3_SL", "data");
+  //NoLep
+  selection_ =TCut("pass_utilityHLT==1   && cutEleVeto==1 && cutMuVeto==1 && runNumber>=161205 && runNumber<=164923")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht250mht60v2and3_NoLep_den", "data");
+  selection_ =TCut("cutTrigger==1 && pass_utilityHLT==1  && cutEleVeto==1 && cutMuVeto==1 && runNumber>=161205 && runNumber<=164923")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht250mht60v2and3_NoLep", "data");
+  //highdp
+  selection_ =TCut("pass_utilityHLT==1   && minDeltaPhiN >= 4 && runNumber>=161205 && runNumber<=164923")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht250mht60v2and3_HDP_den", "data");
+  selection_ =TCut("cutTrigger==1 && pass_utilityHLT==1  && minDeltaPhiN >= 4 && runNumber>=161205 && runNumber<=164923")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht250mht60v2and3_HDP", "data");
+  //ldp
+  selection_ =TCut("pass_utilityHLT==1   && minDeltaPhiN < 4 && runNumber>=161205 && runNumber<=164923")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht250mht60v2and3_LDP_den", "data");
+  selection_ =TCut("cutTrigger==1 && pass_utilityHLT==1  && minDeltaPhiN < 4 && runNumber>=161205 && runNumber<=164923")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht250mht60v2and3_LDP", "data");
+  //SL - hdp
+  selection_ =TCut("pass_utilityHLT==1   && minDeltaPhiN >= 4 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && runNumber>=161205 && runNumber<=164923")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht250mht60v2and3_SLHDP_den", "data");
+  selection_ =TCut("cutTrigger==1 && pass_utilityHLT==1  && minDeltaPhiN >= 4 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && runNumber>=161205 && runNumber<=164923")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht250mht60v2and3_SLHDP", "data");
+  //NoLep - hdp
+  selection_ =TCut("pass_utilityHLT==1   && minDeltaPhiN >= 4 && cutEleVeto==1 && cutMuVeto==1 && runNumber>=161205 && runNumber<=164923")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht250mht60v2and3_NoLepHDP_den", "data");
+  selection_ =TCut("cutTrigger==1 && pass_utilityHLT==1  && minDeltaPhiN >= 4 && cutEleVeto==1 && cutMuVeto==1 && runNumber>=161205 && runNumber<=164923")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht250mht60v2and3_NoLepHDP", "data");
+  //NoLep - ldp
+  selection_ =TCut("pass_utilityHLT==1   && minDeltaPhiN < 4 && cutEleVeto==1 && cutMuVeto==1 && runNumber>=161205 && runNumber<=164923")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht250mht60v2and3_NoLepLDP_den", "data");
+  selection_ =TCut("cutTrigger==1 && pass_utilityHLT==1  && minDeltaPhiN < 4 && cutEleVeto==1 && cutMuVeto==1 && runNumber>=161205 && runNumber<=164923")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht250mht60v2and3_NoLepLDP", "data");
+
+
+  /////////////////
+  // HT250_MHT70_v1
+  /////////////////
+  //all
+  selection_ =TCut("pass_utilityHLT==1   && runNumber>=164924 && runNumber<=165921")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht250mht70v1_den", "data");
+  selection_ =TCut("cutTrigger==1 && pass_utilityHLT==1  && runNumber>=164924 && runNumber<=165921")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht250mht70v1", "data");
+  //all - pass cleaning
+  selection_ =TCut("pass_utilityHLT==1   && passCleaning==1 && runNumber>=164924 && runNumber<=165921")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht250mht70v1_clean_den", "data");
+  selection_ =TCut("cutTrigger==1 && pass_utilityHLT==1  && passCleaning==1 && runNumber>=164924 && runNumber<=165921")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht250mht70v1_clean", "data");
+  //SL
+  selection_ =TCut("pass_utilityHLT==1   && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && runNumber>=164924 && runNumber<=165921")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht250mht70v1_SL_den", "data");
+  selection_ =TCut("cutTrigger==1 && pass_utilityHLT==1  && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && runNumber>=164924 && runNumber<=165921")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht250mht70v1_SL", "data");
+  //NoLep
+  selection_ =TCut("pass_utilityHLT==1   && cutEleVeto==1 && cutMuVeto==1 && runNumber>=164924 && runNumber<=165921")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht250mht70v1_NoLep_den", "data");
+  selection_ =TCut("cutTrigger==1 && pass_utilityHLT==1  && cutEleVeto==1 && cutMuVeto==1 && runNumber>=164924 && runNumber<=165921")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht250mht70v1_NoLep", "data");
+  //highdp
+  selection_ =TCut("pass_utilityHLT==1   && minDeltaPhiN >= 4 && runNumber>=164924 && runNumber<=165921")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht250mht70v1_HDP_den", "data");
+  selection_ =TCut("cutTrigger==1 && pass_utilityHLT==1  && minDeltaPhiN >= 4 && runNumber>=164924 && runNumber<=165921")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht250mht70v1_HDP", "data");
+  //ldp
+  selection_ =TCut("pass_utilityHLT==1   && minDeltaPhiN < 4 && runNumber>=164924 && runNumber<=165921")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht250mht70v1_LDP_den", "data");
+  selection_ =TCut("cutTrigger==1 && pass_utilityHLT==1  && minDeltaPhiN < 4 && runNumber>=164924 && runNumber<=165921")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht250mht70v1_LDP", "data");
+  //SL - hdp
+  selection_ =TCut("pass_utilityHLT==1   && minDeltaPhiN >= 4 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && runNumber>=164924 && runNumber<=165921")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht250mht70v1_SLHDP_den", "data");
+  selection_ =TCut("cutTrigger==1 && pass_utilityHLT==1  && minDeltaPhiN >= 4 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && runNumber>=164924 && runNumber<=165921")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht250mht70v1_SLHDP", "data");
+  //NoLep - hdp
+  selection_ =TCut("pass_utilityHLT==1   && minDeltaPhiN >= 4 && cutEleVeto==1 && cutMuVeto==1 && runNumber>=164924 && runNumber<=165921")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht250mht70v1_NoLepHDP_den", "data");
+  selection_ =TCut("cutTrigger==1 && pass_utilityHLT==1  && minDeltaPhiN >= 4 && cutEleVeto==1 && cutMuVeto==1 && runNumber>=164924 && runNumber<=165921")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht250mht70v1_NoLepHDP", "data");
+  //NoLep - ldp
+  selection_ =TCut("pass_utilityHLT==1   && minDeltaPhiN < 4 && cutEleVeto==1 && cutMuVeto==1 && runNumber>=164924 && runNumber<=165921")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht250mht70v1_NoLepLDP_den", "data");
+  selection_ =TCut("cutTrigger==1 && pass_utilityHLT==1  && minDeltaPhiN < 4 && cutEleVeto==1 && cutMuVeto==1 && runNumber>=164924 && runNumber<=165921")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht250mht70v1_NoLepLDP", "data");
+
 
   /////////////////
   // HT300_MHT75_v*
@@ -4834,6 +4989,12 @@ void drawTrigEff() {
   drawSimple(var,nbins,low,high,histfilename, "MET_ht300mht75v7and8_NoLepHDP_den", "data");
   selection_ =TCut("cutTrigger==1 && pass_utilityHLT==1  && minDeltaPhiN >= 4 && cutEleVeto==1 && cutMuVeto==1 && runNumber>=165922 && runNumber<=166978")&&njetCut&&dpcut&&HTcut;
   drawSimple(var,nbins,low,high,histfilename, "MET_ht300mht75v7and8_NoLepHDP", "data");
+  //NoLep - ldp
+  selection_ =TCut("pass_utilityHLT==1   && minDeltaPhiN < 4 && cutEleVeto==1 && cutMuVeto==1 && runNumber>=165922 && runNumber<=166978")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht300mht75v7and8_NoLepLDP_den", "data");
+  selection_ =TCut("cutTrigger==1 && pass_utilityHLT==1  && minDeltaPhiN < 4 && cutEleVeto==1 && cutMuVeto==1 && runNumber>=165922 && runNumber<=166978")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht300mht75v7and8_NoLepLDP", "data");
+
 
   /////////////////
   // HT300_MHT80_v*
@@ -4878,6 +5039,11 @@ void drawTrigEff() {
   drawSimple(var,nbins,low,high,histfilename, "MET_ht300mht80v1and2_NoLepHDP_den", "data");
   selection_ =TCut("cutTrigger==1 && pass_utilityHLT==1  && minDeltaPhiN >= 4 && cutEleVeto==1 && cutMuVeto==1 && runNumber>=166979 && runNumber<=173211")&&njetCut&&dpcut&&HTcut;
   drawSimple(var,nbins,low,high,histfilename, "MET_ht300mht80v1and2_NoLepHDP", "data");
+  //NoLep - LDP
+  selection_ =TCut("pass_utilityHLT==1   && minDeltaPhiN < 4 && cutEleVeto==1 && cutMuVeto==1 && runNumber>=166979 && runNumber<=173211")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht300mht80v1and2_NoLepLDP_den", "data");
+  selection_ =TCut("cutTrigger==1 && pass_utilityHLT==1  && minDeltaPhiN < 4 && cutEleVeto==1 && cutMuVeto==1 && runNumber>=166979 && runNumber<=173211")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht300mht80v1and2_NoLepLDP", "data");
 
 
 
@@ -4927,6 +5093,11 @@ void drawTrigEff() {
   drawSimple(var,nbins,low,high,histfilename, "MET_ht300mht90v2_NoLepHDP_den", "data");
   selection_ =TCut("cutTrigger==1 && pass_utilityHLT==1  && minDeltaPhiN >= 4 && cutEleVeto==1 && cutMuVeto==1 && runNumber>=173212 && runNumber<=176544")&&njetCut&&dpcut&&HTcut;
   drawSimple(var,nbins,low,high,histfilename, "MET_ht300mht90v2_NoLepHDP", "data");
+  //NoLep-LDP
+  selection_ =TCut("pass_utilityHLT==1   && minDeltaPhiN < 4 && cutEleVeto==1 && cutMuVeto==1 && runNumber>=173212 && runNumber<=176544")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht300mht90v2_NoLepLDP_den", "data");
+  selection_ =TCut("cutTrigger==1 && pass_utilityHLT==1  && minDeltaPhiN < 4 && cutEleVeto==1 && cutMuVeto==1 && runNumber>=173212 && runNumber<=176544")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht300mht90v2_NoLepLDP", "data");
 
 
   /////////////////
@@ -4972,6 +5143,11 @@ void drawTrigEff() {
   drawSimple(var,nbins,low,high,histfilename, "MET_ht350mht90v1_NoLepHDP_den", "data");
   selection_ =TCut("cutTrigger==1 && pass_utilityHLT==1  && minDeltaPhiN >= 4 && cutEleVeto==1 && cutMuVeto==1 && runNumber>=176545 && runNumber<=178410")&&njetCut&&dpcut&&HTcut;
   drawSimple(var,nbins,low,high,histfilename, "MET_ht350mht90v1_NoLepHDP", "data");
+  //NoLep -LDP
+  selection_ =TCut("pass_utilityHLT==1   && minDeltaPhiN < 4 && cutEleVeto==1 && cutMuVeto==1 && runNumber>=176545 && runNumber<=178410")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht350mht90v1_NoLepLDP_den", "data");
+  selection_ =TCut("cutTrigger==1 && pass_utilityHLT==1  && minDeltaPhiN < 4 && cutEleVeto==1 && cutMuVeto==1 && runNumber>=176545 && runNumber<=178410")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht350mht90v1_NoLepLDP", "data");
 
 
   //////////////////
@@ -5017,6 +5193,11 @@ void drawTrigEff() {
   drawSimple(var,nbins,low,high,histfilename, "MET_ht350mht110v3_NoLepHDP_den", "data");
   selection_ =TCut("cutTrigger==1 && pass_utilityHLT==1  && minDeltaPhiN >= 4 && cutEleVeto==1 && cutMuVeto==1 && runNumber>=178411")&&njetCut&&dpcut&&HTcut;
   drawSimple(var,nbins,low,high,histfilename, "MET_ht350mht110v3_NoLepHDP", "data");
+  //NoLep -LDP
+  selection_ =TCut("pass_utilityHLT==1   && minDeltaPhiN < 4 && cutEleVeto==1 && cutMuVeto==1 && runNumber>=178411")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht350mht110v3_NoLepLDP_den", "data");
+  selection_ =TCut("cutTrigger==1 && pass_utilityHLT==1  && minDeltaPhiN < 4 && cutEleVeto==1 && cutMuVeto==1 && runNumber>=178411")&&njetCut&&dpcut&&HTcut;
+  drawSimple(var,nbins,low,high,histfilename, "MET_ht350mht110v3_NoLepLDP", "data");
 
 
 
