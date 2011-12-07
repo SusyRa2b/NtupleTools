@@ -615,6 +615,8 @@ double customPlotMin_=0;
 
 float maxScaleFactor_ = 1.05;
 
+bool splitTTbar_ = false;
+
 //bool latexMode_=false;
 bool latexMode_=true;
 const TString pm = latexMode_ ? " \\pm " : " +/- ";
@@ -1243,6 +1245,12 @@ void setColorScheme(const TString & name) {
     sampleColor_["PythiaPUQCD"] = kYellow;
     sampleColor_["PythiaPUQCDFlat"] = kYellow;
     sampleColor_["TTbarJets"]=kRed+1;
+    sampleColor_["TTbarJets-semiMu"]=kViolet;
+    sampleColor_["TTbarJets-semiEle"]=kViolet-9;
+    sampleColor_["TTbarJets-semiTauHad"]=kViolet-7;
+    sampleColor_["TTbarJets-dilep"]=kMagenta-10;
+    sampleColor_["TTbarJets-had"]=kRed-5;
+    sampleColor_["TTbarJets-other"]=kPink-9;
     sampleColor_["SingleTop"] = kMagenta;
     sampleColor_["WJets"] = kGreen-3;
     sampleColor_["WJetsZ2"] = kGreen-3;
@@ -1271,6 +1279,12 @@ void setColorScheme(const TString & name) {
     sampleColor_["PythiaPUQCD"] =2;
     sampleColor_["PythiaPUQCDFlat"] =2;
     sampleColor_["TTbarJets"]=4;
+    sampleColor_["TTbarJets-semiMu"]=kViolet;
+    sampleColor_["TTbarJets-semiEle"]=kViolet-9;
+    sampleColor_["TTbarJets-semiTauHad"]=kViolet-7;
+    sampleColor_["TTbarJets-dilep"]=kMagenta-10;
+    sampleColor_["TTbarJets-had"]=kRed-5;
+    sampleColor_["TTbarJets-other"]=kPink-9;
     sampleColor_["SingleTop"] = kMagenta;
     sampleColor_["WJets"] = kOrange;
     sampleColor_["WJetsZ2"] = kOrange;
@@ -1302,7 +1316,17 @@ void resetSamples(bool joinSingleTop=true) {
   samples_.push_back("PythiaPUQCD"); 
   //samples_.push_back("PythiaPUQCDFlat");
 
-  samples_.push_back("TTbarJets");
+  if(splitTTbar_){// "load" the decay modes separately
+    samples_.push_back("TTbarJets-semiMu");
+    samples_.push_back("TTbarJets-semiEle");
+    samples_.push_back("TTbarJets-semiTauHad");
+    samples_.push_back("TTbarJets-dilep");
+    samples_.push_back("TTbarJets-had");
+    samples_.push_back("TTbarJets-other");
+  }
+  else{
+    samples_.push_back("TTbarJets");
+  }
   //flip this bool to control whether SingleTop is loaded as one piece or 3
   if (joinSingleTop) samples_.push_back("SingleTop");
   else {
@@ -1337,6 +1361,12 @@ void loadSamples(bool joinSingleTop=true) {
   samplesAll_.insert("PythiaPUQCD");
   //samplesAll_.insert("PythiaPUQCDFlat");
   samplesAll_.insert("TTbarJets");
+  samplesAll_.insert("TTbarJets-semiMu");
+  samplesAll_.insert("TTbarJets-semiEle");
+  samplesAll_.insert("TTbarJets-semiTauHad");
+  samplesAll_.insert("TTbarJets-dilep");
+  samplesAll_.insert("TTbarJets-had");
+  samplesAll_.insert("TTbarJets-other");
   samplesAll_.insert("WJets");
   samplesAll_.insert("ZJets");
   samplesAll_.insert("Zinvisible");
@@ -1448,6 +1478,12 @@ void loadSamples(bool joinSingleTop=true) {
   sampleLabel_["PythiaPUQCDFlat"] = "QCD"; 
   sampleLabel_["PythiaPUQCD"] = "QCD";
   sampleLabel_["TTbarJets"]="t#bar{t}";
+  sampleLabel_["TTbarJets-semiMu"]="t#bar{t}:semi-#mu";
+  sampleLabel_["TTbarJets-semiEle"]="t#bar{t}:semi-e";
+  sampleLabel_["TTbarJets-semiTauHad"]="t#bar{t}:semi-#tau(#rightarrow had)";
+  sampleLabel_["TTbarJets-dilep"]="t#bar{t}:ee,#mu#mu,e#mu (& #tau#rightarrow e,#mu)";
+  sampleLabel_["TTbarJets-had"]="t#bar{t}:fully hadronic";
+  sampleLabel_["TTbarJets-other"]="t#bar{t}:other";
   sampleLabel_["SingleTop"] = "Single-Top";
   sampleLabel_["WJets"] = "W#rightarrowl#nu";
   sampleLabel_["WJetsZ2"] = "W#rightarrowl#nu (Z2)";
@@ -1475,6 +1511,12 @@ void loadSamples(bool joinSingleTop=true) {
   sampleMarkerStyle_["PythiaPUQCDFlat"] = kOpenCircle;  
   sampleMarkerStyle_["PythiaPUQCD"] = kOpenCircle;
   sampleMarkerStyle_["TTbarJets"]= kFullSquare;
+  sampleMarkerStyle_["TTbarJets-semiMu"]= kFullSquare;
+  sampleMarkerStyle_["TTbarJets-semiEle"]= kFullSquare;
+  sampleMarkerStyle_["TTbarJets-semiTauHad"]= kFullSquare;
+  sampleMarkerStyle_["TTbarJets-dilep"]= kFullSquare;
+  sampleMarkerStyle_["TTbarJets-had"]= kFullSquare;
+  sampleMarkerStyle_["TTbarJets-other"]= kFullSquare;
   sampleMarkerStyle_["SingleTop"] = kOpenSquare;
   sampleMarkerStyle_["WJets"] = kMultiply;
   sampleMarkerStyle_["WJetsZ2"] = kMultiply;
@@ -1528,9 +1570,20 @@ void loadSamples(bool joinSingleTop=true) {
       TString thisconfig = configDescriptions_.at(iconfig);
       fname += thisconfig;
       fname+=".";
-      fname += *isample;
+
+      if(splitTTbar_ && (*isample).Contains("TTbarJets") )
+	fname += "TTbarJets";
+      else
+	fname += *isample;
+
       fname+=".root";
-      fname.Prepend(inputPath);
+
+      if(splitTTbar_ && (*isample).Contains("TTbarJets"))
+	fname.Prepend(inputPathTTbar);
+      else 
+	fname.Prepend(inputPath);
+      
+
       files_[thisconfig][*isample] = new TFile(fname);
       if (files_[thisconfig][*isample]->IsZombie() ) {cout<<"file error with "<<*isample<<endl; files_[thisconfig][*isample]=0;}
       else { if (!quiet_)    cout<<"Added sample: "<<thisconfig<<"\t"<<*isample<<endl;}
@@ -1800,8 +1853,43 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
     TTree* tree = (TTree*) files_[currentConfig_][samples_[isample]]->Get("reducedTree");
     gROOT->cd();
     TString weightopt= useFlavorHistoryWeights_ && samples_[isample].Contains("WJets") ? "flavorHistoryWeight" : "";
-    tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,"",0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());
-    
+
+    //treat ttbar in a special way 
+    if(samples_[isample].Contains("TTbar")){
+      if(splitTTbar_){
+	//tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,"",0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	if(samples_[isample].Contains("TTbarJets-semiMu")){
+	  TString semiMuMode = "((W1decayType==13 && W2decayType==1) || (W1decayType==1 && W2decayType==13) || (W1decayType==1513 && W2decayType==1) || (W1decayType==1 && W2decayType==1513))";
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiMuMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	}
+	if(samples_[isample].Contains("TTbarJets-semiEle")){
+	  TString semiEleMode = "((W1decayType==11 && W2decayType==1) || (W1decayType==1 && W2decayType==11) || (W1decayType==1511 && W2decayType==1) || (W1decayType==1 && W2decayType==1511))";
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiEleMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	}
+	if(samples_[isample].Contains("TTbarJets-semiTauHad")){
+	  TString semiTauHadMode = "((W1decayType==15 && W2decayType==1) || (W1decayType==1 && W2decayType==15))";
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiTauHadMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	}
+	if(samples_[isample].Contains("TTbarJets-dilep")){
+	  TString dilepMode = "((W1decayType==11 || W1decayType==13 || W1decayType==1511 || W1decayType==1513) && (W2decayType==11 || W2decayType==13 || W2decayType==1511 || W2decayType==1513))";
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,dilepMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	}
+	if(samples_[isample].Contains("TTbarJets-had")){
+	  TString hadMode = "(W1decayType==1 && W2decayType==1)";
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,hadMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	}
+	if(samples_[isample].Contains("TTbarJets-other")){
+	  //includes tautau(both had), etau(had), mutau(had), 
+	  TString otherMode = "((W1decayType==15 && W2decayType==15)||(W1decayType==11 && W2decayType==15)||(W1decayType==15 && W2decayType==11)||(W1decayType==13 && W2decayType==15)||(W1decayType==15 && W2decayType==13))";
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,otherMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	}
+
+      }
+      else tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,"",0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+    }
+    else
+      tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,"",0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+
     //now the histo is filled
     
     if (renormalizeBins_) ytitle=renormBins(histos_[samples_[isample]],2 ); //manipulates the TH1D //FIXME hard-coded "2"
