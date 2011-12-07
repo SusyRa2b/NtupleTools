@@ -1880,7 +1880,7 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
 	}
 	if(samples_[isample].Contains("TTbarJets-other")){
 	  //includes tautau(both had), etau(had), mutau(had), 
-	  TString otherMode = "((W1decayType==15 && W2decayType==15)||(W1decayType==11 && W2decayType==15)||(W1decayType==15 && W2decayType==11)||(W1decayType==13 && W2decayType==15)||(W1decayType==15 && W2decayType==13))";
+	  TString otherMode = "((W1decayType==15 && W2decayType==15)||(W1decayType==11 && W2decayType==15)||(W1decayType==15 && W2decayType==11)||(W1decayType==1511 && W2decayType==15)||(W1decayType==15 && W2decayType==1511)||(W1decayType==13 && W2decayType==15)||(W1decayType==15 && W2decayType==13)||(W1decayType==15 && W2decayType==1513)||(W1decayType==1513 && W2decayType==15))";
 	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,otherMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
 	}
 
