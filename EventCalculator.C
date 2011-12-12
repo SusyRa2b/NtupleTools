@@ -40,7 +40,9 @@ EventCalculator::EventCalculator(const TString & sampleName, jetType theJetType,
   myElectronsPF( &electron1),
   myElectronsPFhelper( &electronhelper1),
   myMuonsPF(&muon1),
+  myMuonsRECO(&muon),
   myMuonsPFhelper(&muonhelper1),
+  myMuonsRECOhelper(&muonhelper),
   myTausPF(&tau),
   myMETPF(&met1),
   myVertex(&vertex),
@@ -429,6 +431,25 @@ bool EventCalculator::isGoodMuon(const unsigned int imuon, const bool disableRel
   return false;
 }
 
+bool EventCalculator::isGoodRecoMuon(const unsigned int imuon, const bool disableRelIso) {
+
+  if (myMuonsRECO->at(imuon).pt >= 10
+     && fabs(myMuonsRECO->at(imuon).eta)<2.4
+     && myMuonsRECO->at(imuon).GlobalMuonPromptTight == 1
+     && myMuonsRECO->at(imuon).isTrackerMuon == 1 
+     && myMuonsRECO->at(imuon).innerTrack_numberOfValidHits >=11
+     && myMuonsRECO->at(imuon).track_hitPattern_numberOfValidPixelHits >= 1
+     && fabs(myMuonsRECOhelper->at(imuon).dxywrtBeamSpot) < 0.02
+     && fabs(myMuonsRECO->at(imuon).vz - myVertex->at(0).z ) <1
+      && ((myMuonsRECO->at(imuon).chargedHadronIso 
+	   + myMuonsRECO->at(imuon).photonIso 
+	   + myMuonsRECO->at(imuon).neutralHadronIso)/myMuonsRECO->at(imuon).pt <0.2 ||disableRelIso)
+      ) {
+    return true;
+  }
+  
+  return false;
+}
 
 bool EventCalculator::isCleanMuon(const unsigned int imuon) {
 
@@ -1287,8 +1308,21 @@ double EventCalculator::getMinTransverseMETSignificance(unsigned int maxjets) {
   return minTransverseMETSignificance;
 }
 
+double EventCalculator::getDeltaPhiMET(unsigned int n, float ptThreshold, bool bjetsonly){
+  
+  unsigned int ngood=0;
+  for (unsigned int i=0; i<myJetsPF->size(); i++) {
+    
+    if (isGoodJet(i,ptThreshold)) {
+      if(bjetsonly && passBTagger(i)==0) continue;
+      ngood++;
+      if (ngood==n) return  getDeltaPhi( myJetsPF->at(i).phi , getMETphi());
+    }
+  }
+  return 0;
+}
 
-double EventCalculator::getMinDeltaPhiMET30(unsigned int maxjets) {
+double EventCalculator::getMinDeltaPhiMET30(unsigned int maxjets, bool bjetsonly) {
 
   double mindp=99;
 
@@ -1297,6 +1331,7 @@ double EventCalculator::getMinDeltaPhiMET30(unsigned int maxjets) {
   for (unsigned int i=0; i< myJetsPF->size(); i++) {
     
     if (isGoodJet30(i)) {
+      if(bjetsonly && passBTagger(i)==0) continue;
       ++ngood;
       double dp =  getDeltaPhi( myJetsPF->at(i).phi , getMETphi());
       if (dp<mindp) mindp=dp;
@@ -1428,6 +1463,25 @@ double EventCalculator::getMinDeltaPhiMETTaus() {
       if (dp<mindp) mindp=dp;
     }
   }
+  return mindp;
+}
+
+double EventCalculator::getMinDeltaPhiMETMuons(unsigned int maxmuons) {
+
+  double mindp=99;
+
+  unsigned int ngood=0;
+  //get the minimum angle between the first n muons and MET
+  for (unsigned int i=0; i< myMuonsRECO->size(); i++) {
+    
+    if (isGoodRecoMuon(i,true)) {//disable iso
+      ++ngood;
+      double dp =  getDeltaPhi( myMuonsRECO->at(i).phi , getMETphi());
+      if (dp<mindp) mindp=dp;
+      if (ngood >= maxmuons) break;
+    }
+  }
+  
   return mindp;
 }
 
@@ -1572,6 +1626,9 @@ bool EventCalculator::passBTagger(int ijet, BTaggerType btagger ) {
   }
 }
 
+float EventCalculator::getJetCSV(unsigned int ijet){
+  return myJetsPF->at(ijet).combinedSecondaryVertexBJetTags;
+}
 
 unsigned int EventCalculator::nGoodJets() {
   
@@ -2119,6 +2176,23 @@ float  EventCalculator::jetEnergyOfN(unsigned int n) {
   }
   return 0;
 }
+
+float EventCalculator::bjetCSVOfN(unsigned int n) {
+  
+  unsigned int ngood=0;
+  for (unsigned int i=0; i<myJetsPF->size(); i++) {
+    
+    bool pass=false;
+    pass = (isGoodJet30(i) && passBTagger(i));
+    
+    if (pass ) {
+      ngood++;
+      if (ngood==n) return  getJetCSV(i);
+    }
+  }
+  return 0;
+}
+
 
 float EventCalculator::bjetPtOfN(unsigned int n) {
 
@@ -3186,7 +3260,12 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   float minDeltaPhiK, minDeltaPhiK_otherEta5, minDeltaPhiK_otherEta5idNo, minDeltaPhiK_mainPt30_otherEta5idNo, minDeltaPhiK_mainPt30Eta5_otherEta5idNo, minDeltaPhiK_mainPt30Eta5idNo_otherEta5idNo;
   float minDeltaPhiN_DJR, minDeltaPhiN_DJR_otherEta5, minDeltaPhiK_DJR, minDeltaPhiK_DJR_otherEta5;
   float minDeltaPhiMetTau;
-  
+
+  //items to investigate possible heavy flavor understimate in SIG -- looking at semi leptonic decays, bs, etc
+  float CSVout1, CSVout2, CSVout3; //CSV tagger output for the lead three b-tagged jets
+  float minDeltaPhiAllb30, deltaPhib1, deltaPhib2, deltaPhib3;
+  float minDeltaPhiMETMuonsAll;
+
   bool cutHT,cutPV,cutTrigger;
   bool cut3Jets,cutEleVeto,cutMuVeto,cutMET,cutDeltaPhi;
 
@@ -3520,6 +3599,15 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("minDeltaPhiN_DJR_otherEta5", &minDeltaPhiN_DJR_otherEta5, "minDeltaPhiN_DJR_otherEta5/F");
   reducedTree.Branch("minDeltaPhiK_DJR", &minDeltaPhiK_DJR, "minDeltaPhiK_DJR/F");
   reducedTree.Branch("minDeltaPhiK_DJR_otherEta5", &minDeltaPhiK_DJR_otherEta5, "minDeltaPhiK_DJR_otherEta5/F");
+
+  reducedTree.Branch("CSVout1",&CSVout1,"CSVout1/F");
+  reducedTree.Branch("CSVout2",&CSVout2,"CSVout2/F");
+  reducedTree.Branch("CSVout3",&CSVout2,"CSVout3/F");
+  reducedTree.Branch("minDeltaPhiAllb30",&minDeltaPhiAllb30,"minDeltaPhiAllb30/F");
+  reducedTree.Branch("deltaPhib1",&deltaPhib1,"deltaPhib1/F");
+  reducedTree.Branch("deltaPhib2",&deltaPhib2,"deltaPhib2/F");
+  reducedTree.Branch("deltaPhib3",&deltaPhib3,"deltaPhib3/F");
+  reducedTree.Branch("minDeltaPhiMETMuonsAll",&minDeltaPhiMETMuonsAll,"minDeltaPhiMETMuonsAll/F");
 
   reducedTree.Branch("minDeltaPhiN_lostJet", &minDeltaPhiN_lostJet, "minDeltaPhiN_lostJet/F");
   reducedTree.Branch("deltaPhiN1_lostJet", &deltaPhiN1_lostJet, "deltaPhiN1_lostJet/F");
@@ -3863,6 +3951,15 @@ Also the pdfWeightSum* histograms that are used for LM9.
       nbjetsTCHPT = nGoodBJets( kTCHPT);
       nbjetsTCHPM = nGoodBJets( kTCHPM);
       nbjetsCSVM = nGoodBJets( kCSVM);
+
+      CSVout1=bjetCSVOfN(1);
+      CSVout2=bjetCSVOfN(2);
+      CSVout3=bjetCSVOfN(3);
+      minDeltaPhiAllb30=getMinDeltaPhiMET30(99,true);
+      deltaPhib1=getDeltaPhiMET(1,30,true);
+      deltaPhib2=getDeltaPhiMET(2,30,true); 
+      deltaPhib3=getDeltaPhiMET(3,30,true);
+      minDeltaPhiMETMuonsAll=getMinDeltaPhiMETMuons(99);
 
       nElectrons = countEle();
       nMuons = countMu();

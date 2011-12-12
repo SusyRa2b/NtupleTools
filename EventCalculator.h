@@ -69,6 +69,7 @@ public:
   float getPUWeight(Lumi3DReWeighting lumiWeights);
 
   bool isGoodMuon(const unsigned int imuon, const bool disableRelIso=false);
+  bool isGoodRecoMuon(const unsigned int imuon, const bool disableRelIso=false);
   bool isGoodElectron(const unsigned int iele, const bool disableRelIso=false);
   unsigned int countEle() ;
   bool isCleanMuon(const unsigned int imuon);
@@ -107,6 +108,7 @@ public:
 
   double getMinDeltaPhiMET(unsigned int maxjets);
   double getTransverseMETError(unsigned int thisJet);
+  double getDeltaPhiMET(unsigned int n, float ptThreshold = 50, bool bjetsonly = false);
   double getDeltaPhiNMET(unsigned int thisJet); //Luke
   double getDeltaPhiMETN( unsigned int goodJetN, float mainpt, float maineta, bool mainid, float otherpt, float othereta, bool otherid, bool dataJetRes, bool keith ); //Ben
   double getDeltaPhiMETN( unsigned int goodJetN ) {return getDeltaPhiMETN(goodJetN,50,2.4,true,30,2.4,true,false,false); }; //Ben, overloaded
@@ -118,7 +120,7 @@ public:
   double getTransverseMETSignificance(unsigned int thisJet);
   double getMaxTransverseMETSignificance(unsigned int maxjets);
   double getMinTransverseMETSignificance(unsigned int maxjets);
-  double getMinDeltaPhiMET30(unsigned int maxjets);
+  double getMinDeltaPhiMET30(unsigned int maxjets, bool bjetsonly = false);
   double getMinDeltaPhiMET30_eta5(unsigned int maxjets);
   double getMinDeltaPhiMET30_eta5_noId(unsigned int maxjets);
   double getMaxDeltaPhiMET(unsigned int maxjets);
@@ -127,6 +129,7 @@ public:
   double getMaxDeltaPhiMET30_eta5_noId(unsigned int maxjets);
 
   double getMinDeltaPhiMETTaus();
+  double getMinDeltaPhiMETMuons(unsigned int maxmuons);
 
   void getCorrectedMET(float& correctedMET, float& correctedMETPhi);
   void getUncorrectedMET(float& uncorrectedMET, float& uncorrectedMETPhi);
@@ -164,6 +167,7 @@ public:
   float getJetPz( unsigned int ijet ) ;
   float getJetEnergy( unsigned int ijet ) ;
   bool jetPassLooseID( unsigned int ijet );
+  float getJetCSV( unsigned int ijet );
 
   float jetPtOfN(unsigned int n);
   float jetPhiOfN(unsigned int n);
@@ -173,6 +177,7 @@ public:
   float bjetPhiOfN(unsigned int n);
   float bjetEtaOfN(unsigned int n);
   float bjetEnergyOfN(unsigned int n);
+  float bjetCSVOfN(unsigned int n);
 
   float elePtOfN(unsigned int n);
   float elePhiOfN(unsigned int n);
@@ -259,7 +264,9 @@ private:
   std::vector<electron1_s> * myElectronsPF;
   std::vector<electronhelper1_s> * myElectronsPFhelper;
   std::vector<muon1_s> * myMuonsPF;
+  std::vector<muon_s> * myMuonsRECO;
   std::vector<muonhelper1_s> * myMuonsPFhelper;
+  std::vector<muonhelper_s> * myMuonsRECOhelper;
   std::vector<tau_s> * myTausPF;
   std::vector<met1_s> * myMETPF;
   std::vector<vertex_s> * myVertex;
