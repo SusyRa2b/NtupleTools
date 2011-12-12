@@ -426,6 +426,16 @@ std::pair<double,double> ABCD_njetRW(TString phys0bcontrol, TString Acutjm, TStr
   selection_ = phys0bcontrol;
   drawSimple("njets30",jmnbins,jmbins,"dummy.root", "","data");
   TH1D* hJMphysicsData = (TH1D*)hinteractive->Clone("hJMphysicsData");
+
+  if(useScaleFactors_){
+    float eff_ldp_SBANDSIG_MHT = 1, eff_ldp_SBANDSIG_MHT_err[2];
+    //rescale data by LDP (HT>400,0L,mindphin<4, SB AND SIG) efficiency
+    eff_ldp_SBANDSIG_MHT = 0.898; eff_ldp_SBANDSIG_MHT_err[0] = 0.040; eff_ldp_SBANDSIG_MHT_err[1] = 0.126;
+    hJMphysicsData->Sumw2();
+    hJMphysicsData->Scale(1/eff_ldp_SBANDSIG_MHT);//for now, ignore the error on the efficiency 
+  }
+
+
   drawSimple("njets30",jmnbins,jmbins,"dummy.root", "","PythiaPUQCD");
   TH1D* hJMphysicsQCD = (TH1D*)hinteractive->Clone("hJMphysicsQCD");
   drawPlots("njets30",jmnbins,jmbins, "", "", "deleteme");
@@ -570,7 +580,7 @@ std::pair<double,double> ABCD_njetRW(TString phys0bcontrol, TString Acutjm, TStr
   return make_pair( 100*sqrt(pow(closure,2) + pow(closurestat,2)), 0); //estimate in denominator
 }
 
-std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode=false, float subscale=1,float SBshift=0, const TString LSBbsel="==0", float PVCorFactor = 0, bool doNjetRW = false) {
+std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode=false, float subscale=1,float SBshift=0, const TString LSBbsel="==0", float PVCorFactor = 0, bool doNjetRW = false, bool forTTbarEstimate=false) {
   //kind of awful, but we'll return the estimate for datamode=true but the closure test bias for datamode=false
   
   /*
@@ -623,6 +633,12 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
   TCut triggerCut = "1";
   triggerCutLSB = "pass_utilityHLT==1";
   triggerCut = "cutTrigger==1";
+
+  //don: hard-code MHT efficiencies
+  //offline cuts: HT>400, 0L, mindphin>4(<4), 0b
+  float eff_MHT = 1, eff_MHT_err[2];//first entry is + error, second entry is - error
+  float eff_ldp_MHT = 1, eff_ldp_MHT_err[2];
+  TString metselection = region.metSelection;
   
   TCut ge1b = "nbjetsCSVM>=1";
   btagSFweight_="1";
@@ -631,6 +647,17 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
     usePUweight_=true;
     useHLTeff_=true;
     currentConfig_=configDescriptions_.getCorrected(); //add JERbias
+
+    if(metselection=="MET>=200&&MET<250"){
+      eff_MHT     = 0.841; eff_MHT_err[0]     = 0.062; eff_MHT_err[1]     = 0.098;
+      eff_ldp_MHT = 0.936; eff_ldp_MHT_err[0] = 0.035; eff_ldp_MHT_err[1] = 0.132;
+    }
+    else{
+      eff_MHT     = 0.982; eff_MHT_err[0]     = 0.012; eff_MHT_err[1]     = 0.037;
+      //there are very limited stats in the SIG-LDP region for an efficiency measurement
+      //for now, use the SIG numbers
+      eff_ldp_MHT = 0.982; eff_ldp_MHT_err[0] = 0.012; eff_ldp_MHT_err[1] = 0.037;
+    }
     
     ge1b="1";
     if (btagselection=="ge2b") {
@@ -694,7 +721,7 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
   
   var="HT"; xtitle=var;
   nbins=10; low=0; high=5000;
-  double A,B,D,SIG,Aerr,Berr,Derr,SIGerr;
+  double A,B,D,SIG,Aerr,Berr,Derr,DerrMinus,SIGerr;
   double RLSB_RW = 0;
   double dRLSB_RW = 0;
   
@@ -837,6 +864,15 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
   Dcutjm = selection_;
   D=getIntegral(sampleOfInterest);
   Derr=getIntegralErr(sampleOfInterest);
+
+  double D_temp = D, Derr_temp = Derr;
+  if(useScaleFactors_ && datamode){
+    D = D/eff_ldp_MHT;
+    Derr = jmt::errAoverB(D_temp,Derr_temp,eff_ldp_MHT,eff_ldp_MHT_err[0]);
+    DerrMinus = jmt::errAoverB(D_temp,Derr_temp,eff_ldp_MHT,eff_ldp_MHT_err[1]);
+
+    Derr = Derr > DerrMinus ? Derr: DerrMinus;
+  }
   
   double Dsub = 0,Dsuberr=0;
   if (datamode) {
@@ -915,6 +951,22 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
   }
   double estimate = myR*(D-Dsub);
   double estimateerr = jmt::errAtimesB(myR, myRerr, D-Dsub, sqrt(Derr*Derr+Dsuberr*Dsuberr));
+
+  if(useScaleFactors_ && datamode){
+    //do NOT scale by efficiency if this is a SB region and if this is for the ttbar estimate
+    if( !(metselection=="MET>=200&&MET<250" && forTTbarEstimate) ){
+      double estimate_temp = estimate, estimateerr_temp = estimateerr;
+      double estimateerrMinus=0;
+      estimate = eff_MHT*estimate_temp;
+      estimateerr = jmt::errAtimesB(estimate_temp, estimateerr_temp, eff_MHT, eff_MHT_err[0]);
+      estimateerrMinus = jmt::errAtimesB(estimate_temp, estimateerr_temp, eff_MHT, eff_MHT_err[1]);
+      //std::cout << "estimate: "<< estimate << "+" << estimateerr << "- " <<estimateerrMinus << std::endl;
+      
+      //use the larger of the two as the error in the estimate
+      estimateerr = estimateerr > estimateerrMinus ? estimateerr: estimateerrMinus;
+    }
+  }
+
   double closureStat2 = datamode? 0: jmt::errAoverB(SIG,SIGerr,estimate,estimateerr);
   double R0 = myR;
   double R0err = myRerr;
@@ -923,6 +975,13 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
   name += region.owenId;
   name += isSIG ? ", SIG":", SB";
   char output[500];
+
+  //for the purpose of the print-out only, revert D back to the observed data counts
+  if(useScaleFactors_ && datamode){
+    D = D_temp;
+    Derr = Derr_temp;
+  }
+
   if (!datamode) {
     sprintf(output,"%s & %s & %s & %s & %s & %s & $%f \\pm %f$ \\\\ ",name.Data(),
 	    jmt::format_nevents(B,Berr).Data(),jmt::format_nevents(A,Aerr).Data(),
@@ -1162,7 +1221,7 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
     assert ( region.btagSelection == qcdsubregion.btagSelection);
     assert(region.htSelection == qcdsubregion.htSelection);
     //get the QCD estimate for the SB region
-    SBsubQCDp = anotherABCD(qcdsubregion, datamode, 1 ) ;
+    SBsubQCDp = anotherABCD(qcdsubregion, datamode, 1 ,0,"==0",0,false,true) ;//set "forTTbarEstimate" flag to true
     SBsubQCD=SBsubQCDp.first;
     SBsubQCDerr=SBsubQCDp.second;
 
@@ -1257,6 +1316,14 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
   TString var,xtitle;
   int nbins;
   float low,high;
+
+  //don: hard-code MHT efficiencies
+  //offline cuts: HT>400, 0L (1L), mindphin>4
+  float eff_MHT = 1, eff_MHT_err[2];//first entry is + error, second entry is - error
+  float eff_SB_MHT = 1, eff_SB_MHT_err[2];
+  float eff_SL_MHT = 1, eff_SL_MHT_err[2];
+  float eff_SL_SB_MHT = 1, eff_SL_SB_MHT_err[2];
+
   
   // --  count events
   TCut ge1b = "nbjetsCSVM>=1";
@@ -1268,6 +1335,11 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
     useHLTeff_=true;
     currentConfig_=configDescriptions_.getCorrected(); //add JERbias
     
+    eff_MHT       = 0.982; eff_MHT_err[0]        = 0.012; eff_MHT_err[1]        = 0.037;
+    eff_SB_MHT    = 0.841; eff_SB_MHT_err[0]     = 0.062; eff_SB_MHT_err[1]     = 0.098;
+    eff_SL_MHT    = 0.999; eff_SL_MHT_err[0]     = 0.001; eff_SL_MHT_err[1]     = 0.001;
+    eff_SL_SB_MHT = 0.996; eff_SL_SB_MHT_err[0]  = 0.002; eff_SL_SB_MHT_err[1]  = 0.003;
+
     if (btagselection=="ge2b") {
       btagSFweight="probge2";
     }
@@ -1306,7 +1378,7 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
   TCut failOther = "(((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && MT_Wlep>=0&&MT_Wlep<100)";
   TCut passOther = "nElectrons==0 && nMuons==0";
 
-  double A,B,D,SIG,Aerr,Berr,Derr,SIGerr;
+  double A,B,D,SIG,Aerr,AerrMinus,Berr,BerrMinus,Derr,DerrMinus,SIGerr;
   //A = SB, SL
   if (!datamode && (closureMode=="wtplus" || closureMode=="slonlywtplus")) {
     setSampleScaleFactor("WJets",1.5);
@@ -1335,6 +1407,23 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
     myOwen->Nsig_sl = D;
     myOwen->Nsb_sl = A;
   }
+
+  double A_temp = A, Aerr_temp = Aerr;
+  double D_temp = D, Derr_temp = Derr;
+  if(useScaleFactors_ && datamode){
+    A = A/eff_SL_SB_MHT;
+    Aerr = jmt::errAoverB(A_temp,Aerr_temp,eff_SL_SB_MHT,eff_SL_SB_MHT_err[0]);
+    AerrMinus = jmt::errAoverB(A_temp,Aerr_temp,eff_SL_SB_MHT,eff_SL_SB_MHT_err[1]);
+
+    Aerr = Aerr > AerrMinus ? Aerr: AerrMinus;
+
+    D = D/eff_SL_MHT;
+    Derr = jmt::errAoverB(D_temp,Derr_temp,eff_SL_MHT,eff_SL_MHT_err[0]);
+    DerrMinus = jmt::errAoverB(D_temp,Derr_temp,eff_SL_MHT,eff_SL_MHT_err[1]);
+
+    Derr = Derr > DerrMinus ? Derr: DerrMinus;
+  }
+
 
   //for wtplus, wtminus the scale factor is already set
   //for slonly modes, reset them to 1
@@ -1369,6 +1458,14 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
     }
   }
 
+  double B_temp = B, Berr_temp = Berr;
+  if(useScaleFactors_ && datamode){
+    B = B/eff_SB_MHT;
+    Berr = jmt::errAoverB(B_temp,Berr_temp,eff_SB_MHT,eff_SB_MHT_err[0]);
+    BerrMinus = jmt::errAoverB(B_temp,Berr_temp,eff_SB_MHT,eff_SB_MHT_err[1]);
+
+    Berr = Berr > BerrMinus ? Berr: BerrMinus;
+  }
 
   //SIG
   selection_ = baseline && cleaning && dpcut  && SRMET && passOther; //auto cast to TString seems to work
@@ -1384,6 +1481,20 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
   double num = (B-SBsubMisc-SBsubQCD-SBsubZ)*D;
   double estimate = num / A;
   double estimateerr= jmt::errAoverB(num,numerr,A,Aerr);
+
+  if(useScaleFactors_ && datamode){
+    double estimate_temp = estimate, estimateerr_temp = estimateerr;
+    double estimateerrMinus = 0;
+    estimate = eff_MHT*estimate_temp;
+    estimateerr = jmt::errAtimesB(estimate_temp, estimateerr_temp, eff_MHT, eff_MHT_err[0]);
+    estimateerrMinus = jmt::errAtimesB(estimate_temp, estimateerr_temp, eff_MHT, eff_MHT_err[1]);
+    //std::cout << "estimate: "<< estimate << "+" << estimateerr << "- " <<estimateerrMinus << std::endl;
+    
+    //use the larger of the two as the error in the estimate
+    estimateerr = estimateerr > estimateerrMinus ? estimateerr: estimateerrMinus;
+  }
+
+
   double closureStat= datamode? 0: jmt::errAoverB(SIG,SIGerr,estimate,estimateerr);
 
 
@@ -1395,6 +1506,17 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
   name += region.owenId;
 
   char output[500];
+
+  //for the purpose of the print-out only, revert A,B,D back to the observed data counts
+  if(useScaleFactors_ && datamode){
+    D = D_temp;
+    Derr = Derr_temp;
+    A = A_temp;
+    Aerr = Aerr_temp;
+    B = B_temp;
+    Berr = Berr_temp;
+  }
+
   if (!datamode) {
     //sprintf(output,"%s & %s & %s & %s & %s & %s \\\\ %% %f ++ %f",btagselection.Data(),
     //	    jmt::format_nevents(D,Derr).Data(),jmt::format_nevents(A,Aerr).Data(),
@@ -4783,14 +4905,18 @@ void drawTrigEff() {
 
 
   //output file 
-  TString histfilename = "mhteff_dec4.root";
+  //TString histfilename = "mhteff_dec4.root";
+  TString histfilename = "mhteff_dec8_eq0b.root";
+  //TString histfilename = "mhteff_dec8_eq0b_HT500.root";
+  //TString histfilename = "mhteff_dec8_eq0b_HT600.root";
+  //TString histfilename = "mhteff_dec8_ge1b.root";
   TFile fh(histfilename,"RECREATE");//will delete old root file if present 
   fh.Close(); //going to open only when needed 
 
   //TCut HTcut = "HT>=400";
   //TCut HTcut = "HT>=400";  TCut njetCut = "njets >=3";    TCut dpcut = "minDeltaPhiN>=4";
   //TCut HTcut = "HT>=400";  TCut njetCut = "nbjetsCSVM>=1";    TCut dpcut = "";
-  TCut HTcut = "HT>=400";  TCut njetCut = "";    TCut dpcut = "";
+  TCut HTcut = "HT>=600";  TCut njetCut = "nbjetsCSVM==0";    TCut dpcut = "";
   //TCut dpcut = "";
   
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
