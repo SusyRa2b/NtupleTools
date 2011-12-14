@@ -435,10 +435,10 @@ std::pair<double,double> ABCD_njetRW(TString prescontrol, TString physcontrol, T
   selection_ = physcontrol;
   drawSimple("njets30",jmnbins,jmbins,"dummy.root", "","data");
   TH1D* hJMphysicsData = (TH1D*)hinteractive->Clone("hJMphysicsData");
-
+  
   if(useScaleFactors_){
     float eff_ldp_MHT = 1, eff_ldp_MHT_err[2];
-    eff_ldp_MHT = 0.936; eff_ldp_MHT_err[0] = 0.035; eff_ldp_MHT_err[1] = 0.132;
+    eff_ldp_MHT = 0.936; eff_ldp_MHT_err[0] = 0.034; eff_ldp_MHT_err[1] = 0.118;
     hJMphysicsData->Scale(1/eff_ldp_MHT);//for now, ignore the error on the efficiency 
   }
 
