@@ -430,7 +430,7 @@ std::pair<double,double> ABCD_njetRW(TString phys0bcontrol, TString Acutjm, TStr
   if(useScaleFactors_){
     float eff_ldp_SBANDSIG_MHT = 1, eff_ldp_SBANDSIG_MHT_err[2];
     //rescale data by LDP (HT>400,0L,mindphin<4, SB AND SIG) efficiency
-    eff_ldp_SBANDSIG_MHT = 0.898; eff_ldp_SBANDSIG_MHT_err[0] = 0.040; eff_ldp_SBANDSIG_MHT_err[1] = 0.126;
+    eff_ldp_SBANDSIG_MHT = 0.898; eff_ldp_SBANDSIG_MHT_err[0] = 0.038; eff_ldp_SBANDSIG_MHT_err[1] = 0.113;
     hJMphysicsData->Sumw2();
     hJMphysicsData->Scale(1/eff_ldp_SBANDSIG_MHT);//for now, ignore the error on the efficiency 
   }
@@ -649,14 +649,14 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
     currentConfig_=configDescriptions_.getCorrected(); //add JERbias
 
     if(metselection=="MET>=200&&MET<250"){
-      eff_MHT     = 0.841; eff_MHT_err[0]     = 0.062; eff_MHT_err[1]     = 0.098;
-      eff_ldp_MHT = 0.936; eff_ldp_MHT_err[0] = 0.035; eff_ldp_MHT_err[1] = 0.132;
+      eff_MHT     = 0.841; eff_MHT_err[0]     = 0.059; eff_MHT_err[1]     = 0.090;
+      eff_ldp_MHT = 0.936; eff_ldp_MHT_err[0] = 0.034; eff_ldp_MHT_err[1] = 0.118;
     }
     else{
-      eff_MHT     = 0.982; eff_MHT_err[0]     = 0.012; eff_MHT_err[1]     = 0.037;
+      eff_MHT     = 0.982; eff_MHT_err[0]     = 0.012; eff_MHT_err[1]     = 0.036;
       //there are very limited stats in the SIG-LDP region for an efficiency measurement
       //for now, use the SIG numbers
-      eff_ldp_MHT = 0.982; eff_ldp_MHT_err[0] = 0.012; eff_ldp_MHT_err[1] = 0.037;
+      eff_ldp_MHT = 0.982; eff_ldp_MHT_err[0] = 0.012; eff_ldp_MHT_err[1] = 0.036;
     }
     
     ge1b="1";
@@ -1335,8 +1335,8 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
     useHLTeff_=true;
     currentConfig_=configDescriptions_.getCorrected(); //add JERbias
     
-    eff_MHT       = 0.982; eff_MHT_err[0]        = 0.012; eff_MHT_err[1]        = 0.037;
-    eff_SB_MHT    = 0.841; eff_SB_MHT_err[0]     = 0.062; eff_SB_MHT_err[1]     = 0.098;
+    eff_MHT       = 0.982; eff_MHT_err[0]        = 0.012; eff_MHT_err[1]        = 0.036;
+    eff_SB_MHT    = 0.841; eff_SB_MHT_err[0]     = 0.059; eff_SB_MHT_err[1]     = 0.090;
     eff_SL_MHT    = 0.999; eff_SL_MHT_err[0]     = 0.001; eff_SL_MHT_err[1]     = 0.001;
     eff_SL_SB_MHT = 0.996; eff_SL_SB_MHT_err[0]  = 0.002; eff_SL_SB_MHT_err[1]  = 0.003;
 
