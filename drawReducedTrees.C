@@ -405,14 +405,15 @@ void averageZ() {
 
 }
 
-std::pair<double,double> ABCD_njetRW(TString phys0bcontrol, TString Acutjm, TString Bcutjm, TString Ccutjm, TString Dcutjm){
+std::pair<double,double> ABCD_njetRW(TString prescontrol, TString physcontrol, TString Acutjm, TString Bcutjm, TString Ccutjm, TString Dcutjm){
   cout << "Running closure with MC jet multiplicity reweighted to match data." << endl;
   
   TString histfilename = "dummy.root";
   TFile fh(histfilename,"RECREATE");//will delete old root file if present 
   fh.Close(); //going to open only when needed 
 
-  double holdlumiscale = lumiScale_;
+  double physlumiscale = lumiScale_;
+  double preslumiscale = 30.15471;//hardcoded for now
   TString btagSFweight_nom = btagSFweight_;
 
   //going to use the same binning for the physics and prescaled samples
@@ -420,45 +421,62 @@ std::pair<double,double> ABCD_njetRW(TString phys0bcontrol, TString Acutjm, TStr
   int jmnbins = 4;
   float jmbins[] = {2.5,3.5,4.5,5.5,6.5};
 
-  //0b control physics
-  if(useScaleFactors_) btagSFweight_ = "prob0";
-  phys0bcontrol+= " && minDeltaPhiN<4";
-  selection_ = phys0bcontrol;
+
+  //PHYS jet multiplicity scale factors
+  ////////////////////////////////////////////////////////////
+  physcontrol+= " && minDeltaPhiN<4 && MET<250"; //LDP SB
+
+  lumiScale_ = physlumiscale - preslumiscale;
+  if(useScaleFactors_){ 
+    btagSFweight_ = "prob0";
+  }
+  else { physcontrol+= " && nbjetsCSVM==0"; }
+
+  selection_ = physcontrol;
   drawSimple("njets30",jmnbins,jmbins,"dummy.root", "","data");
   TH1D* hJMphysicsData = (TH1D*)hinteractive->Clone("hJMphysicsData");
 
   if(useScaleFactors_){
-    float eff_ldp_SBANDSIG_MHT = 1, eff_ldp_SBANDSIG_MHT_err[2];
-    //rescale data by LDP (HT>400,0L,mindphin<4, SB AND SIG) efficiency
-    eff_ldp_SBANDSIG_MHT = 0.898; eff_ldp_SBANDSIG_MHT_err[0] = 0.038; eff_ldp_SBANDSIG_MHT_err[1] = 0.113;
-    hJMphysicsData->Sumw2();
-    hJMphysicsData->Scale(1/eff_ldp_SBANDSIG_MHT);//for now, ignore the error on the efficiency 
+    float eff_ldp_MHT = 1, eff_ldp_MHT_err[2];
+    eff_ldp_MHT = 0.936; eff_ldp_MHT_err[0] = 0.035; eff_ldp_MHT_err[1] = 0.132;
+    hJMphysicsData->Scale(1/eff_ldp_MHT);//for now, ignore the error on the efficiency 
   }
-
 
   drawSimple("njets30",jmnbins,jmbins,"dummy.root", "","PythiaPUQCD");
   TH1D* hJMphysicsQCD = (TH1D*)hinteractive->Clone("hJMphysicsQCD");
   drawPlots("njets30",jmnbins,jmbins, "", "", "deleteme");
   TH1D* hJMphysicsNonQCD = (TH1D*)totalnonqcd->Clone("hJMphysicsNonQCD");
-  
-  
 
-  //LSB-failmdpn
-  lumiScale_ = 30.15471; 
+
+  //LSB jet multiplicity scale factors
+  ///////////////////////////////////////////
+  lumiScale_ = preslumiscale;
+  if(useScaleFactors_){
+    btagSFweight_ = "probge1";
+  }
+  else{ prescontrol+= " && nbjetsCSVM>=1"; }
+
+  selection_= prescontrol;
+  drawSimple("njets30",jmnbins,jmbins,"dummy.root", "","data");
+  TH1D* hJMprescaleData = (TH1D*)hinteractive->Clone("hJMprescaleData");
+  drawSimple("njets30",jmnbins,jmbins,"dummy.root", "","PythiaPUQCD");
+  TH1D* hJMprescaleQCD = (TH1D*)hinteractive->Clone("hJMprescaleQCD");
+
+
+  //Now ABCD Regions
+  //////////////////////////////////////////
+  lumiScale_ = physlumiscale;
+  if(useScaleFactors_) btagSFweight_ = "prob0";
+
   selection_ = Acutjm;
   drawSimple("njets30",jmnbins,jmbins,"dummy.root", "","PythiaPUQCD");
   TH1D* hJMAqcd = (TH1D*)hinteractive->Clone("hJMAqcd");
-  drawSimple("njets30",jmnbins,jmbins,"dummy.root", "","data");
-  TH1D* hJMAdata = (TH1D*)hinteractive->Clone("hJMAdata");
   
-  //LSB-passmdpn
-  lumiScale_ = 30.15471; 
   selection_ = Bcutjm;
   drawSimple("njets30",jmnbins,jmbins,"dummy.root", "","PythiaPUQCD");
   TH1D* hJMBqcd = (TH1D*)hinteractive->Clone("hJMBqcd");
+  
 
-  //D and SIG (aka C)
-  lumiScale_ = holdlumiscale;
   btagSFweight_ = btagSFweight_nom;
 
   selection_ = Dcutjm;
@@ -468,22 +486,23 @@ std::pair<double,double> ABCD_njetRW(TString phys0bcontrol, TString Acutjm, TStr
   selection_ = Ccutjm;
   drawSimple("njets30",jmnbins,jmbins,"dummy.root", "","PythiaPUQCD");
   TH1D* hJMCqcd = (TH1D*)hinteractive->Clone("hJMCqcd");
-
+  
   //Now we have all the input we need to do the reweighting..
+
 
   //weights////////////////////////////////////////////////
   for(int k=1; k<=hJMphysicsData->GetNbinsX(); k++){
     assert(hJMphysicsData->GetBinContent(k)>0);
     assert(hJMphysicsQCD->GetBinContent(k)>0);
-    assert(hJMAdata->GetBinContent(k)>0);
-    assert(hJMAqcd->GetBinContent(k)>0);
+    assert(hJMprescaleData->GetBinContent(k)>0);
+    assert(hJMprescaleQCD->GetBinContent(k)>0);
     assert((hJMphysicsData->GetBinContent(k)- hJMphysicsNonQCD->GetBinContent(k))>0);//need to think about this more
   }
   TH1D* hphysW = (TH1D*)hJMphysicsData->Clone("hphysW");
   hphysW->Add(hJMphysicsNonQCD,-1);
   hphysW->Divide(hJMphysicsQCD);
-  TH1D* hpresW = (TH1D*)hJMAdata->Clone("hpresW"); //assume no contamination for LSB
-  hpresW->Divide(hJMAqcd);
+  TH1D* hpresW = (TH1D*)hJMprescaleData->Clone("hpresW"); //assume no contamination for LSB
+  hpresW->Divide(hJMprescaleQCD);
       
   TFile fh1(histfilename, "UPDATE");
   hphysW->Write();
@@ -509,7 +528,7 @@ std::pair<double,double> ABCD_njetRW(TString phys0bcontrol, TString Acutjm, TStr
 
   ////////////////////////////////////////////////////////////stat//
   double rwErr2 = 0;
-  for(int k=1; k<=hJMphysicsData->GetNbinsX(); k++){
+  /*  for(int k=1; k<=hJMphysicsData->GetNbinsX(); k++){
     double QAk = hJMAqcdRW->GetBinContent(k);
     double QBk = hJMBqcdRW->GetBinContent(k);
     double QCk = hJMCqcdRW->GetBinContent(k);
@@ -568,6 +587,7 @@ std::pair<double,double> ABCD_njetRW(TString phys0bcontrol, TString Acutjm, TStr
     rwErr2 += QAterm*QAterm*QAkerr*QAkerr + QBterm*QBterm*QBkerr*QBkerr + QCterm*QCterm*QCkerr*QCkerr + QDterm*QDterm*QDkerr*QDkerr;
     rwErr2 += Qterm*Qterm*Qkerr*Qkerr + nterm*nterm*nkerr*nkerr + Rterm*Rterm*Rkerr*Rkerr + Pterm*Pterm*Pkerr*Pkerr;
   }
+  */
   //////////////////////////////////////////////////////////////////
   cout << "njetrw: ABCD: " << Arw << " " << Brw << " " << Crw << " " << Drw << endl; 
   cout << "njetrw: BD/A (rw): " << Brw*Drw/Arw << endl;
@@ -597,7 +617,7 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
   
   setStackMode(false);
   doData(true);
-  setQuiet(true);
+  setQuiet(false);
   
   useFlavorHistoryWeights_=false;
   
@@ -630,8 +650,10 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
   
   // --  count events
   TCut triggerCutLSB = "1";
+  TCut triggerCutLSBInverted = "1";
   TCut triggerCut = "1";
   triggerCutLSB = "pass_utilityHLT==1";
+  triggerCutLSBInverted = "(pass_utilityHLT==0 || isRealData==0)";
   triggerCut = "cutTrigger==1";
 
   //don: hard-code MHT efficiencies
@@ -642,7 +664,7 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
   
   TCut ge1b = "nbjetsCSVM>=1";
   btagSFweight_="1";
-  TString btagSFweight=""; //we're going to have to switch this one in and out of the global var
+  TString btagSFweight="1"; //we're going to have to switch this one in and out of the global var
   if (useScaleFactors_) {
     usePUweight_=true;
     useHLTeff_=true;
@@ -701,18 +723,21 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
   TString LSBbtagSFweight="";
   char cutstring0[100];
   sprintf(cutstring0,"nbjetsCSVM%s",LSBbsel.Data());
-  TCut LSBbtag = TCut(cutstring0);
+  TCut LSBbtag = TCut(cutstring0); 
   if(useScaleFactors_){
     LSBbtag = "1";
     if(LSBbsel=="==0"){ LSBbtagSFweight = "prob0"; }
     else if(LSBbsel==">=1"){ LSBbtagSFweight = "probge1"; }
     else{ assert(0);}
   }
-  btagSFweight_ =  LSBbtagSFweight;
+  //if  useScaleFactors_, LSBbtag="1" and LSBbtagSFweight is "prob0" or "probge1"
+  //if !useScaleFactors_, LSBbtag is the real cut, and LSBbtagSFweight is ""
+
   char cutstring1[100];
   sprintf(cutstring1,"MET>= %.0f && MET < %.0f", 50+SBshift,100+SBshift);
   TCut SBMET = TCut(cutstring1)&&triggerCutLSB&&LSBbtag;
-  
+
+
   TCut dpcut = "1";//"minDeltaPhiN>=4";
   //  TCut passOther = "deltaPhiMPTcaloMET<2";
   //  TCut failOther = "deltaPhiMPTcaloMET>=2";
@@ -728,22 +753,27 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
   //used for jet multiplicity reweighting closure test
   TString Acutjm, Bcutjm, Dcutjm, SIGcutjm;
   
-  //used in lsb and njet reweighting (the latter adds mdpN<4)
-  TCut phys0bcontrol =  TCut("cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && nbjetsCSVM==0 && MET>200") && triggerCut && HTcut && cleaning;
-  TString phys0bcontrolstring;
-  phys0bcontrolstring += phys0bcontrol;
+  //baselines used in lsb and njet reweighting -- notice no mdpN or btag cut!
+  TCut physcontrol =  TCut("cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>200") && triggerCut && triggerCutLSBInverted && HTcut && cleaning;
+  TString physcontrolstring; physcontrolstring += physcontrol;
+  TCut prescontrol =  TCut("cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=50 && MET<100") && triggerCutLSB && HTcut && cleaning;
+  TString prescontrolstring; prescontrolstring += prescontrol;
+
+  //FOR LSB
+  btagSFweight_ =  LSBbtagSFweight;
+    
   if(datamode &&  reweightLSBdata_){
     int pvnbins=11;
     float pvbins[]={0.5,2.5,4.5,5.5,6.5,7.5,8.5,9.5,10.5,12.5,14.5,16.5};
     
     //physics triggers control sample -- physics triggers, 0b
-    //--consider varying MET cut and PV binning!!
-    if(useScaleFactors_) btagSFweight_ = "prob0";
-    selection_ = phys0bcontrol;
+    TCut antibcut = "nbjetsCSVM==0"; 
+    btagSFweight_ = "1"; //this will always be 0b data
+    selection_ = physcontrol && antibcut && passOther; //add mdpN cut to keep sample indepdenent of njet rw
     drawSimple("nGoodPV",pvnbins,pvbins,"dummy", "","data");
     TH1D* hPVphysics = (TH1D*)hinteractive->Clone("hPVphysics");
     btagSFweight_ =  LSBbtagSFweight;
-    
+
     //LSB unweighted
     selection_ = baseline && SBMET && cleaning;
     drawSimple("nGoodPV",pvnbins,pvbins,"dummy", "","data");
@@ -856,7 +886,7 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
   }
   
   //Now that we've moved on from the LSB, use search region b-tag requirement
-  if(useScaleFactors_) btagSFweight_ = btagSFweight;
+  btagSFweight_ = btagSFweight;
   
   //D
   selection_ = baseline && cleaning && dpcut  && SRMET && failOther; //auto cast to TString seems to work
@@ -934,7 +964,7 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
   }
 
   
-  if(doNjetRW){ return ABCD_njetRW(phys0bcontrolstring, Acutjm, Bcutjm, SIGcutjm, Dcutjm);}
+  if(doNjetRW){ return ABCD_njetRW(prescontrolstring, physcontrolstring, Acutjm, Bcutjm, SIGcutjm, Dcutjm);}
   
   //now calculate (B/A)*D=R*D
   double RLSB_UW = B/A; //unweighted
