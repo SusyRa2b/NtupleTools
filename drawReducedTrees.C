@@ -119,6 +119,21 @@ double lumiScale_ = 4683.719;//nov4
 const bool reweightLSBdata_=true; //whether or not LSB data is reweighted based on PV distribution
 const bool useScaleFactors_=true; //whether or not to use MC scale factors when doing subtraction for data-driven estimates
 
+
+float eff_SB_MHT_             = 0.841;   
+float eff_SB_MHT_err_[2]      = {0.059, 0.090};
+float eff_SB_ldp_MHT_         = 0.936;   
+float eff_SB_ldp_MHT_err_[2]  = {0.034, 0.118};
+float eff_SIG_MHT_            = 0.982; 
+float eff_SIG_MHT_err_[2]     = {0.012, 0.036};
+float eff_SIG_ldp_MHT_        = eff_SIG_MHT_; 
+float eff_SIG_ldp_MHT_err_[2] = {eff_SIG_MHT_err_[0], eff_SIG_MHT_err_[1]}; //due to low stas in SIG-LDP, use the SIG numbers for now.
+float eff_SIG_SL_MHT_         = 0.999; 
+float eff_SIG_SL_MHT_err_[2]  = {0.001, 0.001};
+float eff_SB_SL_MHT_          = 0.996; 
+float eff_SB_SL_MHT_err_[2]   = {0.002, 0.003};
+
+
 void countInBoxesBreakdown(const SearchRegion & region) {
   //shows number of events from each background and signal in the 6 boxes
   
@@ -437,9 +452,9 @@ std::pair<double,double> ABCD_njetRW(TString prescontrol, TString physcontrol, T
   TH1D* hJMphysicsData = (TH1D*)hinteractive->Clone("hJMphysicsData");
   
   if(useScaleFactors_){
-    float eff_ldp_MHT = 1, eff_ldp_MHT_err[2];
-    eff_ldp_MHT = 0.936; eff_ldp_MHT_err[0] = 0.034; eff_ldp_MHT_err[1] = 0.118;
-    hJMphysicsData->Scale(1/eff_ldp_MHT);//for now, ignore the error on the efficiency 
+    float eff_SB_ldp_MHT = eff_SB_ldp_MHT_; 
+    float eff_SB_ldp_MHT_err[2] = {eff_SB_ldp_MHT_err_[0], eff_SB_ldp_MHT_err_[1]};
+    hJMphysicsData->Scale(1/eff_SB_ldp_MHT);//for now, ignore the error on the efficiency 
   }
 
   drawSimple("njets30",jmnbins,jmbins,"dummy.root", "","PythiaPUQCD");
@@ -678,14 +693,12 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
     currentConfig_=configDescriptions_.getCorrected(); //add JERbias
 
     if(metselection=="MET>=200&&MET<250"){
-      eff_MHT     = 0.841; eff_MHT_err[0]     = 0.059; eff_MHT_err[1]     = 0.090;
-      eff_ldp_MHT = 0.936; eff_ldp_MHT_err[0] = 0.034; eff_ldp_MHT_err[1] = 0.118;
+      eff_MHT     = eff_SB_MHT_;      eff_MHT_err[0] = eff_SB_MHT_err_[0];         eff_MHT_err[1] = eff_SB_MHT_err_[1];
+      eff_ldp_MHT = eff_SB_ldp_MHT_ ; eff_ldp_MHT_err[0] = eff_SB_ldp_MHT_err_[0]; eff_ldp_MHT_err[1] = eff_SB_ldp_MHT_err_[1];
     }
     else{
-      eff_MHT     = 0.982; eff_MHT_err[0]     = 0.012; eff_MHT_err[1]     = 0.036;
-      //there are very limited stats in the SIG-LDP region for an efficiency measurement
-      //for now, use the SIG numbers
-      eff_ldp_MHT = 0.982; eff_ldp_MHT_err[0] = 0.012; eff_ldp_MHT_err[1] = 0.036;
+      eff_MHT     = eff_SIG_MHT_;      eff_MHT_err[0] = eff_SIG_MHT_err_[0];         eff_MHT_err[1] = eff_SIG_MHT_err_[1];
+      eff_ldp_MHT = eff_SIG_ldp_MHT_ ; eff_ldp_MHT_err[0] = eff_SIG_ldp_MHT_err_[0]; eff_ldp_MHT_err[1] = eff_SIG_ldp_MHT_err_[1];
     }
     
     ge1b="1";
@@ -1372,10 +1385,10 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
     useHLTeff_=true;
     currentConfig_=configDescriptions_.getCorrected(); //add JERbias
     
-    eff_MHT       = 0.982; eff_MHT_err[0]        = 0.012; eff_MHT_err[1]        = 0.036;
-    eff_SB_MHT    = 0.841; eff_SB_MHT_err[0]     = 0.059; eff_SB_MHT_err[1]     = 0.090;
-    eff_SL_MHT    = 0.999; eff_SL_MHT_err[0]     = 0.001; eff_SL_MHT_err[1]     = 0.001;
-    eff_SL_SB_MHT = 0.996; eff_SL_SB_MHT_err[0]  = 0.002; eff_SL_SB_MHT_err[1]  = 0.003;
+    eff_MHT       = eff_SIG_MHT_;    eff_MHT_err[0]       = eff_SIG_MHT_err_[0];    eff_MHT_err[1]       = eff_SIG_MHT_err_[1];
+    eff_SB_MHT    = eff_SB_MHT_ ;    eff_SB_MHT_err[0]    = eff_SB_MHT_err_[0];     eff_SB_MHT_err[1]    = eff_SB_MHT_err_[1];
+    eff_SL_MHT    = eff_SIG_SL_MHT_; eff_SL_MHT_err[0]    = eff_SIG_SL_MHT_err_[0]; eff_SL_MHT_err[1]    = eff_SIG_SL_MHT_err_[1];
+    eff_SL_SB_MHT = eff_SB_SL_MHT_;  eff_SL_SB_MHT_err[0] = eff_SB_SL_MHT_err_[0];  eff_SL_SB_MHT_err[1] = eff_SB_SL_MHT_err_[1];
 
     if (btagselection=="ge2b") {
       btagSFweight="probge2";
