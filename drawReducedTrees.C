@@ -528,43 +528,48 @@ std::pair<double,double> ABCD_njetRW(TString prescontrol, TString physcontrol, T
 
   ////////////////////////////////////////////////////////////stat//
   double rwErr2 = 0;
-  /*  for(int k=1; k<=hJMphysicsData->GetNbinsX(); k++){
+  for(int k=1; k<=hJMphysicsData->GetNbinsX(); k++){
     double QAk = hJMAqcdRW->GetBinContent(k);
     double QBk = hJMBqcdRW->GetBinContent(k);
     double QCk = hJMCqcdRW->GetBinContent(k);
     double QDk = hJMDqcdRW->GetBinContent(k);
-    double Qk =  hJMphysicsQCD->GetBinContent(k);
+    double Qk = hJMphysicsQCD->GetBinContent(k);
     double nk = hJMphysicsNonQCD->GetBinContent(k);
-    double Rk = hJMAdata->GetBinContent(k);
+    double Rk = hJMprescaleData->GetBinContent(k);
+    double rk = hJMprescaleQCD->GetBinContent(k);
     double Pk = hJMphysicsData->GetBinContent(k);
 
     double QAkerr = hJMAqcdRW->GetBinError(k);
     double QBkerr = hJMBqcdRW->GetBinError(k);
     double QCkerr = hJMCqcdRW->GetBinError(k);
     double QDkerr = hJMDqcdRW->GetBinError(k);
-    double Qkerr =  hJMphysicsQCD->GetBinError(k);
+    double Qkerr = hJMphysicsQCD->GetBinError(k);
     double nkerr = hJMphysicsNonQCD->GetBinError(k);
-    double Rkerr = hJMAdata->GetBinError(k);
+    double Rkerr = hJMprescaleData->GetBinError(k);
+    double rkerr = hJMprescaleQCD->GetBinError(k);
     double Pkerr = hJMphysicsData->GetBinError(k);
 
-    double QAterm=0,QBterm=0,QCterm=0,QDterm=0,Qterm=0, nterm=0, Rterm=0, Pterm=0;
-    double X_toppQ=0, X_botpQ=0, X_toppn=0, X_botpn=0, X_toppR=0, X_botpR=0, X_toppP=0, X_botpP=0;
+    double QAterm=0,QBterm=0,QCterm=0,QDterm=0,Qterm=0, nterm=0, Rterm=0, Pterm=0, rterm=0;
+    double X_toppQ=0, X_botpQ=0, X_toppn=0, X_botpn=0, X_toppR=0, X_botpR=0, X_toppP=0, X_botpP=0, X_toppr=0, X_botpr=0;
     double X_top = Crw*Arw;
     double X_bot = Drw*Brw;
-    
-    QAterm = Crw*Arw/Drw/Brw/Brw*QBk*Rk/QAk/QAk;
-    QBterm = - Crw*Arw/Drw/Brw/Brw*Rk/QAk;
+       
+    QAterm = Crw/Drw/Brw*Rk/rk;
+    QBterm = -Crw*Arw/Drw/Brw/Brw*Rk/rk;
     QCterm = Arw/Drw/Brw*(Pk-nk)/Qk;
-    QDterm = - Crw*Arw/Brw/Drw/Drw*(Pk-nk)/Qk; 
+    QDterm = -Crw*Arw/Brw/Drw/Drw*(Pk-nk)/Qk;
 
-    X_toppQ = - Arw*QCk/Qk/Qk*(Pk-nk);
-    X_botpQ = - Brw*QDk/Qk/Qk*(Pk-nk);
+    X_toppQ = -Arw*QCk*(Pk-nk)/Qk/Qk;
+    X_botpQ = -Brw*QDk*(Pk-nk)/Qk/Qk;
 
-    X_toppn = - Arw*QCk/Qk;
-    X_botpn = - Brw*QDk/Qk;
+    X_toppn = -Arw*QCk/Qk;
+    X_botpn = -Brw*QDk/Qk;
+    
+    X_toppR = Crw*QAk/rk;
+    X_botpR = Drw*QBk/rk;
 
-    X_toppR = Crw;
-    X_botpR = Drw*QBk/QAk;
+    X_toppr = -Crw*QAk*Rk/rk/rk;
+    X_botpr = -Drw*QBk*Rk/rk/rk;
 
     X_toppP = Arw*QCk/Qk;
     X_botpP = Brw*QDk/Qk;
@@ -573,6 +578,7 @@ std::pair<double,double> ABCD_njetRW(TString prescontrol, TString physcontrol, T
     Qterm = (X_bot*X_toppQ - X_top*X_botpQ)/X_bot/X_bot;
     nterm = (X_bot*X_toppn - X_top*X_botpn)/X_bot/X_bot;
     Rterm = (X_bot*X_toppR - X_top*X_botpR)/X_bot/X_bot;
+    rterm = (X_bot*X_toppr - X_top*X_botpr)/X_bot/X_bot;
     Pterm = (X_bot*X_toppP - X_top*X_botpP)/X_bot/X_bot;
     
     cout << "njetrw: QA: " << QAterm*QAterm*QAkerr*QAkerr << endl;
@@ -582,12 +588,13 @@ std::pair<double,double> ABCD_njetRW(TString prescontrol, TString physcontrol, T
     cout << "njetrw: Q: " << Qterm*Qterm*Qkerr*Qkerr << endl;
     cout << "njetrw: n: " << nterm*nterm*nkerr*nkerr << endl;
     cout << "njetrw: R: " << Rterm*Rterm*Rkerr*Rkerr << endl;
+    cout << "njetrw: r: " << rterm*rterm*rkerr*rkerr << endl;
     cout << "njetrw: P: " << Pterm*Pterm*Pkerr*Pkerr << endl;
 
     rwErr2 += QAterm*QAterm*QAkerr*QAkerr + QBterm*QBterm*QBkerr*QBkerr + QCterm*QCterm*QCkerr*QCkerr + QDterm*QDterm*QDkerr*QDkerr;
-    rwErr2 += Qterm*Qterm*Qkerr*Qkerr + nterm*nterm*nkerr*nkerr + Rterm*Rterm*Rkerr*Rkerr + Pterm*Pterm*Pkerr*Pkerr;
+    rwErr2 += Qterm*Qterm*Qkerr*Qkerr + nterm*nterm*nkerr*nkerr + Rterm*Rterm*Rkerr*Rkerr + rterm*rterm*rkerr*rkerr + Pterm*Pterm*Pkerr*Pkerr;
   }
-  */
+  
   //////////////////////////////////////////////////////////////////
   cout << "njetrw: ABCD: " << Arw << " " << Brw << " " << Crw << " " << Drw << endl; 
   cout << "njetrw: BD/A (rw): " << Brw*Drw/Arw << endl;
@@ -617,7 +624,7 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
   
   setStackMode(false);
   doData(true);
-  setQuiet(false);
+  setQuiet(true);
   
   useFlavorHistoryWeights_=false;
   
