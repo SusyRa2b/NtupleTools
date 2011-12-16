@@ -595,7 +595,8 @@ bool useFlavorHistoryWeights_=false;//no setter function
 float flavorHistoryScaling_=-1;
 
 bool usePUweight_=false;
-bool useHLTeff_ = false;
+bool useHTeff_ = false;
+bool useMHTeff_ = false;
 TString btagSFweight_="1";
 
 bool savePlots_ = true; //no setter function
@@ -1004,11 +1005,12 @@ for legacy purposes I am keeping all of the weight and selection TStrings, altho
   if (usePUweight_ && type!=kData) {
     weightedcut +="*PUweight";
   }
-  if (useHLTeff_ &&  type!=kData) {
+  if (useHTeff_ &&  type!=kData) {
     weightedcut +="*hltHTeff";
-    //weightedcut +="*hltMHTeff"; //not compatible with Summer reducedTrees
   }
-
+  if (useMHTeff_ &&  type!=kData) {
+    weightedcut +="*hltMHTeff"; //not compatible with Summer reducedTrees
+  }
   if (btagSFweight_=="") btagSFweight_="1";
   if ( type==kData) {
     if (btagSFweight_=="probge1") weightedcut += "*(nbjets>=1)";
@@ -3004,7 +3006,8 @@ void cutflow(bool isTightSelection){
 
   //jmt -- turn on weighting
   usePUweight_=true; 
-  useHLTeff_=true;   
+  useHTeff_=true;   
+  useMHTeff_=true;
   currentConfig_=configDescriptions_.getCorrected(); //use JERbias
 
   vector<TString> vectorOfCuts; //each element is a successive cut string for the cutflow table

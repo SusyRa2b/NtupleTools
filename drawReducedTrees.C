@@ -168,7 +168,8 @@ void countInBoxesBreakdown(const SearchRegion & region) {
   else {assert(0);}
   
   usePUweight_=false;
-  useHLTeff_=false;
+  useHTeff_=false;
+  useMHTeff_=false;
   btagSFweight_="1";
   currentConfig_=configDescriptions_.getDefault(); //completely raw MC
 
@@ -176,7 +177,8 @@ void countInBoxesBreakdown(const SearchRegion & region) {
   if (useScaleFactors_) {
     bcut="1";
     usePUweight_=true;
-    useHLTeff_=true;
+    useHTeff_=true;
+    useMHTeff_=true;
     currentConfig_=configDescriptions_.getCorrected(); //add JERbias
 
     if (btagselection=="ge2b") {
@@ -327,7 +329,8 @@ owen asked for total MC event counts in the 6 boxes, output in a particular form
   //use all of the corrections that are in the AN table
   currentConfig_=configDescriptions_.getCorrected(); //add  JER bias
   usePUweight_=true;
-  useHLTeff_=true;
+  useHTeff_=true;
+  useMHTeff_=true;
   btagSFweight_=bweightstring; //use b tag weight instead
 
   TString var="HT"; TString xtitle=var;
@@ -688,7 +691,8 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
   TString btagSFweight="1"; //we're going to have to switch this one in and out of the global var
   if (useScaleFactors_) {
     usePUweight_=true;
-    useHLTeff_=true;
+    useHTeff_=true;
+    useMHTeff_=false;
     currentConfig_=configDescriptions_.getCorrected(); //add JERbias
 
     if(metselection=="MET>=200&&MET<250"){
@@ -714,7 +718,8 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
   }
   else {
     usePUweight_=false;
-    useHLTeff_=false;
+    useHTeff_=false;
+    useMHTeff_=false;
     btagSFweight_="1";
     currentConfig_=configDescriptions_.getDefault(); //completely raw MC
     
@@ -1381,7 +1386,8 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
   if (useScaleFactors_) {
     ge1b="1";
     usePUweight_=true;
-    useHLTeff_=true;
+    useHTeff_=true;
+    useMHTeff_=false;
     currentConfig_=configDescriptions_.getCorrected(); //add JERbias
     
     eff_MHT       = eff_SIG_MHT_;    eff_MHT_err[0]       = eff_SIG_MHT_err_[0];    eff_MHT_err[1]       = eff_SIG_MHT_err_[1];
@@ -1403,7 +1409,8 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
   }
   else {
     usePUweight_=false;
-    useHLTeff_=false;
+    useHTeff_=false;
+    useMHTeff_=false;
     btagSFweight_="1";
     currentConfig_=configDescriptions_.getDefault(); //completely raw MC
     
@@ -1732,13 +1739,15 @@ void AN2011_prescale( TString btagselection="ge1b",const int mode=1 ) {
   TString modestring="";
   if (mode==1) {
     usePUweight_=false;
-    useHLTeff_=false;
+    useHTeff_=false;
+    useMHTeff_=false;
     btagSFweight_="1";
     currentConfig_=configDescriptions_.getDefault(); //completely raw MC
   }
   else if (mode==2 || mode==3) {
     usePUweight_=true;
-    useHLTeff_=true;
+    useHTeff_=true;
+    useMHTeff_=true;
     currentConfig_=configDescriptions_.getCorrected(); //JER bias
     if (mode==2) modestring="-JER-PU-HLT";
     else if(mode==3) modestring="-JER-PU-HLT-bSF";
@@ -1898,13 +1907,15 @@ void AN2011_PUQCD( TString btagselection="ge1b",const int mode=1 ) {
   TString modestring="";
   if (mode==1) {
     usePUweight_=false;
-    useHLTeff_=false;
+    useHTeff_=false;
+    useMHTeff_=false;
     btagSFweight_="1";
     currentConfig_=configDescriptions_.getDefault(); //completely raw MC
   }
   else if (mode==2 || mode==3) {
     usePUweight_=true;
-    useHLTeff_=true;
+    useHTeff_=true;
+    useMHTeff_=true;
     currentConfig_=configDescriptions_.getCorrected(); //JER bias
     if (mode==2) modestring="-JER-PU-HLT";
     else if(mode==3) modestring="-JER-PU-HLT-bSF";
@@ -2061,7 +2072,8 @@ other.
 
   if (useScaleFactors_) {
     usePUweight_=true;
-    useHLTeff_=true;
+    useHTeff_=true;
+    useMHTeff_=true;
     currentConfig_=configDescriptions_.getCorrected(); //add JERbias
 
     //The MET comparison plots for the AN had the b-tag SF stuff below commented out!
@@ -2614,13 +2626,15 @@ void AN2011( TString btagselection="ge1b",const int mode=1, bool logy=false, boo
   TString modestring="";
   if (mode==1) {
     usePUweight_=false;
-    useHLTeff_=false;
+    useHTeff_=false;
+    useMHTeff_=false;
     btagSFweight_="1";
     currentConfig_=configDescriptions_.getDefault(); //completely raw MC
   }
   else if (mode==2 || mode==3) {
     usePUweight_=true;
-    useHLTeff_=true;
+    useHTeff_=true;
+    useMHTeff_=true;
     currentConfig_=configDescriptions_.getCorrected(); //JER bias
     if (mode==2) modestring="-JER-PU-HLT";
     else if(mode==3) modestring="-JER-PU-HLT-bSF";
@@ -4637,7 +4651,8 @@ void studyRtt_0lep() {
    loadSamples();
 
    usePUweight_=true;
-   useHLTeff_=true;
+   useHTeff_=true;
+   useMHTeff_=true; // is this what I want????
    currentConfig_=configDescriptions_.getCorrected(); //add JERbias
 
    //   setSearchRegions();
@@ -4722,7 +4737,6 @@ void studyRtt_0lep() {
   thecanvas->SaveAs("zSL_r_vTime.eps");
   thecanvas->SaveAs("zSL_r_vTime.png");
   thecanvas->SaveAs("zSL_r_vTime.pdf");
-  return;
 
   //now do it by nPV
   TString var ="nGoodPV";
@@ -4922,16 +4936,6 @@ void studyRtt_0lep() {
 
 }
 
-
-void studyRtt_distributions() {
-
-   loadSamples();
-
-   usePUweight_=true;
-   useHLTeff_=true;
-   currentConfig_=configDescriptions_.getCorrected(); //add JERbias
-
-}
 
 void drawTrigEff() {
 
