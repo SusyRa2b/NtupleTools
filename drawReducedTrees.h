@@ -1578,11 +1578,7 @@ void loadSamples(bool joinSingleTop=true) {
 
       fname+=".root";
 
-      if(splitTTbar_ && (*isample).Contains("TTbarJets"))
-	fname.Prepend(inputPathTTbar);
-      else 
-	fname.Prepend(inputPath);
-      
+      fname.Prepend(inputPath);
 
       files_[thisconfig][*isample] = new TFile(fname);
       if (files_[thisconfig][*isample]->IsZombie() ) {cout<<"file error with "<<*isample<<endl; files_[thisconfig][*isample]=0;}
