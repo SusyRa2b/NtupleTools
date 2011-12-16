@@ -676,9 +676,12 @@ void EventCalculator::loadHLTMHTeff() {
   }
 }
 
-float EventCalculator::getHLTMHTeff(float offMET) {
+float EventCalculator::getHLTMHTeff(float offMET, int nElectrons, int nMuons, float mindphin) {
 
   float eff=1;
+
+  bool isSL = ((nElectrons==1 && nMuons==0)||(nElectrons==0 && nMuons==1));
+  bool is0L = (nElectrons==0 && nMuons==0);
 
   //TGraphAsymmErrors * gr=mhtgraph_;
   //if ( theHLTEffType_ ==kHLTEffup) gr=htgraphPlus;
@@ -690,30 +693,54 @@ float EventCalculator::getHLTMHTeff(float offMET) {
   //for 2011 full result
   if(offMET>=200 && offMET<250){
     //    eff = 0.94;
-    eff = 0.859362; //after HT cut
+    //eff = 0.859362; //after HT cut
 
     //errors are wrong!
 
-    //assign a 3% error in the SB region
-    if ( theHLTEffType_ ==kHLTEffup){
-      eff = eff*1.03; assert(0);
+    ////assign a 3% error in the SB region
+    //if ( theHLTEffType_ ==kHLTEffup){
+    //  eff = eff*1.03; assert(0);
+    //}
+    //else if ( theHLTEffType_ ==kHLTEffdown){
+    //  eff = eff*0.97; assert(0);
+    //}
+
+    //after HT>400, ==0b
+    if( is0L && mindphin > 4 ){
+      eff = 0.841;
     }
-    else if ( theHLTEffType_ ==kHLTEffdown){
-      eff = eff*0.97; assert(0);
+    else if( isSL && mindphin > 4){
+      eff = 0.996;
     }
+    else if ( is0L && mindphin <= 4){
+      eff = 0.936;
+    }
+
 
   }
   else if(offMET>250){
     //    eff = 0.998;
-    eff = 0.975299; //after HT cut
+    //eff = 0.975299; //after HT cut
 
-    //assign a +0.1%(-0.5%) error in the SIG region
-    if ( theHLTEffType_ ==kHLTEffup){
-      eff = eff*1.001; assert(0);
+    ////assign a +0.1%(-0.5%) error in the SIG region
+    //if ( theHLTEffType_ ==kHLTEffup){
+    //  eff = eff*1.001; assert(0);
+    //}
+    //else if ( theHLTEffType_ ==kHLTEffdown){
+    //  eff = eff*0.995; assert(0);
+    //}
+
+    //after HT>400, ==0b
+    if( is0L && mindphin > 4 ){
+      eff = 0.982;
     }
-    else if ( theHLTEffType_ ==kHLTEffdown){
-      eff = eff*0.995; assert(0);
+    else if( isSL && mindphin > 4){
+      eff = 0.999;
     }
+    else if ( is0L && mindphin <= 4){
+      eff = 0.982; // same as nominal for now
+    }
+
 
   }
 
@@ -3964,7 +3991,6 @@ Also the pdfWeightSum* histograms that are used for LM9.
       nElectrons = countEle();
       nMuons = countMu();
       MET=getMET();
-      hltMHTeff = getHLTMHTeff(MET);
       METsig = myMETPF->at(0).mEtSig; //FIXME hard coded for PF
       MHT=getMHT();
       METphi = getMETphi();
@@ -3989,6 +4015,8 @@ Also the pdfWeightSum* histograms that are used for LM9.
       deltaPhiN1 = getDeltaPhiMETN(0);
       deltaPhiN2 = getDeltaPhiMETN(1);
       deltaPhiN3 = getDeltaPhiMETN(2);
+
+      hltMHTeff = getHLTMHTeff(MET, nElectrons, nMuons, minDeltaPhiN);
 
       //alternatives for testing
       minDeltaPhiN_otherEta5                      = getMinDeltaPhiMETN(3,50,2.4,true, 30,5,true, false,false);

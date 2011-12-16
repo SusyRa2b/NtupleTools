@@ -80,7 +80,7 @@ public:
   bool passUtilityHLT(int &version, int &prescale);
   unsigned int utilityHLT_HT300_CentralJet30_BTagIP();
   float getHLTHTeff(float offHT);
-  float getHLTMHTeff(float offMET);
+  float getHLTMHTeff(float offMET, int nElectrons, int nMuons, float mindphin);
 
   int countGoodPV();
   bool passPV() ;
