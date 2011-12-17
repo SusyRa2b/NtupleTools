@@ -455,7 +455,7 @@ std::pair<double,double> ABCD_njetRW(TString prescontrol, TString physcontrol, T
   
   if(useScaleFactors_){
     float eff_SB_ldp_MHT = eff_SB_ldp_MHT_; 
-    float eff_SB_ldp_MHT_err[2] = {eff_SB_ldp_MHT_err_[0], eff_SB_ldp_MHT_err_[1]};
+    //float eff_SB_ldp_MHT_err[2] = {eff_SB_ldp_MHT_err_[0], eff_SB_ldp_MHT_err_[1]};
     hJMphysicsData->Scale(1/eff_SB_ldp_MHT);//for now, ignore the error on the efficiency 
   }
 
@@ -624,7 +624,7 @@ std::pair<double,double> ABCD_njetRW(TString prescontrol, TString physcontrol, T
   return make_pair( 100*sqrt(pow(closure,2) + pow(closurestat,2)), 0); //estimate in denominator
 }
 
-std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode=false, float subscale=1,float SBshift=0, const TString LSBbsel="==0", float PVCorFactor = 0, bool doNjetRW = false, bool forTTbarEstimate=false) {
+std::pair<double,std::vector<double> > anotherABCD( const SearchRegion & region, bool datamode=false, float subscale=1,float SBshift=0, const TString LSBbsel="==0", float PVCorFactor = 0, bool doNjetRW = false, bool forTTbarEstimate=false) {
   //kind of awful, but we'll return the estimate for datamode=true but the closure test bias for datamode=false
   
   /*
@@ -770,7 +770,8 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
   
   var="HT"; xtitle=var;
   nbins=10; low=0; high=5000;
-  double A,B,D,SIG,Aerr,Berr,Derr,DerrMinus,SIGerr;
+  double A,B,D,SIG,Aerr,Berr,Derr,SIGerr;
+  //double DerrMinus;
   double RLSB_RW = 0;
   double dRLSB_RW = 0;
   
@@ -921,11 +922,11 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
 
   double D_temp = D, Derr_temp = Derr;
   if(useScaleFactors_ && datamode){
-    D = D/eff_ldp_MHT;
-    Derr = jmt::errAoverB(D_temp,Derr_temp,eff_ldp_MHT,eff_ldp_MHT_err[0]);
-    DerrMinus = jmt::errAoverB(D_temp,Derr_temp,eff_ldp_MHT,eff_ldp_MHT_err[1]);
+    D = D_temp/eff_ldp_MHT;
+    //Derr = jmt::errAoverB(D_temp,Derr_temp,eff_ldp_MHT,eff_ldp_MHT_err[0]);
+    //DerrMinus = jmt::errAoverB(D_temp,Derr_temp,eff_ldp_MHT,eff_ldp_MHT_err[1]);
 
-    Derr = Derr > DerrMinus ? Derr: DerrMinus;
+    //Derr = Derr > DerrMinus ? Derr: DerrMinus;
   }
   
   double Dsub = 0,Dsuberr=0;
@@ -1006,19 +1007,58 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
   double estimate = myR*(D-Dsub);
   double estimateerr = jmt::errAtimesB(myR, myRerr, D-Dsub, sqrt(Derr*Derr+Dsuberr*Dsuberr));
 
+  double estimate_temp = estimate;
+  //double estimateerr_temp = estimateerr;
+  double estimateerrTrigPlus  = 0;
+  double estimateerrTrigMinus = 0;
+
   if(useScaleFactors_ && datamode){
     //do NOT scale by efficiency if this is a SB region and if this is for the ttbar estimate
-    if( !(metselection=="MET>=200&&MET<250" && forTTbarEstimate) ){
-      double estimate_temp = estimate, estimateerr_temp = estimateerr;
-      double estimateerrMinus=0;
+    if( !(forTTbarEstimate) ){
+      //double estimateerrMinus=0;
       estimate = eff_MHT*estimate_temp;
-      estimateerr = jmt::errAtimesB(estimate_temp, estimateerr_temp, eff_MHT, eff_MHT_err[0]);
-      estimateerrMinus = jmt::errAtimesB(estimate_temp, estimateerr_temp, eff_MHT, eff_MHT_err[1]);
+      //estimateerr = jmt::errAtimesB(estimate_temp, estimateerr_temp, eff_MHT, eff_MHT_err[0]);
+      //estimateerrMinus = jmt::errAtimesB(estimate_temp, estimateerr_temp, eff_MHT, eff_MHT_err[1]);
       //std::cout << "estimate: "<< estimate << "+" << estimateerr << "- " <<estimateerrMinus << std::endl;
       
       //use the larger of the two as the error in the estimate
-      estimateerr = estimateerr > estimateerrMinus ? estimateerr: estimateerrMinus;
+      //estimateerr = estimateerr > estimateerrMinus ? estimateerr: estimateerrMinus;
     }
+
+    //vary the trigger efficiencies by their statistical error to get trigger error on estimate
+    //first vary eff_ldp_MHT
+    float eff_ldp_MHT_up   = eff_ldp_MHT + eff_ldp_MHT_err[0];
+    D = D_temp/eff_ldp_MHT_up;
+    double estimate_up;
+    if( !(forTTbarEstimate) ) estimate_up = eff_MHT*myR*(D-Dsub);
+    else estimate_up = myR*(D-Dsub);
+    double delta_down = (estimate_up - estimate);    
+
+    float eff_ldp_MHT_down = eff_ldp_MHT - eff_ldp_MHT_err[1];
+    D = D_temp/eff_ldp_MHT_down;
+    double estimate_down;
+    if( !(forTTbarEstimate) ) estimate_down = eff_MHT*myR*(D-Dsub);
+    else estimate_down = myR*(D-Dsub);
+    double delta_up = (estimate_down - estimate);
+    //std::cout << "TRIG: + " << delta_up << " - " << delta_down << std::endl;
+
+    //second vary eff_MHT (except when evaluating SB number for ttbar estimate)
+    float eff_MHT_up   = eff_MHT + eff_MHT_err[0];
+    estimate_up = eff_MHT_up*estimate_temp;
+    double delta_up2;
+    if( !(forTTbarEstimate) ) delta_up2 = (estimate_up - estimate);
+    else delta_up2 = 0;
+
+    float eff_MHT_down = eff_MHT - eff_MHT_err[1];
+    estimate_down = eff_MHT_down*estimate_temp;
+    double delta_down2;
+    if( !(forTTbarEstimate) ) delta_down2 = (estimate_down - estimate);
+    else delta_down2 = 0;
+    //std::cout << "TRIG2: + " << delta_up2 << " - " << delta_down2 << std::endl;
+
+    estimateerrTrigPlus  = sqrt(delta_up*delta_up + delta_up2*delta_up2);
+    estimateerrTrigMinus = sqrt(delta_down*delta_down + delta_down2*delta_down2);
+    //std::cout << "TrigError: + " << deltaEstimateTrigPlus << " - " << deltaEstimateTrigMinus << std::endl;
   }
 
   double closureStat2 = datamode? 0: jmt::errAoverB(SIG,SIGerr,estimate,estimateerr);
@@ -1040,29 +1080,35 @@ std::pair<double,double> anotherABCD( const SearchRegion & region, bool datamode
     sprintf(output,"%s & %s & %s & %s & %s & %s & $%f \\pm %f$ \\\\ ",name.Data(),
 	    jmt::format_nevents(B,Berr).Data(),jmt::format_nevents(A,Aerr).Data(),
 	    jmt::format_nevents(D,Derr).Data(),jmt::format_nevents(estimate,estimateerr).Data(),
-	    jmt::format_nevents(SIG,SIGerr).Data(),100*(estimate-SIG)/estimate,closureStat2*100);
-    
+	    jmt::format_nevents(SIG,SIGerr).Data(),100*(estimate-SIG)/estimate,closureStat2*100);    
+    cout<<output<<endl;
   }
   else {
-    if(reweightLSBdata_){
-      sprintf(output,"%s & $%f \\pm %f$ & %d & %s & %s   \\\\ %% %f +/- %f",name.Data(),
-	      RLSB_RW,dRLSB_RW,
-	      TMath::Nint(D), jmt::format_nevents(Dsub,Dsuberr).Data(),
-	      jmt::format_nevents(estimate,estimateerr).Data(),R0,R0err);
-      cout<<"(qcd) DATA\t";
-    }
-    else{
-      sprintf(output,"%s & %d & %d & %d & %s & %s   \\\\ %% %f +/- %f",name.Data(),
-	      TMath::Nint(B),TMath::Nint(A),
-	      TMath::Nint(D), jmt::format_nevents(Dsub,Dsuberr).Data(),
-	      jmt::format_nevents(estimate,estimateerr).Data(),R0,R0err);
-      cout<<"(qcd) DATA\t";
+    if(!(forTTbarEstimate)){
+      if(reweightLSBdata_){
+	sprintf(output,"%s & $%f \\pm %f$ & %d & %s & %s$^{+%.2f}_{-%.2f}$  \\\\ %% %f +/- %f",name.Data(),
+		RLSB_RW,dRLSB_RW,
+		TMath::Nint(D), jmt::format_nevents(Dsub,Dsuberr).Data(),
+		jmt::format_nevents(estimate,estimateerr).Data(),estimateerrTrigPlus,estimateerrTrigMinus,R0,R0err);
+	cout<<"(qcd) DATA\t";
+      }
+      else{
+	sprintf(output,"%s & %d & %d & %d & %s & %s$^{+%.2f}_{-%.2f}$   \\\\ %% %f +/- %f",name.Data(),
+		TMath::Nint(B),TMath::Nint(A),
+		TMath::Nint(D), jmt::format_nevents(Dsub,Dsuberr).Data(),
+		jmt::format_nevents(estimate,estimateerr).Data(),estimateerrTrigPlus,estimateerrTrigMinus,R0,R0err);
+	cout<<"(qcd) DATA\t";
+      }
+      cout<<output<<endl;
     }
   }
-  cout<<output<<endl;
-  
-  if (datamode)  return make_pair(estimate,estimateerr);
-  return make_pair( 100*sqrt(pow((SIG-estimate)/estimate,2) + pow(closureStat2,2)), 0); //estimate in denominator
+
+  std::vector<double> v_errors(3);
+  v_errors.push_back(estimateerr); 
+  v_errors.push_back(estimateerrTrigPlus);
+  v_errors.push_back(estimateerrTrigPlus);
+  if (datamode)  return make_pair(estimate,v_errors);
+  return make_pair( 100*sqrt(pow((SIG-estimate)/estimate,2) + pow(closureStat2,2)), v_errors); //estimate in denominator
 }
 
 
@@ -1122,15 +1168,15 @@ void runDataQCD2011(const bool forOwen=false) {
   assert(sbRegions_.size() == searchRegions_.size());
 
   //data structures to hold results
-  vector<std::pair<double,double> > n;
-  vector<std::pair<double,double> > subp;
-  vector<std::pair<double,double> > subm;
-
-  vector<std::pair<double,double> > sbp;
-  vector<std::pair<double,double> > sbm;
-
-  vector<std::pair<double,double> > lsbp;
-  vector<std::pair<double,double> > lsbm;
+  vector<std::pair<double,std::vector<double> > > n;
+  vector<std::pair<double,std::vector<double> > > subp;
+  vector<std::pair<double,std::vector<double> > > subm;
+			  
+  vector<std::pair<double,std::vector<double> > > sbp;
+  vector<std::pair<double,std::vector<double> > > sbm;
+			  
+  vector<std::pair<double,std::vector<double> > > lsbp;
+  vector<std::pair<double,std::vector<double> > > lsbm;
 
   cout<<" ==== Nominal data results === "<<endl;
   for (unsigned int i=0; i<sbRegions_.size(); i++) {
@@ -1152,14 +1198,14 @@ void runDataQCD2011(const bool forOwen=false) {
     subp.push_back( anotherABCD(sbRegions_[i],true,1.5));
     subp.push_back( anotherABCD(searchRegions_[i],true,1.5));
   }
-
+  
   //now do it again with -50% subtraction
   cout<<" subtraction -50% "<<endl;
   for (unsigned int i=0; i<sbRegions_.size(); i++) {
     subm.push_back( anotherABCD(sbRegions_[i],true,0.5));
     subm.push_back( anotherABCD(searchRegions_[i],true,0.5));
   }
-
+  
   cout<<" ==== systematics for MC subtraction ==== "<<endl;
   for (unsigned int j=0; j<n.size(); j++) {
     double var1 = 100*(n[j].first  -subp[j].first)/n[j].first;
@@ -1243,6 +1289,7 @@ void runDataQCD2011(const bool forOwen=false) {
       cout<<j<<"\t& $"<<qcdSystErrors["MCsub"].at(j)<<"$ & $"<<qcdSystErrors["Closure"].at(j)<<"$ & $"<<qcdSystErrors["SBshift"].at(j)<<"$ & $"<<qcdSystErrors["Total"].at(j)<< "$ \\\\"<< endl;
     }
   }
+  
 }
 
 //i don't like passing the index instead of the region itself, but it makes some things easier.
@@ -1269,7 +1316,10 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
   //this other guy before we do anything else (should make it a class!)
 
   double SBsubQCD =0,SBsubQCDerr=0,SBsubZ=0,SBsubZerr=0,SBsubMisc=0,SBsubMiscerr=0;
-  std::pair<double,double> SBsubQCDp;
+  double SBsubQCDTrigErrPlus=0, SBsubQCDTrigErrMinus=0;
+  std::pair<double,std::vector<double> > SBsubQCDp;
+  std::pair<double,std::vector<double> > SIGQCDp;
+  double SIGQCD=0, SIGQCDerr=0,SIGQCDTrigErrPlus=0,SIGQCDTrigErrMinus=0;
   if (datamode)  {
     //regions should only differ in the MET selection
     assert ( region.btagSelection == qcdsubregion.btagSelection);
@@ -1277,7 +1327,27 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
     //get the QCD estimate for the SB region
     SBsubQCDp = anotherABCD(qcdsubregion, datamode, 1 ,0,"==0",0,false,true) ;//set "forTTbarEstimate" flag to true
     SBsubQCD=SBsubQCDp.first;
-    SBsubQCDerr=SBsubQCDp.second;
+    SBsubQCDerr=SBsubQCDp.second.at(0);
+
+    //Need the uncertainty on the qcd component due to trigger efficiency
+    if(SBsubQCDp.second.size() < 3){ 
+      std::cout << "Not all errors stored in qcd SB estimate error vector. Exiting." << std::endl;
+      assert(0);
+    }
+    SBsubQCDTrigErrPlus = SBsubQCDp.second.at(1);
+    SBsubQCDTrigErrMinus = SBsubQCDp.second.at(2);
+
+    //for combining QCD and TTbar SIG estimate
+    SIGQCDp = anotherABCD(region, datamode, 1 ,0,"==0",0,false,true) ;//set "forTTbarEstimate" flag to true
+    if(SIGQCDp.second.size() < 3){ 
+      std::cout << "Not all errors stored in qcd SIG estimate error vector. Exiting." << std::endl;
+      assert(0);
+    }
+    SIGQCD=SIGQCDp.first;
+    SIGQCDerr=SIGQCDp.second.at(0);
+    SIGQCDTrigErrPlus  = SIGQCDp.second.at(1);
+    SIGQCDTrigErrMinus = SIGQCDp.second.at(2);
+
 
     if (mode.Contains("QCD")) {
        //SBsubQCDerr is the statistical error on the QCD in SB.
@@ -1434,7 +1504,8 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
   TCut failOther = "(((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && MT_Wlep>=0&&MT_Wlep<100)";
   TCut passOther = "nElectrons==0 && nMuons==0";
 
-  double A,B,D,SIG,Aerr,AerrMinus,Berr,BerrMinus,Derr,DerrMinus,SIGerr;
+  double A,B,D,SIG,Aerr,Berr,Derr,SIGerr;
+  //double AerrMinus,BerrMinus,DerrMinus;
   //A = SB, SL
   if (!datamode && (closureMode=="wtplus" || closureMode=="slonlywtplus")) {
     setSampleScaleFactor("WJets",1.5);
@@ -1468,16 +1539,14 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
   double D_temp = D, Derr_temp = Derr;
   if(useScaleFactors_ && datamode){
     A = A/eff_SL_SB_MHT;
-    Aerr = jmt::errAoverB(A_temp,Aerr_temp,eff_SL_SB_MHT,eff_SL_SB_MHT_err[0]);
-    AerrMinus = jmt::errAoverB(A_temp,Aerr_temp,eff_SL_SB_MHT,eff_SL_SB_MHT_err[1]);
-
-    Aerr = Aerr > AerrMinus ? Aerr: AerrMinus;
+    //Aerr = jmt::errAoverB(A_temp,Aerr_temp,eff_SL_SB_MHT,eff_SL_SB_MHT_err[0]);
+    //AerrMinus = jmt::errAoverB(A_temp,Aerr_temp,eff_SL_SB_MHT,eff_SL_SB_MHT_err[1]);
+    //Aerr = Aerr > AerrMinus ? Aerr: AerrMinus;
 
     D = D/eff_SL_MHT;
-    Derr = jmt::errAoverB(D_temp,Derr_temp,eff_SL_MHT,eff_SL_MHT_err[0]);
-    DerrMinus = jmt::errAoverB(D_temp,Derr_temp,eff_SL_MHT,eff_SL_MHT_err[1]);
-
-    Derr = Derr > DerrMinus ? Derr: DerrMinus;
+    //Derr = jmt::errAoverB(D_temp,Derr_temp,eff_SL_MHT,eff_SL_MHT_err[0]);
+    //DerrMinus = jmt::errAoverB(D_temp,Derr_temp,eff_SL_MHT,eff_SL_MHT_err[1]);
+    //Derr = Derr > DerrMinus ? Derr: DerrMinus;
   }
 
 
@@ -1517,10 +1586,9 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
   double B_temp = B, Berr_temp = Berr;
   if(useScaleFactors_ && datamode){
     B = B/eff_SB_MHT;
-    Berr = jmt::errAoverB(B_temp,Berr_temp,eff_SB_MHT,eff_SB_MHT_err[0]);
-    BerrMinus = jmt::errAoverB(B_temp,Berr_temp,eff_SB_MHT,eff_SB_MHT_err[1]);
-
-    Berr = Berr > BerrMinus ? Berr: BerrMinus;
+    //Berr = jmt::errAoverB(B_temp,Berr_temp,eff_SB_MHT,eff_SB_MHT_err[0]);
+    //BerrMinus = jmt::errAoverB(B_temp,Berr_temp,eff_SB_MHT,eff_SB_MHT_err[1]);
+    //Berr = Berr > BerrMinus ? Berr: BerrMinus;
   }
 
   //SIG
@@ -1538,16 +1606,110 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
   double estimate = num / A;
   double estimateerr= jmt::errAoverB(num,numerr,A,Aerr);
 
+  double estimate_temp = estimate, estimateerr_temp = estimateerr;
+  double estimateerrTrigPlus  = 0, estimateerrTrigMinus = 0;
+  double estimateerrTrigPlus_unscaled  = 0, estimateerrTrigMinus_unscaled = 0;
+
+  double estimateQCDANDTTbar=0, estimateerrQCDANDTTbar=0, 
+    estimateerrQCDANDTTbarTrigPlus=0, estimateerrQCDANDTTbarTrigMinus=0; 
+
   if(useScaleFactors_ && datamode){
-    double estimate_temp = estimate, estimateerr_temp = estimateerr;
-    double estimateerrMinus = 0;
-    estimate = eff_MHT*estimate_temp;
-    estimateerr = jmt::errAtimesB(estimate_temp, estimateerr_temp, eff_MHT, eff_MHT_err[0]);
-    estimateerrMinus = jmt::errAtimesB(estimate_temp, estimateerr_temp, eff_MHT, eff_MHT_err[1]);
-    //std::cout << "estimate: "<< estimate << "+" << estimateerr << "- " <<estimateerrMinus << std::endl;
     
+    //double estimateerrMinus = 0;
+    estimate = eff_MHT*estimate_temp;
+    //estimateerr = jmt::errAtimesB(estimate_temp, estimateerr_temp, eff_MHT, eff_MHT_err[0]);
+    // estimateerrMinus = jmt::errAtimesB(estimate_temp, estimateerr_temp, eff_MHT, eff_MHT_err[1]);
+    //std::cout << "estimate: "<< estimate << "+" << estimateerr << "- " <<estimateerrMinus << std::endl;
     //use the larger of the two as the error in the estimate
-    estimateerr = estimateerr > estimateerrMinus ? estimateerr: estimateerrMinus;
+    //estimateerr = estimateerr > estimateerrMinus ? estimateerr: estimateerrMinus;
+
+
+    //vary the trigger efficiencies by their statistical error to get trigger error on estimate
+    //first vary QCD trigger efficiency
+    float SBsubQCD_up   = SBsubQCD + SBsubQCDTrigErrPlus;
+    num = (B-SBsubMisc-SBsubQCD_up-SBsubZ)*D;
+    double estimate_up;
+    estimate_up = eff_MHT*num/A;
+    double delta_down = (estimate_up - estimate);    
+    estimate_up = num/A;
+    double delta_down_unscaled = (estimate_up - estimate_temp);    
+
+    float SBsubQCD_down   = SBsubQCD - SBsubQCDTrigErrMinus;
+    num = (B-SBsubMisc-SBsubQCD_down-SBsubZ)*D;
+    double estimate_down;
+    estimate_down= eff_MHT*num/A;
+    double delta_up = (estimate_down - estimate); 
+    estimate_down= num/A;
+    double delta_up_unscaled = (estimate_down - estimate_temp); 
+
+    //second vary eff_MHT   
+    float eff_MHT_up   = eff_MHT + eff_MHT_err[0];
+    estimate_up = eff_MHT_up*estimate_temp;
+    double delta_up2;
+    delta_up2 = (estimate_up - estimate);
+
+    float eff_MHT_down = eff_MHT - eff_MHT_err[1];
+    estimate_down = eff_MHT_down*estimate_temp;
+    double delta_down2;
+    delta_down2 = (estimate_down - estimate);
+
+    //third vary eff_SB_MHT
+    float eff_SB_MHT_up   = eff_SB_MHT + eff_SB_MHT_err[0];
+    double B_down = B_temp/eff_SB_MHT_up;
+    num = (B_down-SBsubMisc-SBsubQCD-SBsubZ)*D;
+    estimate_up = eff_MHT*num/A;
+    double delta_down3 = (estimate_up - estimate);    
+    estimate_up = num/A;
+    double delta_down3_unscaled = (estimate_up - estimate_temp);    
+
+    float eff_SB_MHT_down   = eff_SB_MHT - eff_SB_MHT_err[1];
+    double B_up = B_temp/eff_SB_MHT_down;
+    num = (B_up-SBsubMisc-SBsubQCD-SBsubZ)*D;
+    estimate_down = eff_MHT*num/A;
+    double delta_up3 = (estimate_down - estimate);    
+    estimate_down = num/A;
+    double delta_up3_unscaled = (estimate_down - estimate_temp);    
+
+
+    estimateerrTrigPlus  = sqrt(delta_up*delta_up + delta_up2*delta_up2 + delta_up3*delta_up3);
+    estimateerrTrigMinus = sqrt(delta_down*delta_down + delta_down2*delta_down2 + delta_down3*delta_down3);
+
+    estimateerrTrigPlus_unscaled  = sqrt(delta_up_unscaled*delta_up_unscaled + delta_up3_unscaled*delta_up3_unscaled);
+    estimateerrTrigMinus_unscaled = sqrt(delta_down_unscaled*delta_down_unscaled + delta_down3_unscaled*delta_down3_unscaled);
+
+
+    /////////////////////////////////
+    //combine QCD and ttbar estimates
+    /////////////////////////////////
+    estimateQCDANDTTbar = eff_MHT*(estimate_temp+SIGQCD);
+    estimateerrQCDANDTTbar = eff_MHT*sqrt(estimateerr_temp*estimateerr_temp + SIGQCDerr*SIGQCDerr);
+
+    //vary eff_MHT   
+    estimate_up = eff_MHT_up*(estimate_temp+SIGQCD);
+    double delta_qcdandttbar_up = (estimate_up - estimateQCDANDTTbar);
+    estimate_down = eff_MHT_down*(estimate_temp+SIGQCD);
+    double delta_qcdandttbar_down = (estimate_down - estimateQCDANDTTbar);
+
+    //vary qcd component
+    estimate_up = eff_MHT*(estimate_temp + (SIGQCD+SIGQCDTrigErrPlus) );
+    double delta_qcdandttbar_up2 = (estimate_up - estimateQCDANDTTbar);
+    estimate_down = eff_MHT*(estimate_temp + (SIGQCD-SIGQCDTrigErrMinus) );
+    double delta_qcdandttbar_down2 = (estimate_down - estimateQCDANDTTbar);
+
+    //vary ttbar component 
+    estimate_up = eff_MHT*( (estimate_temp+estimateerrTrigPlus_unscaled) + SIGQCD );
+    double delta_qcdandttbar_up3 = (estimate_up - estimateQCDANDTTbar);
+    estimate_down = eff_MHT*( (estimate_temp-estimateerrTrigMinus_unscaled) + SIGQCD );
+    double delta_qcdandttbar_down3 = (estimate_down - estimateQCDANDTTbar);
+
+    estimateerrQCDANDTTbarTrigPlus = sqrt( delta_qcdandttbar_up*delta_qcdandttbar_up 
+					   + delta_qcdandttbar_up2*delta_qcdandttbar_up2 
+					   + delta_qcdandttbar_up3*delta_qcdandttbar_up3 );
+
+    estimateerrQCDANDTTbarTrigMinus = sqrt( delta_qcdandttbar_down*delta_qcdandttbar_down 
+					   + delta_qcdandttbar_down2*delta_qcdandttbar_down2 
+					   + delta_qcdandttbar_down3*delta_qcdandttbar_down3 );
+
   }
 
 
@@ -1562,6 +1724,7 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
   name += region.owenId;
 
   char output[500];
+  char output2[500];
 
   //for the purpose of the print-out only, revert A,B,D back to the observed data counts
   if(useScaleFactors_ && datamode){
@@ -1585,12 +1748,18 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
 	    jmt::format_nevents(SIG,SIGerr).Data(), 100*(estimate-SIG)/estimate, 100*closureStat);
   }
   else {
-    sprintf(output,"ttbar DATA %s & %d & %d & %d & %s & %s  \\\\",name.Data(),
+    sprintf(output,"ttbar DATA %s & %d & %d & %d & %s & %s$^{+%.2f}_{-%.2f}$  \\\\",name.Data(),
 	    TMath::Nint(D),TMath::Nint(A),
 	    TMath::Nint(B), jmt::format_nevents(SBsubMisc+SBsubQCD+SBsubZ,suberr).Data(),
-	    jmt::format_nevents(estimate,estimateerr).Data());
+	    jmt::format_nevents(estimate,estimateerr).Data(),estimateerrTrigPlus,estimateerrTrigMinus);
+
+    sprintf(output2,"ttbar+QCD DATA %s & %s$^{+%.2f}_{-%.2f}$  \\\\",name.Data(),
+	    jmt::format_nevents(estimateQCDANDTTbar,estimateerrQCDANDTTbar).Data(),
+	    estimateerrQCDANDTTbarTrigPlus,estimateerrQCDANDTTbarTrigMinus);
+
   }
   cout<<output<<endl;
+  if(datamode) cout << output2 << endl;
 
   resetSampleScaleFactors();
 
