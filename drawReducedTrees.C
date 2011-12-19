@@ -627,9 +627,6 @@ std::pair<double,double> ABCD_njetRW(TString prescontrol, TString physcontrol, T
 std::pair<double,std::vector<double> > anotherABCD( const SearchRegion & region, bool datamode=false, float subscale=1,float SBshift=0, const TString LSBbsel="==0", float PVCorFactor = 0, bool doNjetRW = false, bool forTTbarEstimate=false) {
   //kind of awful, but we'll return the estimate for datamode=true but the closure test bias for datamode=false
   
-  /*
-    .L drawReducedTrees.C++
-  */
   doOverflowAddition(true);
   
   TString btagselection = region.btagSelection;
@@ -1192,18 +1189,18 @@ void runDataQCD2011(const bool forOwen=false) {
   */
   if (forOwen) return;
 
-  //now do it again with +50% subtraction
-  cout<<" subtraction +50% "<<endl;
+  //now do it again with +40% subtraction
+  cout<<" subtraction +40% "<<endl;
   for (unsigned int i=0; i<sbRegions_.size(); i++) {
-    subp.push_back( anotherABCD(sbRegions_[i],true,1.5));
-    subp.push_back( anotherABCD(searchRegions_[i],true,1.5));
+    subp.push_back( anotherABCD(sbRegions_[i],true,1.4));
+    subp.push_back( anotherABCD(searchRegions_[i],true,1.4));
   }
   
-  //now do it again with -50% subtraction
-  cout<<" subtraction -50% "<<endl;
+  //now do it again with -40% subtraction
+  cout<<" subtraction -40% "<<endl;
   for (unsigned int i=0; i<sbRegions_.size(); i++) {
-    subm.push_back( anotherABCD(sbRegions_[i],true,0.5));
-    subm.push_back( anotherABCD(searchRegions_[i],true,0.5));
+    subm.push_back( anotherABCD(sbRegions_[i],true,0.6));
+    subm.push_back( anotherABCD(searchRegions_[i],true,0.6));
   }
   
   cout<<" ==== systematics for MC subtraction ==== "<<endl;
@@ -1507,11 +1504,19 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
   double A,B,D,SIG,Aerr,Berr,Derr,SIGerr;
   //double AerrMinus,BerrMinus,DerrMinus;
   //A = SB, SL
-  if (!datamode && (closureMode=="wtplus" || closureMode=="slonlywtplus")) {
+  if (!datamode && (closureMode=="wtplus" )) {
+    setSampleScaleFactor("WJets",1.38);
+    setSampleScaleFactor("SingleTop",2);
+  }
+  else if (!datamode && (closureMode=="wtminus" )) {
+    setSampleScaleFactor("WJets",1-0.38);
+    setSampleScaleFactor("SingleTop",0);
+  }
+  else if (!datamode && ( closureMode=="slonlywtplus")) {
     setSampleScaleFactor("WJets",1.5);
     setSampleScaleFactor("SingleTop",1.5);
   }
-  else if (!datamode && (closureMode=="wtminus" || closureMode=="slonlywtminus")) {
+  else if (!datamode && (closureMode=="slonlywtminus")) {
     setSampleScaleFactor("WJets",0.5);
     setSampleScaleFactor("SingleTop",0.5);
   }
@@ -1843,10 +1848,13 @@ void runTtbarEstimate2011(const bool forOwen=false) {
   cout<<"Running closure tests"<<endl;
   for (unsigned int j=0; j<searchRegions_.size();j++) {
     double allsamples=fabs(slABCD(j)); //mix of samples
-    double ttbaronly=fabs(slABCD(j,false,"","justttbar")); //just ttbar
-    if(allsamples>ttbaronly)
-      closure.push_back(allsamples);
-    else closure.push_back(ttbaronly);
+    //    double ttbaronly=fabs(slABCD(j,false,"","justttbar")); //just ttbar
+    double wtup=fabs(slABCD(j,false,"","wtplus")); //vary W+t
+    double wtdown=fabs(slABCD(j,false,"","wtminus")); //vary W+t
+    //find the largest of the 3 and store it in allsamples
+    if (wtup > wtdown) wtdown = wtup;
+    if (wtdown > allsamples) allsamples=wtdown;
+    closure.push_back(allsamples);
   }
 
   ttbarClosureSyst.clear();
@@ -1888,7 +1896,7 @@ void printOwenSyst() {
     ofstream textfile(effoutput);
 
     textfile<<"sf_mc            "<<1<<endl;
-    textfile<<"sf_mc_err        "<<0.5<<endl;
+    textfile<<"sf_mc_err        "<<0.4<<endl;
     textfile<<"sf_qcd_sb        "<<1<<endl;
     textfile<<"sf_qcd_sb_err    "<<0.01*sqrt(pow(qcdSystErrors["Closure"].at(i),2)+pow(qcdSystErrors["SBshift"].at(i),2))<<endl;
     textfile<<"sf_qcd_sig       "<<1<<endl;
