@@ -2250,21 +2250,21 @@ other.
   if (useScaleFactors_) {
     usePUweight_=true;
     useHTeff_=true;
-    useMHTeff_=true;
+    useMHTeff_=false;
     currentConfig_=configDescriptions_.getCorrected(); //add JERbias
 
-    //The MET comparison plots for the AN had the b-tag SF stuff below commented out!
-    btagcut="1";   
-    if (btagselection=="ge2b") {
-      btagSFweight_="probge2";
-    }
-    else if (btagselection=="ge1b") {
-      btagSFweight_="probge1";
-    }
-    else if (btagselection=="ge3b") {
-      btagSFweight_="probge3";
-    }
-    else {assert(0);}
+    ////The MET comparison plots for the AN have the b-tag SF stuff below commented out!
+    //btagcut="1";   
+    //if (btagselection=="ge2b") {
+    //  btagSFweight_="probge2";
+    //}
+    //else if (btagselection=="ge1b") {
+    //  btagSFweight_="probge1";
+    //}
+    //else if (btagselection=="ge3b") {
+    //  btagSFweight_="probge3";
+    //}
+    //else {assert(0);}
   }
 
 
@@ -2274,6 +2274,22 @@ other.
   bool vb = true;
 
   if(samplename=="datamode"){
+
+    if(useScaleFactors_){ 
+      useMHTeff_=true;
+    
+      btagcut="1";   
+      if (btagselection=="ge2b") {
+	btagSFweight_="probge2";
+      }
+      else if (btagselection=="ge1b") {
+	btagSFweight_="probge1";
+      }
+      else if (btagselection=="ge3b") {
+	btagSFweight_="probge3";
+      }
+      else {assert(0);}
+    }
 
     resetSamples(); //use all samples
     setStackMode(true); //regular stack
@@ -2319,205 +2335,205 @@ other.
 
   }
   else{
-  //ge1b, Loose
-  //const int nvarbins=18;
-  //const float varbins[]={100, 120, 140, 160, 180, 200, 220, 240, 260, 280, 300, 320, 340, 360, 380, 400, 450, 500, 550}; //AN and PAS
+    //ge1b, Loose
+    //const int nvarbins=18;
+    //const float varbins[]={100, 120, 140, 160, 180, 200, 220, 240, 260, 280, 300, 320, 340, 360, 380, 400, 450, 500, 550}; //AN and PAS
 
-  //ge1b, Tight
-  //const int nvarbins=15;
-  //const float varbins[]={100, 120, 140, 160, 180, 200, 220, 240, 260, 280, 300, 350, 400, 450, 500, 550}; 
+    //ge1b, Tight
+    //const int nvarbins=15;
+    //const float varbins[]={100, 120, 140, 160, 180, 200, 220, 240, 260, 280, 300, 350, 400, 450, 500, 550}; 
   
-  //ge2b, Loose and Tight
-  const int nvarbins=15;
-  const float varbins[]={100, 125, 150, 175, 200, 225, 250, 275, 300, 350, 400, 450, 500, 550, 600, 650}; //AN and PAS 
-  //const int nvarbins=12;
-  //const float varbins[]={200, 225, 250, 275, 300, 350, 400, 450, 550,650,750, 850,950}; 
+    //ge2b, Loose and Tight
+    const int nvarbins=15;
+    const float varbins[]={100, 125, 150, 175, 200, 225, 250, 275, 300, 350, 400, 450, 500, 550, 600, 650}; //AN and PAS 
+    //const int nvarbins=12;
+    //const float varbins[]={200, 225, 250, 275, 300, 350, 400, 450, 550,650,750, 850,950}; 
 
-  doOverflowAddition(true);
+    doOverflowAddition(true);
 
-  setStackMode(false,true); //normalized
-  setColorScheme("nostack");
-  clearSamples();
-  addSample(samplename);
-  drawLegend(false);
-  doRatioPlot(false);
+    setStackMode(false,true); //normalized
+    setColorScheme("nostack");
+    clearSamples();
+    addSample(samplename);
+    drawLegend(false);
+    doRatioPlot(false);
 
-  doData(false);
+    doData(false);
 
-  TString sample;
-  if(samplename=="TTbarJets") sample = "ttbar";
-  else if(samplename=="WJets") sample = "wjets";
-  else if(samplename=="SingleTop") sample = "singletop";
+    TString sample;
+    if(samplename=="TTbarJets") sample = "ttbar";
+    else if(samplename=="WJets") sample = "wjets";
+    else if(samplename=="SingleTop") sample = "singletop";
 
-  selection_ =TCut("cutPV==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && minDeltaPhiN >= 4 && MT_Wlep>=0 && MT_Wlep<100")&&btagcut&&HTcut;
-  //selection_ =TCut("MET>=150 && cutPV==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && minDeltaPhiN >= 4")&&btagcut&&HTcut; //AN v5
-  var="MET"; xtitle="E_{T}^{miss} [GeV]";
-  //nbins = 40; low=100; high=550; 
-  nbins = 55; low=100; high=650; 
-  //nbins = 40; low=200; high=600; 
-  //nbins = 40; low=150; high=550; //AN v5
-  //nbins = 20; low=150; high=550;
-  //nbins = 16; low=150; high=550;
-  if(vb) drawPlots(var,nvarbins, varbins, xtitle,"Arbitrary units", "SBandSIG_MET_SL_"+sample+"_"+btagselection+"_"+HTselection);
-  else drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "SBandSIG_MET_SL_"+sample+"_"+btagselection+"_"+HTselection);
+    selection_ =TCut("cutPV==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && minDeltaPhiN >= 4 && MT_Wlep>=0 && MT_Wlep<100")&&btagcut&&HTcut;
+    //selection_ =TCut("MET>=150 && cutPV==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && minDeltaPhiN >= 4")&&btagcut&&HTcut; //AN v5
+    var="MET"; xtitle="E_{T}^{miss} [GeV]";
+    //nbins = 40; low=100; high=550; 
+    nbins = 55; low=100; high=650; 
+    //nbins = 40; low=200; high=600; 
+    //nbins = 40; low=150; high=550; //AN v5
+    //nbins = 20; low=150; high=550;
+    //nbins = 16; low=150; high=550;
+    if(vb) drawPlots(var,nvarbins, varbins, xtitle,"Arbitrary units", "SBandSIG_MET_SL_"+sample+"_"+btagselection+"_"+HTselection);
+    else drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "SBandSIG_MET_SL_"+sample+"_"+btagselection+"_"+HTselection);
 
-  ////////////////////////////////////////////////
-  //This part sets up the SIG/SB ratio computation
-  ////////////////////////////////////////////////
+    ////////////////////////////////////////////////
+    //This part sets up the SIG/SB ratio computation
+    ////////////////////////////////////////////////
 
-  //the lower boundary on the SB should be set to 200 GeV
-  int lowbin = hinteractive->FindBin(200);
-  int boundarybin_sb = 0, boundarybin_sig=0;
-  //the upper boundary on the SB should be set to 250 GeV
-  boundarybin_sb = hinteractive->FindBin(250);
+    //the lower boundary on the SB should be set to 200 GeV
+    int lowbin = hinteractive->FindBin(200);
+    int boundarybin_sb = 0, boundarybin_sig=0;
+    //the upper boundary on the SB should be set to 250 GeV
+    boundarybin_sb = hinteractive->FindBin(250);
 
-  //the lower boundary on the SR depends on the selection
-  if (HTselection=="Tight" && btagselection=="ge1b")  boundarybin_sig = hinteractive->FindBin(500);
-  else if (HTselection=="Tight" && btagselection=="ge2b")  boundarybin_sig = hinteractive->FindBin(300);
-  else boundarybin_sig = hinteractive->FindBin(250);
+    //the lower boundary on the SR depends on the selection
+    if (HTselection=="Tight" && btagselection=="ge1b")  boundarybin_sig = hinteractive->FindBin(500);
+    else if (HTselection=="Tight" && btagselection=="ge2b")  boundarybin_sig = hinteractive->FindBin(300);
+    else boundarybin_sig = hinteractive->FindBin(250);
 
-  //the upper boundary on the SR region should be the last bin on the plot
-  int highbin= hinteractive->GetNbinsX();
+    //the upper boundary on the SR region should be the last bin on the plot
+    int highbin= hinteractive->GetNbinsX();
 
 
-  ////////////////////////////////////////
-  //This part computes the SL SIG/SB ratio
-  ////////////////////////////////////////
+    ////////////////////////////////////////
+    //This part computes the SL SIG/SB ratio
+    ////////////////////////////////////////
 
-  double sl_sb_err=0, sl_sig_err=0;
-  double sl_sb = hinteractive->IntegralAndError(lowbin,boundarybin_sb-1,sl_sb_err);//integral from 200 to <250
-  double sl_sig = hinteractive->IntegralAndError(boundarybin_sig,highbin,sl_sig_err);//integral from e.g. 300 to last bin
-  double r_sl_sigoversb = sl_sig/sl_sb;
-  double r_sl_sigoversb_err = jmt::errAoverB(sl_sig,sl_sig_err,sl_sb,sl_sb_err);
+    double sl_sb_err=0, sl_sig_err=0;
+    double sl_sb = hinteractive->IntegralAndError(lowbin,boundarybin_sb-1,sl_sb_err);//integral from 200 to <250
+    double sl_sig = hinteractive->IntegralAndError(boundarybin_sig,highbin,sl_sig_err);//integral from e.g. 300 to last bin
+    double r_sl_sigoversb = sl_sig/sl_sb;
+    double r_sl_sigoversb_err = jmt::errAoverB(sl_sig,sl_sig_err,sl_sb,sl_sb_err);
 
-  std::cout << "SL: SB content= " << sl_sb << " +/- " << sl_sb_err << std::endl;
-  std::cout << "SL: SIG content= " << sl_sig << " +/- " << sl_sig_err << std::endl;
-  std::cout << "SL: SIG/SB ratio = " << r_sl_sigoversb << " +/- " << r_sl_sigoversb_err << std::endl;
+    std::cout << "SL: SB content= " << sl_sb << " +/- " << sl_sb_err << std::endl;
+    std::cout << "SL: SIG content= " << sl_sig << " +/- " << sl_sig_err << std::endl;
+    std::cout << "SL: SIG/SB ratio = " << r_sl_sigoversb << " +/- " << r_sl_sigoversb_err << std::endl;
 
-  r_sl = r_sl_sigoversb;
-  r_sl_err = r_sl_sigoversb_err;
+    r_sl = r_sl_sigoversb;
+    r_sl_err = r_sl_sigoversb_err;
   
-  TH1D* SLplot = (TH1D*)hinteractive->Clone("SLplot");
-  //now switch to the normal selection
-  selection_ =TCut("cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4")&&btagcut&&HTcut;
-  //selection_ =TCut("MET>=150 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4")&&btagcut&&HTcut;// AN v5
-  if(vb)drawPlots(var,nvarbins, varbins ,xtitle,"Arbitrary units", "SBandSIG_MET_normal_"+sample+"_"+btagselection+"_"+HTselection);
-  else drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "SBandSIG_MET_normal_"+sample+"_"+btagselection+"_"+HTselection);
-  TH1D* SIGplot = (TH1D*)hinteractive->Clone("SIGplot");
-  SLplot->SetLineColor(kRed);
-  SLplot->SetMarkerColor(kRed);
-  SLplot->Draw("SAME");
+    TH1D* SLplot = (TH1D*)hinteractive->Clone("SLplot");
+    //now switch to the normal selection
+    selection_ =TCut("cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4")&&btagcut&&HTcut;
+    //selection_ =TCut("MET>=150 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4")&&btagcut&&HTcut;// AN v5
+    if(vb)drawPlots(var,nvarbins, varbins ,xtitle,"Arbitrary units", "SBandSIG_MET_normal_"+sample+"_"+btagselection+"_"+HTselection);
+    else drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "SBandSIG_MET_normal_"+sample+"_"+btagselection+"_"+HTselection);
+    TH1D* SIGplot = (TH1D*)hinteractive->Clone("SIGplot");
+    SLplot->SetLineColor(kRed);
+    SLplot->SetMarkerColor(kRed);
+    SLplot->Draw("SAME");
   
-  thecanvas->SaveAs("METshape_"+sample+"_SLandStandard_"+btagselection+"_"+HTselection+".pdf");
+    thecanvas->SaveAs("METshape_"+sample+"_SLandStandard_"+btagselection+"_"+HTselection+".pdf");
 
 
-  ////////////////////////////////////////
-  //This part computes the nominal SIG/SB ratio
-  ////////////////////////////////////////
+    ////////////////////////////////////////
+    //This part computes the nominal SIG/SB ratio
+    ////////////////////////////////////////
 
-  double lv_sb_err=0, lv_sig_err=0;
-  double lv_sb = hinteractive->IntegralAndError(lowbin,boundarybin_sb-1,lv_sb_err);
-  double lv_sig = hinteractive->IntegralAndError(boundarybin_sig,highbin,lv_sig_err);
-  double r_lv_sigoversb = lv_sig/lv_sb;
-  double r_lv_sigoversb_err = jmt::errAoverB(lv_sig,lv_sig_err,lv_sb,lv_sb_err);
+    double lv_sb_err=0, lv_sig_err=0;
+    double lv_sb = hinteractive->IntegralAndError(lowbin,boundarybin_sb-1,lv_sb_err);
+    double lv_sig = hinteractive->IntegralAndError(boundarybin_sig,highbin,lv_sig_err);
+    double r_lv_sigoversb = lv_sig/lv_sb;
+    double r_lv_sigoversb_err = jmt::errAoverB(lv_sig,lv_sig_err,lv_sb,lv_sb_err);
 
-  std::cout << "LV: SB content= " << lv_sb << " +/- " << lv_sb_err << std::endl;
-  std::cout << "LV: SIG content= " << lv_sig << " +/- " << lv_sig_err << std::endl;
-  std::cout << "LV: SIG/SB ratio = " << r_lv_sigoversb << " +/- " << r_lv_sigoversb_err << std::endl;
+    std::cout << "LV: SB content= " << lv_sb << " +/- " << lv_sb_err << std::endl;
+    std::cout << "LV: SIG content= " << lv_sig << " +/- " << lv_sig_err << std::endl;
+    std::cout << "LV: SIG/SB ratio = " << r_lv_sigoversb << " +/- " << r_lv_sigoversb_err << std::endl;
 
-  r_nom = r_lv_sigoversb;
-  r_nom_err = r_lv_sigoversb_err;
+    r_nom = r_lv_sigoversb;
+    r_nom_err = r_lv_sigoversb_err;
 
-  //Hack to get it plotted with ratio plot
-  TCanvas* myC = 0;
-  myC = new TCanvas("myC", "myC", 600,700);
-  gStyle->SetPadBorderMode(0);
-  gStyle->SetFrameBorderMode(0);
-  Float_t small = 1e-5;
-  myC->Divide(1,2,small,small);
-  //myC->Divide(1,2);
-  //const float padding=0.01; const float ydivide=0.2;
-  const float padding=1e-5; const float ydivide=0.3;
-  myC->GetPad(1)->SetPad( padding, ydivide + padding, 1-padding, 1-padding);
-  myC->GetPad(2)->SetPad( padding, padding, 1-padding, ydivide-padding);
-  myC->GetPad(1)->SetLogy(1);
-  myC->GetPad(1)->SetRightMargin(.05);
-  myC->GetPad(2)->SetRightMargin(.05);
-  myC->GetPad(2)->SetBottomMargin(.4);
-  myC->GetPad(1)->Modified();
-  myC->GetPad(2)->Modified();
-  myC->cd(1);
-  gPad->SetBottomMargin(small);
-  gPad->Modified();
+    //Hack to get it plotted with ratio plot
+    TCanvas* myC = 0;
+    myC = new TCanvas("myC", "myC", 600,700);
+    gStyle->SetPadBorderMode(0);
+    gStyle->SetFrameBorderMode(0);
+    Float_t small = 1e-5;
+    myC->Divide(1,2,small,small);
+    //myC->Divide(1,2);
+    //const float padding=0.01; const float ydivide=0.2;
+    const float padding=1e-5; const float ydivide=0.3;
+    myC->GetPad(1)->SetPad( padding, ydivide + padding, 1-padding, 1-padding);
+    myC->GetPad(2)->SetPad( padding, padding, 1-padding, ydivide-padding);
+    myC->GetPad(1)->SetLogy(1);
+    myC->GetPad(1)->SetRightMargin(.05);
+    myC->GetPad(2)->SetRightMargin(.05);
+    myC->GetPad(2)->SetBottomMargin(.4);
+    myC->GetPad(1)->Modified();
+    myC->GetPad(2)->Modified();
+    myC->cd(1);
+    gPad->SetBottomMargin(small);
+    gPad->Modified();
 
-  renormBins(SIGplot,-1);
-  renormBins(SLplot,-1);
-  SIGplot->GetYaxis()->SetTitleSize(0.07);
-  SIGplot->GetYaxis()->SetTitleOffset(1.);
-  SIGplot->Draw("HIST E");
-  SLplot->SetMarkerStyle(kFullTriangleUp);
-  SLplot->Draw("HIST E SAME");
-  TH1D* myRatio;
-  if(vb) myRatio = new TH1D("ratio", "ratio", nvarbins, varbins);
-  else  myRatio = new TH1D("ratio", "ratio", nbins,low,high);
-  myRatio->Sumw2();
-  myRatio->SetLineColor(kBlack);
-  myRatio->SetMarkerColor(kBlack);
-  myRatio->Divide(SIGplot,SLplot);
-  myRatio->SetMinimum(0);
-  myRatio->SetMaximum(2.5);
-  myRatio->GetYaxis()->SetNdivisions(200 + int(ratioMax-ratioMin)+1);    //set ticks ; to be seen if this really works
-  //myRatio->GetYaxis()->SetNdivisions(400);
-  myRatio->GetYaxis()->SetLabelSize(0.1); //make y label bigger
-  myRatio->GetXaxis()->SetLabelSize(0.1); //make y label bigger
-  myRatio->GetXaxis()->SetTitleOffset(1.1);
-  myRatio->GetXaxis()->SetTitle("E_{T}^{miss} [GeV]"); //make y label bigger
-  myRatio->GetXaxis()->SetLabelSize(0.12);
-  myRatio->GetXaxis()->SetLabelOffset(0.04);
-  myRatio->GetXaxis()->SetTitleSize(0.16);
-  myRatio->GetYaxis()->SetTitle("Ratio ");
-  myRatio->GetYaxis()->SetTitleSize(0.16);
-  myRatio->GetYaxis()->SetTitleOffset(.43);
-  myC->cd(2);
-  gPad->SetTopMargin(small);
-  gPad->SetTickx();
-  gPad->Modified();
+    renormBins(SIGplot,-1);
+    renormBins(SLplot,-1);
+    SIGplot->GetYaxis()->SetTitleSize(0.07);
+    SIGplot->GetYaxis()->SetTitleOffset(1.);
+    SIGplot->Draw("HIST E");
+    SLplot->SetMarkerStyle(kFullTriangleUp);
+    SLplot->Draw("HIST E SAME");
+    TH1D* myRatio;
+    if(vb) myRatio = new TH1D("ratio", "ratio", nvarbins, varbins);
+    else  myRatio = new TH1D("ratio", "ratio", nbins,low,high);
+    myRatio->Sumw2();
+    myRatio->SetLineColor(kBlack);
+    myRatio->SetMarkerColor(kBlack);
+    myRatio->Divide(SIGplot,SLplot);
+    myRatio->SetMinimum(0);
+    myRatio->SetMaximum(2.5);
+    myRatio->GetYaxis()->SetNdivisions(200 + int(ratioMax-ratioMin)+1);    //set ticks ; to be seen if this really works
+    //myRatio->GetYaxis()->SetNdivisions(400);
+    myRatio->GetYaxis()->SetLabelSize(0.1); //make y label bigger
+    myRatio->GetXaxis()->SetLabelSize(0.1); //make y label bigger
+    myRatio->GetXaxis()->SetTitleOffset(1.1);
+    myRatio->GetXaxis()->SetTitle("E_{T}^{miss} [GeV]"); //make y label bigger
+    myRatio->GetXaxis()->SetLabelSize(0.12);
+    myRatio->GetXaxis()->SetLabelOffset(0.04);
+    myRatio->GetXaxis()->SetTitleSize(0.16);
+    myRatio->GetYaxis()->SetTitle("Ratio ");
+    myRatio->GetYaxis()->SetTitleSize(0.16);
+    myRatio->GetYaxis()->SetTitleOffset(.43);
+    myC->cd(2);
+    gPad->SetTopMargin(small);
+    gPad->SetTickx();
+    gPad->Modified();
 
-  myRatio->Draw();
-  TLine* myLine;
-  myLine = new TLine(low, 1, high, 1);
-  myLine->Draw();
-  myC->cd(1);
-  //TLatex* mytext = new TLatex(3.570061,23.08044,"CMS Preliminary");
-  TLatex* mytext = new TLatex(3.570061,23.08044,"CMS Simulation");
-  mytext->SetNDC();
-  mytext->SetTextAlign(13);
-  mytext->SetX(0.6);
-  mytext->SetY(0.9);
-  mytext->SetTextFont(42);
-  mytext->SetTextSizePixels(24);
-  mytext->Draw();
-  TLegend* myLegend = new TLegend(0.615,0.84,0.81,0.7);
-  myLegend->SetFillColor(0);
-  myLegend->SetBorderSize(0);
-  myLegend->SetLineStyle(0);
-  myLegend->SetTextFont(42);
-  myLegend->SetFillStyle(0);
-  myLegend->SetTextSize(0.045);
-  if(sample=="ttbar"){
+    myRatio->Draw();
+    TLine* myLine;
+    myLine = new TLine(low, 1, high, 1);
+    myLine->Draw();
+    myC->cd(1);
+    //TLatex* mytext = new TLatex(3.570061,23.08044,"CMS Preliminary");
+    TLatex* mytext = new TLatex(3.570061,23.08044,"CMS Simulation");
+    mytext->SetNDC();
+    mytext->SetTextAlign(13);
+    mytext->SetX(0.6);
+    mytext->SetY(0.9);
+    mytext->SetTextFont(42);
+    mytext->SetTextSizePixels(24);
+    mytext->Draw();
+    TLegend* myLegend = new TLegend(0.615,0.84,0.81,0.7);
+    myLegend->SetFillColor(0);
+    myLegend->SetBorderSize(0);
+    myLegend->SetLineStyle(0);
+    myLegend->SetTextFont(42);
+    myLegend->SetFillStyle(0);
+    myLegend->SetTextSize(0.045);
+    if(sample=="ttbar"){
     myLegend->AddEntry(SIGplot,"t#bar{t}, 0 leptons", "lp");
     myLegend->AddEntry(SLplot, "t#bar{t}, 1 lepton", "lp");
-  }
-  else if(sample=="wjets"){
-    myLegend->AddEntry(SIGplot,"wjets, 0 leptons", "lp");
-    myLegend->AddEntry(SLplot, "wjets, 1 lepton", "lp");
-  }
-  else if(sample=="singletop"){
-    myLegend->AddEntry(SIGplot,"single-top, 0 leptons", "lp");
-    myLegend->AddEntry(SLplot, "single-top, 1 lepton", "lp");
-  }
-  myLegend->Draw();
-  myC->Print("METshape_logAndRatio_"+sample+"_SLandStandard_"+btagselection+"_"+HTselection+".pdf");
+    }
+    else if(sample=="wjets"){
+      myLegend->AddEntry(SIGplot,"wjets, 0 leptons", "lp");
+      myLegend->AddEntry(SLplot, "wjets, 1 lepton", "lp");
+    }
+    else if(sample=="singletop"){
+      myLegend->AddEntry(SIGplot,"single-top, 0 leptons", "lp");
+      myLegend->AddEntry(SLplot, "single-top, 1 lepton", "lp");
+    }
+    myLegend->Draw();
+    myC->Print("METshape_logAndRatio_"+sample+"_SLandStandard_"+btagselection+"_"+HTselection+".pdf");
 
   }
 }
@@ -2600,7 +2616,7 @@ void makeTTbarWMETPlots() {
     if(i==0) std::cout << "TTbarJets" << std::endl;
     if(i==5) std::cout << "WJets" << std::endl;
     if(i==10) std::cout << "SingleTop" << std::endl;
-    std::cout << " & "<< selections.at(i) <<" & " << ratios_nom.at(i) << "$\\pm$" << ratios_nom_err.at(i) << "\t & " << ratios_sl.at(i) << "$\\pm$" << ratios_sl_err.at(i) << " \\\\" << std::endl; 
+    std::cout << " & "<< selections.at(i) <<" & " << setprecision(3) << ratios_nom.at(i) << "$\\pm$" << ratios_nom_err.at(i) << "\t & " << ratios_sl.at(i) << "$\\pm$" << ratios_sl_err.at(i) << " \\\\" << std::endl; 
   }
    
   //print out the SIG/SB ratio in the SL region for data and full MC
