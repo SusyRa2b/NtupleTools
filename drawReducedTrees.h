@@ -148,6 +148,9 @@ public:
 
   TString owenId;
   bool isSIG;
+
+  TString id() const;
+
 };
 SearchRegion::SearchRegion(TString btagSel,TString htSel,TString metSel,TString oId,bool isSig) : 
   htSelection(htSel),metSelection(metSel),btagSelection(btagSel),owenId(oId),isSIG(isSig) {}
@@ -155,6 +158,13 @@ SearchRegion::~SearchRegion() {}
 void SearchRegion::Print() const {
   cout<<" == "<<btagSelection<<" "<<htSelection<<" "<<metSelection<<endl;
 
+}
+
+TString SearchRegion::id() const {
+
+  TString theid= btagSelection;
+  theid += owenId;
+  return theid;
 }
 
 std::vector<SearchRegion > searchRegions_;
@@ -487,6 +497,66 @@ struct OwenData {
 
   //don't need DataLumi...that's just lumiScale_
 } ;
+
+
+
+struct texData {
+
+  double value;
+  double statError;
+  double systError;
+  double trigErrorPlus;
+  double trigErrorMinus;
+
+};
+
+//  btag+owenId  background cat
+map<TString, map<TString, texData> > resultsMap_;
+
+
+void addResults(TString id, TString addcat1, TString addcat2, TString newcat) {
+
+  resultsMap_[id][newcat].value = resultsMap_[id][addcat1].value  + resultsMap_[id][addcat2].value ;
+  resultsMap_[id][newcat].statError = sqrt(pow(resultsMap_[id][addcat1].statError,2)  + pow(resultsMap_[id][addcat2].statError,2));
+  resultsMap_[id][newcat].systError = sqrt(pow(resultsMap_[id][addcat1].systError,2)  + pow(resultsMap_[id][addcat2].systError,2));
+
+  const float tol=0.001;
+
+  bool hastrig1= resultsMap_[id][addcat1].trigErrorPlus >tol || resultsMap_[id][addcat1].trigErrorMinus >tol;
+  bool hastrig2= resultsMap_[id][addcat2].trigErrorPlus >tol || resultsMap_[id][addcat2].trigErrorMinus >tol;
+  //it's not ok to add trigger errors because they will be correlated
+  assert( !(hastrig1 && hastrig2));
+
+  if (hastrig1) {
+    resultsMap_[id][newcat].trigErrorPlus = resultsMap_[id][addcat1].trigErrorPlus;
+    resultsMap_[id][newcat].trigErrorMinus = resultsMap_[id][addcat1].trigErrorMinus;
+  }
+  else if (hastrig2) {
+    resultsMap_[id][newcat].trigErrorPlus = resultsMap_[id][addcat2].trigErrorPlus;
+    resultsMap_[id][newcat].trigErrorMinus = resultsMap_[id][addcat2].trigErrorMinus;
+  }
+  else {
+    resultsMap_[id][newcat].trigErrorPlus = 0;
+    resultsMap_[id][newcat].trigErrorMinus = 0;
+  }
+
+}
+
+TString formatLatex(const texData & data) {
+  //in principle we should adapt format_nevents() but for now do this
+
+  const float tol=0.001;
+
+  char out[50];
+  if (data.trigErrorPlus <tol && data.trigErrorMinus<tol)  sprintf(out,"$%f \\pm %f \\pm %f$",data.value,data.statError,data.systError);
+  else {
+    sprintf(out,"$%f \\pm %f^{+%f}_{-%f}$",data.value,data.statError,
+	    sqrt(data.systError*data.systError + data.trigErrorPlus*data.trigErrorPlus),
+	    sqrt(data.systError*data.systError + data.trigErrorMinus*data.trigErrorMinus));
+  }
+
+  return TString(out);
+}
 
 
 //ok, i would rather implement this as a C++ style class instead of a C style function, but for now I'll do the easiest thing
