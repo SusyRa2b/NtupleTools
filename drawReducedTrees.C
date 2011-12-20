@@ -1100,10 +1100,10 @@ std::pair<double,std::vector<double> > anotherABCD( const SearchRegion & region,
     }
   }
 
-  std::vector<double> v_errors(3);
+  std::vector<double> v_errors;
   v_errors.push_back(estimateerr); 
   v_errors.push_back(estimateerrTrigPlus);
-  v_errors.push_back(estimateerrTrigPlus);
+  v_errors.push_back(estimateerrTrigMinus);
   if (datamode)  return make_pair(estimate,v_errors);
   return make_pair( 100*sqrt(pow((SIG-estimate)/estimate,2) + pow(closureStat2,2)), v_errors); //estimate in denominator
 }
@@ -1178,7 +1178,12 @@ void runDataQCD2011(const bool forOwen=false) {
   cout<<" ==== Nominal data results === "<<endl;
   for (unsigned int i=0; i<sbRegions_.size(); i++) {
     n.push_back( anotherABCD(sbRegions_[i],true));
-    n.push_back( anotherABCD(searchRegions_[i],true));
+    std::pair<double,std::vector<double> > qcdresult= anotherABCD(searchRegions_[i],true);
+    n.push_back( qcdresult);
+    resultsMap_[ searchRegions_[i].id()]["QCD"].value = qcdresult.first;
+    resultsMap_[ searchRegions_[i].id()]["QCD"].statError = qcdresult.second.at(0);
+    resultsMap_[ searchRegions_[i].id()]["QCD"].trigErrorPlus = qcdresult.second.at(1);
+    resultsMap_[ searchRegions_[i].id()]["QCD"].trigErrorMinus = qcdresult.second.at(2);
   }
   cout<<" =END Nominal data results === "<<endl;
 
@@ -1285,6 +1290,12 @@ void runDataQCD2011(const bool forOwen=false) {
       qcdSystErrors["Total"].push_back( sqrt( pow(qcdSystErrors["MCsub"].at(j),2) +  pow(qcdSystErrors["Closure"].at(j),2)+ pow(qcdSystErrors["SBshift"].at(j),2)));
       cout<<j<<"\t& $"<<qcdSystErrors["MCsub"].at(j)<<"$ & $"<<qcdSystErrors["Closure"].at(j)<<"$ & $"<<qcdSystErrors["SBshift"].at(j)<<"$ & $"<<qcdSystErrors["Total"].at(j)<< "$ \\\\"<< endl;
     }
+
+    //here is where the terrible design comes back and bites me....
+    //we only want to fill this data for the SIG regions, but the loop over the elements of n alternates between sig and sb
+    //the only way to deal with it is to know that the *odd* elements are SIG
+    if (j%2!=0) resultsMap_[ searchRegions_[(j-1)/2].id()]["QCD"].systError = 0.01*qcdSystErrors["Total"].at(j)*resultsMap_[ searchRegions_[(j-1)/2].id()]["QCD"].value;
+    //note that the qcdSystErrors is in %, so I need to convert to a number of events here
   }
   
 }
@@ -1292,7 +1303,7 @@ void runDataQCD2011(const bool forOwen=false) {
 //i don't like passing the index instead of the region itself, but it makes some things easier.
 //this code is all around a big kludge...
 //double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const TString & mode="", const bool justttbar=false ) {
-double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const TString & mode="", const TString & closureMode="nominal" ) {
+double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const TString & mode="", const TString & closureMode="nominal", bool fillResultsGlobal=false ) {
   //in datamode, return the estimate; in non-datamode, return the Closure Test results (true-pred)/pred
 
   assert( closureMode=="nominal" || closureMode=="justttbar" || closureMode=="wtplus" ||closureMode=="wtminus" ||closureMode=="slonlywtplus" ||closureMode=="slonlywtminus" ||closureMode=="0lonlywtplus" ||closureMode=="0lonlywtminus");
@@ -1762,6 +1773,18 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
 	    jmt::format_nevents(estimateQCDANDTTbar,estimateerrQCDANDTTbar).Data(),
 	    estimateerrQCDANDTTbarTrigPlus,estimateerrQCDANDTTbarTrigMinus);
 
+    //stuff results into the resultsMap_
+    if (fillResultsGlobal) {
+      resultsMap_[ region.id()]["ttbar"].value = estimate;
+      resultsMap_[ region.id()]["ttbar"].statError = estimateerr;
+      resultsMap_[ region.id()]["ttbar"].trigErrorPlus = estimateerrTrigPlus;
+      resultsMap_[ region.id()]["ttbar"].trigErrorMinus = estimateerrTrigMinus;
+      
+      resultsMap_[ region.id()]["ttbarQCD"].value = estimateQCDANDTTbar;
+      resultsMap_[ region.id()]["ttbarQCD"].statError = estimateerrQCDANDTTbar;
+      resultsMap_[ region.id()]["ttbarQCD"].trigErrorPlus = estimateerrQCDANDTTbarTrigPlus;
+      resultsMap_[ region.id()]["ttbarQCD"].trigErrorMinus = estimateerrQCDANDTTbarTrigMinus;
+    }
   }
   cout<<output<<endl;
   if(datamode) cout << output2 << endl;
@@ -1807,7 +1830,9 @@ void runTtbarEstimate2011(const bool forOwen=false) {
   std::vector<double> mc;
   //  int i=0;
   cout<<"nominal ttbar"<<endl;
-  for (unsigned int j=0; j<searchRegions_.size();j++) ttw.push_back(slABCD(j,true));
+  //this bool set to true at the end tells it to fill the global data for tex output
+  //this is not a pretty solution
+  for (unsigned int j=0; j<searchRegions_.size();j++) ttw.push_back(slABCD(j,true,"","nominal",true));
  
   if (forOwen) return;
 
@@ -1864,6 +1889,15 @@ void runTtbarEstimate2011(const bool forOwen=false) {
     double totalsyst = sqrt(closure[j]*closure[j] + qcd[j]*qcd[j] + znn[j]*znn[j] + mc[j]*mc[j]);
     cout<<j<<"\t & $"<<closure[j]<<"$ & $"<<qcd[j]<<"$ & $"<<znn[j]<<"$ & $"<<mc[j]<<"$ & $"<<totalsyst << "$ \\\\ " << endl;
     ttbarClosureSyst.push_back(closure[j]);
+
+    //i have gone into slABCD and filled the global with central values and stat errors directly inside
+    //but syst errors must be done here (note that they are in % so we must convert to events)
+    resultsMap_[ searchRegions_[j].id()]["ttbar"].systError = 0.01*totalsyst*resultsMap_[ searchRegions_[j].id()]["ttbar"].value;
+    //again, all errors except stat have been filled in slABCD
+    //these are uncorrelated so let's just add them in quadrature
+    resultsMap_[ searchRegions_[j].id()]["ttbarQCD"].systError = sqrt(
+								      pow(resultsMap_[ searchRegions_[j].id()]["ttbar"].systError,2) 
+								      + pow(resultsMap_[searchRegions_[j].id()]["QCD"].systError,2));
   }
 
 
@@ -1905,6 +1939,113 @@ void printOwenSyst() {
     textfile<<"sf_ttwj_sig_err  "<<0.01*ttbarClosureSyst[i]<<endl;
     textfile.close();
   }
+
+  cout<<" == Last but not least, output for Results.tex =="<<endl;
+  resultsMap_["ge1bLoose"]["ttbarCC"].value = 319;
+  resultsMap_["ge1bLoose"]["ttbarCC"].statError = 31;
+  resultsMap_["ge1bLoose"]["ttbarCC"].systError = 30;
+  resultsMap_["ge1bLoose"]["ttbarCC"].trigErrorPlus = 0;
+  resultsMap_["ge1bLoose"]["ttbarCC"].trigErrorMinus = 0;
+
+  resultsMap_["ge1bTight"]["ttbarCC"].value = 4.9;
+  resultsMap_["ge1bTight"]["ttbarCC"].statError = 2.9;
+  resultsMap_["ge1bTight"]["ttbarCC"].systError = 2.1;
+  resultsMap_["ge1bTight"]["ttbarCC"].trigErrorPlus = 0;
+  resultsMap_["ge1bTight"]["ttbarCC"].trigErrorMinus = 0;
+
+  resultsMap_["ge2bLoose"]["ttbarCC"].value = 121;
+  resultsMap_["ge2bLoose"]["ttbarCC"].statError = 17;
+  resultsMap_["ge2bLoose"]["ttbarCC"].systError = 15;
+  resultsMap_["ge2bLoose"]["ttbarCC"].trigErrorPlus = 0;
+  resultsMap_["ge2bLoose"]["ttbarCC"].trigErrorMinus = 0;
+
+  resultsMap_["ge2bTight"]["ttbarCC"].value = 20.7;
+  resultsMap_["ge2bTight"]["ttbarCC"].statError = 6.8;
+  resultsMap_["ge2bTight"]["ttbarCC"].systError = 3.8;
+  resultsMap_["ge2bTight"]["ttbarCC"].trigErrorPlus = 0;
+  resultsMap_["ge2bTight"]["ttbarCC"].trigErrorMinus = 0;
+
+  resultsMap_["ge3bLoose"]["ttbarCC"].value = 13.3;
+  resultsMap_["ge3bLoose"]["ttbarCC"].statError = 6.2;
+  resultsMap_["ge3bLoose"]["ttbarCC"].systError = 2.7;
+  resultsMap_["ge3bLoose"]["ttbarCC"].trigErrorPlus = 0;
+  resultsMap_["ge3bLoose"]["ttbarCC"].trigErrorMinus = 0;
+
+  resultsMap_["ge1bLoose"]["Znn"].value = 132;
+  resultsMap_["ge1bLoose"]["Znn"].statError = 17;
+  resultsMap_["ge1bLoose"]["Znn"].systError = 23;
+  resultsMap_["ge1bLoose"]["Znn"].trigErrorPlus = 0;
+  resultsMap_["ge1bLoose"]["Znn"].trigErrorMinus = 0;
+
+  resultsMap_["ge1bTight"]["Znn"].value = 2.5;
+  resultsMap_["ge1bTight"]["Znn"].statError = 1.9;
+  resultsMap_["ge1bTight"]["Znn"].systError = 0.5;
+  resultsMap_["ge1bTight"]["Znn"].trigErrorPlus = 0;
+  resultsMap_["ge1bTight"]["Znn"].trigErrorMinus = 0;
+
+  resultsMap_["ge2bLoose"]["Znn"].value = 23;
+  resultsMap_["ge2bLoose"]["Znn"].statError = 3.5;
+  resultsMap_["ge2bLoose"]["Znn"].systError = 11.5;
+  resultsMap_["ge2bLoose"]["Znn"].trigErrorPlus = 0;
+  resultsMap_["ge2bLoose"]["Znn"].trigErrorMinus = 0;
+
+  resultsMap_["ge2bTight"]["Znn"].value = 4.6;
+  resultsMap_["ge2bTight"]["Znn"].statError = 1.4;
+  resultsMap_["ge2bTight"]["Znn"].systError = 2.4;
+  resultsMap_["ge2bTight"]["Znn"].trigErrorPlus = 0;
+  resultsMap_["ge2bTight"]["Znn"].trigErrorMinus = 0;
+
+  resultsMap_["ge3bLoose"]["Znn"].value = 3;
+  resultsMap_["ge3bLoose"]["Znn"].statError = 0.9;
+  resultsMap_["ge3bLoose"]["Znn"].systError = 3.3;
+  resultsMap_["ge3bLoose"]["Znn"].trigErrorPlus = 0;
+  resultsMap_["ge3bLoose"]["Znn"].trigErrorMinus = 0;
+
+  cout<<"    & 1BL & 1BT & 2BL & 2BT & 3B \\"<<endl;
+  //we'll do this in a C way instead of a C++ way
+  cout<<"QCD & "
+      <<formatLatex( resultsMap_["ge1bLoose"]["QCD"])<<" & "
+      <<formatLatex( resultsMap_["ge1bTight"]["QCD"])<<" & "
+      <<formatLatex( resultsMap_["ge2bLoose"]["QCD"])<<" & "
+      <<formatLatex( resultsMap_["ge2bTight"]["QCD"])<<" & "
+      <<formatLatex( resultsMap_["ge3bLoose"]["QCD"])<<" \\ "<<endl;
+
+  cout<<"\\ttbar/W+jets & "
+      <<formatLatex( resultsMap_["ge1bLoose"]["ttbar"])<<" & "
+      <<formatLatex( resultsMap_["ge1bTight"]["ttbar"])<<" & "
+      <<formatLatex( resultsMap_["ge2bLoose"]["ttbar"])<<" & "
+      <<formatLatex( resultsMap_["ge2bTight"]["ttbar"])<<" & "
+      <<formatLatex( resultsMap_["ge3bLoose"]["ttbar"])<<" \\ "<<endl;
+
+  cout<<"\\ttbar/W+jets CC & "
+      <<formatLatex( resultsMap_["ge1bLoose"]["ttbarCC"])<<" & "
+      <<formatLatex( resultsMap_["ge1bTight"]["ttbarCC"])<<" & "
+      <<formatLatex( resultsMap_["ge2bLoose"]["ttbarCC"])<<" & "
+      <<formatLatex( resultsMap_["ge2bTight"]["ttbarCC"])<<" & "
+      <<formatLatex( resultsMap_["ge3bLoose"]["ttbarCC"])<<" \\ "<<endl;
+
+  cout<<"\\Zinvisible & "
+      <<formatLatex( resultsMap_["ge1bLoose"]["Znn"])<<" & "
+      <<formatLatex( resultsMap_["ge1bTight"]["Znn"])<<" & "
+      <<formatLatex( resultsMap_["ge2bLoose"]["Znn"])<<" & "
+      <<formatLatex( resultsMap_["ge2bTight"]["Znn"])<<" & "
+      <<formatLatex( resultsMap_["ge3bLoose"]["Znn"])<<" \\ "<<endl;
+
+  cout<<" \\hline"<<endl;
+
+  addResults("ge1bLoose","ttbarQCD","Znn","total");
+  addResults("ge1bTight","ttbarQCD","Znn","total");
+  addResults("ge2bLoose","ttbarQCD","Znn","total");
+  addResults("ge2bTight","ttbarQCD","Znn","total");
+  addResults("ge3bLoose","ttbarQCD","Znn","total");
+
+  cout<<"Total SM & "
+      <<formatLatex( resultsMap_["ge1bLoose"]["total"])<<" & "
+      <<formatLatex( resultsMap_["ge1bTight"]["total"])<<" & "
+      <<formatLatex( resultsMap_["ge2bLoose"]["total"])<<" & "
+      <<formatLatex( resultsMap_["ge2bTight"]["total"])<<" & "
+      <<formatLatex( resultsMap_["ge3bLoose"]["total"])<<" \\ "<<endl;
+
 
 }
 
