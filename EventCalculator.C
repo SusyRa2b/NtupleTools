@@ -4749,7 +4749,11 @@ int EventCalculator::findTop(int& top1, int& top2)
 int EventCalculator::WDecayType(const int Wparent,int& Wdaughter)
 {
   int thisParticle = TMath::Nint(myGenParticles->at(Wparent).firstDaughter); 
-  int maxParticle = TMath::Nint(myGenParticles->at(Wparent).lastDaughter)+1;
+  //int maxParticle = TMath::Nint(myGenParticles->at(Wparent).lastDaughter)+1;
+  int maxParticle = TMath::Nint(myGenParticles->at(Wparent).firstDaughter)+2;//look at first two daughters only
+  //for(int i = thisParticle; i < maxParticle ; i++){
+  //  std::cout << "\t " << i << ", id = " << TMath::Nint(myGenParticles->at(i).pdgId) << std::endl;
+  //}
   if(thisParticle==-1||maxParticle==0) return -1;
   for(; thisParticle < maxParticle ; thisParticle++)
     {
@@ -5170,6 +5174,7 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
 
   //int decayType;
   //int W1decayType, W2decayType;
+  //int nSemiMu=0,nSemiEle=0,nSemiTauHad=0,nDilep=0,nHad=0,nOther=0;
 
   startTimer();
   for(int entry=0; entry < nevents; ++entry){
@@ -5180,7 +5185,6 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
     fillObjects();
 
     if(entry%10000==0) cout << "entry: " << entry << ", percent done=" << (int)(entry/(double)nevents*100.)<<  endl;
-
     //int event = getEventNumber();
     //if(event !=86684 ) continue;
     
@@ -5199,8 +5203,45 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
     //
     //
     //}
+    //for(uint i = 0; i< myGenParticles->size(); ++i){
+    //  if(myGenParticles->at(i).status == 3){
+    //  std::cout << i << ": ID = " << myGenParticles->at(i).pdgId 
+    //		<< ", status = " << myGenParticles->at(i).status 
+    //		<< ", pt = " << myGenParticles->at(i).pt 
+    //		<< ", eta = " << myGenParticles->at(i).eta 
+    //		<< ", phi = " << myGenParticles->at(i).phi 
+    //		<< ", mmin = " << myGenParticles->at(i).firstMother 
+    //		<< ", mmax = " << myGenParticles->at(i).lastMother
+    //		<< ", dmin = " << myGenParticles->at(i).firstDaughter 
+    //		<< ", dmax = " << myGenParticles->at(i).lastDaughter
+    //		<< std::endl;
+    //  }
+    //}
     //decayType = getTTbarDecayType(W1decayType, W2decayType);
     //std::cout << "decaytype = " << decayType << ", W1decayType = " << W1decayType << ", W2decayType = " << W2decayType << std::endl;
+
+    //if((W1decayType==13 && W2decayType==1) || (W1decayType==1 && W2decayType==13) || (W1decayType==1513 && W2decayType==1) || (W1decayType==1 && W2decayType==1513)){
+    //  nSemiMu++;
+    //}
+    //else if((W1decayType==11 && W2decayType==1) || (W1decayType==1 && W2decayType==11) || (W1decayType==1511 && W2decayType==1) || (W1decayType==1 && W2decayType==1511)){
+    //  nSemiEle++;
+    //}
+    //else if((W1decayType==15 && W2decayType==1) || (W1decayType==1 && W2decayType==15)){
+    //  nSemiTauHad++;
+    //}
+    //else if((W1decayType==11 || W1decayType==13 || W1decayType==1511 || W1decayType==1513) && (W2decayType==11 || W2decayType==13 || W2decayType==1511 || W2decayType==1513)){
+    //  nDilep++;
+    //}
+    //else if(W1decayType==1 && W2decayType==1){
+    //  nHad++;
+    //}
+    //else if((W1decayType==15 && W2decayType==15)||(W1decayType==11 && W2decayType==15)||(W1decayType==15 && W2decayType==11)||(W1decayType==1511 && W2decayType==15)||(W1decayType==15 && W2decayType==1511)||(W1decayType==13 && W2decayType==15)||(W1decayType==15 && W2decayType==13)||(W1decayType==15 && W2decayType==1513)||(W1decayType==1513 && W2decayType==15)){
+    //  nOther++;
+    //}
+    //else{
+    //  std::cout << "We got a problem boss" << std::endl;
+    //  std::cout << "\t W1decayType = " << W1decayType << ", W2decayType = " << W2decayType << std::endl;
+    //}
 
     //if(Cut()==1){
 
@@ -5566,6 +5607,12 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
   //std::cout << "ntaggedjets_c = " << ntaggedjets_c << std::endl;
   //std::cout << "ntaggedjets_l = " << ntaggedjets_l << std::endl;
   
+  //std::cout << "nSemiMu = " << nSemiMu << std::endl;  
+  //std::cout << "nSemiEle = " << nSemiEle << std::endl;  
+  //std::cout << "nSemiTauHad = " << nSemiTauHad << std::endl;  
+  //std::cout << "nDilep = " << nDilep << std::endl;  
+  //std::cout << "nHad = " << nHad << std::endl;  
+  //std::cout << "nOther = " << nOther << std::endl;  
   
   ////TH1F *h_btageff = (TH1F*) h_btag->Clone();
   //TH1F * h_btageff = new TH1F("h_btageff","btageff",9,bins);
