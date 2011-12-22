@@ -3629,7 +3629,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
 
   reducedTree.Branch("CSVout1",&CSVout1,"CSVout1/F");
   reducedTree.Branch("CSVout2",&CSVout2,"CSVout2/F");
-  reducedTree.Branch("CSVout3",&CSVout2,"CSVout3/F");
+  reducedTree.Branch("CSVout3",&CSVout3,"CSVout3/F");
   reducedTree.Branch("minDeltaPhiAllb30",&minDeltaPhiAllb30,"minDeltaPhiAllb30/F");
   reducedTree.Branch("deltaPhib1",&deltaPhib1,"deltaPhib1/F");
   reducedTree.Branch("deltaPhib2",&deltaPhib2,"deltaPhib2/F");
