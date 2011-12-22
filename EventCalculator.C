@@ -4662,8 +4662,24 @@ void EventCalculator::loadEventList(std::vector<int> &vrun, std::vector<int> &vl
   //inFile.open("eventlist_ht350_r178866_SUM.txt");        
   //inFile.open("eventlist_ht350l1fastjet_r178866_SUM.txt");        
   //inFile.open("eventlist_pfht350_r178866_SUM.txt"); 
-  if (sampleName_.Contains("ttjets_madgraph") )                     
-    inFile.open("badeventlist_pythia6bug_ttjets_madgraph.txt"); 
+  if (sampleName_.Contains("ttjets_madgraph") )
+    inFile.open("badeventlist_pythia6bug_ttjets_madgraph.txt");
+  else if (sampleName_.Contains("t_s-channel") )
+    inFile.open("badeventlist_pythia6bug_t_schannel_madgraph.txt");
+  else if (sampleName_.Contains("tbar_s-channel") )
+    inFile.open("badeventlist_pythia6bug_tbar_schannel_madgraph.txt");
+  else if (sampleName_.Contains("t_t-channel") )
+    inFile.open("badeventlist_pythia6bug_t_tchannel_madgraph.txt");
+  else if (sampleName_.Contains("tbar_t-channel") )
+    inFile.open("badeventlist_pythia6bug_tbar_tchannel_madgraph.txt");
+  else if (sampleName_.Contains("t_tW-channel") )
+    inFile.open("badeventlist_pythia6bug_t_tWchannel_madgraph.txt");
+  else if (sampleName_.Contains("tbar_tW-channel") )
+    inFile.open("badeventlist_pythia6bug_tbar_tWchannel_madgraph.txt");
+  else if (sampleName_.Contains("WJetsToLNu_300_HT_inf_TuneZ2_7TeV-madgraph-tauola") )
+    inFile.open("badeventlist_pythia6bug_wjets_ht300_madgraph.txt");
+  else if (sampleName_.Contains("DYJetsToLL_TuneZ2_M-50_7TeV-madgraph-tauola") )
+    inFile.open("badeventlist_pythia6bug_dyjets_madgraph.txt");
   else return;
 
   if(!inFile) {std::cout << "ERROR: can't open event list" << std::endl;  assert(0);}
