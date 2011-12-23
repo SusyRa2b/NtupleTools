@@ -31,6 +31,31 @@ const double mW_ = 80.399;
 const double mtop_ = 172.0;
 const double lumi_ = 1.; //fix to 1/pb and scale MC later (e.g. in drawReducedTrees)
 
+//define the BNN functions
+double HT260_MHT60_v2_HT260_v2_160431_161204_sel1(std::vector<double>& inputvars, int first=0, int last=100-1);
+double HT250_MHT60_v2_HT250_v2_161205_163268_sel1(std::vector<double>& inputvars, int first=0, int last=100-1);
+double HT250_MHT60_v3_HT250_v3_163269_164923_sel1(std::vector<double>& inputvars, int first=0, int last=100-1);
+double HT250_MHT70_v1_HT250_v4_164924_165921_sel1(std::vector<double>& inputvars, int first=0, int last=100-1);
+double HT300_MHT75_v7_HT300_v6_165922_166300_166374_166978_sel1(std::vector<double>& inputvars, int first=0, int last=100-1);
+double HT300_MHT75_v8_HT300_v7_166301_166373_sel1(std::vector<double>& inputvars, int first=0, int last=100-1);
+double HT300_MHT80_v1_HT300_v6_166979_170064_sel1(std::vector<double>& inputvars, int first=0, int last=100-1);
+double HT300_MHT80_v2_HT300_v9_170065_173211_sel1(std::vector<double>& inputvars, int first=0, int last=100-1);
+double HT300_MHT90_v2_HT300_v9_173212_176544_sel1(std::vector<double>& inputvars, int first=0, int last=100-1);
+double HT350_MHT90_v1_HT350_v8_176545_178410_sel1(std::vector<double>& inputvars, int first=0, int last=100-1);
+double HT350_MHT110_v3_HT350_v11_178411_180252_sel1(std::vector<double>& inputvars, int first=0, int last=100-1);
+
+double HT260_MHT60_v2_HT260_v2_160431_161204_sel2(std::vector<double>& inputvars, int first=0, int last=100-1);
+double HT250_MHT60_v2_HT250_v2_161205_163268_sel2(std::vector<double>& inputvars, int first=0, int last=100-1);
+double HT250_MHT60_v3_HT250_v3_163269_164923_sel2(std::vector<double>& inputvars, int first=0, int last=100-1);
+double HT250_MHT70_v1_HT250_v4_164924_165921_sel2(std::vector<double>& inputvars, int first=0, int last=100-1);
+double HT300_MHT75_v7_HT300_v6_165922_166300_166374_166978_sel2(std::vector<double>& inputvars, int first=0, int last=100-1);
+double HT300_MHT75_v8_HT300_v7_166301_166373_sel2(std::vector<double>& inputvars, int first=0, int last=100-1);
+double HT300_MHT80_v1_HT300_v6_166979_170064_sel2(std::vector<double>& inputvars, int first=0, int last=100-1);
+double HT300_MHT80_v2_HT300_v9_170065_173211_sel2(std::vector<double>& inputvars, int first=0, int last=100-1);
+double HT300_MHT90_v2_HT300_v9_173212_176544_sel2(std::vector<double>& inputvars, int first=0, int last=100-1);
+double HT350_MHT90_v1_HT350_v8_176545_178410_sel2(std::vector<double>& inputvars, int first=0, int last=100-1);
+double HT350_MHT110_v3_HT350_v11_178411_180252_sel2(std::vector<double>& inputvars, int first=0, int last=100-1);
+
 class EventCalculator {
 public:
   //enums for configuration
@@ -80,7 +105,10 @@ public:
   bool passUtilityHLT(int &version, int &prescale);
   unsigned int utilityHLT_HT300_CentralJet30_BTagIP();
   float getHLTHTeff(float offHT);
-  float getHLTMHTeff(float offMET, int nElectrons, int nMuons, float mindphin);
+  float getHLTMHTeff(float offMET, float offHT, uint nElectrons, uint nMuons, double mindphin);
+  //  double getPFMHTWeight(); //TODO
+  double getHLTMHTeffBNN(float offMET, float offHT, uint nElectrons, uint nMuons, double mindphin, 
+			 double& effUp, double& effDown);
 
   int countGoodPV();
   bool passPV() ;
@@ -213,8 +241,6 @@ public:
   int getTTbarDecayType(int& W1decayType, int& W2decayType);
 
   double getCrossSection();
-
-  //  double getPFMHTWeight(); //TODO
 
   double getScanCrossSection( SUSYProcess p, const TString & variation );
   double getSMSScanCrossSection( const double mgluino);

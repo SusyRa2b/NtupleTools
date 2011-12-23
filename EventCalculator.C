@@ -676,7 +676,7 @@ void EventCalculator::loadHLTMHTeff() {
   }
 }
 
-float EventCalculator::getHLTMHTeff(float offMET, int nElectrons, int nMuons, float mindphin) {
+float EventCalculator::getHLTMHTeff(float offMET, float offHT, uint nElectrons, uint nMuons, double mindphin) {
 
   float eff=1;
 
@@ -691,7 +691,7 @@ float EventCalculator::getHLTMHTeff(float offMET, int nElectrons, int nMuons, fl
   //eff = gr->Eval(offMET);
 
   //for 2011 full result
-  if(offMET>=200 && offMET<250){
+  if(offHT>400 && offMET>=200 && offMET<250){
     //    eff = 0.94;
     //eff = 0.859362; //after HT cut
 
@@ -718,7 +718,7 @@ float EventCalculator::getHLTMHTeff(float offMET, int nElectrons, int nMuons, fl
 
 
   }
-  else if(offMET>250){
+  else if(offHT>400 && offMET>250){
     //    eff = 0.998;
     //eff = 0.975299; //after HT cut
 
@@ -2709,6 +2709,466 @@ void EventCalculator::getPdfWeights(const TString & pdfset, Float_t * pdfWeights
 //   return pfmhtweight;
 // }
 
+double EventCalculator::getHLTMHTeffBNN(float offMET, float offHT, uint nElectrons, uint nMuons, double mindphin,
+					double& effUp, double& effDown) {
+
+  float eff=1;
+  effUp =1; effDown =1;
+
+  bool isSL = ((nElectrons==1 && nMuons==0)||(nElectrons==0 && nMuons==1));
+  bool is0L = (nElectrons==0 && nMuons==0);
+
+  std::vector<double> vlumi;
+  vlumi.push_back(0.0067);//ht260_mht60
+  vlumi.push_back(0.0409);//ht250_mht60_v2
+  vlumi.push_back(0.1686);//ht250_mht60_v3
+  vlumi.push_back(0.1391);//ht250_mht70
+  vlumi.push_back(0.0982+0.4225);//ht300_mht75_v7
+  vlumi.push_back(0.0043);//ht300_mht75_v8
+  vlumi.push_back(0.2657);//ht300_mht80_v1
+  vlumi.push_back(0.7804);//ht300_mht80_v2
+  vlumi.push_back(0.6044);//ht300_mht90
+  vlumi.push_back(1.3405);//ht350_mht95
+  vlumi.push_back(0.8125);//ht350_mht110  
+  double totallumi = 4.6838; //this is exactly the sum of the above lumi numbers
+
+  // BNNs:
+  std::vector<double> pfmet;
+  pfmet.push_back( (double) getMET() );
+
+  double effn[100];
+
+  // Get the efficiency value from the BNNs:
+
+  if( offHT>400 && is0L && mindphin > 4 ){
+
+    if ( isSampleRealData() ) {//if data, just use the curve corresponding to the trigger that was used
+      ULong64_t runnumber = getRunNumber();
+      double stddeveff = 0;
+      if      (runnumber >= 160431 && runnumber <= 161204){
+	eff = HT260_MHT60_v2_HT260_v2_160431_161204_sel1( pfmet );	
+	//compute the standard deviation of the ensemble of curves
+	for(uint i = 0; i < 100; ++i){
+	  effn[i] = HT260_MHT60_v2_HT260_v2_160431_161204_sel1(pfmet, i, i);
+	  stddeveff += (effn[i] - eff)*(effn[i] - eff);
+	}      
+      }
+      else if (runnumber >= 161205 && runnumber <= 163268){
+	eff = HT250_MHT60_v2_HT250_v2_161205_163268_sel1( pfmet ); 
+	for(uint i = 0; i < 100; ++i){
+	  effn[i] = HT250_MHT60_v2_HT250_v2_161205_163268_sel1(pfmet, i, i);
+	  stddeveff += (effn[i] - eff)*(effn[i] - eff);
+	}      
+      }
+      else if (runnumber >= 163269 && runnumber <= 164923){
+	eff = HT250_MHT60_v3_HT250_v3_163269_164923_sel1( pfmet );
+	for(uint i = 0; i < 100; ++i){
+	  effn[i] = HT250_MHT60_v3_HT250_v3_163269_164923_sel1(pfmet, i, i);
+	  stddeveff += (effn[i] - eff)*(effn[i] - eff);
+	}      
+      }
+      else if (runnumber >= 164924 && runnumber <= 165921){
+	eff = HT250_MHT70_v1_HT250_v4_164924_165921_sel1( pfmet );
+	for(uint i = 0; i < 100; ++i){
+	  effn[i] = HT250_MHT70_v1_HT250_v4_164924_165921_sel1(pfmet, i, i);
+	  stddeveff += (effn[i] - eff)*(effn[i] - eff);
+	}      
+      }
+      else if (runnumber >= 165922 && runnumber <= 166300){
+	eff = HT300_MHT75_v7_HT300_v6_165922_166300_166374_166978_sel1( pfmet );
+	for(uint i = 0; i < 100; ++i){
+	  effn[i] = HT300_MHT75_v7_HT300_v6_165922_166300_166374_166978_sel1(pfmet, i, i);
+	  stddeveff += (effn[i] - eff)*(effn[i] - eff);
+	}      
+      }
+      else if (runnumber >= 166301 && runnumber <= 166373){  
+	eff = HT300_MHT75_v8_HT300_v7_166301_166373_sel1( pfmet );
+	for(uint i = 0; i < 100; ++i){
+	  effn[i] = HT300_MHT75_v8_HT300_v7_166301_166373_sel1(pfmet, i, i);
+	  stddeveff += (effn[i] - eff)*(effn[i] - eff);
+	}      
+      }
+      else if (runnumber >= 166374 && runnumber <= 166978){
+	eff = HT300_MHT75_v7_HT300_v6_165922_166300_166374_166978_sel1( pfmet );
+	for(uint i = 0; i < 100; ++i){
+	  effn[i] = HT300_MHT75_v7_HT300_v6_165922_166300_166374_166978_sel1(pfmet, i, i);
+	  stddeveff += (effn[i] - eff)*(effn[i] - eff);
+	}      
+      }
+      else if (runnumber >= 166979 && runnumber <= 170064){ 
+	eff = HT300_MHT80_v1_HT300_v6_166979_170064_sel1( pfmet );
+	for(uint i = 0; i < 100; ++i){
+	  effn[i] = HT300_MHT80_v1_HT300_v6_166979_170064_sel1(pfmet, i, i);
+	  stddeveff += (effn[i] - eff)*(effn[i] - eff);
+	}      
+      }
+      //end of summer 11 result data			  
+      else if (runnumber >= 170065 && runnumber <= 173211){  
+	eff = HT300_MHT80_v2_HT300_v9_170065_173211_sel1( pfmet );
+	for(uint i = 0; i < 100; ++i){
+	  effn[i] = HT300_MHT80_v2_HT300_v9_170065_173211_sel1(pfmet, i, i);
+	  stddeveff += (effn[i] - eff)*(effn[i] - eff);
+	}      
+      }
+      else if (runnumber >= 173212 && runnumber <= 176544){
+	eff = HT300_MHT90_v2_HT300_v9_173212_176544_sel1( pfmet );
+	for(uint i = 0; i < 100; ++i){
+	  effn[i] = HT300_MHT90_v2_HT300_v9_173212_176544_sel1(pfmet, i, i);
+	  stddeveff += (effn[i] - eff)*(effn[i] - eff);
+	}      
+      }
+      else if (runnumber >= 176545 && runnumber <= 178410){  
+	eff = HT350_MHT90_v1_HT350_v8_176545_178410_sel1( pfmet );
+	for(uint i = 0; i < 100; ++i){
+	  effn[i] = HT350_MHT90_v1_HT350_v8_176545_178410_sel1(pfmet, i, i);
+	  stddeveff += (effn[i] - eff)*(effn[i] - eff);
+	}      
+      }
+      else if (runnumber >= 178411){
+	eff = HT350_MHT110_v3_HT350_v11_178411_180252_sel1( pfmet );
+	for(uint i = 0; i < 100; ++i){
+	  effn[i] = HT350_MHT110_v3_HT350_v11_178411_180252_sel1(pfmet, i, i);
+	  stddeveff += (effn[i] - eff)*(effn[i] - eff);
+	}      
+      }
+      else {cout<<"No trigger assigned for run = "<<runnumber<<endl; assert(0);}
+
+      stddeveff = sqrt(stddeveff / 99);
+
+      effUp = eff + stddeveff;
+      effDown = eff - stddeveff;
+    }
+    else{//for MC, use the lumi-weighted average of all trigger curves
+      std::vector<double> trigeffs;
+      std::vector<double> trigeffserr;
+      double stddeveff = 0, efferr = 0;
+
+      trigeffs.push_back(HT260_MHT60_v2_HT260_v2_160431_161204_sel1( pfmet ));
+      for(uint i = 0; i < 100; ++i){
+	effn[i] = HT260_MHT60_v2_HT260_v2_160431_161204_sel1(pfmet, i, i);
+	stddeveff += (effn[i] - trigeffs.back())*(effn[i] - trigeffs.back());
+      }      
+      stddeveff = sqrt(stddeveff / 99); trigeffserr.push_back(stddeveff);
+
+      trigeffs.push_back(HT250_MHT60_v2_HT250_v2_161205_163268_sel1( pfmet ));
+      stddeveff = 0;
+      for(uint i = 0; i < 100; ++i){
+	effn[i] = HT250_MHT60_v2_HT250_v2_161205_163268_sel1(pfmet, i, i);
+	stddeveff += (effn[i] - trigeffs.back())*(effn[i] - trigeffs.back());
+      }      
+      stddeveff = sqrt(stddeveff / 99); trigeffserr.push_back(stddeveff);
+
+      trigeffs.push_back(HT250_MHT60_v3_HT250_v3_163269_164923_sel1( pfmet ));
+      stddeveff = 0;
+      for(uint i = 0; i < 100; ++i){
+	effn[i] = HT250_MHT60_v3_HT250_v3_163269_164923_sel1(pfmet, i, i);
+	stddeveff += (effn[i] - trigeffs.back())*(effn[i] - trigeffs.back());
+      }      
+      stddeveff = sqrt(stddeveff / 99); trigeffserr.push_back(stddeveff);
+
+      trigeffs.push_back(HT250_MHT70_v1_HT250_v4_164924_165921_sel1( pfmet ));
+      stddeveff = 0;
+      for(uint i = 0; i < 100; ++i){
+	effn[i] = HT250_MHT70_v1_HT250_v4_164924_165921_sel1(pfmet, i, i);
+	stddeveff += (effn[i] - trigeffs.back())*(effn[i] - trigeffs.back());
+      }      
+      stddeveff = sqrt(stddeveff / 99); trigeffserr.push_back(stddeveff);
+
+      trigeffs.push_back(HT300_MHT75_v7_HT300_v6_165922_166300_166374_166978_sel1( pfmet ));
+      stddeveff = 0;
+      for(uint i = 0; i < 100; ++i){
+	effn[i] = HT300_MHT75_v7_HT300_v6_165922_166300_166374_166978_sel1(pfmet, i, i);
+	stddeveff += (effn[i] - trigeffs.back())*(effn[i] - trigeffs.back());
+      }      
+      stddeveff = sqrt(stddeveff / 99); trigeffserr.push_back(stddeveff);
+
+      trigeffs.push_back(HT300_MHT75_v8_HT300_v7_166301_166373_sel1( pfmet ));
+      stddeveff = 0;
+      for(uint i = 0; i < 100; ++i){
+	effn[i] = HT300_MHT75_v8_HT300_v7_166301_166373_sel1(pfmet, i, i);
+	stddeveff += (effn[i] - trigeffs.back())*(effn[i] - trigeffs.back());
+      }      
+      stddeveff = sqrt(stddeveff / 99); trigeffserr.push_back(stddeveff);
+
+      trigeffs.push_back(HT300_MHT80_v1_HT300_v6_166979_170064_sel1( pfmet ));
+      stddeveff = 0;
+      for(uint i = 0; i < 100; ++i){
+	effn[i] = HT300_MHT80_v1_HT300_v6_166979_170064_sel1(pfmet, i, i);
+	stddeveff += (effn[i] - trigeffs.back())*(effn[i] - trigeffs.back());
+      }      
+      stddeveff = sqrt(stddeveff / 99); trigeffserr.push_back(stddeveff);
+
+      trigeffs.push_back(HT300_MHT80_v2_HT300_v9_170065_173211_sel1( pfmet ));
+      stddeveff = 0;
+      for(uint i = 0; i < 100; ++i){
+	effn[i] = HT300_MHT80_v2_HT300_v9_170065_173211_sel1(pfmet, i, i);
+	stddeveff += (effn[i] - trigeffs.back())*(effn[i] - trigeffs.back());
+      }      
+      stddeveff = sqrt(stddeveff / 99); trigeffserr.push_back(stddeveff);
+
+      trigeffs.push_back(HT300_MHT90_v2_HT300_v9_173212_176544_sel1( pfmet ));
+      stddeveff = 0;
+      for(uint i = 0; i < 100; ++i){
+	effn[i] = HT300_MHT90_v2_HT300_v9_173212_176544_sel1(pfmet, i, i);
+	stddeveff += (effn[i] - trigeffs.back())*(effn[i] - trigeffs.back());
+      }      
+      stddeveff = sqrt(stddeveff / 99); trigeffserr.push_back(stddeveff);
+
+      trigeffs.push_back(HT350_MHT90_v1_HT350_v8_176545_178410_sel1( pfmet ));
+      stddeveff = 0;
+      for(uint i = 0; i < 100; ++i){
+	effn[i] = HT350_MHT90_v1_HT350_v8_176545_178410_sel1(pfmet, i, i);
+	stddeveff += (effn[i] - trigeffs.back())*(effn[i] - trigeffs.back());
+      }      
+      stddeveff = sqrt(stddeveff / 99); trigeffserr.push_back(stddeveff);
+
+      trigeffs.push_back(HT350_MHT110_v3_HT350_v11_178411_180252_sel1( pfmet ));
+      stddeveff = 0;
+      for(uint i = 0; i < 100; ++i){
+	effn[i] = HT350_MHT110_v3_HT350_v11_178411_180252_sel1(pfmet, i, i);
+	stddeveff += (effn[i] - trigeffs.back())*(effn[i] - trigeffs.back());
+      }      
+      stddeveff = sqrt(stddeveff / 99); trigeffserr.push_back(stddeveff);
+
+
+      eff = 0;
+      for(uint i = 0; i < trigeffs.size(); ++i){
+	//std::cout << "eff " << i << " = " << trigeffs.at(i) << ", err = " << trigeffserr.at(i) << std::endl;
+	eff += trigeffs.at(i) * (vlumi.at(i) / totallumi);
+	efferr += trigeffserr.at(i) * trigeffserr.at(i) * (vlumi.at(i)*vlumi.at(i) / totallumi /  totallumi );
+      }
+      efferr = sqrt(efferr);
+      //std::cout << "final eff = " << eff << ", err = " << efferr << std::endl;
+
+      effUp = eff + efferr;
+      effDown = eff - efferr;
+
+    }
+  }
+  else if ( offHT>400 && is0L && mindphin <= 4){
+
+    if ( isSampleRealData() ) {//if data, just use the curve corresponding to the trigger that was used
+      ULong64_t runnumber = getRunNumber();
+      double stddeveff = 0;
+      if      (runnumber >= 160431 && runnumber <= 161204){
+	eff = HT260_MHT60_v2_HT260_v2_160431_161204_sel2( pfmet );
+	
+	//compute the standard deviation of the ensemble of curves
+	for(uint i = 0; i < 100; ++i){
+	  effn[i] = HT260_MHT60_v2_HT260_v2_160431_161204_sel2(pfmet, i, i);
+	  stddeveff += (effn[i] - eff)*(effn[i] - eff);
+	}      
+      }
+      else if (runnumber >= 161205 && runnumber <= 163268){
+	eff = HT250_MHT60_v2_HT250_v2_161205_163268_sel2( pfmet ); 
+	for(uint i = 0; i < 100; ++i){
+	  effn[i] = HT250_MHT60_v2_HT250_v2_161205_163268_sel2(pfmet, i, i);
+	  stddeveff += (effn[i] - eff)*(effn[i] - eff);
+	}      
+      }
+      else if (runnumber >= 163269 && runnumber <= 164923){
+	eff = HT250_MHT60_v3_HT250_v3_163269_164923_sel2( pfmet );
+	for(uint i = 0; i < 100; ++i){
+	  effn[i] = HT250_MHT60_v3_HT250_v3_163269_164923_sel2(pfmet, i, i);
+	  stddeveff += (effn[i] - eff)*(effn[i] - eff);
+	}      
+      }
+      else if (runnumber >= 164924 && runnumber <= 165921){
+	eff = HT250_MHT70_v1_HT250_v4_164924_165921_sel2( pfmet );
+	for(uint i = 0; i < 100; ++i){
+	  effn[i] = HT250_MHT70_v1_HT250_v4_164924_165921_sel2(pfmet, i, i);
+	  stddeveff += (effn[i] - eff)*(effn[i] - eff);
+	}      
+      }
+      else if (runnumber >= 165922 && runnumber <= 166300){
+	eff = HT300_MHT75_v7_HT300_v6_165922_166300_166374_166978_sel2( pfmet );
+	for(uint i = 0; i < 100; ++i){
+	  effn[i] = HT300_MHT75_v7_HT300_v6_165922_166300_166374_166978_sel2(pfmet, i, i);
+	  stddeveff += (effn[i] - eff)*(effn[i] - eff);
+	}      
+      }
+      else if (runnumber >= 166301 && runnumber <= 166373){  
+	eff = HT300_MHT75_v8_HT300_v7_166301_166373_sel2( pfmet );
+	for(uint i = 0; i < 100; ++i){
+	  effn[i] = HT300_MHT75_v8_HT300_v7_166301_166373_sel2(pfmet, i, i);
+	  stddeveff += (effn[i] - eff)*(effn[i] - eff);
+	}      
+      }
+      else if (runnumber >= 166374 && runnumber <= 166978){
+	eff = HT300_MHT75_v7_HT300_v6_165922_166300_166374_166978_sel2( pfmet );
+	for(uint i = 0; i < 100; ++i){
+	  effn[i] = HT300_MHT75_v7_HT300_v6_165922_166300_166374_166978_sel2(pfmet, i, i);
+	  stddeveff += (effn[i] - eff)*(effn[i] - eff);
+	}      
+      }
+      else if (runnumber >= 166979 && runnumber <= 170064){ 
+	eff = HT300_MHT80_v1_HT300_v6_166979_170064_sel2( pfmet );
+	for(uint i = 0; i < 100; ++i){
+	  effn[i] = HT300_MHT80_v1_HT300_v6_166979_170064_sel2(pfmet, i, i);
+	  stddeveff += (effn[i] - eff)*(effn[i] - eff);
+	}      
+      }
+      //end of summer 11 result data			  
+      else if (runnumber >= 170065 && runnumber <= 173211){  
+	eff = HT300_MHT80_v2_HT300_v9_170065_173211_sel2( pfmet );
+	for(uint i = 0; i < 100; ++i){
+	  effn[i] = HT300_MHT80_v2_HT300_v9_170065_173211_sel2(pfmet, i, i);
+	  stddeveff += (effn[i] - eff)*(effn[i] - eff);
+	}      
+      }
+      else if (runnumber >= 173212 && runnumber <= 176544){
+	eff = HT300_MHT90_v2_HT300_v9_173212_176544_sel2( pfmet );
+	for(uint i = 0; i < 100; ++i){
+	  effn[i] = HT300_MHT90_v2_HT300_v9_173212_176544_sel2(pfmet, i, i);
+	  stddeveff += (effn[i] - eff)*(effn[i] - eff);
+	}      
+      }
+      else if (runnumber >= 176545 && runnumber <= 178410){  
+	eff = HT350_MHT90_v1_HT350_v8_176545_178410_sel2( pfmet );
+	for(uint i = 0; i < 100; ++i){
+	  effn[i] = HT350_MHT90_v1_HT350_v8_176545_178410_sel2(pfmet, i, i);
+	  stddeveff += (effn[i] - eff)*(effn[i] - eff);
+	}      
+      }
+      else if (runnumber >= 178411){
+	eff = HT350_MHT110_v3_HT350_v11_178411_180252_sel2( pfmet );
+	for(uint i = 0; i < 100; ++i){
+	  effn[i] = HT350_MHT110_v3_HT350_v11_178411_180252_sel2(pfmet, i, i);
+	  stddeveff += (effn[i] - eff)*(effn[i] - eff);
+	}      
+      }
+      else {cout<<"No trigger assigned for run = "<<runnumber<<endl; assert(0);}
+
+      stddeveff = sqrt(stddeveff / 99);
+
+      effUp = eff + stddeveff;
+      effDown = eff - stddeveff;
+    }
+    else{//for MC, use the lumi-weighted average of all trigger curves
+      std::vector<double> trigeffs;
+      std::vector<double> trigeffserr;
+      double stddeveff = 0, efferr = 0;
+
+      trigeffs.push_back(HT260_MHT60_v2_HT260_v2_160431_161204_sel2( pfmet ));
+      for(uint i = 0; i < 100; ++i){
+	effn[i] = HT260_MHT60_v2_HT260_v2_160431_161204_sel2(pfmet, i, i);
+	stddeveff += (effn[i] - trigeffs.back())*(effn[i] - trigeffs.back());
+      }      
+      stddeveff = sqrt(stddeveff / 99); trigeffserr.push_back(stddeveff);
+
+
+      trigeffs.push_back(HT250_MHT60_v2_HT250_v2_161205_163268_sel2( pfmet ));
+      stddeveff = 0;
+      for(uint i = 0; i < 100; ++i){
+	effn[i] = HT250_MHT60_v2_HT250_v2_161205_163268_sel2(pfmet, i, i);
+	stddeveff += (effn[i] - trigeffs.back())*(effn[i] - trigeffs.back());
+      }      
+      stddeveff = sqrt(stddeveff / 99); trigeffserr.push_back(stddeveff);
+
+      trigeffs.push_back(HT250_MHT60_v3_HT250_v3_163269_164923_sel2( pfmet ));
+      stddeveff = 0;
+      for(uint i = 0; i < 100; ++i){
+	effn[i] = HT250_MHT60_v3_HT250_v3_163269_164923_sel2(pfmet, i, i);
+	stddeveff += (effn[i] - trigeffs.back())*(effn[i] - trigeffs.back());
+      }      
+      stddeveff = sqrt(stddeveff / 99); trigeffserr.push_back(stddeveff);
+
+      trigeffs.push_back(HT250_MHT70_v1_HT250_v4_164924_165921_sel2( pfmet ));
+      stddeveff = 0;
+      for(uint i = 0; i < 100; ++i){
+	effn[i] = HT250_MHT70_v1_HT250_v4_164924_165921_sel2(pfmet, i, i);
+	stddeveff += (effn[i] - trigeffs.back())*(effn[i] - trigeffs.back());
+      }      
+      stddeveff = sqrt(stddeveff / 99); trigeffserr.push_back(stddeveff);
+
+      trigeffs.push_back(HT300_MHT75_v7_HT300_v6_165922_166300_166374_166978_sel2( pfmet ));
+      stddeveff = 0;
+      for(uint i = 0; i < 100; ++i){
+	effn[i] = HT300_MHT75_v7_HT300_v6_165922_166300_166374_166978_sel2(pfmet, i, i);
+	stddeveff += (effn[i] - trigeffs.back())*(effn[i] - trigeffs.back());
+      }      
+      stddeveff = sqrt(stddeveff / 99); trigeffserr.push_back(stddeveff);
+
+      trigeffs.push_back(HT300_MHT75_v8_HT300_v7_166301_166373_sel2( pfmet ));
+      stddeveff = 0;
+      for(uint i = 0; i < 100; ++i){
+	effn[i] = HT300_MHT75_v8_HT300_v7_166301_166373_sel2(pfmet, i, i);
+	stddeveff += (effn[i] - trigeffs.back())*(effn[i] - trigeffs.back());
+      }      
+      stddeveff = sqrt(stddeveff / 99); trigeffserr.push_back(stddeveff);
+
+      trigeffs.push_back(HT300_MHT80_v1_HT300_v6_166979_170064_sel2( pfmet ));
+      stddeveff = 0;
+      for(uint i = 0; i < 100; ++i){
+	effn[i] = HT300_MHT80_v1_HT300_v6_166979_170064_sel2(pfmet, i, i);
+	stddeveff += (effn[i] - trigeffs.back())*(effn[i] - trigeffs.back());
+      }      
+      stddeveff = sqrt(stddeveff / 99); trigeffserr.push_back(stddeveff);
+
+      trigeffs.push_back(HT300_MHT80_v2_HT300_v9_170065_173211_sel2( pfmet ));
+      stddeveff = 0;
+      for(uint i = 0; i < 100; ++i){
+	effn[i] = HT300_MHT80_v2_HT300_v9_170065_173211_sel2(pfmet, i, i);
+	stddeveff += (effn[i] - trigeffs.back())*(effn[i] - trigeffs.back());
+      }      
+      stddeveff = sqrt(stddeveff / 99); trigeffserr.push_back(stddeveff);
+
+      trigeffs.push_back(HT300_MHT90_v2_HT300_v9_173212_176544_sel2( pfmet ));
+      stddeveff = 0;
+      for(uint i = 0; i < 100; ++i){
+	effn[i] = HT300_MHT90_v2_HT300_v9_173212_176544_sel2(pfmet, i, i);
+	stddeveff += (effn[i] - trigeffs.back())*(effn[i] - trigeffs.back());
+      }      
+      stddeveff = sqrt(stddeveff / 99); trigeffserr.push_back(stddeveff);
+
+      trigeffs.push_back(HT350_MHT90_v1_HT350_v8_176545_178410_sel2( pfmet ));
+      stddeveff = 0;
+      for(uint i = 0; i < 100; ++i){
+	effn[i] = HT350_MHT90_v1_HT350_v8_176545_178410_sel2(pfmet, i, i);
+	stddeveff += (effn[i] - trigeffs.back())*(effn[i] - trigeffs.back());
+      }      
+      stddeveff = sqrt(stddeveff / 99); trigeffserr.push_back(stddeveff);
+
+      trigeffs.push_back(HT350_MHT110_v3_HT350_v11_178411_180252_sel2( pfmet ));
+      stddeveff = 0;
+      for(uint i = 0; i < 100; ++i){
+	effn[i] = HT350_MHT110_v3_HT350_v11_178411_180252_sel2(pfmet, i, i);
+	stddeveff += (effn[i] - trigeffs.back())*(effn[i] - trigeffs.back());
+      }      
+      stddeveff = sqrt(stddeveff / 99); trigeffserr.push_back(stddeveff);
+
+
+      eff = 0;
+      for(uint i = 0; i < trigeffs.size(); ++i){
+	//std::cout << "eff " << i << " = " << trigeffs.at(i) << ", err = " << trigeffserr.at(i) << std::endl;
+	eff += trigeffs.at(i) * (vlumi.at(i) / totallumi);
+	efferr += trigeffserr.at(i) * trigeffserr.at(i) * (vlumi.at(i)*vlumi.at(i) / totallumi /  totallumi );
+      }
+      efferr = sqrt(efferr);
+      //std::cout << "final eff = " << eff << ", err = " << efferr << std::endl;
+
+      effUp = eff + efferr;
+      effDown = eff - efferr;
+
+    }
+  }
+  else if( offHT>400 && isSL && mindphin > 4){ // use the overall numbers
+    if(offMET>=200 && offMET<250){ 
+      eff = 0.996;
+      
+      effUp = eff + 0;//assume error in SL region negligible
+      effDown = eff - 0;
+    }
+    else if(offMET>250){
+      eff = 0.999;
+
+      effUp = eff + 0;//assume error in SL region negligible
+      effDown = eff - 0;
+    }
+  }
+
+  return eff;
+}
 
 double EventCalculator::getCrossSection(){
   //from https://twiki.cern.ch/twiki/bin/view/CMS/SusyRA2BJets2011?rev=36
@@ -3270,6 +3730,7 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   float PUweight;
   float hltHTeff;
   float hltMHTeff;
+  float hltMHTeffBNN,hltMHTeffBNNUp,hltMHTeffBNNDown;
 
   double scanCrossSection,scanCrossSectionPlus,scanCrossSectionMinus;
   int m0,m12;
@@ -3512,6 +3973,9 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("PUweight",&PUweight,"PUweight/F");
   reducedTree.Branch("hltHTeff",&hltHTeff,"hltHTeff/F");
   reducedTree.Branch("hltMHTeff",&hltMHTeff,"hltMHTeff/F");
+  reducedTree.Branch("hltMHTeffBNN",&hltMHTeffBNN,"hltMHTeffBNN/F");
+  reducedTree.Branch("hltMHTeffBNNUp",&hltMHTeffBNNUp,"hltMHTeffBNNUp/F");
+  reducedTree.Branch("hltMHTeffBNNDown",&hltMHTeffBNNDown,"hltMHTeffBNNDown/F");
 
   //got to store the whole vector. very big, unfortunately
   reducedTree.Branch("pdfWeightsCTEQ",&pdfWeightsCTEQ,"pdfWeightsCTEQ[45]/F");
@@ -4016,7 +4480,11 @@ Also the pdfWeightSum* histograms that are used for LM9.
       deltaPhiN2 = getDeltaPhiMETN(1);
       deltaPhiN3 = getDeltaPhiMETN(2);
 
-      hltMHTeff = getHLTMHTeff(MET, nElectrons, nMuons, minDeltaPhiN);
+      hltMHTeff = getHLTMHTeff(MET, HT, nElectrons, nMuons, minDeltaPhiN);
+      double effUp, effDown;
+      hltMHTeffBNN = getHLTMHTeffBNN(MET, HT, nElectrons, nMuons, minDeltaPhiN, effUp, effDown);
+      hltMHTeffBNNUp = effUp;
+      hltMHTeffBNNDown = effDown;
 
       //alternatives for testing
       minDeltaPhiN_otherEta5                      = getMinDeltaPhiMETN(3,50,2.4,true, 30,5,true, false,false);
@@ -5057,7 +5525,7 @@ int EventCalculator::getTTbarDecayType(int& W1decayType, int& W2decayType)
 void EventCalculator::sampleAnalyzer(itreestream& stream){
 
 
-  TFile fout("histos.root","RECREATE");
+  //TFile fout("histos.root","RECREATE");
   
   //TH1F * h_MCPU = new TH1F("h_MCPU","unweighted PU distribution",35,0.5,34.5);
   //TH1F * h_MCPUr = new TH1F("h_MCPUr","reweighted PU distribution",35,-0.5,34.5);
@@ -5069,60 +5537,60 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
   //TH1F * h_ht = new TH1F("h_ht","HT",1000,0,1000);
   //TH1F * h_ht_trig = new TH1F("h_ht_trig","HT",1000,0,1000);
 
-  TH1F * h_met_den_mht75 = new TH1F("h_met_den_mht75","HT",1000,0,1000);
-  TH1F * h_met_trig_mht75 = new TH1F("h_met_trig_mht75","HT",1000,0,1000);
-  TH1F * h_met_den_mht80 = new TH1F("h_met_den_mht80","HT",1000,0,1000);
-  TH1F * h_met_trig_mht80 = new TH1F("h_met_trig_mht80","HT",1000,0,1000);
-  TH1F * h_met_den_mht90_ht300 = new TH1F("h_met_den_mht90_ht300","HT",1000,0,1000);
-  TH1F * h_met_trig_mht90_ht300 = new TH1F("h_met_trig_mht90_ht300","HT",1000,0,1000);
-  TH1F * h_met_den_mht90_ht350 = new TH1F("h_met_den_mht90_ht350","HT",1000,0,1000);
-  TH1F * h_met_trig_mht90_ht350 = new TH1F("h_met_trig_mht90_ht350","HT",1000,0,1000);
-  TH1F * h_met_den_mht110 = new TH1F("h_met_den_mht110","HT",1000,0,1000);
-  TH1F * h_met_trig_mht110 = new TH1F("h_met_trig_mht110","HT",1000,0,1000);
-
-  TH1F * h_met_0L_den_mht75       = new TH1F("h_met_0L_den_mht75","HT",1000,0,1000);
-  TH1F * h_met_0L_trig_mht75      = new TH1F("h_met_0L_trig_mht75","HT",1000,0,1000);
-  TH1F * h_met_0L_den_mht80       = new TH1F("h_met_0L_den_mht80","HT",1000,0,1000);
-  TH1F * h_met_0L_trig_mht80      = new TH1F("h_met_0L_trig_mht80","HT",1000,0,1000);
-  TH1F * h_met_0L_den_mht90_ht300 = new TH1F("h_met_0L_den_mht90_ht300","HT",1000,0,1000);
-  TH1F * h_met_0L_trig_mht90_ht300= new TH1F("h_met_0L_trig_mht90_ht300","HT",1000,0,1000);
-  TH1F * h_met_0L_den_mht90_ht350 = new TH1F("h_met_0L_den_mht90_ht350","HT",1000,0,1000);
-  TH1F * h_met_0L_trig_mht90_ht350= new TH1F("h_met_0L_trig_mht90_ht350","HT",1000,0,1000);
-  TH1F * h_met_0L_den_mht110      = new TH1F("h_met_0L_den_mht110","HT",1000,0,1000);
-  TH1F * h_met_0L_trig_mht110     = new TH1F("h_met_0L_trig_mht110","HT",1000,0,1000);
-
-  TH1F * h_met_1L_den_mht75       = new TH1F("h_met_1L_den_mht75","HT",1000,0,1000);
-  TH1F * h_met_1L_trig_mht75      = new TH1F("h_met_1L_trig_mht75","HT",1000,0,1000);
-  TH1F * h_met_1L_den_mht80       = new TH1F("h_met_1L_den_mht80","HT",1000,0,1000);
-  TH1F * h_met_1L_trig_mht80      = new TH1F("h_met_1L_trig_mht80","HT",1000,0,1000);
-  TH1F * h_met_1L_den_mht90_ht300 = new TH1F("h_met_1L_den_mht90_ht300","HT",1000,0,1000);
-  TH1F * h_met_1L_trig_mht90_ht300= new TH1F("h_met_1L_trig_mht90_ht300","HT",1000,0,1000);
-  TH1F * h_met_1L_den_mht90_ht350 = new TH1F("h_met_1L_den_mht90_ht350","HT",1000,0,1000);
-  TH1F * h_met_1L_trig_mht90_ht350= new TH1F("h_met_1L_trig_mht90_ht350","HT",1000,0,1000);
-  TH1F * h_met_1L_den_mht110      = new TH1F("h_met_1L_den_mht110","HT",1000,0,1000);
-  TH1F * h_met_1L_trig_mht110     = new TH1F("h_met_1L_trig_mht110","HT",1000,0,1000);
-
-  TH1F * h_met_1e0mu_den_mht75       = new TH1F("h_met_1e0mu_den_mht75","HT",1000,0,1000);
-  TH1F * h_met_1e0mu_trig_mht75      = new TH1F("h_met_1e0mu_trig_mht75","HT",1000,0,1000);
-  TH1F * h_met_1e0mu_den_mht80       = new TH1F("h_met_1e0mu_den_mht80","HT",1000,0,1000);
-  TH1F * h_met_1e0mu_trig_mht80      = new TH1F("h_met_1e0mu_trig_mht80","HT",1000,0,1000);
-  TH1F * h_met_1e0mu_den_mht90_ht300 = new TH1F("h_met_1e0mu_den_mht90_ht300","HT",1000,0,1000);
-  TH1F * h_met_1e0mu_trig_mht90_ht300= new TH1F("h_met_1e0mu_trig_mht90_ht300","HT",1000,0,1000);
-  TH1F * h_met_1e0mu_den_mht90_ht350 = new TH1F("h_met_1e0mu_den_mht90_ht350","HT",1000,0,1000);
-  TH1F * h_met_1e0mu_trig_mht90_ht350= new TH1F("h_met_1e0mu_trig_mht90_ht350","HT",1000,0,1000);
-  TH1F * h_met_1e0mu_den_mht110      = new TH1F("h_met_1e0mu_den_mht110","HT",1000,0,1000);
-  TH1F * h_met_1e0mu_trig_mht110     = new TH1F("h_met_1e0mu_trig_mht110","HT",1000,0,1000);
-
-  TH1F * h_met_1mu0e_den_mht75       = new TH1F("h_met_1mu0e_den_mht75","HT",1000,0,1000);
-  TH1F * h_met_1mu0e_trig_mht75      = new TH1F("h_met_1mu0e_trig_mht75","HT",1000,0,1000);
-  TH1F * h_met_1mu0e_den_mht80       = new TH1F("h_met_1mu0e_den_mht80","HT",1000,0,1000);
-  TH1F * h_met_1mu0e_trig_mht80      = new TH1F("h_met_1mu0e_trig_mht80","HT",1000,0,1000);
-  TH1F * h_met_1mu0e_den_mht90_ht300 = new TH1F("h_met_1mu0e_den_mht90_ht300","HT",1000,0,1000);
-  TH1F * h_met_1mu0e_trig_mht90_ht300= new TH1F("h_met_1mu0e_trig_mht90_ht300","HT",1000,0,1000);
-  TH1F * h_met_1mu0e_den_mht90_ht350 = new TH1F("h_met_1mu0e_den_mht90_ht350","HT",1000,0,1000);
-  TH1F * h_met_1mu0e_trig_mht90_ht350= new TH1F("h_met_1mu0e_trig_mht90_ht350","HT",1000,0,1000);
-  TH1F * h_met_1mu0e_den_mht110      = new TH1F("h_met_1mu0e_den_mht110","HT",1000,0,1000);
-  TH1F * h_met_1mu0e_trig_mht110     = new TH1F("h_met_1mu0e_trig_mht110","HT",1000,0,1000);
+  //TH1F * h_met_den_mht75 = new TH1F("h_met_den_mht75","HT",1000,0,1000);
+  //TH1F * h_met_trig_mht75 = new TH1F("h_met_trig_mht75","HT",1000,0,1000);
+  //TH1F * h_met_den_mht80 = new TH1F("h_met_den_mht80","HT",1000,0,1000);
+  //TH1F * h_met_trig_mht80 = new TH1F("h_met_trig_mht80","HT",1000,0,1000);
+  //TH1F * h_met_den_mht90_ht300 = new TH1F("h_met_den_mht90_ht300","HT",1000,0,1000);
+  //TH1F * h_met_trig_mht90_ht300 = new TH1F("h_met_trig_mht90_ht300","HT",1000,0,1000);
+  //TH1F * h_met_den_mht90_ht350 = new TH1F("h_met_den_mht90_ht350","HT",1000,0,1000);
+  //TH1F * h_met_trig_mht90_ht350 = new TH1F("h_met_trig_mht90_ht350","HT",1000,0,1000);
+  //TH1F * h_met_den_mht110 = new TH1F("h_met_den_mht110","HT",1000,0,1000);
+  //TH1F * h_met_trig_mht110 = new TH1F("h_met_trig_mht110","HT",1000,0,1000);
+  //
+  //TH1F * h_met_0L_den_mht75       = new TH1F("h_met_0L_den_mht75","HT",1000,0,1000);
+  //TH1F * h_met_0L_trig_mht75      = new TH1F("h_met_0L_trig_mht75","HT",1000,0,1000);
+  //TH1F * h_met_0L_den_mht80       = new TH1F("h_met_0L_den_mht80","HT",1000,0,1000);
+  //TH1F * h_met_0L_trig_mht80      = new TH1F("h_met_0L_trig_mht80","HT",1000,0,1000);
+  //TH1F * h_met_0L_den_mht90_ht300 = new TH1F("h_met_0L_den_mht90_ht300","HT",1000,0,1000);
+  //TH1F * h_met_0L_trig_mht90_ht300= new TH1F("h_met_0L_trig_mht90_ht300","HT",1000,0,1000);
+  //TH1F * h_met_0L_den_mht90_ht350 = new TH1F("h_met_0L_den_mht90_ht350","HT",1000,0,1000);
+  //TH1F * h_met_0L_trig_mht90_ht350= new TH1F("h_met_0L_trig_mht90_ht350","HT",1000,0,1000);
+  //TH1F * h_met_0L_den_mht110      = new TH1F("h_met_0L_den_mht110","HT",1000,0,1000);
+  //TH1F * h_met_0L_trig_mht110     = new TH1F("h_met_0L_trig_mht110","HT",1000,0,1000);
+  //
+  //TH1F * h_met_1L_den_mht75       = new TH1F("h_met_1L_den_mht75","HT",1000,0,1000);
+  //TH1F * h_met_1L_trig_mht75      = new TH1F("h_met_1L_trig_mht75","HT",1000,0,1000);
+  //TH1F * h_met_1L_den_mht80       = new TH1F("h_met_1L_den_mht80","HT",1000,0,1000);
+  //TH1F * h_met_1L_trig_mht80      = new TH1F("h_met_1L_trig_mht80","HT",1000,0,1000);
+  //TH1F * h_met_1L_den_mht90_ht300 = new TH1F("h_met_1L_den_mht90_ht300","HT",1000,0,1000);
+  //TH1F * h_met_1L_trig_mht90_ht300= new TH1F("h_met_1L_trig_mht90_ht300","HT",1000,0,1000);
+  //TH1F * h_met_1L_den_mht90_ht350 = new TH1F("h_met_1L_den_mht90_ht350","HT",1000,0,1000);
+  //TH1F * h_met_1L_trig_mht90_ht350= new TH1F("h_met_1L_trig_mht90_ht350","HT",1000,0,1000);
+  //TH1F * h_met_1L_den_mht110      = new TH1F("h_met_1L_den_mht110","HT",1000,0,1000);
+  //TH1F * h_met_1L_trig_mht110     = new TH1F("h_met_1L_trig_mht110","HT",1000,0,1000);
+  //
+  //TH1F * h_met_1e0mu_den_mht75       = new TH1F("h_met_1e0mu_den_mht75","HT",1000,0,1000);
+  //TH1F * h_met_1e0mu_trig_mht75      = new TH1F("h_met_1e0mu_trig_mht75","HT",1000,0,1000);
+  //TH1F * h_met_1e0mu_den_mht80       = new TH1F("h_met_1e0mu_den_mht80","HT",1000,0,1000);
+  //TH1F * h_met_1e0mu_trig_mht80      = new TH1F("h_met_1e0mu_trig_mht80","HT",1000,0,1000);
+  //TH1F * h_met_1e0mu_den_mht90_ht300 = new TH1F("h_met_1e0mu_den_mht90_ht300","HT",1000,0,1000);
+  //TH1F * h_met_1e0mu_trig_mht90_ht300= new TH1F("h_met_1e0mu_trig_mht90_ht300","HT",1000,0,1000);
+  //TH1F * h_met_1e0mu_den_mht90_ht350 = new TH1F("h_met_1e0mu_den_mht90_ht350","HT",1000,0,1000);
+  //TH1F * h_met_1e0mu_trig_mht90_ht350= new TH1F("h_met_1e0mu_trig_mht90_ht350","HT",1000,0,1000);
+  //TH1F * h_met_1e0mu_den_mht110      = new TH1F("h_met_1e0mu_den_mht110","HT",1000,0,1000);
+  //TH1F * h_met_1e0mu_trig_mht110     = new TH1F("h_met_1e0mu_trig_mht110","HT",1000,0,1000);
+  //
+  //TH1F * h_met_1mu0e_den_mht75       = new TH1F("h_met_1mu0e_den_mht75","HT",1000,0,1000);
+  //TH1F * h_met_1mu0e_trig_mht75      = new TH1F("h_met_1mu0e_trig_mht75","HT",1000,0,1000);
+  //TH1F * h_met_1mu0e_den_mht80       = new TH1F("h_met_1mu0e_den_mht80","HT",1000,0,1000);
+  //TH1F * h_met_1mu0e_trig_mht80      = new TH1F("h_met_1mu0e_trig_mht80","HT",1000,0,1000);
+  //TH1F * h_met_1mu0e_den_mht90_ht300 = new TH1F("h_met_1mu0e_den_mht90_ht300","HT",1000,0,1000);
+  //TH1F * h_met_1mu0e_trig_mht90_ht300= new TH1F("h_met_1mu0e_trig_mht90_ht300","HT",1000,0,1000);
+  //TH1F * h_met_1mu0e_den_mht90_ht350 = new TH1F("h_met_1mu0e_den_mht90_ht350","HT",1000,0,1000);
+  //TH1F * h_met_1mu0e_trig_mht90_ht350= new TH1F("h_met_1mu0e_trig_mht90_ht350","HT",1000,0,1000);
+  //TH1F * h_met_1mu0e_den_mht110      = new TH1F("h_met_1mu0e_den_mht110","HT",1000,0,1000);
+  //TH1F * h_met_1mu0e_trig_mht110     = new TH1F("h_met_1mu0e_trig_mht110","HT",1000,0,1000);
 
   ////check the MC efficiencies from Summer11 TTbar
   ////this histogram has bin edges {30,50,75,100,150,200,240,500,1000}
@@ -5286,10 +5754,15 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
 
       npass++;
 
+      double effUp,effDown;     
+      std::cout << "HT = " << getHT() << ",MET = " << getMET() << ", eff = "
+		<< getHLTMHTeffBNN(getMET(),getHT(),countEle(),countMu(),getMinDeltaPhiMETN(3),effUp,effDown) << std::endl;
+      std::cout << ", effUp = " << effUp << ", effDown = " << effDown << std::endl;
+      
       //std::cout << "MET = " << getMET() << ", eff = " << getHLTMHTeff(getMET()) << std::endl;
       //std::cout << "HT = " << getHT() << ", eff = " << getHLTHTeff(getHT()) << std::endl;
 
-
+      /*
       bool cutEleVeto,cutMuVeto;
       cutEleVeto = passCut("cutEleVeto");
       cutMuVeto = passCut("cutMuVeto");
@@ -5496,8 +5969,8 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
 
 	  }
 	}
-      }
-      
+      }      
+      */
       /*      
       h_ht->Fill(getHT());
       
@@ -5641,8 +6114,8 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
   //h_ltageff->Divide(h_ltag,h_ljet,1,1,"B");
   
   
-  fout.Write();
-  fout.Close();
+  //fout.Write();
+  //fout.Close();
 
 
   return;
