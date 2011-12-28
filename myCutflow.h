@@ -409,50 +409,48 @@ myCutflow::myCutflow(TString sampleName, TTree *tree):Event_(sampleName)
       TChain * chain = new TChain("reducedTree","");
 
       if (sampleName=="TTbarJets"){
-	//chain->Add("/cu2/ra2b/reducedTrees/V00-02-35e/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.TTbarJets.root/reducedTree");
-	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35e/reducedTree.CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.TTbarJets.root/reducedTree");
-	//chain->Add("/cu2/wteo/reducedTrees/splitTTbarDecayMode/reducedTree.CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.TTbarJets.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35g/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.TTbarJets.root/reducedTree");
       }
 
       else if (sampleName=="SingleTop"){
-	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35e/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.SingleTop.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35g/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.SingleTop.root/reducedTree");
       }
 
       else if (sampleName=="WJets"){
-	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35e/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.WJets.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35g/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.WJets.root/reducedTree");
       }
 
       else if (sampleName=="ZJets"){
-	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35e/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.ZJets.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35g/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.ZJets.root/reducedTree");
       }
 
       else if (sampleName=="Zinvisible"){
-	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35e/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.Zinvisible.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35g/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.Zinvisible.root/reducedTree");
       }
 
       else if (sampleName=="VV"){
-	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35e/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.VV.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35g/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.VV.root/reducedTree");
       }
 
       else if (sampleName=="PythiaPUQCD"){
-	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35e/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.PythiaPUQCD.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35g/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.PythiaPUQCD.root/reducedTree");
       }
 
       else if (sampleName=="LM9"){
-	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35e/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.LM9.root/reducedTree");	
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35g/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.LM9.root/reducedTree");	
       }
 
       else if (sampleName=="Data"){
-	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35d/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.ht_run2011a_may10rereco.root/reducedTree");
-	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35d/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.ht_run2011a_aug5rereco.root/reducedTree");
-	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35d/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.ht_run2011a_promptrecov4_try3.root/reducedTree");
-	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35d/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.ht_run2011a_promptrecov6.root/reducedTree");
-	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35d/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.ht_run2011b_promptrecov1_nov4_try2.root/reducedTree");
-	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35d/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.ht_run2011b_promptrecov1_oct21.root/reducedTree");
-	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35d/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.ht_run2011b_promptrecov1_oct14.root/reducedTree");
-	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35d/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.ht_run2011b_promptrecov1_oct7.root/reducedTree");
-	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35d/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.ht_run2011b_promptrecov1_oct28_plusLostJobs.root/reducedTree");
-	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35d/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.ht_run2011b_promptrecov1.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35g/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.ht_run2011a_may10rereco.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35g/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.ht_run2011a_aug5rereco.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35g/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.ht_run2011a_promptrecov4_try3.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35g/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.ht_run2011a_promptrecov6.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35g/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.ht_run2011b_promptrecov1_nov4_try2.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35g/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.ht_run2011b_promptrecov1_oct21.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35g/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.ht_run2011b_promptrecov1_oct14.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35g/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.ht_run2011b_promptrecov1_oct7.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35g/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.ht_run2011b_promptrecov1_oct28_plusLostJobs.root/reducedTree");
+	chain->Add("/cu2/ra2b/reducedTrees/V00-02-35g/reducedTree.CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.ht_run2011b_promptrecov1.root/reducedTree");
 
       }
 
