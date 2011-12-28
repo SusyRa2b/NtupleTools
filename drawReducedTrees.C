@@ -76,8 +76,8 @@ functionality for TH1F and TH1D e.g. the case of addOverflowBin()
 
   //TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35d/";
   //TString inputPath = "/cu1/joshmt/reducedTrees/test/"; 
-TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35f/";
-TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35f/";
+TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35g/";
+TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35g/";
 
 //-- reducedTrees for Oct 25 SUSY meeting. 3464.581/pb. 
 //TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35a/";
@@ -3108,7 +3108,7 @@ void AN2011( TString btagselection="ge1b",const int mode=1, bool logy=false, boo
   var="HT"; xtitle="H_{T} (GeV)";
   nbins = 20; low=400; high=1100;
   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_HT_"+btagselection+modestring,0,"GeV");
-  
+    
   //MET
   selection_ =TCut("HT>=400 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4 &&passCleaning==1")&&btagcut;
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
@@ -3211,16 +3211,30 @@ void AN2011( TString btagselection="ge1b",const int mode=1, bool logy=false, boo
   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_SL_"+btagselection+modestring,0,"GeV");
   
   // == HT for the combined sample
-  selection_ =TCut("MET>=150 &&cutHT==1 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && minDeltaPhiN >= 4 && MT_Wlep>=0 && MT_Wlep<100")&&btagcut;
+  selection_ =TCut("MET>=200 &&cutHT==1 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && minDeltaPhiN >= 4 && MT_Wlep>=0 && MT_Wlep<100")&&btagcut;
   var="HT"; xtitle="H_{T} [GeV]";
   nbins = 20; low=350; high=1050;
   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_HT_SL_"+btagselection+modestring,0,"GeV");
 
+  /*
   // == njets for the combined sample
-  selection_ =TCut("MET>=150 &&cutHT==1 && cutPV==1 && cutTrigger==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && minDeltaPhiN >= 4 && MT_Wlep>=0 && MT_Wlep<100")&&btagcut;
-  var="HT"; xtitle="H_{T} [GeV]";
-  nbins = 20; low=350; high=1050;
-  drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_njets_SL_"+btagselection+modestring,0,"GeV");
+  selection_ =TCut("MET>=200 && HT>=400 && cutPV==1 && cutTrigger==1 && cut3Jets==1 &&  ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && minDeltaPhiN >= 4 && MT_Wlep>=0 && MT_Wlep<100 && MET>=200 && minDeltaPhiN >= 4 &&passCleaning==1")&&btagcut;
+  var="njets"; xtitle="Jet multiplicity";
+  nbins = 7; low=2; high=9;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_njets_SL_"+btagselection+modestring);
+  
+  // == njets for the combined sample (HT>500)
+  selection_ =TCut("MET>=200 && HT>=500 && cutPV==1 && cutTrigger==1 && cut3Jets==1 &&  ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && minDeltaPhiN >= 4 && MT_Wlep>=0 && MT_Wlep<100 && MET>=200 && minDeltaPhiN >= 4 &&passCleaning==1")&&btagcut;
+  var="njets"; xtitle="Jet multiplicity";
+  nbins = 7; low=2; high=9;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_njets_SL_HT500_"+btagselection+modestring);
+
+  // == njets for the combined sample (HT>600)
+  selection_ =TCut("MET>=200 && HT>=600 && cutPV==1 && cutTrigger==1 && cut3Jets==1 &&  ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && minDeltaPhiN >= 4 && MT_Wlep>=0 && MT_Wlep<100 && MET>=200 && minDeltaPhiN >= 4 &&passCleaning==1")&&btagcut;
+  var="njets"; xtitle="Jet multiplicity";
+  nbins = 7; low=2; high=9;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_njets_SL_HT600_"+btagselection+modestring);
+  
   
   // == MET for the combined sample (HT>500)
   selection_ =TCut("MET>=200 && HT>500 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && minDeltaPhiN >= 4 && MT_Wlep>=0 && MT_Wlep<100 &&passCleaning==1")&&btagcut;
@@ -3233,7 +3247,7 @@ void AN2011( TString btagselection="ge1b",const int mode=1, bool logy=false, boo
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
   nbins = 15; low=200; high=500;
   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_SL_HT600_"+btagselection+modestring,0,"GeV");
-
+  */
 
   //different scale to compare to Kristen
 //   selection_ =TCut("MET>=150 && HT>500 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && minDeltaPhiN >= 4 && MT_Wlep>=0 && MT_Wlep<100")&&btagcut;
@@ -3275,12 +3289,6 @@ void AN2011( TString btagselection="ge1b",const int mode=1, bool logy=false, boo
   var="minDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}";
   nbins = 20; low=0; high=40;
   drawPlots(var,nbins,low,high,xtitle,"Events", "SB_mindphin_"+btagselection+modestring);
-  
-  //SL SB+SIG njet
-  selection_ =TCut("HT>=400 && cutPV==1 && cutTrigger==1 && cut3Jets==1 &&  ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && minDeltaPhiN >= 4 && MT_Wlep>=0 && MT_Wlep<100 && MET>=200 && minDeltaPhiN >= 4 &&passCleaning==1")&&btagcut;
-  var="njets"; xtitle="Jet multiplicity";
-  nbins = 7; low=2; high=9;
-  drawPlots(var,nbins,low,high,xtitle,"Events", "SL_njets_"+btagselection+modestring);
   */
 
   resetLegendPosition();
