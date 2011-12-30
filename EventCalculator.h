@@ -301,12 +301,12 @@ private:
   std::vector<met1_s> * myMETPF;
   std::vector<vertex_s> * myVertex;
   std::vector<genparticlehelperra2_s> * myGenParticles;
+  double* myGenWeight;
 
   //versions for jet-loss study
   std::vector<jet2_s> * myJetsPF_temp;
   std::vector<met1_s> * myMETPF_temp;
 
-  double* myGenWeight;
   double* myEDM_bunchCrossing;
   double* myEDM_event;
   double* myEDM_isRealData;
