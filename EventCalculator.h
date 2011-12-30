@@ -156,6 +156,10 @@ public:
   double getMaxDeltaPhiMET30_eta5(unsigned int maxjets);
   double getMaxDeltaPhiMET30_eta5_noId(unsigned int maxjets);
 
+  float getMaxJetMis(unsigned int rank, unsigned int maxjets, float jetpt);
+  float getMaxJetFracMis(unsigned int rank, unsigned int maxjets, float jetpt);
+  float getDeltaPhiMETJetMaxMis(float jetpt);
+
   double getMinDeltaPhiMETTaus();
   double getMinDeltaPhiMETMuons(unsigned int maxmuons);
 
