@@ -117,7 +117,7 @@ double lumiScale_ = 4683.719;//nov4
 
 const bool reweightLSBdata_=true; //whether or not LSB data is reweighted based on PV distribution
 const bool useScaleFactors_=true; //whether or not to use MC scale factors when doing subtraction for data-driven estimates
-
+const bool useBNNEffCurves_=true; 
 
 float eff_SB_MHT_             = 0.841;   
 float eff_SB_MHT_err_[2]      = {0.059, 0.090};
@@ -170,6 +170,7 @@ void countInBoxesBreakdown(const SearchRegion & region) {
   usePUweight_=false;
   useHTeff_=false;
   useMHTeff_=false;
+  thebnnMHTeffMode_ = kOff;
   btagSFweight_="1";
   currentConfig_=configDescriptions_.getDefault(); //completely raw MC
 
@@ -331,6 +332,7 @@ owen asked for total MC event counts in the 6 boxes, output in a particular form
   usePUweight_=true;
   useHTeff_=true;
   useMHTeff_=true;
+  thebnnMHTeffMode_ = kOff;
   btagSFweight_=bweightstring; //use b tag weight instead
 
   TString var="HT"; TString xtitle=var;
@@ -690,6 +692,7 @@ std::pair<double,std::vector<double> > anotherABCD( const SearchRegion & region,
     usePUweight_=true;
     useHTeff_=true;
     useMHTeff_=false;
+    thebnnMHTeffMode_ = kOff;//dealt with later
     currentConfig_=configDescriptions_.getCorrected(); //add JERbias
 
     if(metselection=="MET>=200&&MET<250"){
@@ -764,10 +767,12 @@ std::pair<double,std::vector<double> > anotherABCD( const SearchRegion & region,
   //  TCut failOther = "deltaPhiMPTcaloMET>=2";
   TCut passOther = "minDeltaPhiN>=4";
   TCut failOther = "minDeltaPhiN<4";
+
   
   var="HT"; xtitle=var;
   nbins=10; low=0; high=5000;
   double A,B,D,SIG,Aerr,Berr,Derr,SIGerr;
+  double D_bnnPlus=0, D_bnnMinus=0;
   //double DerrMinus;
   double RLSB_RW = 0;
   double dRLSB_RW = 0;
@@ -919,11 +924,29 @@ std::pair<double,std::vector<double> > anotherABCD( const SearchRegion & region,
 
   double D_temp = D, Derr_temp = Derr;
   if(useScaleFactors_ && datamode){
-    D = D_temp/eff_ldp_MHT;
-    //Derr = jmt::errAoverB(D_temp,Derr_temp,eff_ldp_MHT,eff_ldp_MHT_err[0]);
-    //DerrMinus = jmt::errAoverB(D_temp,Derr_temp,eff_ldp_MHT,eff_ldp_MHT_err[1]);
 
-    //Derr = Derr > DerrMinus ? Derr: DerrMinus;
+    if(useBNNEffCurves_){
+      thebnnMHTeffMode_ = kOn;
+      drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_D");
+      D=getIntegral(sampleOfInterest);
+      Derr=getIntegralErr(sampleOfInterest);      
+
+      thebnnMHTeffMode_ = kOnPlus;
+      drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_D");
+      D_bnnPlus=getIntegral(sampleOfInterest);
+      thebnnMHTeffMode_ = kOnMinus;
+      drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_D");
+      D_bnnMinus=getIntegral(sampleOfInterest);
+
+      thebnnMHTeffMode_ = kOff;//turn it back off
+    }
+    else{
+      D = D_temp/eff_ldp_MHT;
+      //Derr = jmt::errAoverB(D_temp,Derr_temp,eff_ldp_MHT,eff_ldp_MHT_err[0]);
+      //DerrMinus = jmt::errAoverB(D_temp,Derr_temp,eff_ldp_MHT,eff_ldp_MHT_err[1]);
+      
+      //Derr = Derr > DerrMinus ? Derr: DerrMinus;
+    }
   }
   
   double Dsub = 0,Dsuberr=0;
@@ -1024,18 +1047,28 @@ std::pair<double,std::vector<double> > anotherABCD( const SearchRegion & region,
 
     //vary the trigger efficiencies by their statistical error to get trigger error on estimate
     //first vary eff_ldp_MHT
-    float eff_ldp_MHT_up   = eff_ldp_MHT + eff_ldp_MHT_err[0];
-    D = D_temp/eff_ldp_MHT_up;
-    double estimate_up;
-    if( !(forTTbarEstimate) ) estimate_up = eff_MHT*myR*(D-Dsub);
-    else estimate_up = myR*(D-Dsub);
-    double delta_down = (estimate_up - estimate);    
 
-    float eff_ldp_MHT_down = eff_ldp_MHT - eff_ldp_MHT_err[1];
-    D = D_temp/eff_ldp_MHT_down;
-    double estimate_down;
-    if( !(forTTbarEstimate) ) estimate_down = eff_MHT*myR*(D-Dsub);
-    else estimate_down = myR*(D-Dsub);
+    double estimate_up, estimate_down;
+
+    if(useBNNEffCurves_){
+      if( !(forTTbarEstimate) ) estimate_up = eff_MHT*myR*(D_bnnPlus - Dsub);
+      else estimate_up = myR*(D_bnnPlus - Dsub);
+      if( !(forTTbarEstimate) ) estimate_down = eff_MHT*myR*(D_bnnMinus - Dsub);
+      else estimate_down = myR*(D_bnnMinus - Dsub);
+    }
+    else{
+      float eff_ldp_MHT_up   = eff_ldp_MHT + eff_ldp_MHT_err[0];
+      D = D_temp/eff_ldp_MHT_up;
+      if( !(forTTbarEstimate) ) estimate_up = eff_MHT*myR*(D-Dsub);
+      else estimate_up = myR*(D-Dsub);
+      
+      float eff_ldp_MHT_down = eff_ldp_MHT - eff_ldp_MHT_err[1];
+      D = D_temp/eff_ldp_MHT_down;
+      if( !(forTTbarEstimate) ) estimate_down = eff_MHT*myR*(D-Dsub);
+      else estimate_down = myR*(D-Dsub);
+    }
+
+    double delta_down = (estimate_up - estimate);    
     double delta_up = (estimate_down - estimate);
     //std::cout << "TRIG: + " << delta_up << " - " << delta_down << std::endl;
 
@@ -1466,6 +1499,7 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
     usePUweight_=true;
     useHTeff_=true;
     useMHTeff_=false;
+    thebnnMHTeffMode_ = kOff;//dealt with later
     currentConfig_=configDescriptions_.getCorrected(); //add JERbias
     
     eff_MHT       = eff_SIG_MHT_;    eff_MHT_err[0]       = eff_SIG_MHT_err_[0];    eff_MHT_err[1]       = eff_SIG_MHT_err_[1];
@@ -1489,6 +1523,7 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
     usePUweight_=false;
     useHTeff_=false;
     useMHTeff_=false;
+    thebnnMHTeffMode_ = kOff;
     btagSFweight_="1";
     currentConfig_=configDescriptions_.getDefault(); //completely raw MC
     
@@ -1513,6 +1548,7 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
   TCut passOther = "nElectrons==0 && nMuons==0";
 
   double A,B,D,SIG,Aerr,Berr,Derr,SIGerr;
+  double B_bnnPlus=0, B_bnnMinus=0;
   //double AerrMinus,BerrMinus,DerrMinus;
   //A = SB, SL
   if (!datamode && (closureMode=="wtplus" )) {
@@ -1553,7 +1589,7 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
 
   double A_temp = A, Aerr_temp = Aerr;
   double D_temp = D, Derr_temp = Derr;
-  if(useScaleFactors_ && datamode){
+  if(useScaleFactors_ && datamode){//also use this for bnnEff mode
     A = A/eff_SL_SB_MHT;
     //Aerr = jmt::errAoverB(A_temp,Aerr_temp,eff_SL_SB_MHT,eff_SL_SB_MHT_err[0]);
     //AerrMinus = jmt::errAoverB(A_temp,Aerr_temp,eff_SL_SB_MHT,eff_SL_SB_MHT_err[1]);
@@ -1601,10 +1637,28 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
 
   double B_temp = B, Berr_temp = Berr;
   if(useScaleFactors_ && datamode){
-    B = B/eff_SB_MHT;
-    //Berr = jmt::errAoverB(B_temp,Berr_temp,eff_SB_MHT,eff_SB_MHT_err[0]);
-    //BerrMinus = jmt::errAoverB(B_temp,Berr_temp,eff_SB_MHT,eff_SB_MHT_err[1]);
-    //Berr = Berr > BerrMinus ? Berr: BerrMinus;
+
+    if(useBNNEffCurves_){
+      thebnnMHTeffMode_ = kOn;
+      drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_B");
+      B=getIntegral(sampleOfInterest);
+      Berr=getIntegralErr(sampleOfInterest);
+
+      thebnnMHTeffMode_ = kOnPlus;
+      drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_B");
+      B_bnnPlus=getIntegral(sampleOfInterest);
+      thebnnMHTeffMode_ = kOnMinus;
+      drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_B");
+      B_bnnMinus=getIntegral(sampleOfInterest);
+
+      thebnnMHTeffMode_ = kOff;//turn it back off
+    }
+    else{
+      B = B/eff_SB_MHT;
+      //Berr = jmt::errAoverB(B_temp,Berr_temp,eff_SB_MHT,eff_SB_MHT_err[0]);
+      //BerrMinus = jmt::errAoverB(B_temp,Berr_temp,eff_SB_MHT,eff_SB_MHT_err[1]);
+      //Berr = Berr > BerrMinus ? Berr: BerrMinus;
+    }
   }
 
   //SIG
@@ -1670,21 +1724,34 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
     delta_down2 = (estimate_down - estimate);
 
     //third vary eff_SB_MHT
-    float eff_SB_MHT_up   = eff_SB_MHT + eff_SB_MHT_err[0];
-    double B_down = B_temp/eff_SB_MHT_up;
-    num = (B_down-SBsubMisc-SBsubQCD-SBsubZ)*D;
-    estimate_up = eff_MHT*num/A;
-    double delta_down3 = (estimate_up - estimate);    
-    estimate_up = num/A;
-    double delta_down3_unscaled = (estimate_up - estimate_temp);    
+    double estimate_up_unscaled, estimate_down_unscaled;
+    if(useBNNEffCurves_){
+      num = (B_bnnPlus-SBsubMisc-SBsubQCD-SBsubZ)*D;
+      estimate_up = eff_MHT*num/A;
+      estimate_up_unscaled = num/A;
 
-    float eff_SB_MHT_down   = eff_SB_MHT - eff_SB_MHT_err[1];
-    double B_up = B_temp/eff_SB_MHT_down;
-    num = (B_up-SBsubMisc-SBsubQCD-SBsubZ)*D;
-    estimate_down = eff_MHT*num/A;
-    double delta_up3 = (estimate_down - estimate);    
-    estimate_down = num/A;
-    double delta_up3_unscaled = (estimate_down - estimate_temp);    
+      num = (B_bnnMinus-SBsubMisc-SBsubQCD-SBsubZ)*D;
+      estimate_down = eff_MHT*num/A;
+      estimate_down_unscaled = num/A;
+    }
+    else{
+      float eff_SB_MHT_up   = eff_SB_MHT + eff_SB_MHT_err[0];
+      double B_down = B_temp/eff_SB_MHT_up;
+      num = (B_down-SBsubMisc-SBsubQCD-SBsubZ)*D;
+      estimate_up = eff_MHT*num/A;
+      estimate_up_unscaled = num/A;
+      
+      float eff_SB_MHT_down   = eff_SB_MHT - eff_SB_MHT_err[1];
+      double B_up = B_temp/eff_SB_MHT_down;
+      num = (B_up-SBsubMisc-SBsubQCD-SBsubZ)*D;
+      estimate_down = eff_MHT*num/A;
+      estimate_down_unscaled = num/A;
+    }
+    double delta_down3 = (estimate_up - estimate);
+    double delta_up3 = (estimate_down - estimate);
+
+    double delta_down3_unscaled = (estimate_up_unscaled - estimate_temp);
+    double delta_up3_unscaled = (estimate_down_unscaled - estimate_temp);
 
 
     estimateerrTrigPlus  = sqrt(delta_up*delta_up + delta_up2*delta_up2 + delta_up3*delta_up3);
@@ -2059,6 +2126,7 @@ void AN2011_prescale( TString btagselection="ge1b",const int mode=1 ) {
     usePUweight_=false;
     useHTeff_=false;
     useMHTeff_=false;
+    thebnnMHTeffMode_ = kOff;
     btagSFweight_="1";
     currentConfig_=configDescriptions_.getDefault(); //completely raw MC
   }
@@ -2066,6 +2134,7 @@ void AN2011_prescale( TString btagselection="ge1b",const int mode=1 ) {
     usePUweight_=true;
     useHTeff_=true;
     useMHTeff_=true;
+    thebnnMHTeffMode_ = kOff;
     currentConfig_=configDescriptions_.getCorrected(); //JER bias
     if (mode==2) modestring="-JER-PU-HLT";
     else if(mode==3) modestring="-JER-PU-HLT-bSF";
@@ -2227,6 +2296,7 @@ void AN2011_PUQCD( TString btagselection="ge1b",const int mode=1 ) {
     usePUweight_=false;
     useHTeff_=false;
     useMHTeff_=false;
+    thebnnMHTeffMode_ = kOff;
     btagSFweight_="1";
     currentConfig_=configDescriptions_.getDefault(); //completely raw MC
   }
@@ -2234,6 +2304,7 @@ void AN2011_PUQCD( TString btagselection="ge1b",const int mode=1 ) {
     usePUweight_=true;
     useHTeff_=true;
     useMHTeff_=true;
+    thebnnMHTeffMode_ = kOff;
     currentConfig_=configDescriptions_.getCorrected(); //JER bias
     if (mode==2) modestring="-JER-PU-HLT";
     else if(mode==3) modestring="-JER-PU-HLT-bSF";
@@ -2392,6 +2463,7 @@ other.
     usePUweight_=true;
     useHTeff_=true;
     useMHTeff_=false;
+    thebnnMHTeffMode_ = kOff;
     currentConfig_=configDescriptions_.getCorrected(); //add JERbias
 
     ////The MET comparison plots for the AN have the b-tag SF stuff below commented out!
@@ -2418,7 +2490,8 @@ other.
 
     if(useScaleFactors_){ 
       useMHTeff_=true;
-    
+      thebnnMHTeffMode_ = kOff;
+
       btagcut="1";   
       if (btagselection=="ge2b") {
 	btagSFweight_="probge2";
@@ -2962,13 +3035,15 @@ void AN2011( TString btagselection="ge1b",const int mode=1, bool logy=false, boo
     usePUweight_=false;
     useHTeff_=false;
     useMHTeff_=false;
+    thebnnMHTeffMode_ = kOff;
     btagSFweight_="1";
     currentConfig_=configDescriptions_.getDefault(); //completely raw MC
   }
   else if (mode==2 || mode==3) {
     usePUweight_=true;
     useHTeff_=true;
-    useMHTeff_=true;
+    useMHTeff_=true;    
+    thebnnMHTeffMode_ = kOff;
     currentConfig_=configDescriptions_.getCorrected(); //JER bias
     if (mode==2) modestring="-JER-PU-HLT";
     else if(mode==3) modestring="-JER-PU-HLT-bSF";
@@ -4995,6 +5070,7 @@ void studyRtt_0lep() {
    usePUweight_=true;
    useHTeff_=true;
    useMHTeff_=true; // is this what I want????
+   thebnnMHTeffMode_ = kOff;
    currentConfig_=configDescriptions_.getCorrected(); //add JERbias
 
    //   setSearchRegions();

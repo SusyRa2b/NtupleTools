@@ -667,6 +667,9 @@ float flavorHistoryScaling_=-1;
 bool usePUweight_=false;
 bool useHTeff_ = false;
 bool useMHTeff_ = false;
+enum bnnMHTeffMode {kOff=0, kOn, kOnPlus, kOnMinus};
+bnnMHTeffMode thebnnMHTeffMode_ = kOff;
+
 TString btagSFweight_="1";
 
 bool savePlots_ = true; //no setter function
@@ -1080,6 +1083,15 @@ for legacy purposes I am keeping all of the weight and selection TStrings, altho
   }
   if (useMHTeff_ &&  type!=kData) {
     weightedcut +="*hltMHTeff"; //not compatible with Summer reducedTrees
+  }
+  if (thebnnMHTeffMode_==kOn &&  type==kData) {
+    weightedcut +="*(1/hltMHTeffBNN)"; 
+  }
+  if (thebnnMHTeffMode_==kOnPlus &&  type==kData) {
+    weightedcut +="*(1/hltMHTeffBNNUp)"; 
+  }
+  if (thebnnMHTeffMode_==kOnMinus &&  type==kData) {
+    weightedcut +="*(1/hltMHTeffBNNDown)"; 
   }
   if (btagSFweight_=="") btagSFweight_="1";
   if ( type==kData) {
