@@ -117,7 +117,7 @@ double lumiScale_ = 4683.719;//nov4
 
 const bool reweightLSBdata_=true; //whether or not LSB data is reweighted based on PV distribution
 const bool useScaleFactors_=true; //whether or not to use MC scale factors when doing subtraction for data-driven estimates
-const bool useBNNEffCurves_=true; 
+const bool useBNNEffCurves_=false; 
 
 float eff_SB_MHT_             = 0.841;   
 float eff_SB_MHT_err_[2]      = {0.059, 0.090};
