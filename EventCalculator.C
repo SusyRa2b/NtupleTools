@@ -5278,6 +5278,8 @@ void EventCalculator::loadEventList(std::vector<int> &vrun, std::vector<int> &vl
     inFile.open("badeventlist_pythia6bug_wjets_ht300_madgraph.txt");
   else if (sampleName_.Contains("DYJetsToLL_TuneZ2_M-50_7TeV-madgraph-tauola") )
     inFile.open("badeventlist_pythia6bug_dyjets_madgraph.txt");
+  else if (sampleName_.Contains("zjets") )
+    inFile.open("badeventlist_pythia6bug_zinvjets_madgraph.txt");
   else return;
 
   if(!inFile) {std::cout << "ERROR: can't open event list" << std::endl;  assert(0);}
