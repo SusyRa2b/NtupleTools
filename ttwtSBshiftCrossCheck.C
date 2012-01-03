@@ -14,8 +14,8 @@ void sb()
 
   double r,r_err;
   const  double trigeff=0.841;
-  const  double trigeff_perr =6.2e-2 ;
-  const  double trigeff_merr =9.8e-2 ;
+  const  double trigeff_perr =5.9e-2 ;
+  const  double trigeff_merr =9.0e-2 ;
 
   //1BT
   double nsb = 173;
@@ -30,7 +30,7 @@ void sb()
   //1BT nominal with eff correction
   nsb = 328;
   sbsub = 108;
-  sbsub_err = 17;
+  sbsub_err = 13;
   nsbsl = 173;
 
   docalc(nsb / trigeff, sqrt(nsb)/trigeff, sbsub,sbsub_err,nsbsl,sqrt(nsbsl),r,r_err);
@@ -55,7 +55,7 @@ void sb()
 
   //2BT nominal with eff correction
   nsb = 52 ;
-  sbsub = 11;
+  sbsub = 10;
   sbsub_err = 3;
   nsbsl = 41;
 
