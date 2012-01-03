@@ -132,7 +132,6 @@ float eff_SIG_SL_MHT_err_[2]  = {0.001, 0.001};
 float eff_SB_SL_MHT_          = 0.996; 
 float eff_SB_SL_MHT_err_[2]   = {0.002, 0.003};
 
-
 void countInBoxesBreakdown(const SearchRegion & region) {
   //shows number of events from each background and signal in the 6 boxes
   
@@ -1107,10 +1106,11 @@ std::pair<double,std::vector<double> > anotherABCD( const SearchRegion & region,
   }
 
   if (!datamode) {
-    sprintf(output,"%s & %s & %s & %s & %s & %s & $%f \\pm %f$ \\\\ ",name.Data(),
+    float fc = (estimate-SIG)/sqrt(estimateerr*estimateerr + SIGerr*SIGerr);
+    sprintf(output,"%s & %s & %s & %s & %s & %s & $%f \\pm %f$ \\\\ %% %f",name.Data(),
 	    jmt::format_nevents(B,Berr).Data(),jmt::format_nevents(A,Aerr).Data(),
 	    jmt::format_nevents(D,Derr).Data(),jmt::format_nevents(estimate,estimateerr).Data(),
-	    jmt::format_nevents(SIG,SIGerr).Data(),100*(estimate-SIG)/estimate,closureStat2*100);    
+	    jmt::format_nevents(SIG,SIGerr).Data(),100*(estimate-SIG)/estimate,closureStat2*100,fc);    
     cout<<output<<endl;
   }
   else {
@@ -1820,15 +1820,11 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
   }
 
   if (!datamode) {
-    //sprintf(output,"%s & %s & %s & %s & %s & %s \\\\ %% %f ++ %f",btagselection.Data(),
-    //	    jmt::format_nevents(D,Derr).Data(),jmt::format_nevents(A,Aerr).Data(),
-    //	    jmt::format_nevents(B,Berr).Data(),jmt::format_nevents(estimate,estimateerr).Data(),
-    //	    jmt::format_nevents(SIG,SIGerr).Data(),100*(estimate-SIG)/estimate,100*closureStat);
-
-    sprintf(output,"%s & %s & %s & %s & %s & %s & $%f \\pm %f$ \\\\",name.Data(),
+    float fc = (estimate-SIG)/sqrt(estimateerr*estimateerr + SIGerr*SIGerr);
+      sprintf(output,"%s & %s & %s & %s & %s & %s & $%f \\pm %f$ \\\\ %% %f",name.Data(),
 	    jmt::format_nevents(D,Derr).Data(),jmt::format_nevents(A,Aerr).Data(),
 	    jmt::format_nevents(B,Berr).Data(),jmt::format_nevents(estimate,estimateerr).Data(),
-	    jmt::format_nevents(SIG,SIGerr).Data(), 100*(estimate-SIG)/estimate, 100*closureStat);
+	      jmt::format_nevents(SIG,SIGerr).Data(), 100*(estimate-SIG)/estimate, 100*closureStat, fc);
   }
   else {
     sprintf(output,"ttbar DATA %s & %d & %d & %d & %s & %s$^{+%.2f}_{-%.2f}$  \\\\",name.Data(),
