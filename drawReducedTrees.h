@@ -547,10 +547,11 @@ TString formatLatex(const texData & data) {
 
   const float tol=0.001;
 
+
   char out[50];
-  if (data.trigErrorPlus <tol && data.trigErrorMinus<tol)  sprintf(out,"$%f \\pm %f \\pm %f$",data.value,data.statError,data.systError);
+  if (data.trigErrorPlus <tol && data.trigErrorMinus<tol)  sprintf(out,"$%.1f \\pm %.1f \\pm %.1f$",data.value,data.statError,data.systError);
   else {
-    sprintf(out,"$%f \\pm %f^{+%f}_{-%f}$",data.value,data.statError,
+    sprintf(out,"$%.1f \\pm %.1f^{+%.1f}_{-%.1f}$",data.value,data.statError,
 	    sqrt(data.systError*data.systError + data.trigErrorPlus*data.trigErrorPlus),
 	    sqrt(data.systError*data.systError + data.trigErrorMinus*data.trigErrorMinus));
   }
@@ -667,7 +668,7 @@ float flavorHistoryScaling_=-1;
 bool usePUweight_=false;
 bool useHTeff_ = false;
 bool useMHTeff_ = false;
-enum bnnMHTeffMode {kOff=0, kOn, kOnPlus, kOnMinus};
+enum bnnMHTeffMode {kOff=0, kOn, kOnPlus, kOnMinus, kPlot};
 bnnMHTeffMode thebnnMHTeffMode_ = kOff;
 
 TString btagSFweight_="1";
@@ -1057,7 +1058,10 @@ for legacy purposes I am keeping all of the weight and selection TStrings, altho
   weightedcut += "*(";
   weightedcut +=scalefactor;
   weightedcut+=")";
-  
+
+  //horrible kludge
+  //  if (type==kData) weightedcut+="*(runNumber>=178411)";
+
   //this flavorHistoryWeight business is too kludgey...someday should fix it
   if (extraWeight=="flavorHistoryWeight" && type!=kData) {
     if (flavorHistoryScaling_ <0) {
@@ -1086,6 +1090,9 @@ for legacy purposes I am keeping all of the weight and selection TStrings, altho
   }
   if (thebnnMHTeffMode_==kOn &&  type==kData) {
     weightedcut +="*(1/hltMHTeffBNN)"; 
+  }
+  if (thebnnMHTeffMode_==kPlot &&  type!=kData) {
+    weightedcut +="*hltMHTeffBNN"; 
   }
   if (thebnnMHTeffMode_==kOnPlus &&  type==kData) {
     weightedcut +="*(1/hltMHTeffBNNUp)"; 
