@@ -3532,7 +3532,7 @@ void EventCalculator::loadJetTagEffMaps() {
     f_tageff_ = new TFile("histos_btageff_csvm.root","READ");
 }
 
-void EventCalculator::calculateTagProb(float &Prob0, float &ProbGEQ1, float &Prob1, float &ProbGEQ2, float &ProbGEQ3) {
+void EventCalculator::calculateTagProb(float &Prob0, float &ProbGEQ1, float &Prob1, float &ProbGEQ2, float &ProbGEQ3 ) {
 
   char btageffname[200], ctageffname[200], ltageffname[200];
   std::string sbtageff = "h_btageff";  std::string sctageff = "h_ctageff";  std::string sltageff = "h_ltageff";
@@ -3654,6 +3654,26 @@ float EventCalculator::getBTagIPWeight() {//this function should be called *afte
   }
 
   return w_event;
+}
+
+void EventCalculator::averageBeff(double & bjetEffSum) {// , Long64_t & bjetSum) {
+
+  char btageffname[200];
+  std::string sbtageff = "h_btageff";
+  sprintf(btageffname,"%s",sbtageff.c_str());   
+  TH1F * h_btageff  = (TH1F *)f_tageff_->Get(btageffname);
+
+  for (unsigned int ijet=0; ijet<myJetsPF->size(); ++ijet) {
+    if ( abs( myJetsPF->at(ijet).partonFlavour)==5) {
+      if (isGoodJet30(ijet)) {
+	float effi = jetTagEff(ijet, h_btageff, 0, 0);
+	//this effi is SF * eff_MC for this b jet
+	bjetEffSum += effi;
+      }
+      //      bjetSum++;
+    }
+  } 
+
 }
 
 
@@ -3928,10 +3948,14 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   // bookkeeping for screen output only
   pair<int,int> lastpoint = make_pair(0,0);
 
-  /*
-new idea:
+  //keep track of the average b-tagging efficiency for the sample
+  //for scans, need to break it up by scan point, hence the map
+  map<pair<int,int> , double> bjetEffSum; //numerator
+  //  map<pair<int,int> , Long64_t> bjetSum;    //denominator
+  map<pair<int,int> , Long64_t> bjetSumSUSY;    //alternate denominator
 
-scanProcessTotalsMap to be extended to handle PDF weight sums.
+  /*
+scanProcessTotalsMap has been extended to handle PDF weight sums.
 
 TH1[process] -> TH2[process, pdf index]
 
@@ -4527,6 +4551,11 @@ Also the pdfWeightSum* histograms that are used for LM9.
 
       calculateTagProb(prob0,probge1,prob1,probge2,probge3);
 
+      if ( bjetEffSum.count(thispoint)==0) bjetEffSum[thispoint]=0;
+      //      if ( bjetSum.count(thispoint)==0) bjetSum[thispoint]=0;
+      if ( bjetSumSUSY.count(thispoint)==0) bjetSumSUSY[thispoint]=0;
+      averageBeff(bjetEffSum[thispoint]);//,bjetSum[thispoint]);
+
       isRealData = isSampleRealData();
       int version = 0, prescale = 0;
       pass_utilityHLT = passUtilityHLT(version, prescale);
@@ -4538,6 +4567,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
       nGoodPV = countGoodPV();
 
       SUSY_nb = sampleIsSignal_ ? getSUSYnb() : 0;
+      bjetSumSUSY[thispoint] += SUSY_nb;
 
       njets = nGoodJets();
       njets30 = nGoodJets30();
@@ -4752,9 +4782,31 @@ Also the pdfWeightSum* histograms that are used for LM9.
 
   if (watch_!=0) watch_->Print();
 
+  //now we need to store this the root output
+  fout.cd();
+  //typically i do this with a TH2(m0, m12), but i don't like this because i need to get the histogram grid correct
+  //instead do:
+  // TH1 storing m0
+  // TH1 storing m12
+  // TH1 storing <eff>
+  unsigned int nhistobins = bjetEffSum.size();
+  TH1I * btageff_m0 = new TH1I("btageff_m0","m0/mGL coordinate for btag eff",nhistobins, 0,nhistobins);
+  TH1I * btageff_m12 = new TH1I("btageff_m12","m12/mLSP coordinate for btag eff",nhistobins, 0,nhistobins);
+  TH1D * btageff_avg = new TH1D("btageff_avg","average btag eff",nhistobins, 0,nhistobins);
+  unsigned int ibin=1;
+  for (map<pair<int,int> , double>::iterator ipoint = bjetEffSum.begin(); ipoint!=bjetEffSum.end(); ++ipoint) {
+    double avgval=bjetSumSUSY[ipoint->first]>0 ? bjetEffSum[ipoint->first]/bjetSumSUSY[ipoint->first] : -1;
+    btageff_m0->SetBinContent(ibin,ipoint->first.first);
+    btageff_m12->SetBinContent(ibin,ipoint->first.second);
+    btageff_avg->SetBinContent(ibin,avgval);
+    
+    ++ibin;
+  }
+
+
+
   fout.Write();
-  fout.Close();
-  
+  fout.Close();  
 }
 
 

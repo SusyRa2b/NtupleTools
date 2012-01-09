@@ -249,6 +249,7 @@ public:
   double getScanCrossSection( SUSYProcess p, const TString & variation );
   double getSMSScanCrossSection( const double mgluino);
   void calculateTagProb(float &Prob0, float &ProbGEQ1, float &Prob1, float &ProbGEQ2, float &ProbGEQ3);
+  void averageBeff(double & bjetEffSum);// , Long64_t & bjetSum);
 
   //btag stuff
   float getBTagIPWeight(); //this function should be called *after* offline tagging 
