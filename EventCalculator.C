@@ -3532,7 +3532,7 @@ void EventCalculator::loadJetTagEffMaps() {
     f_tageff_ = new TFile("histos_btageff_csvm.root","READ");
 }
 
-void EventCalculator::calculateTagProb(float &Prob0, float &ProbGEQ1, float &Prob1, float &ProbGEQ2, float &ProbGEQ3 ) {
+void EventCalculator::calculateTagProb(float &Prob0, float &ProbGEQ1, float &Prob1, float &ProbGEQ2, float &Prob2, float &ProbGEQ3 ) {
 
   char btageffname[200], ctageffname[200], ltageffname[200];
   std::string sbtageff = "h_btageff";  std::string sctageff = "h_ctageff";  std::string sltageff = "h_ltageff";
@@ -3544,7 +3544,7 @@ void EventCalculator::calculateTagProb(float &Prob0, float &ProbGEQ1, float &Pro
   TH1F * h_ltageff  = (TH1F *)f_tageff_->Get(ltageffname);
 
   //must initialize correctly
-  float Prob2 = 0;
+  Prob2 = 0;
   Prob1 = 0; ProbGEQ1 = 1; Prob0 = 1; ProbGEQ2 = 0;
 
   for (unsigned int ijet=0; ijet<myJetsPF->size(); ++ijet) {
@@ -3931,7 +3931,7 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   float minDeltaPhiN_Luke_lostJet, maxDeltaPhiN_Luke_lostJet, deltaPhiN1_Luke_lostJet, deltaPhiN2_Luke_lostJet, deltaPhiN3_Luke_lostJet;
   float minTransverseMETSignificance_lostJet, maxTransverseMETSignificance_lostJet, transverseMETSignificance1_lostJet, transverseMETSignificance2_lostJet, transverseMETSignificance3_lostJet;
 
-  float prob0,probge1,prob1,probge2,probge3;
+  float prob0,probge1,prob1,probge2,probge3,prob2;
 
   std::vector<int> vrun,vlumi,vevent;
   loadEventList(vrun, vlumi, vevent);
@@ -4096,6 +4096,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("probge1",&probge1,"probge1/F");
   reducedTree.Branch("prob1",&prob1,"prob1/F");
   reducedTree.Branch("probge2",&probge2,"probge2/F");
+  reducedTree.Branch("prob2",&prob2,"prob2/F");
   reducedTree.Branch("probge3",&probge3,"probge3/F");
 
   //should consider whether some of these should be killed off
@@ -4549,7 +4550,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
       cutMET = passCut("cutMET");
       cutDeltaPhi = passCut("cutDeltaPhi");
 
-      calculateTagProb(prob0,probge1,prob1,probge2,probge3);
+      calculateTagProb(prob0,probge1,prob1,probge2,prob2,probge3);
 
       if ( bjetEffSum.count(thispoint)==0) bjetEffSum[thispoint]=0;
       //      if ( bjetSum.count(thispoint)==0) bjetSum[thispoint]=0;
