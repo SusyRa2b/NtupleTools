@@ -164,6 +164,12 @@ void countInBoxesBreakdown(const SearchRegion & region) {
   else if (btagselection=="ge3b") {
     bcut="nbjetsCSVM>=3";
   }
+  else if (btagselection=="eq1b") {
+    bcut="nbjetsCSVM==1";
+  }
+  else if (btagselection=="eq2b") {
+    bcut="nbjetsCSVM==2";
+  }
   else {assert(0);}
   
   usePUweight_=false;
@@ -187,31 +193,18 @@ void countInBoxesBreakdown(const SearchRegion & region) {
     else if (btagselection=="ge1b") {
       btagSFweight_="probge1";
     }
+    else if (btagselection=="eq1b") {
+      btagSFweight_="prob1";
+    }
+    else if (btagselection=="eq2b") {
+      btagSFweight_="(1-prob1-prob0-probge3)"; //because we don't have prob2 in the reducedTrees
+    }
     else if (btagselection=="ge3b") {
       btagSFweight_="probge3";
     }
     else {assert(0);}
   }
 
-  
-  /*
-  //block to cross check old cuts
-  TString bweightstring="probge1";
-  if (btagselection=="ge2b") {
-    bweightstring="probge2";
-  }
-  else if (btagselection=="ge1b") {}
-  else if (btagselection=="ge3b") {
-    bweightstring="probge3"; //this one isn't calculated right now, i think
-  }
-  else {assert(0);}
-  //use all of the corrections that are in the AN table
-  currentConfig_=configDescriptions_.getCorrected(); //add  JER bias
-  usePUweight_=true;
-  useHLTeff_=true;
-  btagSFweight_=bweightstring; //use b tag weight instead
-  */
-  
   TString thisbox="";
   
   TCut baseline = "cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && passCleaning==1";
@@ -317,6 +310,14 @@ owen asked for total MC event counts in the 6 boxes, output in a particular form
     bcut="nbjets>=3";
     bweightstring="probge3"; 
   }
+  else if (btagselection=="eq1b") {
+    bcut="nbjets==1";
+    bweightstring="prob1"; 
+  }
+  else if (btagselection=="eq2b") {
+    bcut="nbjets==2";
+    bweightstring="(1-prob1-prob0-probge3)"; 
+  }
   else {assert(0);}
 
   TCut baseline = "cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 &&passCleaning==1";
@@ -408,7 +409,7 @@ void runCountInBoxesMC() {
 }
 
 
-void averageZ() {
+void averageZ() { //jmt -- delete this code?
   cout<<"Loose SIG ge1b"<<endl;
   double zn[]={22.8,17.9};
   double ze[]={11.6,10.6};
@@ -713,6 +714,12 @@ std::pair<double,std::vector<double> > anotherABCD( const SearchRegion & region,
     else if (btagselection=="ge3b") {
       btagSFweight="probge3";
     }
+    else if (btagselection=="eq1b") {
+      btagSFweight="prob1";
+    }
+    else if (btagselection=="eq2b") {
+      btagSFweight="(1-prob1-prob0-probge3)";
+    }
     else {assert(0);}
   }
   else {
@@ -728,6 +735,12 @@ std::pair<double,std::vector<double> > anotherABCD( const SearchRegion & region,
     else if (btagselection=="ge1b") {}
     else if (btagselection=="ge3b") {
       ge1b="nbjetsCSVM>=3";
+    }
+    else if (btagselection=="eq1b") {
+      ge1b="nbjetsCSVM==1";
+    }
+    else if (btagselection=="eq2b") {
+      ge1b="nbjetsCSVM==2";
     }
     else {assert(0);}
   }
@@ -1178,11 +1191,11 @@ void runClosureTest2011(std::map<TString, std::vector<double> > & syst, bool add
 void runClosureTest2011()  {
   std::map<TString, std::vector<double> > dummy;
   
-  //cout << "You are starting closure test without considering njet reweighting!" << endl;
-  //runClosureTest2011(dummy,false);
+  cout << "You are starting closure test without considering njet reweighting!" << endl;
+  runClosureTest2011(dummy,false);
 
-  cout << "You are starting closure test that also considers njet reweighting! (this will do both)" << endl;
-  runClosureTest2011(dummy,true);
+  //  cout << "You are starting closure test that also considers njet reweighting! (this will do both)" << endl;
+  //  runClosureTest2011(dummy,true);
 
 }
 
@@ -1435,6 +1448,17 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
       zv[0] = 1.9; ze[0]=2.8;
       zsbsyst = 0.0;   
     }
+    else if (qcdsubregion.owenId == "Loose" && qcdsubregion.btagSelection=="eq1b") {
+      doMean=false;//averaging already done
+      //preliminary numbers from https://indico.cern.ch/getFile.py/access?contribId=1&resId=0&materialId=slides&confId=168427
+      zv[0] =68; ze[0]=sqrt( 12*12 + 10*10);
+      zsbsyst = 0.0;    //this is a *percent* error...but we're not putting it in that way anymore
+    }
+    else if (qcdsubregion.owenId == "Loose" && qcdsubregion.btagSelection=="eq2b") {
+      doMean=false;//averaging already done
+      zv[0] =12; ze[0]=sqrt( 2*2 + 8*8);
+      zsbsyst = 0.0;   
+    }
     else {assert(0);}
     if(doMean){
       SBsubZ = zinvscale*(jmt::weightedMean(2,zv,ze));
@@ -1516,6 +1540,12 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
     else if (btagselection=="ge3b") {
       btagSFweight="probge3";
     }
+    else if (btagselection=="eq1b") {
+      btagSFweight="prob1";
+    }
+    else if (btagselection=="eq2b") {
+      btagSFweight="(1-prob1-prob0-probge3)";
+    }
     else {assert(0);}
     btagSFweight_=btagSFweight;
   }
@@ -1533,6 +1563,12 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
     else if (btagselection=="ge1b") {}
     else if (btagselection=="ge3b") {
       ge1b="nbjetsCSVM>=3";
+    }
+    else if (btagselection=="eq1b") {
+      ge1b="nbjetsCSVM==1";
+    }
+    else if (btagselection=="eq2b") {
+      ge1b="nbjetsCSVM==2";
     }
     else {assert(0);}
   }
@@ -1865,10 +1901,10 @@ void runSLClosureTest2011() {
   cout<<"Note that the following is the joint tt+W+t closure test only!"<<endl;
   for (unsigned int j=0; j<searchRegions_.size();j++) slABCD(j);
 
+/*
   cout<<"Note that the following is the tt closure test only!"<<endl;
   for (unsigned int j=0; j<searchRegions_.size();j++) slABCD(j,false,"","justttbar");
 
-/*
   for (unsigned int j=0; j<searchRegions_.size();j++) slABCD(j,false,"","wtplus");
   for (unsigned int j=0; j<searchRegions_.size();j++) slABCD(j,false,"","wtminus");
 
@@ -2146,6 +2182,9 @@ void AN2011_prescale( TString btagselection="ge1b",const int mode=1 ) {
     else if ( btagselection=="eq1b" ) {
       btagcut = "nbjetsCSVM==1";
     }
+    else if ( btagselection=="eq2b" ) {
+      btagcut = "nbjetsCSVM==2";
+    }
     else if ( btagselection=="eq0b" ) {
       btagcut = "nbjetsCSVM==0";
     }
@@ -2168,6 +2207,14 @@ void AN2011_prescale( TString btagselection="ge1b",const int mode=1 ) {
     else if ( btagselection=="eq0b" ) {
       btagcut = "1";
       btagSFweight_="prob0";
+    }
+    else if ( btagselection=="eq1b" ) {
+      btagcut = "1";
+      btagSFweight_="prob1";
+    }
+    else if ( btagselection=="eq2b" ) {
+      btagcut = "1";
+      btagSFweight_="(1-prob1-prob0-probge3)";
     }
     else {
       assert(0);
@@ -2319,6 +2366,9 @@ void AN2011_PUQCD( TString btagselection="ge1b",const int mode=1 ) {
     else if ( btagselection=="eq0b" ) {
       btagcut = "nbjetsCSVM==0";
     }
+    else if ( btagselection=="eq2b" ) {
+      btagcut = "nbjetsCSVM==2";
+    }
     else if (btagselection=="ge3b" ){
       btagcut = "nbjetsCSVM>=3";
     }
@@ -2335,9 +2385,17 @@ void AN2011_PUQCD( TString btagselection="ge1b",const int mode=1 ) {
       btagcut = "1";
       btagSFweight_="probge2";
     }
-    else if ( btagselection=="eq0b" ) {
+    else  if ( btagselection=="ge3b" ) {
       btagcut = "1";
-      btagSFweight_="prob0";
+      btagSFweight_="probge3";
+    }
+    else if ( btagselection=="eq1b" ) {
+      btagcut = "1";
+      btagSFweight_="prob1";
+    }
+    else if ( btagselection=="eq2b" ) {
+      btagcut = "1";
+      btagSFweight_="(1-prob1-prob0-probge3)";
     }
     else {
       assert(0);
@@ -2438,6 +2496,9 @@ other.
   else if ( btagselection=="eq1b" ) {
     btagcut = "nbjetsCSVM==1";
   }
+  else if ( btagselection=="eq2b" ) {
+    btagcut = "nbjetsCSVM==2";
+  }
   else if ( btagselection=="ge0b" ) {
     btagcut = "nbjetsCSVM>=0";
   }
@@ -2494,6 +2555,12 @@ other.
       }
       else if (btagselection=="ge1b") {
 	btagSFweight_="probge1";
+      }
+      else if (btagselection=="eq1b") {
+	btagSFweight_="prob1";
+      }
+      else if (btagselection=="eq2b") {
+	btagSFweight_="(1-prob1-prob0-probge3)";
       }
       else if (btagselection=="ge3b") {
 	btagSFweight_="probge3";
