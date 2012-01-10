@@ -179,6 +179,7 @@ void setSearchRegions() {
   //also, for style reasons the 'owenId' should not contain the number of b tags.
   //everywhere that we use the owenId as an identifier, we combine with the number of b tags
 
+/*
   //oct25
   sbRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=200&&MET<250","Loose",false));
   searchRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=250","Loose")); //1BL
@@ -194,8 +195,39 @@ void setSearchRegions() {
 
   sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=200&&MET<250","Loose",false));
   searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=250","Loose")); //3B
-
+*/
   
+  //Loose exclusive regions
+  sbRegions_.push_back( SearchRegion( "eq1b","HT>=400","MET>=200&&MET<250","Loose",false));
+  searchRegions_.push_back( SearchRegion( "eq1b","HT>=400","MET>=250","Loose")); //1BL
+
+  sbRegions_.push_back( SearchRegion( "eq2b","HT>=400","MET>=200&&MET<250","Loose",false));
+  searchRegions_.push_back( SearchRegion( "eq2b","HT>=400","MET>=250","Loose")); //2BL
+
+  sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=200&&MET<250","Loose",false));
+  searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=250","Loose")); //3B
+
+  //2BT exclusive regions
+  sbRegions_.push_back( SearchRegion( "eq1b","HT>=600","MET>=200&&MET<250","TightHT",false));
+  searchRegions_.push_back( SearchRegion( "eq1b","HT>=600","MET>=300","TightHT")); //2BT
+
+  sbRegions_.push_back( SearchRegion( "eq2b","HT>=600","MET>=200&&MET<250","TightHT",false));
+  searchRegions_.push_back( SearchRegion( "eq2b","HT>=600","MET>=300","TightHT")); //2BT
+
+  sbRegions_.push_back( SearchRegion( "ge3b","HT>=600","MET>=200&&MET<250","TightHT",false));
+  searchRegions_.push_back( SearchRegion( "ge3b","HT>=600","MET>=300","TightHT")); //2BT
+
+  //1BT exclusive regions
+  sbRegions_.push_back( SearchRegion( "eq1b","HT>=500","MET>=200&&MET<250","TightMET",false));
+  searchRegions_.push_back( SearchRegion( "eq1b","HT>=500","MET>=500","TightMET")); //1BT
+
+  sbRegions_.push_back( SearchRegion( "eq2b","HT>=500","MET>=200&&MET<250","TightMET",false));
+  searchRegions_.push_back( SearchRegion( "eq2b","HT>=500","MET>=500","TightMET")); //1BT
+
+  sbRegions_.push_back( SearchRegion( "ge3b","HT>=500","MET>=200&&MET<250","TightMET",false));
+  searchRegions_.push_back( SearchRegion( "ge3b","HT>=500","MET>=500","TightMET")); //1BT
+
+
   /*
   //2011 Summer result
   sbRegions_.push_back( SearchRegion( "ge1b","HT>=350","MET>=150&&MET<200","Loose",false)); //loose SB
@@ -1105,6 +1137,8 @@ for legacy purposes I am keeping all of the weight and selection TStrings, altho
     if (btagSFweight_=="probge1") weightedcut += "*(nbjets>=1)";
     else if (btagSFweight_=="probge2") weightedcut += "*(nbjets>=2)";
     else if (btagSFweight_=="probge3") weightedcut += "*(nbjets>=3)";
+    else if (btagSFweight_=="prob2") weightedcut += "*(nbjets==2)";
+    else if (btagSFweight_=="(1-prob1-prob0-probge3)") weightedcut += "*(nbjets==2)";
     else if (btagSFweight_=="prob1") weightedcut += "*(nbjets==1)";
     else if (btagSFweight_=="prob0") weightedcut += "*(nbjets==0)";
     else if (btagSFweight_=="1") {} //do nothing
