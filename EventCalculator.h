@@ -248,12 +248,14 @@ public:
 
   double getScanCrossSection( SUSYProcess p, const TString & variation );
   double getSMSScanCrossSection( const double mgluino);
-  void calculateTagProb(float &Prob0, float &ProbGEQ1, float &Prob1, float &ProbGEQ2, float & Prob2, float &ProbGEQ3);
+  void calculateTagProb(float &Prob0, float &ProbGEQ1, float &Prob1, float &ProbGEQ2, float & Prob2, float &ProbGEQ3, 
+			float extraSFb=1, float extraSFc=1, float extraSFl=1);
   void averageBeff(double & bjetEffSum);// , Long64_t & bjetSum);
 
   //btag stuff
   float getBTagIPWeight(); //this function should be called *after* offline tagging 
-  float jetTagEff(unsigned int ijet, TH1F* h_btageff, TH1F* h_ctageff, TH1F* h_ltageff);
+  float jetTagEff(unsigned int ijet, TH1F* h_btageff, TH1F* h_ctageff, TH1F* h_ltageff,
+		  const float extraSFb, const float extraSFc, const float extraSFl);
 
   //other stuff
   double getDeltaPhi(double a, double b) { return jmt::deltaPhi(a,b);}
