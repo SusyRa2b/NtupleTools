@@ -45,8 +45,9 @@ gSystem->Load("CrossSectionTable_cxx.so");
 
 //*** AFTER SUMMER
 //***************************
-TString inputPath = "/cu1/joshmt/reducedTrees/test/"; 
+TString inputPath = "/cu1/joshmt/reducedTrees/V00-02-35g/"; 
 TString dataInputPath =  "dummy"; //no data needed!
+TString inputPathTTbar = "dummy";
 
 double lumiScale_ = 4683.719;//nov4
 
@@ -75,8 +76,8 @@ SignalEffData signalSystematics2011(const SearchRegion & region, bool isSL=false
   if (isSL) cout<<"   == SL "<<endl;
 
   //take care of trigger efficiency systematics, which differs between SB and SIG
-  if (region.isSIG) results.set("trigger",3.8e-2,3.8e-2);
-  else results.set("trigger",8.6e-2,8.6e-2); //since we don't have a facility for asymmetric systematics, use the largest one
+  if (region.isSIG) results.set("trigger",3.7e-2,3.7e-2);
+  else results.set("trigger",9.8e-2,9.8e-2); //since we don't have a facility for asymmetric systematics, use the largest one
 
 
   //for susy scan; harmless for non-susy scan
@@ -96,6 +97,14 @@ SignalEffData signalSystematics2011(const SearchRegion & region, bool isSL=false
     bweightstring="probge2";
   }
   else if (btagselection=="ge1b") {}
+  else if (btagselection=="eq1b") {
+    bcut="nbjets==1";
+    bweightstring="prob1";  
+  }
+  else if (btagselection=="eq2b") {
+    bcut="nbjets==2";
+    bweightstring="prob2";
+  }
   else if (btagselection=="ge3b") {
     bcut="nbjets>=3";
     bweightstring="probge3"; 
@@ -113,7 +122,8 @@ SignalEffData signalSystematics2011(const SearchRegion & region, bool isSL=false
 
   //critical to reset these!
   usePUweight_=false;
-  useHLTeff_=false;
+  useHTeff_=false;
+  useMHTeff_=false;
   btagSFweight_="1";
   currentConfig_=configDescriptions_.getDefault(); //completely raw MC
 
@@ -165,7 +175,8 @@ each of the systematics variations was done with JERbias turned on.
   cout<<"add PU weight yield = "<<getIntegral(sampleOfInterest)<<" +/- "<<getIntegralErr(sampleOfInterest) <<endl;
   results.yield_JER_PU = getIntegral(sampleOfInterest);
 
-  useHLTeff_=true;
+  useMHTeff_=true;
+  useHTeff_=true;
   drawPlots(var,nbins,low,high,xtitle,"events","dummyH");
   cout<<"add HLT eff = "<<getIntegral(sampleOfInterest)<<" +/- "<<getIntegralErr(sampleOfInterest) <<endl;
   results.yield_JER_PU_HLT = getIntegral(sampleOfInterest);
@@ -179,6 +190,55 @@ each of the systematics variations was done with JERbias turned on.
 
   results.effCorr = nominal / raw0;
   results.rawYield = raw0;
+
+  //now we can test the effect of the changing the charm and LF tag rates
+  //all of this is done with the regular JERbias file
+  TString btagprobbase=btagSFweight_;
+
+  //b +
+  btagSFweight_ = btagprobbase + "_bplus";
+  drawPlots(var,nbins,low,high,xtitle,"events","dummyH");
+  double bplus=  getIntegral(sampleOfInterest);
+
+  //b -
+  btagSFweight_ = btagprobbase + "_bminus";
+  drawPlots(var,nbins,low,high,xtitle,"events","dummyH");
+  double bminus=  getIntegral(sampleOfInterest);
+
+  //charm +
+  btagSFweight_ = btagprobbase + "_cplus";
+  drawPlots(var,nbins,low,high,xtitle,"events","dummyH");
+  double cplus=  getIntegral(sampleOfInterest);
+
+  //charm -
+  btagSFweight_ = btagprobbase + "_cminus";
+  drawPlots(var,nbins,low,high,xtitle,"events","dummyH");
+  double cminus=  getIntegral(sampleOfInterest);
+
+  //LF +
+  btagSFweight_ = btagprobbase + "_lplus";
+  drawPlots(var,nbins,low,high,xtitle,"events","dummyH");
+  double lplus=  getIntegral(sampleOfInterest);
+
+  //LF -
+  btagSFweight_ = btagprobbase + "_lminus";
+  drawPlots(var,nbins,low,high,xtitle,"events","dummyH");
+  double lminus=  getIntegral(sampleOfInterest);
+
+  results.eff_derivative_b = ( ((1.0/0.1)* (bplus - nominal) / nominal) + ((-1.0/0.1)* (bminus - nominal) / nominal))*0.5;
+  results.eff_derivative_c = ( ((1.0/0.1)* (cplus - nominal) / nominal) + ((-1.0/0.1)* (cminus - nominal) / nominal))*0.5;
+  results.eff_derivative_l = ( ((1.0/0.1)* (lplus - nominal) / nominal) + ((-1.0/0.1)* (lminus - nominal) / nominal))*0.5;
+
+  //reset the sf weight string
+  btagSFweight_ = bweightstring;
+
+/*
+  //for LM9 the histogram should have exactly 1 bin
+  TH1D* btageff_avg_nominal = (TH1D*) files_[currentConfig_][sampleOfInterest]->Get("btageff_avg");
+  double av_btageff_nominal = btageff_avg_nominal->GetBinContent(1);
+  double av_btageff_var1=0;
+  double av_btageff_var2=0;
+*/
 
   // NLO k factor uncertainty
   susyCrossSectionVariation_="Plus";
@@ -204,12 +264,12 @@ each of the systematics variations was done with JERbias turned on.
     currentConfig_=configDescriptions_.at(j);
     drawPlots(var,nbins,low,high,xtitle,"events","dummyH");
     double thisn=getIntegral(sampleOfInterest);
-    if (j%2==0) { //this one runs first
+    if (j%2==0) { //this one runs first; by convention this one should be "down"
       var2=(thisn-nominal)/nominal;
     }
-    else { //this one runs second
+    else { //this one runs second; by convention this one should be "up"
       var1=(thisn-nominal)/nominal;
-      results.set(configDescriptions_.getVariedSubstring(currentConfig_), var1,var2);
+      results.set(configDescriptions_.getVariedSubstring(currentConfig_), var2,var1);
     }
   }
 
@@ -438,6 +498,35 @@ void runSystematics2011_LM9(  TString sampleOfInterest="LM9" ) {
     (*textfiles_human[i])<<" \\hline                   &"<<endl;
     (*textfiles_human[i])<<" Total systematic         &"<<setprecision(3)<<SIG.totalSystematic()<<endl;
     (*textfiles_human[i])<<" \\hline                   &"<<endl;
+    (*textfiles_human[i])<<" \\hline                   &"<<endl;
+
+
+    cout<<"SB DeltaEff / DeltaBtagEff = "<<SB.eff_derivative_b<<endl;
+    cout<<"SIG DeltaEff / DeltaBtagEff = "<<SIG.eff_derivative_b<<endl;
+
+    cout<<"SBSL DeltaEff / DeltaBtagEff = "<<SBSL.eff_derivative_b<<endl;
+    cout<<"SIGSL DeltaEff / DeltaBtagEff = "<<SIGSL.eff_derivative_b<<endl;
+
+    cout<<"SBLDP DeltaEff / DeltaBtagEff = "<<SBLDP.eff_derivative_b<<endl;
+    cout<<"SIGLDP DeltaEff / DeltaBtagEff = "<<SIGLDP.eff_derivative_b<<endl;
+
+    cout<<"SB DeltaEff / DeltaCtagEff = "<<SB.eff_derivative_c<<endl;
+    cout<<"SIG DeltaEff / DeltaCtagEff = "<<SIG.eff_derivative_c<<endl;
+
+    cout<<"SBSL DeltaEff / DeltaCtagEff = "<<SBSL.eff_derivative_c<<endl;
+    cout<<"SIGSL DeltaEff / DeltaCtagEff = "<<SIGSL.eff_derivative_c<<endl;
+
+    cout<<"SBLDP DeltaEff / DeltaCtagEff = "<<SBLDP.eff_derivative_c<<endl;
+    cout<<"SIGLDP DeltaEff / DeltaCtagEff = "<<SIGLDP.eff_derivative_c<<endl;
+
+    cout<<"SB DeltaEff / DeltaLFtagEff = "<<SB.eff_derivative_l<<endl;
+    cout<<"SIG DeltaEff / DeltaLFtagEff = "<<SIG.eff_derivative_l<<endl;
+
+    cout<<"SBSL DeltaEff / DeltaLFtagEff = "<<SBSL.eff_derivative_l<<endl;
+    cout<<"SIGSL DeltaEff / DeltaLFtagEff = "<<SIGSL.eff_derivative_l<<endl;
+
+    cout<<"SBLDP DeltaEff / DeltaLFtagEff = "<<SBLDP.eff_derivative_l<<endl;
+    cout<<"SIGLDP DeltaEff / DeltaLFtagEff = "<<SIGLDP.eff_derivative_l<<endl;
 
   }
 
@@ -496,7 +585,8 @@ map<pair<int,int>, SignalEffData>  runTH2Syst2011_mSugra(const SearchRegion & re
 
   //critical to reset these!
   usePUweight_=false;
-  useHLTeff_=false;
+  useMHTeff_=false;
+  useHTeff_=false;
   btagSFweight_="1";
   currentConfig_=configDescriptions_.getDefault(); //completely raw MC
 
@@ -511,7 +601,8 @@ map<pair<int,int>, SignalEffData>  runTH2Syst2011_mSugra(const SearchRegion & re
 	  && currentConfig_.Contains("PUunc0")&& currentConfig_.Contains("BTagEff0")&& currentConfig_.Contains("HLTEff0") );
 
   usePUweight_=true;
-  useHLTeff_=true;
+  useMHTeff_=true;
+  useHTeff_=true;
   selection_ = baseline && HTcut && passOther && SRMET; //remove b tag
   btagSFweight_=bweightstring; // add b tag back in the form of the SF
   susyScanYields nominalYields=getSusyScanYields(sampleOfInterest);
@@ -574,8 +665,8 @@ map<pair<int,int>, SignalEffData>  runTH2Syst2011_mSugra(const SearchRegion & re
     SignalEffData theseResults;
 
     //take care of trigger efficiency systematics, which differs between SB and SIG
-    if (region.isSIG) theseResults.set("trigger",3.8e-2,3.8e-2);
-    else theseResults.set("trigger",8.6e-2,8.6e-2); //since we don't have a facility for asymmetric systematics, use the largest one
+    if (region.isSIG) theseResults.set("trigger",3.7e-2,3.7e-2);
+    else theseResults.set("trigger",9.8e-2,9.8e-2); //since we don't have a facility for asymmetric systematics, use the largest one
 
     if (rawYields[imsugra->first].first >0) {
       cout<<imsugra->first.first<<" "<<imsugra->first.second<<" " //m0 and m12
@@ -988,7 +1079,8 @@ void drawmSugraEfficiency() {
     selection_ =TCut("cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4")
       && TCut(searchRegions_[iregion].metSelection.Data()) && TCut(searchRegions_[iregion].htSelection.Data());
     usePUweight_=true;
-    useHLTeff_=true;
+    useHTeff_=true;
+    useMHTeff_=true;
     TString bweightstring="probge1";
     TString btagselection = searchRegions_[iregion].btagSelection;
     if (btagselection=="ge2b") {

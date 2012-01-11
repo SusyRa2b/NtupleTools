@@ -179,6 +179,7 @@ void setSearchRegions() {
   //also, for style reasons the 'owenId' should not contain the number of b tags.
   //everywhere that we use the owenId as an identifier, we combine with the number of b tags
 
+
 /*
   //oct25
   sbRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=200&&MET<250","Loose",false));
@@ -195,8 +196,8 @@ void setSearchRegions() {
 
   sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=200&&MET<250","Loose",false));
   searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=250","Loose")); //3B
-*/
-  
+  */
+
   //Loose exclusive regions
   sbRegions_.push_back( SearchRegion( "eq1b","HT>=400","MET>=200&&MET<250","Loose",false));
   searchRegions_.push_back( SearchRegion( "eq1b","HT>=400","MET>=250","Loose")); //1BL
@@ -226,7 +227,6 @@ void setSearchRegions() {
 
   sbRegions_.push_back( SearchRegion( "ge3b","HT>=500","MET>=200&&MET<250","TightMET",false));
   searchRegions_.push_back( SearchRegion( "ge3b","HT>=500","MET>=500","TightMET")); //1BT
-
 
   /*
   //2011 Summer result
@@ -299,10 +299,16 @@ public:
   double yield_JER_PU;      //NOT persisted when object is saved to file
   double yield_JER_PU_HLT;  //NOT persisted when object is saved to file
 
+  double eff_derivative_b;
+  double eff_derivative_c;
+  double eff_derivative_l;
+
   double totalSystematic(); 
   double symmetrize(const TString & which);
 
   double value(const TString &which) {return symmetrize(which);}
+  double valuePlus(const TString &which);
+  double valueMinus(const TString &which);
 
   void set(const TString & which, double valminus, double valplus);
 
@@ -335,6 +341,10 @@ void SignalEffData::write(TString id) const {
   ofstream output(filename.Data());
   output<<rawYield<<endl<<effCorr<<endl;
 
+  output<<eff_derivative_b<<endl;
+  output<<eff_derivative_c<<endl;
+  output<<eff_derivative_l<<endl;
+
   for (map<TString, SystInfo >::const_iterator isyst=systematics.begin(); isyst!=systematics.end(); ++isyst) {
     output << isyst->first<<" ";
     isyst->second.write( &output );
@@ -349,7 +359,7 @@ SignalEffData::SignalEffData(TString idtoload) :
   //  id(idtoload),
   rawYield(0),
   effCorr(1),
-  yield_JER(0), yield_JER_PU(0),yield_JER_PU_HLT(0)
+  yield_JER(0), yield_JER_PU(0),yield_JER_PU_HLT(0),eff_derivative_b(0),eff_derivative_c(0),eff_derivative_l(0)
 {
   //filename constructed from id
   TString filename = "SignalEffData.";
@@ -359,12 +369,17 @@ SignalEffData::SignalEffData(TString idtoload) :
   input>>rawYield;
   input>>effCorr;
 
+  input>>eff_derivative_b;
+  input>>eff_derivative_c;
+  input>>eff_derivative_l;
+
   TString akey;
   while (input>>akey) {
     //load the SystInfo from the file using the special ctor
     cout<<"==loading key "<<akey<<endl; //DEBUG
     systematics[akey] = SystInfo(&input);
   }
+
   input.close();
 }
 
@@ -372,7 +387,7 @@ SignalEffData::SignalEffData() :
   //  id("noname"),
   rawYield(0),
   effCorr(1),
-  yield_JER(0), yield_JER_PU(0),yield_JER_PU_HLT(0)
+  yield_JER(0), yield_JER_PU(0),yield_JER_PU_HLT(0),eff_derivative_b(0),eff_derivative_c(0),eff_derivative_l(0)
 { 
 
   systematics["JES"] = SystInfo();             
@@ -385,7 +400,7 @@ SignalEffData::SignalEffData() :
   systematics["cleaning"] = SystInfo(1e-2,1e-2,1);    //ok for now
   systematics["LepVeto"] = SystInfo(2e-2,2e-2,1);     //ok for now
   systematics["trigger"] = SystInfo(); //to be set box by box
-  systematics["lumi"] = SystInfo(6e-2 , 6e-2,1);   //full dataset seems to be 6%, at least for now
+  systematics["lumi"] = SystInfo(4.5e-2 , 4.5e-2,1);   //was 6% but lately people seem to be using 4.5% again
   //we don't really want this one this time.
   //keep it for now just for the sake of comparison with old results
   //  systematics["L2L3"] = SystInfo(1e-2 , 1e-2,1);
@@ -479,6 +494,33 @@ double SignalEffData::symmetrize(const TString & which) {
     s = var2>var1? var2:var1;
   }
   
+  return s;
+}
+
+double SignalEffData::valuePlus(const TString & which) {
+
+  double s=-1;
+
+  map<TString, SystInfo >::iterator it=systematics.find(which);
+  if (it==systematics.end() ) {
+    cout<<"ERROR -- cannot find in systematics list: "<<which<<endl;
+  }
+  else { //return the larger deviation
+    s=it->second.plus;
+  }  
+  return s;
+}
+double SignalEffData::valueMinus(const TString & which) {
+
+  double s=-1;
+
+  map<TString, SystInfo >::iterator it=systematics.find(which);
+  if (it==systematics.end() ) {
+    cout<<"ERROR -- cannot find in systematics list: "<<which<<endl;
+  }
+  else { //return the larger deviation
+    s=it->second.minus;
+  }  
   return s;
 }
 
@@ -1521,32 +1563,35 @@ void loadSamples(bool joinSingleTop=true) {
   //FOR PLOTS
   ////////////
 
-    configDescriptions_.setDefault("CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
-    configDescriptions_.setCorrected("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
+  //    configDescriptions_.setDefault("CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
+  //    configDescriptions_.setCorrected("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
 
   //Only for signal systematics
-    /*     
+         
   configDescriptions_.setDefault("CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff03_HLTEff0");
   configDescriptions_.setCorrected("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff03_HLTEff0");
+
+  //convention: put 'down' variation first and 'up' variation second
+
   //JES //LM9 and scans
   configDescriptions_.addVariation("CSVM_PF2PATjets_JESdown_JERbias_PFMET_METunc0_PUunc0_BTagEff03_HLTEff0",
 				   "CSVM_PF2PATjets_JESup_JERbias_PFMET_METunc0_PUunc0_BTagEff03_HLTEff0");
   //JER //LM9 only
-  //  configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERdown_PFMET_METunc0_PUunc0_BTagEff03_HLTEff0",
-  //				   "CSVM_PF2PATjets_JES0_JERup_PFMET_METunc0_PUunc0_BTagEff03_HLTEff0");
+    configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERdown_PFMET_METunc0_PUunc0_BTagEff03_HLTEff0",
+  				   "CSVM_PF2PATjets_JES0_JERup_PFMET_METunc0_PUunc0_BTagEff03_HLTEff0");
 
   //unclustered MET //LM9 and scans
   configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERbias_PFMET_METuncDown_PUunc0_BTagEff03_HLTEff0", 
   				   "CSVM_PF2PATjets_JES0_JERbias_PFMET_METuncUp_PUunc0_BTagEff03_HLTEff0");
 
   //PU //LM9 only
-  //configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncDown_BTagEff03_HLTEff0",
-  //				   "CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncUp_BTagEff03_HLTEff0");
+  configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncDown_BTagEff03_HLTEff0",
+  				   "CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncUp_BTagEff03_HLTEff0");
 
   //btag eff //LM9 and scans
   configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffdown3_HLTEff0",
   				   "CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffup3_HLTEff0");
-    */
+    
   //HLT eff //never use this one
   //    configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffdown",
   //"CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffup");
