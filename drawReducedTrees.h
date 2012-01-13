@@ -207,7 +207,7 @@ void setSearchRegions() {
 
   sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=200&&MET<250","Loose",false));
   searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=250","Loose")); //3B
-
+ 
   //2BT exclusive regions
   sbRegions_.push_back( SearchRegion( "eq1b","HT>=600","MET>=200&&MET<250","TightHT",false));
   searchRegions_.push_back( SearchRegion( "eq1b","HT>=600","MET>=300","TightHT")); //2BT
@@ -227,7 +227,7 @@ void setSearchRegions() {
 
   sbRegions_.push_back( SearchRegion( "ge3b","HT>=500","MET>=200&&MET<250","TightMET",false));
   searchRegions_.push_back( SearchRegion( "ge3b","HT>=500","MET>=500","TightMET")); //1BT
-
+  
   /*
   //2011 Summer result
   sbRegions_.push_back( SearchRegion( "ge1b","HT>=350","MET>=150&&MET<200","Loose",false)); //loose SB
@@ -548,24 +548,25 @@ struct OwenData {
   //owen didn't ask for these
   //  double  Nlsb ;
   //  double  Nlsb_ldp;
-  double  Nlsb_0b ;      // done
-  double  Nlsb_0b_ldp;   // done
+
+  //deprecated
+  //  double  Nlsb_0b ;      // done
+  //  double  Nlsb_0b_ldp;   // done
+  double Rlsb_passfail;
+  double Rlsb_passfail_err;
+
 
   double Nttbarmc_sig_ldp; //done
   double Nttbarmc_sb_ldp; //done
-
   //  double lsf_WJmc; //done
   double NWJmc_sig_ldp; //done
   double NWJmc_sb_ldp; //done
-
   //  double lsf_Znnmc; //done
   double NZnnmc_sig_ldp; //done
   double NZnnmc_sb_ldp; //done
-
   //  double lsf_Zjmc;
   double NZjmc_sig_ldp;
   double NZjmc_sb_ldp;
-
   double Nsingletopmc_sig_ldp;
   double Nsingletopmc_sb_ldp;
 
@@ -693,8 +694,10 @@ void printOwen(const TString& owenKey) {
   cout<<"Nsig_ldp          "<<  owenMap_[owenKey].Nsig_ldp<<endl;
   cout<<"Nsb_ldp           "<<  owenMap_[owenKey].Nsb_ldp<<endl;
 
-  cout<<"Nlsb_0b           "<<  owenMap_[owenKey].Nlsb_0b<<endl;
-  cout<<"Nlsb_0b_ldp       "<<  owenMap_[owenKey].Nlsb_0b_ldp<<endl;
+  //  cout<<"Nlsb_0b           "<<  owenMap_[owenKey].Nlsb_0b<<endl;
+  //  cout<<"Nlsb_0b_ldp       "<<  owenMap_[owenKey].Nlsb_0b_ldp<<endl;
+  cout<<"Rlsb_passfail     "<<owenMap_[owenKey].Rlsb_passfail<<endl;
+  cout<<"Rlsb_passfail_err "<<owenMap_[owenKey].Rlsb_passfail_err<<endl;
 
   cout<<"Nttbarmc_sig_ldp  "<<  owenMap_[owenKey].Nttbarmc_sig_ldp<<endl;
   cout<<"Nttbarmc_sb_ldp   "<<  owenMap_[owenKey].Nttbarmc_sb_ldp<<endl;

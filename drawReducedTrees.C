@@ -21,20 +21,12 @@ The signal efficiency functions are now forked into signalEffSyst.C
 The functions that do the heavy lifting, along with various utility functions,
 are in drawReducedTrees.h.
 
-Details:
 This code replaces drawCutflowPlots.C (which had replaced drawBasicPlots.C). 
 The input files are the reducedTrees.
 
 Depending on the exact setup in loadSamples(), the QCD and Single-top samples must be added together with 'hadd' 
 in order to get one file per sample.
 
-Potential improvements:
- -- The cuts are defined by the user settings the selection_ string
-directly. This can be error prone. A better interface would allow the user
-to set cuts more intutitively and with less change of e.g. accidentally 
-forgotten cuts (while still preserving the current flexibility).
- -- someday I should test whether I can get rid of duplicate
-functionality for TH1F and TH1D e.g. the case of addOverflowBin()
 */
 
 #include "TROOT.h"
@@ -118,6 +110,7 @@ double lumiScale_ = 4683.719;//nov4
 const bool reweightLSBdata_=true; //whether or not LSB data is reweighted based on PV distribution
 const bool useScaleFactors_=true; //whether or not to use MC scale factors when doing subtraction for data-driven estimates
 const bool useBNNEffCurves_=false; 
+const bool btaggedLSB_=false;
 
 float eff_SB_MHT_             = 0.841;   
 float eff_SB_MHT_err_[2]      = {0.059, 0.090};
@@ -470,10 +463,16 @@ std::pair<double,double> ABCD_njetRW(TString prescontrol, TString physcontrol, T
   //LSB jet multiplicity scale factors
   ///////////////////////////////////////////
   lumiScale_ = preslumiscale;
+  //original design of the analysis uses >=1b for the prescaled sample here. 
+  //but in the case of the b-tagged LSB, we want to use the =0b sample to avoid correlations
   if(useScaleFactors_){
-    btagSFweight_ = "probge1";
+    if (btaggedLSB_) btagSFweight_ = "prob0";
+    else    btagSFweight_ = "probge1";
   }
-  else{ prescontrol+= " && nbjetsCSVM>=1"; }
+  else{ 
+    if (btaggedLSB_) prescontrol+= " && nbjetsCSVM==0"; 
+    else    prescontrol+= " && nbjetsCSVM>=1"; 
+  }
 
   selection_= prescontrol;
   drawSimple("njets30",jmnbins,jmbins,"dummy.root", "","data");
@@ -483,9 +482,15 @@ std::pair<double,double> ABCD_njetRW(TString prescontrol, TString physcontrol, T
 
 
   //Now ABCD Regions
+
+  //jmt -- seems like this is the event counting that is the actual MC-based closure test
+  //for usebtaggedLSB_, we need to apply b-tagging, I think
   //////////////////////////////////////////
   lumiScale_ = physlumiscale;
-  if(useScaleFactors_) btagSFweight_ = "prob0";
+  if(useScaleFactors_) {
+    if (btaggedLSB_)   btagSFweight_ = btagSFweight_nom;
+    else btagSFweight_ = "prob0";
+  }
 
   selection_ = Acutjm;
   drawSimple("njets30",jmnbins,jmbins,"dummy.root", "","PythiaPUQCD");
@@ -626,13 +631,38 @@ std::pair<double,double> ABCD_njetRW(TString prescontrol, TString physcontrol, T
   return make_pair( 100*sqrt(pow(closure,2) + pow(closurestat,2)), 0); //estimate in denominator
 }
 
-std::pair<double,std::vector<double> > anotherABCD( const SearchRegion & region, bool datamode=false, float subscale=1,float SBshift=0, const TString LSBbsel="==0", float PVCorFactor = 0, bool doNjetRW = false, bool forTTbarEstimate=false) {
+TString getLSBbsel(const SearchRegion & r) {
+  TString lsbbsel = "==0"; //default is use 0b LSB
+  if (btaggedLSB_) { //in case we want btagged LSB
+    if (r.btagSelection.Contains("3")) lsbbsel = "ge2b"; //use >=2b in place of >=3b
+    else lsbbsel = r.btagSelection;
+  }
+  return lsbbsel;
+}
+
+std::pair<double,std::vector<double> > anotherABCD( const SearchRegion & region, bool datamode=false, float subscale=1,float SBshift=0, TString LSBbsel="==0", float PVCorFactor = 0, bool doNjetRW = false, bool forTTbarEstimate=false) {
   //kind of awful, but we'll return the estimate for datamode=true but the closure test bias for datamode=false
   
   doOverflowAddition(true);
   
   TString btagselection = region.btagSelection;
   
+  //for user convenience, to allow different forms of input
+  if (LSBbsel == "eq0b") LSBbsel = "==0";
+  else  if (LSBbsel == "ge1b") LSBbsel = ">=1";
+  else  if (LSBbsel == "ge2b") LSBbsel = ">=2";
+  else  if (LSBbsel == "ge3b") LSBbsel = ">=3";
+  else  if (LSBbsel == "eq1b") LSBbsel = "==1";
+  else  if (LSBbsel == "eq2b") LSBbsel = "==2";
+  //now just logic checks
+  else  if (LSBbsel == "==0") {}
+  else  if (LSBbsel == "==1") {}
+  else  if (LSBbsel == "==2") {}
+  else  if (LSBbsel == ">=1") {}
+  else  if (LSBbsel == ">=2") {}
+  else  if (LSBbsel == ">=3") {}
+  else assert(0);
+
   TString owenKey = btagselection;
   owenKey += region.owenId;
   OwenData * myOwen = &(owenMap_[owenKey]);
@@ -763,7 +793,11 @@ std::pair<double,std::vector<double> > anotherABCD( const SearchRegion & region,
   if(useScaleFactors_){
     LSBbtag = "1";
     if(LSBbsel=="==0"){ LSBbtagSFweight = "prob0"; }
+    else if(LSBbsel=="==1"){ LSBbtagSFweight = "prob1"; }
+    else if(LSBbsel=="==2"){ LSBbtagSFweight = "(1-prob1-prob0-probge3)"; }
     else if(LSBbsel==">=1"){ LSBbtagSFweight = "probge1"; }
+    else if(LSBbsel==">=2"){ LSBbtagSFweight = "probge2"; }
+    else if(LSBbsel==">=3"){ LSBbtagSFweight = "probge3"; }
     else{ assert(0);}
   }
   //if  useScaleFactors_, LSBbtag="1" and LSBbtagSFweight is "prob0" or "probge1"
@@ -801,17 +835,38 @@ std::pair<double,std::vector<double> > anotherABCD( const SearchRegion & region,
   //FOR LSB
   btagSFweight_ =  LSBbtagSFweight;
     
-  if(datamode &&  reweightLSBdata_){
+  if(datamode &&  reweightLSBdata_) {
+
+    float *pvbins;
     int pvnbins=11;
-    float pvbins[]={0.5,2.5,4.5,5.5,6.5,7.5,8.5,9.5,10.5,12.5,14.5,16.5};
-    
+    float pvbins_1[]= {0.5,2.5,4.5,5.5,6.5,7.5,8.5,9.5,10.5,12.5,14.5,16.5};
+    float pvbins_2[]={0.5,3.5,5.5,8.5,11.5,16.5};
+    float pvbins_3[]={0.5,5.5,10.5,16.5};
+
+    int choice = 1; //this logic is kinda convoluted, but it (barely) works
+    if ( LSBbsel.Contains("2") ) choice =2;
+    else if (LSBbsel.Contains("3") ) choice =3;
+    else if (region.owenId.Contains("TightHT")) choice =2;
+    else if (region.owenId.Contains("TightMET")) choice=3;
+
+    //adjust to coarser binning for higher numbers of b tags
+    if (choice==2 ) pvnbins=5;
+    else if (choice==3 )   pvnbins=3;
+    pvbins = new float[pvnbins+1];
+    for (int jj=0; jj<pvnbins+1; jj++)  {
+      if (choice==2 ) pvbins[jj] = pvbins_2[jj];
+      else if (choice==3 ) pvbins[jj] = pvbins_3[jj];
+      else if (choice==1) pvbins[jj] = pvbins_1[jj];
+      else assert(0);
+    }
+
     //physics triggers control sample -- physics triggers, 0b
     TCut antibcut = "nbjetsCSVM==0"; 
     btagSFweight_ = "1"; //this will always be 0b data
     selection_ = physcontrol && antibcut && passOther; //add mdpN cut to keep sample indepdenent of njet rw
     drawSimple("nGoodPV",pvnbins,pvbins,"dummy", "","data");
     TH1D* hPVphysics = (TH1D*)hinteractive->Clone("hPVphysics");
-    btagSFweight_ =  LSBbtagSFweight;
+    btagSFweight_ =  LSBbtagSFweight; //restore nominal LSB b tag cut
 
     //LSB unweighted
     selection_ = baseline && SBMET && cleaning;
@@ -838,6 +893,7 @@ std::pair<double,std::vector<double> > anotherABCD( const SearchRegion & region,
     //check for zero entries
     for(int j=1; j<=hPVphysics->GetNbinsX();j++){
       assert(hPVphysics->GetBinContent(j)>0);
+      //      cout<<hPVprescalePass->GetBinLowEdge(j)<<" "<<hPVprescalePass->GetBinContent(j)<<endl;
       assert(hPVprescalePass->GetBinContent(j)>0);
       assert(hPVprescaleFail->GetBinContent(j)>0);
     }
@@ -847,6 +903,8 @@ std::pair<double,std::vector<double> > anotherABCD( const SearchRegion & region,
     TH1D* hPVprescaleFail_RW = (TH1D*)hPVprescaleFail->Clone("hPVprescaleFail_RW");
     hPVprescalePass_RW->Multiply(hPV_W);
     hPVprescaleFail_RW->Multiply(hPV_W);
+
+    delete [] pvbins;
     
     ///////////////////////////////////////////////////////////////////////////////stat///////
     double dR2 = 0;
@@ -967,8 +1025,8 @@ std::pair<double,std::vector<double> > anotherABCD( const SearchRegion & region,
     Dsuberr = subscale*getIntegralErr("totalsm");
     
     //special stuff for owen
-    myOwen->Nlsb_0b_ldp = A;
-    myOwen->Nlsb_0b     = B;
+    //    myOwen->Nlsb_0b_ldp = A;
+    //    myOwen->Nlsb_0b     = B;
     if (isSIG) myOwen->Nsig_ldp = D;
     else       myOwen->Nsb_ldp = D;
     
@@ -1036,6 +1094,11 @@ std::pair<double,std::vector<double> > anotherABCD( const SearchRegion & region,
     myR = RLSB_UW;
     myRerr = RLSB_UWerr; 
   }
+  if (datamode) { //jan13 new. is this ok?
+    myOwen-> Rlsb_passfail= myR;
+    myOwen-> Rlsb_passfail_err= myRerr;
+  }
+
   double estimate = myR*(D-Dsub);
   double estimateerr = jmt::errAtimesB(myR, myRerr, D-Dsub, sqrt(Derr*Derr+Dsuberr*Dsuberr));
 
@@ -1162,15 +1225,15 @@ void runClosureTest2011(std::map<TString, std::vector<double> > & syst, bool add
 
   for (unsigned int i=0; i<sbRegions_.size(); i++) {
 
-    double sb =   fabs(anotherABCD(sbRegions_[i]).first);
-    double sig =  fabs(anotherABCD(searchRegions_[i]).first);
+    double sb =   fabs(anotherABCD(sbRegions_[i],false,1,0,getLSBbsel(sbRegions_[i])).first);
+    double sig =  fabs(anotherABCD(searchRegions_[i],false,1,0,getLSBbsel(searchRegions_[i])).first);
     double sb_rw = 0, sig_rw = 0;
     double finalsb = sb;
     double finalsig = sig;
 
     if(addnjetrw){
-      sb_rw = fabs(anotherABCD(sbRegions_[i],false,1,0,"==0",0,true).first);
-      sig_rw = fabs(anotherABCD(searchRegions_[i],false,1,0,"==0",0,true).first);
+      sb_rw = fabs(anotherABCD(sbRegions_[i],false,1,0,getLSBbsel(sbRegions_[i]),0,true).first);
+      sig_rw = fabs(anotherABCD(searchRegions_[i],false,1,0,getLSBbsel(searchRegions_[i]),0,true).first);
 
       finalsb = (sb_rw>sb) ? sb_rw: sb;
       finalsig = (sig_rw>sig) ? sig_rw: sig;
@@ -1191,14 +1254,23 @@ void runClosureTest2011(std::map<TString, std::vector<double> > & syst, bool add
 void runClosureTest2011()  {
   std::map<TString, std::vector<double> > dummy;
   
-  cout << "You are starting closure test without considering njet reweighting!" << endl;
-  runClosureTest2011(dummy,false);
+  //cout << "You are starting closure test without considering njet reweighting!" << endl;
+  //runClosureTest2011(dummy,false);
 
-  //  cout << "You are starting closure test that also considers njet reweighting! (this will do both)" << endl;
-  //  runClosureTest2011(dummy,true);
+  cout << "You are starting closure test that also considers njet reweighting! (this will do both)" << endl;
+  runClosureTest2011(dummy,true);
 
 }
 
+
+void testQCD(unsigned int i) {
+  //do it with shifted SB
+  setSearchRegions();
+  cout<<" SB +10 GeV"<<endl;
+  anotherABCD(sbRegions_[i],true,1,10,getLSBbsel(sbRegions_[i]));
+
+
+}
 
 //to hold systematics
 //making this global because I'm lazy...
@@ -1223,8 +1295,8 @@ void runDataQCD2011(const bool forOwen=false) {
 
   cout<<" ==== Nominal data results === "<<endl;
   for (unsigned int i=0; i<sbRegions_.size(); i++) {
-    n.push_back( anotherABCD(sbRegions_[i],true));
-    std::pair<double,std::vector<double> > qcdresult= anotherABCD(searchRegions_[i],true);
+    n.push_back( anotherABCD(sbRegions_[i],true,1,0,getLSBbsel(sbRegions_[i])));
+    std::pair<double,std::vector<double> > qcdresult= anotherABCD(searchRegions_[i],true,1,0,getLSBbsel(searchRegions_[i]) );
     n.push_back( qcdresult);
     resultsMap_[ searchRegions_[i].id()]["QCD"].value = qcdresult.first;
     resultsMap_[ searchRegions_[i].id()]["QCD"].statError = qcdresult.second.at(0);
@@ -1243,15 +1315,15 @@ void runDataQCD2011(const bool forOwen=false) {
   //now do it again with +40% subtraction
   cout<<" subtraction +40% "<<endl;
   for (unsigned int i=0; i<sbRegions_.size(); i++) {
-    subp.push_back( anotherABCD(sbRegions_[i],true,1.4));
-    subp.push_back( anotherABCD(searchRegions_[i],true,1.4));
+    subp.push_back( anotherABCD(sbRegions_[i],true,1.4,0,getLSBbsel(sbRegions_[i])));
+    subp.push_back( anotherABCD(searchRegions_[i],true,1.4,0,getLSBbsel(searchRegions_[i])));
   }
   
   //now do it again with -40% subtraction
   cout<<" subtraction -40% "<<endl;
   for (unsigned int i=0; i<sbRegions_.size(); i++) {
-    subm.push_back( anotherABCD(sbRegions_[i],true,0.6));
-    subm.push_back( anotherABCD(searchRegions_[i],true,0.6));
+    subm.push_back( anotherABCD(sbRegions_[i],true,0.6,0,getLSBbsel(sbRegions_[i])));
+    subm.push_back( anotherABCD(searchRegions_[i],true,0.6,0,getLSBbsel(searchRegions_[i])));
   }
   
   cout<<" ==== systematics for MC subtraction ==== "<<endl;
@@ -1269,15 +1341,17 @@ void runDataQCD2011(const bool forOwen=false) {
   //do it with shifted SB
   cout<<" SB +10 GeV"<<endl;
   for (unsigned int i=0; i<sbRegions_.size(); i++) {
-    sbp.push_back( anotherABCD(sbRegions_[i],true,1,10));
-    sbp.push_back( anotherABCD(searchRegions_[i],true,1,10));
+    sbp.push_back( anotherABCD(sbRegions_[i],true,1,10,getLSBbsel(sbRegions_[i])));
+    sbp.push_back( anotherABCD(searchRegions_[i],true,1,10,getLSBbsel(searchRegions_[i])));
   }
 
-  //now do it again with -50% subtraction
+  //now do it again with shift in the other direction
   cout<<" SB -10 GeV "<<endl;
   for (unsigned int i=0; i<sbRegions_.size(); i++) {
-    sbm.push_back( anotherABCD(sbRegions_[i],true,1,-10));
-    sbm.push_back( anotherABCD(searchRegions_[i],true,1,-10));
+    TString lsbbsel = "==0"; //default is use 0b LSB
+    if (btaggedLSB_) lsbbsel = sbRegions_[i].btagSelection; //in case we want btagged LSB
+    sbm.push_back( anotherABCD(sbRegions_[i],true,1,-10,getLSBbsel(sbRegions_[i])));
+    sbm.push_back( anotherABCD(searchRegions_[i],true,1,-10,getLSBbsel(searchRegions_[i])));
   }
 
   cout<<" ==== systematics for SB shift ==== "<<endl;
@@ -1294,15 +1368,15 @@ void runDataQCD2011(const bool forOwen=false) {
     //do it with LSB RW correction +100%
     cout << "LSB RW correction +100%" << endl;
     for (unsigned int i=0; i<sbRegions_.size(); i++) {
-      lsbp.push_back( anotherABCD(sbRegions_[i],true,1,0,"==0",1));
-      lsbp.push_back( anotherABCD(searchRegions_[i],true,1,0,"==0",1));
+      lsbp.push_back( anotherABCD(sbRegions_[i],true,1,0,getLSBbsel(sbRegions_[i]),1));
+      lsbp.push_back( anotherABCD(searchRegions_[i],true,1,0,getLSBbsel(searchRegions_[i]),1));
     }
     
     //do it with LSB RW correction -100%
     cout << "LSB RW correction -100%" << endl;
     for (unsigned int i=0; i<sbRegions_.size(); i++) {
-      lsbm.push_back( anotherABCD(sbRegions_[i],true,1,0,"==0",-1));
-      lsbm.push_back( anotherABCD(searchRegions_[i],true,1,0,"==0",-1));
+      lsbm.push_back( anotherABCD(sbRegions_[i],true,1,0,getLSBbsel(sbRegions_[i]),-1));
+      lsbm.push_back( anotherABCD(searchRegions_[i],true,1,0,getLSBbsel(searchRegions_[i]),-1));
     }
     
     cout<<" ==== systematics for LSB reweighting ==== "<<endl;
@@ -1316,11 +1390,12 @@ void runDataQCD2011(const bool forOwen=false) {
     cout<<" ==== END systematics for LSB reweighting ==== "<<endl;
   }
 
-
-  cout<<"== Cross check with >=1 b instead of exactly 0 b =="<<endl;
-  for (unsigned int i=0; i<sbRegions_.size(); i++) {
-    anotherABCD(sbRegions_[i],true,1,0,">=1");
-    anotherABCD(searchRegions_[i],true,1,0,">=1");
+  if (!btaggedLSB_) {
+    cout<<"== Cross check with >=1 b instead of exactly 0 b =="<<endl;
+    for (unsigned int i=0; i<sbRegions_.size(); i++) {
+      anotherABCD(sbRegions_[i],true,1,0,">=1");
+      anotherABCD(searchRegions_[i],true,1,0,">=1");
+    }
   }
   
   cout<<" == Running QCD closure test =="<<endl;
@@ -1346,11 +1421,15 @@ void runDataQCD2011(const bool forOwen=false) {
   
 }
 
-//i don't like passing the index instead of the region itself, but it makes some things easier.
-//this code is all around a big kludge...
-//double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const TString & mode="", const bool justttbar=false ) {
-double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const TString & mode="", const TString & closureMode="nominal", bool fillResultsGlobal=false ) {
+double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const TString & mode="", const TString & closureMode="nominal", bool fillResultsGlobal=false, const bool bShape=false ) {
   //in datamode, return the estimate; in non-datamode, return the Closure Test results (true-pred)/pred
+
+/*
+modifications for SHAPE analysis: (bShape = true)
+-- new formula mu_i,jb = mu_SB,1b * ( mu_i,SL,jb / mu_SB,SL,1b )
+
+-- for DATA, this means the data-driven subtraction must always be for the 1b case
+*/
 
   assert( closureMode=="nominal" || closureMode=="justttbar" || closureMode=="wtplus" ||closureMode=="wtminus" ||closureMode=="slonlywtplus" ||closureMode=="slonlywtminus" ||closureMode=="0lonlywtplus" ||closureMode=="0lonlywtminus");
 
@@ -1359,7 +1438,15 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
   else cout<<"Running closure test in mode: "<<closureMode<<endl;
 
   const SearchRegion region = searchRegions_[searchRegionIndex];
-  const SearchRegion qcdsubregion = sbRegions_[searchRegionIndex];
+  SearchRegion qcdsubregion = sbRegions_[searchRegionIndex];
+  if (bShape) { //qcdsubregion should be the eq1b region
+    for (int rr = searchRegionIndex; rr>=0; rr--) { //loop backwards; assumes that the vector is filled a certain way, of course
+      if (sbRegions_[rr].btagSelection=="eq1b") {
+	qcdsubregion = sbRegions_[rr];
+	break;
+      }
+    }
+  }
 
   TString btagselection = region.btagSelection;
   TString owenKey = btagselection;
@@ -1375,11 +1462,12 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
   std::pair<double,std::vector<double> > SIGQCDp;
   double SIGQCD=0, SIGQCDerr=0,SIGQCDTrigErrPlus=0,SIGQCDTrigErrMinus=0;
   if (datamode)  {
-    //regions should only differ in the MET selection
-    assert ( region.btagSelection == qcdsubregion.btagSelection);
+    //regions should only differ in the MET selection (except for b tag, in case of bShape analysis)
+    if (!bShape) assert ( region.btagSelection == qcdsubregion.btagSelection);
     assert(region.htSelection == qcdsubregion.htSelection);
+    assert(region.owenId == qcdsubregion.owenId);
     //get the QCD estimate for the SB region
-    SBsubQCDp = anotherABCD(qcdsubregion, datamode, 1 ,0,"==0",0,false,true) ;//set "forTTbarEstimate" flag to true
+    SBsubQCDp = anotherABCD(qcdsubregion, datamode, 1 ,0,getLSBbsel(qcdsubregion),0,false,true) ;//set "forTTbarEstimate" flag to true
     SBsubQCD=SBsubQCDp.first;
     SBsubQCDerr=SBsubQCDp.second.at(0);
 
@@ -1392,7 +1480,7 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
     SBsubQCDTrigErrMinus = SBsubQCDp.second.at(2);
 
     //for combining QCD and TTbar SIG estimate
-    SIGQCDp = anotherABCD(region, datamode, 1 ,0,"==0",0,false,true) ;//set "forTTbarEstimate" flag to true
+    SIGQCDp = anotherABCD(region, datamode, 1 ,0,getLSBbsel(region),0,false,true) ;//set "forTTbarEstimate" flag to true
     if(SIGQCDp.second.size() < 3){ 
       std::cout << "Not all errors stored in qcd SIG estimate error vector. Exiting." << std::endl;
       assert(0);
@@ -1450,16 +1538,48 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
     }
     else if (qcdsubregion.owenId == "Loose" && qcdsubregion.btagSelection=="eq1b") {
       doMean=false;//averaging already done
-      //preliminary numbers from https://indico.cern.ch/getFile.py/access?contribId=1&resId=0&materialId=slides&confId=168427
-      zv[0] =68; ze[0]=sqrt( 12*12 + 10*10);
+      //preliminary numbers from http://www.slac.stanford.edu/~gaz/RA2b/ZinvTable.pdf
+      zv[0] =68; ze[0]=15;
       zsbsyst = 0.0;    //this is a *percent* error...but we're not putting it in that way anymore
     }
     else if (qcdsubregion.owenId == "Loose" && qcdsubregion.btagSelection=="eq2b") {
       doMean=false;//averaging already done
-      zv[0] =12; ze[0]=sqrt( 2*2 + 8*8);
+      zv[0] =12; ze[0]=8;
       zsbsyst = 0.0;   
     }
+    else if (qcdsubregion.owenId == "TightMET" && qcdsubregion.btagSelection=="eq1b") {
+      doMean=false;//averaging already done
+      zv[0] =36; ze[0]=10;
+      zsbsyst = 0.0; 
+    }
+    else if (qcdsubregion.owenId == "TightMET" && qcdsubregion.btagSelection=="eq2b") {
+      doMean=false;//averaging already done
+      zv[0] =6; ze[0]=4;
+      zsbsyst = 0.0; 
+    }
+    else if (qcdsubregion.owenId == "TightMET" && qcdsubregion.btagSelection=="ge3b") {
+      doMean=false;//averaging already done
+      zv[0] =1.0; ze[0]=1.4;
+      zsbsyst = 0.0; 
+    }
+    else if (qcdsubregion.owenId == "TightHT" && qcdsubregion.btagSelection=="eq1b") {
+      doMean=false;//averaging already done
+      zv[0] =19; ze[0]=7;
+      zsbsyst = 0.0; 
+    }
+    else if (qcdsubregion.owenId == "TightHT" && qcdsubregion.btagSelection=="eq2b") {
+      doMean=false;//averaging already done
+      zv[0] =3.3; ze[0]=2.4;
+      zsbsyst = 0.0; 
+    }
+    else if (qcdsubregion.owenId == "TightHT" && qcdsubregion.btagSelection=="ge3b") {
+      doMean=false;//averaging already done
+      zv[0] =0.5; ze[0]=0.8;
+      zsbsyst = 0.0; 
+    }
+
     else {assert(0);}
+
     if(doMean){
       SBsubZ = zinvscale*(jmt::weightedMean(2,zv,ze));
       SBsubZerr = zinvscale*(jmt::weightedMean(2,zv,ze,true));
@@ -1515,11 +1635,14 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
 
   
   // --  count events
-  TCut ge1b = "nbjetsCSVM>=1";
+  TCut btagcut = "nbjetsCSVM>=1";
+  TCut btagcut_1b = "nbjetsCSVM==1"; //for the new shape analysis
   btagSFweight_="1";
   TString btagSFweight=""; //we're going to have to switch this one in and out of the global var
+  TString btagSFweight_1b="";
   if (useScaleFactors_) {
-    ge1b="1";
+    btagcut="1";
+    btagcut_1b="1"; btagSFweight_1b="prob1"; // shape
     usePUweight_=true;
     useHTeff_=true;
     useMHTeff_=false;
@@ -1555,20 +1678,21 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
     useMHTeff_=false;
     thebnnMHTeffMode_ = kOff;
     btagSFweight_="1";
+    btagSFweight_1b="1"; //shape
     currentConfig_=configDescriptions_.getDefault(); //completely raw MC
     
     if (btagselection=="ge2b") {
-      ge1b="nbjetsCSVM>=2";
+      btagcut="nbjetsCSVM>=2";
     }
     else if (btagselection=="ge1b") {}
     else if (btagselection=="ge3b") {
-      ge1b="nbjetsCSVM>=3";
+      btagcut="nbjetsCSVM>=3";
     }
     else if (btagselection=="eq1b") {
-      ge1b="nbjetsCSVM==1";
+      btagcut="nbjetsCSVM==1";
     }
     else if (btagselection=="eq2b") {
-      ge1b="nbjetsCSVM==2";
+      btagcut="nbjetsCSVM==2";
     }
     else {assert(0);}
   }
@@ -1576,9 +1700,9 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
   TCut HTcut=region.htSelection.Data(); 
   TCut SRMET = region.metSelection.Data();
   TCut baseline = "cutPV==1 && cut3Jets==1 && cutTrigger==1";
-  baseline = baseline&&HTcut&&ge1b;
+  baseline = baseline&&HTcut&&btagcut;
   TCut cleaning = "weight<1000 && passCleaning==1";
-  TCut SBMET = qcdsubregion.metSelection.Data();//"MET>=150 && MET<200";
+  TCut SBMET = qcdsubregion.metSelection.Data();
   TCut dpcut = "minDeltaPhiN>=4";
   TCut failOther = "(((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && MT_Wlep>=0&&MT_Wlep<100)";
   TCut passOther = "nElectrons==0 && nMuons==0";
@@ -1611,6 +1735,17 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
   A=getIntegral(sampleOfInterest);
   Aerr=getIntegralErr(sampleOfInterest);
 
+  //shape -- get the SB,SL number for 1b
+  btagSFweight=btagSFweight_;
+  selection_ = TCut("cutPV==1 && cut3Jets==1 && cutTrigger==1") &&HTcut && cleaning && dpcut  && SBMET && failOther && btagcut_1b; //auto cast to TString seems to work
+  btagSFweight_ = btagSFweight_1b;
+  drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_A");
+  double mu_SB_SL_1b=getIntegral(sampleOfInterest);
+  double mu_SB_SL_1b_err=getIntegralErr(sampleOfInterest);
+  //put back the btag sf
+  btagSFweight_ = btagSFweight;
+  //end shape
+
   //D = SIG,SL
   //keep the scaling on W, t as set for region A
   selection_ = baseline && cleaning && dpcut  && SRMET && failOther; //auto cast to TString seems to work
@@ -1618,12 +1753,14 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
   D=getIntegral(sampleOfInterest);
   Derr=getIntegralErr(sampleOfInterest);
 
-  if (datamode) { //for owen
+  if (datamode) { //for owen //SHAPE TODO
     myOwen->Nsig_sl = D;
     myOwen->Nsb_sl = A;
   }
 
   double A_temp = A, Aerr_temp = Aerr;
+  double mu_SB_SL_1b_temp = mu_SB_SL_1b; //shape
+  double mu_SB_SL_1b_err_temp = mu_SB_SL_1b_err; //shape
   double D_temp = D, Derr_temp = Derr;
   if(useScaleFactors_ && datamode){//also use this for bnnEff mode
     A = A/eff_SL_SB_MHT;
@@ -1635,6 +1772,9 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
     //Derr = jmt::errAoverB(D_temp,Derr_temp,eff_SL_MHT,eff_SL_MHT_err[0]);
     //DerrMinus = jmt::errAoverB(D_temp,Derr_temp,eff_SL_MHT,eff_SL_MHT_err[1]);
     //Derr = Derr > DerrMinus ? Derr: DerrMinus;
+
+    //shape
+    mu_SB_SL_1b /= eff_SL_SB_MHT; //what about the error?
   }
 
 
@@ -1654,14 +1794,17 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
   }
 
   //B = SB
-  selection_ = baseline && cleaning && dpcut  && SBMET && passOther; //auto cast to TString seems to work
+  btagSFweight=btagSFweight_;
+  if (bShape) btagSFweight_ = btagSFweight_1b;
+  if (bShape) selection_=TCut("cutPV==1 && cut3Jets==1 && cutTrigger==1") &&HTcut && cleaning && dpcut  && SBMET && passOther && btagcut_1b;
+  else   selection_ = baseline && cleaning && dpcut  && SBMET && passOther;
   drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_B");
   B=getIntegral(sampleOfInterest);
   Berr=getIntegralErr(sampleOfInterest);
+
   if (datamode) {
     SBsubMisc=getIntegral("totalsm");
     SBsubMiscerr=getIntegralErr("totalsm");
-
     if (mode.Contains("MC")) {
       const double mcsyst = 1; //100% uncertainty
       SBsubMiscerr = sqrt( SBsubMiscerr*SBsubMiscerr + pow(mcsyst*SBsubMisc,2));
@@ -1696,6 +1839,17 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
       //Berr = Berr > BerrMinus ? Berr: BerrMinus;
     }
   }
+  //put back the btag sf
+  btagSFweight_ = btagSFweight;
+
+  double SBtrue=0,SBtrueErr=0;
+  if (!datamode && bShape) {
+    //for closure test of bShape, need the true number in SB
+    selection_ = baseline && cleaning && dpcut  && SBMET && passOther;
+    drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_B");
+    SBtrue=getIntegral(sampleOfInterest);
+    SBtrueErr=getIntegralErr(sampleOfInterest);
+  }
 
   //SIG
   selection_ = baseline && cleaning && dpcut  && SRMET && passOther; //auto cast to TString seems to work
@@ -1703,21 +1857,46 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
   SIG=getIntegral(sampleOfInterest);
   SIGerr=getIntegralErr(sampleOfInterest);
 
-  //now calculate B*D/A
   double suberr = sqrt(SBsubMiscerr*SBsubMiscerr + SBsubQCDerr*SBsubQCDerr + SBsubZerr*SBsubZerr);
 
-  double numerr=jmt::errAtimesB(B-SBsubMisc-SBsubQCD-SBsubZ,sqrt(suberr*suberr + Berr*Berr),
-				D,Derr);
-  double num = (B-SBsubMisc-SBsubQCD-SBsubZ)*D;
-  double estimate = num / A;
-  double estimateerr= jmt::errAoverB(num,numerr,A,Aerr);
-
+  double estimate=0,estimateerr=0;
   double estimate_temp = estimate, estimateerr_temp = estimateerr;
   double estimateerrTrigPlus  = 0, estimateerrTrigMinus = 0;
   double estimateerrTrigPlus_unscaled  = 0, estimateerrTrigMinus_unscaled = 0;
 
   double estimateQCDANDTTbar=0, estimateerrQCDANDTTbar=0, 
     estimateerrQCDANDTTbarTrigPlus=0, estimateerrQCDANDTTbarTrigMinus=0; 
+
+  TString name = btagselection;
+  name += region.owenId;
+
+  double SBestimate=0,SBestimate_err=0;
+  if (bShape) { //calculate SB and SIG estimates
+    double Bprime = B-SBsubMisc-SBsubQCD-SBsubZ;
+    double Bprimeerr= sqrt(suberr*suberr + Berr*Berr);
+
+    SBestimate = Bprime * A / mu_SB_SL_1b;
+    SBestimate_err = jmt::errAoverB(A,Aerr,mu_SB_SL_1b,mu_SB_SL_1b_err);
+    SBestimate_err = jmt::errAtimesB(Bprime,Bprimeerr,A / mu_SB_SL_1b,SBestimate_err);
+    
+    double SIGestimate = Bprime * D / mu_SB_SL_1b;
+    double SIGestimate_err = jmt::errAoverB(D,Derr,mu_SB_SL_1b,mu_SB_SL_1b_err);
+    SIGestimate_err = jmt::errAtimesB(Bprime,Bprimeerr,D / mu_SB_SL_1b,SIGestimate_err);
+    //closure test output
+    cout<<"SHAPE "<<name.Data()
+	<<" SB: " <<SBestimate<<" +/- "<<SBestimate_err<<" true: "<<SBtrue<<" +/- "<<SBtrueErr
+	<<" SIG: "<<SIGestimate<<" +/- "<<SIGestimate_err<<" true: "<<SIG<<" +/- "<<SIGerr<<endl;
+    estimate = SIGestimate;
+    estimateerr = SIGestimate_err;
+  }
+  else {  //now calculate B*D/A (old-fashioned ABCD)
+    double numerr=jmt::errAtimesB(B-SBsubMisc-SBsubQCD-SBsubZ,sqrt(suberr*suberr + Berr*Berr),
+				  D,Derr);
+    double num = (B-SBsubMisc-SBsubQCD-SBsubZ)*D;
+    estimate = num / A;
+    estimateerr= jmt::errAoverB(num,numerr,A,Aerr);
+  }
+  estimate_temp = estimate; estimateerr_temp = estimateerr;
 
   if(useScaleFactors_ && datamode){
     
@@ -1729,23 +1908,25 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
     //use the larger of the two as the error in the estimate
     //estimateerr = estimateerr > estimateerrMinus ? estimateerr: estimateerrMinus;
 
+    //for bShape, divide by SB,SL,1b; for normal, divide by A
+    double mu_SB_SL_jb = bShape ? mu_SB_SL_1b : A; 
 
     //vary the trigger efficiencies by their statistical error to get trigger error on estimate
     //first vary QCD trigger efficiency
     float SBsubQCD_up   = SBsubQCD + SBsubQCDTrigErrPlus;
-    num = (B-SBsubMisc-SBsubQCD_up-SBsubZ)*D;
+    double    num = (B-SBsubMisc-SBsubQCD_up-SBsubZ)*D;
     double estimate_up;
-    estimate_up = eff_MHT*num/A;
+    estimate_up = eff_MHT*num/  mu_SB_SL_jb;
     double delta_down = (estimate_up - estimate);    
-    estimate_up = num/A;
+    estimate_up = num/  mu_SB_SL_jb;
     double delta_down_unscaled = (estimate_up - estimate_temp);    
 
     float SBsubQCD_down   = SBsubQCD - SBsubQCDTrigErrMinus;
     num = (B-SBsubMisc-SBsubQCD_down-SBsubZ)*D;
     double estimate_down;
-    estimate_down= eff_MHT*num/A;
+    estimate_down= eff_MHT*num/  mu_SB_SL_jb;
     double delta_up = (estimate_down - estimate); 
-    estimate_down= num/A;
+    estimate_down= num/  mu_SB_SL_jb;
     double delta_up_unscaled = (estimate_down - estimate_temp); 
 
     //second vary eff_MHT   
@@ -1763,25 +1944,25 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
     double estimate_up_unscaled, estimate_down_unscaled;
     if(useBNNEffCurves_){
       num = (B_bnnPlus-SBsubMisc-SBsubQCD-SBsubZ)*D;
-      estimate_up = eff_MHT*num/A;
-      estimate_up_unscaled = num/A;
+      estimate_up = eff_MHT*num/  mu_SB_SL_jb;
+      estimate_up_unscaled = num/  mu_SB_SL_jb;
 
       num = (B_bnnMinus-SBsubMisc-SBsubQCD-SBsubZ)*D;
-      estimate_down = eff_MHT*num/A;
-      estimate_down_unscaled = num/A;
+      estimate_down = eff_MHT*num/  mu_SB_SL_jb;
+      estimate_down_unscaled = num/  mu_SB_SL_jb;
     }
     else{
       float eff_SB_MHT_up   = eff_SB_MHT + eff_SB_MHT_err[0];
       double B_down = B_temp/eff_SB_MHT_up;
       num = (B_down-SBsubMisc-SBsubQCD-SBsubZ)*D;
-      estimate_up = eff_MHT*num/A;
-      estimate_up_unscaled = num/A;
+      estimate_up = eff_MHT*num/  mu_SB_SL_jb;
+      estimate_up_unscaled = num/  mu_SB_SL_jb;
       
       float eff_SB_MHT_down   = eff_SB_MHT - eff_SB_MHT_err[1];
       double B_up = B_temp/eff_SB_MHT_down;
       num = (B_up-SBsubMisc-SBsubQCD-SBsubZ)*D;
-      estimate_down = eff_MHT*num/A;
-      estimate_down_unscaled = num/A;
+      estimate_down = eff_MHT*num/  mu_SB_SL_jb;
+      estimate_down_unscaled = num/  mu_SB_SL_jb;
     }
     double delta_down3 = (estimate_up - estimate);
     double delta_up3 = (estimate_down - estimate);
@@ -1830,7 +2011,7 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
 					   + delta_qcdandttbar_down3*delta_qcdandttbar_down3 );
 
   }
-
+  
 
   double closureStat= datamode? 0: jmt::errAoverB(SIG,SIGerr,estimate,estimateerr);
 
@@ -1839,8 +2020,8 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
 //       <<"Estimate = "<<estimate<<" +/- "<<estimateerr<<endl
 //       <<" truth   = "<<SIG     <<" +/- "<<SIGerr<<endl;
   // btagselection += tight ? " Tight " : " Loose ";
-  TString name = btagselection;
-  name += region.owenId;
+
+
 
   char output[500];
   char output2[500];
@@ -1853,20 +2034,42 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
     Aerr = Aerr_temp;
     B = B_temp;
     Berr = Berr_temp;
+    mu_SB_SL_1b = mu_SB_SL_1b_temp;
+    mu_SB_SL_1b_err = mu_SB_SL_1b_err_temp;
   }
 
   if (!datamode) {
+    if (bShape) {
+      sprintf(output,"%s SB  & %s & %s & %s & %s & %s & $%f \\pm %f$ \\\\ ",name.Data(),
+	      jmt::format_nevents(B,Berr).Data(),jmt::format_nevents(mu_SB_SL_1b,mu_SB_SL_1b_err).Data(),
+	      jmt::format_nevents(A,Aerr).Data(),jmt::format_nevents(SBestimate,SBestimate_err).Data(),
+	      jmt::format_nevents(SBtrue,SBtrueErr).Data(),100*(SBestimate-SBtrue)/SBestimate,
+	      jmt::errAoverB(SBtrue,SBtrueErr,SBestimate,SBestimate_err));
+      sprintf(output2,"%s SIG & %s & %s & %s & %s & %s & $%f \\pm %f$ \\\\ ",name.Data(),
+	      jmt::format_nevents(B,Berr).Data(),jmt::format_nevents(mu_SB_SL_1b,mu_SB_SL_1b_err).Data(),
+	      jmt::format_nevents(D,Derr).Data(),jmt::format_nevents(estimate,estimateerr).Data(),
+	      jmt::format_nevents(SIG,SIGerr).Data(),100*(estimate-SIG)/estimate,
+	      100*closureStat);
+    }
+    else {
     float fc = (estimate-SIG)/sqrt(estimateerr*estimateerr + SIGerr*SIGerr);
       sprintf(output,"%s & %s & %s & %s & %s & %s & $%f \\pm %f$ \\\\ %% %f",name.Data(),
 	    jmt::format_nevents(D,Derr).Data(),jmt::format_nevents(A,Aerr).Data(),
 	    jmt::format_nevents(B,Berr).Data(),jmt::format_nevents(estimate,estimateerr).Data(),
 	      jmt::format_nevents(SIG,SIGerr).Data(), 100*(estimate-SIG)/estimate, 100*closureStat, fc);
+    }
   }
   else {
-    sprintf(output,"ttbar DATA %s & %d & %d & %d & %s & %s$^{+%.2f}_{-%.2f}$  \\\\",name.Data(),
-	    TMath::Nint(D),TMath::Nint(A),
-	    TMath::Nint(B), jmt::format_nevents(SBsubMisc+SBsubQCD+SBsubZ,suberr).Data(),
-	    jmt::format_nevents(estimate,estimateerr).Data(),estimateerrTrigPlus,estimateerrTrigMinus);
+    if (!bShape)
+      sprintf(output,"ttbar DATA %s & %d & %d & %d & %s & %s$^{+%.2f}_{-%.2f}$  \\\\",name.Data(),
+	      TMath::Nint(D),TMath::Nint(A),
+	      TMath::Nint(B), jmt::format_nevents(SBsubMisc+SBsubQCD+SBsubZ,suberr).Data(),
+	      jmt::format_nevents(estimate,estimateerr).Data(),estimateerrTrigPlus,estimateerrTrigMinus);
+    else 
+      sprintf(output,"ttbar SHAPE DATA %s & %d & %d & %d & %s & %s$^{+%.2f}_{-%.2f}$  \\\\",name.Data(),
+	      TMath::Nint(D),TMath::Nint(mu_SB_SL_1b),
+	      TMath::Nint(B), jmt::format_nevents(SBsubMisc+SBsubQCD+SBsubZ,suberr).Data(),
+	      jmt::format_nevents(estimate,estimateerr).Data(),estimateerrTrigPlus,estimateerrTrigMinus);
 
     sprintf(output2,"ttbar+QCD DATA %s & %s$^{+%.2f}_{-%.2f}$  \\\\",name.Data(),
 	    jmt::format_nevents(estimateQCDANDTTbar,estimateerrQCDANDTTbar).Data(),
@@ -1886,7 +2089,7 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
     }
   }
   cout<<output<<endl;
-  if(datamode) cout << output2 << endl;
+  if(datamode ||bShape) cout << output2 << endl;
 
   resetSampleScaleFactors();
 
@@ -1894,12 +2097,13 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
   return 100*sqrt(pow((SIG-estimate)/estimate,2) + pow(closureStat,2));
 }
 
-void runSLClosureTest2011() {
+void runSLClosureTest2011(const bool bShape=false) {
 
   setSearchRegions();
 
   cout<<"Note that the following is the joint tt+W+t closure test only!"<<endl;
-  for (unsigned int j=0; j<searchRegions_.size();j++) slABCD(j);
+  for (unsigned int j=0; j<searchRegions_.size();j++) //slABCD(j);
+    slABCD(j,false,"","nominal",false,bShape);
 
 /*
   cout<<"Note that the following is the tt closure test only!"<<endl;
@@ -1917,7 +2121,7 @@ void runSLClosureTest2011() {
 }
 
 vector<double> ttbarClosureSyst;
-void runTtbarEstimate2011(const bool forOwen=false) {
+void runTtbarEstimate2011(const bool forOwen=false, const bool bShape=false) {
   setSearchRegions();
 
   std::vector<double> ttw;
@@ -1931,7 +2135,7 @@ void runTtbarEstimate2011(const bool forOwen=false) {
   cout<<"nominal ttbar"<<endl;
   //this bool set to true at the end tells it to fill the global data for tex output
   //this is not a pretty solution
-  for (unsigned int j=0; j<searchRegions_.size();j++) ttw.push_back(slABCD(j,true,"","nominal",true));
+  for (unsigned int j=0; j<searchRegions_.size();j++) ttw.push_back(slABCD(j,true,"","nominal",true,bShape));
  
   if (forOwen) return;
 
@@ -1941,8 +2145,8 @@ void runTtbarEstimate2011(const bool forOwen=false) {
 
   cout<<"vary QCD subtraction"<<endl;
   for (unsigned int j=0; j<searchRegions_.size();j++) {
-    p.push_back(slABCD(j,true,"QCDup"));
-    m.push_back(slABCD(j,true,"QCDdown"));
+    p.push_back(slABCD(j,true,"QCDup","nominal",false,bShape));
+    m.push_back(slABCD(j,true,"QCDdown","nominal",false,bShape));
     if (fabs(p[j]-ttw[j])/ttw[j] - fabs(m[j]-ttw[j])/ttw[j] > 0.01) cout<<"** Difference in size of QCD sub syst!"<<endl;
     qcd.push_back(100*fabs(p[j]-ttw[j])/ttw[j]);
   }
@@ -1951,8 +2155,8 @@ void runTtbarEstimate2011(const bool forOwen=false) {
   //for Znunu subtraction systematics
   cout<<"vary Znn subtraction"<<endl;
   for (unsigned int j=0; j<searchRegions_.size();j++) {
-    p.push_back(slABCD(j,true,"Zup"));
-    m.push_back(slABCD(j,true,"Zdown"));
+    p.push_back(slABCD(j,true,"Zup","nominal",false,bShape));
+    m.push_back(slABCD(j,true,"Zdown","nominal",false,bShape));
     if (fabs(p[j]-ttw[j])/ttw[j] - fabs(m[j]-ttw[j])/ttw[j] > 0.01) cout<<"** Difference in size of Znn sub syst!"<<endl;
     znn.push_back(100*fabs(p[j]-ttw[j])/ttw[j]);
   }
@@ -1961,8 +2165,8 @@ void runTtbarEstimate2011(const bool forOwen=false) {
   //for MC subtraction systematics
   cout<<"vary MC subtraction"<<endl;
   for (unsigned int j=0; j<searchRegions_.size();j++) {
-    p.push_back(slABCD(j,true,"MCup"));
-    m.push_back(slABCD(j,true,"MCdown"));
+    p.push_back(slABCD(j,true,"MCup","nominal",false,bShape));
+    m.push_back(slABCD(j,true,"MCdown","nominal",false,bShape));
     if (fabs(p[j]-ttw[j])/ttw[j] - fabs(m[j]-ttw[j])/ttw[j] > 0.01) cout<<"** Difference in size of MC sub syst!"<<endl;
     mc.push_back(100*fabs(p[j]-ttw[j])/ttw[j]);
   }
@@ -1971,10 +2175,10 @@ void runTtbarEstimate2011(const bool forOwen=false) {
   std::vector<double> closure;
   cout<<"Running closure tests"<<endl;
   for (unsigned int j=0; j<searchRegions_.size();j++) {
-    double allsamples=fabs(slABCD(j)); //mix of samples
+    double allsamples=fabs(slABCD(j,false,"","nominal",false,bShape)); //mix of samples
     //    double ttbaronly=fabs(slABCD(j,false,"","justttbar")); //just ttbar
-    double wtup=fabs(slABCD(j,false,"","wtplus")); //vary W+t
-    double wtdown=fabs(slABCD(j,false,"","wtminus")); //vary W+t
+    double wtup=fabs(slABCD(j,false,"","wtplus",false,bShape)); //vary W+t
+    double wtdown=fabs(slABCD(j,false,"","wtminus",false,bShape)); //vary W+t
     //find the largest of the 3 and store it in allsamples
     if (wtup > wtdown) wtdown = wtup;
     if (wtdown > allsamples) allsamples=wtdown;
@@ -2031,45 +2235,46 @@ void printOwenSyst() {
     textfile<<"sf_mc            "<<1<<endl;
     textfile<<"sf_mc_err        "<<0.4<<endl;
     textfile<<"sf_qcd_sb        "<<1<<endl;
-    textfile<<"sf_qcd_sb_err    "<<0.01*sqrt(pow(qcdSystErrors["Closure"].at(i),2)+pow(qcdSystErrors["SBshift"].at(i),2))<<endl;
+    textfile<<"sf_qcd_sb_err    "<<0.01*sqrt(pow(qcdSystErrors["Closure"].at(i),2)+pow(qcdSystErrors["SBshift"].at(i),2) + pow(qcdSystErrors["LSBrw"].at(i),2))<<endl;
     textfile<<"sf_qcd_sig       "<<1<<endl;
-    textfile<<"sf_qcd_sig_err   "<<0.01*sqrt(pow(qcdSystErrors["Closure"].at(2*i+1),2)+pow(qcdSystErrors["SBshift"].at(2*i+1),2))<<endl;
+    textfile<<"sf_qcd_sig_err   "<<0.01*sqrt(pow(qcdSystErrors["Closure"].at(2*i+1),2)+pow(qcdSystErrors["SBshift"].at(2*i+1),2)+ pow(qcdSystErrors["LSBrw"].at(i),2))<<endl;
     textfile<<"sf_ttwj_sig      "<<1<<endl;
     textfile<<"sf_ttwj_sig_err  "<<0.01*ttbarClosureSyst[i]<<endl;
     textfile.close();
   }
 
-  cout<<" == Last but not least, output for Results.tex =="<<endl;
-  resultsMap_["ge1bLoose"]["ttbarCC"].value = 319;
-  resultsMap_["ge1bLoose"]["ttbarCC"].statError = 31;
-  resultsMap_["ge1bLoose"]["ttbarCC"].systError = 30;
-  resultsMap_["ge1bLoose"]["ttbarCC"].trigErrorPlus = 0;
-  resultsMap_["ge1bLoose"]["ttbarCC"].trigErrorMinus = 0;
+  //  cout<<" == Last but not least, output for Results.tex =="<<endl;
 
-  resultsMap_["ge1bTight"]["ttbarCC"].value = 4.9;
-  resultsMap_["ge1bTight"]["ttbarCC"].statError = 2.9;
-  resultsMap_["ge1bTight"]["ttbarCC"].systError = 2.1;
-  resultsMap_["ge1bTight"]["ttbarCC"].trigErrorPlus = 0;
-  resultsMap_["ge1bTight"]["ttbarCC"].trigErrorMinus = 0;
+//   resultsMap_["ge1bLoose"]["ttbarCC"].value = 319;
+//   resultsMap_["ge1bLoose"]["ttbarCC"].statError = 31;
+//   resultsMap_["ge1bLoose"]["ttbarCC"].systError = 30;
+//   resultsMap_["ge1bLoose"]["ttbarCC"].trigErrorPlus = 0;
+//   resultsMap_["ge1bLoose"]["ttbarCC"].trigErrorMinus = 0;
 
-  resultsMap_["ge2bLoose"]["ttbarCC"].value = 121;
-  resultsMap_["ge2bLoose"]["ttbarCC"].statError = 17;
-  resultsMap_["ge2bLoose"]["ttbarCC"].systError = 15;
-  resultsMap_["ge2bLoose"]["ttbarCC"].trigErrorPlus = 0;
-  resultsMap_["ge2bLoose"]["ttbarCC"].trigErrorMinus = 0;
+//   resultsMap_["ge1bTight"]["ttbarCC"].value = 4.9;
+//   resultsMap_["ge1bTight"]["ttbarCC"].statError = 2.9;
+//   resultsMap_["ge1bTight"]["ttbarCC"].systError = 2.1;
+//   resultsMap_["ge1bTight"]["ttbarCC"].trigErrorPlus = 0;
+//   resultsMap_["ge1bTight"]["ttbarCC"].trigErrorMinus = 0;
 
-  resultsMap_["ge2bTight"]["ttbarCC"].value = 20.7;
-  resultsMap_["ge2bTight"]["ttbarCC"].statError = 6.8;
-  resultsMap_["ge2bTight"]["ttbarCC"].systError = 3.8;
-  resultsMap_["ge2bTight"]["ttbarCC"].trigErrorPlus = 0;
-  resultsMap_["ge2bTight"]["ttbarCC"].trigErrorMinus = 0;
+//   resultsMap_["ge2bLoose"]["ttbarCC"].value = 121;
+//   resultsMap_["ge2bLoose"]["ttbarCC"].statError = 17;
+//   resultsMap_["ge2bLoose"]["ttbarCC"].systError = 15;
+//   resultsMap_["ge2bLoose"]["ttbarCC"].trigErrorPlus = 0;
+//   resultsMap_["ge2bLoose"]["ttbarCC"].trigErrorMinus = 0;
 
-  resultsMap_["ge3bLoose"]["ttbarCC"].value = 13.3;
-  resultsMap_["ge3bLoose"]["ttbarCC"].statError = 6.2;
-  resultsMap_["ge3bLoose"]["ttbarCC"].systError = 2.7;
-  resultsMap_["ge3bLoose"]["ttbarCC"].trigErrorPlus = 0;
-  resultsMap_["ge3bLoose"]["ttbarCC"].trigErrorMinus = 0;
+//   resultsMap_["ge2bTight"]["ttbarCC"].value = 20.7;
+//   resultsMap_["ge2bTight"]["ttbarCC"].statError = 6.8;
+//   resultsMap_["ge2bTight"]["ttbarCC"].systError = 3.8;
+//   resultsMap_["ge2bTight"]["ttbarCC"].trigErrorPlus = 0;
+//   resultsMap_["ge2bTight"]["ttbarCC"].trigErrorMinus = 0;
 
+//   resultsMap_["ge3bLoose"]["ttbarCC"].value = 13.3;
+//   resultsMap_["ge3bLoose"]["ttbarCC"].statError = 6.2;
+//   resultsMap_["ge3bLoose"]["ttbarCC"].systError = 2.7;
+//   resultsMap_["ge3bLoose"]["ttbarCC"].trigErrorPlus = 0;
+//   resultsMap_["ge3bLoose"]["ttbarCC"].trigErrorMinus = 0;
+/*
   resultsMap_["ge1bLoose"]["Znn"].value = 132;
   resultsMap_["ge1bLoose"]["Znn"].statError = 17;
   resultsMap_["ge1bLoose"]["Znn"].systError = 23;
@@ -2099,6 +2304,28 @@ void printOwenSyst() {
   resultsMap_["ge3bLoose"]["Znn"].systError = 3.3;
   resultsMap_["ge3bLoose"]["Znn"].trigErrorPlus = 0;
   resultsMap_["ge3bLoose"]["Znn"].trigErrorMinus = 0;
+*/
+
+/* NOT UPDATED
+  resultsMap_["eq1bLoose"]["Znn"].value = 132;
+  resultsMap_["eq1bLoose"]["Znn"].statError = 17;
+  resultsMap_["eq1bLoose"]["Znn"].systError = 23;
+  resultsMap_["eq1bLoose"]["Znn"].trigErrorPlus = 0;
+  resultsMap_["eq1bLoose"]["Znn"].trigErrorMinus = 0;
+
+  resultsMap_["eq2bLoose"]["Znn"].value = 132;
+  resultsMap_["eq2bLoose"]["Znn"].statError = 17;
+  resultsMap_["eq2bLoose"]["Znn"].systError = 23;
+  resultsMap_["eq2bLoose"]["Znn"].trigErrorPlus = 0;
+  resultsMap_["eq2bLoose"]["Znn"].trigErrorMinus = 0;
+
+  resultsMap_["ge3bLoose"]["Znn"].value = 132;
+  resultsMap_["ge3bLoose"]["Znn"].statError = 17;
+  resultsMap_["ge3bLoose"]["Znn"].systError = 23;
+  resultsMap_["ge3bLoose"]["Znn"].trigErrorPlus = 0;
+  resultsMap_["ge3bLoose"]["Znn"].trigErrorMinus = 0;
+
+
 
   cout<<"    & 1BL & 1BT & 2BL & 2BT & 3B \\"<<endl;
   //we'll do this in a C way instead of a C++ way
@@ -2116,12 +2343,12 @@ void printOwenSyst() {
       <<formatLatex( resultsMap_["ge2bTight"]["ttbar"])<<" & "
       <<formatLatex( resultsMap_["ge3bLoose"]["ttbar"])<<" \\ "<<endl;
 
-  cout<<"\\ttbar/W+jets CC & "
-      <<formatLatex( resultsMap_["ge1bLoose"]["ttbarCC"])<<" & "
-      <<formatLatex( resultsMap_["ge1bTight"]["ttbarCC"])<<" & "
-      <<formatLatex( resultsMap_["ge2bLoose"]["ttbarCC"])<<" & "
-      <<formatLatex( resultsMap_["ge2bTight"]["ttbarCC"])<<" & "
-      <<formatLatex( resultsMap_["ge3bLoose"]["ttbarCC"])<<" \\ "<<endl;
+//   cout<<"\\ttbar/W+jets CC & "
+//       <<formatLatex( resultsMap_["ge1bLoose"]["ttbarCC"])<<" & "
+//       <<formatLatex( resultsMap_["ge1bTight"]["ttbarCC"])<<" & "
+//       <<formatLatex( resultsMap_["ge2bLoose"]["ttbarCC"])<<" & "
+//       <<formatLatex( resultsMap_["ge2bTight"]["ttbarCC"])<<" & "
+//       <<formatLatex( resultsMap_["ge3bLoose"]["ttbarCC"])<<" \\ "<<endl;
 
   cout<<"\\Zinvisible & "
       <<formatLatex( resultsMap_["ge1bLoose"]["Znn"])<<" & "
@@ -2144,7 +2371,7 @@ void printOwenSyst() {
       <<formatLatex( resultsMap_["ge2bLoose"]["total"])<<" & "
       <<formatLatex( resultsMap_["ge2bTight"]["total"])<<" & "
       <<formatLatex( resultsMap_["ge3bLoose"]["total"])<<" \\ "<<endl;
-
+*/
 
 }
 
