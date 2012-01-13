@@ -2991,13 +2991,20 @@ void getCutStringForCutflow(vector<TString> &vectorOfCuts, vector<TString> &stag
   TString thisSelection;
   TString selectionPreB;
   TString selectionEq1bLoose;
-  TString selectionGe1bLoose;
-  TString selectionGe2bLoose;
-  TString selectionGe3bLoose;
-  TString selectionEq1bTight;
-  TString selectionGe1bTight;
-  TString selectionGe2bTight;  
-
+  TString selectionEq2bLoose;
+  TString selectionGe3bLoose;  
+  //TString selectionGe1bLoose;
+  //TString selectionGe2bLoose;
+  TString selectionEq1bTightHT;
+  TString selectionEq2bTightHT;  
+  TString selectionGe3bTightHT;  
+  //TString selectionGe1bTightHT;
+  //TString selectionGe2bTightHT;  
+  TString selectionEq1bTightMET;
+  TString selectionEq2bTightMET;  
+  TString selectionGe3bTightMET;  
+  //TString selectionGe1bTightMET;
+  //TString selectionGe2bTightMET;  
   
   //inclusive
   thisSelection="";
@@ -3027,6 +3034,14 @@ void getCutStringForCutflow(vector<TString> &vectorOfCuts, vector<TString> &stag
   if (latexMode_) stageCut.push_back("HT$\\ge$"+minHT);
   else stageCut.push_back("HT>="+minHT);
   
+  //MET
+  if (thisSelection=="") {thisSelection += "MET>="; thisSelection += minMET; }
+  else {thisSelection += " && MET>="; thisSelection += minMET;}
+  cut=getCutString(kMC,thisSelection);
+  vectorOfCuts.push_back(cut);
+  if (latexMode_) stageCut.push_back("\\MET$\\ge$"+minMET);
+  else stageCut.push_back("MET>="+minMET);
+
   //3 or more jets
   if (thisSelection=="") thisSelection += "cut3Jets==1";
   else thisSelection += " && cut3Jets==1";
@@ -3049,14 +3064,6 @@ void getCutStringForCutflow(vector<TString> &vectorOfCuts, vector<TString> &stag
   vectorOfCuts.push_back(cut);
   if (latexMode_) stageCut.push_back("$\\mu$ veto");
   else stageCut.push_back("Mu veto");
-
-  //MET
-  if (thisSelection=="") {thisSelection += "MET>="; thisSelection += minMET; }
-  else {thisSelection += " && MET>="; thisSelection += minMET;}
-  cut=getCutString(kMC,thisSelection);
-  vectorOfCuts.push_back(cut);
-  if (latexMode_) stageCut.push_back("\\MET$\\ge$"+minMET);
-  else stageCut.push_back("MET>="+minMET);
 
   //angular cuts
 
@@ -3095,31 +3102,41 @@ void getCutStringForCutflow(vector<TString> &vectorOfCuts, vector<TString> &stag
   selectionPreB=thisSelection;
 
   //loose selection
-  //>= 1 b
-  selectionGe1bLoose=selectionPreB;
-  if (btagSF) btagSFweight_="probge1";
-  else selectionGe1bLoose += " && nbjetsCSVM>=1";
-  cut=getCutString(kMC,selectionGe1bLoose);
-  vectorOfCuts.push_back(cut);
-  if (latexMode_) stageCut.push_back("HT$\\ge$400, \\MET$\\ge$250, $\\ge$1 b");
-  else stageCut.push_back("HT>=400, MET>=250, >= 1 b");
+  ////>= 1 b
+  //selectionGe1bLoose=selectionPreB;
+  //if (btagSF) btagSFweight_="probge1";
+  //else selectionGe1bLoose += " && nbjetsCSVM>=1";
+  //cut=getCutString(kMC,selectionGe1bLoose);
+  //vectorOfCuts.push_back(cut);
+  //if (latexMode_) stageCut.push_back("HT$\\ge$400, \\MET$\\ge$250, $\\ge$1 b");
+  //else stageCut.push_back("HT>=400, MET>=250, >= 1 b");
 
   //==1b
-  //jmt -- don't bother with this
-//   selectionEq1bLoose=selectionPreB; selectionEq1bLoose +=" && nbjetsSSVHPT==1";
-//   cut=getCutString(lumiScale_,selectionEq1bLoose);
-//   vectorOfCuts.push_back(cut);
-//   if (latexMode_) stageCut.push_back("HT$\\ge$350, \\MET$\\ge$200, $==$1 b");
-//   else stageCut.push_back("HT>=350, MET>=200, == 1 b");
-
-  //>= 2 b
-  selectionGe2bLoose=selectionPreB; 
-  if (btagSF) btagSFweight_="probge2";
-  else selectionGe2bLoose += " && nbjetsCSVM>=2";
-  cut=getCutString(kMC,selectionGe2bLoose);
+  selectionEq1bLoose=selectionPreB; 
+  if (btagSF) btagSFweight_="prob1";
+  else selectionEq1bLoose +=" && nbjetsCSVM==1";
+  cut=getCutString(kMC,selectionEq1bLoose);
   vectorOfCuts.push_back(cut);
-  if (latexMode_) stageCut.push_back("HT$\\ge$400, \\MET$\\ge$250, $\\ge$2 b");
-  else stageCut.push_back("HT>=400, MET>=250, >= 2 b");
+  if (latexMode_) stageCut.push_back("HT$\\ge$400, \\MET$\\ge$250, $==$1 b");
+  else stageCut.push_back("HT>=400, MET>=250, == 1 b");
+
+  ////>= 2 b
+  //selectionGe2bLoose=selectionPreB; 
+  //if (btagSF) btagSFweight_="probge2";
+  //else selectionGe2bLoose += " && nbjetsCSVM>=2";
+  //cut=getCutString(kMC,selectionGe2bLoose);
+  //vectorOfCuts.push_back(cut);
+  //if (latexMode_) stageCut.push_back("HT$\\ge$400, \\MET$\\ge$250, $\\ge$2 b");
+  //else stageCut.push_back("HT>=400, MET>=250, >= 2 b");
+
+  //== 2 b
+  selectionEq2bLoose=selectionPreB; 
+  if (btagSF) btagSFweight_="(1-prob1-prob0-probge3)";
+  else selectionEq2bLoose += " && nbjetsCSVM==2";
+  cut=getCutString(kMC,selectionEq2bLoose);
+  vectorOfCuts.push_back(cut);
+  if (latexMode_) stageCut.push_back("HT$\\ge$400, \\MET$\\ge$250, $==$2 b");
+  else stageCut.push_back("HT>=400, MET>=250, == 2 b");
 
   //>= 3 b
   selectionGe3bLoose=selectionPreB; 
@@ -3133,30 +3150,77 @@ void getCutStringForCutflow(vector<TString> &vectorOfCuts, vector<TString> &stag
 
   //tight selection
   if (!isTightSelection){ //print out the results for the tight selection anyway
-    //>=1 b
-    selectionGe1bTight=selectionPreB; 
-    if (btagSF) {btagSFweight_="probge1"; selectionGe1bTight += " && HT>=500 && MET>=500";}
-    else selectionGe1bTight += " && nbjetsCSVM>=1 && HT>=500 && MET>=500"; //hard-coded!
-    cut=getCutString(kMC,selectionGe1bTight);
-    vectorOfCuts.push_back(cut);
-    if (latexMode_) stageCut.push_back("HT$\\ge$500, \\MET$\\ge$500, $\\ge$1 b");
-    else stageCut.push_back("HT>=500, MET>=500, >= 1 b");
-    
+
+    ////OLD 1BT and 2BT cuts
+    ////>=1 b
+    //selectionGe1bTight=selectionPreB; 
+    //if (btagSF) {btagSFweight_="probge1"; selectionGe1bTight += " && HT>=500 && MET>=500";}
+    //else selectionGe1bTight += " && nbjetsCSVM>=1 && HT>=500 && MET>=500"; //hard-coded!
+    //cut=getCutString(kMC,selectionGe1bTight);
+    //vectorOfCuts.push_back(cut);
+    //if (latexMode_) stageCut.push_back("HT$\\ge$500, \\MET$\\ge$500, $\\ge$1 b");
+    //else stageCut.push_back("HT>=500, MET>=500, >= 1 b");
+    ////>=2 b
+    //selectionGe1bTight=selectionPreB;
+    //if (btagSF) {btagSFweight_="probge2"; selectionGe1bTight += " && HT>=600 && MET>=300";}
+    //else selectionGe1bTight += " && nbjetsCSVM>=2 && HT>=600 && MET>=300"; //hard-coded!
+    //cut=getCutString(kMC,selectionGe1bTight);
+    //vectorOfCuts.push_back(cut);
+    //if (latexMode_) stageCut.push_back("HT$\\ge$600, \\MET$\\ge$300, $\\ge$2 b");
+    //else stageCut.push_back("HT>=600, MET>=300, >= 2 b");  
+
+    //TIGHT MET
     //==1 b
-//     selectionGe1bTight=selectionPreB; selectionGe1bTight += " && nbjetsSSVHPT==1 && HT>=500 && MET>=300"; //hard-coded!
-//     cut=getCutString(lumiScale_,selectionGe1bTight);
-//     vectorOfCuts.push_back(cut);
-//     if (latexMode_) stageCut.push_back("HT$\\ge$500, \\MET$\\ge$300, $==$1 b");
-//     else stageCut.push_back("HT>=500, MET>=300, == 1 b");
-    
-    //>=2 b
-    selectionGe1bTight=selectionPreB;
-    if (btagSF) {btagSFweight_="probge2"; selectionGe1bTight += " && HT>=600 && MET>=300";}
-    else selectionGe1bTight += " && nbjetsCSVM>=2 && HT>=600 && MET>=300"; //hard-coded!
-    cut=getCutString(kMC,selectionGe1bTight);
+    selectionEq1bTightMET=selectionPreB; 
+    if (btagSF) {btagSFweight_="prob1"; selectionEq1bTightMET += " && HT>=500 && MET>=500";}
+    else selectionEq1bTightMET += " && nbjetsCSVM==1 && HT>=500 && MET>=500"; //hard-coded!
+    cut=getCutString(kMC,selectionEq1bTightMET);
     vectorOfCuts.push_back(cut);
-    if (latexMode_) stageCut.push_back("HT$\\ge$600, \\MET$\\ge$300, $\\ge$2 b");
-    else stageCut.push_back("HT>=600, MET>=300, >= 2 b");  
+    if (latexMode_) stageCut.push_back("HT$\\ge$500, \\MET$\\ge$500, $==$1 b");
+    else stageCut.push_back("HT>=500, MET>=500, == 1 b");
+    //==2 b
+    selectionEq2bTightMET=selectionPreB; 
+    if (btagSF) {btagSFweight_="(1-prob1-prob0-probge3)"; selectionEq2bTightMET += " && HT>=500 && MET>=500";}
+    else selectionEq2bTightMET += " && nbjetsCSVM==2 && HT>=500 && MET>=500"; //hard-coded!
+    cut=getCutString(kMC,selectionEq2bTightMET);
+    vectorOfCuts.push_back(cut);
+    if (latexMode_) stageCut.push_back("HT$\\ge$500, \\MET$\\ge$500, $==$2 b");
+    else stageCut.push_back("HT>=500, MET>=500, == 2 b");
+    //>=3 b
+    selectionGe3bTightMET=selectionPreB; 
+    if (btagSF) {btagSFweight_="probge3"; selectionGe3bTightMET += " && HT>=500 && MET>=500";}
+    else selectionGe3bTightMET += " && nbjetsCSVM>=3 && HT>=500 && MET>=500"; //hard-coded!
+    cut=getCutString(kMC,selectionGe3bTightMET);
+    vectorOfCuts.push_back(cut);
+    if (latexMode_) stageCut.push_back("HT$\\ge$500, \\MET$\\ge$500, $\\ge$3 b");
+    else stageCut.push_back("HT>=500, MET>=500, >= 3 b");
+        
+    //TIGHT HT
+    //==1 b
+    selectionEq1bTightHT=selectionPreB; 
+    if (btagSF) {btagSFweight_="prob1"; selectionEq1bTightHT += " && HT>=600 && MET>=300";}
+    else selectionEq1bTightHT += " && nbjetsCSVM==1 && HT>=600 && MET>=300"; //hard-coded!
+    cut=getCutString(kMC,selectionEq1bTightHT);
+    vectorOfCuts.push_back(cut);
+    if (latexMode_) stageCut.push_back("HT$\\ge$600, \\MET$\\ge$300, $==$1 b");
+    else stageCut.push_back("HT>=600, MET>=300, == 1 b");
+    //==2 b
+    selectionEq2bTightHT=selectionPreB; 
+    if (btagSF) {btagSFweight_="(1-prob1-prob0-probge3)"; selectionEq2bTightHT += " && HT>=600 && MET>=300";}
+    else selectionEq2bTightHT += " && nbjetsCSVM==2 && HT>=600 && MET>=300"; //hard-coded!
+    cut=getCutString(kMC,selectionEq2bTightHT);
+    vectorOfCuts.push_back(cut);
+    if (latexMode_) stageCut.push_back("HT$\\ge$600, \\MET$\\ge$300, $==$2 b");
+    else stageCut.push_back("HT>=600, MET>=300, == 2 b");
+    //>=3 b
+    selectionGe3bTightHT=selectionPreB; 
+    if (btagSF) {btagSFweight_="probge3"; selectionGe3bTightHT += " && HT>=600 && MET>=300";}
+    else selectionGe3bTightHT += " && nbjetsCSVM>=3 && HT>=600 && MET>=300"; //hard-coded!
+    cut=getCutString(kMC,selectionGe3bTightHT);
+    vectorOfCuts.push_back(cut);
+    if (latexMode_) stageCut.push_back("HT$\\ge$600, \\MET$\\ge$300, $\\ge$3 b");
+    else stageCut.push_back("HT>=600, MET>=300, >= 3 b");
+        
   }
   
   //  //check output
