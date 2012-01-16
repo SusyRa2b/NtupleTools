@@ -110,7 +110,7 @@ double lumiScale_ = 4683.719;//nov4
 const bool reweightLSBdata_=true; //whether or not LSB data is reweighted based on PV distribution
 const bool useScaleFactors_=true; //whether or not to use MC scale factors when doing subtraction for data-driven estimates
 const bool useBNNEffCurves_=false; 
-const bool btaggedLSB_=false;
+const bool btaggedLSB_=true;
 
 float eff_SB_MHT_             = 0.841;   
 float eff_SB_MHT_err_[2]      = {0.059, 0.090};
@@ -2044,7 +2044,7 @@ modifications for SHAPE analysis: (bShape = true)
 	      jmt::format_nevents(B,Berr).Data(),jmt::format_nevents(mu_SB_SL_1b,mu_SB_SL_1b_err).Data(),
 	      jmt::format_nevents(A,Aerr).Data(),jmt::format_nevents(SBestimate,SBestimate_err).Data(),
 	      jmt::format_nevents(SBtrue,SBtrueErr).Data(),100*(SBestimate-SBtrue)/SBestimate,
-	      jmt::errAoverB(SBtrue,SBtrueErr,SBestimate,SBestimate_err));
+	      100*jmt::errAoverB(SBtrue,SBtrueErr,SBestimate,SBestimate_err));
       sprintf(output2,"%s SIG & %s & %s & %s & %s & %s & $%f \\pm %f$ \\\\ ",name.Data(),
 	      jmt::format_nevents(B,Berr).Data(),jmt::format_nevents(mu_SB_SL_1b,mu_SB_SL_1b_err).Data(),
 	      jmt::format_nevents(D,Derr).Data(),jmt::format_nevents(estimate,estimateerr).Data(),
@@ -2208,8 +2208,9 @@ void runTtbarEstimate2011(const bool forOwen=false, const bool bShape=false) {
 
 void printOwenAll() {
 
+  //updated for shape analysis!
   runDataQCD2011(true);
-  runTtbarEstimate2011(true);
+  runTtbarEstimate2011(true,true);
 
   for (std::map<TString,OwenData>::iterator i=owenMap_.begin(); i!=owenMap_.end(); ++i) {
     printOwen( i->first);
