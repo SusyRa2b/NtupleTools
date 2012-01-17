@@ -87,7 +87,7 @@ EventCalculator::EventCalculator(const TString & sampleName, jetType theJetType,
     std::cout<<"\tDetected that I'm running over an mSugra scan!"<<std::endl;
     sampleIsSignal_=true;
   }
-  else if (sampleName_.Contains("T1bbbb") || sampleName_.Contains("T2bb") || sampleName_.Contains("T2tt")) {
+  else if (sampleName_.Contains("T1bbbb") || sampleName_.Contains("T2bb") || sampleName_.Contains("T2tt") || sampleName_.Contains("T1tttt")) {
     theScanType_ = kSMS;
     std::cout<<"\tDetected that I'm running over an SMS scan!"<<std::endl;
     sampleIsSignal_=true;
