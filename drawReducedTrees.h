@@ -25,6 +25,7 @@ std::map<TString, UInt_t> sampleMarkerStyle_;
 std::map<TString, float> sampleScaleFactor_; //1 by default //implemented only for drawPlots!
 TChain* dtree=0;
 TH1D* hdata=0;
+TH2D* hdata2d=0;
 
 TString currentConfig_;
 TH2D* scanSMSngen=0;
@@ -302,6 +303,9 @@ public:
   double eff_derivative_b;
   double eff_derivative_c;
   double eff_derivative_l;
+
+  double sigma_btageff; //TODO persist this
+  double eff_derivative_b_1s; //NOT persisted (cross-check)
 
   double totalSystematic(); 
   double symmetrize(const TString & which);
@@ -1566,11 +1570,11 @@ void loadSamples(bool joinSingleTop=true) {
   //FOR PLOTS
   ////////////
 
-  configDescriptions_.setDefault("CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
-  configDescriptions_.setCorrected("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
-
+   configDescriptions_.setDefault("CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
+   configDescriptions_.setCorrected("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
+   /*
   //Only for signal systematics
-  /*       
+       
   configDescriptions_.setDefault("CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff03_HLTEff0");
   configDescriptions_.setCorrected("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff03_HLTEff0");
 
@@ -1594,11 +1598,11 @@ void loadSamples(bool joinSingleTop=true) {
   //btag eff //LM9 and scans
   configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffdown3_HLTEff0",
   				   "CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffup3_HLTEff0");
-    
+   */    
   //HLT eff //never use this one
   //    configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffdown",
   //"CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffup");
-*/
+
   ///////////////
   //////////////
  
@@ -1858,8 +1862,6 @@ void draw2d(const TString var, const int nbins, const float low, const float hig
 	    const TString vary, const int nbinsy, const float lowy, const float highy,
 	    const TString xtitle, TString ytitle, TString filename="") {
 
-  //for now hard-code this to plot only the first sample and only COLZ!
-
   loadSamples();
   if (filename=="") filename=var;
   gROOT->SetStyle("CMS");
@@ -1869,23 +1871,41 @@ void draw2d(const TString var, const int nbins, const float low, const float hig
   const TString hname="h2d";
   h2d = new TH2D(hname,"",nbins,low,high,nbinsy,lowy,highy);
   h2d->Sumw2();
-  TString opt="colz";
-  for (unsigned int isample=0; isample<1 ; isample++) { //plot only the first sample!
+
+  TH2D* h2d_temp = (TH2D*) h2d->Clone("h2d_temp");
+
+  if (dodata_) {
+    if (hdata2d!=0) delete hdata2d;
+    hdata2d = new TH2D("hdata2d","",nbins,low,high,nbinsy,lowy,highy);
+    hdata2d->Sumw2();
+  }
+
+  TString opt="box";
+  TString drawstring=vary;
+  drawstring+=":";
+  drawstring+=var;
+  for (unsigned int isample=0; isample<samples_.size() ; isample++) {
     gROOT->cd();
     TTree* tree = (TTree*) files_[currentConfig_][samples_[isample]]->Get("reducedTree");
     gROOT->cd();
     TString weightopt= useFlavorHistoryWeights_ && samples_[isample].Contains("WJets") ? "flavorHistoryWeight" : "";
-    TString drawstring=vary;
-    drawstring+=":";
-    drawstring+=var;
-    tree->Project(hname,drawstring,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,"",0,""));
+    tree->Project("h2d_temp",drawstring,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,"",0,""));
+
+    h2d->Add(h2d_temp);
 
     //now the histo is filled
     
     h2d->SetXTitle(xtitle);
     h2d->SetYTitle(ytitle);
   }
+  h2d->SetLineColor(sampleColor_["TotalSM"]);
   h2d->Draw(opt);
+
+  if (dodata_) {
+    dtree->Project("hdata2d",drawstring, getCutString(true));
+    hdata2d->SetLineColor(kBlack);
+    hdata2d->Draw("box same");
+  }
 
   TString savename = filename;
   if (logy_) savename += "-logY";
