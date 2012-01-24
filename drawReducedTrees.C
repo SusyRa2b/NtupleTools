@@ -3313,6 +3313,71 @@ void drawMSugraTest() {
 
 }
 
+void AN2011_excess() {
+
+  //these plots certainly duplicate what we already have, but what the hell
+
+  loadSamples();
+  doRatioPlot(true);
+
+  //set all corrections to MC
+  usePUweight_=true;
+  useHTeff_=true;
+  useMHTeff_=true;
+  thebnnMHTeffMode_=kOff;
+  currentConfig_=configDescriptions_.getCorrected(); //JER bias
+  TString modestring="-JER-PU-HLT-bSF";
+
+  setStackMode(true); //regular stack
+  setColorScheme("stack");
+  doData(true);
+
+
+  int nbins;
+  float low,high;
+  TString var,xtitle;
+  
+  doOverflowAddition(true);
+  drawMCErrors_=true;
+  
+
+  btagSFweight_="probge2";
+  selection_ =TCut("HT>=600 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=200 &&passCleaning==1 && minDeltaPhiN>=4");
+  var="MET"; xtitle="E_{T}^{miss}";
+  low=200; high = 500; nbins=10;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_2BT_MET"+modestring,0,"GeV");
+  setLogY(true); setPlotMinimum(0.7);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_2BT_MET"+modestring,0,"GeV");
+  setLogY(false); resetPlotMinimum();
+
+  btagSFweight_="probge3";
+  selection_ =TCut("HT>=400 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=200 &&passCleaning==1 && minDeltaPhiN>=4");
+  drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_3B_MET"+modestring,0,"GeV");
+  setLogY(true); setPlotMinimum(0.7);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_3B_MET"+modestring,0,"GeV");
+  setLogY(false); resetPlotMinimum();
+
+
+  btagSFweight_="probge2";
+  selection_ =TCut("HT>=400 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=300 &&passCleaning==1 && minDeltaPhiN>=4");
+  var="HT"; xtitle="H_{T}";
+  low=400; high = 1500; nbins=11;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "HT_2BT"+modestring,0,"GeV");
+  setLogY(true); setPlotMinimum(0.7);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "HT_2BT"+modestring,0,"GeV");
+  setLogY(false); resetPlotMinimum();
+
+  btagSFweight_="probge3";
+  selection_ =TCut("HT>=400 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=250 &&passCleaning==1 && minDeltaPhiN>=4");
+  var="HT"; xtitle="H_{T}";
+  low=400; high = 1400; nbins=5;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "HT_3B"+modestring,0,"GeV");
+  setLogY(true); setPlotMinimum(0.7);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "HT_3B"+modestring,0,"GeV");
+  setLogY(false); resetPlotMinimum();
+
+}
+
 //for the actual AN and paper, use mode 3, logy and doRatio false
 void AN2011( TString btagselection="ge1b",const int mode=1, bool logy=false, bool doRatio=false ) {
   doRatioPlot(doRatio);
