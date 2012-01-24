@@ -3348,6 +3348,7 @@ double EventCalculator::getCrossSection(){
 
   if (sampleName_.Contains("mSUGRA")) return 1; //NLO cross sections will be specially stored per point
   if (sampleName_.Contains("T1bbbb")) return 1;
+  if (sampleName_.Contains("T1tttt")) return 1;
   if (sampleName_.Contains("T2bb")) return 1;
   if (sampleName_.Contains("T2tt")) return 1;
 
