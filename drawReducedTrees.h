@@ -1467,7 +1467,7 @@ void setColorScheme(const TString & name) {
     sampleColor_["SingleTop-sChannel"] = kMagenta+1; //for special cases
     sampleColor_["SingleTop-tChannel"] = kMagenta+2; //for special cases
     sampleColor_["SingleTop-tWChannel"] = kMagenta+3; //for special cases
-    sampleColor_["TotalSM"] =kGreen+2; //owen requested 3
+    sampleColor_["TotalSM"] =kGreen+1; //owen requested 3
     sampleColor_["Total"] = 6;
     sampleColor_["VV"] = kOrange-3;
     sampleColor_["HerwigQCDFlat"] = 2;
@@ -1860,7 +1860,9 @@ float drawSimple(const TString var, const int nbins, const float* varbins, const
 
 void draw2d(const TString var, const int nbins, const float low, const float high, 
 	    const TString vary, const int nbinsy, const float lowy, const float highy,
-	    const TString xtitle, TString ytitle, TString filename="") {
+	    const TString xtitle, TString ytitle, TString filename="",
+	    const float* varbins=0,const float* varbinsy=0) {
+  //in case varbins is used, the low and high will not be used
 
   loadSamples();
   if (filename=="") filename=var;
@@ -1869,14 +1871,19 @@ void draw2d(const TString var, const int nbins, const float low, const float hig
   renewCanvas();
   if (h2d!=0) delete h2d;
   const TString hname="h2d";
-  h2d = new TH2D(hname,"",nbins,low,high,nbinsy,lowy,highy);
+  if (varbins==0 &&varbinsy==0)  h2d = new TH2D(hname,"",nbins,low,high,nbinsy,lowy,highy);
+  else  h2d = new TH2D(hname,"",nbins,varbins,nbinsy,varbinsy);
   h2d->Sumw2();
 
-  TH2D* h2d_temp = (TH2D*) h2d->Clone("h2d_temp");
+  TH2D*  h2d_temp =0;
+  if (varbins==0 &&varbinsy==0) h2d_temp= new TH2D("h2d_temp","",nbins,low,high,nbinsy,lowy,highy);
+  else h2d_temp= new TH2D("h2d_temp","",nbins,varbins,nbinsy,varbinsy);
+  h2d_temp->Sumw2();
 
   if (dodata_) {
     if (hdata2d!=0) delete hdata2d;
-    hdata2d = new TH2D("hdata2d","",nbins,low,high,nbinsy,lowy,highy);
+    if (varbins==0 &&varbinsy==0)   hdata2d = new TH2D("hdata2d","",nbins,low,high,nbinsy,lowy,highy);
+    else   hdata2d = new TH2D("hdata2d","",nbins,varbins,nbinsy,varbinsy);
     hdata2d->Sumw2();
   }
 
@@ -1885,27 +1892,34 @@ void draw2d(const TString var, const int nbins, const float low, const float hig
   drawstring+=":";
   drawstring+=var;
   for (unsigned int isample=0; isample<samples_.size() ; isample++) {
-    gROOT->cd();
-    TTree* tree = (TTree*) files_[currentConfig_][samples_[isample]]->Get("reducedTree");
-    gROOT->cd();
-    TString weightopt= useFlavorHistoryWeights_ && samples_[isample].Contains("WJets") ? "flavorHistoryWeight" : "";
-    tree->Project("h2d_temp",drawstring,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,"",0,""));
-
-    h2d->Add(h2d_temp);
-
-    //now the histo is filled
-    
-    h2d->SetXTitle(xtitle);
-    h2d->SetYTitle(ytitle);
+    if ( isSampleSM(samples_[isample]) ) {
+      gROOT->cd();
+      TTree* tree = (TTree*) files_[currentConfig_][samples_[isample]]->Get("reducedTree");
+      gROOT->cd();
+      TString weightopt= useFlavorHistoryWeights_ && samples_[isample].Contains("WJets") ? "flavorHistoryWeight" : "";
+      h2d_temp->Reset(); //just to be safe
+      tree->Project("h2d_temp",drawstring,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,"",0,""));
+      h2d->Add(h2d_temp);
+    }
   }
+  h2d->SetXTitle(xtitle);
+  h2d->SetYTitle(ytitle);
   h2d->SetLineColor(sampleColor_["TotalSM"]);
-  h2d->Draw(opt);
+  double zmax = h2d->GetMaximum();
 
   if (dodata_) {
     dtree->Project("hdata2d",drawstring, getCutString(true));
     hdata2d->SetLineColor(kBlack);
-    hdata2d->Draw("box same");
+    if (hdata2d->GetMaximum() > zmax) zmax= hdata2d->GetMaximum();
   }
+
+  h2d->Draw(opt);
+
+  h2d->SetMaximum(zmax*1.1);
+  hdata2d->SetMaximum(zmax*1.1);
+
+  if (dodata_)  hdata2d->Draw("box same");
+
 
   TString savename = filename;
   if (logy_) savename += "-logY";
@@ -1919,6 +1933,8 @@ void draw2d(const TString var, const int nbins, const float low, const float hig
     thecanvas->SaveAs(savename+".pdf"); //for pdftex
     thecanvas->SaveAs(savename+".png"); //for twiki
   }
+
+  delete h2d_temp;
 
 }
 
