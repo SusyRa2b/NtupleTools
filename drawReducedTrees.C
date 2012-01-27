@@ -125,6 +125,8 @@ float eff_SIG_SL_MHT_err_[2]  = {0.001, 0.001};
 float eff_SB_SL_MHT_          = 0.996; 
 float eff_SB_SL_MHT_err_[2]   = {0.002, 0.003};
 
+
+
 void countInBoxesBreakdown(const SearchRegion & region) {
   //shows number of events from each background and signal in the 6 boxes
   
@@ -201,7 +203,7 @@ void countInBoxesBreakdown(const SearchRegion & region) {
   TString thisbox="";
   
   TCut baseline = "cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && passCleaning==1";
-  TCut baselineSL = "cutPV==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && MT_Wlep>=0 && MT_Wlep<100";
+  TCut baselineSL = "cutPV==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && MT_Wlep>=0 && MT_Wlep<100 && passCleaning==1";
   TCut passOther = "minDeltaPhiN>=4";
   TCut failOther="minDeltaPhiN<4";
 
@@ -3340,7 +3342,7 @@ void AN2011_excess() {
   doOverflowAddition(true);
   drawMCErrors_=true;
   
-
+/*
   btagSFweight_="probge2";
   selection_ =TCut("HT>=600 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=200 &&passCleaning==1 && minDeltaPhiN>=4");
   var="MET"; xtitle="E_{T}^{miss}";
@@ -3366,15 +3368,65 @@ void AN2011_excess() {
   setLogY(true); setPlotMinimum(0.7);
   drawPlots(var,nbins,low,high,xtitle,"Events", "HT_2BT"+modestring,0,"GeV");
   setLogY(false); resetPlotMinimum();
-
+*/
   btagSFweight_="probge3";
   selection_ =TCut("HT>=400 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=250 &&passCleaning==1 && minDeltaPhiN>=4");
+
+/*
   var="HT"; xtitle="H_{T}";
   low=400; high = 1400; nbins=5;
   drawPlots(var,nbins,low,high,xtitle,"Events", "HT_3B"+modestring,0,"GeV");
   setLogY(true); setPlotMinimum(0.7);
   drawPlots(var,nbins,low,high,xtitle,"Events", "HT_3B"+modestring,0,"GeV");
   setLogY(false); resetPlotMinimum();
+*/
+
+  float binsHT[]={400,600,800,1400};
+  float binsMET[]={250,300,350,500};
+  setColorScheme("nostack");
+  draw2d("MET", 5, 250, 500,"HT", 5, 400, 1400, "MET", "HT", "3B_METvHT");
+  draw2d("MET", 3, 250, 500,"HT", 3, 400, 1400, "MET", "HT", "3B_METvHT_varbins",binsMET,binsHT);
+
+  
+  {for (int ibinx=1 ; ibinx<=h2d->GetNbinsX(); ibinx++) {
+    for (int ibiny=1 ; ibiny<=h2d->GetNbinsY(); ibiny++) {
+      cout<<"MET="<<h2d->GetXaxis()->GetBinLowEdge(ibinx)<<"-"<<h2d->GetXaxis()->GetBinLowEdge(ibinx)+h2d->GetXaxis()->GetBinWidth(ibinx)
+	  <<" HT="<<h2d->GetYaxis()->GetBinLowEdge(ibiny)<<"-"<<h2d->GetYaxis()->GetBinLowEdge(ibiny)+h2d->GetYaxis()->GetBinWidth(ibiny)
+	  <<" SM MC="<<h2d->GetBinContent(ibinx,ibiny)<<" +/- "<< h2d->GetBinError(ibinx,ibiny)<<" data="<<hdata2d->GetBinContent(ibinx,ibiny)<<endl;
+    }
+  }  }
+
+  TH2D* h2d_sigma = (TH2D*)h2d->Clone("h2d_sigma");
+  for (int ibinx=1 ; ibinx<=h2d->GetNbinsX(); ibinx++) {
+    for (int ibiny=1 ; ibiny<=h2d->GetNbinsY(); ibiny++) {
+      double nMC = h2d->GetBinContent(ibinx,ibiny);
+      double nData = hdata2d->GetBinContent(ibinx,ibiny);
+      double nMC_err = h2d->GetBinError(ibinx,ibiny);
+      double nData_err = hdata2d->GetBinError(ibinx,ibiny);
+
+      double nsigma = (nData-nMC) / sqrt( nData_err*nData_err + nMC_err*nMC_err);
+      h2d_sigma->SetBinContent(ibinx,ibiny,nsigma);
+    }
+  }
+  renewCanvas();
+  h2d_sigma->Draw("COLZ");
+  h2d_sigma->Draw("text same");
+
+  // Now take a look at the 3B SL sample
+  btagSFweight_="probge3";
+  selection_ =TCut("HT>=400 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0))&& MT_Wlep>=0 && MT_Wlep<100 && MET>=200 &&passCleaning==1 && minDeltaPhiN>=4");
+
+  var="MET"; xtitle="E_{T}^{miss}";
+  low=200; high = 500; nbins=10;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_SL_3B_MET"+modestring,0,"GeV");
+//   setLogY(true); setPlotMinimum(0.7);
+//   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_SL_3B_MET"+modestring,0,"GeV");
+//   setLogY(false); resetPlotMinimum();
+
+  selection_ =TCut("HT>=400 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0))&& MT_Wlep>=0 && MT_Wlep<100 && MET>=250 &&passCleaning==1 && minDeltaPhiN>=4");
+  var="HT"; xtitle="H_{T}";
+  low=400; high = 1400; nbins=5;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "HT_SL_3B"+modestring,0,"GeV");
 
 }
 
@@ -3577,7 +3629,7 @@ void AN2011( TString btagselection="ge1b",const int mode=1, bool logy=false, boo
   drawPlots(var,nbins,low,high,xtitle,"Events", "SIG_HT_1BT_"+btagselection+modestring,0,"GeV");
 
   var="MET+HT"; xtitle="M_{eff} [GeV]";
-  nbins = 10; low=1000; high=2000;
+  nbins = 5; low=1000; high=2000;
   drawPlots(var,nbins,low,high,xtitle,"Events", "SIG_Meff_1BT_"+btagselection+modestring,0,"GeV");
   }
   else if (btagselection=="ge2b") {
@@ -3596,7 +3648,7 @@ void AN2011( TString btagselection="ge1b",const int mode=1, bool logy=false, boo
     drawPlots(var,nbins,low,high,xtitle,"Events", "SIG_HT_2BT_"+btagselection+modestring,0,"GeV");
 
     var="MET+HT"; xtitle="M_{eff} [GeV]";
-    nbins = 11; low=900; high=2000;
+    nbins = 6; low=900; high=2000;
     drawPlots(var,nbins,low,high,xtitle,"Events", "SIG_Meff_2BT_"+btagselection+modestring,0,"GeV");
 
   }
@@ -3609,6 +3661,11 @@ void AN2011( TString btagselection="ge1b",const int mode=1, bool logy=false, boo
     var="MET+HT"; xtitle="M_{eff} [GeV]";
     nbins = 5; low=650; high=1650;
     drawPlots(var,nbins,low,high,xtitle,"Events", "SIG_Meff_3B_"+btagselection+modestring,0,"GeV");
+
+    selection_ =TCut("HT>400 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=350 && minDeltaPhiN >= 4 &&passCleaning==1")&&btagcut;
+    nbins = 5; low=750; high=1750;
+    drawPlots(var,nbins,low,high,xtitle,"Events", "SIG_Meff_3B_TighterMET_"+btagselection+modestring,0,"GeV");
+
   }
   // ===== single lepton selection
   
