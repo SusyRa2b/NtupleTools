@@ -517,6 +517,38 @@ unsigned int EventCalculator::countMu() {
 }
 
 
+bool EventCalculator::isGoodTau(const unsigned int itau, const float pTthreshold, const float etaMax) {
+
+  if( getTauPt(itau) >= pTthreshold
+      && fabs(myTausPF->at(itau).eta) < etaMax
+      && myTausPF->at(itau).tauID_againstElectron > 0
+      && myTausPF->at(itau).tauID_againstMuon > 0
+      && myTausPF->at(itau).tauID_byTaNCfrHalfPercent > 0
+      ){
+    return true;
+  }
+
+  return false;
+}
+
+float EventCalculator::getTauPt( unsigned int itau) {
+
+
+  float pt = myTausPF->at(itau).pt;
+
+  return pt;
+}
+
+unsigned int EventCalculator::countTau() {
+
+  unsigned int ngoodtau=0;
+  for (unsigned int i=0; i <myTausPF->size() ; i++) {
+    if(isGoodTau(i))      ++ngoodtau;
+  }
+  return ngoodtau;
+}
+
+
 bool EventCalculator::passHLT() { 
 
   //RA2b - 2011 Triggers
@@ -2217,6 +2249,19 @@ float EventCalculator::muonPhiOfN(unsigned int n) {
   return 0;
 }
 
+float EventCalculator::tauPtOfN(unsigned int n) {
+
+  unsigned int ngood=0;
+  for (unsigned int i=0; i < myTausPF->size(); i++) {
+    if(isGoodTau(i)){
+      ngood++;
+      if (ngood==n) return getTauPt(i);
+    }
+  }
+  return 0;
+}
+
+
 float  EventCalculator::jetPtOfN(unsigned int n) {
 
   unsigned int ngood=0;
@@ -3890,7 +3935,7 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   UInt_t pass_utilityHLT_HT300_CentralJet30_BTagIP;
   UInt_t prescale_utilityHLT_HT300_CentralJet30_BTagIP;
 
-  int njets, njets30, nbjets, ntruebjets, nElectrons, nMuons;
+  int njets, njets30, nbjets, ntruebjets, nElectrons, nMuons, nTaus;
   int nbjetsSSVM,nbjetsTCHET,nbjetsSSVHPT,nbjetsTCHPT,nbjetsTCHPM,nbjetsCSVM;
 
   float jetpt1,jetphi1, jeteta1, jetenergy1, bjetpt1, bjetphi1, bjeteta1, bjetenergy1;
@@ -3898,6 +3943,7 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   float jetpt3,jetphi3, jeteta3, jetenergy3, bjetpt3, bjetphi3, bjeteta3, bjetenergy3;
   float eleet1;
   float muonpt1;
+  float taupt1;
   float eleRelIso,muonRelIso;
 
   float MT_Wlep;
@@ -4194,6 +4240,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("ntruebjets",&ntruebjets,"ntruebjets/I");
   reducedTree.Branch("nElectrons",&nElectrons,"nElectrons/I");
   reducedTree.Branch("nMuons",&nMuons,"nMuons/I");
+  reducedTree.Branch("nTaus",&nTaus,"nTaus/I");
 
   reducedTree.Branch("nbjetsSSVM",&nbjetsSSVM,"nbjetsSSVM/I");
   reducedTree.Branch("nbjetsSSVHPT",&nbjetsSSVHPT,"nbjetsSSVHPT/I");
@@ -4328,6 +4375,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
 
   reducedTree.Branch("eleet1",&eleet1,"eleet1/F");
   reducedTree.Branch("muonpt1",&muonpt1,"muonpt1/F");
+  reducedTree.Branch("taupt1",&taupt1,"taupt1/F");
 
   reducedTree.Branch("eleRelIso",&eleRelIso,"eleRelIso/F");
   reducedTree.Branch("muonRelIso",&muonRelIso,"muonRelIso/F");
@@ -4660,6 +4708,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
 
       nElectrons = countEle();
       nMuons = countMu();
+      nTaus = countTau();
       MET=getMET();
       METsig = myMETPF->at(0).mEtSig; //FIXME hard coded for PF
       MHT=getMHT();
@@ -4782,6 +4831,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
 
       eleet1 = elePtOfN(1);
       muonpt1 = muonPtOfN(1);     
+      taupt1 = tauPtOfN(1);     
       
       //i'm giving these awkward names on purpose, so that they won't be used without understanding what they do
       eleRelIso = getRelIsoForIsolationStudyEle();

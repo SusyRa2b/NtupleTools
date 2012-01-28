@@ -100,6 +100,10 @@ public:
   bool isCleanMuon(const unsigned int imuon);
   unsigned int countMu();
 
+  bool isGoodTau(const unsigned int itau, const float pTthreshold=20, const float etaMax=2.4);
+  float getTauPt( unsigned int itau );
+  unsigned int countTau();
+
   //  bool passBEFilter(); //TODO migrate this code
   bool passHLT();
   bool passUtilityHLT(int &version, int &prescale);
@@ -216,6 +220,8 @@ public:
 
   float muonPtOfN(unsigned int n);
   float muonPhiOfN(unsigned int n);
+
+  float tauPtOfN(unsigned int n);
 
   float getRelIsoForIsolationStudyEle();
   float getRelIsoForIsolationStudyMuon();
