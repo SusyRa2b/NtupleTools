@@ -2700,6 +2700,7 @@ SUSYProcess EventCalculator::getSUSYProcess() {
   int sbottoms = 0;
   int stops = 0;
 
+  int antisbottoms = 0; //jmt addition
 
   SUSYProcess process = NotFound;
 
@@ -2724,6 +2725,7 @@ SUSYProcess EventCalculator::getSUSYProcess() {
         antisquarks++;
       }
       if ( abs( myid ) == 1000005 || abs( myid ) == 2000005) sbottoms++;
+      if ( myid == -1000005 || myid == -2000005) antisbottoms++; //jmt -- tacked on
       if ( abs( myid ) == 1000006 || abs( myid ) == 2000006) stops++;
 
       //select gluinos
@@ -2740,27 +2742,32 @@ SUSYProcess EventCalculator::getSUSYProcess() {
     }
   }
 
-
   if((neutralinos + charginos) == 1 && gluinos == 1) process = ng;
   if((neutralinos + charginos) == 1 && (squarks + antisquarks) == 1) process = ns;
   if(neutralinos + charginos == 2) process = nn;
   if(sleptons == 2) process = ll;
-  //if(squarks ==1 && antisquarks == 1) process = sb; //jmt this just seems wrong to me
-  if( (squarks+antisquarks) ==1 &&  sbottoms== 1) process = sb; //jmt -- my version
-  if(squarks + antisquarks == 2) process = ss; //jmt -- added antisquarks
-  //  if(stops == 2 ) process = tb; //jmt this also seems wrong
-  if(stops == 1 && sbottoms==1 ) process = tb; //jmt this also seems wrong
+  if(squarks ==1 && antisquarks == 1) process = sb;
+  if(squarks == 2) process = ss;
+  if(stops == 2 ) process = tb;
   if(sbottoms == 2) process = bb;
   if(gluinos == 2) process = gg;
   if(squarks + antisquarks + sbottoms + stops == 1 && gluinos == 1) process = sg;
 
-  //jmt -- i am adding some not-quite-correct clauses to account for cases where we have no cross section calculation
-  if (stops == 2) process = bb; //treat stop as if it was sbottom
-  if ((neutralinos + charginos) == 1 && (squarks + antisquarks + stops +sbottoms) == 1) process = ns; //treat b~,t~ as light flavor
-
   if (process == NotFound) verbose = true;
+  //jmt -- We seem to have no cross section for neutralino+sbottom
+  //also squark + sbotttom
+
+  //adjust sbottom number to just have b~ with no bbar~
+  int   n_sbottoms = sbottoms - antisbottoms;
+  if ( antisbottoms == 1 && squarks == 1) process=sb; //treat this as squark-antisquark
+  if ( n_sbottoms == 1 && squarks == 1) process=ss; //treat this as squark-squark
+  if ( n_sbottoms == 1 && antisquarks == 1) process=sb; //treat this as squark-antisquark
+  if ( sbottoms==1 && (neutralinos + charginos) == 1) process=ns; //treat this as n+LF
+
   if(verbose) cout << "************ Process = "  <<  process << endl;
-  if(verbose == true)cout << " neutralinos " << neutralinos << "\n charginos " << charginos << "\n gluinos " << gluinos << "\n squarks " << squarks << "\n antisquarks " << antisquarks << "\n sleptons " << sleptons << "\n stops " << stops << "\n sbottoms " << sbottoms << endl;
+  if(verbose == true)cout << " neutralinos " << neutralinos << "\n charginos " << charginos << "\n gluinos " << gluinos << "\n squarks " << squarks << "\n antisquarks " << antisquarks << "\n sleptons " << sleptons << "\n stops " << stops << "\n sbottoms " << sbottoms 
+			  <<" = (b~ + bbar~) = "<<n_sbottoms <<" + "<<antisbottoms
+			  << endl;
   return process;
 }
 
@@ -4697,6 +4704,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
 
       SUSY_nb = sampleIsSignal_ ? getSUSYnb() : 0;
       bjetSumSUSY[thispoint] += SUSY_nb;
+      if(SUSY_process==NotFound) cout<<"SUSY_nb = "<<SUSY_nb<<endl;
 
       njets = nGoodJets();
       njets30 = nGoodJets30();
