@@ -111,7 +111,7 @@ namespace pu {
   //(Can be used for Spring11 and Summer11 if you don't worry about small shifts in the mean) 
   //SHOULD be used for 3-D Reweighting, as this is the "true" input for all Summer11 samples.
 
-  Double_t probdistFlat10_f[25] = {
+  Double_t probdistFlat10_f[35] = {
     0.0698146584,
     0.0698146584,
     0.0698146584,
@@ -136,7 +136,17 @@ namespace pu {
     0.0004595759,
     0.0002229748,
     0.0001028162,
-    4.58337152809607E-05
+    4.58337152809607E-05,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
   };
 
 
