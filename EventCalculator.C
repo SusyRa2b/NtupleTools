@@ -407,6 +407,26 @@ float EventCalculator::getPUWeight(Lumi3DReWeighting lumiWeights) {
   //  weight = weight * PShift.ShiftWeight( npv );
   //}
 
+  //if this is ttbar Fall11 MC 
+  if (sampleName_.Contains("TTJets_TuneZ2_7TeV-madgraph-tauola_Fall11_v2") ) {
+    int nPV =  countGoodPV();
+    //From Kristen
+    //double pvweights[25]={0 , 0.549398 , 0.854301 , 1.0274 , 1.19307 ,
+    //                          1.29101 , 1.33746 , 1.25162 , 1.16767 , 1.12114 ,
+    //                          0.954877 , 0.771361 , 0.583225 , 0.46853 , 0.343897 ,
+    //                          0.238567 , 0.160576 , 0.11326 , 0.0544237 , 0.0236446 ,
+    //                  0 , 0.0850062 , 0 , 0 , 0};
+    //From looking at data vs fall ttbar MC after HT>400 cut only
+    double pvweights[25]={0,0.851901,1.27335,1.5957,1.45827,1.36811,1.38217,1.10248,
+			  0.903996,0.786264,0.614646,0.501687,0.379393,0.307361,
+			  0.217792,0.171912,0.198068,0.0912894,0.145531,0.0546068,
+			  0.110518,0.0685031,0.0155274,0,0};
+    
+    if(nPV > 24) weight =0;
+    //else weight = pvweights[nPV]*0.975;
+    else weight = pvweights[nPV];
+  }
+
   return weight;
 
 }
@@ -414,14 +434,14 @@ float EventCalculator::getPUWeight(Lumi3DReWeighting lumiWeights) {
 bool EventCalculator::isGoodMuon(const unsigned int imuon, const bool disableRelIso) {
 
   if (myMuonsPF->at(imuon).pt >= 10
-     && fabs(myMuonsPF->at(imuon).eta)<2.4
-     && myMuonsPF->at(imuon).GlobalMuonPromptTight == 1
-     && myMuonsPF->at(imuon).isTrackerMuon == 1 
-     && myMuonsPF->at(imuon).innerTrack_numberOfValidHits >=11
-     && myMuonsPF->at(imuon).track_hitPattern_numberOfValidPixelHits >= 1
-     //&& fabs(myMuonsPF->at(imuon).dB) < 0.02
-     && fabs(myMuonsPFhelper->at(imuon).dxywrtBeamSpot) < 0.02
-     && fabs(myMuonsPF->at(imuon).vz - myVertex->at(0).z ) <1
+      && fabs(myMuonsPF->at(imuon).eta)<2.4
+      && myMuonsPF->at(imuon).GlobalMuonPromptTight == 1
+      && myMuonsPF->at(imuon).isTrackerMuon == 1 
+      && myMuonsPF->at(imuon).innerTrack_numberOfValidHits >=11
+      && myMuonsPF->at(imuon).track_hitPattern_numberOfValidPixelHits >= 1
+      //&& fabs(myMuonsPF->at(imuon).dB) < 0.02
+      && fabs(myMuonsPFhelper->at(imuon).dxywrtBeamSpot) < 0.02
+      && fabs(myMuonsPF->at(imuon).vz - myVertex->at(0).z ) <1
       && ((myMuonsPF->at(imuon).chargedHadronIso 
 	   + myMuonsPF->at(imuon).photonIso 
 	   + myMuonsPF->at(imuon).neutralHadronIso)/myMuonsPF->at(imuon).pt <0.2 ||disableRelIso)
@@ -435,13 +455,13 @@ bool EventCalculator::isGoodMuon(const unsigned int imuon, const bool disableRel
 bool EventCalculator::isGoodRecoMuon(const unsigned int imuon, const bool disableRelIso) {
 
   if (myMuonsRECO->at(imuon).pt >= 10
-     && fabs(myMuonsRECO->at(imuon).eta)<2.4
-     && myMuonsRECO->at(imuon).GlobalMuonPromptTight == 1
-     && myMuonsRECO->at(imuon).isTrackerMuon == 1 
-     && myMuonsRECO->at(imuon).innerTrack_numberOfValidHits >=11
-     && myMuonsRECO->at(imuon).track_hitPattern_numberOfValidPixelHits >= 1
-     && fabs(myMuonsRECOhelper->at(imuon).dxywrtBeamSpot) < 0.02
-     && fabs(myMuonsRECO->at(imuon).vz - myVertex->at(0).z ) <1
+      && fabs(myMuonsRECO->at(imuon).eta)<2.4
+      && myMuonsRECO->at(imuon).GlobalMuonPromptTight == 1
+      && myMuonsRECO->at(imuon).isTrackerMuon == 1 
+      && myMuonsRECO->at(imuon).innerTrack_numberOfValidHits >=11
+      && myMuonsRECO->at(imuon).track_hitPattern_numberOfValidPixelHits >= 1
+      && fabs(myMuonsRECOhelper->at(imuon).dxywrtBeamSpot) < 0.02
+      && fabs(myMuonsRECO->at(imuon).vz - myVertex->at(0).z ) <1
       && ((myMuonsRECO->at(imuon).chargedHadronIso 
 	   + myMuonsRECO->at(imuon).photonIso 
 	   + myMuonsRECO->at(imuon).neutralHadronIso)/myMuonsRECO->at(imuon).pt <0.2 ||disableRelIso)
@@ -3354,7 +3374,9 @@ double EventCalculator::getCrossSection(){
   if (sampleName_.Contains("DYJetsToLL_TuneZ2_M-50_7TeV-madgraph-tauola") )          return 3048;
   
   if (sampleName_.Contains("LM9_SUSY_sftsht_7TeV-pythia6_v2") )                         return 7.134 * 1.48; //from ProductionSpring2011 twiki
-
+  
+  if (sampleName_.Contains("TTJets_TuneZ2_7TeV-madgraph-tauola_Fall11_v2") )         return 158; 
+  
   /*
   if (sampleName_.Contains("DYJetsToLL_TuneD6T_M-10To50_7TeV-madgraph-tauola") )     return 310;
   if (sampleName_.Contains("DYJetsToLL_TuneD6T_M-50_7TeV-madgraph-tauola") )         return 3048;
@@ -3430,6 +3452,7 @@ TString EventCalculator::getSampleNameOutputString(){
 
   //V00-02-35 (don't do: QCD, )
   if (sampleName_.Contains("ttjets_madgraph") )                                      return "TTbarJets";
+  if (sampleName_.Contains("TTJets_TuneZ2_7TeV-madgraph-tauola_Fall11_v2") )         return "TTbarJets";
   if (sampleName_.Contains("zjets") )                                                return "Zinvisible";
   //if (sampleName_.Contains("wjets") )                                                return "WJets";
   if (sampleName_.Contains("WJetsToLNu_TuneZ2_7TeV-madgraph-tauola") )               return "WJets";
@@ -3901,6 +3924,7 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   int m0,m12;
 
   int W1decayType = -1, W2decayType = -1;
+  int decayType = -1;;
 
   ULong64_t lumiSection, eventNumber, runNumber;
   float METsig;
@@ -4123,7 +4147,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
     //MCDist2011.push_back(pu::PoissonOneXDist_f[i]);
     //for 3dPU reweighting 
     DataDist2011.push_back(pu::TrueDist2011_f[i]);
-    if(i<25)
+    //if(i<25)
       MCDist2011.push_back(pu::probdistFlat10_f[i]);
   }  
   //reweight::LumiReWeighting LumiWeights = reweight::LumiReWeighting( MCDist2011, DataDist2011 );
@@ -4157,6 +4181,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
 
   reducedTree.Branch("W1decayType",&W1decayType,"W1decayType/I");
   reducedTree.Branch("W2decayType",&W2decayType,"W2decayType/I");
+  reducedTree.Branch("decayType",&decayType,"decayType/I");
 
   reducedTree.Branch("btagIPweight",&btagIPweight,"btagIPweight/F");
   //  reducedTree.Branch("pfmhtweight",&pfmhtweight,"pfmhtweight/F");
@@ -4658,8 +4683,8 @@ Also the pdfWeightSum* histograms that are used for LM9.
       eventNumber = getEventNumber();
 
       //if we are running over ttbar, fill info on decay mode
-      if (sampleName_.Contains("ttjets_madgraph") ){
-	getTTbarDecayType(W1decayType, W2decayType);
+      if (sampleName_.Contains("ttjets_madgraph") || sampleName_.Contains("TTJets_TuneZ2_7TeV-madgraph-tauola_Fall11_v2")){
+	decayType = getTTbarDecayType(W1decayType, W2decayType);
       }
 
       HT=getHT();
@@ -4954,9 +4979,10 @@ unsigned int EventCalculator::getSeed(){
   //V00-02-35
 
   if (sampleName_.Contains("ttjets_madgraph") )                                      return 4381;
+  if (sampleName_.Contains("TTJets_TuneZ2_7TeV-madgraph-tauola_Fall11_v2") )         return 4381;
   if (sampleName_.Contains("zjets") )                                                return 4382;
-  if (sampleName_.Contains("ww") )                                                   return 4383;                                                
-  if (sampleName_.Contains("wz") )                                                   return 4384;                                                
+  if (sampleName_.Contains("ww") )                                                   return 4383;
+  if (sampleName_.Contains("wz") )                                                   return 4384;
   if (sampleName_.Contains("zz") )                                                   return 4385;
   if (sampleName_.Contains("t_s-channel") )                                          return 4386;
   if (sampleName_.Contains("tbar_s-channel") )                                       return 4387;
@@ -5712,7 +5738,7 @@ int EventCalculator::tauMatch(const int trueTau)
   return -1;
 }
 
-
+//return the index of the reco object that the W daughter is matched to
 int EventCalculator::daughterMatch(const int Wdaughter, const int WdecayType)
 {
   if(WdecayType == 11 || WdecayType == 1511)
@@ -5754,7 +5780,7 @@ int EventCalculator::getTTbarDecayType(int& W1decayType, int& W2decayType)
 
   //std::cout << "W1decayType = " << W1decayType << ", W2decayType = " << W2decayType << std::endl;
   //std::cout << "W1daughter = " << W1daughter << ", W2daughter = " << W2daughter << std::endl;
-  /*
+  
   int W1daughterMatch = -1;
   int W2daughterMatch = -1;
   if( W1decayType > 0 ) W1daughterMatch = daughterMatch(W1daughter,W1decayType);
@@ -5762,46 +5788,64 @@ int EventCalculator::getTTbarDecayType(int& W1decayType, int& W2decayType)
 
   //cout << "done with matching" << endl;
 
+  //considering only (W->had,W->e/mu), (W->tau->had,W->e/mu), (W->had,W->had), (W->had,W->tau->had) 
   if((W1decayType == 1 || W2decayType == 1 || W1decayType == 15 || W2decayType == 15) && !(W1decayType == 15 && W2decayType == 15)) //hadronic decay
+  //considering only semileptonic decay: (W->had,W->e/mu)
+  //if( ((W1decayType==13 && W2decayType==1) || (W1decayType==1 && W2decayType==13) || (W1decayType==1513 && W2decayType==1) || (W1decayType==1 && W2decayType==1513))
+  //    || ((W1decayType==11 && W2decayType==1) || (W1decayType==1 && W2decayType==11) || (W1decayType==1511 && W2decayType==1) || (W1decayType==1 && W2decayType==1511)))
     {
+      //find the e/mu decay one
       int WdecayType, Wdaughter,WdaughterMatch;
-	  if(W1decayType!=1) 
-	    {
-	      WdecayType =  W1decayType;
-	      Wdaughter = W1daughter;
-	      WdaughterMatch = W1daughterMatch;
-	    }
-	  else if(W2decayType!=1)
-	    {
-	      WdecayType =  W2decayType;
-	      Wdaughter = W2daughter;
-	      WdaughterMatch = W2daughterMatch;
-	    }
-	  else if(W1decayType!=15)
-	    {
-	      WdecayType =  W1decayType;
-	      Wdaughter = W1daughter;
-	      WdaughterMatch = W1daughterMatch;
-	    }
-	  else
-	    {
-	      WdecayType =  W2decayType;
-	      Wdaughter = W2daughter;
-	      WdaughterMatch = W2daughterMatch;
-	    }
+      if(W1decayType!=1) //if W1 is the non-hadronic one
+	{
+	  WdecayType =  W1decayType;
+	  Wdaughter = W1daughter;
+	  WdaughterMatch = W1daughterMatch;
+	}
+      else if(W2decayType!=1)
+	{
+	  WdecayType =  W2decayType;
+	  Wdaughter = W2daughter;
+	  WdaughterMatch = W2daughterMatch;
+	}
+      else if(W1decayType!=15)//otherwise, it's a (W->tau->had,W->e/mu) one
+	{
+	  WdecayType =  W1decayType;
+	  Wdaughter = W1daughter;
+	  WdaughterMatch = W1daughterMatch;
+	}
+      else
+	{
+	  WdecayType =  W2decayType;
+	  Wdaughter = W2daughter;
+	  WdaughterMatch = W2daughterMatch;
+	}
       if(WdecayType == 11 || WdecayType == 1511) //electron
 	{
 	  //cout << "electron match" << endl;
 	  if( WdaughterMatch > -1 ) // electron on electron list
 	    {
-	      if( isGoodElectron(WdaughterMatch) ) return 101100;
-	      else if( myElectronsPF->at(WdaughterMatch).eta > 2.4 || myGenParticles->at(Wdaughter).eta > 2.4 ) return 101101;
-	      else if( myElectronsPF->at(WdaughterMatch).pt < 10 || myGenParticles->at(Wdaughter).pt < 10 ) return 101102;
-	      else return 101103;
+	      if( isGoodElectron(WdaughterMatch) ) 
+		return 101100;//there is match, and it passes all cuts
+	      else if( 
+		      fabs(myElectronsPF->at(WdaughterMatch).superCluster_eta) > 2.5
+		      || fabs(myGenParticles->at(Wdaughter).eta) > 2.5 ) 
+		//there is a match, but it is out of eta range
+		return 101101;
+	      else if( myElectronsPF->at(WdaughterMatch).pt < 10 
+		       || myGenParticles->at(Wdaughter).pt < 10 ) 
+		//there is a match, it is in eta range, but it is out of pt range
+		return 101102;
+	      else if ((myElectronsPF->at(WdaughterMatch).chargedHadronIso
+			+ myElectronsPF->at(WdaughterMatch).photonIso
+			+ myElectronsPF->at(WdaughterMatch).neutralHadronIso)/myElectronsPF->at(WdaughterMatch).pt >=0.2 )
+		//there is a match, it is in eta and pt range, but it fails isolation cut
+		return 101103;
+	      else return 101104;//it fails some other quality cut
 	    }
 	  else
 	    {
-	      if(myGenParticles->at(Wdaughter).eta > 2.4) return 201101;//
+	      if(fabs(myGenParticles->at(Wdaughter).eta) > 2.5) return 201101;//
 	      else if(myGenParticles->at(Wdaughter).pt < 10) return 201102;//
 	      else return 201103;
 	    }
@@ -5815,15 +5859,23 @@ int EventCalculator::getTTbarDecayType(int& W1decayType, int& W2decayType)
 	      //cout << "true index " << Wdaughter << endl;
 	      //cout << "match index " << WdaughterMatch << endl;
 	      if( isGoodMuon(WdaughterMatch) ) return 101300;
-	      else if( myMuonsPF->at(WdaughterMatch).eta > 2.4 || myGenParticles->at(Wdaughter).eta > 2.4 ) return 101301;
-	      else if( myMuonsPF->at(WdaughterMatch).pt < 10 || myGenParticles->at(Wdaughter).pt < 10 ) return 101302;
-	      else return 101303;
+	      else if( fabs(myMuonsPF->at(WdaughterMatch).eta) > 2.4 
+		       || fabs(myGenParticles->at(Wdaughter).eta) > 2.4 ) 
+		return 101301;
+	      else if( myMuonsPF->at(WdaughterMatch).pt < 10 
+		       || myGenParticles->at(Wdaughter).pt < 10 ) 
+		return 101302;
+	      else if ( (myMuonsPF->at(WdaughterMatch).chargedHadronIso
+			 + myMuonsPF->at(WdaughterMatch).photonIso
+			 + myMuonsPF->at(WdaughterMatch).neutralHadronIso)/myMuonsPF->at(WdaughterMatch).pt >=0.2 )
+		return 101303;
+	      else return 101304;
 	    }
 	  else
 	    {
 	      //cout << "unmatched daughter" << endl;
 	      //cout << "true index " << Wdaughter << endl;
-	      if(myGenParticles->at(Wdaughter).eta > 2.4) return 201301;//
+	      if(fabs(myGenParticles->at(Wdaughter).eta) > 2.4) return 201301;//
 	      else if(myGenParticles->at(Wdaughter).pt < 10) return 201302;//
 	      else return 201303;
 	    }
@@ -5842,7 +5894,7 @@ int EventCalculator::getTTbarDecayType(int& W1decayType, int& W2decayType)
 	    }
 	}
     }
-  */
+  
   return 0;
 }
 
@@ -5980,8 +6032,8 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
   //int ntaggedjets_c = 0;
   //int ntaggedjets_l = 0;
 
-  //int decayType;
-  //int W1decayType, W2decayType;
+  int decayType;
+  int W1decayType, W2decayType;
   //int nSemiMu=0,nSemiEle=0,nSemiTauHad=0,nDilep=0,nHad=0,nOther=0;
 
   startTimer();
@@ -6025,8 +6077,8 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
     //		<< std::endl;
     //  }
     //}
-    //decayType = getTTbarDecayType(W1decayType, W2decayType);
-    //std::cout << "decaytype = " << decayType << ", W1decayType = " << W1decayType << ", W2decayType = " << W2decayType << std::endl;
+    decayType = getTTbarDecayType(W1decayType, W2decayType);
+    std::cout << "decaytype = " << decayType << ", W1decayType = " << W1decayType << ", W2decayType = " << W2decayType << std::endl;
 
     //if((W1decayType==13 && W2decayType==1) || (W1decayType==1 && W2decayType==13) || (W1decayType==1513 && W2decayType==1) || (W1decayType==1 && W2decayType==1513)){
     //  nSemiMu++;
@@ -6078,10 +6130,10 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
 
       npass++;
 
-      double effUp,effDown;     
-      std::cout << "HT = " << getHT() << ",MET = " << getMET() << ", eff = "
-		<< getHLTMHTeffBNN(getMET(),getHT(),countEle(),countMu(),getMinDeltaPhiMETN(3),effUp,effDown) << std::endl;
-      std::cout << ", effUp = " << effUp << ", effDown = " << effDown << std::endl;
+      //double effUp,effDown;     
+      //std::cout << "HT = " << getHT() << ",MET = " << getMET() << ", eff = "
+      //		<< getHLTMHTeffBNN(getMET(),getHT(),countEle(),countMu(),getMinDeltaPhiMETN(3),effUp,effDown) << std::endl;
+      //std::cout << ", effUp = " << effUp << ", effDown = " << effDown << std::endl;
       
       //std::cout << "MET = " << getMET() << ", eff = " << getHLTMHTeff(getMET()) << std::endl;
       //std::cout << "HT = " << getHT() << ", eff = " << getHLTHTeff(getHT()) << std::endl;
