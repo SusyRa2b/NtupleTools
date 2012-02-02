@@ -2645,8 +2645,9 @@ unsigned int EventCalculator::findSUSYMaternity( unsigned int k ) {
   if (TMath::Nint(myGenParticles->at(k).firstMother) <0) {/*cout<<"got no mother!"<<endl;*/ return numSUSY;}
 
   int motherId = abs(TMath::Nint( myGenParticles->at(  TMath::Nint(myGenParticles->at(k).firstMother)).pdgId )); //get rid of minus signs!
-  if ( (motherId>= 1000001 && motherId <=1000037) || (motherId>= 2000001 && motherId <=2000015)) {numSUSY++;}
+  if ( (motherId>= 1000001 && motherId <=1000039) || (motherId>= 2000001 && motherId <=2000015)) {numSUSY++;}
   else if (motherId == 21) {/*cout<<"Found gluon splitting!"<<endl;*/}
+  else if ( int(k) == TMath::Nint(myGenParticles->at(k).firstMother)) {} //particle is its own mother. do nothing. (avoids infinite loop)
   else { numSUSY+= findSUSYMaternity(TMath::Nint(myGenParticles->at(k).firstMother)  ); }
 
   return numSUSY;
@@ -2655,16 +2656,20 @@ unsigned int EventCalculator::findSUSYMaternity( unsigned int k ) {
 
 unsigned int EventCalculator::getSUSYnb(std::vector<unsigned int> &susyb_index) {
 
+  //  for (unsigned int k = 0; k<myGenParticles->size(); k++) {
+    //for debugging
+  //  cout<<k<<"\t"<<TMath::Nint(myGenParticles->at(k).pdgId )<<"\t"<< TMath::Nint(myGenParticles->at(k).firstMother)<<"\t"<<TMath::Nint(myGenParticles->at(k).lastMother)<<"\t"<<TMath::Nint(myGenParticles->at(k).status ) <<endl;
+  //  }
+  
   unsigned int SUSY_nb=0;
   for (unsigned int k = 0; k<myGenParticles->size(); k++) {
-    //         cout<<k<<"\t"<<TMath::Nint(myGenParticles->at(k).pdgId )<<"\t"<< TMath::Nint(myGenParticles->at(k).firstMother)<<"\t"<<TMath::Nint(myGenParticles->at(k).lastMother)<<"\t"<<TMath::Nint(myGenParticles->at(k).status ) <<endl;
-
-    if ( abs(TMath::Nint(myGenParticles->at(k).pdgId )) == 5 ) { //find b quark
+    //important to require status 3!
+    if ( abs(TMath::Nint(myGenParticles->at(k).pdgId )) == 5 && TMath::Nint(myGenParticles->at(k).status)==3 ) { //find b quark
       unsigned int nSUSY = findSUSYMaternity( k );      
       if (nSUSY>0) {SUSY_nb++; susyb_index.push_back(k);}
     }
   }
-  
+  //cout<<"SUSY_nb = "<<SUSY_nb<<endl;
   return SUSY_nb;
 
 }
@@ -2740,12 +2745,19 @@ SUSYProcess EventCalculator::getSUSYProcess() {
   if((neutralinos + charginos) == 1 && (squarks + antisquarks) == 1) process = ns;
   if(neutralinos + charginos == 2) process = nn;
   if(sleptons == 2) process = ll;
-  if(squarks ==1 && antisquarks == 1) process = sb;
-  if(squarks == 2) process = ss;
-  if(stops == 2 ) process = tb;
+  //if(squarks ==1 && antisquarks == 1) process = sb; //jmt this just seems wrong to me
+  if( (squarks+antisquarks) ==1 &&  sbottoms== 1) process = sb; //jmt -- my version
+  if(squarks + antisquarks == 2) process = ss; //jmt -- added antisquarks
+  //  if(stops == 2 ) process = tb; //jmt this also seems wrong
+  if(stops == 1 && sbottoms==1 ) process = tb; //jmt this also seems wrong
   if(sbottoms == 2) process = bb;
   if(gluinos == 2) process = gg;
   if(squarks + antisquarks + sbottoms + stops == 1 && gluinos == 1) process = sg;
+
+  //jmt -- i am adding some not-quite-correct clauses to account for cases where we have no cross section calculation
+  if (stops == 2) process = bb; //treat stop as if it was sbottom
+  if ((neutralinos + charginos) == 1 && (squarks + antisquarks + stops +sbottoms) == 1) process = ns; //treat b~,t~ as light flavor
+
   if (process == NotFound) verbose = true;
   if(verbose) cout << "************ Process = "  <<  process << endl;
   if(verbose == true)cout << " neutralinos " << neutralinos << "\n charginos " << charginos << "\n gluinos " << gluinos << "\n squarks " << squarks << "\n antisquarks " << antisquarks << "\n sleptons " << sleptons << "\n stops " << stops << "\n sbottoms " << sbottoms << endl;
@@ -4486,7 +4498,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
       }
       cout << "weight: "<< getWeight(nevents) << endl;
     }
-    if (entry%100000==0) cout << "  entry: " << entry << ", percent done=" << (int)(entry/(double)nevents*100.)<<  endl;
+    if (entry%100000==0 ) cout << "  entry: " << entry << ", percent done=" << (int)(entry/(double)nevents*100.)<<  endl;
 
 
     pair<int,int> thispoint;
