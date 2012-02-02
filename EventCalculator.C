@@ -431,9 +431,9 @@ float EventCalculator::getPUWeight(Lumi3DReWeighting lumiWeights) {
 
 }
 
-bool EventCalculator::isGoodMuon(const unsigned int imuon, const bool disableRelIso) {
+bool EventCalculator::isGoodMuon(const unsigned int imuon, const bool disableRelIso, const float ptthreshold) {
 
-  if (myMuonsPF->at(imuon).pt >= 10
+  if (myMuonsPF->at(imuon).pt >= ptthreshold
       && fabs(myMuonsPF->at(imuon).eta)<2.4
       && myMuonsPF->at(imuon).GlobalMuonPromptTight == 1
       && myMuonsPF->at(imuon).isTrackerMuon == 1 
@@ -472,9 +472,9 @@ bool EventCalculator::isGoodRecoMuon(const unsigned int imuon, const bool disabl
   return false;
 }
 
-bool EventCalculator::isCleanMuon(const unsigned int imuon) {
+bool EventCalculator::isCleanMuon(const unsigned int imuon, const float ptthreshold) {
 
-  if (!isGoodMuon(imuon)) return false;
+  if (!isGoodMuon(imuon,false,ptthreshold)) return false;
 
   //clean muons if using reco-pfjets
   if(theJetType_ == kRECOPF) {    
@@ -492,9 +492,9 @@ bool EventCalculator::isCleanMuon(const unsigned int imuon) {
 }
 
 //this bool could be turned into a more powerful selector for N-1 studies. keep it simple for now
-bool EventCalculator::isGoodElectron(const unsigned int iele, const bool disableRelIso) {
+bool EventCalculator::isGoodElectron(const unsigned int iele, const bool disableRelIso, const float ptthreshold) {
   
-  if (myElectronsPF->at(iele).pt >= 10
+  if (myElectronsPF->at(iele).pt >= ptthreshold
      && fabs(myElectronsPF->at(iele).superCluster_eta) < 2.5 
      && !(fabs(myElectronsPF->at(iele).superCluster_eta) > 1.4442 
 	  && fabs(myElectronsPF->at(iele).superCluster_eta) < 1.566)
@@ -513,21 +513,21 @@ bool EventCalculator::isGoodElectron(const unsigned int iele, const bool disable
 }
 
 
-unsigned int EventCalculator::countEle() {
+unsigned int EventCalculator::countEle(const float ptthreshold) {
 
   unsigned int ngoodele=0;
   for (unsigned int i=0; i <myElectronsPF->size() ; i++) {
-    if(isGoodElectron(i))      ++ngoodele;
+    if(isGoodElectron(i,false,ptthreshold))      ++ngoodele;
   }
   return ngoodele;
 }
 
-unsigned int EventCalculator::countMu() {
+unsigned int EventCalculator::countMu(const float ptthreshold) {
 
   unsigned int ngoodmu=0;
   unsigned int nmu = myMuonsPF->size();
   for ( unsigned int i = 0; i< nmu; i++) {
-    if (isCleanMuon(i)){
+    if (isCleanMuon(i,ptthreshold)) {
       //once we reach here we've got a good muon in hand
       ++ngoodmu;   
     }
@@ -3981,6 +3981,8 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
 
   int njets, njets30, nbjets, ntruebjets, nElectrons, nMuons, nTaus;
   int nbjetsSSVM,nbjetsTCHET,nbjetsSSVHPT,nbjetsTCHPT,nbjetsTCHPM,nbjetsCSVM;
+  int nElectrons5, nElectrons15;
+  int nMuons5, nMuons15;
 
   float jetpt1,jetphi1, jeteta1, jetenergy1, bjetpt1, bjetphi1, bjeteta1, bjetenergy1;
   float jetpt2,jetphi2, jeteta2, jetenergy2, bjetpt2, bjetphi2, bjeteta2, bjetenergy2;
@@ -4286,6 +4288,11 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("nElectrons",&nElectrons,"nElectrons/I");
   reducedTree.Branch("nMuons",&nMuons,"nMuons/I");
   reducedTree.Branch("nTaus",&nTaus,"nTaus/I");
+  reducedTree.Branch("nElectrons5",&nElectrons5,"nElectrons5/I");
+  reducedTree.Branch("nMuons5",&nMuons5,"nMuons5/I");
+  reducedTree.Branch("nElectrons15",&nElectrons15,"nElectrons15/I");
+  reducedTree.Branch("nMuons15",&nMuons15,"nMuons15/I");
+
 
   reducedTree.Branch("nbjetsSSVM",&nbjetsSSVM,"nbjetsSSVM/I");
   reducedTree.Branch("nbjetsSSVHPT",&nbjetsSSVHPT,"nbjetsSSVHPT/I");
@@ -4754,6 +4761,10 @@ Also the pdfWeightSum* histograms that are used for LM9.
 
       nElectrons = countEle();
       nMuons = countMu();
+      nElectrons5 = countEle(5);
+      nMuons5 = countMu(5);
+      nElectrons15 = countEle(15);
+      nMuons15 = countMu(15);
       nTaus = countTau();
       MET=getMET();
       METsig = myMETPF->at(0).mEtSig; //FIXME hard coded for PF

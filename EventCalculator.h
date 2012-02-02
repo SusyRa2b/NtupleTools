@@ -93,12 +93,12 @@ public:
   //float getPUWeight(reweight::LumiReWeighting lumiWeights);
   float getPUWeight(Lumi3DReWeighting lumiWeights);
 
-  bool isGoodMuon(const unsigned int imuon, const bool disableRelIso=false);
+  bool isGoodMuon(const unsigned int imuon, const bool disableRelIso=false, const float ptthreshold=10);
   bool isGoodRecoMuon(const unsigned int imuon, const bool disableRelIso=false);
-  bool isGoodElectron(const unsigned int iele, const bool disableRelIso=false);
-  unsigned int countEle() ;
-  bool isCleanMuon(const unsigned int imuon);
-  unsigned int countMu();
+  bool isGoodElectron(const unsigned int iele, const bool disableRelIso=false, const float ptthreshold=10);
+  unsigned int countEle(const float ptthreshold=10) ;
+  bool isCleanMuon(const unsigned int imuon, const float ptthreshold=10);
+  unsigned int countMu(const float ptthreshold=10);
 
   bool isGoodTau(const unsigned int itau, const float pTthreshold=20, const float etaMax=2.4);
   float getTauPt( unsigned int itau );
