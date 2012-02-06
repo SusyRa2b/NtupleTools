@@ -42,10 +42,23 @@ gSystem->Load("CrossSectionTable_cxx.so");
 #include <map>
 #include <set>
 
+float eff_SB_MHT_             = 0.841;   
+float eff_SB_MHT_err_[2]      = {0.059, 0.090};
+float eff_SB_ldp_MHT_         = 0.936;   
+float eff_SB_ldp_MHT_err_[2]  = {0.034, 0.118};
+float eff_SIG_MHT_            = 0.982; 
+float eff_SIG_MHT_err_[2]     = {0.012, 0.036};
+float eff_SIG_ldp_MHT_        = eff_SIG_MHT_; 
+float eff_SIG_ldp_MHT_err_[2] = {eff_SIG_MHT_err_[0], eff_SIG_MHT_err_[1]}; //due to low stas in SIG-LDP, use the SIG numbers for now.
+float eff_SIG_SL_MHT_         = 0.999; 
+float eff_SIG_SL_MHT_err_[2]  = {0.001, 0.001};
+float eff_SB_SL_MHT_          = 0.996; 
+float eff_SB_SL_MHT_err_[2]   = {0.002, 0.003};
+
 
 //*** AFTER SUMMER
 //***************************
-TString inputPath = "/cu1/joshmt/reducedTrees/V00-02-35g/"; 
+TString inputPath = "/cu3/joshmt/reducedTrees/V00-02-35g/"; 
 TString dataInputPath =  "dummy"; //no data needed!
 TString inputPathTTbar = "dummy";
 
@@ -232,13 +245,11 @@ each of the systematics variations was done with JERbias turned on.
   //reset the sf weight string
   btagSFweight_ = bweightstring;
 
-/*
   //for LM9 the histogram should have exactly 1 bin
   TH1D* btageff_avg_nominal = (TH1D*) files_[currentConfig_][sampleOfInterest]->Get("btageff_avg");
   double av_btageff_nominal = btageff_avg_nominal->GetBinContent(1);
   double av_btageff_var1=0;
   double av_btageff_var2=0;
-*/
 
   // NLO k factor uncertainty
   susyCrossSectionVariation_="Plus";
@@ -266,15 +277,34 @@ each of the systematics variations was done with JERbias turned on.
     double thisn=getIntegral(sampleOfInterest);
     if (j%2==0) { //this one runs first; by convention this one should be "down"
       var2=(thisn-nominal)/nominal;
+      if (configDescriptions_.getVariedSubstring(currentConfig_).Contains("BTag")) {
+	TH1D* btageff_avg_2 = (TH1D*) files_[currentConfig_][sampleOfInterest]->Get("btageff_avg");
+	av_btageff_var2=btageff_avg_2->GetBinContent(1);
+	bminus=thisn;
+      }
     }
     else { //this one runs second; by convention this one should be "up"
       var1=(thisn-nominal)/nominal;
       results.set(configDescriptions_.getVariedSubstring(currentConfig_), var2,var1);
+      if (configDescriptions_.getVariedSubstring(currentConfig_).Contains("BTag")) { //capitalization ok?
+	TH1D* btageff_avg_1 = (TH1D*) files_[currentConfig_][sampleOfInterest]->Get("btageff_avg");
+	av_btageff_var1=btageff_avg_1->GetBinContent(1);
+	bplus=thisn;
+      }
     }
   }
-
+  
   //reset to the nominal with JER bias
   currentConfig_=configDescriptions_.getCorrected();
+
+  //var2 is down, var1 is up
+  double delta_btageff_plus =  (av_btageff_var1 - av_btageff_nominal) / av_btageff_nominal;
+  double delta_btageff_minus = (av_btageff_var2 - av_btageff_nominal) / av_btageff_nominal;
+  //this is the error on the <btageff> for +/- 1 sigma variations on the SF
+  results.sigma_btageff = 0.5*(fabs(delta_btageff_plus) + fabs(delta_btageff_minus));
+  results.eff_derivative_b_1s =  0.5* ( (((bplus - nominal) / nominal)/delta_btageff_plus ) 
+					+ (((bminus - nominal) / nominal)/delta_btageff_minus)
+					);
 
   double largest=0;
   double smallest=1e9;
@@ -299,7 +329,7 @@ each of the systematics variations was done with JERbias turned on.
     //then get the yield after cuts with extra weight pdfWeights[i]/sum
     TH1D pdfEventCounter("pdfEventCounter","pdfEventCounter",1,0,1e9);
     pdfEventCounter.Sumw2();
-    if (sampleOfInterest!="T1bbbb"&&sampleOfInterest!="T2bb"&&sampleOfInterest!="T2tt")    thetree->Project("pdfEventCounter","HT",getCutString(false, "",extraWeight,i,"CTEQ").Data());
+    if (sampleOfInterest!="T1bbbb"&&sampleOfInterest!="T2bb"&&sampleOfInterest!="T2tt"&&sampleOfInterest!="T1tttt")    thetree->Project("pdfEventCounter","HT",getCutString(false, "",extraWeight,i,"CTEQ").Data());
     else      thetree->Project("pdfEventCounter","HT",getCutString(kSMSPoint,"",selection_,"",i,"CTEQ").Data());
     if (i%2==0) {
       Xminus[(i-2)/2] = pdfEventCounter.Integral();
@@ -354,7 +384,7 @@ each of the systematics variations was done with JERbias turned on.
     //then get the yield after cuts with extra weight pdfWeights[i]/sum
     TH1D pdfEventCounter("pdfEventCounter","pdfEventCounter",1,0,1e9);
     pdfEventCounter.Sumw2();
-    if (sampleOfInterest!="T1bbbb"&&sampleOfInterest!="T2bb"&&sampleOfInterest!="T2tt")    thetree->Project("pdfEventCounter","HT",getCutString(false, "",extraWeight,i,"MSTW").Data());
+    if (sampleOfInterest!="T1bbbb"&&sampleOfInterest!="T2bb"&&sampleOfInterest!="T2tt"&&sampleOfInterest!="T1tttt")    thetree->Project("pdfEventCounter","HT",getCutString(false, "",extraWeight,i,"MSTW").Data());
     else      thetree->Project("pdfEventCounter","HT",getCutString(kSMSPoint,"",selection_,"",i,"MSTW").Data());
     //    thetree->Project("pdfEventCounter","HT",getCutString(false, "",extraWeight,i,"MSTW").Data());
     if (i%2==0) {
@@ -403,7 +433,7 @@ each of the systematics variations was done with JERbias turned on.
       TH1D pdfEventCounter("pdfEventCounter","pdfEventCounter",1,0,1e9);
       pdfEventCounter.Sumw2();
       //      thetree->Project("pdfEventCounter","HT",getCutString(false, "",extraWeight,i,"NNPDF").Data());
-      if (sampleOfInterest!="T1bbbb"&&sampleOfInterest!="T2bb"&&sampleOfInterest!="T2tt")    thetree->Project("pdfEventCounter","HT",getCutString(false, "",extraWeight,i,"NNPDF").Data());
+      if (sampleOfInterest!="T1bbbb"&&sampleOfInterest!="T2bb"&&sampleOfInterest!="T2tt"&&sampleOfInterest!="T1tttt")    thetree->Project("pdfEventCounter","HT",getCutString(false, "",extraWeight,i,"NNPDF").Data());
       else      thetree->Project("pdfEventCounter","HT",getCutString(kSMSPoint,"",selection_,"",i,"NNPDF").Data());
       cout<<"    yield = "<<pdfEventCounter.Integral()<<endl;
       nnpdfYields.Fill(pdfEventCounter.Integral());
@@ -500,7 +530,16 @@ void runSystematics2011_LM9(  TString sampleOfInterest="LM9" ) {
     (*textfiles_human[i])<<" \\hline                   &"<<endl;
     (*textfiles_human[i])<<" \\hline                   &"<<endl;
 
+    cout<<" === cross-check "<<endl;
+    cout<<"SB DeltaEff / DeltaBtagEff = "<<SB.eff_derivative_b_1s<<endl;
+    cout<<"SIG DeltaEff / DeltaBtagEff = "<<SIG.eff_derivative_b_1s<<endl;
 
+    cout<<"SBSL DeltaEff / DeltaBtagEff = "<<SBSL.eff_derivative_b_1s<<endl;
+    cout<<"SIGSL DeltaEff / DeltaBtagEff = "<<SIGSL.eff_derivative_b_1s<<endl;
+
+    cout<<"SBLDP DeltaEff / DeltaBtagEff = "<<SBLDP.eff_derivative_b_1s<<endl;
+    cout<<"SIGLDP DeltaEff / DeltaBtagEff = "<<SIGLDP.eff_derivative_b_1s<<endl;
+    cout<<" === new "<<endl;
     cout<<"SB DeltaEff / DeltaBtagEff = "<<SB.eff_derivative_b<<endl;
     cout<<"SIG DeltaEff / DeltaBtagEff = "<<SIG.eff_derivative_b<<endl;
 
@@ -509,7 +548,7 @@ void runSystematics2011_LM9(  TString sampleOfInterest="LM9" ) {
 
     cout<<"SBLDP DeltaEff / DeltaBtagEff = "<<SBLDP.eff_derivative_b<<endl;
     cout<<"SIGLDP DeltaEff / DeltaBtagEff = "<<SIGLDP.eff_derivative_b<<endl;
-
+    cout<<" === charm "<<endl;
     cout<<"SB DeltaEff / DeltaCtagEff = "<<SB.eff_derivative_c<<endl;
     cout<<"SIG DeltaEff / DeltaCtagEff = "<<SIG.eff_derivative_c<<endl;
 
@@ -518,7 +557,7 @@ void runSystematics2011_LM9(  TString sampleOfInterest="LM9" ) {
 
     cout<<"SBLDP DeltaEff / DeltaCtagEff = "<<SBLDP.eff_derivative_c<<endl;
     cout<<"SIGLDP DeltaEff / DeltaCtagEff = "<<SIGLDP.eff_derivative_c<<endl;
-
+    cout<<" === LF "<<endl;
     cout<<"SB DeltaEff / DeltaLFtagEff = "<<SB.eff_derivative_l<<endl;
     cout<<"SIG DeltaEff / DeltaLFtagEff = "<<SIG.eff_derivative_l<<endl;
 
@@ -574,7 +613,7 @@ map<pair<int,int>, SignalEffData>  runTH2Syst2011_mSugra(const SearchRegion & re
   else if (btagselection=="ge1b") {}
   else if (btagselection=="ge3b") {
     bcut="nbjets>=3";
-    bweightstring="probge3"; //this one isn't calculated right now, i think
+    bweightstring="probge3";
   }
   else {assert(0);}
   TCut baseline = "cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && passCleaning==1";
@@ -608,13 +647,15 @@ map<pair<int,int>, SignalEffData>  runTH2Syst2011_mSugra(const SearchRegion & re
   susyScanYields nominalYields=getSusyScanYields(sampleOfInterest);
 
   //only applicable to mSugra
+  const bool do_kfactor_variation=false;  //for now...*disable* the cross-section uncertainty
+  if (ismSugra && !do_kfactor_variation)  cout<<" NLO cross-section uncertainty disabled!"<<endl;
   //NLO k factor uncertainty -- vary it up
   susyCrossSectionVariation_="Plus";
-  susyScanYields kFactorPlusYields= ismSugra ? getSusyScanYields(sampleOfInterest) : nominalYields;
+  susyScanYields kFactorPlusYields= ismSugra && do_kfactor_variation ? getSusyScanYields(sampleOfInterest) : nominalYields;
   
   //NLO k factor uncertainty -- vary it down
   susyCrossSectionVariation_="Minus";
-  susyScanYields kFactorMinusYields=ismSugra ? getSusyScanYields(sampleOfInterest): nominalYields;
+  susyScanYields kFactorMinusYields=ismSugra && do_kfactor_variation ? getSusyScanYields(sampleOfInterest): nominalYields;
 
   susyCrossSectionVariation_=""; //reset to default k factors
 
@@ -664,9 +705,14 @@ map<pair<int,int>, SignalEffData>  runTH2Syst2011_mSugra(const SearchRegion & re
   for (  susyScanYields::iterator imsugra=rawYields.begin(); imsugra!=rawYields.end(); ++imsugra) {
     SignalEffData theseResults;
 
-    //take care of trigger efficiency systematics, which differs between SB and SIG
-    if (region.isSIG) theseResults.set("trigger",3.7e-2,3.7e-2);
-    else theseResults.set("trigger",9.8e-2,9.8e-2); //since we don't have a facility for asymmetric systematics, use the largest one
+    //take care of trigger efficiency systematics, which differs between SB and SIG, SL, LDP, etc
+    if (region.isSIG && !isSL &&!isLDP) theseResults.set("trigger",eff_SIG_MHT_err_[0],eff_SIG_MHT_err_[1]);
+    else if (!region.isSIG && !isSL && !isLDP) theseResults.set("trigger",eff_SB_MHT_err_[0],eff_SB_MHT_err_[1]);
+    else if (region.isSIG && isSL) theseResults.set("trigger",eff_SIG_SL_MHT_err_[0],eff_SIG_SL_MHT_err_[1]);
+    else if (!region.isSIG && isSL) theseResults.set("trigger",eff_SB_SL_MHT_err_[0],eff_SB_SL_MHT_err_[1]);
+    else if (region.isSIG && isLDP) theseResults.set("trigger",eff_SIG_ldp_MHT_err_[0],eff_SIG_ldp_MHT_err_[1]);
+    else if (!region.isSIG && isLDP) theseResults.set("trigger",eff_SB_ldp_MHT_err_[0],eff_SB_ldp_MHT_err_[1]);
+    else assert(0);
 
     if (rawYields[imsugra->first].first >0) {
       cout<<imsugra->first.first<<" "<<imsugra->first.second<<" " //m0 and m12
@@ -1095,7 +1141,7 @@ void drawmSugraEfficiency() {
 
     //these are for mSugra [copied and pasted from getSusyScanYields() ]
     TString varx="m0"; TString xtitle=varx;
-    int  nbinsx=210; float lowx=-0.5; float highx=2100-0.5;
+    int  nbinsx=310; float lowx=-0.5; float highx=3100-0.5; //UPDATED for new scans
     
     TString vary="m12"; TString ytitle=vary;
     int  nbinsy=110; float lowy=-0.5; float highy=1100-0.5;
@@ -1169,6 +1215,7 @@ void drawmSugraEfficiency() {
     if (h2d!=0) delete h2d;
 
     //redo the binning with what appears to be the actual binning (for better presentation)
+    assert(0); //need to update binning for new scans
     nbinsx=105;  lowx=-0.5; highx=2100-0.5; //m0
     nbinsy=40;  lowy=-0.5;  highy=800-0.5; //m12
 
