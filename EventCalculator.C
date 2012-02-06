@@ -410,21 +410,23 @@ float EventCalculator::getPUWeight(Lumi3DReWeighting lumiWeights) {
   //if this is ttbar Fall11 MC 
   if (sampleName_.Contains("TTJets_TuneZ2_7TeV-madgraph-tauola_Fall11_v2") ) {
     int nPV =  countGoodPV();
-    //From Kristen
-    //double pvweights[25]={0 , 0.549398 , 0.854301 , 1.0274 , 1.19307 ,
-    //                          1.29101 , 1.33746 , 1.25162 , 1.16767 , 1.12114 ,
-    //                          0.954877 , 0.771361 , 0.583225 , 0.46853 , 0.343897 ,
-    //                          0.238567 , 0.160576 , 0.11326 , 0.0544237 , 0.0236446 ,
-    //                  0 , 0.0850062 , 0 , 0 , 0};
-    //From looking at data vs fall ttbar MC after HT>400 cut only
-    double pvweights[25]={0,0.851901,1.27335,1.5957,1.45827,1.36811,1.38217,1.10248,
-			  0.903996,0.786264,0.614646,0.501687,0.379393,0.307361,
-			  0.217792,0.171912,0.198068,0.0912894,0.145531,0.0546068,
-			  0.110518,0.0685031,0.0155274,0,0};
-    
+    //From Kristen (via RA4 group)
+    double pvweights[25]={0 , 0.549398 , 0.854301 , 1.0274 , 1.19307 ,
+			  1.29101 , 1.33746 , 1.25162 , 1.16767 , 1.12114 ,
+			  0.954877 , 0.771361 , 0.583225 , 0.46853 , 0.343897 ,
+			  0.238567 , 0.160576 , 0.11326 , 0.0544237 , 0.0236446 ,
+			  0 , 0.0850062 , 0 , 0 , 0};
+    //this is applied to normalize the nGoodPV distribution
+    //of ttbar Fall MC to that of data after applying the following cuts
+    //{HT>400,MET>250,njets>=3,bjets>=1}
+    //(Kristen is applying the same weighting)
+    double corr[25] = {0., 0.8919, 0.8289, 1.1152, 1.0013, 0.8529, 1.0224, 0.9010, 1.0397,
+		       0.9782, 1.0765, 1.2540, 1.3285, 0.8122, 0.9539, 1.5913, 1.3473, 1.9760,
+		       0., 0., 0., 0., 0., 0., 0.};
+
     if(nPV > 24) weight =0;
-    //else weight = pvweights[nPV]*0.975;
-    else weight = pvweights[nPV];
+    else weight = pvweights[nPV]*0.975*corr[nPV];
+    //else weight = pvweights[nPV];  
   }
 
   return weight;
@@ -2346,6 +2348,23 @@ float  EventCalculator::jetEnergyOfN(unsigned int n) {
   return 0;
 }
 
+int  EventCalculator::jetFlavorOfN(unsigned int n) {
+
+  unsigned int ngood=0;
+  for (unsigned int i=0; i<myJetsPF->size(); i++) {
+
+    bool pass=false;
+    pass = isGoodJet(i);
+
+    if (pass ) {
+      ngood++;
+      if (ngood==n) return  myJetsPF->at(i).partonFlavour;
+    }
+  }
+  return 0;
+}
+
+
 float EventCalculator::bjetCSVOfN(unsigned int n) {
   
   unsigned int ngood=0;
@@ -2426,6 +2445,23 @@ float EventCalculator::bjetEnergyOfN(unsigned int n) {
   }
   return 0;
 }
+
+int  EventCalculator::bjetFlavorOfN(unsigned int n) {
+
+  unsigned int ngood=0;
+  for (unsigned int i=0; i<myJetsPF->size(); i++) {
+
+    bool pass=false;
+    pass = (isGoodJet30(i) && passBTagger(i));
+
+    if (pass ) {
+      ngood++;
+      if (ngood==n) return  myJetsPF->at(i).partonFlavour;
+    }
+  }
+  return 0;
+}
+
 
 //-- first two jets are from W.  third is b jet
 void EventCalculator::calcCosHel( unsigned int j1i, unsigned int j2i, unsigned int j3i, float & wcoshel,float &tcoshel) {
@@ -3987,6 +4023,7 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   float jetpt1,jetphi1, jeteta1, jetenergy1, bjetpt1, bjetphi1, bjeteta1, bjetenergy1;
   float jetpt2,jetphi2, jeteta2, jetenergy2, bjetpt2, bjetphi2, bjeteta2, bjetenergy2;
   float jetpt3,jetphi3, jeteta3, jetenergy3, bjetpt3, bjetphi3, bjeteta3, bjetenergy3;
+  int jetflavor1, jetflavor2, jetflavor3, bjetflavor1, bjetflavor2, bjetflavor3;
   float eleet1;
   float muonpt1;
   float taupt1;
@@ -4402,31 +4439,37 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("jeteta1",&jeteta1,"jeteta1/F");
   reducedTree.Branch("jetphi1",&jetphi1,"jetphi1/F");
   reducedTree.Branch("jetenergy1",&jetenergy1,"jetenergy1/F");
+  reducedTree.Branch("jetflavor1",&jetflavor1,"jetflavor1/I");
 
   reducedTree.Branch("jetpt2",&jetpt2,"jetpt2/F");
   reducedTree.Branch("jeteta2",&jeteta2,"jeteta2/F");
   reducedTree.Branch("jetphi2",&jetphi2,"jetphi2/F");
   reducedTree.Branch("jetenergy2",&jetenergy2,"jetenergy2/F");
+  reducedTree.Branch("jetflavor2",&jetflavor2,"jetflavor2/I");
 
   reducedTree.Branch("jetpt3",&jetpt3,"jetpt3/F");
   reducedTree.Branch("jeteta3",&jeteta3,"jeteta3/F");
   reducedTree.Branch("jetphi3",&jetphi3,"jetphi3/F");
   reducedTree.Branch("jetenergy3",&jetenergy3,"jetenergy3/F");
+  reducedTree.Branch("jetflavor3",&jetflavor3,"jetflavor3/I");
 
   reducedTree.Branch("bjetpt1",&bjetpt1,"bjetpt1/F");
   reducedTree.Branch("bjeteta1",&bjeteta1,"bjeteta1/F");
   reducedTree.Branch("bjetphi1",&bjetphi1,"bjetphi1/F");
   reducedTree.Branch("bjetenergy1",&bjetenergy1,"bjetenergy1/F");  
+  reducedTree.Branch("bjetflavor1",&bjetflavor1,"bjetflavor1/I");
 
   reducedTree.Branch("bjetpt2",&bjetpt2,"bjetpt2/F");
   reducedTree.Branch("bjeteta2",&bjeteta2,"bjeteta2/F");
   reducedTree.Branch("bjetphi2",&bjetphi2,"bjetphi2/F");
-  reducedTree.Branch("bjetenergy2",&bjetenergy2,"bjetenergy2/F");  
+  reducedTree.Branch("bjetenergy2",&bjetenergy2,"bjetenergy2/F");
+  reducedTree.Branch("bjetflavor2",&bjetflavor2,"bjetflavor2/I");  
   
   reducedTree.Branch("bjetpt3",&bjetpt3,"bjetpt3/F");
   reducedTree.Branch("bjeteta3",&bjeteta3,"bjeteta3/F");
   reducedTree.Branch("bjetphi3",&bjetphi3,"bjetphi3/F");
   reducedTree.Branch("bjetenergy3",&bjetenergy3,"bjetenergy3/F");  
+  reducedTree.Branch("bjetflavor3",&bjetflavor3,"bjetflavor3/I");
 
   reducedTree.Branch("eleet1",&eleet1,"eleet1/F");
   reducedTree.Branch("muonpt1",&muonpt1,"muonpt1/F");
@@ -4739,7 +4782,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
 
       SUSY_nb = sampleIsSignal_ ? getSUSYnb() : 0;
       bjetSumSUSY[thispoint] += SUSY_nb;
-      if(SUSY_process==NotFound) cout<<"SUSY_nb = "<<SUSY_nb<<endl;
+      //if(SUSY_process==NotFound) cout<<"SUSY_nb = "<<SUSY_nb<<endl;
 
       njets = nGoodJets();
       njets30 = nGoodJets30();
@@ -4865,31 +4908,37 @@ Also the pdfWeightSum* histograms that are used for LM9.
       jetphi1 = jetPhiOfN(1);
       jeteta1 = jetEtaOfN(1);
       jetenergy1 = jetEnergyOfN(1);
+      jetflavor1 = jetFlavorOfN(1);
 
       jetpt2 = jetPtOfN(2);
       jetphi2 = jetPhiOfN(2);
       jeteta2 = jetEtaOfN(2);
       jetenergy2 = jetEnergyOfN(2);
+      jetflavor2 = jetFlavorOfN(2);
 
       jetpt3 = jetPtOfN(3);
       jetphi3 = jetPhiOfN(3);
       jeteta3 = jetEtaOfN(3);
       jetenergy3 = jetEnergyOfN(3);      
+      jetflavor3 = jetFlavorOfN(3);
 
       bjetpt1 = bjetPtOfN(1);
       bjetphi1 = bjetPhiOfN(1);
       bjeteta1 = bjetEtaOfN(1);
       bjetenergy1 = bjetEnergyOfN(1); 
+      bjetflavor1 = bjetFlavorOfN(1);
 
       bjetpt2 = bjetPtOfN(2);
       bjetphi2 = bjetPhiOfN(2);
       bjeteta2 = bjetEtaOfN(2);
       bjetenergy2 = bjetEnergyOfN(2); 
+      bjetflavor2 = bjetFlavorOfN(2);
 
       bjetpt3 = bjetPtOfN(3);
       bjetphi3 = bjetPhiOfN(3);
       bjeteta3 = bjetEtaOfN(3);
       bjetenergy3 = bjetEnergyOfN(3);       
+      bjetflavor3 = bjetFlavorOfN(3);
 
       eleet1 = elePtOfN(1);
       muonpt1 = muonPtOfN(1);     
