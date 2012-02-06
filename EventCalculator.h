@@ -209,11 +209,13 @@ public:
   float jetPhiOfN(unsigned int n);
   float jetEtaOfN(unsigned int n);
   float jetEnergyOfN(unsigned int n);
+  int jetFlavorOfN(unsigned int n);
   float bjetPtOfN(unsigned int n);
   float bjetPhiOfN(unsigned int n);
   float bjetEtaOfN(unsigned int n);
   float bjetEnergyOfN(unsigned int n);
   float bjetCSVOfN(unsigned int n);
+  int bjetFlavorOfN(unsigned int n);
 
   float elePtOfN(unsigned int n, const float ptthreshold=10);
   float elePhiOfN(unsigned int n, const float ptthreshold=10);
