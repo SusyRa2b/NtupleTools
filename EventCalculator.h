@@ -215,18 +215,18 @@ public:
   float bjetEnergyOfN(unsigned int n);
   float bjetCSVOfN(unsigned int n);
 
-  float elePtOfN(unsigned int n);
-  float elePhiOfN(unsigned int n);
+  float elePtOfN(unsigned int n, const float ptthreshold=10);
+  float elePhiOfN(unsigned int n, const float ptthreshold=10);
 
-  float muonPtOfN(unsigned int n);
-  float muonPhiOfN(unsigned int n);
+  float muonPtOfN(unsigned int n, const float ptthreshold=10);
+  float muonPhiOfN(unsigned int n, const float ptthreshold=10);
 
   float tauPtOfN(unsigned int n);
 
   float getRelIsoForIsolationStudyEle();
   float getRelIsoForIsolationStudyMuon();
 
-  float getMT_Wlep();
+  float getMT_Wlep(const float pttreshold=10);
   void calcTopDecayVariables(float & wmass, float & tmass, float & wcoshel, float & tcoshel);
   void calcCosHel(unsigned int j1i, unsigned int j2i, unsigned int j3i, float & wcoshel,float &tcoshel);
 

@@ -2220,11 +2220,11 @@ float EventCalculator::getRelIsoForIsolationStudyMuon() {
   return bestRelIso;
 }
 
-float EventCalculator::elePtOfN(unsigned int n) {
+float EventCalculator::elePtOfN(unsigned int n, const float ptthreshold) {
 
   unsigned int ngood=0;
   for (unsigned int i=0; i < myElectronsPF->size(); i++) {
-    if(isGoodElectron(i)){
+    if(isGoodElectron(i,false,ptthreshold)){
       ngood++;
       if (ngood==n) return myElectronsPF->at(i).et;
     }
@@ -2232,11 +2232,11 @@ float EventCalculator::elePtOfN(unsigned int n) {
   return 0;
 }
 
-float EventCalculator::elePhiOfN(unsigned int n) {
+float EventCalculator::elePhiOfN(unsigned int n, const float ptthreshold) {
 
   unsigned int ngood=0;
   for (unsigned int i=0; i < myElectronsPF->size(); i++) {
-    if(isGoodElectron(i)){
+    if(isGoodElectron(i,false,ptthreshold)){
       ngood++;
       if (ngood==n) return myElectronsPF->at(i).phi;
     }
@@ -2244,11 +2244,11 @@ float EventCalculator::elePhiOfN(unsigned int n) {
   return 0;
 }
 
-float EventCalculator::muonPtOfN(unsigned int n) {
+float EventCalculator::muonPtOfN(unsigned int n, const float ptthreshold) {
 
   unsigned int ngood=0;
   for (unsigned int i=0; i < myMuonsPF->size(); i++) {
-    if (isCleanMuon(i)) {
+    if (isCleanMuon(i,ptthreshold)) {
       ngood++;
       if (ngood==n) return myMuonsPF->at(i).pt;
     }
@@ -2257,11 +2257,11 @@ float EventCalculator::muonPtOfN(unsigned int n) {
 }
 
 
-float EventCalculator::muonPhiOfN(unsigned int n) {
+float EventCalculator::muonPhiOfN(unsigned int n, const float ptthreshold) {
 
   unsigned int ngood=0;
   for (unsigned int i=0; i < myMuonsPF->size(); i++) {
-    if (isCleanMuon(i)) {
+    if (isCleanMuon(i,ptthreshold)) {
       ngood++;
       if (ngood==n) return myMuonsPF->at(i).phi;
     }
@@ -2580,12 +2580,12 @@ void EventCalculator::calcTopDecayVariables(float & wmass, float & tmass, float 
   tmass = bestM3j;
 }
 
-float EventCalculator::getMT_Wlep() {
+float EventCalculator::getMT_Wlep(const float ptthreshold) {
 
   float MT = -1.;
   float MT2;
-  int nE = countEle();
-  int nM = countMu();
+  int nE = countEle(ptthreshold);
+  int nM = countMu(ptthreshold);
   
   float myMET = getMET();
   float myMETphi = getMETphi();
@@ -2596,13 +2596,13 @@ float EventCalculator::getMT_Wlep() {
   bool newMT = false;
   if(nE==1 && nM==0){
     newMT = true;
-    myP = elePtOfN(1);
-    myPphi = elePhiOfN(1); 
+    myP = elePtOfN(1,ptthreshold);
+    myPphi = elePhiOfN(1,ptthreshold); 
   }
   else if(nE==0 && nM==1){
     newMT=true;
-    myP = muonPtOfN(1);
-    myPphi = muonPhiOfN(1);
+    myP = muonPtOfN(1,ptthreshold);
+    myPphi = muonPhiOfN(1,ptthreshold);
   }
   float px = myP * cos(myPphi);
   float py = myP * sin(myPphi); 
@@ -3993,6 +3993,7 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   float eleRelIso,muonRelIso;
 
   float MT_Wlep;
+  float MT_Wlep5,MT_Wlep15;
   float wMass, topMass, wCosHel, topCosHel;
 
   int nGoodPV;
@@ -4322,6 +4323,8 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("topCosHel",&topCosHel,"topCosHel/F");
   reducedTree.Branch("WCosHel",&wCosHel,"WCosHel/F");
   reducedTree.Branch("MT_Wlep",&MT_Wlep, "MT_Wlep/F");
+  reducedTree.Branch("MT_Wlep5",&MT_Wlep5, "MT_Wlep5/F");
+  reducedTree.Branch("MT_Wlep15",&MT_Wlep15, "MT_Wlep15/F");
 
   reducedTree.Branch("minDeltaPhi",&minDeltaPhi,"minDeltaPhi/F");
   reducedTree.Branch("minDeltaPhiAll",&minDeltaPhiAll,"minDeltaPhiAll/F");
@@ -4852,6 +4855,8 @@ Also the pdfWeightSum* histograms that are used for LM9.
       transverseMETSignificance3 = getTransverseMETSignificance(2);
       
       MT_Wlep = getMT_Wlep();
+      MT_Wlep5 = getMT_Wlep(5);
+      MT_Wlep15 = getMT_Wlep(15);
       
       calcTopDecayVariables(  wMass, topMass, wCosHel, topCosHel);
       
