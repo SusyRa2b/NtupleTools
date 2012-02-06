@@ -251,12 +251,12 @@ void setSearchRegions() {
 //very simple data container used by the SignalEffData class
 class SystInfo {
 public:
-  SystInfo(double p=0, double m=0, int s=0);
+  SystInfo(float p=0, float m=0, int s=0);
   ~SystInfo();
   SystInfo( ifstream* input);
 
-  double plus;
-  double minus;
+  float plus;
+  float minus;
   //convention:
   //use 0 for numbers that are completely unset
   //use 1 for numbers that are fixed by SignalEffData
@@ -280,7 +280,7 @@ SystInfo::SystInfo(ifstream* input) :
   cout<< "  Loaded status,minus,plus = "<<status<<" "<<minus<<" "<<plus<<endl; //DEBUG
 }
 
-SystInfo::SystInfo(double p, double m, int s) :
+SystInfo::SystInfo(float p, float m, int s) :
   plus(p),  minus(m),  status(s) {}
 SystInfo::~SystInfo() {}
 
@@ -294,28 +294,28 @@ public:
 
   //  TString id;
 
-  double rawYield; //yield in lumiScale_ invpb, or for SMS really the raw yield
-  double effCorr; //factor including all corrections to the efficiency
+  float rawYield; //yield in lumiScale_ invpb, or for SMS really the raw yield
+  float effCorr; //factor including all corrections to the efficiency
 
-  double yield_JER;         //NOT persisted when object is saved to file
-  double yield_JER_PU;      //NOT persisted when object is saved to file
-  double yield_JER_PU_HLT;  //NOT persisted when object is saved to file
+  float yield_JER;         //NOT persisted when object is saved to file
+  float yield_JER_PU;      //NOT persisted when object is saved to file
+  float yield_JER_PU_HLT;  //NOT persisted when object is saved to file
 
-  double eff_derivative_b;
-  double eff_derivative_c;
-  double eff_derivative_l;
+  float eff_derivative_b;
+  float eff_derivative_c;
+  float eff_derivative_l;
 
-  double sigma_btageff; //TODO persist this
-  double eff_derivative_b_1s; //NOT persisted (cross-check)
+  float sigma_btageff; //TODO persist this
+  float eff_derivative_b_1s; //NOT persisted (cross-check)
 
-  double totalSystematic(); 
-  double symmetrize(const TString & which);
+  float totalSystematic(); 
+  float symmetrize(const TString & which);
 
-  double value(const TString &which) {return symmetrize(which);}
-  double valuePlus(const TString &which);
-  double valueMinus(const TString &which);
+  float value(const TString &which) {return symmetrize(which);}
+  float valuePlus(const TString &which);
+  float valueMinus(const TString &which);
 
-  void set(const TString & which, double valminus, double valplus);
+  void set(const TString & which, float valminus, float valplus);
 
   void setFixedForScan();
 
@@ -463,7 +463,7 @@ TString SignalEffData::translateVariation(const TString & which) {
 
 }
 
-void SignalEffData::set(const TString & which, double valminus, double valplus) {
+void SignalEffData::set(const TString & which, float valminus, float valplus) {
 
   TString translatedWhich=  translateVariation(which);
   
@@ -479,9 +479,9 @@ void SignalEffData::set(const TString & which, double valminus, double valplus) 
   
 }
 
-double SignalEffData::symmetrize(const TString & which) {
+float SignalEffData::symmetrize(const TString & which) {
 
-  double s=-1;
+  float s=-1;
 
  map<TString, SystInfo >::iterator it=systematics.find(which);
   if (it==systematics.end() ) {
@@ -494,17 +494,17 @@ double SignalEffData::symmetrize(const TString & which) {
   }
   else { //return the larger deviation
     //for PDF uncertainties for now just store the pre-processed results
-    double var1= fabs( it->second.plus);
-    double var2= fabs( it->second.minus);
+    float var1= fabs( it->second.plus);
+    float var2= fabs( it->second.minus);
     s = var2>var1? var2:var1;
   }
   
   return s;
 }
 
-double SignalEffData::valuePlus(const TString & which) {
+float SignalEffData::valuePlus(const TString & which) {
 
-  double s=-1;
+  float s=-1;
 
   map<TString, SystInfo >::iterator it=systematics.find(which);
   if (it==systematics.end() ) {
@@ -515,9 +515,9 @@ double SignalEffData::valuePlus(const TString & which) {
   }  
   return s;
 }
-double SignalEffData::valueMinus(const TString & which) {
+float SignalEffData::valueMinus(const TString & which) {
 
-  double s=-1;
+  float s=-1;
 
   map<TString, SystInfo >::iterator it=systematics.find(which);
   if (it==systematics.end() ) {
@@ -529,9 +529,9 @@ double SignalEffData::valueMinus(const TString & which) {
   return s;
 }
 
-double SignalEffData::totalSystematic() {
+float SignalEffData::totalSystematic() {
 
-  double total2=0;
+  float total2=0;
   for (map<TString, SystInfo >::iterator isyst=systematics.begin(); isyst!=systematics.end(); ++isyst) {
     if ( isyst->second.status == 0) { 
       cout<<"WARNING -- systematic is unset! "<<isyst->first<<endl;
@@ -1241,7 +1241,7 @@ for legacy purposes I am keeping all of the weight and selection TStrings, altho
       //thisn does not have to be integer (in the case of pdf weights)
       float thisn = thishist->GetBinContent(i,pdfWeightIndex); //bin 0 has no special PDF weighting
       if (thisn==0) thisn=1; //avoid div by 0. if there are no events anyway then any value is ok
-      sprintf(thisweight, "((SUSY_process==%d)*scanCrossSection%s/%d)",i,susyCrossSectionVariation_.Data(),thisn);
+      sprintf(thisweight, "((SUSY_process==%d)*scanCrossSection%s/%f)",i,susyCrossSectionVariation_.Data(),thisn);
       susyprocessweight += thisweight;
       if (i!=10)    susyprocessweight += " + ";
     }
@@ -2609,7 +2609,7 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
 
 
 
-typedef map<pair<int,int>, pair<double,double> > susyScanYields;
+typedef map<pair<int,int>, pair<float,float> > susyScanYields;
 susyScanYields getSusyScanYields(const TString & sampleOfInterest,const int pdfindex=0, const TString & pdfset="CTEQ") {
   cout<<" ~~ begin slow version of getSusyScanYields()"<<endl;
 
