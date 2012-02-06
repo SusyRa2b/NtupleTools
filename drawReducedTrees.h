@@ -181,7 +181,6 @@ void setSearchRegions() {
   //everywhere that we use the owenId as an identifier, we combine with the number of b tags
 
 
-/*
   //oct25
   sbRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=200&&MET<250","Loose",false));
   searchRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=250","Loose")); //1BL
@@ -197,8 +196,9 @@ void setSearchRegions() {
 
   sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=200&&MET<250","Loose",false));
   searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=250","Loose")); //3B
-  */
 
+
+/*
   //Loose exclusive regions
   sbRegions_.push_back( SearchRegion( "eq1b","HT>=400","MET>=200&&MET<250","Loose",false));
   searchRegions_.push_back( SearchRegion( "eq1b","HT>=400","MET>=250","Loose")); //1BL
@@ -228,7 +228,8 @@ void setSearchRegions() {
 
   sbRegions_.push_back( SearchRegion( "ge3b","HT>=500","MET>=200&&MET<250","TightMET",false));
   searchRegions_.push_back( SearchRegion( "ge3b","HT>=500","MET>=500","TightMET")); //1BT
-  
+*/  
+
   /*
   //2011 Summer result
   sbRegions_.push_back( SearchRegion( "ge1b","HT>=350","MET>=150&&MET<200","Loose",false)); //loose SB
@@ -926,7 +927,6 @@ void loadSusyScanHistograms() {
     }
   }
 
-
   loadedSusyHistos_=true;
 }
 
@@ -1238,7 +1238,8 @@ for legacy purposes I am keeping all of the weight and selection TStrings, altho
     if (susySubProcess>=0) { lowbound=susySubProcess; highbound=susySubProcess;}
     for (int i=lowbound; i<=highbound; i++ ) {
       char thisweight[50];
-      int thisn = TMath::Nint(thishist->GetBinContent(i,pdfWeightIndex)); //bin 0 has no special PDF weighting
+      //thisn does not have to be integer (in the case of pdf weights)
+      float thisn = thishist->GetBinContent(i,pdfWeightIndex); //bin 0 has no special PDF weighting
       if (thisn==0) thisn=1; //avoid div by 0. if there are no events anyway then any value is ok
       sprintf(thisweight, "((SUSY_process==%d)*scanCrossSection%s/%d)",i,susyCrossSectionVariation_.Data(),thisn);
       susyprocessweight += thisweight;
@@ -1412,6 +1413,7 @@ void setColorScheme(const TString & name) {
     sampleColor_["LM9"] =kGray;
     sampleColor_["mSUGRAtanb40"] =kGray;
     sampleColor_["T1bbbb"] =kGray;
+    sampleColor_["T1tttt"] =kGray;
     sampleColor_["T2bb"] =kGray;
     sampleColor_["T2tt"] =kGray;
     sampleColor_["QCD"] = kYellow;
@@ -1446,6 +1448,7 @@ void setColorScheme(const TString & name) {
     sampleColor_["LM9"] = kCyan+2;
     sampleColor_["mSUGRAtanb40"] =kCyan+2;
     sampleColor_["T1bbbb"] =kCyan+2;
+    sampleColor_["T1tttt"] =kCyan+2;
     sampleColor_["T2bb"] =kCyan+2;
     sampleColor_["T2tt"] =kCyan+2;
     sampleColor_["QCD"] = 2;
@@ -1562,6 +1565,7 @@ void loadSamples(bool joinSingleTop=true) {
 
   samplesAll_.insert("mSUGRAtanb40");
   samplesAll_.insert("T1bbbb");
+  samplesAll_.insert("T1tttt");
   samplesAll_.insert("T2bb");
   samplesAll_.insert("T2tt");
 
@@ -1570,9 +1574,9 @@ void loadSamples(bool joinSingleTop=true) {
   //FOR PLOTS
   ////////////
 
-   configDescriptions_.setDefault("CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
-   configDescriptions_.setCorrected("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
-   /*
+//    configDescriptions_.setDefault("CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
+//    configDescriptions_.setCorrected("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
+   
   //Only for signal systematics
        
   configDescriptions_.setDefault("CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff03_HLTEff0");
@@ -1584,21 +1588,21 @@ void loadSamples(bool joinSingleTop=true) {
   configDescriptions_.addVariation("CSVM_PF2PATjets_JESdown_JERbias_PFMET_METunc0_PUunc0_BTagEff03_HLTEff0",
 				   "CSVM_PF2PATjets_JESup_JERbias_PFMET_METunc0_PUunc0_BTagEff03_HLTEff0");
   //JER //LM9 only
-    configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERdown_PFMET_METunc0_PUunc0_BTagEff03_HLTEff0",
-  				   "CSVM_PF2PATjets_JES0_JERup_PFMET_METunc0_PUunc0_BTagEff03_HLTEff0");
+//     configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERdown_PFMET_METunc0_PUunc0_BTagEff03_HLTEff0",
+//   				   "CSVM_PF2PATjets_JES0_JERup_PFMET_METunc0_PUunc0_BTagEff03_HLTEff0");
 
   //unclustered MET //LM9 and scans
   configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERbias_PFMET_METuncDown_PUunc0_BTagEff03_HLTEff0", 
   				   "CSVM_PF2PATjets_JES0_JERbias_PFMET_METuncUp_PUunc0_BTagEff03_HLTEff0");
 
   //PU //LM9 only
-  configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncDown_BTagEff03_HLTEff0",
-  				   "CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncUp_BTagEff03_HLTEff0");
+//   configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncDown_BTagEff03_HLTEff0",
+//   				   "CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncUp_BTagEff03_HLTEff0");
 
   //btag eff //LM9 and scans
   configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffdown3_HLTEff0",
   				   "CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffup3_HLTEff0");
-   */    
+    
   //HLT eff //never use this one
   //    configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffdown",
   //"CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffup");
@@ -1606,37 +1610,6 @@ void loadSamples(bool joinSingleTop=true) {
   ///////////////
   //////////////
  
-
-/*  
-  //new btag eff prescription
- //for summer11 signal systematics!
-  configDescriptions_.setDefault("SSVHPT_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
-  configDescriptions_.setCorrected("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
-  
-  //JES
-  configDescriptions_.addVariation("SSVHPT_PF2PATjets_JESdown_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0",
-				   "SSVHPT_PF2PATjets_JESup_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
-  //JER - out for scans
-  //  configDescriptions_.addVariation("SSVHPT_PF2PATjets_JES0_JERdown_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0",
-				    //  				   "SSVHPT_PF2PATjets_JES0_JERup_PFMET_METunc0_PUunc0_BTagEff02_HLTEff0");
-
-  //unclustered MET
-  configDescriptions_.addVariation("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METuncDown_PUunc0_BTagEff02_HLTEff0",
-				   "SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METuncUp_PUunc0_BTagEff02_HLTEff0");
-
-  //PU - out for scans
-  //   configDescriptions_.addVariation("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncDown_BTagEff02_HLTEff0",
-  //  				   "SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncUp_BTagEff02_HLTEff0");
-
-  //btag eff
-  configDescriptions_.addVariation("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffdown2_HLTEff0",
-				   "SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffup2_HLTEff0");
-
-  //HLT eff
-  //    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEffdown");
-  //    configDescriptions_.push_back("SSVHPT_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff02_HLTEffup");
-  
-*/
 
   currentConfig_=configDescriptions_.getDefault();
 
@@ -1646,6 +1619,7 @@ void loadSamples(bool joinSingleTop=true) {
 
   sampleLabel_["mSUGRAtanb40"] = "tan #beta = 40";
   sampleLabel_["T1bbbb"] = "T1bbbb";
+  sampleLabel_["T1tttt"] = "T1tttt";
   sampleLabel_["T2bb"] = "T2bb";
   sampleLabel_["T2tt"] = "T2tt";
   sampleLabel_["LM13"] = "LM13";
@@ -1679,6 +1653,7 @@ void loadSamples(bool joinSingleTop=true) {
 
   sampleMarkerStyle_["mSUGRAtanb40"] = kFullStar;
   sampleMarkerStyle_["T1bbbb"] = kFullStar;
+  sampleMarkerStyle_["T1tttt"] = kFullStar;
   sampleMarkerStyle_["T2bb"] = kFullStar;
   sampleMarkerStyle_["T2tt"] = kFullStar;
   sampleMarkerStyle_["LM13"] = kFullStar;
@@ -1712,6 +1687,7 @@ void loadSamples(bool joinSingleTop=true) {
 
   sampleOwenName_["mSUGRAtanb40"] = "msugra40";
   sampleOwenName_["T1bbbb"] = "t1bbbb";
+  sampleOwenName_["T1tttt"] = "t1tttt";
   sampleOwenName_["T2bb"] = "t2bb";
   sampleOwenName_["T2tt"] = "t2tt";
   sampleOwenName_["LM13"] = "lm13";
@@ -1791,6 +1767,8 @@ sampleType getSampleType(const TString & sample , const TString & planeOrPoint="
   else if (sample.Contains("mSUGRA") && planeOrPoint=="plane") return kmSugraPlane;
   else if (sample.Contains("T1bbbb") && planeOrPoint=="point") return kSMSPoint;
   else if (sample.Contains("T1bbbb") && planeOrPoint=="plane") return kSMSPlane;
+  else if (sample.Contains("T1tttt") && planeOrPoint=="point") return kSMSPoint;
+  else if (sample.Contains("T1tttt") && planeOrPoint=="plane") return kSMSPlane;
   else if (sample.Contains("T2bb") && planeOrPoint=="point") return kSMSPoint;
   else if (sample.Contains("T2bb") && planeOrPoint=="plane") return kSMSPlane;
   else if (sample.Contains("T2tt") && planeOrPoint=="point") return kSMSPoint;
@@ -2632,7 +2610,7 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
 
 
 typedef map<pair<int,int>, pair<double,double> > susyScanYields;
-susyScanYields getSusyScanYields(const TString & sampleOfInterest,const int pdfindex=0, const TString & pdfset="") {
+susyScanYields getSusyScanYields(const TString & sampleOfInterest,const int pdfindex=0, const TString & pdfset="CTEQ") {
   cout<<" ~~ begin slow version of getSusyScanYields()"<<endl;
 
   /*
@@ -2640,7 +2618,7 @@ this function was written to draw mSugra. It can also draw T1bbbb with no proble
 The pdfindex and pdfset can also be specified, but it is not good for checking the whole mSugra plane because it is too slow
   */
 
-  if (sampleOfInterest.Contains("mSUGRA") ) assert(pdfset=="" && pdfindex==0); //just until i have time to think about it
+  if (sampleOfInterest.Contains("mSUGRA") ) assert( pdfindex==0); //just until i have time to think about it
 
   TStopwatch timer;
 
@@ -2656,12 +2634,12 @@ most of it is irrelevant for SMS, but we'll use it anyway
 
   //these are for mSugra
   TString varx="m0"; TString xtitle=varx;
-  int  nbinsx=210; float lowx=-0.5; float highx=2100-0.5;
+  int  nbinsx=310; float lowx=-0.5; float highx=3100-0.5; //UPDATED for new scans
 
   TString vary="m12"; TString ytitle=vary;
   int  nbinsy=110; float lowy=-0.5; float highy=1100-0.5;
 
-  if (sampleOfInterest== "T1bbbb" || sampleOfInterest== "T2bb" || sampleOfInterest== "T2tt") { //change binning
+  if (sampleOfInterest== "T1bbbb" || sampleOfInterest== "T2bb" || sampleOfInterest== "T2tt" || sampleOfInterest== "T1tttt") { //change binning
     //m0 -> mGl
     //m12 -> mLSP
     nbinsx=60;//scanSMSngen->GetNbinsX();
@@ -2687,6 +2665,8 @@ most of it is irrelevant for SMS, but we'll use it anyway
     thetree->Project(hname,drawstring,thecut.Data());
   }
 
+
+  cout<<"[getSusyScanYields (slow)] done counting cross-section weighted events"<<endl;
   //[for mSugra]
   //at this point, each bin contains Npass_i * sigma_i for that (m0,m12)
   //need to divide by N_i for each (m0,m12)
@@ -2701,11 +2681,12 @@ most of it is irrelevant for SMS, but we'll use it anyway
 	int m0=iscanpoint->first.first;
 	int m12=iscanpoint->first.second;
 	TH2D* thishist = scanProcessTotalsMap[make_pair(m0,m12)][pdfset];
-	int thisn = TMath::Nint(thishist->GetBinContent(i,pdfindex)); //bin 0 has the raw total events (no pdf weights)
+	//thisn does not have to be integer in the case of pdf weights
+	double thisn = thishist->GetBinContent(i,pdfindex); //bin 0 has the raw total events (no pdf weights)
 	int bin=  raw0[i]->FindBin(m0,m12);
 	double N_i_thispoint = raw0[i]->GetBinContent(bin);
 	double err_i_thispoint = raw0[i]->GetBinError(bin);
-	if (thisn == 0) {
+	if (thisn < 0.0000001) {
 	  if (N_i_thispoint > 0.0000001) cout<<"Possible problem: "<<m0<<" "<<m12<<" "<<i<<" "<< N_i_thispoint<<" "<<thisn<<endl;
 	  thisn=1; //prevent divide by zero
 	  N_i_thispoint = 0; //need to come back to what is going wrong h
@@ -2717,6 +2698,7 @@ most of it is irrelevant for SMS, but we'll use it anyway
       }
     }
     
+    cout<<"[getSusyScanYields (slow)] done dividing by Ngen"<<endl;
     //now we have Npass_i * sigma_i * lumi / Ngen_i 
     //all that is left is to make the sum over i
     
@@ -2731,6 +2713,7 @@ most of it is irrelevant for SMS, but we'll use it anyway
       //cout<<iscanpoint->first.first<<" "<<iscanpoint->first.second<<" "<<Nraw<< " +/- "<<sqrt(errraw)<<endl;
       theYields[iscanpoint->first] = make_pair(Nraw,sqrt(errraw));
     }
+    cout<<"[getSusyScanYields (slow)] done summing over subprocesses"<<endl;
   }
   else { //not mSugra
     //just copy the histogram into the data structure
@@ -2750,6 +2733,7 @@ most of it is irrelevant for SMS, but we'll use it anyway
   }
 
   //try to clean up
+  cout<<"[getSusyScanYields (slow)] cleaning up memory"<<endl;
   for (unsigned int i=0; i<raw0.size(); i++) {
     delete raw0[i];
   }
@@ -2770,11 +2754,11 @@ vector<susyScanYields> getSusyScanYields(const TString & sampleOfInterest,const 
   if (!quiet_) cout<<sampleOfInterest<<" "<<currentConfig_<<endl;
   //these are for mSugra
   TString varx="m0"; TString xtitle=varx;
-  int  nbinsx=210; float lowx=-0.5; float highx=2100-0.5;
+  int  nbinsx=310; float lowx=-0.5; float highx=3100-0.5; //UPDATED for new scans
 
   TString vary="m12"; TString ytitle=vary;
   int  nbinsy=110; float lowy=-0.5; float highy=1100-0.5;
-  if (sampleOfInterest== "T1bbbb" || sampleOfInterest== "T2bb" || sampleOfInterest== "T2tt") { //change binning
+  if (sampleOfInterest== "T1bbbb" || sampleOfInterest== "T2bb" || sampleOfInterest== "T2tt" || sampleOfInterest== "T1tttt") { //change binning
     //m0 -> mGl
     //m12 -> mLSP
     if (scanSMSngen==0) scanSMSngen = (TH2D*) files_[currentConfig_][sampleOfInterest]->Get("scanSMSngen");
@@ -2831,11 +2815,11 @@ vector<susyScanYields> getSusyScanYields(const TString & sampleOfInterest,const 
 	  int m0=iscanpoint->first.first;
 	  int m12=iscanpoint->first.second;
 	  TH2D* thishist = scanProcessTotalsMap[make_pair(m0,m12)][pdfset];
-	  int thisn = TMath::Nint(thishist->GetBinContent(i,ipdf));
+	  double thisn = thishist->GetBinContent(i,ipdf); //ngen is not necessarily an integer! 
 	  int bin=  raw0[i][ipdf]->FindBin(m0,m12);
 	  double N_i_thispoint = raw0[i][ipdf]->GetBinContent(bin);
 	  double err_i_thispoint = raw0[i][ipdf]->GetBinError(bin);
-	  if (thisn == 0) {
+	  if (thisn < 0.0000001) {
 	    if (N_i_thispoint > 0.0000001) cout<<"[new getSusyScanYields()] Possible problem: "<<m0<<" "<<m12<<" "<<i<<" "<<ipdf<<" "<< N_i_thispoint<<" "<<thisn<<endl;
 	    thisn=1; //prevent divide by zero
 	    N_i_thispoint = 0; 
