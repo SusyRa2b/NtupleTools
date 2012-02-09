@@ -747,6 +747,22 @@ float EventCalculator::getHLTMHTeff(float offMET, float offHT, uint nElectrons, 
   //eff = gr->Eval(offMET);
 
   //for 2011 full result
+  if(offHT>400 && offMET>=150 && offMET<200){
+    if( is0L && mindphin > 4 ){
+      eff =  0.832;
+    }
+    else if( isSingleE && mindphin > 4){
+      eff = 0.931;
+    }
+    else if( isSingleMu && mindphin > 4){
+      eff = 0.983;
+    }
+    else if ( is0L && mindphin <= 4){
+      eff = 0.910;
+    }
+
+
+  }
   if(offHT>400 && offMET>=200 && offMET<250){
     //    eff = 0.94;
     //eff = 0.859362; //after HT cut
