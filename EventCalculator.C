@@ -735,7 +735,8 @@ float EventCalculator::getHLTMHTeff(float offMET, float offHT, uint nElectrons, 
 
   float eff=1;
 
-  bool isSL = ((nElectrons==1 && nMuons==0)||(nElectrons==0 && nMuons==1));
+  bool isSingleE = (nElectrons==1 && nMuons==0);
+  bool isSingleMu = (nElectrons==0 && nMuons==1);
   bool is0L = (nElectrons==0 && nMuons==0);
 
   //TGraphAsymmErrors * gr=mhtgraph_;
@@ -764,8 +765,11 @@ float EventCalculator::getHLTMHTeff(float offMET, float offHT, uint nElectrons, 
     if( is0L && mindphin > 4 ){
       eff = 0.841;
     }
-    else if( isSL && mindphin > 4){
-      eff = 0.996;
+    else if( isSingleE && mindphin > 4){
+      eff = 0.991;
+    }
+    else if( isSingleMu && mindphin > 4){
+      eff = 1.0;
     }
     else if ( is0L && mindphin <= 4){
       eff = 0.936;
@@ -789,9 +793,13 @@ float EventCalculator::getHLTMHTeff(float offMET, float offHT, uint nElectrons, 
     if( is0L && mindphin > 4 ){
       eff = 0.982;
     }
-    else if( isSL && mindphin > 4){
-      eff = 0.999;
+    else if( isSingleE && mindphin > 4){
+      eff = 1.0;
     }
+    else if( isSingleMu && mindphin > 4){
+      eff = 0.998;
+    }
+
     else if ( is0L && mindphin <= 4){
       eff = 0.982; // same as nominal for now
     }
@@ -2912,7 +2920,8 @@ double EventCalculator::getHLTMHTeffBNN(float offMET, float offHT, uint nElectro
   float eff=1;
   effUp =1; effDown =1;
 
-  bool isSL = ((nElectrons==1 && nMuons==0)||(nElectrons==0 && nMuons==1));
+  bool isSingleE = (nElectrons==1 && nMuons==0);
+  bool isSingleMu = (nElectrons==0 && nMuons==1);
   bool is0L = (nElectrons==0 && nMuons==0);
 
   std::vector<double> vlumi;
@@ -3032,7 +3041,7 @@ double EventCalculator::getHLTMHTeffBNN(float offMET, float offHT, uint nElectro
 
       stddeveff = sqrt(stddeveff / 99);
 
-      effUp = eff + stddeveff;
+      effUp = (eff+stddeveff > 1) ? 1 : eff + stddeveff;
       effDown = eff - stddeveff;
     }
     else{//for MC, use the lumi-weighted average of all trigger curves
@@ -3137,7 +3146,7 @@ double EventCalculator::getHLTMHTeffBNN(float offMET, float offHT, uint nElectro
       efferr = sqrt(efferr);
       //std::cout << "final eff = " << eff << ", err = " << efferr << std::endl;
 
-      effUp = eff + efferr;
+      effUp = (eff+efferr > 1) ? 1 : eff + efferr;
       effDown = eff - efferr;
 
     }
@@ -3238,7 +3247,7 @@ double EventCalculator::getHLTMHTeffBNN(float offMET, float offHT, uint nElectro
 
       stddeveff = sqrt(stddeveff / 99);
 
-      effUp = eff + stddeveff;
+      effUp = (eff+stddeveff > 1) ? 1 : eff + stddeveff;
       effDown = eff - stddeveff;
     }
     else{//for MC, use the lumi-weighted average of all trigger curves
@@ -3344,25 +3353,138 @@ double EventCalculator::getHLTMHTeffBNN(float offMET, float offHT, uint nElectro
       efferr = sqrt(efferr);
       //std::cout << "final eff = " << eff << ", err = " << efferr << std::endl;
 
-      effUp = eff + efferr;
+      effUp = (eff+efferr > 1) ? 1 : eff + efferr;
       effDown = eff - efferr;
 
     }
   }
-  else if( offHT>400 && isSL && mindphin > 4){ // use the overall numbers
-    if(offMET>=200 && offMET<250){ 
-      eff = 0.996;
-      
-      effUp = eff + 0;//assume error in SL region negligible
-      effDown = eff - 0;
-    }
-    else if(offMET>250){
-      eff = 0.999;
 
-      effUp = eff + 0;//assume error in SL region negligible
-      effDown = eff - 0;
+  //SingleE and SingleMu samples (separately)
+  //for *both* data and MC, use the lumi-weighted average of all trigger curves
+  //(we only have the curves for the last three triggers)
+  else if( offHT>400 && isSingleE && mindphin > 4){ 
+
+    std::vector<double> vlumi_sl;
+    vlumi_sl.push_back(0.6044);//ht300_mht90
+    vlumi_sl.push_back(1.3405);//ht350_mht95
+    vlumi_sl.push_back(0.8125);//ht350_mht110  
+    double totallumi_sl = 2.7574; //this is exactly the sum of the above lumi numbers
+
+    std::vector<double> trigeffs;
+    std::vector<double> trigeffserr;
+    double stddeveff = 0, efferr = 0;
+  
+    trigeffs.push_back(HT300MHT90elNew( pfmet ));
+    for(uint i = 0; i < 100; ++i){
+      effn[i] = HT300MHT90elNew(pfmet, i, i);
+      stddeveff += (effn[i] - trigeffs.back())*(effn[i] - trigeffs.back());
+    }      
+    stddeveff = sqrt(stddeveff / 99); trigeffserr.push_back(stddeveff);
+
+    trigeffs.push_back(HT350MHT90elNew( pfmet ));
+    stddeveff = 0;
+    for(uint i = 0; i < 100; ++i){
+      effn[i] = HT350MHT90elNew(pfmet, i, i);
+      stddeveff += (effn[i] - trigeffs.back())*(effn[i] - trigeffs.back());
+    }      
+    stddeveff = sqrt(stddeveff / 99); trigeffserr.push_back(stddeveff);
+
+    trigeffs.push_back(HT350MHT110elNew( pfmet ));
+    stddeveff = 0;
+    for(uint i = 0; i < 100; ++i){
+      effn[i] = HT350MHT110elNew(pfmet, i, i);
+      stddeveff += (effn[i] - trigeffs.back())*(effn[i] - trigeffs.back());
+    }      
+    stddeveff = sqrt(stddeveff / 99); trigeffserr.push_back(stddeveff);
+
+    eff = 0;
+    for(uint i = 0; i < trigeffs.size(); ++i){
+      //std::cout << "eff " << i << " = " << trigeffs.at(i) << ", err = " << trigeffserr.at(i) << std::endl;
+      eff += trigeffs.at(i) * (vlumi_sl.at(i) / totallumi_sl);
+      efferr += trigeffserr.at(i) * trigeffserr.at(i) * (vlumi_sl.at(i)*vlumi_sl.at(i) / totallumi_sl /  totallumi_sl );
     }
+    efferr = sqrt(efferr);
+    //std::cout << "final eff = " << eff << ", err = " << efferr << std::endl;
+    
+    effUp = (eff+efferr > 1) ? 1 : eff + efferr;
+    effDown = eff - efferr;
+    
+    //if(offMET>=200 && offMET<250){ 
+    //  eff = 0.996;
+    //  
+    //  effUp = eff + 0;//assume error in SL region negligible
+    //  effDown = eff - 0;
+    //}
+    //else if(offMET>250){
+    //  eff = 0.999;
+    //
+    //  effUp = eff + 0;//assume error in SL region negligible
+    //  effDown = eff - 0;
+    //}
   }
+
+  else if( offHT>400 && isSingleMu && mindphin > 4){ 
+
+    std::vector<double> vlumi_sl;
+    vlumi_sl.push_back(0.6044);//ht300_mht90
+    vlumi_sl.push_back(1.3405);//ht350_mht95
+    vlumi_sl.push_back(0.8125);//ht350_mht110  
+    double totallumi_sl = 2.7574; //this is exactly the sum of the above lumi numbers
+
+    std::vector<double> trigeffs;
+    std::vector<double> trigeffserr;
+    double stddeveff = 0, efferr = 0;
+  
+    trigeffs.push_back(HT300MHT90muNew( pfmet ));
+    for(uint i = 0; i < 100; ++i){
+      effn[i] = HT300MHT90muNew(pfmet, i, i);
+      stddeveff += (effn[i] - trigeffs.back())*(effn[i] - trigeffs.back());
+    }      
+    stddeveff = sqrt(stddeveff / 99); trigeffserr.push_back(stddeveff);
+
+    trigeffs.push_back(HT350MHT90muNew( pfmet ));
+    stddeveff = 0;
+    for(uint i = 0; i < 100; ++i){
+      effn[i] = HT350MHT90muNew(pfmet, i, i);
+      stddeveff += (effn[i] - trigeffs.back())*(effn[i] - trigeffs.back());
+    }      
+    stddeveff = sqrt(stddeveff / 99); trigeffserr.push_back(stddeveff);
+
+    trigeffs.push_back(HT350MHT110muNew( pfmet ));
+    stddeveff = 0;
+    for(uint i = 0; i < 100; ++i){
+      effn[i] = HT350MHT110muNew(pfmet, i, i);
+      stddeveff += (effn[i] - trigeffs.back())*(effn[i] - trigeffs.back());
+    }      
+    stddeveff = sqrt(stddeveff / 99); trigeffserr.push_back(stddeveff);
+
+    eff = 0;
+    for(uint i = 0; i < trigeffs.size(); ++i){
+      //std::cout << "eff " << i << " = " << trigeffs.at(i) << ", err = " << trigeffserr.at(i) << std::endl;
+      eff += trigeffs.at(i) * (vlumi_sl.at(i) / totallumi_sl);
+      efferr += trigeffserr.at(i) * trigeffserr.at(i) * (vlumi_sl.at(i)*vlumi_sl.at(i) / totallumi_sl /  totallumi_sl );
+    }
+    efferr = sqrt(efferr);
+    //std::cout << "final eff = " << eff << ", err = " << efferr << std::endl;
+    
+    effUp = (eff+efferr > 1) ? 1 : eff + efferr;
+    effDown = eff - efferr;
+    
+    //if(offMET>=200 && offMET<250){ 
+    //  eff = 0.996;
+    //  
+    //  effUp = eff + 0;//assume error in SL region negligible
+    //  effDown = eff - 0;
+    //}
+    //else if(offMET>250){
+    //  eff = 0.999;
+    //
+    //  effUp = eff + 0;//assume error in SL region negligible
+    //  effDown = eff - 0;
+    //}
+  }
+
+
 
   return eff;
 }
@@ -5540,6 +5662,13 @@ void EventCalculator::cutflow(itreestream& stream, int maxevents=-1){
 void EventCalculator::loadEventList(std::vector<int> &vrun, std::vector<int> &vlumi, std::vector<int> &vevent){
 
   std::ifstream inFile;
+  //inFile.open("pfmht100_ormht150_eventlist_full.txt");        
+  //inFile.open("premht25_pfmht100_ormht150_eventlist_full.txt");        
+  //inFile.open("premht50_pfmht100_ormht150_eventlist_full.txt");        
+  //inFile.open("premht100_pfmht100_ormht150_eventlist_full.txt");        
+  //inFile.open("premht25_pfmht100_ormet150_eventlist_full.txt");        
+  //inFile.open("premht25_pfmht100_ormet125_eventlist_full.txt");        
+  //inFile.open("premht25_pfmht100_ormet100_eventlist_full.txt");        
   //inFile.open("eventlist_ht350_r178866_SUM.txt");        
   //inFile.open("eventlist_ht350l1fastjet_r178866_SUM.txt");        
   //inFile.open("eventlist_pfht350_r178866_SUM.txt"); 
@@ -5978,6 +6107,9 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
   //TH1F * h_ht = new TH1F("h_ht","HT",1000,0,1000);
   //TH1F * h_ht_trig = new TH1F("h_ht_trig","HT",1000,0,1000);
 
+  //TH1F * h_met = new TH1F("h_met","HT",1000,0,1000);
+  //TH1F * h_met_trig = new TH1F("h_met_trig","HT",1000,0,1000);
+
   //TH1F * h_met_den_mht75 = new TH1F("h_met_den_mht75","HT",1000,0,1000);
   //TH1F * h_met_trig_mht75 = new TH1F("h_met_trig_mht75","HT",1000,0,1000);
   //TH1F * h_met_den_mht80 = new TH1F("h_met_den_mht80","HT",1000,0,1000);
@@ -6097,8 +6229,8 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
   //int ntaggedjets_c = 0;
   //int ntaggedjets_l = 0;
 
-  int decayType;
-  int W1decayType, W2decayType;
+  //int decayType;
+  //int W1decayType, W2decayType;
   //int nSemiMu=0,nSemiEle=0,nSemiTauHad=0,nDilep=0,nHad=0,nOther=0;
 
   startTimer();
@@ -6142,8 +6274,8 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
     //		<< std::endl;
     //  }
     //}
-    decayType = getTTbarDecayType(W1decayType, W2decayType);
-    std::cout << "decaytype = " << decayType << ", W1decayType = " << W1decayType << ", W2decayType = " << W2decayType << std::endl;
+    //decayType = getTTbarDecayType(W1decayType, W2decayType);
+    //std::cout << "decaytype = " << decayType << ", W1decayType = " << W1decayType << ", W2decayType = " << W2decayType << std::endl;
 
     //if((W1decayType==13 && W2decayType==1) || (W1decayType==1 && W2decayType==13) || (W1decayType==1513 && W2decayType==1) || (W1decayType==1 && W2decayType==1513)){
     //  nSemiMu++;
@@ -6195,11 +6327,12 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
 
       npass++;
 
-      //double effUp,effDown;     
-      //std::cout << "HT = " << getHT() << ",MET = " << getMET() << ", eff = "
-      //		<< getHLTMHTeffBNN(getMET(),getHT(),countEle(),countMu(),getMinDeltaPhiMETN(3),effUp,effDown) << std::endl;
-      //std::cout << ", effUp = " << effUp << ", effDown = " << effDown << std::endl;
-      
+      double effUp,effDown;     
+      if( (countMu()==1 && countEle()==0) || (countMu()==0 && countEle()==1)){
+      	std::cout << "HT = " << getHT() << ",MET = " << getMET() << ", eff = "
+      		  << getHLTMHTeffBNN(getMET(),getHT(),countEle(),countMu(),getMinDeltaPhiMETN(3),effUp,effDown) << std::endl;
+      	std::cout << ", effUp = " << effUp << ", effDown = " << effDown << std::endl;
+      }
       //std::cout << "MET = " << getMET() << ", eff = " << getHLTMHTeff(getMET()) << std::endl;
       //std::cout << "HT = " << getHT() << ", eff = " << getHLTHTeff(getHT()) << std::endl;
 
@@ -6412,8 +6545,10 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
 	}
       }      
       */
-      /*      
-      h_ht->Fill(getHT());
+      /*          
+      //h_ht->Fill(getHT());
+      if(getHT()>400){
+      h_met->Fill(getMET());
       
       int lumi =  getLumiSection();
       int run = getRunNumber();
@@ -6431,9 +6566,10 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
       	}
       }
       if(passTrig)
-      	h_ht_trig->Fill(getHT());
-     
-      */
+      	//h_ht_trig->Fill(getHT());
+	h_met_trig->Fill(getMET());
+      }
+      */     
 
 
       /*               

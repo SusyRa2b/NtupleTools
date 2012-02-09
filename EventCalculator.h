@@ -55,6 +55,13 @@ double HT300_MHT80_v2_HT300_v9_170065_173211_sel2(std::vector<double>& inputvars
 double HT300_MHT90_v2_HT300_v9_173212_176544_sel2(std::vector<double>& inputvars, int first=0, int last=100-1);
 double HT350_MHT90_v1_HT350_v8_176545_178410_sel2(std::vector<double>& inputvars, int first=0, int last=100-1);
 double HT350_MHT110_v3_HT350_v11_178411_180252_sel2(std::vector<double>& inputvars, int first=0, int last=100-1);
+double HT300MHT90elNew(std::vector<double>& inputvars, int first=0, int last=100-1);
+double HT300MHT90muNew(std::vector<double>& inputvars, int first=0, int last=100-1);
+double HT350MHT90elNew(std::vector<double>& inputvars, int first=0, int last=100-1);
+double HT350MHT90muNew(std::vector<double>& inputvars, int first=0, int last=100-1);
+double HT350MHT110elNew(std::vector<double>& inputvars, int first=0, int last=100-1);
+double HT350MHT110muNew(std::vector<double>& inputvars, int first=0, int last=100-1);
+
 
 class EventCalculator {
 public:
