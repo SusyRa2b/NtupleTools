@@ -2,6 +2,8 @@
 
 #include "TStopwatch.h"
 
+#include "TRegexp.h"
+
 //useful for playing around with plots in interactive ROOT
 TH1D* hinteractive=0;
 TH2D* h2d=0;
@@ -143,6 +145,8 @@ public:
   ~SearchRegion();
   void Print() const;
 
+  double getLowEdgeMET();
+
   TString htSelection;
   TString metSelection;
   TString btagSelection;
@@ -161,6 +165,18 @@ void SearchRegion::Print() const {
 
 }
 
+double SearchRegion::getLowEdgeMET() {
+
+  //find MET>=xxx
+  TRegexp metge("MET>=[0-9]+");   //can't handle white space or > instead of >=
+  TRegexp numbersonly("[0-9]+");
+
+  TString metcut=  metSelection(metge);
+  TString metcutval=  metcut(numbersonly);
+
+  return metcutval.Atof();
+}
+
 TString SearchRegion::id() const {
 
   TString theid= btagSelection;
@@ -171,7 +187,11 @@ TString SearchRegion::id() const {
 std::vector<SearchRegion > searchRegions_;
 std::vector<SearchRegion > sbRegions_;
 bool searchRegionsSet_=false;
-void setSearchRegions() {
+void setSearchRegions( TString  which="") {
+  //note that the search regions can be set exactly once per session. after that they will not be overridden by
+  //further calls to this function
+  //this is intentional...since this code is ill-designed and there are zillions of calls to setSearchRegions()
+  //scattered throughout the code. This way the user is ensured that the first call has primacy
   if (searchRegionsSet_) return;
   
   //nb: some of the code *depends* on the fact that for there are equal numbers of corresponding
@@ -180,70 +200,125 @@ void setSearchRegions() {
   //also, for style reasons the 'owenId' should not contain the number of b tags.
   //everywhere that we use the owenId as an identifier, we combine with the number of b tags
 
+  // i honestly can't remember if the 'owenId' must match between SB and SIG regions
 
+  if (which=="") {cout<<"Setting default 'Moriond 2012' search regions"<<endl; which="Moriond";}
+  else    cout<<"Setting search regions to set: "<<which<<endl;
+
+  //27 Jan 2012 -- (preliminary) regions for testing shapes of background....
+  if (which=="METbins") {
+    sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=200&&MET<250","METBin1",false));
+    searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=250 &&MET<300","METBin1"));
+    
+    sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=200&&MET<250","METBin2",false));
+    searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=300 &&MET<350","METBin2"));
+    
+    sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=200&&MET<250","METBin3",false));
+    searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=350","METBin3"));
+  }
+  else if (which=="METfinebins") {
+    sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=200&&MET<250","METFineBin1",false));
+    searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=250 &&MET<300","METFineBin1"));
+    
+    sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=200&&MET<250","METFineBin2",false));
+    searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=300 &&MET<350","METFineBin2"));
+    
+    sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=200&&MET<250","METFineBin3",false));
+    searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=350 &&MET<400","METFineBin3"));
+
+    sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=200&&MET<250","METFineBin4",false));
+    searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=400 &&MET<450","METFineBin4"));
+
+    sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=200&&MET<250","METFineBin5",false));
+    searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=450 &&MET<500","METFineBin5"));
+
+    sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=200&&MET<250","METFineBin6",false));
+    searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=500","METFineBin6"));
+  }
+//These are the nominal search regions for the "Moriond 2012" analysis
+  else if (which=="Moriond") {
   //oct25
-  sbRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=200&&MET<250","Loose",false));
-  searchRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=250","Loose")); //1BL
+    
+    sbRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=200&&MET<250","Loose",false));
+    searchRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=250","Loose")); //1BL
+    
+    sbRegions_.push_back( SearchRegion( "ge1b","HT>=500","MET>=200&&MET<250","Tight",false));
+    searchRegions_.push_back( SearchRegion( "ge1b","HT>=500","MET>=500","Tight")); //1BT
+    
+    sbRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=200&&MET<250","Loose",false));
+    searchRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=250","Loose")); //2BL
+    
+    sbRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=200&&MET<250","Tight",false));
+    searchRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=300","Tight")); //2BT
+    
+    sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=200&&MET<250","Loose",false));
+    searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=250","Loose")); //3B
 
-  sbRegions_.push_back( SearchRegion( "ge1b","HT>=500","MET>=200&&MET<250","Tight",false));
-  searchRegions_.push_back( SearchRegion( "ge1b","HT>=500","MET>=500","Tight")); //1BT
-
-  sbRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=200&&MET<250","Loose",false));
-  searchRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=250","Loose")); //2BL
-
-  sbRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=200&&MET<250","Tight",false));
-  searchRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=300","Tight")); //2BT
-
-  sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=200&&MET<250","Loose",false));
-  searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=250","Loose")); //3B
-
-
-/*
-  //Loose exclusive regions
-  sbRegions_.push_back( SearchRegion( "eq1b","HT>=400","MET>=200&&MET<250","Loose",false));
-  searchRegions_.push_back( SearchRegion( "eq1b","HT>=400","MET>=250","Loose")); //1BL
-
-  sbRegions_.push_back( SearchRegion( "eq2b","HT>=400","MET>=200&&MET<250","Loose",false));
-  searchRegions_.push_back( SearchRegion( "eq2b","HT>=400","MET>=250","Loose")); //2BL
-
-  sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=200&&MET<250","Loose",false));
-  searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=250","Loose")); //3B
- 
-  //2BT exclusive regions
-  sbRegions_.push_back( SearchRegion( "eq1b","HT>=600","MET>=200&&MET<250","TightHT",false));
-  searchRegions_.push_back( SearchRegion( "eq1b","HT>=600","MET>=300","TightHT")); //2BT
-
-  sbRegions_.push_back( SearchRegion( "eq2b","HT>=600","MET>=200&&MET<250","TightHT",false));
-  searchRegions_.push_back( SearchRegion( "eq2b","HT>=600","MET>=300","TightHT")); //2BT
-
-  sbRegions_.push_back( SearchRegion( "ge3b","HT>=600","MET>=200&&MET<250","TightHT",false));
-  searchRegions_.push_back( SearchRegion( "ge3b","HT>=600","MET>=300","TightHT")); //2BT
-
-  //1BT exclusive regions
-  sbRegions_.push_back( SearchRegion( "eq1b","HT>=500","MET>=200&&MET<250","TightMET",false));
-  searchRegions_.push_back( SearchRegion( "eq1b","HT>=500","MET>=500","TightMET")); //1BT
-
-  sbRegions_.push_back( SearchRegion( "eq2b","HT>=500","MET>=200&&MET<250","TightMET",false));
-  searchRegions_.push_back( SearchRegion( "eq2b","HT>=500","MET>=500","TightMET")); //1BT
-
-  sbRegions_.push_back( SearchRegion( "ge3b","HT>=500","MET>=200&&MET<250","TightMET",false));
-  searchRegions_.push_back( SearchRegion( "ge3b","HT>=500","MET>=500","TightMET")); //1BT
-*/  
-
-  /*
-  //2011 Summer result
-  sbRegions_.push_back( SearchRegion( "ge1b","HT>=350","MET>=150&&MET<200","Loose",false)); //loose SB
-  searchRegions_.push_back( SearchRegion( "ge1b","HT>=350","MET>=200","Loose")); //loose Sig
-
-  sbRegions_.push_back( SearchRegion( "ge1b","HT>=500","MET>=150&&MET<200","Tight",false)); //tight SB
-  searchRegions_.push_back( SearchRegion( "ge1b","HT>=500","MET>=300","Tight")); //tight Sig
-
-  sbRegions_.push_back( SearchRegion( "ge2b","HT>=350","MET>=150&&MET<200","Loose",false)); //loose SB
-  searchRegions_.push_back( SearchRegion( "ge2b","HT>=350","MET>=200","Loose")); //loose Sig
-
-  sbRegions_.push_back( SearchRegion( "ge2b","HT>=500","MET>=150&&MET<200","Tight",false)); //tight SB
-  searchRegions_.push_back( SearchRegion( "ge2b","HT>=500","MET>=300","Tight")); //tight Sig
-  */
+  }
+  else if (which=="MoriondLowSB") {
+    //move SB down to 150-200
+    sbRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=150&&MET<200","LooseLowSB",false));
+    searchRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=250","LooseLowSB")); //1BL
+    
+    sbRegions_.push_back( SearchRegion( "ge1b","HT>=500","MET>=150&&MET<200","TightLowSB",false));
+    searchRegions_.push_back( SearchRegion( "ge1b","HT>=500","MET>=500","TightLowSB")); //1BT
+    
+    sbRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=150&&MET<200","LooseLowSB",false));
+    searchRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=250","LooseLowSB")); //2BL
+    
+    sbRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=150&&MET<200","TightLowSB",false));
+    searchRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=300","TightLowSB")); //2BT
+    
+    sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=150&&MET<200","LooseLowSB",false));
+    searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=250","LooseLowSB")); //3B
+  }
+  else if (which=="bShape") {
+    //Tentative search regions for the b-shape analysis
+    //Loose exclusive regions
+    sbRegions_.push_back( SearchRegion( "eq1b","HT>=400","MET>=200&&MET<250","Loose",false));
+    searchRegions_.push_back( SearchRegion( "eq1b","HT>=400","MET>=250","Loose")); //1BL
+    
+    sbRegions_.push_back( SearchRegion( "eq2b","HT>=400","MET>=200&&MET<250","Loose",false));
+    searchRegions_.push_back( SearchRegion( "eq2b","HT>=400","MET>=250","Loose")); //2BL
+    
+    sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=200&&MET<250","Loose",false));
+    searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=250","Loose")); //3B
+    
+    //2BT exclusive regions
+    sbRegions_.push_back( SearchRegion( "eq1b","HT>=600","MET>=200&&MET<250","TightHT",false));
+    searchRegions_.push_back( SearchRegion( "eq1b","HT>=600","MET>=300","TightHT")); //2BT
+    
+    sbRegions_.push_back( SearchRegion( "eq2b","HT>=600","MET>=200&&MET<250","TightHT",false));
+    searchRegions_.push_back( SearchRegion( "eq2b","HT>=600","MET>=300","TightHT")); //2BT
+    
+    sbRegions_.push_back( SearchRegion( "ge3b","HT>=600","MET>=200&&MET<250","TightHT",false));
+    searchRegions_.push_back( SearchRegion( "ge3b","HT>=600","MET>=300","TightHT")); //2BT
+    
+    //1BT exclusive regions
+    sbRegions_.push_back( SearchRegion( "eq1b","HT>=500","MET>=200&&MET<250","TightMET",false));
+    searchRegions_.push_back( SearchRegion( "eq1b","HT>=500","MET>=500","TightMET")); //1BT
+    
+    sbRegions_.push_back( SearchRegion( "eq2b","HT>=500","MET>=200&&MET<250","TightMET",false));
+    searchRegions_.push_back( SearchRegion( "eq2b","HT>=500","MET>=500","TightMET")); //1BT
+    
+    sbRegions_.push_back( SearchRegion( "ge3b","HT>=500","MET>=200&&MET<250","TightMET",false));
+    searchRegions_.push_back( SearchRegion( "ge3b","HT>=500","MET>=500","TightMET")); //1BT
+  }
+  else if (which=="Summer2011") {
+    //2011 Summer result
+    sbRegions_.push_back( SearchRegion( "ge1b","HT>=350","MET>=150&&MET<200","Loose",false)); //loose SB
+    searchRegions_.push_back( SearchRegion( "ge1b","HT>=350","MET>=200","Loose")); //loose Sig
+    
+    sbRegions_.push_back( SearchRegion( "ge1b","HT>=500","MET>=150&&MET<200","Tight",false)); //tight SB
+    searchRegions_.push_back( SearchRegion( "ge1b","HT>=500","MET>=300","Tight")); //tight Sig
+    
+    sbRegions_.push_back( SearchRegion( "ge2b","HT>=350","MET>=150&&MET<200","Loose",false)); //loose SB
+    searchRegions_.push_back( SearchRegion( "ge2b","HT>=350","MET>=200","Loose")); //loose Sig
+    
+    sbRegions_.push_back( SearchRegion( "ge2b","HT>=500","MET>=150&&MET<200","Tight",false)); //tight SB
+    searchRegions_.push_back( SearchRegion( "ge2b","HT>=500","MET>=300","Tight")); //tight Sig
+  }
+  else assert(0);
 
   searchRegionsSet_=true;
 }
@@ -593,6 +668,26 @@ struct texData {
 //  btag+owenId  background cat
 map<TString, map<TString, texData> > resultsMap_;
 
+//again, this should be C++ style rather than C style, but let's just do it like this for now
+//in other words, resultsMap_ should be an instance of a class that has a ::writeToText() function...
+void writeResultsMapToText(TString filename) {
+
+  ofstream outfile(filename.Data());
+
+  for (map<TString, map<TString, texData> >::iterator ibin = resultsMap_.begin() ; ibin!=resultsMap_.end() ; ++ibin) {
+    map<TString, texData> thisbin = ibin->second;
+    for ( map<TString, texData> ::iterator ibackground = thisbin.begin(); ibackground!= thisbin.end(); ++ibackground) {
+      outfile<<ibin->first<<" "<<ibackground->first<<" "
+	     <<ibackground->second.value<<" "
+	     <<ibackground->second.statError<<" "
+	     <<ibackground->second.systError<<" "
+	     <<ibackground->second.trigErrorPlus<<" "
+	     <<ibackground->second.trigErrorMinus<<" "
+	     <<endl;
+    }
+  }
+
+}
 
 void addResults(TString id, TString addcat1, TString addcat2, TString newcat) {
 
@@ -638,6 +733,7 @@ TString formatLatex(const texData & data) {
 
   return TString(out);
 }
+
 
 
 //ok, i would rather implement this as a C++ style class instead of a C style function, but for now I'll do the easiest thing
@@ -1421,6 +1517,7 @@ void setColorScheme(const TString & name) {
     sampleColor_["PythiaPUQCD"] = kYellow;
     sampleColor_["PythiaPUQCDFlat"] = kYellow;
     sampleColor_["TTbarJets"]=kRed+1;
+    sampleColor_["ttbar"]=kRed+1;
     sampleColor_["TTbarJets-semiMu"]=kViolet;
     sampleColor_["TTbarJets-semiEle"]=kViolet-9;
     sampleColor_["TTbarJets-semiTauHad"]=kViolet-7;
@@ -1456,6 +1553,7 @@ void setColorScheme(const TString & name) {
     sampleColor_["PythiaPUQCD"] =2;
     sampleColor_["PythiaPUQCDFlat"] =2;
     sampleColor_["TTbarJets"]=4;
+    sampleColor_["ttbar"]=4;
     sampleColor_["TTbarJets-semiMu"]=kViolet;
     sampleColor_["TTbarJets-semiEle"]=kViolet-9;
     sampleColor_["TTbarJets-semiTauHad"]=kViolet-7;
@@ -1574,11 +1672,11 @@ void loadSamples(bool joinSingleTop=true) {
   //FOR PLOTS
   ////////////
 
-//    configDescriptions_.setDefault("CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
-//    configDescriptions_.setCorrected("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
+    configDescriptions_.setDefault("CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
+    configDescriptions_.setCorrected("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
    
   //Only for signal systematics
-       
+/*       
   configDescriptions_.setDefault("CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff03_HLTEff0");
   configDescriptions_.setCorrected("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff03_HLTEff0");
 
@@ -1603,6 +1701,7 @@ void loadSamples(bool joinSingleTop=true) {
   configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffdown3_HLTEff0",
   				   "CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffup3_HLTEff0");
     
+*/
   //HLT eff //never use this one
   //    configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffdown",
   //"CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffup");
@@ -1624,11 +1723,12 @@ void loadSamples(bool joinSingleTop=true) {
   sampleLabel_["T2tt"] = "T2tt";
   sampleLabel_["LM13"] = "LM13";
   sampleLabel_["LM9"] = "LM9";
-  sampleLabel_["QCD"] = "QCD (madgraph)";
+  sampleLabel_["QCD"] = "QCD";
   sampleLabel_["PythiaQCD"] = "QCD (no PU)";
   sampleLabel_["PythiaPUQCDFlat"] = "QCD"; 
   sampleLabel_["PythiaPUQCD"] = "QCD";
   sampleLabel_["TTbarJets"]="t#bar{t}";
+  sampleLabel_["ttbar"]="t#bar{t}+W+t"; //for DD ttwt
   sampleLabel_["TTbarJets-semiMu"]="t#bar{t}:semi-#mu";
   sampleLabel_["TTbarJets-semiEle"]="t#bar{t}:semi-e";
   sampleLabel_["TTbarJets-semiTauHad"]="t#bar{t}:semi-#tau(#rightarrow had)";
@@ -1663,6 +1763,7 @@ void loadSamples(bool joinSingleTop=true) {
   sampleMarkerStyle_["PythiaPUQCDFlat"] = kOpenCircle;  
   sampleMarkerStyle_["PythiaPUQCD"] = kOpenCircle;
   sampleMarkerStyle_["TTbarJets"]= kFullSquare;
+  sampleMarkerStyle_["ttbar"]= kFullSquare;
   sampleMarkerStyle_["TTbarJets-semiMu"]= kFullSquare;
   sampleMarkerStyle_["TTbarJets-semiEle"]= kFullSquare;
   sampleMarkerStyle_["TTbarJets-semiTauHad"]= kFullSquare;
@@ -1697,6 +1798,7 @@ void loadSamples(bool joinSingleTop=true) {
   sampleOwenName_["PythiaPUQCDFlat"] = "qcd"; 
   sampleOwenName_["PythiaPUQCD"] = "qcd";
   sampleOwenName_["TTbarJets"]="ttbar";
+  sampleOwenName_["ttbar"]="ttbar";
   sampleOwenName_["SingleTop"] = "singletop";
   sampleOwenName_["WJets"] = "wjets";
   sampleOwenName_["WJetsZ2"] = "wjets";
@@ -1777,6 +1879,20 @@ sampleType getSampleType(const TString & sample , const TString & planeOrPoint="
   return kMC;
 
 }
+
+//beginning of something i've wanted for a long time. functions that return some standard cuts
+TCut getLeptonVetoCut() {
+  TCut a = "nElectrons==0 && nMuons==0"; //default cut
+  
+  //require lost lepton due to pT (ttbar only)
+  //TCut a="nElectrons==0 && nMuons==0 && (decayType==201102 ||decayType==101102 ||decayType==101302 ||decayType==201302)";
+  return a;
+}
+TCut getSingleLeptonCut() {
+  TCut sl = "(((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && MT_Wlep>=0&&MT_Wlep<100)";
+  return sl;
+}
+
 
 //if something is passed to varbins, then low and high will be ignored
 float drawSimple(const TString var, const int nbins, const double low, const double high, const TString filename, 

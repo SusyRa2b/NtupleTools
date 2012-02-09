@@ -69,7 +69,7 @@ in order to get one file per sample.
   //TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35d/";
   //TString inputPath = "/cu1/joshmt/reducedTrees/test/"; 
 TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35g/";
-TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35g/";
+TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35h/";
 
 //-- reducedTrees for Oct 25 SUSY meeting. 3464.581/pb. 
 //TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35a/";
@@ -100,7 +100,6 @@ TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35g/";
 
 //the cutdesc string is now defined in loadSamples()
 
-//double lumiScale_ = 1091.891;
 //double lumiScale_ = 1143; //official summer conf lumi
 //double lumiScale_ = 3464.581;//oct25
 double lumiScale_ = 4683.719;//nov4
@@ -111,8 +110,10 @@ const bool reweightLSBdata_=true; //whether or not LSB data is reweighted based 
 const bool useScaleFactors_=true; //whether or not to use MC scale factors when doing subtraction for data-driven estimates
 const bool useBNNEffCurves_=false; 
 const bool btaggedLSB_=true;
+const bool use1B_SL_=false; // use ge1b selection for SL sample in ttbar method
 
-float eff_SB_MHT_             = 0.841;   
+//nominal numbers used for frozen AN etc. SB corresponds to 200-250 GeV
+float eff_SB_MHT_             = 0.841;
 float eff_SB_MHT_err_[2]      = {0.059, 0.090};
 float eff_SB_ldp_MHT_         = 0.936;   
 float eff_SB_ldp_MHT_err_[2]  = {0.034, 0.118};
@@ -125,7 +126,30 @@ float eff_SIG_SL_MHT_err_[2]  = {0.001, 0.001};
 float eff_SB_SL_MHT_          = 0.996; 
 float eff_SB_SL_MHT_err_[2]   = {0.002, 0.003};
 
+//150-200 GeV SB
+// CAREFUL -- if we really move to this region this we have to split e and mu in the SL SB
+// float eff_SB_MHT_             = 0.832;
+// float eff_SB_MHT_err_[2]      = {0.042, 0.054};
+// float eff_SB_ldp_MHT_         = 0.91;   
+// float eff_SB_ldp_MHT_err_[2]  = {0.026, 0.059};
+// float eff_SIG_MHT_            = 0.982; 
+// float eff_SIG_MHT_err_[2]     = {0.012, 0.036};
+// float eff_SIG_ldp_MHT_        = eff_SIG_MHT_; 
+// float eff_SIG_ldp_MHT_err_[2] = {eff_SIG_MHT_err_[0], eff_SIG_MHT_err_[1]}; //due to low stas in SIG-LDP, use the SIG numbers for now.
+// float eff_SIG_SL_MHT_         = 0.999; 
+// float eff_SIG_SL_MHT_err_[2]  = {0.001, 0.001};
+// float eff_SB_SL_MHT_          = 0.996;  //not really true but need new numbers
+// float eff_SB_SL_MHT_err_[2]   = {0.002, 0.003};
 
+
+void RSL(double SIG, double SB) {
+
+  double rsl = SIG/SB;
+  double err = jmt::errAoverB(SIG,sqrt(SIG),SB,sqrt(SB));
+
+  cout<<"R_SL = "<<rsl<< " +/- "<<err<<endl;
+
+}
 
 void countInBoxesBreakdown(const SearchRegion & region) {
   //shows number of events from each background and signal in the 6 boxes
@@ -404,24 +428,13 @@ void runCountInBoxesMC() {
 }
 
 
-void averageZ() { //jmt -- delete this code?
-  cout<<"Loose SIG ge1b"<<endl;
-  double zn[]={22.8,17.9};
-  double ze[]={11.6,10.6};
-  jmt::weightedMean(2,zn,ze);
 
-  cout<<"Tight SIG ge1b"<<endl;
-  double zn2[]={3.4,3.6};
-  double ze2[]={2.2,2.3};
-  jmt::weightedMean(2,zn2,ze2);
-
-
-
-}
-
-std::pair<double,double> ABCD_njetRW(TString prescontrol, TString physcontrol, TString Acutjm, TString Bcutjm, TString Ccutjm, TString Dcutjm){
+std::pair<double,double> ABCD_njetRW(TString prescontrol, TString physcontrol, TString Acutjm, TString Bcutjm, TString Ccutjm, TString Dcutjm, TString lsbbtagsf=""){
   cout << "Running closure with MC jet multiplicity reweighted to match data." << endl;
   
+  bool quietornot = quiet_;
+  setQuiet(false);
+
   TString histfilename = "dummy.root";
   TFile fh(histfilename,"RECREATE");//will delete old root file if present 
   fh.Close(); //going to open only when needed 
@@ -490,11 +503,12 @@ std::pair<double,double> ABCD_njetRW(TString prescontrol, TString physcontrol, T
   //////////////////////////////////////////
   lumiScale_ = physlumiscale;
   if(useScaleFactors_) {
-    if (btaggedLSB_)   btagSFweight_ = btagSFweight_nom;
+    if (btaggedLSB_)   btagSFweight_ = (lsbbtagsf!="") ?  lsbbtagsf : btagSFweight_nom;
     else btagSFweight_ = "prob0";
   }
 
   selection_ = Acutjm;
+
   drawSimple("njets30",jmnbins,jmbins,"dummy.root", "","PythiaPUQCD");
   TH1D* hJMAqcd = (TH1D*)hinteractive->Clone("hJMAqcd");
   
@@ -620,7 +634,7 @@ std::pair<double,double> ABCD_njetRW(TString prescontrol, TString physcontrol, T
     rwErr2 += QAterm*QAterm*QAkerr*QAkerr + QBterm*QBterm*QBkerr*QBkerr + QCterm*QCterm*QCkerr*QCkerr + QDterm*QDterm*QDkerr*QDkerr;
     rwErr2 += Qterm*Qterm*Qkerr*Qkerr + nterm*nterm*nkerr*nkerr + Rterm*Rterm*Rkerr*Rkerr + rterm*rterm*rkerr*rkerr + Pterm*Pterm*Pkerr*Pkerr;
   }
-  
+  setQuiet(quietornot);
   //////////////////////////////////////////////////////////////////
   cout << "njetrw: ABCD: " << Arw << " " << Brw << " " << Crw << " " << Drw << endl; 
   cout << "njetrw: BD/A (rw): " << Brw*Drw/Arw << endl;
@@ -639,6 +653,7 @@ TString getLSBbsel(const SearchRegion & r) {
     if (r.btagSelection.Contains("3")) lsbbsel = "ge2b"; //use >=2b in place of >=3b
     else lsbbsel = r.btagSelection;
   }
+
   return lsbbsel;
 }
 
@@ -727,11 +742,13 @@ std::pair<double,std::vector<double> > anotherABCD( const SearchRegion & region,
     thebnnMHTeffMode_ = kOff;//dealt with later
     currentConfig_=configDescriptions_.getCorrected(); //add JERbias
 
-    if(metselection=="MET>=200&&MET<250"){
+    if(metselection=="MET>=200&&MET<250" || metselection=="MET>=150&&MET<200") {
+      //      cout<<"Using SB efficiency corrections for QCD"<<endl;
       eff_MHT     = eff_SB_MHT_;      eff_MHT_err[0] = eff_SB_MHT_err_[0];         eff_MHT_err[1] = eff_SB_MHT_err_[1];
       eff_ldp_MHT = eff_SB_ldp_MHT_ ; eff_ldp_MHT_err[0] = eff_SB_ldp_MHT_err_[0]; eff_ldp_MHT_err[1] = eff_SB_ldp_MHT_err_[1];
     }
     else{
+      //      cout<<"Using SIG efficiency corrections for QCD"<<endl;
       eff_MHT     = eff_SIG_MHT_;      eff_MHT_err[0] = eff_SIG_MHT_err_[0];         eff_MHT_err[1] = eff_SIG_MHT_err_[1];
       eff_ldp_MHT = eff_SIG_ldp_MHT_ ; eff_ldp_MHT_err[0] = eff_SIG_ldp_MHT_err_[0]; eff_ldp_MHT_err[1] = eff_SIG_ldp_MHT_err_[1];
     }
@@ -782,7 +799,8 @@ std::pair<double,std::vector<double> > anotherABCD( const SearchRegion & region,
   
   SRMET = SRMET && ge1b && triggerCut; //apply physics trigger and physics b cut in high MET region
   
-  TCut baseline = "cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1";
+  //  TCut baseline = "cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1";
+  TCut baseline = TCut("cutPV==1 && cut3Jets==1") && getLeptonVetoCut();
   baseline = baseline&&HTcut;
   TCut cleaning = "weight<1000 && passCleaning==1";
   
@@ -806,7 +824,7 @@ std::pair<double,std::vector<double> > anotherABCD( const SearchRegion & region,
   //if !useScaleFactors_, LSBbtag is the real cut, and LSBbtagSFweight is ""
 
   char cutstring1[100];
-  sprintf(cutstring1,"MET>= %.0f && MET < %.0f", 50+SBshift,100+SBshift);
+  sprintf(cutstring1,"MET>= %.0f && MET < %.0f", 50.0+SBshift,100.0);
   TCut SBMET = TCut(cutstring1)&&triggerCutLSB&&LSBbtag;
 
 
@@ -829,9 +847,10 @@ std::pair<double,std::vector<double> > anotherABCD( const SearchRegion & region,
   TString Acutjm, Bcutjm, Dcutjm, SIGcutjm;
   
   //baselines used in lsb and njet reweighting -- notice no mdpN or btag cut!
-  TCut physcontrol =  TCut("cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>200") && triggerCut && triggerCutLSBInverted && HTcut && cleaning;
+  //  TCut physcontrol =  TCut("cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>200") && triggerCut && triggerCutLSBInverted && HTcut && cleaning;
+  TCut physcontrol =  TCut("cutPV==1 && cut3Jets==1 && MET>200") && triggerCut && triggerCutLSBInverted && HTcut && cleaning && getLeptonVetoCut();
   TString physcontrolstring; physcontrolstring += physcontrol;
-  TCut prescontrol =  TCut("cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=50 && MET<100") && triggerCutLSB && HTcut && cleaning;
+  TCut prescontrol =  TCut("cutPV==1 && cut3Jets==1 && MET>=50 && MET<100") && triggerCutLSB && HTcut && cleaning && getLeptonVetoCut();
   TString prescontrolstring; prescontrolstring += prescontrol;
 
   //FOR LSB
@@ -1081,7 +1100,7 @@ std::pair<double,std::vector<double> > anotherABCD( const SearchRegion & region,
   }
 
   
-  if(doNjetRW){ return ABCD_njetRW(prescontrolstring, physcontrolstring, Acutjm, Bcutjm, SIGcutjm, Dcutjm);}
+  if(doNjetRW){ return ABCD_njetRW(prescontrolstring, physcontrolstring, Acutjm, Bcutjm, SIGcutjm, Dcutjm,LSBbtagSFweight);}
   
   //now calculate (B/A)*D=R*D
   double RLSB_UW = B/A; //unweighted
@@ -1165,7 +1184,7 @@ std::pair<double,std::vector<double> > anotherABCD( const SearchRegion & region,
 
     estimateerrTrigPlus  = sqrt(delta_up*delta_up + delta_up2*delta_up2);
     estimateerrTrigMinus = sqrt(delta_down*delta_down + delta_down2*delta_down2);
-    //std::cout << "TrigError: + " << deltaEstimateTrigPlus << " - " << deltaEstimateTrigMinus << std::endl;
+    //    std::cout << "TrigError: trig+ " << estimateerrTrigPlus << " trig- " << estimateerrTrigMinus << std::endl;
   }
 
   double closureStat2 = datamode? 0: jmt::errAoverB(SIG,SIGerr,estimate,estimateerr);
@@ -1280,6 +1299,9 @@ void testQCD(unsigned int i) {
 //the vector is list of values for all of the search and sb regions (not a very good approach)
 std::map<TString, std::vector<double> > qcdSystErrors;
 void runDataQCD2011(const bool forOwen=false) {
+
+  const bool doNJetRWClosure = true; //should usually be true; set it to false only to save time
+  if (!doNJetRWClosure) cout<<"Warning! njet reweighting for closure test is turned off!"<<endl;
 
   setSearchRegions();
   assert(sbRegions_.size() == searchRegions_.size());
@@ -1401,23 +1423,27 @@ void runDataQCD2011(const bool forOwen=false) {
   }
   
   cout<<" == Running QCD closure test =="<<endl;
-  runClosureTest2011(qcdSystErrors,true);
+  runClosureTest2011(qcdSystErrors,doNJetRWClosure);
   
   cout<<" == QCD systematics summary =="<<endl;
+  /*
+    stuffing the alternating SB and SIG into a vector was ugly, so here we have to be careful if we want to print out something
+    human-readable as a label. Also we are hard-coding the fact that the *odd* elements are SIG
+  */
   for (unsigned int j=0; j<n.size(); j++) {
+    int index = ( j - (j%2))/2;
+    SearchRegion thisregion = (j%2==0) ? sbRegions_.at(index) : searchRegions_.at(index);
     if( reweightLSBdata_){
       qcdSystErrors["Total"].push_back( sqrt( pow(qcdSystErrors["MCsub"].at(j),2) +  pow(qcdSystErrors["Closure"].at(j),2) + pow(qcdSystErrors["SBshift"].at(j),2) +  pow(qcdSystErrors["LSBrw"].at(j),2)  ));
-      cout<<j<<"\t& $"<<qcdSystErrors["MCsub"].at(j)<<"$ & $"<<qcdSystErrors["Closure"].at(j)<<"$ & $"<<qcdSystErrors["SBshift"].at(j)<<"$ & $"<<qcdSystErrors["LSBrw"].at(j) << "$ & $" <<qcdSystErrors["Total"].at(j)<< "$ \\\\" << endl;
+      cout<<thisregion.id() <<"\t& $"<<qcdSystErrors["MCsub"].at(j)<<"$ & $"<<qcdSystErrors["Closure"].at(j)<<"$ & $"<<qcdSystErrors["SBshift"].at(j)<<"$ & $"<<qcdSystErrors["LSBrw"].at(j) << "$ & $" <<qcdSystErrors["Total"].at(j)<< "$ \\\\" << endl;
     }
     else{
       qcdSystErrors["Total"].push_back( sqrt( pow(qcdSystErrors["MCsub"].at(j),2) +  pow(qcdSystErrors["Closure"].at(j),2)+ pow(qcdSystErrors["SBshift"].at(j),2)));
-      cout<<j<<"\t& $"<<qcdSystErrors["MCsub"].at(j)<<"$ & $"<<qcdSystErrors["Closure"].at(j)<<"$ & $"<<qcdSystErrors["SBshift"].at(j)<<"$ & $"<<qcdSystErrors["Total"].at(j)<< "$ \\\\"<< endl;
+      cout<<thisregion.id()<<"\t& $"<<qcdSystErrors["MCsub"].at(j)<<"$ & $"<<qcdSystErrors["Closure"].at(j)<<"$ & $"<<qcdSystErrors["SBshift"].at(j)<<"$ & $"<<qcdSystErrors["Total"].at(j)<< "$ \\\\"<< endl;
     }
 
-    //here is where the terrible design comes back and bites me....
-    //we only want to fill this data for the SIG regions, but the loop over the elements of n alternates between sig and sb
-    //the only way to deal with it is to know that the *odd* elements are SIG
-    if (j%2!=0) resultsMap_[ searchRegions_[(j-1)/2].id()]["QCD"].systError = 0.01*qcdSystErrors["Total"].at(j)*resultsMap_[ searchRegions_[(j-1)/2].id()]["QCD"].value;
+    //we only want to fill this data for the SIG regions
+    if (thisregion.isSIG) resultsMap_[ thisregion.id()]["QCD"].systError = 0.01*qcdSystErrors["Total"].at(j)*resultsMap_[ thisregion.id()]["QCD"].value;
     //note that the qcdSystErrors is in %, so I need to convert to a number of events here
   }
   
@@ -1533,10 +1559,26 @@ modifications for SHAPE analysis: (bShape = true)
       zv[0] = 3.8; ze[0]=2.7;
       zsbsyst = 0.0;
     }
-    else if (qcdsubregion.owenId == "Loose" && qcdsubregion.btagSelection=="ge3b") {
+    else if ( (qcdsubregion.owenId == "Loose" || qcdsubregion.owenId.Contains( "METBin")|| qcdsubregion.owenId.Contains( "METFineBin"))  && qcdsubregion.btagSelection=="ge3b") {
       doMean=false;//averaging already done
       zv[0] = 1.9; ze[0]=2.8;
       zsbsyst = 0.0;   
+    }
+    //for 150-200 GeV SB
+    else if (qcdsubregion.owenId == "LooseLowSB" && qcdsubregion.btagSelection=="ge1b") {
+      doMean=false;   zv[0] = 116.7; ze[0]=26.9;    zsbsyst = 0.0;
+    }
+    else if (qcdsubregion.owenId == "TightLowSB" && qcdsubregion.btagSelection=="ge1b") {
+      doMean=false;   zv[0] = 58.9; ze[0]=15.8;    zsbsyst = 0.0;
+    }
+    else if (qcdsubregion.owenId == "LooseLowSB" && qcdsubregion.btagSelection=="ge2b") {
+      doMean=false;   zv[0] = 19.5; ze[0]=12.9;    zsbsyst = 0.0;
+    }
+    else if (qcdsubregion.owenId == "TightLowSB" && qcdsubregion.btagSelection=="ge2b") {
+      doMean=false;   zv[0] = 5.0; ze[0]=3.5;    zsbsyst = 0.0;
+    }
+    else if (qcdsubregion.owenId == "LooseLowSB" && qcdsubregion.btagSelection=="ge3b") {
+      doMean=false;   zv[0] = 2.7; ze[0]=3.9;    zsbsyst = 0.0;
     }
     else if (qcdsubregion.owenId == "Loose" && qcdsubregion.btagSelection=="eq1b") {
       doMean=false;//averaging already done
@@ -1638,13 +1680,14 @@ modifications for SHAPE analysis: (bShape = true)
   
   // --  count events
   TCut btagcut = "nbjetsCSVM>=1";
-  TCut btagcut_1b = "nbjetsCSVM==1"; //for the new shape analysis
+  TCut btagcut_1b = bShape ? "nbjetsCSVM==1" : "nbjetsCSVM>=1"; //for the new shape analysis (and also for checks with a ge1b SL sample)
   btagSFweight_="1";
   TString btagSFweight=""; //we're going to have to switch this one in and out of the global var
   TString btagSFweight_1b="";
   if (useScaleFactors_) {
     btagcut="1";
-    btagcut_1b="1"; btagSFweight_1b="prob1"; // shape
+    if (bShape)    {btagcut_1b="1"; btagSFweight_1b="prob1";} // shape
+    else           {btagcut_1b="1"; btagSFweight_1b="probge1";} // ge1b SL cross-check
     usePUweight_=true;
     useHTeff_=true;
     useMHTeff_=false;
@@ -1706,8 +1749,8 @@ modifications for SHAPE analysis: (bShape = true)
   TCut cleaning = "weight<1000 && passCleaning==1";
   TCut SBMET = qcdsubregion.metSelection.Data();
   TCut dpcut = "minDeltaPhiN>=4";
-  TCut failOther = "(((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && MT_Wlep>=0&&MT_Wlep<100)";
-  TCut passOther = "nElectrons==0 && nMuons==0";
+  TCut failOther = getSingleLeptonCut();//"(((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && MT_Wlep>=0&&MT_Wlep<100)";
+  TCut passOther = getLeptonVetoCut();//"nElectrons==0 && nMuons==0";
 
   double A,B,D,SIG,Aerr,Berr,Derr,SIGerr;
   double B_bnnPlus=0, B_bnnMinus=0;
@@ -1738,6 +1781,7 @@ modifications for SHAPE analysis: (bShape = true)
   Aerr=getIntegralErr(sampleOfInterest);
 
   //shape -- get the SB,SL number for 1b
+  //this code block was written for the SHAPE analysis but it turns out to be useful for overriding the b-tag cut to always use ge1b for the SB
   btagSFweight=btagSFweight_;
   selection_ = TCut("cutPV==1 && cut3Jets==1 && cutTrigger==1") &&HTcut && cleaning && dpcut  && SBMET && failOther && btagcut_1b; //auto cast to TString seems to work
   btagSFweight_ = btagSFweight_1b;
@@ -1754,6 +1798,23 @@ modifications for SHAPE analysis: (bShape = true)
   drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_D");
   D=getIntegral(sampleOfInterest);
   Derr=getIntegralErr(sampleOfInterest);
+
+  //get the SIG,SL number for ge1b
+  //this is only needed for a ge1b SL cross-check (not for the nominal method and not for the shape analysis)
+  if (use1B_SL_) {
+    btagSFweight=btagSFweight_;
+    selection_ = TCut("cutPV==1 && cut3Jets==1 && cutTrigger==1") &&HTcut && cleaning && dpcut  && SRMET && failOther && btagcut_1b;
+    btagSFweight_ = btagSFweight_1b;
+    drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_A");
+    D=getIntegral(sampleOfInterest); //clobber the nominal value of D
+    Derr=getIntegralErr(sampleOfInterest);
+    //put back the btag sf
+    btagSFweight_ = btagSFweight;
+
+    //finally, clobber A as well
+    A=mu_SB_SL_1b;
+    Aerr = mu_SB_SL_1b_err;
+  } //end new block
 
   if (datamode) { //for owen //SHAPE TODO
     myOwen->Nsig_sl = D;
@@ -2192,7 +2253,7 @@ void runTtbarEstimate2011(const bool forOwen=false, const bool bShape=false) {
   cout<<"\tClosure\tQCD\tZ\tMC\tTotal"<<endl;
   for (unsigned int j=0; j<searchRegions_.size();j++) {
     double totalsyst = sqrt(closure[j]*closure[j] + qcd[j]*qcd[j] + znn[j]*znn[j] + mc[j]*mc[j]);
-    cout<<j<<"\t & $"<<closure[j]<<"$ & $"<<qcd[j]<<"$ & $"<<znn[j]<<"$ & $"<<mc[j]<<"$ & $"<<totalsyst << "$ \\\\ " << endl;
+    cout<<searchRegions_[j].id() <<"\t & $"<<closure[j]<<"$ & $"<<qcd[j]<<"$ & $"<<znn[j]<<"$ & $"<<mc[j]<<"$ & $"<<totalsyst << "$ \\\\ " << endl;
     ttbarClosureSyst.push_back(closure[j]);
 
     //i have gone into slABCD and filled the global with central values and stat errors directly inside
@@ -2208,11 +2269,25 @@ void runTtbarEstimate2011(const bool forOwen=false, const bool bShape=false) {
 
 }
 
-void printOwenAll() {
+//these 2 functions run the bshape version of the analysis
+void runDDbShape() {
 
-  //updated for shape analysis!
   runDataQCD2011(true);
-  runTtbarEstimate2011(true,true);
+  runTtbarEstimate2011(true,true); //turn on shape analysis
+
+}
+void runDDwithSystShape() {
+
+  runDataQCD2011(false);
+  runTtbarEstimate2011(false,true); //turn on shape analysis
+
+}
+
+
+void printOwenAll() { //no b shape
+
+  runDataQCD2011(true);
+  runTtbarEstimate2011(true,false); //turn off shape analysis
 
   for (std::map<TString,OwenData>::iterator i=owenMap_.begin(); i!=owenMap_.end(); ++i) {
     printOwen( i->first);
@@ -2221,13 +2296,13 @@ void printOwenAll() {
 
 }
 
-void printOwenSyst() {
-
+void printOwenSyst(TString regions) {
+  setSearchRegions(regions);
   //note that because of the way the code is written, i am not at all sure that
   //it is safe to run printOwenAll() and printOwenSyst() in the same session. better to be safe!
 
   runDataQCD2011();
-  runTtbarEstimate2011();
+  runTtbarEstimate2011(); //no shape analysis
 
   for (unsigned int i=0; i<searchRegions_.size(); i++) {
     char effoutput[500];
@@ -2246,38 +2321,38 @@ void printOwenSyst() {
     textfile.close();
   }
 
-  //  cout<<" == Last but not least, output for Results.tex =="<<endl;
+  if (regions=="Moriond") {
+    cout<<" == Last but not least, output for Results.tex =="<<endl;
+    resultsMap_["ge1bLoose"]["ttbarCC"].value = 322;
+    resultsMap_["ge1bLoose"]["ttbarCC"].statError = 30;
+    resultsMap_["ge1bLoose"]["ttbarCC"].systError = 37;
+    resultsMap_["ge1bLoose"]["ttbarCC"].trigErrorPlus = 0;
+    resultsMap_["ge1bLoose"]["ttbarCC"].trigErrorMinus = 0;
+    
+    resultsMap_["ge1bTight"]["ttbarCC"].value = 5.0;
+    resultsMap_["ge1bTight"]["ttbarCC"].statError = 2.3;
+    resultsMap_["ge1bTight"]["ttbarCC"].systError = 2.2;
+    resultsMap_["ge1bTight"]["ttbarCC"].trigErrorPlus = 0;
+    resultsMap_["ge1bTight"]["ttbarCC"].trigErrorMinus = 0;
 
-//   resultsMap_["ge1bLoose"]["ttbarCC"].value = 319;
-//   resultsMap_["ge1bLoose"]["ttbarCC"].statError = 31;
-//   resultsMap_["ge1bLoose"]["ttbarCC"].systError = 30;
-//   resultsMap_["ge1bLoose"]["ttbarCC"].trigErrorPlus = 0;
-//   resultsMap_["ge1bLoose"]["ttbarCC"].trigErrorMinus = 0;
+  resultsMap_["ge2bLoose"]["ttbarCC"].value = 123;
+  resultsMap_["ge2bLoose"]["ttbarCC"].statError = 16;
+  resultsMap_["ge2bLoose"]["ttbarCC"].systError = 16;
+  resultsMap_["ge2bLoose"]["ttbarCC"].trigErrorPlus = 0;
+  resultsMap_["ge2bLoose"]["ttbarCC"].trigErrorMinus = 0;
 
-//   resultsMap_["ge1bTight"]["ttbarCC"].value = 4.9;
-//   resultsMap_["ge1bTight"]["ttbarCC"].statError = 2.9;
-//   resultsMap_["ge1bTight"]["ttbarCC"].systError = 2.1;
-//   resultsMap_["ge1bTight"]["ttbarCC"].trigErrorPlus = 0;
-//   resultsMap_["ge1bTight"]["ttbarCC"].trigErrorMinus = 0;
+  resultsMap_["ge2bTight"]["ttbarCC"].value = 21.0;
+  resultsMap_["ge2bTight"]["ttbarCC"].statError = 6.3;
+  resultsMap_["ge2bTight"]["ttbarCC"].systError = 4.3;
+  resultsMap_["ge2bTight"]["ttbarCC"].trigErrorPlus = 0;
+  resultsMap_["ge2bTight"]["ttbarCC"].trigErrorMinus = 0;
 
-//   resultsMap_["ge2bLoose"]["ttbarCC"].value = 121;
-//   resultsMap_["ge2bLoose"]["ttbarCC"].statError = 17;
-//   resultsMap_["ge2bLoose"]["ttbarCC"].systError = 15;
-//   resultsMap_["ge2bLoose"]["ttbarCC"].trigErrorPlus = 0;
-//   resultsMap_["ge2bLoose"]["ttbarCC"].trigErrorMinus = 0;
+  resultsMap_["ge3bLoose"]["ttbarCC"].value = 13.7;
+  resultsMap_["ge3bLoose"]["ttbarCC"].statError = 6.1;
+  resultsMap_["ge3bLoose"]["ttbarCC"].systError = 3.1;
+  resultsMap_["ge3bLoose"]["ttbarCC"].trigErrorPlus = 0;
+  resultsMap_["ge3bLoose"]["ttbarCC"].trigErrorMinus = 0;
 
-//   resultsMap_["ge2bTight"]["ttbarCC"].value = 20.7;
-//   resultsMap_["ge2bTight"]["ttbarCC"].statError = 6.8;
-//   resultsMap_["ge2bTight"]["ttbarCC"].systError = 3.8;
-//   resultsMap_["ge2bTight"]["ttbarCC"].trigErrorPlus = 0;
-//   resultsMap_["ge2bTight"]["ttbarCC"].trigErrorMinus = 0;
-
-//   resultsMap_["ge3bLoose"]["ttbarCC"].value = 13.3;
-//   resultsMap_["ge3bLoose"]["ttbarCC"].statError = 6.2;
-//   resultsMap_["ge3bLoose"]["ttbarCC"].systError = 2.7;
-//   resultsMap_["ge3bLoose"]["ttbarCC"].trigErrorPlus = 0;
-//   resultsMap_["ge3bLoose"]["ttbarCC"].trigErrorMinus = 0;
-/*
   resultsMap_["ge1bLoose"]["Znn"].value = 132;
   resultsMap_["ge1bLoose"]["Znn"].statError = 17;
   resultsMap_["ge1bLoose"]["Znn"].systError = 23;
@@ -2307,28 +2382,6 @@ void printOwenSyst() {
   resultsMap_["ge3bLoose"]["Znn"].systError = 3.3;
   resultsMap_["ge3bLoose"]["Znn"].trigErrorPlus = 0;
   resultsMap_["ge3bLoose"]["Znn"].trigErrorMinus = 0;
-*/
-
-/* NOT UPDATED
-  resultsMap_["eq1bLoose"]["Znn"].value = 132;
-  resultsMap_["eq1bLoose"]["Znn"].statError = 17;
-  resultsMap_["eq1bLoose"]["Znn"].systError = 23;
-  resultsMap_["eq1bLoose"]["Znn"].trigErrorPlus = 0;
-  resultsMap_["eq1bLoose"]["Znn"].trigErrorMinus = 0;
-
-  resultsMap_["eq2bLoose"]["Znn"].value = 132;
-  resultsMap_["eq2bLoose"]["Znn"].statError = 17;
-  resultsMap_["eq2bLoose"]["Znn"].systError = 23;
-  resultsMap_["eq2bLoose"]["Znn"].trigErrorPlus = 0;
-  resultsMap_["eq2bLoose"]["Znn"].trigErrorMinus = 0;
-
-  resultsMap_["ge3bLoose"]["Znn"].value = 132;
-  resultsMap_["ge3bLoose"]["Znn"].statError = 17;
-  resultsMap_["ge3bLoose"]["Znn"].systError = 23;
-  resultsMap_["ge3bLoose"]["Znn"].trigErrorPlus = 0;
-  resultsMap_["ge3bLoose"]["Znn"].trigErrorMinus = 0;
-
-
 
   cout<<"    & 1BL & 1BT & 2BL & 2BT & 3B \\"<<endl;
   //we'll do this in a C way instead of a C++ way
@@ -2345,14 +2398,14 @@ void printOwenSyst() {
       <<formatLatex( resultsMap_["ge2bLoose"]["ttbar"])<<" & "
       <<formatLatex( resultsMap_["ge2bTight"]["ttbar"])<<" & "
       <<formatLatex( resultsMap_["ge3bLoose"]["ttbar"])<<" \\ "<<endl;
-
-//   cout<<"\\ttbar/W+jets CC & "
-//       <<formatLatex( resultsMap_["ge1bLoose"]["ttbarCC"])<<" & "
-//       <<formatLatex( resultsMap_["ge1bTight"]["ttbarCC"])<<" & "
-//       <<formatLatex( resultsMap_["ge2bLoose"]["ttbarCC"])<<" & "
-//       <<formatLatex( resultsMap_["ge2bTight"]["ttbarCC"])<<" & "
-//       <<formatLatex( resultsMap_["ge3bLoose"]["ttbarCC"])<<" \\ "<<endl;
-
+  
+  cout<<"\\ttbar/W+jets CC & "
+      <<formatLatex( resultsMap_["ge1bLoose"]["ttbarCC"])<<" & "
+      <<formatLatex( resultsMap_["ge1bTight"]["ttbarCC"])<<" & "
+      <<formatLatex( resultsMap_["ge2bLoose"]["ttbarCC"])<<" & "
+      <<formatLatex( resultsMap_["ge2bTight"]["ttbarCC"])<<" & "
+      <<formatLatex( resultsMap_["ge3bLoose"]["ttbarCC"])<<" \\ "<<endl;
+  
   cout<<"\\Zinvisible & "
       <<formatLatex( resultsMap_["ge1bLoose"]["Znn"])<<" & "
       <<formatLatex( resultsMap_["ge1bTight"]["Znn"])<<" & "
@@ -2374,7 +2427,225 @@ void printOwenSyst() {
       <<formatLatex( resultsMap_["ge2bLoose"]["total"])<<" & "
       <<formatLatex( resultsMap_["ge2bTight"]["total"])<<" & "
       <<formatLatex( resultsMap_["ge3bLoose"]["total"])<<" \\ "<<endl;
-*/
+  }
+
+}
+
+void runBinsOfMET() {
+  setSearchRegions("METbins");
+
+  //run estimates with full syst
+  runDataQCD2011();
+  runTtbarEstimate2011(); 
+
+  //now hard-code Keith's results
+  //https://indico.cern.ch/getFile.py/access?contribId=1&resId=0&materialId=slides&confId=175106
+  //page 2
+  resultsMap_["ge3bMETBin1"]["Znn"].value = 1.4;
+  resultsMap_["ge3bMETBin1"]["Znn"].statError = 0.6;
+  resultsMap_["ge3bMETBin1"]["Znn"].systError = 1.5;
+  resultsMap_["ge3bMETBin1"]["Znn"].trigErrorPlus = 0;
+  resultsMap_["ge3bMETBin1"]["Znn"].trigErrorMinus = 0;
+
+  resultsMap_["ge3bMETBin2"]["Znn"].value = 0.9;
+  resultsMap_["ge3bMETBin2"]["Znn"].statError = 0.4;
+  resultsMap_["ge3bMETBin2"]["Znn"].systError = 1.0;
+  resultsMap_["ge3bMETBin2"]["Znn"].trigErrorPlus = 0;
+  resultsMap_["ge3bMETBin2"]["Znn"].trigErrorMinus = 0;
+
+  resultsMap_["ge3bMETBin3"]["Znn"].value = 0.4 + 0.2 + 0.1 + 0.1;
+  resultsMap_["ge3bMETBin3"]["Znn"].statError = sqrt( 0.2*0.2 + 0.2*0.2 + 0.1*0.1 + 0.1*0.1);
+  resultsMap_["ge3bMETBin3"]["Znn"].systError = 0.4 + 0.2 + 0.1 + 0.1; //the sum in quadrature of 100% errors is not a 100% error, so i'll put in 100% error here by hand
+  resultsMap_["ge3bMETBin3"]["Znn"].trigErrorPlus = 0;
+  resultsMap_["ge3bMETBin3"]["Znn"].trigErrorMinus = 0;
+
+  writeResultsMapToText("DDresults_METbins3B_1BLSL.dat");
+
+}
+
+
+void runFineBinsOfMET() {
+  setSearchRegions("METfinebins");
+
+  assert(use1B_SL_==true);
+
+  //run estimates with full syst
+  runDataQCD2011();
+  runTtbarEstimate2011(); 
+
+  //now hard-code Keith's results
+  //https://indico.cern.ch/getFile.py/access?contribId=1&resId=0&materialId=slides&confId=175106
+  //page 2
+  resultsMap_["ge3bMETFineBin1"]["Znn"].value = 1.4;
+  resultsMap_["ge3bMETFineBin1"]["Znn"].statError = 0.6;
+  resultsMap_["ge3bMETFineBin1"]["Znn"].systError = 1.5;
+  resultsMap_["ge3bMETFineBin1"]["Znn"].trigErrorPlus = 0;
+  resultsMap_["ge3bMETFineBin1"]["Znn"].trigErrorMinus = 0;
+
+  resultsMap_["ge3bMETFineBin2"]["Znn"].value = 0.9;
+  resultsMap_["ge3bMETFineBin2"]["Znn"].statError = 0.4;
+  resultsMap_["ge3bMETFineBin2"]["Znn"].systError = 1.0;
+  resultsMap_["ge3bMETFineBin2"]["Znn"].trigErrorPlus = 0;
+  resultsMap_["ge3bMETFineBin2"]["Znn"].trigErrorMinus = 0;
+
+  resultsMap_["ge3bMETFineBin3"]["Znn"].value = 0.4 ;
+  resultsMap_["ge3bMETFineBin3"]["Znn"].statError = 0.2;
+  resultsMap_["ge3bMETFineBin3"]["Znn"].systError = 0.4 ;
+  resultsMap_["ge3bMETFineBin3"]["Znn"].trigErrorPlus = 0;
+  resultsMap_["ge3bMETFineBin3"]["Znn"].trigErrorMinus = 0;
+
+  resultsMap_["ge3bMETFineBin4"]["Znn"].value = 0.2;
+  resultsMap_["ge3bMETFineBin4"]["Znn"].statError =  0.2;
+  resultsMap_["ge3bMETFineBin4"]["Znn"].systError = 0.2;
+  resultsMap_["ge3bMETFineBin4"]["Znn"].trigErrorPlus = 0;
+  resultsMap_["ge3bMETFineBin4"]["Znn"].trigErrorMinus = 0;
+
+  resultsMap_["ge3bMETFineBin5"]["Znn"].value =  0.1;
+  resultsMap_["ge3bMETFineBin5"]["Znn"].statError = 0.1;
+  resultsMap_["ge3bMETFineBin5"]["Znn"].systError = 0.1; 
+  resultsMap_["ge3bMETFineBin5"]["Znn"].trigErrorPlus = 0;
+  resultsMap_["ge3bMETFineBin5"]["Znn"].trigErrorMinus = 0;
+
+  resultsMap_["ge3bMETFineBin6"]["Znn"].value = 0.1;
+  resultsMap_["ge3bMETFineBin6"]["Znn"].statError = 0.1;
+  resultsMap_["ge3bMETFineBin6"]["Znn"].systError = 0.1; 
+  resultsMap_["ge3bMETFineBin6"]["Znn"].trigErrorPlus = 0;
+  resultsMap_["ge3bMETFineBin6"]["Znn"].trigErrorMinus = 0;
+
+  writeResultsMapToText("DDresults_METfinebins3B_1BLSL.dat");
+
+}
+
+
+//read back the file generated above and make a plot
+void drawDD() 
+{
+  gROOT->SetStyle("CMS");
+  loadSamples();
+
+  setSearchRegions("METbins");
+  ifstream file("DDresults_METbins3B.dat");
+
+  //  setSearchRegions("METfinebins");
+  //  ifstream file("DDresults_METfinebins3B_1BLSL.dat");
+
+  int nbins=(int) searchRegions_.size();
+  float *metbins = new float[nbins+1];
+  for (int ibin=0; ibin<nbins; ibin++) {
+    metbins[ibin]=  searchRegions_.at(ibin).getLowEdgeMET();
+  }
+  metbins[nbins] = 550; //hard-coded because there is no upper bound on MET
+
+  TString xtitle = "E_{T}^{miss}";
+
+  resetHistos();
+  setColorScheme("stack");
+
+  if (totalsm!=0) delete totalsm;
+  totalsm =  new TH1D("totalsm","",nbins,metbins);
+  totalsm->Sumw2();
+
+  if (thestack!= 0 ) delete thestack;
+  thestack = new THStack("thestack","--");
+
+  //histos are now filled
+  renewCanvas();
+  renewLegend();
+
+  TString binName;
+  TString backgroundName;
+  texData vals;
+  while (file>>binName) {
+    file>>backgroundName;
+    file>>vals.value;
+    file>>vals.statError;
+    file>>vals.systError;
+    file>>vals.trigErrorPlus;
+    file>>vals.trigErrorMinus;
+
+    if (!histos_.count(backgroundName)) {
+      histos_[backgroundName] = new TH1D(backgroundName,backgroundName,nbins,metbins);
+      histos_[backgroundName]->Sumw2();
+    }
+    //need to get the bin number
+    unsigned int index=0;
+    for ( ; index<searchRegions_.size(); index++) {
+      if  (binName==searchRegions_[index].id()) break;
+    }
+    histos_[backgroundName]->SetBinContent(index+1, vals.value);
+    double avtrigerr = 0.5*(fabs(vals.trigErrorPlus) + fabs(vals.trigErrorMinus));
+    double totalerr = sqrt( vals.systError*vals.systError + vals.statError*vals.statError + avtrigerr*avtrigerr);
+    histos_[backgroundName]->SetBinError(index+1, totalerr);
+
+    histos_[backgroundName]->SetFillColor(sampleColor_[backgroundName]);
+    histos_[backgroundName]->SetMarkerSize(0);
+    histos_[backgroundName]->SetXTitle(xtitle);
+    //    histos_[backgroundName]->SetYTitle(ytitle);
+
+  }
+
+  for (map<TString, TH1D*>::iterator ih=histos_.begin(); ih!=histos_.end(); ++ih) {
+
+    backgroundName= ih->first;
+
+    if (backgroundName != "ttbarQCD") {
+      thestack->Add(histos_[backgroundName]);
+    }
+      
+    if (backgroundName=="ttbarQCD" || backgroundName=="Zinvisible") {
+      totalsm ->Add(histos_[backgroundName]);
+    }
+  }
+  //get the legend filled in the opposite order
+  for (map<TString, TH1D*>::reverse_iterator ih=histos_.rbegin(); ih!=histos_.rend(); ++ih) {
+    backgroundName= ih->first;
+    if (backgroundName != "ttbarQCD") leg->AddEntry(histos_[backgroundName], sampleLabel_[backgroundName]);
+  }
+
+  totalsm->SetMarkerStyle(sampleMarkerStyle_["totalsm"]);
+
+  thecanvas->cd();
+  thestack->Draw("hist");
+    thestack->GetHistogram()->GetXaxis()->SetTitle(xtitle);
+
+  //draw errors on DD
+  if (mcerrors!=0) delete mcerrors;
+  mcerrors = new TGraphErrors(totalsm);
+  mcerrors->SetFillStyle(3353); //3353 3544
+  mcerrors->SetFillColor(1);
+  //ack. TGraphs and TH1s use different conventions for numbering.
+  for ( int ibin=1; ibin<=totalsm->GetNbinsX(); ibin++) {
+    double yerr = mcerrors->GetErrorY(ibin-1);
+    double xerr = totalsm->GetBinCenter(ibin) - totalsm->GetBinLowEdge(ibin);
+    mcerrors->SetPointError(ibin-1,xerr,yerr);
+  }
+  mcerrors->Draw("2 same");
+  //  totalsm->Draw("same");
+  leg->Draw();
+
+  gROOT->cd();
+  if (hdata!=0) delete hdata;
+  hdata =  new TH1D("hdata","",nbins,metbins);
+  hdata->Sumw2();
+  //to draw data we have to define all of the cuts....
+  
+  TCut baseline = "cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && passCleaning==1 && minDeltaPhiN>=4";
+  TCut htcut = searchRegions_[0].htSelection.Data();
+  TCut btagging="nbjets>=3";
+  TCut thecut = baseline&&htcut&&btagging;
+  gROOT->cd();
+  dtree->Project("hdata","MET",thecut.GetTitle()); //oy...we should use getCutString
+  hdata->SetMarkerColor(kBlack);
+  hdata->SetLineWidth(2);
+  hdata->SetMarkerStyle(kFullCircle);
+  hdata->SetMarkerSize(1);
+  hdata->Draw("SAME");
+
+  double mymax = thestack->GetMaximum();
+  if ( findOverallMax(totalsm) >mymax) mymax = findOverallMax(totalsm);
+  if (findOverallMax(hdata) > mymax) mymax = findOverallMax(hdata);
+  thestack->SetMaximum( maxScaleFactor_*mymax);
+
 
 }
 
@@ -2851,8 +3122,11 @@ other.
     //const float varbins[]={100, 120, 140, 160, 180, 200, 220, 240, 260, 280, 300, 350, 400, 450, 500, 550}; 
   
     //ge2b, Loose and Tight
-    const int nvarbins=15;
-    const float varbins[]={100, 125, 150, 175, 200, 225, 250, 275, 300, 350, 400, 450, 500, 550, 600, 650}; //AN and PAS 
+    // ===== This is the one Don has in CVS!
+    //    const int nvarbins=15;
+    //    const float varbins[]={100, 125, 150, 175, 200, 225, 250, 275, 300, 350, 400, 450, 500, 550, 600, 650}; //AN and PAS 
+    const int nvarbins=11;
+    const float varbins[]={100, 125, 150, 175, 200, 225, 250,  300, 350, 400,  500,  650}; //AN and PAS 
     //const int nvarbins=12;
     //const float varbins[]={200, 225, 250, 275, 300, 350, 400, 450, 550,650,750, 850,950}; 
 
@@ -2872,7 +3146,10 @@ other.
     else if(samplename=="WJets") sample = "wjets";
     else if(samplename=="SingleTop") sample = "singletop";
 
-    selection_ =TCut("cutPV==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && minDeltaPhiN >= 4 && MT_Wlep>=0 && MT_Wlep<100")&&btagcut&&HTcut;
+    const bool PVhack=true;
+
+    if (PVhack)  selection_ =TCut("cutPV==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==0)||(nElectrons==0 && nMuons==0)) && minDeltaPhiN >= 4 && MT_Wlep>=-2 && MT_Wlep<100 && nGoodPV>=10")&&btagcut&&HTcut;
+    else         selection_ =TCut("cutPV==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && minDeltaPhiN >= 4 && MT_Wlep>=0 && MT_Wlep<100")&&btagcut&&HTcut;
     //selection_ =TCut("MET>=150 && cutPV==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && minDeltaPhiN >= 4")&&btagcut&&HTcut; //AN v5
     var="MET"; xtitle="E_{T}^{miss} [GeV]";
     //nbins = 40; low=100; high=550; 
@@ -2922,7 +3199,9 @@ other.
   
     TH1D* SLplot = (TH1D*)hinteractive->Clone("SLplot");
     //now switch to the normal selection
-    selection_ =TCut("cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4")&&btagcut&&HTcut;
+    //CAREFUL OF THIS HACK!
+    if (PVhack)  selection_ =TCut("cutPV==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==0)||(nElectrons==0 && nMuons==0)) && minDeltaPhiN >= 4 && MT_Wlep>=-2 && MT_Wlep<100 && nGoodPV<10")&&btagcut&&HTcut;
+    else    selection_ =TCut("cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4")&&btagcut&&HTcut;
     //selection_ =TCut("MET>=150 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4")&&btagcut&&HTcut;// AN v5
     if(vb)drawPlots(var,nvarbins, varbins ,xtitle,"Arbitrary units", "SBandSIG_MET_normal_"+sample+"_"+btagselection+"_"+HTselection);
     else drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "SBandSIG_MET_normal_"+sample+"_"+btagselection+"_"+HTselection);
@@ -2931,9 +3210,10 @@ other.
     SLplot->SetMarkerColor(kRed);
     SLplot->Draw("SAME");
   
-    thecanvas->SaveAs("METshape_"+sample+"_SLandStandard_"+btagselection+"_"+HTselection+".pdf");
+    if (PVhack)  thecanvas->SaveAs("METshape_"+sample+"_0LinPVbins_"+btagselection+"_"+HTselection+".pdf");
+    else         thecanvas->SaveAs("METshape_"+sample+"_SLandStandard_"+btagselection+"_"+HTselection+".pdf");
 
-
+  
     ////////////////////////////////////////
     //This part computes the nominal SIG/SB ratio
     ////////////////////////////////////////
@@ -3028,8 +3308,14 @@ other.
     myLegend->SetFillStyle(0);
     myLegend->SetTextSize(0.045);
     if(sample=="ttbar"){
-    myLegend->AddEntry(SIGplot,"t#bar{t}, 0 leptons", "lp");
-    myLegend->AddEntry(SLplot, "t#bar{t}, 1 lepton", "lp");
+      if (PVhack) {
+	myLegend->AddEntry(SIGplot,"t#bar{t}, 0 lepton (n_{PV} #leq 9)", "lp");
+	myLegend->AddEntry(SLplot, "t#bar{t}, 0 lepton (n_{PV} #geq 10)", "lp");
+      }
+      else {
+	myLegend->AddEntry(SIGplot,"t#bar{t}, 0 leptons", "lp");
+	myLegend->AddEntry(SLplot, "t#bar{t}, 1 lepton", "lp");
+      }
     }
     else if(sample=="wjets"){
       myLegend->AddEntry(SIGplot,"wjets, 0 leptons", "lp");
@@ -3040,7 +3326,8 @@ other.
       myLegend->AddEntry(SLplot, "single-top, 1 lepton", "lp");
     }
     myLegend->Draw();
-    myC->Print("METshape_logAndRatio_"+sample+"_SLandStandard_"+btagselection+"_"+HTselection+".pdf");
+    if (PVhack)    myC->Print("METshape_logAndRatio_"+sample+"_0LinPVbins_"+btagselection+"_"+HTselection+".pdf");
+    else     myC->Print("METshape_logAndRatio_"+sample+"_SLandStandard_"+btagselection+"_"+HTselection+".pdf");
 
   }
 }
@@ -5514,11 +5801,11 @@ void studyRtt_0lep() {
   TCut SIG="MET>250";
   TCut SB = "MET>200 && MET<=250";
   //  TCut bcut = "nbjets>=1";
-  TCut bcut="1";      btagSFweight_="probge2"; //use b tag SF
+  TCut bcut="1";      btagSFweight_="probge1"; //use b tag SF
   //TCut bcut="1";//no b tag
 
-  //  float rmin=0.6; float rmax=1.1; //ge1b
-  float rmin=0.5; float rmax=1.5; //ge2b
+    float rmin=0.6; float rmax=1.1; //ge1b
+  //float rmin=0.5; float rmax=1.5; //ge2b
 
   int nbins = 5;
   double runs[]={160000,166000,169000,175000,177500,181000};
@@ -5546,6 +5833,8 @@ void studyRtt_0lep() {
   thecanvas->SaveAs("SL_R_vTime.png");
   thecanvas->SaveAs("SL_R_vTime.pdf");
 */
+
+/*
   TH1D zL_SB_vTime("zL_SB_vTime","zL SB versus run number",nbins,runs);
   TH1D SL_SB_vTime("SL_SB_vTime","SL SB versus run number",nbins,runs);
   TH1D zSL_R_vTime("zSL_R_vTime","SB r_(0L/SL) versus run number",nbins,runs);
@@ -5568,11 +5857,12 @@ void studyRtt_0lep() {
   thecanvas->SaveAs("zSL_r_vTime.eps");
   thecanvas->SaveAs("zSL_r_vTime.png");
   thecanvas->SaveAs("zSL_r_vTime.pdf");
+*/
 
   //now do it by nPV
   TString var ="nGoodPV";
   nbins = 3;
-  float npv[]={0,4,8,30};
+  float npv[]={0,4,10,30};
   TH1D SL_SIG_nPV("SL_SIG_nPV","SL SIG versus nPV",nbins,npv);
   TH1D SL_SB_nPV("SL_SB_nPV","SL SB versus nPV",nbins,npv);
   TH1D SL_R_nPV("SL_R_nPV","R_SL versus nPV",nbins,npv);
@@ -5631,9 +5921,11 @@ void studyRtt_0lep() {
   SL_ttWt_R_nPV_MC->Draw("SAME");
   SL_R_nPV.Draw("same");
 
+ 
   thecanvas->SaveAs("SL_R_nPV.eps");
   thecanvas->SaveAs("SL_R_nPV.png");
   thecanvas->SaveAs("SL_R_nPV.pdf");
+ return;
 
   //ok, now do it all again for the 0 lepton sample
   resetSamples(); //all samples
