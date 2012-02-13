@@ -62,14 +62,14 @@ in order to get one file per sample.
 #include <map>
 #include <set>
 	
-
 //*** AFTER SUMMER
 //***************************
 
   //TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35d/";
   //TString inputPath = "/cu1/joshmt/reducedTrees/test/"; 
-TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35g/";
-TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35h/";
+  //TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35j/";
+TString inputPath = "/cu2/wteo/reducedTrees/Fall11/V00-02-35j/";
+TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35j/";
 
 //-- reducedTrees for Oct 25 SUSY meeting. 3464.581/pb. 
 //TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35a/";
@@ -111,36 +111,6 @@ const bool useScaleFactors_=true; //whether or not to use MC scale factors when 
 const bool useBNNEffCurves_=false; 
 const bool btaggedLSB_=true;
 const bool use1B_SL_=false; // use ge1b selection for SL sample in ttbar method
-
-//nominal numbers used for frozen AN etc. SB corresponds to 200-250 GeV
-float eff_SB_MHT_             = 0.841;
-float eff_SB_MHT_err_[2]      = {0.059, 0.090};
-float eff_SB_ldp_MHT_         = 0.936;   
-float eff_SB_ldp_MHT_err_[2]  = {0.034, 0.118};
-float eff_SIG_MHT_            = 0.982; 
-float eff_SIG_MHT_err_[2]     = {0.012, 0.036};
-float eff_SIG_ldp_MHT_        = eff_SIG_MHT_; 
-float eff_SIG_ldp_MHT_err_[2] = {eff_SIG_MHT_err_[0], eff_SIG_MHT_err_[1]}; //due to low stas in SIG-LDP, use the SIG numbers for now.
-float eff_SIG_SL_MHT_         = 0.999; 
-float eff_SIG_SL_MHT_err_[2]  = {0.001, 0.001};
-float eff_SB_SL_MHT_          = 0.996; 
-float eff_SB_SL_MHT_err_[2]   = {0.002, 0.003};
-
-//150-200 GeV SB
-// CAREFUL -- if we really move to this region this we have to split e and mu in the SL SB
-// float eff_SB_MHT_             = 0.832;
-// float eff_SB_MHT_err_[2]      = {0.042, 0.054};
-// float eff_SB_ldp_MHT_         = 0.91;   
-// float eff_SB_ldp_MHT_err_[2]  = {0.026, 0.059};
-// float eff_SIG_MHT_            = 0.982; 
-// float eff_SIG_MHT_err_[2]     = {0.012, 0.036};
-// float eff_SIG_ldp_MHT_        = eff_SIG_MHT_; 
-// float eff_SIG_ldp_MHT_err_[2] = {eff_SIG_MHT_err_[0], eff_SIG_MHT_err_[1]}; //due to low stas in SIG-LDP, use the SIG numbers for now.
-// float eff_SIG_SL_MHT_         = 0.999; 
-// float eff_SIG_SL_MHT_err_[2]  = {0.001, 0.001};
-// float eff_SB_SL_MHT_          = 0.996;  //not really true but need new numbers
-// float eff_SB_SL_MHT_err_[2]   = {0.002, 0.003};
-
 
 void RSL(double SIG, double SB) {
 
@@ -432,8 +402,8 @@ void runCountInBoxesMC() {
 std::pair<double,double> ABCD_njetRW(TString prescontrol, TString physcontrol, TString Acutjm, TString Bcutjm, TString Ccutjm, TString Dcutjm, TString lsbbtagsf=""){
   cout << "Running closure with MC jet multiplicity reweighted to match data." << endl;
   
-  bool quietornot = quiet_;
-  setQuiet(false);
+  //  bool quietornot = quiet_;
+  //  setQuiet(false);
 
   TString histfilename = "dummy.root";
   TFile fh(histfilename,"RECREATE");//will delete old root file if present 
@@ -634,7 +604,7 @@ std::pair<double,double> ABCD_njetRW(TString prescontrol, TString physcontrol, T
     rwErr2 += QAterm*QAterm*QAkerr*QAkerr + QBterm*QBterm*QBkerr*QBkerr + QCterm*QCterm*QCkerr*QCkerr + QDterm*QDterm*QDkerr*QDkerr;
     rwErr2 += Qterm*Qterm*Qkerr*Qkerr + nterm*nterm*nkerr*nkerr + Rterm*Rterm*Rkerr*Rkerr + rterm*rterm*rkerr*rkerr + Pterm*Pterm*Pkerr*Pkerr;
   }
-  setQuiet(quietornot);
+  //  setQuiet(quietornot);
   //////////////////////////////////////////////////////////////////
   cout << "njetrw: ABCD: " << Arw << " " << Brw << " " << Crw << " " << Drw << endl; 
   cout << "njetrw: BD/A (rw): " << Brw*Drw/Arw << endl;
@@ -1048,8 +1018,8 @@ std::pair<double,std::vector<double> > anotherABCD( const SearchRegion & region,
     //special stuff for owen
     //    myOwen->Nlsb_0b_ldp = A;
     //    myOwen->Nlsb_0b     = B;
-    if (isSIG) myOwen->Nsig_ldp = D;
-    else       myOwen->Nsb_ldp = D;
+    if (isSIG) myOwen->Nsig_ldp = D_temp;
+    else       myOwen->Nsb_ldp = D_temp;
     
     if (isSIG) {
       myOwen->Nttbarmc_sig_ldp = getIntegral("TTbarJets");
@@ -1459,7 +1429,7 @@ modifications for SHAPE analysis: (bShape = true)
 -- for DATA, this means the data-driven subtraction must always be for the 1b case
 */
 
-  assert( closureMode=="nominal" || closureMode=="justttbar" || closureMode=="wtplus" ||closureMode=="wtminus" ||closureMode=="slonlywtplus" ||closureMode=="slonlywtminus" ||closureMode=="0lonlywtplus" ||closureMode=="0lonlywtminus");
+  assert( closureMode=="nominal" || closureMode=="justttbar" || closureMode=="wtplus" ||closureMode=="wtminus" ||closureMode=="slonlywtplus" ||closureMode=="slonlywtminus" ||closureMode=="0lonlywtplus" ||closureMode=="0lonlywtminus" || closureMode=="justw"|| closureMode=="justsingletop");
 
   if (closureMode=="justttbar") cout<<"Will run closure test in ttbar only mode!"<<endl;
   else if (closureMode=="nominal") {}
@@ -1656,10 +1626,10 @@ modifications for SHAPE analysis: (bShape = true)
     sampleOfInterest="data";
   }
   else {
-    addSample("TTbarJets");
+    if (closureMode!="justw" && closureMode!="justsingletop")  addSample("TTbarJets");
     if (closureMode!="justttbar") {
-      addSample("WJets");
-      addSample("SingleTop");
+      if (closureMode!="justsingletop")  addSample("WJets");
+      if (closureMode!="justw")          addSample("SingleTop");
     }
   }
 
@@ -2163,15 +2133,16 @@ modifications for SHAPE analysis: (bShape = true)
 void runSLClosureTest2011(const bool bShape=false) {
 
   setSearchRegions();
-
   cout<<"Note that the following is the joint tt+W+t closure test only!"<<endl;
-  for (unsigned int j=0; j<searchRegions_.size();j++) //slABCD(j);
-    slABCD(j,false,"","nominal",false,bShape);
+  for (unsigned int j=0; j<searchRegions_.size();j++)    slABCD(j,false,"","nominal",false,bShape);
 
 /*
   cout<<"Note that the following is the tt closure test only!"<<endl;
   for (unsigned int j=0; j<searchRegions_.size();j++) slABCD(j,false,"","justttbar");
-
+  for (unsigned int j=0; j<searchRegions_.size();j++) slABCD(j,false,"","justw");
+  for (unsigned int j=0; j<searchRegions_.size();j++) slABCD(j,false,"","justsingletop");
+*/
+  /*
   for (unsigned int j=0; j<searchRegions_.size();j++) slABCD(j,false,"","wtplus");
   for (unsigned int j=0; j<searchRegions_.size();j++) slABCD(j,false,"","wtminus");
 
@@ -2180,7 +2151,7 @@ void runSLClosureTest2011(const bool bShape=false) {
 
   for (unsigned int j=0; j<searchRegions_.size();j++) slABCD(j,false,"","0lonlywtplus");
   for (unsigned int j=0; j<searchRegions_.size();j++) slABCD(j,false,"","0lonlywtminus");
-*/
+  */
 }
 
 vector<double> ttbarClosureSyst;
@@ -2313,9 +2284,9 @@ void printOwenSyst(TString regions) {
     textfile<<"sf_mc            "<<1<<endl;
     textfile<<"sf_mc_err        "<<0.4<<endl;
     textfile<<"sf_qcd_sb        "<<1<<endl;
-    textfile<<"sf_qcd_sb_err    "<<0.01*sqrt(pow(qcdSystErrors["Closure"].at(i),2)+pow(qcdSystErrors["SBshift"].at(i),2) + pow(qcdSystErrors["LSBrw"].at(i),2))<<endl;
+    textfile<<"sf_qcd_sb_err    "<<0.01*sqrt(pow(qcdSystErrors["Closure"].at(2*i),2)+pow(qcdSystErrors["SBshift"].at(2*i),2) + pow(qcdSystErrors["LSBrw"].at(2*i),2))<<endl;
     textfile<<"sf_qcd_sig       "<<1<<endl;
-    textfile<<"sf_qcd_sig_err   "<<0.01*sqrt(pow(qcdSystErrors["Closure"].at(2*i+1),2)+pow(qcdSystErrors["SBshift"].at(2*i+1),2)+ pow(qcdSystErrors["LSBrw"].at(i),2))<<endl;
+    textfile<<"sf_qcd_sig_err   "<<0.01*sqrt(pow(qcdSystErrors["Closure"].at(2*i+1),2)+pow(qcdSystErrors["SBshift"].at(2*i+1),2)+ pow(qcdSystErrors["LSBrw"].at(2*i+1),2))<<endl;
     textfile<<"sf_ttwj_sig      "<<1<<endl;
     textfile<<"sf_ttwj_sig_err  "<<0.01*ttbarClosureSyst[i]<<endl;
     textfile.close();
@@ -3671,19 +3642,23 @@ void AN2011_excess() {
   float binsHT[]={400,600,800,1400};
   float binsMET[]={250,300,350,500};
   setColorScheme("nostack");
-  draw2d("MET", 5, 250, 500,"HT", 5, 400, 1400, "MET", "HT", "3B_METvHT");
-  draw2d("MET", 3, 250, 500,"HT", 3, 400, 1400, "MET", "HT", "3B_METvHT_varbins",binsMET,binsHT);
+  //  draw2d("MET", 5, 250, 500,"HT", 5, 400, 1400, "MET", "HT", "3B_METvHT");
+  //  draw2d("MET", 3, 250, 500,"HT", 3, 400, 1400, "MET", "HT", "3B_METvHT_varbins",binsMET,binsHT);
+
+  draw2d("HT", 5,400, 1400,"MET", 5, 250, 500, "H_{T}", "E_{T}^{miss}", "3B_METvHT");
+  draw2d("HT", 3, 400, 1400,"MET", 3, 250, 500, "H_{T}", "E_{T}^{miss}", "3B_METvHT_varbins",binsHT,binsMET);
 
   
   {for (int ibinx=1 ; ibinx<=h2d->GetNbinsX(); ibinx++) {
     for (int ibiny=1 ; ibiny<=h2d->GetNbinsY(); ibiny++) {
-      cout<<"MET="<<h2d->GetXaxis()->GetBinLowEdge(ibinx)<<"-"<<h2d->GetXaxis()->GetBinLowEdge(ibinx)+h2d->GetXaxis()->GetBinWidth(ibinx)
-	  <<" HT="<<h2d->GetYaxis()->GetBinLowEdge(ibiny)<<"-"<<h2d->GetYaxis()->GetBinLowEdge(ibiny)+h2d->GetYaxis()->GetBinWidth(ibiny)
+      cout<<"HT="<<h2d->GetXaxis()->GetBinLowEdge(ibinx)<<"-"<<h2d->GetXaxis()->GetBinLowEdge(ibinx)+h2d->GetXaxis()->GetBinWidth(ibinx)
+	  <<" MET="<<h2d->GetYaxis()->GetBinLowEdge(ibiny)<<"-"<<h2d->GetYaxis()->GetBinLowEdge(ibiny)+h2d->GetYaxis()->GetBinWidth(ibiny)
 	  <<" SM MC="<<h2d->GetBinContent(ibinx,ibiny)<<" +/- "<< h2d->GetBinError(ibinx,ibiny)<<" data="<<hdata2d->GetBinContent(ibinx,ibiny)<<endl;
     }
   }  }
 
   TH2D* h2d_sigma = (TH2D*)h2d->Clone("h2d_sigma");
+  {
   for (int ibinx=1 ; ibinx<=h2d->GetNbinsX(); ibinx++) {
     for (int ibiny=1 ; ibiny<=h2d->GetNbinsY(); ibiny++) {
       double nMC = h2d->GetBinContent(ibinx,ibiny);
@@ -3694,10 +3669,11 @@ void AN2011_excess() {
       double nsigma = (nData-nMC) / sqrt( nData_err*nData_err + nMC_err*nMC_err);
       h2d_sigma->SetBinContent(ibinx,ibiny,nsigma);
     }
-  }
+  }}
   renewCanvas();
   h2d_sigma->Draw("COLZ");
   h2d_sigma->Draw("text same");
+
 
   // Now take a look at the 3B SL sample
   btagSFweight_="probge3";
@@ -3882,8 +3858,8 @@ void AN2011( TString btagselection="ge1b",const int mode=1, bool logy=false, boo
   //MET
   selection_ =TCut("HT>=400 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4 &&passCleaning==1")&&btagcut;
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
-  nbins = 35; low=150; high=500;
-  drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_"+btagselection+modestring,0,"GeV");
+  nbins = 14; low=150; high=500;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_taus_"+btagselection+modestring,0,"GeV");
   
   //MET distribution with tighter HT cut
   selection_ =TCut("HT>500 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4 &&passCleaning==1")&&btagcut;
