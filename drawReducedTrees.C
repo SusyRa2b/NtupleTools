@@ -65,11 +65,11 @@ in order to get one file per sample.
 //*** AFTER SUMMER
 //***************************
 
-  //TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35d/";
-  //TString inputPath = "/cu1/joshmt/reducedTrees/test/"; 
-  //TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35j/";
-TString inputPath = "/cu2/wteo/reducedTrees/Fall11/V00-02-35j/";
+TString inputPath = "/cu2/wteo/reducedTrees/Fall11/V00-02-35k/";
 TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35j/";
+
+//TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35d/";
+//TString inputPath = "/cu1/joshmt/reducedTrees/test/"; 
 
 //-- reducedTrees for Oct 25 SUSY meeting. 3464.581/pb. 
 //TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35a/";
@@ -2637,7 +2637,7 @@ void AN2011_prescale( TString btagselection="ge1b",const int mode=1 ) {
   else if (mode==2 || mode==3) {
     usePUweight_=true;
     useHTeff_=true;
-    useMHTeff_=true;
+    useMHTeff_=false;//SPECIAL FOR PRESCALE DATA!
     thebnnMHTeffMode_ = kOff;
     currentConfig_=configDescriptions_.getCorrected(); //JER bias
     if (mode==2) modestring="-JER-PU-HLT";
@@ -2717,6 +2717,7 @@ void AN2011_prescale( TString btagselection="ge1b",const int mode=1 ) {
   doData(true);
   drawMCErrors_=true;
 
+  
   //MET
   selection_ =TCut("cutHT==1 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4 && passCleaning==1")&&util&&btagcut;
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
@@ -2725,13 +2726,16 @@ void AN2011_prescale( TString btagselection="ge1b",const int mode=1 ) {
   drawPlots(var,nbins,low,high,xtitle,"Events", "prescaled_MET_"+btagselection+modestring,0,"GeV");
   setLogY(true);  setPlotMinimum(1e-1);
   drawPlots(var,nbins,low,high,xtitle,"Events", "prescaled_MET_"+btagselection+modestring,0,"GeV");
+  
 
+  
   //njets in 50 < MET < 100 region
   selection_ =TCut("cutHT==1 && cutPV==1 && MET>=50 && MET<100 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4 && passCleaning==1")&&util&&btagcut;
   var="njets"; xtitle="Jet multiplicity";
   nbins = 7; low=2; high=9;
   setLogY(false); resetPlotMinimum();
   drawPlots(var,nbins,low,high,xtitle,"Events", "prescaled_njets_LSB_"+btagselection+modestring);
+  
 
   selection_ =TCut("cutHT==1 && cutPV==1 && MET>=50 && MET<100 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1  && passCleaning==1")&&util&&btagcut;
   var="minDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}";
@@ -2740,7 +2744,7 @@ void AN2011_prescale( TString btagselection="ge1b",const int mode=1 ) {
   drawPlots(var,nbins,low,high,xtitle,"Events", "prescaled_minDeltaPhiN_LSB_"+btagselection+modestring);
   setLogY(true);  setPlotMinimum(1e-1);
   drawPlots(var,nbins,low,high,xtitle,"Events", "prescaled_minDeltaPhiN_LSB_"+btagselection+modestring);
-
+  return;
 
   //look again at MET
   selection_ =TCut("MET>=50 && MET<100 && cutHT==1 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4 && passCleaning==1")&&util&&btagcut;
@@ -2818,7 +2822,7 @@ void AN2011_PUQCD( TString btagselection="ge1b",const int mode=1 ) {
   else if (mode==2 || mode==3) {
     usePUweight_=true;
     useHTeff_=true;
-    useMHTeff_=true;
+    useMHTeff_=false;//SPECIAL for prescaled data!
     thebnnMHTeffMode_ = kOff;
     currentConfig_=configDescriptions_.getCorrected(); //JER bias
     if (mode==2) modestring="-JER-PU-HLT";
@@ -2865,6 +2869,10 @@ void AN2011_PUQCD( TString btagselection="ge1b",const int mode=1 ) {
       btagcut = "1";
       btagSFweight_="prob1";
     }
+    else if ( btagselection=="eq0b" ) {
+      btagcut = "1";
+      btagSFweight_="prob0";
+    }
     else if ( btagselection=="eq2b" ) {
       btagcut = "1";
       btagSFweight_="(1-prob1-prob0-probge3)";
@@ -2900,14 +2908,17 @@ void AN2011_PUQCD( TString btagselection="ge1b",const int mode=1 ) {
 
   setPlotMaximum(0.5); setPlotMinimum(0);
   selection_ =TCut("HT>=400 && MET >=50 && MET <100 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 &&passCleaning==1")&&util&&btagcut;
-  drawR("minDeltaPhiN", 4, "nGoodPV", 14, 0.5, 14.5, "nGoodPV"+modestring);
-  
+  drawR("minDeltaPhiN", 4, "nGoodPV", 14, 0.5, 14.5, "nGoodPV_"+btagselection+modestring);
+  return;
+
+    
   drawTotalSM_=false;  
   doOverflowAddition(false);
   setPlotMaximum(0.5); setPlotMinimum(0);
   selection_ =TCut("HT>=400 && MET >=50 && MET <100 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && passCleaning==1")&&util&&btagcut;
-  drawR("minDeltaPhiN", 4, "runNumber", 10, 160300, 180300, "runNumber"+modestring,0,true);
-
+  drawR("minDeltaPhiN", 4, "runNumber", 10, 160300, 180300, "runNumber_"+btagselection+modestring,0,true);
+  
+  
   lumiScale_ = holdLumiScale;
   selection_ =TCut("HT>=400 && MET >=50 && MET <100 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && passCleaning==1")&&util&&btagcut;
   drawSimple("nGoodPV",14,0.5,14.5,"dummy", "","data");
@@ -2932,12 +2943,12 @@ void AN2011_PUQCD( TString btagselection="ge1b",const int mode=1 ) {
   myLegend->SetTextFont(42);
   myLegend->SetFillStyle(0);
   myLegend->SetTextSize(0.035);
-  myLegend->AddEntry(PVpres,"data, prescaled triggers", "p");
-  myLegend->AddEntry(PVphys, "data, physics triggers", "p");
+  myLegend->AddEntry(PVpres,"Data, prescaled triggers", "p");
+  myLegend->AddEntry(PVphys, "Data, physics triggers", "p");
   myLegend->Draw();
   drawPlotHeader();
-  Cpv->Print("PV_phys_pres" + modestring =".pdf");
-  Cpv->Print("PV_phys_pres" + modestring =".png");
+  Cpv->Print("PV_phys_pres_"+btagselection + modestring +".pdf");
+  Cpv->Print("PV_phys_pres_"+btagselection + modestring +".png");
   
 
 }
@@ -3399,42 +3410,94 @@ void makeTTbarWMETPlots() {
 
 
 
-void AN2011_r() { //for paper, data+MC plots at low MET
-  TString btagselection="ge1b";
-  TCut btagcut = "nbjetsCSVM>=1";
+void AN2011_r(TString btagselection="ge1b", const int mode=1) { //for paper, data+MC plots at low MET
+
   loadSamples();
 
-  // == draw r(MET)
-  clearSamples();
-  addSample("PythiaPUQCD");
   setColorScheme("nostack");
-
   setStackMode(false);
   doOverflowAddition(true);
-
-  leg_x1 = 0.2380496; leg_x2=0.481167; leg_y1=0.5029892; leg_y2=0.9231433;
-
-  //now try drawing it in data
-  //careful -- there is a bug in the drawR() implementation
-  //it doesn't work right unless you turn on doRatioPlot
   drawTotalSM_=true; 
-  usePUweight_=true;
   doRatioPlot(false);
   drawLegend(true);
-  setPlotMinimum(0); setPlotMaximum(0.5);
+  doData(true);
+  
+  TString modestring="";
+  if (mode==1) {
+    usePUweight_=false;
+    useHTeff_=false;
+    useMHTeff_=false;
+    thebnnMHTeffMode_ = kOff;
+    btagSFweight_="1";
+    currentConfig_=configDescriptions_.getDefault(); //completely raw MC
+  }
+  else if (mode==2 || mode==3) {
+    usePUweight_=true;
+    useHTeff_=true;
+    useMHTeff_=false; //SPECIAL for prescaled data!
+    thebnnMHTeffMode_ = kOff;
+    currentConfig_=configDescriptions_.getCorrected(); //JER bias
+    if (mode==2) modestring="-JER-PU-HLT";
+    else if(mode==3) modestring="-JER-PU-HLT-bSF";
+  }
+  else assert(0);
+  
+  TCut btagcut = "nbjetsCSVM>=1";
+  if (mode==1 || mode==2) {
+    if ( btagselection=="ge1b") {} //do nothing
+    else  if ( btagselection=="ge2b" ) {
+      btagcut = "nbjetsCSVM>=2";
+    }
+    else if ( btagselection=="eq1b" ) {
+      btagcut = "nbjetsCSVM==1";
+    }  
+    else if ( btagselection=="eq0b" ) {
+      btagcut = "nbjetsCSVM==0";
+    }
+    else if ( btagselection=="ge3b" ) {
+      btagcut = "nbjetsCSVM>=3";
+    }
+    else {
+      assert(0);
+    }
+  }
+  else if (mode==3) {
+    if ( btagselection=="eq0b") {
+      btagcut="1";
+      btagSFweight_="prob0";
+    }
+    else if ( btagselection=="ge1b") {
+      btagcut="1";
+      btagSFweight_="probge1";
+    }
+    else  if ( btagselection=="ge2b" ) {
+      btagcut = "1";
+      btagSFweight_="probge2";
+    }
+    else if ( btagselection=="ge3b" ) {
+      btagcut = "1";
+      btagSFweight_="probge3";
+    }
+    else {
+      assert(0);
+    }
+  }
+  
   lumiScale_ = 30.15471; //customize lumiScale_
   resetSamples();
-  doData(true);
-  TCut util = "pass_utilityHLT==1 && weight<2"; //don't use weight<1 when plotting data!
-  selection_ =TCut("HT>=400 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && nbjetsCSVM==0 &&passCleaning==1")&&util;
-  //drawR("minDeltaPhiN",4,10,50,150,"Data_eq0b");
-  drawR("minDeltaPhiN",4,15,0,150,"Data_eq0b");
+  setPlotMinimum(0); setPlotMaximum(0.3);
+  leg_x1 = 0.2380496; leg_x2=0.481167; leg_y1=0.5029892; leg_y2=0.9231433;
   
-  selection_ =TCut("HT>=500 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && nbjetsCSVM==0 &&passCleaning==1")&&util;
-  drawR("minDeltaPhiN",4,15,0,150,"Data_HT500_eq0b"); 
+  TCut util = "pass_utilityHLT==1 && weight<2"; //don't use weight<1 when plotting data!
 
-  selection_ =TCut("HT>=600 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && nbjetsCSVM==0 &&passCleaning==1")&&util;
-  drawR("minDeltaPhiN",4,15,0,150,"Data_HT600_eq0b"); 
+  selection_ =TCut("HT>=400 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && passCleaning==1")&&util&&btagcut;
+  drawR("minDeltaPhiN",4,15,0,150,"Data_HT400_"+btagselection+modestring);
+  
+  selection_ =TCut("HT>=500 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && passCleaning==1")&&util&&btagcut;
+  drawR("minDeltaPhiN",4,15,0,150,"Data_HT500_"+btagselection+modestring); 
+
+  selection_ =TCut("HT>=600 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && passCleaning==1")&&util&&btagcut;
+  drawR("minDeltaPhiN",4,15,0,150,"Data_HT600_"+btagselection+modestring); 
 
 }
 
@@ -5397,147 +5460,6 @@ void studyPrescale_r(int ibtag = 4) {
 
 }
  
-void LSB_PVreweight(){
-  loadSamples();
-  doOverflowAddition(true);
-  savePlots_=false;
-
-  TString histfilename = "dummy.root";
-  TFile fh(histfilename,"RECREATE");//will delete old root file if present 
-  fh.Close(); //going to open only when needed 
-
-  TCut HTcut = "HT>=600";
-
-  //PV binning
-  //int pvnbins=12;
-  //double pvlow = 0.5;
-  //double pvhigh = 12.5;
-  
-  int pvnbins=10;
-  float pvbins[]={0.5,2.5,3.5,4.5,5.5,6.5,7.5,8.5,10.5,11.5,12.5};//3.5/fb. used with allPrescale=false and 10 run bins. 10 pv bins.
-  //float pvbins[]=  {0.5,2.5,3.5,4.5,5.5,6.5,7.5,8.5,10.5,11.5,12.5,13.5,14.5,15.5}; //0.150042 +- 0.00443286. 13 pv bins.
-  //float pvbins[]=  {0.5,2.5,3.5,4.5,5.5,6.5,7.5,8.5,10.5,11.5,12.5,13.5,14.5,15.5,16.5,17.5};//0.150014 +- 0.00443216
-  //float pvbins[]=    {0.5,1.5,2.5,3.5,4.5,5.5,6.5,7.5,8.5,9.5,10.5,11.5,12.5,13.5,14.5,15.5,16.5,17.5,18.5};//0.149939 +- 0.00443764
-
-  
-  //make a plot to form the run number binning
-  selection_=TCut("HT>999");
-  drawSimple("runNumber",1, 160403.5, 180000.5,histfilename, "h_binningDummy", "data");
-  TH1D* hbinning = (TH1D*)hinteractive->Clone("hbinning");
-  TH1D* hpf =      (TH1D*)hinteractive->Clone("hpf");
-  TH1D* hpf_RW =   (TH1D*)hinteractive->Clone("hpf_RW");
-  hbinning->Reset(); //because only interested in binning
-  hpf     ->Reset();
-  hpf_RW  ->Reset();
-
-  //PV distribution in physics --> used for reweighting
-  selection_ =TCut("cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && cutTrigger==1 && MET>=200")&&HTcut;//note no mdp or btag
-  //  drawSimple("nGoodPV",pvnbins,pvlow,pvhigh,histfilename, "nGoodPV_physics_data","data");
-  drawSimple("nGoodPV",pvnbins,pvbins,histfilename, "nGoodPV_physics_data","data");
-  TH1D* hPVphysics = (TH1D*)hinteractive->Clone("hPVphysics");
-  for(int j=1; j<=hPVphysics->GetNbinsX();j++){
-    assert(hPVphysics->GetBinContent(j)>0);
-  }
-  bool allPrescale = true;
-  
-  for(int i=1; i<=hbinning->GetNbinsX(); i++){
-    double runlow = hbinning->GetBinLowEdge(i);
-    double runhigh = hbinning->GetBinLowEdge(i+1);
-    TString runCutString = "runNumber>=";
-    runCutString+=runlow;
-    runCutString+=" && runNumber<";
-    runCutString+=runhigh;
-    TCut runCut = TCut(runCutString);
-    
-    
-    if(allPrescale){
-      selection_ =TCut("cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=50 && MET<100 && nbjetsCSVM==0 && pass_utilityHLT==1")&&HTcut;//note no mdp or run cut
-    }
-    else{
-      selection_ =TCut("cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=50 && MET<100 && nbjetsCSVM==0 && pass_utilityHLT==1")&&HTcut&&runCut;//note no mdp
-    }
-    //drawSimple("nGoodPV",pvnbins,pvlow,pvhigh,histfilename, "nGoodPV_prescale_data","data");
-    drawSimple("nGoodPV",pvnbins,pvbins,histfilename, "nGoodPV_prescale_data","data");
-    TH1D* hPVprescale = (TH1D*)hinteractive->Clone("hPVprescale");
-    if(hPVprescale->Integral()<1.) continue;
-    
-    TH1D* hPVprescale_RW = (TH1D*)hPVphysics->Clone("hPVprescale_RW");
-    //hPVprescale_RW->Scale(hPVprescale->Integral()/hPVphysics->Integral());
-    //include error on scaling -- turns out to be negligible but leave it in anyway...
-    double s = hPVprescale->Integral()/hPVphysics->Integral();
-    double serr = jmt::errAoverB(hPVprescale->Integral(),jmt::errOnIntegral(hPVprescale),hPVphysics->Integral(),jmt::errOnIntegral(hPVphysics));
-    for(int j=1; j<=hPVprescale_RW->GetNbinsX(); j++){
-      assert(hPVprescale->GetBinContent(j)>0);
-      hPVprescale_RW->SetBinContent(j,s*hPVprescale_RW->GetBinContent(j));
-      double fillerror = sqrt(serr*serr+hPVprescale_RW->GetBinError(j)*hPVprescale_RW->GetBinError(j));
-      cout << j << " " << hPVprescale_RW->GetBinError(j) << " " << fillerror << endl;
-      hPVprescale_RW->SetBinError(j,fillerror);
-    }
-    
-    TH1D* hPV_W = (TH1D*)hPVphysics->Clone("hPV_W");
-    hPV_W->Reset();
-    hPV_W->Divide(hPVprescale_RW,hPVprescale); 
-    
-    
-    selection_ =TCut("cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=50 && MET<100 && nbjetsCSVM==0 && pass_utilityHLT==1 && minDeltaPhiN>=4")&&HTcut&&runCut;
-    //drawSimple("nGoodPV",pvnbins,pvlow,pvhigh,histfilename, "nGoodPVPass_prescale_data","data");
-    drawSimple("nGoodPV",pvnbins,pvbins,histfilename, "nGoodPVPass_prescale_data","data");
-    TH1D* hPVprescalePass = (TH1D*)hinteractive->Clone("hPVprescalePass");
-    
-    selection_ =TCut("cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=50 && MET<100 && nbjetsCSVM==0 && pass_utilityHLT==1 && minDeltaPhiN<4")&&HTcut&&runCut;
-    //drawSimple("nGoodPV",pvnbins,pvlow,pvhigh,histfilename, "nGoodPVFail_prescale_data","data");
-    drawSimple("nGoodPV",pvnbins,pvbins,histfilename, "nGoodPVFail_prescale_data","data");
-    TH1D* hPVprescaleFail = (TH1D*)hinteractive->Clone("hPVprescaleFail");
-
-    TH1D* hPVprescalePass_RW = (TH1D*)hPVprescalePass->Clone("hPVprescalePass_RW");
-    TH1D* hPVprescaleFail_RW = (TH1D*)hPVprescaleFail->Clone("hPVprescaleFail_RW");
-    hPVprescalePass_RW->Multiply(hPV_W);
-    hPVprescaleFail_RW->Multiply(hPV_W);
-    
-    double p, perr, f, ferr, pf, pferr;
-    double p_RW, p_RWerr, f_RW, f_RWerr, pf_RW, pf_RWerr;
-    p = hPVprescalePass->Integral();
-    perr = jmt::errOnIntegral(hPVprescalePass);
-    f = hPVprescaleFail->Integral();
-    ferr = jmt::errOnIntegral(hPVprescaleFail);
-    pf = p/f;
-    pferr = jmt::errAoverB(p,perr,f,ferr);
-    if(!(pf>0. && pf<1e9)){
-      pf=0;
-      pferr=0;
-    }
-    hpf->SetBinContent(i,pf);
-    hpf->SetBinError(i,pferr);
-    cout << "PF: " << pf << " +- " << pferr << endl;
-
-    p_RW = hPVprescalePass_RW->Integral();
-    p_RWerr = jmt::errOnIntegral(hPVprescalePass_RW);
-    f_RW = hPVprescaleFail_RW->Integral();
-    f_RWerr = jmt::errOnIntegral(hPVprescaleFail_RW);
-    pf_RW = p_RW/f_RW;
-    pf_RWerr = jmt::errAoverB(p_RW, p_RWerr, f_RW, f_RWerr);
-    if(!(pf_RW>0. && pf_RW<1e9)){
-      pf_RW=0;
-      pf_RWerr=0;
-    }
-    hpf_RW->SetBinContent(i,pf_RW);
-    hpf_RW->SetBinError(i,pf_RWerr);
-    cout << "PF_RW: " << pf_RW << " +- " << pf_RWerr << endl;
-  }
-  
-  hpf_RW->SetLineColor(kRed);
-  hpf_RW->SetMarkerColor(kRed);
-  hpf->GetXaxis()->SetTitle("runNumber");
-  hpf->GetYaxis()->SetTitle("N pass/N fail");
-  hpf->Draw("e1");
-  hpf_RW->Draw("e1 same");
-
-  TFile fh2(histfilename,"UPDATE");
-  hpf_RW->Write();
-  hpf->Write();
-  fh2.Close(); 
-
-}
 
 void lowMETcount(){
   loadSamples();
