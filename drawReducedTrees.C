@@ -65,8 +65,10 @@ in order to get one file per sample.
 //*** AFTER SUMMER
 //***************************
 
+  //TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35g/";
+//TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35h/";
 TString inputPath = "/cu2/wteo/reducedTrees/Fall11/V00-02-35k/";
-TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35j/";
+TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35k/";
 
 //TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35d/";
 //TString inputPath = "/cu1/joshmt/reducedTrees/test/"; 
@@ -1396,6 +1398,9 @@ void runDataQCD2011(const bool forOwen=false) {
   runClosureTest2011(qcdSystErrors,doNJetRWClosure);
   
   cout<<" == QCD systematics summary =="<<endl;
+  cout.setf(ios_base::fixed); //want exactly one decimal place....
+  cout.precision(1);
+
   /*
     stuffing the alternating SB and SIG into a vector was ugly, so here we have to be careful if we want to print out something
     human-readable as a label. Also we are hard-coding the fact that the *odd* elements are SIG
@@ -1411,6 +1416,8 @@ void runDataQCD2011(const bool forOwen=false) {
       qcdSystErrors["Total"].push_back( sqrt( pow(qcdSystErrors["MCsub"].at(j),2) +  pow(qcdSystErrors["Closure"].at(j),2)+ pow(qcdSystErrors["SBshift"].at(j),2)));
       cout<<thisregion.id()<<"\t& $"<<qcdSystErrors["MCsub"].at(j)<<"$ & $"<<qcdSystErrors["Closure"].at(j)<<"$ & $"<<qcdSystErrors["SBshift"].at(j)<<"$ & $"<<qcdSystErrors["Total"].at(j)<< "$ \\\\"<< endl;
     }
+    cout.unsetf(ios_base::fixed); //reset the cout precision
+    cout.precision(6);
 
     //we only want to fill this data for the SIG regions
     if (thisregion.isSIG) resultsMap_[ thisregion.id()]["QCD"].systError = 0.01*qcdSystErrors["Total"].at(j)*resultsMap_[ thisregion.id()]["QCD"].value;
@@ -1645,7 +1652,8 @@ modifications for SHAPE analysis: (bShape = true)
   float eff_MHT = 1, eff_MHT_err[2];//first entry is + error, second entry is - error
   float eff_SB_MHT = 1, eff_SB_MHT_err[2];
   float eff_SL_MHT = 1, eff_SL_MHT_err[2];
-  float eff_SL_SB_MHT = 1, eff_SL_SB_MHT_err[2];
+  float eff_1e_SB_MHT = 1, eff_1e_SB_MHT_err[2];
+  float eff_1m_SB_MHT = 1, eff_1m_SB_MHT_err[2];
 
   
   // --  count events
@@ -1667,7 +1675,8 @@ modifications for SHAPE analysis: (bShape = true)
     eff_MHT       = eff_SIG_MHT_;    eff_MHT_err[0]       = eff_SIG_MHT_err_[0];    eff_MHT_err[1]       = eff_SIG_MHT_err_[1];
     eff_SB_MHT    = eff_SB_MHT_ ;    eff_SB_MHT_err[0]    = eff_SB_MHT_err_[0];     eff_SB_MHT_err[1]    = eff_SB_MHT_err_[1];
     eff_SL_MHT    = eff_SIG_SL_MHT_; eff_SL_MHT_err[0]    = eff_SIG_SL_MHT_err_[0]; eff_SL_MHT_err[1]    = eff_SIG_SL_MHT_err_[1];
-    eff_SL_SB_MHT = eff_SB_SL_MHT_;  eff_SL_SB_MHT_err[0] = eff_SB_SL_MHT_err_[0];  eff_SL_SB_MHT_err[1] = eff_SB_SL_MHT_err_[1];
+    eff_1e_SB_MHT = eff_SB_1e_MHT_;  eff_1e_SB_MHT_err[0] = eff_SB_1e_MHT_err_[0];  eff_1e_SB_MHT_err[1] = eff_SB_1e_MHT_err_[1];
+    eff_1m_SB_MHT = eff_SB_1m_MHT_;  eff_1m_SB_MHT_err[0] = eff_SB_1m_MHT_err_[0];  eff_1m_SB_MHT_err[1] = eff_SB_1m_MHT_err_[1];
 
     if (btagselection=="ge2b") {
       btagSFweight="probge2";
@@ -1720,9 +1729,11 @@ modifications for SHAPE analysis: (bShape = true)
   TCut SBMET = qcdsubregion.metSelection.Data();
   TCut dpcut = "minDeltaPhiN>=4";
   TCut failOther = getSingleLeptonCut();//"(((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && MT_Wlep>=0&&MT_Wlep<100)";
+  TCut failOther_1e = getSingleElectronCut();//"(((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && MT_Wlep>=0&&MT_Wlep<100)";
+  TCut failOther_1m = getSingleMuonCut();//"(((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && MT_Wlep>=0&&MT_Wlep<100)";
   TCut passOther = getLeptonVetoCut();//"nElectrons==0 && nMuons==0";
 
-  double A,B,D,SIG,Aerr,Berr,Derr,SIGerr;
+  double A_1e,A_1m,B,D,SIG,Aerr_1e,Aerr_1m,Berr,Derr,SIGerr;
   double B_bnnPlus=0, B_bnnMinus=0;
   //double AerrMinus,BerrMinus,DerrMinus;
   //A = SB, SL
@@ -1743,21 +1754,32 @@ modifications for SHAPE analysis: (bShape = true)
     setSampleScaleFactor("SingleTop",0.5);
   }
 
-  selection_ = baseline && cleaning && dpcut  && SBMET && failOther; //auto cast to TString seems to work
+  selection_ = baseline && cleaning && dpcut  && SBMET && failOther_1e; //auto cast to TString seems to work
   var="HT"; xtitle=var;
   nbins=10; low=0; high=5000;
   drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_A");
-  A=getIntegral(sampleOfInterest);
-  Aerr=getIntegralErr(sampleOfInterest);
+  A_1e=getIntegral(sampleOfInterest);
+  Aerr_1e=getIntegralErr(sampleOfInterest);
+
+  selection_ = baseline && cleaning && dpcut  && SBMET && failOther_1m;
+  drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_A");
+  A_1m=getIntegral(sampleOfInterest);
+  Aerr_1m=getIntegralErr(sampleOfInterest);
+
+  cout<<" SL SB found e,mu = "<<A_1e<<" , "<<A_1m<<endl;
 
   //shape -- get the SB,SL number for 1b
   //this code block was written for the SHAPE analysis but it turns out to be useful for overriding the b-tag cut to always use ge1b for the SB
   btagSFweight=btagSFweight_;
-  selection_ = TCut("cutPV==1 && cut3Jets==1 && cutTrigger==1") &&HTcut && cleaning && dpcut  && SBMET && failOther && btagcut_1b; //auto cast to TString seems to work
+  selection_ = TCut("cutPV==1 && cut3Jets==1 && cutTrigger==1") &&HTcut && cleaning && dpcut  && SBMET && failOther_1e && btagcut_1b; //auto cast to TString seems to work
   btagSFweight_ = btagSFweight_1b;
   drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_A");
-  double mu_SB_SL_1b=getIntegral(sampleOfInterest);
-  double mu_SB_SL_1b_err=getIntegralErr(sampleOfInterest);
+  double mu_SB_1e_1b=getIntegral(sampleOfInterest);
+  double mu_SB_1e_1b_err=getIntegralErr(sampleOfInterest);
+  selection_ = TCut("cutPV==1 && cut3Jets==1 && cutTrigger==1") &&HTcut && cleaning && dpcut  && SBMET && failOther_1m && btagcut_1b;
+  drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_A");
+  double mu_SB_1m_1b=getIntegral(sampleOfInterest);
+  double mu_SB_1m_1b_err=getIntegralErr(sampleOfInterest);
   //put back the btag sf
   btagSFweight_ = btagSFweight;
   //end shape
@@ -1782,32 +1804,54 @@ modifications for SHAPE analysis: (bShape = true)
     btagSFweight_ = btagSFweight;
 
     //finally, clobber A as well
-    A=mu_SB_SL_1b;
-    Aerr = mu_SB_SL_1b_err;
+    A_1e=mu_SB_1e_1b;
+    Aerr_1e = mu_SB_1e_1b_err;
+
+    A_1m=mu_SB_1m_1b;
+    Aerr_1m = mu_SB_1m_1b_err;
   } //end new block
 
   if (datamode) { //for owen //SHAPE TODO
     myOwen->Nsig_sl = D;
-    myOwen->Nsb_sl = A;
+    myOwen->Nsb_1e = A_1e;
+    myOwen->Nsb_1m = A_1m;
   }
 
-  double A_temp = A, Aerr_temp = Aerr;
-  double mu_SB_SL_1b_temp = mu_SB_SL_1b; //shape
-  double mu_SB_SL_1b_err_temp = mu_SB_SL_1b_err; //shape
+  double A_1e_temp = A_1e, Aerr_1e_temp = Aerr_1e;
+  double A_1m_temp = A_1m, Aerr_1m_temp = Aerr_1m;
+  double mu_SB_1e_1b_temp = mu_SB_1e_1b; //shape
+  double mu_SB_1e_1b_err_temp = mu_SB_1e_1b_err; //shape
+  double mu_SB_1m_1b_temp = mu_SB_1m_1b; //shape
+  double mu_SB_1m_1b_err_temp = mu_SB_1m_1b_err; //shape
   double D_temp = D, Derr_temp = Derr;
-  if(useScaleFactors_ && datamode){//also use this for bnnEff mode
-    A = A/eff_SL_SB_MHT;
-    //Aerr = jmt::errAoverB(A_temp,Aerr_temp,eff_SL_SB_MHT,eff_SL_SB_MHT_err[0]);
-    //AerrMinus = jmt::errAoverB(A_temp,Aerr_temp,eff_SL_SB_MHT,eff_SL_SB_MHT_err[1]);
-    //Aerr = Aerr > AerrMinus ? Aerr: AerrMinus;
+  if(useScaleFactors_ && datamode) {
+    if(useBNNEffCurves_){ 
+      assert(0);
+    }
+    else {
+      A_1e /= eff_1e_SB_MHT;
+      A_1m /= eff_1m_SB_MHT;
 
-    D = D/eff_SL_MHT;
-    //Derr = jmt::errAoverB(D_temp,Derr_temp,eff_SL_MHT,eff_SL_MHT_err[0]);
-    //DerrMinus = jmt::errAoverB(D_temp,Derr_temp,eff_SL_MHT,eff_SL_MHT_err[1]);
-    //Derr = Derr > DerrMinus ? Derr: DerrMinus;
+      Aerr_1e /= eff_1e_SB_MHT;
+      Aerr_1m /= eff_1m_SB_MHT;
 
-    //shape
-    mu_SB_SL_1b /= eff_SL_SB_MHT; //what about the error?
+      //Aerr = jmt::errAoverB(A_temp,Aerr_temp,eff_SL_SB_MHT,eff_SL_SB_MHT_err[0]);
+      //AerrMinus = jmt::errAoverB(A_temp,Aerr_temp,eff_SL_SB_MHT,eff_SL_SB_MHT_err[1]);
+      //Aerr = Aerr > AerrMinus ? Aerr: AerrMinus;
+      
+      D    /= eff_SL_MHT;
+      Derr /= eff_SL_MHT; //treat trig eff error as 0, but still need to correct poisson error on D for trig eff
+      //Derr = jmt::errAoverB(D_temp,Derr_temp,eff_SL_MHT,eff_SL_MHT_err[0]);
+      //DerrMinus = jmt::errAoverB(D_temp,Derr_temp,eff_SL_MHT,eff_SL_MHT_err[1]);
+      //Derr = Derr > DerrMinus ? Derr: DerrMinus;
+      
+      //shape
+      mu_SB_1e_1b /= eff_1e_SB_MHT;
+      mu_SB_1m_1b /= eff_1m_SB_MHT;
+
+      mu_SB_1e_1b_err /= eff_1e_SB_MHT;
+      mu_SB_1m_1b_err /= eff_1m_SB_MHT;
+    }
   }
 
 
@@ -1867,6 +1911,7 @@ modifications for SHAPE analysis: (bShape = true)
     }
     else{
       B = B/eff_SB_MHT;
+      Berr/=eff_SB_MHT; //need to scale Poisson errors by trig eff
       //Berr = jmt::errAoverB(B_temp,Berr_temp,eff_SB_MHT,eff_SB_MHT_err[0]);
       //BerrMinus = jmt::errAoverB(B_temp,Berr_temp,eff_SB_MHT,eff_SB_MHT_err[1]);
       //Berr = Berr > BerrMinus ? Berr: BerrMinus;
@@ -1890,6 +1935,14 @@ modifications for SHAPE analysis: (bShape = true)
   SIG=getIntegral(sampleOfInterest);
   SIGerr=getIntegralErr(sampleOfInterest);
 
+  // now we've got our counts in all of the boxes; all have been corrected for trigger eff
+  // now find the total number of 'perfect trigger' events in the SL SB
+  double A = A_1e + A_1m;
+  double Aerr = sqrt(Aerr_1e*Aerr_1e + Aerr_1m*Aerr_1m);
+
+  double mu_SB_SL_1b = mu_SB_1e_1b + mu_SB_1m_1b;
+  double mu_SB_SL_1b_err = sqrt(mu_SB_1e_1b_err*mu_SB_1e_1b_err + mu_SB_1m_1b_err*mu_SB_1m_1b_err);
+
   double suberr = sqrt(SBsubMiscerr*SBsubMiscerr + SBsubQCDerr*SBsubQCDerr + SBsubZerr*SBsubZerr);
 
   double estimate=0,estimateerr=0;
@@ -1908,7 +1961,7 @@ modifications for SHAPE analysis: (bShape = true)
     double Bprime = B-SBsubMisc-SBsubQCD-SBsubZ;
     double Bprimeerr= sqrt(suberr*suberr + Berr*Berr);
 
-    SBestimate = Bprime * A / mu_SB_SL_1b;
+    SBestimate = Bprime * A/ mu_SB_SL_1b; 
     SBestimate_err = jmt::errAoverB(A,Aerr,mu_SB_SL_1b,mu_SB_SL_1b_err);
     SBestimate_err = jmt::errAtimesB(Bprime,Bprimeerr,A / mu_SB_SL_1b,SBestimate_err);
     
@@ -2063,12 +2116,12 @@ modifications for SHAPE analysis: (bShape = true)
   if(useScaleFactors_ && datamode){
     D = D_temp;
     Derr = Derr_temp;
-    A = A_temp;
-    Aerr = Aerr_temp;
+    A = A_1e_temp + A_1m_temp; //FIXME -- should really output both e and mu separately
+    Aerr = sqrt(Aerr_1e_temp*Aerr_1e_temp + Aerr_1m_temp*Aerr_1m_temp);
     B = B_temp;
     Berr = Berr_temp;
-    mu_SB_SL_1b = mu_SB_SL_1b_temp;
-    mu_SB_SL_1b_err = mu_SB_SL_1b_err_temp;
+    mu_SB_SL_1b = mu_SB_1e_1b_temp+mu_SB_1m_1b_temp;
+    mu_SB_SL_1b_err = 0;//mu_SB_SL_1b_err_temp; //FIXME
   }
 
   if (!datamode) {
@@ -3782,6 +3835,14 @@ void AN2011( TString btagselection="ge1b",const int mode=1, bool logy=false, boo
     if (mode==2) modestring="-JER-PU-HLT";
     else if(mode==3) modestring="-JER-PU-HLT-bSF";
   }
+  else if (mode==4) {
+    usePUweight_=true;
+    useHTeff_=true;
+    useMHTeff_=false;    
+    thebnnMHTeffMode_ = kPlot;
+    currentConfig_=configDescriptions_.getCorrected(); //JER bias
+    modestring="-JER-PU-HLT-BNN-bSF";
+  }
   else assert(0);
 
 
@@ -3801,7 +3862,7 @@ void AN2011( TString btagselection="ge1b",const int mode=1, bool logy=false, boo
       assert(0);
     }
   }
-  else if (mode==3) {
+  else if (mode==3 ||mode==4) {
     if ( btagselection=="eq0b") {
       btagcut="1";
       btagSFweight_="prob0";
@@ -3864,19 +3925,21 @@ void AN2011( TString btagselection="ge1b",const int mode=1, bool logy=false, boo
   //  leg_x1 = 0.6; leg_x2=0.96; leg_y1=0.4; leg_y2=0.88;//bensep28 - for data/mc stack comparison
   leg_x2=0.96; leg_y1=0.4; //leg_y2=0.88;//bensep28 - for data/mc stack comparison
   //leg_x1 = 0.6; leg_x2=0.96; leg_y1=0.42; leg_y2=0.9;//bensep28 -for data/mc stack comparison NJETS
-
   
   var="minDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}";
   nbins = 20; low=0; high=40;
+  if (btagselection=="ge3b") nbins=10;
   //no delta phi cut
   selection_ =TCut("HT>=400 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=200 &&passCleaning==1")&&btagcut;
   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_minDeltaPhiN_"+btagselection+modestring);
-  
+
   // 2BT but with loose MET
+  nbins = 10; low=0; high=40;
   selection_ =TCut("HT>=600 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=200 &&passCleaning==1")&&btagcut;
   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_minDeltaPhiN_HT600_"+btagselection+modestring);    
 
   //signal region N-1 minDeltaPhiN
+  nbins = 20; low=0; high=40;
   if (btagselection=="ge1b") {
     selection_ =TCut("HT>=400 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=250 &&passCleaning==1")&&btagcut;
     drawPlots(var,nbins,low,high,xtitle,"Events", "SIG_minDeltaPhiN_1BL_"+btagselection+modestring);
@@ -3917,24 +3980,25 @@ void AN2011( TString btagselection="ge1b",const int mode=1, bool logy=false, boo
   var="HT"; xtitle="H_{T} (GeV)";
   nbins = 20; low=400; high=1100;
   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_HT_"+btagselection+modestring,0,"GeV");
-    
+  
   //MET
   selection_ =TCut("HT>=400 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4 &&passCleaning==1")&&btagcut;
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
-  nbins = 14; low=150; high=500;
-  drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_taus_"+btagselection+modestring,0,"GeV");
-  
+  nbins = 30; low=200; high=500;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_"+btagselection+modestring,0,"GeV");
+
+    
   //MET distribution with tighter HT cut
   selection_ =TCut("HT>500 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4 &&passCleaning==1")&&btagcut;
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
   TString thisytitle = "";
-  if(btagselection=="ge2b") { nbins = 7; low=200; high=500;} 
+  if(btagselection=="ge2b") { nbins = 6; low=200; high=500;} 
   else{ nbins = 17; low=200; high=500;}
   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_HT500_"+btagselection+modestring,0,"GeV");
   
   selection_ =TCut("HT>600 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4 &&passCleaning==1")&&btagcut;
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
-  if(btagselection=="ge2b") { nbins = 7; low=150; high=500; } 
+  if(btagselection=="ge2b") { nbins = 6; low=200; high=500; } 
   else{ nbins = 17; low=200; high=500; }
   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_HT600_"+btagselection+modestring,0,"GeV");
 

@@ -48,8 +48,10 @@ float eff_SIG_ldp_MHT_        = eff_SIG_MHT_;
 float eff_SIG_ldp_MHT_err_[2] = {eff_SIG_MHT_err_[0], eff_SIG_MHT_err_[1]}; //due to low stas in SIG-LDP, use the SIG numbers for now.
 float eff_SIG_SL_MHT_         = 0.999; 
 float eff_SIG_SL_MHT_err_[2]  = {0.001, 0.001};
-float eff_SB_SL_MHT_          = 0.996; 
-float eff_SB_SL_MHT_err_[2]   = {0.002, 0.003};
+float eff_SB_1m_MHT_          = 0.996; 
+float eff_SB_1m_MHT_err_[2]   = {0.002, 0.003};
+float eff_SB_1e_MHT_          = 0.996; 
+float eff_SB_1e_MHT_err_[2]   = {0.002, 0.003};
 
 //150-200 GeV SB
 // CAREFUL -- if we really move to this region this we have to split e and mu in the SL SB
@@ -76,9 +78,13 @@ void printEff() {
   cout<<"eff_SB_ldp_MHT_err_plus   "<<eff_SB_ldp_MHT_err_[0]<<endl;
   cout<<"eff_SB_ldp_MHT_err_minus  "<<eff_SB_ldp_MHT_err_[1]<<endl;
 
-  cout<<"eff_SB_SL_MHT             "<<eff_SB_SL_MHT_<<endl;
-  cout<<"eff_SB_SL_MHT_err_plus    "<<eff_SB_SL_MHT_err_[0]<<endl;
-  cout<<"eff_SB_SL_MHT_err_minus   "<<eff_SB_SL_MHT_err_[1]<<endl;
+  cout<<"eff_SB_1e_MHT             "<<eff_SB_1e_MHT_<<endl;
+  cout<<"eff_SB_1e_MHT_err_plus    "<<eff_SB_1e_MHT_err_[0]<<endl;
+  cout<<"eff_SB_1e_MHT_err_minus   "<<eff_SB_1e_MHT_err_[1]<<endl;
+
+  cout<<"eff_SB_1m_MHT             "<<eff_SB_1m_MHT_<<endl;
+  cout<<"eff_SB_1m_MHT_err_plus    "<<eff_SB_1m_MHT_err_[0]<<endl;
+  cout<<"eff_SB_1m_MHT_err_minus   "<<eff_SB_1m_MHT_err_[1]<<endl;
 
   cout<<"eff_SIG_MHT               "<<eff_SIG_MHT_<<endl;
   cout<<"eff_SIG_MHT_err_plus      "<<eff_SIG_MHT_err_[0]<<endl;
@@ -679,8 +685,13 @@ float SignalEffData::totalSystematic() {
 struct OwenData {
   double Nsig; //number in signal region , data //done
   double Nsb; // number in SB, data             //done
+  //  double Nsig_sl; //number in SL SIG, data  //done
+  //  double Nsb_sl; // number in SL SB, data   //done
+
   double Nsig_sl; //number in SL SIG, data  //done
-  double Nsb_sl; // number in SL SB, data   //done
+  double Nsb_1e; // number in SL SB, data   //done
+  double Nsb_1m; // number in SL SB, data   //done
+
   double Nsig_ldp; //number in SIG, fail DP //done
   double Nsb_ldp;   // number in SB, fail DP //done
 
@@ -849,7 +860,9 @@ void printOwen(const TString& owenKey) {
   cout<<"Nsb               "<<  owenMap_[owenKey].Nsb<<endl;
 
   cout<<"Nsig_sl           "<<  owenMap_[owenKey].Nsig_sl<<endl;
-  cout<<"Nsb_sl            "<<  owenMap_[owenKey].Nsb_sl<<endl;
+  //  cout<<"Nsb_sl            "<<  owenMap_[owenKey].Nsb_sl<<endl;
+  cout<<"Nsb_1e            "<<  owenMap_[owenKey].Nsb_1e<<endl;
+  cout<<"Nsb_1m            "<<  owenMap_[owenKey].Nsb_1m<<endl;
 
   cout<<"Nsig_ldp          "<<  owenMap_[owenKey].Nsig_ldp<<endl;
   cout<<"Nsb_ldp           "<<  owenMap_[owenKey].Nsb_ldp<<endl;
@@ -1951,6 +1964,16 @@ TCut getLeptonVetoCut() {
 }
 TCut getSingleLeptonCut() {
   TCut sl = "(((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && MT_Wlep>=0&&MT_Wlep<100)";
+  return sl;
+}
+
+TCut getSingleMuonCut() {
+  TCut sl = "(nElectrons==0 && nMuons==1 && MT_Wlep>=0&&MT_Wlep<100)";
+  return sl;
+}
+
+TCut getSingleElectronCut() {
+  TCut sl = "(nElectrons==1 && nMuons==0 && MT_Wlep>=0&&MT_Wlep<100)";
   return sl;
 }
 
