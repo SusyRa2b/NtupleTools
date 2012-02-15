@@ -42,20 +42,6 @@ gSystem->Load("CrossSectionTable_cxx.so");
 #include <map>
 #include <set>
 
-float eff_SB_MHT_             = 0.841;   
-float eff_SB_MHT_err_[2]      = {0.059, 0.090};
-float eff_SB_ldp_MHT_         = 0.936;   
-float eff_SB_ldp_MHT_err_[2]  = {0.034, 0.118};
-float eff_SIG_MHT_            = 0.982; 
-float eff_SIG_MHT_err_[2]     = {0.012, 0.036};
-float eff_SIG_ldp_MHT_        = eff_SIG_MHT_; 
-float eff_SIG_ldp_MHT_err_[2] = {eff_SIG_MHT_err_[0], eff_SIG_MHT_err_[1]}; //due to low stas in SIG-LDP, use the SIG numbers for now.
-float eff_SIG_SL_MHT_         = 0.999; 
-float eff_SIG_SL_MHT_err_[2]  = {0.001, 0.001};
-float eff_SB_SL_MHT_          = 0.996; 
-float eff_SB_SL_MHT_err_[2]   = {0.002, 0.003};
-
-
 //*** AFTER SUMMER
 //***************************
 TString inputPath = "/cu3/joshmt/reducedTrees/V00-02-35g/"; 
@@ -705,36 +691,39 @@ map<pair<int,int>, SignalEffData>  runTH2Syst2011_mSugra(const SearchRegion & re
   for (  susyScanYields::iterator imsugra=rawYields.begin(); imsugra!=rawYields.end(); ++imsugra) {
     SignalEffData theseResults;
 
+    assert( eff_SB_1e_MHT_err_[0] == eff_SB_1m_MHT_err_[0]); //until i update this code to work with the split e/mu
+    assert( eff_SB_1e_MHT_err_[1] == eff_SB_1m_MHT_err_[1]);
+
     //take care of trigger efficiency systematics, which differs between SB and SIG, SL, LDP, etc
     if (region.isSIG && !isSL &&!isLDP) theseResults.set("trigger",eff_SIG_MHT_err_[0],eff_SIG_MHT_err_[1]);
     else if (!region.isSIG && !isSL && !isLDP) theseResults.set("trigger",eff_SB_MHT_err_[0],eff_SB_MHT_err_[1]);
     else if (region.isSIG && isSL) theseResults.set("trigger",eff_SIG_SL_MHT_err_[0],eff_SIG_SL_MHT_err_[1]);
-    else if (!region.isSIG && isSL) theseResults.set("trigger",eff_SB_SL_MHT_err_[0],eff_SB_SL_MHT_err_[1]);
+    else if (!region.isSIG && isSL) theseResults.set("trigger",eff_SB_1m_MHT_err_[0],eff_SB_1m_MHT_err_[1]);
     else if (region.isSIG && isLDP) theseResults.set("trigger",eff_SIG_ldp_MHT_err_[0],eff_SIG_ldp_MHT_err_[1]);
     else if (!region.isSIG && isLDP) theseResults.set("trigger",eff_SB_ldp_MHT_err_[0],eff_SB_ldp_MHT_err_[1]);
     else assert(0);
 
-    if (rawYields[imsugra->first].first >0) {
+    if (rawYields[imsugra->first] >0) {
       cout<<imsugra->first.first<<" "<<imsugra->first.second<<" " //m0 and m12
- 	  <<rawYields[imsugra->first].first<<" "<<nominalYields[imsugra->first].first<<" "
- 	  <<kFactorPlusYields[imsugra->first].first<<" "<<kFactorMinusYields[imsugra->first].first<<" ";
+ 	  <<rawYields[imsugra->first]<<" "<<nominalYields[imsugra->first]<<" "
+ 	  <<kFactorPlusYields[imsugra->first]<<" "<<kFactorMinusYields[imsugra->first]<<" ";
 
-      theseResults.rawYield = rawYields[imsugra->first].first;
+      theseResults.rawYield = rawYields[imsugra->first];
 
-      double nominalYield = nominalYields[imsugra->first].first;
+      double nominalYield = nominalYields[imsugra->first];
       theseResults.effCorr = nominalYield/theseResults.rawYield;
       if (nominalYield==0) nominalYield=0.000001; //should make this better
 
       //remove fabs()
-      double kfactorP = ((kFactorPlusYields[imsugra->first].first - nominalYield) / nominalYield);
-      double kfactorM = ((kFactorMinusYields[imsugra->first].first - nominalYield) / nominalYield);
+      double kfactorP = ((kFactorPlusYields[imsugra->first] - nominalYield) / nominalYield);
+      double kfactorM = ((kFactorMinusYields[imsugra->first] - nominalYield) / nominalYield);
       theseResults.set("kFactor",kfactorM,kfactorP);
 
       //pdf uncertainties
       //      if (fullPdfUncertainties) {
 	
-	double cteqXminusMax = cteqXplusminus.first[imsugra->first].first;
-	double cteqXplusMax = cteqXplusminus.second[imsugra->first].first;
+	double cteqXminusMax = cteqXplusminus.first[imsugra->first];
+	double cteqXplusMax = cteqXplusminus.second[imsugra->first];
 
 	//cout<<"\nCTEQ nominal xMinusMax xPlusMax "<<nominalYield<<" "<<cteqXminusMax<<" "<<cteqXplusMax<<endl;
 	double  cteqFracPDF = 0.5* ( cteqXminusMax + cteqXplusMax);
@@ -743,15 +732,15 @@ map<pair<int,int>, SignalEffData>  runTH2Syst2011_mSugra(const SearchRegion & re
 	cout<<endl;
 	cout<<imsugra->first.first<<" "<<imsugra->first.second<<" CTEQ  % = "<<100*cteqFracPDF<<endl;
 
-	double mstwXminusMax = mstwXplusminus.first[imsugra->first].first;
-	double mstwXplusMax = mstwXplusminus.second[imsugra->first].first;
+	double mstwXminusMax = mstwXplusminus.first[imsugra->first];
+	double mstwXplusMax = mstwXplusminus.second[imsugra->first];
 	double  mstwFracPDF = 0.5* ( mstwXminusMax + mstwXplusMax);
 	mstwFracPDF = fabs( mstwFracPDF ) /nominalYield;
 	cout<<imsugra->first.first<<" "<<imsugra->first.second<<" MSTW  % = "<<100*mstwFracPDF<<endl;
 	if (cteqFracPDF > mstwFracPDF) mstwFracPDF = cteqFracPDF;
 	
-	double nnpdfTotalX  = nnpdfXX2.first[imsugra->first].first;
-	double nnpdfTotalX2 = nnpdfXX2.second[imsugra->first].first;
+	double nnpdfTotalX  = nnpdfXX2.first[imsugra->first];
+	double nnpdfTotalX2 = nnpdfXX2.second[imsugra->first];
 	double nnpdfFracPDF = sqrt(nnpdfTotalX2 - (nnpdfTotalX*nnpdfTotalX)) / nominalYield;
 	cout<<imsugra->first.first<<" "<<imsugra->first.second<<" NNPDF % = "<<100*nnpdfFracPDF<<endl;
  	if (nnpdfFracPDF > mstwFracPDF) mstwFracPDF = nnpdfFracPDF;
@@ -765,11 +754,11 @@ map<pair<int,int>, SignalEffData>  runTH2Syst2011_mSugra(const SearchRegion & re
 //       }
 	
       for ( map<TString, pair<susyScanYields,susyScanYields> >::iterator ivariation=variedYields.begin(); ivariation!=variedYields.end(); ++ivariation) {
-	cout<<ivariation->second.first[imsugra->first].first<<" "<<ivariation->second.second[imsugra->first].first<<" ";
+	cout<<ivariation->second.first[imsugra->first]<<" "<<ivariation->second.second[imsugra->first]<<" ";
 	
 	//get rid of fabs()
-	double percent1 = ((ivariation->second.first[imsugra->first].first - nominalYield)/nominalYield);
-	double percent2 = ((ivariation->second.second[imsugra->first].first - nominalYield)/nominalYield);
+	double percent1 = ((ivariation->second.first[imsugra->first] - nominalYield)/nominalYield);
+	double percent2 = ((ivariation->second.second[imsugra->first] - nominalYield)/nominalYield);
 	theseResults.set(ivariation->first,percent1,percent2);
 
       }
@@ -844,11 +833,11 @@ void loadSystematics2011_scanBoxByBox(TString sampleOfInterest, const unsigned i
   double    highx=1500;
   double    highy=1500;
   if ( sampleOfInterest.Contains("mSUGRA")) {
-    nbinsx=200;
+    nbinsx=300;
     nbinsy=100;
     lowx=0;
     lowy=0;
-    highx=2000;
+    highx=3000;
     highy=1000;
   }
 
@@ -1205,7 +1194,7 @@ void drawmSugraEfficiency() {
       
       //total Sigma is already the sum over i
       double crossSectionTimesLumi = totalSigma.GetBinContent(bin) * lumiScale_;
-      if (crossSectionTimesLumi >0)    theEff[iscanpoint->first] = make_pair(Nraw / crossSectionTimesLumi,0);
+      if (crossSectionTimesLumi >0)    theEff[iscanpoint->first] = Nraw / crossSectionTimesLumi;//make_pair(Nraw / crossSectionTimesLumi,0);
       else if (Nraw < 0.00001 && crossSectionTimesLumi <0.00001) {}//do nothing
       else {cout<<"Something weird? crossSectionTimeLumi is zero!"<<endl;}
     }
@@ -1224,7 +1213,7 @@ void drawmSugraEfficiency() {
     TString opt="colz";
     for (susyScanYields::iterator ieff = theEff.begin(); ieff!=theEff.end(); ++ieff) {
       int bin=    h2d->FindBin( ieff->first.first, ieff->first.second);
-      h2d->SetBinContent(bin, ieff->second.first);
+      h2d->SetBinContent(bin, ieff->second);
     }
     
     h2d->SetXTitle("m_{0} [GeV]");

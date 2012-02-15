@@ -4,6 +4,7 @@
 
 #include "TRegexp.h"
 
+TString sedfPath = "/home/joshmt/09Feb_mSUGRA_output/"; //for signal systematics
 
 //useful for playing around with plots in interactive ROOT
 TH1D* hinteractive=0;
@@ -483,6 +484,8 @@ void SignalEffData::write(TString id) const {
   filename +=".";
   filename += SignalEffDataSuffix_;
 
+  filename.Prepend(sedfPath);
+
   ofstream output(filename.Data());
   output<<rawYield<<endl<<effCorr<<endl;
 
@@ -509,6 +512,8 @@ SignalEffData::SignalEffData(TString idtoload) :
   //filename constructed from id
   TString filename = "SignalEffData.";
   filename += idtoload;
+
+  filename.Prepend(sedfPath);
 
   ifstream input(filename.Data()); //should check that this is good
   input>>rawYield;
@@ -828,6 +833,7 @@ map<pair<int,int>, SignalEffData> loadSignalEffDataMapFromFiles( const TString &
   TChain dummychain("dummychain");
   TString searchfor ="*.";
   searchfor += SignalEffDataSuffix_;
+  searchfor.Prepend(sedfPath);
   dummychain.Add(searchfor);
   TObjArray* dir1list = dummychain.GetListOfFiles();
   int nfiles1=dir1list->GetEntries();
@@ -2809,7 +2815,8 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
 
 
 
-typedef map<pair<int,int>, pair<float,float> > susyScanYields;
+//typedef map<pair<int,int>, pair<float,float> > susyScanYields;
+typedef map<pair<int,int>, float > susyScanYields;
 susyScanYields getSusyScanYields(const TString & sampleOfInterest,const int pdfindex=0, const TString & pdfset="CTEQ") {
   cout<<" ~~ begin slow version of getSusyScanYields()"<<endl;
 
@@ -2911,7 +2918,7 @@ most of it is irrelevant for SMS, but we'll use it anyway
 	errraw += pow(raw0[i]->GetBinError(bin),2);
       }
       //cout<<iscanpoint->first.first<<" "<<iscanpoint->first.second<<" "<<Nraw<< " +/- "<<sqrt(errraw)<<endl;
-      theYields[iscanpoint->first] = make_pair(Nraw,sqrt(errraw));
+      theYields[iscanpoint->first] = Nraw;//make_pair(Nraw,sqrt(errraw));
     }
     cout<<"[getSusyScanYields (slow)] done summing over subprocesses"<<endl;
   }
@@ -2926,7 +2933,7 @@ most of it is irrelevant for SMS, but we'll use it anyway
 	//throw out points that have ngen too far from 10000
 	//note that scanSMSngen could be replaced by scanProcessTotalsMap, but it is easier and safer not to change this for now
 	if ( TMath::Nint(scanSMSngen->GetBinContent(scanSMSngen->FindBin(mgl,mlsp))) >= 1000 ) {
-	  theYields[make_pair(mgl,mlsp)] = make_pair(nevents,0); //skip errors for now
+	  theYields[make_pair(mgl,mlsp)] = nevents;//make_pair(nevents,0); //skip errors for now
 	}
       }
     }
@@ -2973,7 +2980,7 @@ vector<susyScanYields> getSusyScanYields(const TString & sampleOfInterest,const 
 
   TTree* thetree = (TTree*) files_[currentConfig_][sampleOfInterest]->Get("reducedTree");
   //key of the map is the susysubprocess. the vector is over the pdf weight indices
-  map<int, vector<TH2D*> > raw0;
+  map<int, vector<TH2F*> > raw0;
   int npdfset=0;
   if (pdfset=="CTEQ") npdfset=44;
   else if (pdfset=="MSTW") npdfset =40;
@@ -2991,7 +2998,7 @@ vector<susyScanYields> getSusyScanYields(const TString & sampleOfInterest,const 
       hname += ipdf;
       hname+="_";
       hname+=isusy;
-      raw0[isusy].push_back(new TH2D(hname,"raw event counts",nbinsx,lowx,highx,nbinsy,lowy,highy));
+      raw0[isusy].push_back(new TH2F(hname,"raw event counts",nbinsx,lowx,highx,nbinsy,lowy,highy));
       raw0[isusy][ipdf]->Sumw2();
       TString thecut = sampleOfInterest.Contains("mSUGRA") ? getCutString(kmSugraPlane,"",selection_,"",ipdf,pdfset,isusy) : getCutString(kSMSPlane,"",selection_,"",ipdf,pdfset);
       multiDraw->LoadVariables( TString(drawstring+">>"+hname).Data(), thecut.Data());
@@ -3042,7 +3049,7 @@ vector<susyScanYields> getSusyScanYields(const TString & sampleOfInterest,const 
 	  errraw += pow(raw0[i][ipdf]->GetBinError(bin),2);
 	}
 	//cout<<iscanpoint->first.first<<" "<<iscanpoint->first.second<<" "<<Nraw<< " +/- "<<sqrt(errraw)<<endl;
-	oneSetOfYields[iscanpoint->first] = make_pair(Nraw,sqrt(errraw));
+	oneSetOfYields[iscanpoint->first] = Nraw;//make_pair(Nraw,sqrt(errraw));
       }
     }
     else { //for T1bbbb and hopefully other samples that don't have the susy subprocesses 
@@ -3060,7 +3067,7 @@ vector<susyScanYields> getSusyScanYields(const TString & sampleOfInterest,const 
 	    //	    cout<<"   -- Rescaling PDF weights by "<< thishist->GetBinContent(10,0)<<" / "<< thishist->GetBinContent(10,ipdf)<<endl;
 	    nevents *= thishist->GetBinContent(10,0) / thishist->GetBinContent(10,ipdf);
 
-	    oneSetOfYields[make_pair(mgl,mlsp)] = make_pair(nevents,0); //skip errors for now
+	    oneSetOfYields[make_pair(mgl,mlsp)] = nevents;//make_pair(nevents,0); //skip errors for now
 	  }
 	}
       }
@@ -3072,8 +3079,7 @@ vector<susyScanYields> getSusyScanYields(const TString & sampleOfInterest,const 
   cout<<"[getSusyScanYields() (fast)] CPU time ("<<pdfset<<") = "<<timer.CpuTime()<<endl;
 
   //try to clean up
-  //need to fix this for the new data structure
-  for ( map<int, vector<TH2D*> >::iterator im = raw0.begin(); im!=raw0.end() ; ++im) {
+  for ( map<int, vector<TH2F*> >::iterator im = raw0.begin(); im!=raw0.end() ; ++im) {
     for (unsigned int i=0; i<im->second.size(); i++) {
       delete im->second[i];
     }
@@ -3140,17 +3146,17 @@ pair<susyScanYields,susyScanYields> doScanPDFUncertainties(const TString & sampl
     for (unsigned int i=0; i<cteqXplus.size(); i++) { //only xplus is filled
       for (susyScanYields::iterator ipoint=cteqXplus[i].begin(); ipoint!=cteqXplus[i].end(); ++ipoint) {
 	//if this scan point doesn't exist, create it with 0
-	if ( XplusMax.count(ipoint->first) ==0) XplusMax[ipoint->first]=make_pair(0,0);
-	if ( XminusMax.count(ipoint->first) ==0) XminusMax[ipoint->first]=make_pair(0,0);
-	double val = cteqXplus[i][ipoint->first].first;
-	XplusMax[ipoint->first].first += val; //sum up the values for pdf i and this scan point
-	XminusMax[ipoint->first].first += val*val; //sum up the values for pdf i and this scan point
+	if ( XplusMax.count(ipoint->first) ==0) XplusMax[ipoint->first]=0;//make_pair(0,0);
+	if ( XminusMax.count(ipoint->first) ==0) XminusMax[ipoint->first]=0;//make_pair(0,0);
+	double val = cteqXplus[i][ipoint->first];//.first;
+	XplusMax[ipoint->first] += val; //sum up the values for pdf i and this scan point
+	XminusMax[ipoint->first] += val*val; //sum up the values for pdf i and this scan point
       }
       nn++;
     }
     for (susyScanYields::iterator ipoint=XplusMax.begin() ; ipoint!=XplusMax.end(); ++ipoint) {
-      XplusMax[ipoint->first].first = XplusMax[ipoint->first].first / double(nn);
-      XminusMax[ipoint->first].first = XminusMax[ipoint->first].first / double(nn);
+      XplusMax[ipoint->first] = XplusMax[ipoint->first] / double(nn);
+      XminusMax[ipoint->first] = XminusMax[ipoint->first] / double(nn);
     }
 
   }
@@ -3159,37 +3165,37 @@ pair<susyScanYields,susyScanYields> doScanPDFUncertainties(const TString & sampl
     for (unsigned int i=0; i<cteqXplus.size(); i++) {
       for (susyScanYields::iterator ipoint=cteqXplus[i].begin(); ipoint!=cteqXplus[i].end(); ++ipoint) {
 	//	if (ipoint->first ==apoint) cout<<ipoint->first.first<<" "<<ipoint->first.second<<" -- "<<nominal[ipoint->first].first<<" " <<cteqXplus[i][ipoint->first].first<<" "<<cteqXminus[i][ipoint->first].first<<endl;
-	double diff1 =  cteqXplus[i][ipoint->first].first - nominal[ipoint->first].first ;
-	double diff2 =  cteqXminus[i][ipoint->first].first - nominal[ipoint->first].first ;
+	double diff1 =  cteqXplus[i][ipoint->first] - nominal[ipoint->first] ;
+	double diff2 =  cteqXminus[i][ipoint->first] - nominal[ipoint->first] ;
 	double larger = diff1>diff2 ? diff1 : diff2;
 	if ( 0 > larger ) larger = 0;
 	if ( XplusMax.count(ipoint->first) ==0) {
-	  XplusMax[ipoint->first]=make_pair(0,0);
+	  XplusMax[ipoint->first]=0;//make_pair(0,0);
 	  //  if (ipoint->first ==apoint) cout<<" ***** CREATING XplusMax"<<endl;
 	}
-	XplusMax[ipoint->first].first += larger*larger;
+	XplusMax[ipoint->first] += larger*larger;
 	//	if (ipoint->first ==apoint) cout<<"       XplusMax = "<<XplusMax[ipoint->first].first<<endl;
       }
     }
     for (unsigned int i=0; i<cteqXplus.size(); i++) {
       for (susyScanYields::iterator ipoint=cteqXplus[i].begin(); ipoint!=cteqXplus[i].end(); ++ipoint) {
-	double diff1 =  nominal[ipoint->first].first  - cteqXplus[i][ipoint->first].first ;
-	double diff2 =  nominal[ipoint->first].first - cteqXminus[i][ipoint->first].first ;
+	double diff1 =  nominal[ipoint->first]  - cteqXplus[i][ipoint->first];
+	double diff2 =  nominal[ipoint->first] - cteqXminus[i][ipoint->first] ;
 	double larger = diff1>diff2 ? diff1 : diff2;
 	if ( 0 > larger ) larger = 0;
-	if ( XminusMax.count(ipoint->first) ==0) XminusMax[ipoint->first]=make_pair(0,0);
-	XminusMax[ipoint->first].first += larger*larger;
+	if ( XminusMax.count(ipoint->first) ==0) XminusMax[ipoint->first]=0;//make_pair(0,0);
+	XminusMax[ipoint->first] += larger*larger;
       }
     }
 
     const double scale = (pdfset=="CTEQ") ? 1.645 : 1;
     for (susyScanYields::iterator ipoint=XplusMax.begin() ; ipoint!=XplusMax.end() ; ++ipoint) {
-      ipoint->second.first = sqrt(ipoint->second.first);
-      ipoint->second.first = ipoint->second.first / scale;
+      ipoint->second = sqrt(ipoint->second);
+      ipoint->second = ipoint->second / scale;
     }
     for (susyScanYields::iterator ipoint=XminusMax.begin() ; ipoint!=XminusMax.end() ; ++ipoint) {
-      ipoint->second.first = sqrt(ipoint->second.first);
-      ipoint->second.first = ipoint->second.first / scale;
+      ipoint->second = sqrt(ipoint->second);
+      ipoint->second = ipoint->second / scale;
     }
   }
 
