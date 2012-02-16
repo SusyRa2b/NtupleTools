@@ -1324,8 +1324,8 @@ void runDataQCD2011(const bool forOwen=false) {
   
   cout<<" ==== systematics for MC subtraction ==== "<<endl;
   for (unsigned int j=0; j<n.size(); j++) {
-    double var1 = 100*(n[j].first  -subp[j].first)/n[j].first;
-    double var2 = 100*(n[j].first -subm[j].first)/n[j].first;
+    double var1 = 100*(subp[j].first-n[j].first )/n[j].first;
+    double var2 = 100*(subm[j].first-n[j].first )/n[j].first;
     //expect these to be equal and opposite
     if ( fabs(var1)-fabs(var2) > 0.1 ) cout<<j<<" found MC subtraction systematic size discrepancy"<<endl;
     cout<<var1<<"\t"<<var2<<endl;
@@ -1557,6 +1557,22 @@ modifications for SHAPE analysis: (bShape = true)
     else if (qcdsubregion.owenId == "LooseLowSB" && qcdsubregion.btagSelection=="ge3b") {
       doMean=false;   zv[0] = 2.7; ze[0]=3.9;    zsbsyst = 0.0;
     }
+    //for 150-250 GeV SB -- take 150-200 and add the 200-250 numbers. PRELIMINARY...probably the errors are wrong
+    else if (qcdsubregion.owenId == "LooseWideSB" && qcdsubregion.btagSelection=="ge1b") {
+      doMean=false;   zv[0] = 116.7 + 82; ze[0]=jmt::addInQuad(26.9,20);    zsbsyst = 0.0;
+    }
+    else if (qcdsubregion.owenId == "TightWideSB" && qcdsubregion.btagSelection=="ge1b") {
+      doMean=false;   zv[0] = 58.9 + 44; ze[0]=jmt::addInQuad(15.8,13);    zsbsyst = 0.0;
+    }
+    else if (qcdsubregion.owenId == "LooseWideSB" && qcdsubregion.btagSelection=="ge2b") {
+      doMean=false;   zv[0] = 19.5 + 14; ze[0]=jmt::addInQuad(12.9,9);    zsbsyst = 0.0;
+    }
+    else if (qcdsubregion.owenId == "TightWideSB" && qcdsubregion.btagSelection=="ge2b") {
+      doMean=false;   zv[0] = 5.0 + 3.8; ze[0]=jmt::addInQuad(3.5,2.7);    zsbsyst = 0.0;
+    }
+    else if (qcdsubregion.owenId == "LooseWideSB" && qcdsubregion.btagSelection=="ge3b") {
+      doMean=false;   zv[0] = 2.7 + 1.9; ze[0]=jmt::addInQuad(3.9,2.8);    zsbsyst = 0.0;
+    }
     else if (qcdsubregion.owenId == "Loose" && qcdsubregion.btagSelection=="eq1b") {
       doMean=false;//averaging already done
       //preliminary numbers from http://www.slac.stanford.edu/~gaz/RA2b/ZinvTable.pdf
@@ -1766,7 +1782,7 @@ modifications for SHAPE analysis: (bShape = true)
   A_1m=getIntegral(sampleOfInterest);
   Aerr_1m=getIntegralErr(sampleOfInterest);
 
-  cout<<" SL SB found e,mu = "<<A_1e<<" , "<<A_1m<<endl;
+  //  cout<<" SL SB found e,mu = "<<A_1e<<" , "<<A_1m<<endl;
 
   //shape -- get the SB,SL number for 1b
   //this code block was written for the SHAPE analysis but it turns out to be useful for overriding the b-tag cut to always use ge1b for the SB
@@ -1988,6 +2004,7 @@ modifications for SHAPE analysis: (bShape = true)
     
     //double estimateerrMinus = 0;
     estimate = eff_MHT*estimate_temp;
+    estimateerr = eff_MHT*estimateerr_temp;
     //estimateerr = jmt::errAtimesB(estimate_temp, estimateerr_temp, eff_MHT, eff_MHT_err[0]);
     // estimateerrMinus = jmt::errAtimesB(estimate_temp, estimateerr_temp, eff_MHT, eff_MHT_err[1]);
     //std::cout << "estimate: "<< estimate << "+" << estimateerr << "- " <<estimateerrMinus << std::endl;
@@ -2275,6 +2292,9 @@ void runTtbarEstimate2011(const bool forOwen=false, const bool bShape=false) {
   ttbarClosureSyst.clear();
   cout<<" == summary (%) == "<<endl;
   cout<<"\tClosure\tQCD\tZ\tMC\tTotal"<<endl;
+  cout.setf(ios_base::fixed); //want exactly one decimal place....
+  cout.precision(1);
+
   for (unsigned int j=0; j<searchRegions_.size();j++) {
     double totalsyst = sqrt(closure[j]*closure[j] + qcd[j]*qcd[j] + znn[j]*znn[j] + mc[j]*mc[j]);
     cout<<searchRegions_[j].id() <<"\t & $"<<closure[j]<<"$ & $"<<qcd[j]<<"$ & $"<<znn[j]<<"$ & $"<<mc[j]<<"$ & $"<<totalsyst << "$ \\\\ " << endl;
@@ -2289,7 +2309,10 @@ void runTtbarEstimate2011(const bool forOwen=false, const bool bShape=false) {
 								      pow(resultsMap_[ searchRegions_[j].id()]["ttbar"].systError,2) 
 								      + pow(resultsMap_[searchRegions_[j].id()]["QCD"].systError,2));
   }
+  cout.unsetf(ios_base::fixed); //want exactly one decimal place....
+  cout.precision(6);
 
+ 
 
 }
 

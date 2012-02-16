@@ -39,20 +39,20 @@ TString selection_ ="cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cut
 
 // for now do this C-style, instead of making a class
 //nominal numbers used for frozen AN etc. SB corresponds to 200-250 GeV
-float eff_SB_MHT_             = 0.841;
-float eff_SB_MHT_err_[2]      = {0.059, 0.090};
-float eff_SB_ldp_MHT_         = 0.936;   
-float eff_SB_ldp_MHT_err_[2]  = {0.034, 0.118};
-float eff_SIG_MHT_            = 0.982; 
-float eff_SIG_MHT_err_[2]     = {0.012, 0.036};
-float eff_SIG_ldp_MHT_        = eff_SIG_MHT_; 
-float eff_SIG_ldp_MHT_err_[2] = {eff_SIG_MHT_err_[0], eff_SIG_MHT_err_[1]}; //due to low stas in SIG-LDP, use the SIG numbers for now.
-float eff_SIG_SL_MHT_         = 0.999; 
-float eff_SIG_SL_MHT_err_[2]  = {0.001, 0.001};
-float eff_SB_1m_MHT_          = 0.996; 
-float eff_SB_1m_MHT_err_[2]   = {0.002, 0.003};
-float eff_SB_1e_MHT_          = 0.996; 
-float eff_SB_1e_MHT_err_[2]   = {0.002, 0.003};
+// float eff_SB_MHT_             = 0.841;
+// float eff_SB_MHT_err_[2]      = {0.059, 0.090};
+// float eff_SB_ldp_MHT_         = 0.936;   
+// float eff_SB_ldp_MHT_err_[2]  = {0.034, 0.118};
+// float eff_SIG_MHT_            = 0.982; 
+// float eff_SIG_MHT_err_[2]     = {0.012, 0.036};
+// float eff_SIG_ldp_MHT_        = eff_SIG_MHT_; 
+// float eff_SIG_ldp_MHT_err_[2] = {eff_SIG_MHT_err_[0], eff_SIG_MHT_err_[1]}; //due to low stas in SIG-LDP, use the SIG numbers for now.
+// float eff_SIG_SL_MHT_         = 0.999; 
+// float eff_SIG_SL_MHT_err_[2]  = {0.001, 0.001};
+// float eff_SB_1m_MHT_          = 0.996; 
+// float eff_SB_1m_MHT_err_[2]   = {0.002, 0.003};
+// float eff_SB_1e_MHT_          = 0.996; 
+// float eff_SB_1e_MHT_err_[2]   = {0.002, 0.003};
 
 //150-200 GeV SB
 // CAREFUL -- if we really move to this region this we have to split e and mu in the SL SB
@@ -68,6 +68,22 @@ float eff_SB_1e_MHT_err_[2]   = {0.002, 0.003};
 // float eff_SIG_SL_MHT_err_[2]  = {0.001, 0.001};
 // float eff_SB_SL_MHT_          = 0.996;  //not really true but need new numbers
 // float eff_SB_SL_MHT_err_[2]   = {0.002, 0.003};
+
+//150-250 GeV SB (VERY CRUDE averages)
+float eff_SB_MHT_             = 0.834665;
+float eff_SB_MHT_err_[2]      = {0.04, 0.04};
+float eff_SB_ldp_MHT_         = 0.916194;   
+float eff_SB_ldp_MHT_err_[2]  = {0.04, 0.04};
+float eff_SIG_MHT_            = 0.982; 
+float eff_SIG_MHT_err_[2]     = {0.012, 0.036};
+float eff_SIG_ldp_MHT_        = eff_SIG_MHT_; 
+float eff_SIG_ldp_MHT_err_[2] = {eff_SIG_MHT_err_[0], eff_SIG_MHT_err_[1]}; //due to low stas in SIG-LDP, use the SIG numbers for now.
+float eff_SIG_SL_MHT_         = 0.999; 
+float eff_SIG_SL_MHT_err_[2]  = {0.001, 0.001};
+float eff_SB_1m_MHT_          = 0.986095 ;
+float eff_SB_1m_MHT_err_[2]   = {0.004, 0.004};
+float eff_SB_1e_MHT_          = 0.96; 
+float eff_SB_1e_MHT_err_[2]   = {0.005, 0.005};
 
 void printEff() {
 
@@ -337,6 +353,23 @@ void setSearchRegions( TString  which="") {
     
     sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=150&&MET<200","LooseLowSB",false));
     searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=250","LooseLowSB")); //3B
+  }
+  else if (which=="MoriondWideSB") {
+    //SB is 150-250
+    sbRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=150&&MET<250","LooseWideSB",false));
+    searchRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=250","LooseWideSB")); //1BL
+    
+    sbRegions_.push_back( SearchRegion( "ge1b","HT>=500","MET>=150&&MET<250","TightWideSB",false));
+    searchRegions_.push_back( SearchRegion( "ge1b","HT>=500","MET>=500","TightWideSB")); //1BT
+    
+    sbRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=150&&MET<250","LooseWideSB",false));
+    searchRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=250","LooseWideSB")); //2BL
+    
+    sbRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=150&&MET<250","TightWideSB",false));
+    searchRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=300","TightWideSB")); //2BT
+    
+    sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=150&&MET<250","LooseWideSB",false));
+    searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=250","LooseWideSB")); //3B
   }
   else if (which=="bShape") {
     //Tentative search regions for the b-shape analysis
