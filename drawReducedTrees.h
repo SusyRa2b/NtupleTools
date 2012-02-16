@@ -1633,11 +1633,10 @@ void setColorScheme(const TString & name) {
     sampleColor_["PythiaPUQCD"] =2;
     sampleColor_["PythiaPUQCDFlat"] =2;
     sampleColor_["TTbarJets"]=4;
-    sampleColor_["ttbar"]=4;
-    sampleColor_["TTbarJets-semiMu"]=kViolet;
-    sampleColor_["TTbarJets-semiEle"]=kViolet-9;
-    sampleColor_["TTbarJets-semiTauHad"]=kViolet-7;
-    sampleColor_["TTbarJets-dilep"]=kMagenta-10;
+    sampleColor_["TTbarJets-semiMu"]=kGreen-3;
+    sampleColor_["TTbarJets-semiEle"]=kAzure-2;
+    sampleColor_["TTbarJets-semiTauHad"]=kBlack;
+    sampleColor_["TTbarJets-dilep"]=kYellow;
     sampleColor_["TTbarJets-had"]=kRed-5;
     sampleColor_["TTbarJets-other"]=kPink-9;
     sampleColor_["SingleTop"] = kMagenta;
@@ -1812,7 +1811,7 @@ void loadSamples(bool joinSingleTop=true) {
   sampleLabel_["TTbarJets-semiMu"]="t#bar{t}:semi-#mu";
   sampleLabel_["TTbarJets-semiEle"]="t#bar{t}:semi-e";
   sampleLabel_["TTbarJets-semiTauHad"]="t#bar{t}:semi-#tau(#rightarrow had)";
-  sampleLabel_["TTbarJets-dilep"]="t#bar{t}:ee,#mu#mu,e#mu (& #tau#rightarrow e,#mu)";
+  sampleLabel_["TTbarJets-dilep"]="t#bar{t}:ee,#mu#mu,e#mu";
   sampleLabel_["TTbarJets-had"]="t#bar{t}:fully hadronic";
   sampleLabel_["TTbarJets-other"]="t#bar{t}:other";
   sampleLabel_["SingleTop"] = "Single-Top";
@@ -2244,7 +2243,7 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
     TString weightopt= useFlavorHistoryWeights_ && samples_[isample].Contains("WJets") ? "flavorHistoryWeight" : "";
 
     //treat ttbar in a special way 
-    if(samples_[isample].Contains("TTbar")){
+    if(samples_[isample].Contains("TTbarJets-")){
       if(splitTTbar_){
 	//tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,"",0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
 	if(samples_[isample].Contains("TTbarJets-semiMu")){
@@ -2437,6 +2436,7 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
       cout<<"Integral of data, EW, total SM: "<<hdata->Integral()<<" ; "<<totalewk->Integral()<<" ; "<<totalsm->Integral()<<endl;
       cout<<"Chi^2 Test results: "<<hdata->Chi2Test(totalsm,"UW P")<<endl;
       cout<<"KS Test results: "<<hdata->KolmogorovTest(totalsm,"N")<<endl;;
+      cout<<"KS Test (without \"N\") results: "<<hdata->KolmogorovTest(totalsm)<<endl;
 
       dataIntegral_ = hdata->Integral();
       MCIntegral_ = totalsm->IntegralAndError(totalsm->GetXaxis()->GetFirst(),totalsm->GetXaxis()->GetLast(),MCIntegralErr_);

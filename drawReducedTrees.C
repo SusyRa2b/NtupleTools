@@ -3007,7 +3007,7 @@ void AN2011_PUQCD( TString btagselection="ge1b",const int mode=1 ) {
 }
 
 void AN2011_ttbarw( double& r_sl, double& r_sl_err, double& r_nom, double& r_nom_err, 
-		    TString btagselection="ge1b", TString HTselection="Loose" , TString samplename="TTbarJets") {
+		    TString btagselection="ge1b", TString HTselection="Loose" , TString samplename="TTbarJets", TString ttbarcomponent="All") {
 
   /*
 goal:
@@ -3111,6 +3111,8 @@ other.
     drawMCErrors_=true;
     doOverflowAddition(false);
 
+    //ST
+    //selection_ =TCut("MET>=200 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && minDeltaPhiN >= 4 &&cutEleVeto==1 && cutMuVeto==1 && nTaus==1 &&passCleaning==1")&&btagcut&&HTcut;;
     //SL
     selection_ =TCut("MET>=200 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && minDeltaPhiN >= 4 && MT_Wlep>=0 && MT_Wlep<100 &&passCleaning==1")&&btagcut&&HTcut;;
     //SE
@@ -3181,10 +3183,10 @@ other.
     else if(samplename=="WJets") sample = "wjets";
     else if(samplename=="SingleTop") sample = "singletop";
 
-    const bool PVhack=true;
+    const bool PVhack=false;
 
-    if (PVhack)  selection_ =TCut("cutPV==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==0)||(nElectrons==0 && nMuons==0)) && minDeltaPhiN >= 4 && MT_Wlep>=-2 && MT_Wlep<100 && nGoodPV>=10")&&btagcut&&HTcut;
-    else         selection_ =TCut("cutPV==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && minDeltaPhiN >= 4 && MT_Wlep>=0 && MT_Wlep<100")&&btagcut&&HTcut;
+    if (PVhack)  selection_ =TCut("cutPV==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==0)||(nElectrons==0 && nMuons==0)) && minDeltaPhiN >= 4 && MT_Wlep>=-2 && MT_Wlep<100 && nGoodPV>=10 && passCleaning==1")&&btagcut&&HTcut;
+    else         selection_ =TCut("cutPV==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && minDeltaPhiN >= 4 && MT_Wlep>=0 && MT_Wlep<100 && passCleaning==1")&&btagcut&&HTcut;
     //selection_ =TCut("MET>=150 && cutPV==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && minDeltaPhiN >= 4")&&btagcut&&HTcut; //AN v5
     var="MET"; xtitle="E_{T}^{miss} [GeV]";
     //nbins = 40; low=100; high=550; 
@@ -3233,10 +3235,54 @@ other.
     r_sl_err = r_sl_sigoversb_err;
   
     TH1D* SLplot = (TH1D*)hinteractive->Clone("SLplot");
+
+
     //now switch to the normal selection
     //CAREFUL OF THIS HACK!
-    if (PVhack)  selection_ =TCut("cutPV==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==0)||(nElectrons==0 && nMuons==0)) && minDeltaPhiN >= 4 && MT_Wlep>=-2 && MT_Wlep<100 && nGoodPV<10")&&btagcut&&HTcut;
-    else    selection_ =TCut("cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4")&&btagcut&&HTcut;
+    if (PVhack)  selection_ =TCut("cutPV==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==0)||(nElectrons==0 && nMuons==0)) && minDeltaPhiN >= 4 && MT_Wlep>=-2 && MT_Wlep<100 && passCleaning==1 && nGoodPV<10")&&btagcut&&HTcut;
+    else{    
+
+      if(ttbarcomponent=="All"){
+	selection_ =TCut("cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4 && passCleaning==1 ")&&btagcut&&HTcut;
+      }
+      else{
+	if(!splitTTbar_){std::cout << "ERROR: For mode " << ttbarcomponent << " the splitTTbar_ flag must be true!" << std::endl; assert(0);}
+	clearSamples();
+	if(ttbarcomponent=="TauHad"){
+	  addSample("TTbarJets-semiTauHad");
+	  selection_ =TCut("cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4 && passCleaning==1 ")&&btagcut&&HTcut;
+	}
+         
+	else if(ttbarcomponent=="SemiEleFailEta"){
+	  addSample("TTbarJets-semiEle");
+	  selection_ =TCut(" cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN>=4 && passCleaning==1 && (decayType==101101 || decayType==201101)")&&btagcut&&HTcut;
+	}
+	else if(ttbarcomponent=="SemiEleFailPt"){
+	  addSample("TTbarJets-semiEle");
+	  selection_ =TCut(" cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN>=4 && passCleaning==1 && (decayType==101102 || decayType==201102)")&&btagcut&&HTcut;
+	}
+	else if(ttbarcomponent=="SemiEleFailOther"){
+	  addSample("TTbarJets-semiEle");
+	  selection_ =TCut(" cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN>=4 && passCleaning==1 && decayType==101104")&&btagcut&&HTcut;
+	}
+	
+	else if(ttbarcomponent=="SemiMuFailEta"){
+	  addSample("TTbarJets-semiMu");
+	  selection_ =TCut(" cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN>=4 && passCleaning==1 && (decayType==101301 || decayType==201301)")&&btagcut&&HTcut;
+	}
+	else if(ttbarcomponent=="SemiMuFailPt"){
+	  addSample("TTbarJets-semiMu");
+	  selection_ =TCut(" cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN>=4 && passCleaning==1 && (decayType==101302 || decayType==201302)")&&btagcut&&HTcut;
+	}
+	else if(ttbarcomponent=="SemiMuFailOther"){
+	  addSample("TTbarJets-semiMu");
+	  selection_ =TCut(" cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN>=4 && passCleaning==1 && decayType==101304")&&btagcut&&HTcut;
+	}
+	else{std::cout << "ttbarcomponent not recognized.  Quitting" << std::endl; assert(0);}
+
+      }
+    }
+    
     //selection_ =TCut("MET>=150 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4")&&btagcut&&HTcut;// AN v5
     if(vb)drawPlots(var,nvarbins, varbins ,xtitle,"Arbitrary units", "SBandSIG_MET_normal_"+sample+"_"+btagselection+"_"+HTselection);
     else drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "SBandSIG_MET_normal_"+sample+"_"+btagselection+"_"+HTselection);
@@ -3244,7 +3290,7 @@ other.
     SLplot->SetLineColor(kRed);
     SLplot->SetMarkerColor(kRed);
     SLplot->Draw("SAME");
-  
+    
     if (PVhack)  thecanvas->SaveAs("METshape_"+sample+"_0LinPVbins_"+btagselection+"_"+HTselection+".pdf");
     else         thecanvas->SaveAs("METshape_"+sample+"_SLandStandard_"+btagselection+"_"+HTselection+".pdf");
 
@@ -3348,7 +3394,24 @@ other.
 	myLegend->AddEntry(SLplot, "t#bar{t}, 0 lepton (n_{PV} #geq 10)", "lp");
       }
       else {
-	myLegend->AddEntry(SIGplot,"t#bar{t}, 0 leptons", "lp");
+	
+	if(ttbarcomponent=="All"){
+	  myLegend->AddEntry(SIGplot,"t#bar{t}, 0 leptons", "lp");
+	}
+	else{
+	  if(ttbarcomponent=="TauHad"){
+	    myLegend->AddEntry(SIGplot,"t#bar{t}, 0 leptons - semi-#tau-had", "lp");
+	  }
+	  else if(ttbarcomponent=="SemiEleFailEta" || ttbarcomponent=="SemiEleFailPt" || ttbarcomponent=="SemiEleFailOther"){
+	    myLegend->AddEntry(SIGplot,"t#bar{t}, 0 leptons - semi-e", "lp");
+	  }
+
+	  else if(ttbarcomponent=="SemiMuFailEta" || ttbarcomponent=="SemiMuFailPt" || ttbarcomponent=="SemiMuFailOther"){
+	    myLegend->AddEntry(SIGplot,"t#bar{t}, 0 leptons - semi-#mu", "lp");
+	  }
+	  
+	}
+	
 	myLegend->AddEntry(SLplot, "t#bar{t}, 1 lepton", "lp");
       }
     }
@@ -3362,102 +3425,159 @@ other.
     }
     myLegend->Draw();
     if (PVhack)    myC->Print("METshape_logAndRatio_"+sample+"_0LinPVbins_"+btagselection+"_"+HTselection+".pdf");
-    else     myC->Print("METshape_logAndRatio_"+sample+"_SLandStandard_"+btagselection+"_"+HTselection+".pdf");
-
+    //else     myC->Print("METshape_logAndRatio_"+sample+"_SLandStandard_"+btagselection+"_"+HTselection+".pdf");
+    else{
+      if(ttbarcomponent=="All"){
+	myC->Print("METshape_logAndRatio_"+sample+"_SLandStandard_"+btagselection+"_"+HTselection+".pdf");	
+      }
+      else{
+	myC->Print("METshape_Fall11_"+ttbarcomponent+"_logAndRatio_"+sample+"_SLandStandard_"+btagselection+"_"+HTselection+".pdf");	
+      }
+    }
   }
 }
 
 //kludgy , but it suffices for now
-void makeTTbarWMETPlots() {
+void makeTTbarWMETPlots(bool forttbarbreakdown=false) {
   
   double ratio_sl = 0, ratio_sl_err = 0, ratio_nom = 0, ratio_nom_err = 0;
   std::vector<double> ratios_sl, ratios_sl_err, ratios_nom, ratios_nom_err;
   std::vector<string> selections;
+  
+
+  if(forttbarbreakdown){
+
+
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Loose" , "TTbarJets", "TauHad");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Tight" , "TTbarJets", "TauHad");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Loose" , "TTbarJets", "TauHad");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Tight" , "TTbarJets", "TauHad");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge3b", "Loose" , "TTbarJets", "TauHad");
     
-  std::cout << "TTbarJets" << std::endl;
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Loose" , "TTbarJets", "SemiEleFailEta");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Tight" , "TTbarJets", "SemiEleFailEta");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Loose" , "TTbarJets", "SemiEleFailEta");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Tight" , "TTbarJets", "SemiEleFailEta");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge3b", "Loose" , "TTbarJets", "SemiEleFailEta");
+    
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Loose" , "TTbarJets", "SemiEleFailPt");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Tight" , "TTbarJets", "SemiEleFailPt");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Loose" , "TTbarJets", "SemiEleFailPt");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Tight" , "TTbarJets", "SemiEleFailPt");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge3b", "Loose" , "TTbarJets", "SemiEleFailPt");
+    
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Loose" , "TTbarJets", "SemiEleFailOther");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Tight" , "TTbarJets", "SemiEleFailOther");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Loose" , "TTbarJets", "SemiEleFailOther");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Tight" , "TTbarJets", "SemiEleFailOther");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge3b", "Loose" , "TTbarJets", "SemiEleFailOther");
+    
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Loose" , "TTbarJets", "SemiMuFailEta");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Tight" , "TTbarJets", "SemiMuFailEta");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Loose" , "TTbarJets", "SemiMuFailEta");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Tight" , "TTbarJets", "SemiMuFailEta");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge3b", "Loose" , "TTbarJets", "SemiMuFailEta");
+    
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Loose" , "TTbarJets", "SemiMuFailPt");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Tight" , "TTbarJets", "SemiMuFailPt");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Loose" , "TTbarJets", "SemiMuFailPt");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Tight" , "TTbarJets", "SemiMuFailPt");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge3b", "Loose" , "TTbarJets", "SemiMuFailPt");
+    
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Loose" , "TTbarJets", "SemiMuFailOther");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Tight" , "TTbarJets", "SemiMuFailOther");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Loose" , "TTbarJets", "SemiMuFailOther");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Tight" , "TTbarJets", "SemiMuFailOther");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge3b", "Loose" , "TTbarJets", "SemiMuFailOther");
 
-  AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Loose" , "TTbarJets");
-  selections.push_back("1BL");
-  ratios_sl.push_back(ratio_sl);  ratios_sl_err.push_back(ratio_sl_err);  ratios_nom.push_back(ratio_nom);  ratios_nom_err.push_back(ratio_nom_err);
-
-  AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Tight" , "TTbarJets");
-  selections.push_back("1BT");
-  ratios_sl.push_back(ratio_sl);  ratios_sl_err.push_back(ratio_sl_err);  ratios_nom.push_back(ratio_nom);  ratios_nom_err.push_back(ratio_nom_err);
-
-  AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Loose" , "TTbarJets");
-  selections.push_back("2BL");
-  ratios_sl.push_back(ratio_sl);  ratios_sl_err.push_back(ratio_sl_err);  ratios_nom.push_back(ratio_nom);  ratios_nom_err.push_back(ratio_nom_err);
-
-  AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Tight" , "TTbarJets");
-  selections.push_back("2BT");
-  ratios_sl.push_back(ratio_sl);  ratios_sl_err.push_back(ratio_sl_err);  ratios_nom.push_back(ratio_nom);  ratios_nom_err.push_back(ratio_nom_err);
-
-  AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge3b", "Loose" , "TTbarJets");
-  selections.push_back("3B");
-  ratios_sl.push_back(ratio_sl);  ratios_sl_err.push_back(ratio_sl_err);  ratios_nom.push_back(ratio_nom);  ratios_nom_err.push_back(ratio_nom_err);
-
-  std::cout << "WJets" << std::endl;
-
-  AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Loose" , "WJets");
-  selections.push_back("1BL");
-  ratios_sl.push_back(ratio_sl);  ratios_sl_err.push_back(ratio_sl_err);  ratios_nom.push_back(ratio_nom);  ratios_nom_err.push_back(ratio_nom_err);
-
-  AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Tight" , "WJets");
-  selections.push_back("1BT");
-  ratios_sl.push_back(ratio_sl);  ratios_sl_err.push_back(ratio_sl_err);  ratios_nom.push_back(ratio_nom);  ratios_nom_err.push_back(ratio_nom_err);
-
-  AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Loose" , "WJets");
-  selections.push_back("2BL");
-  ratios_sl.push_back(ratio_sl);  ratios_sl_err.push_back(ratio_sl_err);  ratios_nom.push_back(ratio_nom);  ratios_nom_err.push_back(ratio_nom_err);
-
-  AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Tight" , "WJets");
-  selections.push_back("2BT");
-  ratios_sl.push_back(ratio_sl);  ratios_sl_err.push_back(ratio_sl_err);  ratios_nom.push_back(ratio_nom);  ratios_nom_err.push_back(ratio_nom_err);
-
-  AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge3b", "Loose" , "WJets");
-  selections.push_back("3B");
-  ratios_sl.push_back(ratio_sl);  ratios_sl_err.push_back(ratio_sl_err);  ratios_nom.push_back(ratio_nom);  ratios_nom_err.push_back(ratio_nom_err);
-
-  std::cout << "SingleTop" << std::endl;
-
-  AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Loose" , "SingleTop");
-  selections.push_back("1BL");
-  ratios_sl.push_back(ratio_sl);  ratios_sl_err.push_back(ratio_sl_err);  ratios_nom.push_back(ratio_nom);  ratios_nom_err.push_back(ratio_nom_err);
-
-  AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Tight" , "SingleTop");
-  selections.push_back("1BT");
-  ratios_sl.push_back(ratio_sl);  ratios_sl_err.push_back(ratio_sl_err);  ratios_nom.push_back(ratio_nom);  ratios_nom_err.push_back(ratio_nom_err);
-
-  AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Loose" , "SingleTop");
-  selections.push_back("2BL");
-  ratios_sl.push_back(ratio_sl);  ratios_sl_err.push_back(ratio_sl_err);  ratios_nom.push_back(ratio_nom);  ratios_nom_err.push_back(ratio_nom_err);
-
-  AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Tight" , "SingleTop");
-  selections.push_back("2BT");
-  ratios_sl.push_back(ratio_sl);  ratios_sl_err.push_back(ratio_sl_err);  ratios_nom.push_back(ratio_nom);  ratios_nom_err.push_back(ratio_nom_err);
-
-  AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge3b", "Loose" , "SingleTop");
-  selections.push_back("3B");
-  ratios_sl.push_back(ratio_sl);  ratios_sl_err.push_back(ratio_sl_err);  ratios_nom.push_back(ratio_nom);  ratios_nom_err.push_back(ratio_nom_err);
-
-
-  for(uint i = 0; i<selections.size(); ++i){
-    if(i==0) std::cout << "TTbarJets" << std::endl;
-    if(i==5) std::cout << "WJets" << std::endl;
-    if(i==10) std::cout << "SingleTop" << std::endl;
-    std::cout << " & "<< selections.at(i) <<" & " << setprecision(3) << ratios_nom.at(i) << "$\\pm$" << ratios_nom_err.at(i) << "\t & " << ratios_sl.at(i) << "$\\pm$" << ratios_sl_err.at(i) << " \\\\" << std::endl; 
   }
-   
-  //print out the SIG/SB ratio in the SL region for data and full MC
-  savePlots_ = false;
-  TString mode = "datamode";
-  AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Loose" , mode);
-  AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Tight" , mode);
-  AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Loose" , mode);
-  AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Tight" , mode);
-  AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge3b", "Loose" , mode);
+  else{
+    std::cout << "TTbarJets" << std::endl;
+
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Loose" , "TTbarJets");
+    selections.push_back("1BL");
+    ratios_sl.push_back(ratio_sl);  ratios_sl_err.push_back(ratio_sl_err);  ratios_nom.push_back(ratio_nom);  ratios_nom_err.push_back(ratio_nom_err);
+
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Tight" , "TTbarJets");
+    selections.push_back("1BT");
+    ratios_sl.push_back(ratio_sl);  ratios_sl_err.push_back(ratio_sl_err);  ratios_nom.push_back(ratio_nom);  ratios_nom_err.push_back(ratio_nom_err);
+
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Loose" , "TTbarJets");
+    selections.push_back("2BL");
+    ratios_sl.push_back(ratio_sl);  ratios_sl_err.push_back(ratio_sl_err);  ratios_nom.push_back(ratio_nom);  ratios_nom_err.push_back(ratio_nom_err);
+
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Tight" , "TTbarJets");
+    selections.push_back("2BT");
+    ratios_sl.push_back(ratio_sl);  ratios_sl_err.push_back(ratio_sl_err);  ratios_nom.push_back(ratio_nom);  ratios_nom_err.push_back(ratio_nom_err);
+
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge3b", "Loose" , "TTbarJets");
+    selections.push_back("3B");
+    ratios_sl.push_back(ratio_sl);  ratios_sl_err.push_back(ratio_sl_err);  ratios_nom.push_back(ratio_nom);  ratios_nom_err.push_back(ratio_nom_err);
+  
 
 
+    std::cout << "WJets" << std::endl;
+
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Loose" , "WJets");
+    selections.push_back("1BL");
+    ratios_sl.push_back(ratio_sl);  ratios_sl_err.push_back(ratio_sl_err);  ratios_nom.push_back(ratio_nom);  ratios_nom_err.push_back(ratio_nom_err);
+
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Tight" , "WJets");
+    selections.push_back("1BT");
+    ratios_sl.push_back(ratio_sl);  ratios_sl_err.push_back(ratio_sl_err);  ratios_nom.push_back(ratio_nom);  ratios_nom_err.push_back(ratio_nom_err);
+
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Loose" , "WJets");
+    selections.push_back("2BL");
+    ratios_sl.push_back(ratio_sl);  ratios_sl_err.push_back(ratio_sl_err);  ratios_nom.push_back(ratio_nom);  ratios_nom_err.push_back(ratio_nom_err);
+
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Tight" , "WJets");
+    selections.push_back("2BT");
+    ratios_sl.push_back(ratio_sl);  ratios_sl_err.push_back(ratio_sl_err);  ratios_nom.push_back(ratio_nom);  ratios_nom_err.push_back(ratio_nom_err);
+
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge3b", "Loose" , "WJets");
+    selections.push_back("3B");
+    ratios_sl.push_back(ratio_sl);  ratios_sl_err.push_back(ratio_sl_err);  ratios_nom.push_back(ratio_nom);  ratios_nom_err.push_back(ratio_nom_err);
+
+    std::cout << "SingleTop" << std::endl;
+
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Loose" , "SingleTop");
+    selections.push_back("1BL");
+    ratios_sl.push_back(ratio_sl);  ratios_sl_err.push_back(ratio_sl_err);  ratios_nom.push_back(ratio_nom);  ratios_nom_err.push_back(ratio_nom_err);
+
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Tight" , "SingleTop");
+    selections.push_back("1BT");
+    ratios_sl.push_back(ratio_sl);  ratios_sl_err.push_back(ratio_sl_err);  ratios_nom.push_back(ratio_nom);  ratios_nom_err.push_back(ratio_nom_err);
+
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Loose" , "SingleTop");
+    selections.push_back("2BL");
+    ratios_sl.push_back(ratio_sl);  ratios_sl_err.push_back(ratio_sl_err);  ratios_nom.push_back(ratio_nom);  ratios_nom_err.push_back(ratio_nom_err);
+
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Tight" , "SingleTop");
+    selections.push_back("2BT");
+    ratios_sl.push_back(ratio_sl);  ratios_sl_err.push_back(ratio_sl_err);  ratios_nom.push_back(ratio_nom);  ratios_nom_err.push_back(ratio_nom_err);
+
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge3b", "Loose" , "SingleTop");
+    selections.push_back("3B");
+    ratios_sl.push_back(ratio_sl);  ratios_sl_err.push_back(ratio_sl_err);  ratios_nom.push_back(ratio_nom);  ratios_nom_err.push_back(ratio_nom_err);
+
+
+    for(uint i = 0; i<selections.size(); ++i){
+      if(i==0) std::cout << "TTbarJets" << std::endl;
+      if(i==5) std::cout << "WJets" << std::endl;
+      if(i==10) std::cout << "SingleTop" << std::endl;
+      std::cout << " & "<< selections.at(i) <<" & " << setprecision(3) << ratios_nom.at(i) << "$\\pm$" << ratios_nom_err.at(i) << "\t & " << ratios_sl.at(i) << "$\\pm$" << ratios_sl_err.at(i) << " \\\\" << std::endl; 
+    }
+  
+    //print out the SIG/SB ratio in the SL region for data and full MC
+    savePlots_ = false;
+    TString mode = "datamode";
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Loose" , mode);
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Tight" , mode);
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Loose" , mode);
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Tight" , mode);
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge3b", "Loose" , mode);
+  
+  }
 
 }
 
@@ -4167,6 +4287,18 @@ void AN2011( TString btagselection="ge1b",const int mode=1, bool logy=false, boo
   var="minDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}";
   nbins = 20; low=0; high=40;
   drawPlots(var,nbins,low,high,xtitle,"Events", "SB_mindphin_"+btagselection+modestring);
+  */
+
+
+  /*
+  //==single-tau selection
+  selection_ =TCut("HT>=400 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && nTaus==1 && minDeltaPhiN >= 4 &&passCleaning==1")&&btagcut;
+  var="MET"; xtitle="E_{T}^{miss} [GeV]";
+  //nbins = 14; low=150; high=500;
+  const int nvarbins=3;
+  const float varbins[]={150, 200, 250, 500}; //AN and PAS 
+  //drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_ST_"+btagselection+modestring,0,"GeV");
+  drawPlots(var,nvarbins,varbins,xtitle,"Events", "SBandSIG_MET_ST_"+btagselection+modestring);
   */
 
   resetLegendPosition();
