@@ -238,6 +238,9 @@ public:
 
   TString id() const;
 
+  bool operator==(const SearchRegion& other);
+  bool operator!=(const SearchRegion& other) {return !((*this)==other);}
+
 };
 SearchRegion::SearchRegion(TString btagSel,TString htSel,TString metSel,TString oId,bool isSig) : 
   htSelection(htSel),metSelection(metSel),btagSelection(btagSel),owenId(oId),isSIG(isSig) {}
@@ -245,6 +248,18 @@ SearchRegion::~SearchRegion() {}
 void SearchRegion::Print() const {
   cout<<" == "<<btagSelection<<" "<<htSelection<<" "<<metSelection<<endl;
 
+}
+
+bool SearchRegion::operator==(const SearchRegion& other) {
+  //ht, met, btag cuts must match
+  if ( htSelection != other.htSelection ) return false;
+  if ( metSelection != other.metSelection ) return false;
+  if ( btagSelection != other.btagSelection ) return false;
+  //also must both be either SIG or SB
+  if (isSIG != other.isSIG) return false;
+
+  //don't care about owenId
+  return true;
 }
 
 double SearchRegion::getLowEdgeMET() {
@@ -269,6 +284,7 @@ TString SearchRegion::id() const {
 std::vector<SearchRegion > searchRegions_;
 std::vector<SearchRegion > sbRegions_;
 bool searchRegionsSet_=false;
+
 void setSearchRegions( TString  which="") {
   //note that the search regions can be set exactly once per session. after that they will not be overridden by
   //further calls to this function
@@ -316,6 +332,24 @@ void setSearchRegions( TString  which="") {
 
     sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=200&&MET<250","METFineBin6",false));
     searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=500","METFineBin6"));
+  }
+
+  else if (which=="METfinebins2BT") {
+    
+    sbRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=200&&MET<250","METFine2BTBin1",false));
+    searchRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=300 &&MET<350","METFine2BTBin1"));
+    
+    sbRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=200&&MET<250","METFine2BTBin2",false));
+    searchRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=350 &&MET<400","METFine2BTBin2"));
+
+    sbRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=200&&MET<250","METFine2BTBin3",false));
+    searchRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=400 &&MET<450","METFine2BTBin3"));
+
+    sbRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=200&&MET<250","METFine2BTBin4",false));
+    searchRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=450 &&MET<500","METFine2BTBin4"));
+
+    sbRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=200&&MET<250","METFine2BTBin5",false));
+    searchRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=500","METFine2BTBin5"));
   }
 //These are the nominal search regions for the "Moriond 2012" analysis
   else if (which=="Moriond") {

@@ -113,6 +113,8 @@ const bool useScaleFactors_=true; //whether or not to use MC scale factors when 
 const bool useBNNEffCurves_=false; 
 const bool btaggedLSB_=true;
 const bool use1B_SL_=false; // use ge1b selection for SL sample in ttbar method
+const bool doNJetRWClosure_ = true; //should usually be true; set it to false only to save time
+
 
 void RSL(double SIG, double SB) {
 
@@ -1272,9 +1274,6 @@ void testQCD(unsigned int i) {
 std::map<TString, std::vector<double> > qcdSystErrors;
 void runDataQCD2011(const bool forOwen=false) {
 
-  const bool doNJetRWClosure = true; //should usually be true; set it to false only to save time
-  if (!doNJetRWClosure) cout<<"Warning! njet reweighting for closure test is turned off!"<<endl;
-
   setSearchRegions();
   assert(sbRegions_.size() == searchRegions_.size());
 
@@ -1289,6 +1288,7 @@ void runDataQCD2011(const bool forOwen=false) {
   vector<std::pair<double,std::vector<double> > > lsbp;
   vector<std::pair<double,std::vector<double> > > lsbm;
 
+  if (!doNJetRWClosure_) cout<<"Warning! njet reweighting for closure test is turned off!"<<endl;
   cout<<" ==== Nominal data results === "<<endl;
   for (unsigned int i=0; i<sbRegions_.size(); i++) {
     n.push_back( anotherABCD(sbRegions_[i],true,1,0,getLSBbsel(sbRegions_[i])));
@@ -1395,7 +1395,7 @@ void runDataQCD2011(const bool forOwen=false) {
   }
   
   cout<<" == Running QCD closure test =="<<endl;
-  runClosureTest2011(qcdSystErrors,doNJetRWClosure);
+  runClosureTest2011(qcdSystErrors,doNJetRWClosure_);
   
   cout<<" == QCD systematics summary =="<<endl;
   cout.setf(ios_base::fixed); //want exactly one decimal place....
@@ -1531,7 +1531,7 @@ modifications for SHAPE analysis: (bShape = true)
       zv[0] = 14; ze[0]=9;
       zsbsyst = 0.0;
     }
-    else if (qcdsubregion.owenId == "Tight" && qcdsubregion.btagSelection=="ge2b") {
+    else if ((qcdsubregion.owenId == "Tight" && qcdsubregion.btagSelection=="ge2b") || qcdsubregion.owenId.Contains( "METFine2BTBin")) {
       doMean=false;//averaging already done
       zv[0] = 3.8; ze[0]=2.7;
       zsbsyst = 0.0;
@@ -1807,6 +1807,9 @@ modifications for SHAPE analysis: (bShape = true)
   D=getIntegral(sampleOfInterest);
   Derr=getIntegralErr(sampleOfInterest);
 
+  //  cout<<" SL SIG found = "<<D<<endl;
+  if (D==0) Derr = 1; //impose error of 1 on zero counts
+
   //get the SIG,SL number for ge1b
   //this is only needed for a ge1b SL cross-check (not for the nominal method and not for the shape analysis)
   if (use1B_SL_) {
@@ -1816,6 +1819,7 @@ modifications for SHAPE analysis: (bShape = true)
     drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_A");
     D=getIntegral(sampleOfInterest); //clobber the nominal value of D
     Derr=getIntegralErr(sampleOfInterest);
+    if (D==0) Derr = 1; //impose error of 1 on zero counts
     //put back the btag sf
     btagSFweight_ = btagSFweight;
 
@@ -2249,30 +2253,57 @@ void runTtbarEstimate2011(const bool forOwen=false, const bool bShape=false) {
 
   cout<<"vary QCD subtraction"<<endl;
   for (unsigned int j=0; j<searchRegions_.size();j++) {
-    p.push_back(slABCD(j,true,"QCDup","nominal",false,bShape));
-    m.push_back(slABCD(j,true,"QCDdown","nominal",false,bShape));
-    if (fabs(p[j]-ttw[j])/ttw[j] - fabs(m[j]-ttw[j])/ttw[j] > 0.01) cout<<"** Difference in size of QCD sub syst!"<<endl;
-    qcd.push_back(100*fabs(p[j]-ttw[j])/ttw[j]);
+    if (j==0 || sbRegions_.at(0)!=sbRegions_.at(j)) {
+      p.push_back(slABCD(j,true,"QCDup","nominal",false,bShape));
+      m.push_back(slABCD(j,true,"QCDdown","nominal",false,bShape));
+      if (fabs(p[j]-ttw[j])/ttw[j] - fabs(m[j]-ttw[j])/ttw[j] > 0.01) cout<<"** Difference in size of QCD sub syst!"<<endl;
+      qcd.push_back(100*fabs(p[j]-ttw[j])/ttw[j]);
+    }
+    else if ( j>0 && sbRegions_.at(0)==sbRegions_.at(j) ) {
+      //copy the results from search region 0
+      p.push_back( p.at(0)); //probably p and m don't need to be copied....
+      m.push_back( m.at(0));
+      qcd.push_back(qcd.at(0));
+    }
+    else {cout<<"I think this should not happen!"<<endl; assert(0);}
   }
 
   p.clear(); m.clear();
   //for Znunu subtraction systematics
   cout<<"vary Znn subtraction"<<endl;
   for (unsigned int j=0; j<searchRegions_.size();j++) {
-    p.push_back(slABCD(j,true,"Zup","nominal",false,bShape));
-    m.push_back(slABCD(j,true,"Zdown","nominal",false,bShape));
-    if (fabs(p[j]-ttw[j])/ttw[j] - fabs(m[j]-ttw[j])/ttw[j] > 0.01) cout<<"** Difference in size of Znn sub syst!"<<endl;
-    znn.push_back(100*fabs(p[j]-ttw[j])/ttw[j]);
+    if (j==0 || sbRegions_.at(0)!=sbRegions_.at(j)) {
+      p.push_back(slABCD(j,true,"Zup","nominal",false,bShape));
+      m.push_back(slABCD(j,true,"Zdown","nominal",false,bShape));
+      if (fabs(p[j]-ttw[j])/ttw[j] - fabs(m[j]-ttw[j])/ttw[j] > 0.01) cout<<"** Difference in size of Znn sub syst!"<<endl;
+      znn.push_back(100*fabs(p[j]-ttw[j])/ttw[j]);
+    }
+    else if ( j>0 && sbRegions_.at(0)==sbRegions_.at(j) ) {
+      //copy the results from search region 0
+      p.push_back( p.at(0));
+      m.push_back( m.at(0));
+      znn.push_back(znn.at(0));
+    }
+    else {cout<<"I think this should not happen!"<<endl; assert(0);}
   }
 
   p.clear(); m.clear();
   //for MC subtraction systematics
   cout<<"vary MC subtraction"<<endl;
   for (unsigned int j=0; j<searchRegions_.size();j++) {
-    p.push_back(slABCD(j,true,"MCup","nominal",false,bShape));
-    m.push_back(slABCD(j,true,"MCdown","nominal",false,bShape));
-    if (fabs(p[j]-ttw[j])/ttw[j] - fabs(m[j]-ttw[j])/ttw[j] > 0.01) cout<<"** Difference in size of MC sub syst!"<<endl;
-    mc.push_back(100*fabs(p[j]-ttw[j])/ttw[j]);
+    if (j==0 || sbRegions_.at(0)!=sbRegions_.at(j)) {
+      p.push_back(slABCD(j,true,"MCup","nominal",false,bShape));
+      m.push_back(slABCD(j,true,"MCdown","nominal",false,bShape));
+      if (fabs(p[j]-ttw[j])/ttw[j] - fabs(m[j]-ttw[j])/ttw[j] > 0.01) cout<<"** Difference in size of MC sub syst!"<<endl;
+      mc.push_back(100*fabs(p[j]-ttw[j])/ttw[j]);
+    }
+    else if ( j>0 && sbRegions_.at(0)==sbRegions_.at(j) ) {
+      //copy the results from search region 0
+      p.push_back( p.at(0));
+      m.push_back( m.at(0));
+      mc.push_back(mc.at(0));
+    }
+    else {cout<<"I think this should not happen!"<<endl; assert(0);}
   }
 
   //finally, run the closure test
@@ -2302,7 +2333,9 @@ void runTtbarEstimate2011(const bool forOwen=false, const bool bShape=false) {
 
     //i have gone into slABCD and filled the global with central values and stat errors directly inside
     //but syst errors must be done here (note that they are in % so we must convert to events)
-    resultsMap_[ searchRegions_[j].id()]["ttbar"].systError = 0.01*totalsyst*resultsMap_[ searchRegions_[j].id()]["ttbar"].value;
+    if (resultsMap_[ searchRegions_[j].id()]["ttbar"].value > 0.0001)     resultsMap_[ searchRegions_[j].id()]["ttbar"].systError = 0.01*totalsyst*resultsMap_[ searchRegions_[j].id()]["ttbar"].value;
+    //if the central value is 0, then compute the syst error (in events) as the syst error in % times the value+1 statistical sigma
+    else  resultsMap_[ searchRegions_[j].id()]["ttbar"].systError = 0.01*totalsyst*resultsMap_[ searchRegions_[j].id()]["ttbar"].statError;
     //again, all errors except stat have been filled in slABCD
     //these are uncorrelated so let's just add them in quadrature
     resultsMap_[ searchRegions_[j].id()]["ttbarQCD"].systError = sqrt(
@@ -2563,6 +2596,49 @@ void runFineBinsOfMET() {
 
 }
 
+void runFineBinsOfMET_2BT() {
+  setSearchRegions("METfinebins2BT");
+
+  //run estimates with full syst
+  runDataQCD2011();
+  runTtbarEstimate2011(); 
+
+  //now hard-code Ale's results
+  //http://www.slac.stanford.edu/~gaz/RA2b/Znn_Binned.txt
+  resultsMap_["ge2bMETFine2BTBin1"]["Znn"].value = 2.37;
+  resultsMap_["ge2bMETFine2BTBin1"]["Znn"].statError = 1.59;
+  resultsMap_["ge2bMETFine2BTBin1"]["Znn"].systError = 0;
+  resultsMap_["ge2bMETFine2BTBin1"]["Znn"].trigErrorPlus = 0;
+  resultsMap_["ge2bMETFine2BTBin1"]["Znn"].trigErrorMinus = 0;
+
+  resultsMap_["ge2bMETFine2BTBin2"]["Znn"].value = 0.93;
+  resultsMap_["ge2bMETFine2BTBin2"]["Znn"].statError = 0.78;
+  resultsMap_["ge2bMETFine2BTBin2"]["Znn"].systError = 0;
+  resultsMap_["ge2bMETFine2BTBin2"]["Znn"].trigErrorPlus = 0;
+  resultsMap_["ge2bMETFine2BTBin2"]["Znn"].trigErrorMinus = 0;
+
+  resultsMap_["ge2bMETFine2BTBin3"]["Znn"].value = 0.88 ;
+  resultsMap_["ge2bMETFine2BTBin3"]["Znn"].statError = 0.74;
+  resultsMap_["ge2bMETFine2BTBin3"]["Znn"].systError = 0 ;
+  resultsMap_["ge2bMETFine2BTBin3"]["Znn"].trigErrorPlus = 0;
+  resultsMap_["ge2bMETFine2BTBin3"]["Znn"].trigErrorMinus = 0;
+
+  resultsMap_["ge2bMETFine2BTBin4"]["Znn"].value = 0.35;
+  resultsMap_["ge2bMETFine2BTBin4"]["Znn"].statError =  0.62;
+  resultsMap_["ge2bMETFine2BTBin4"]["Znn"].systError = 0;
+  resultsMap_["ge2bMETFine2BTBin4"]["Znn"].trigErrorPlus = 0;
+  resultsMap_["ge2bMETFine2BTBin4"]["Znn"].trigErrorMinus = 0;
+
+  resultsMap_["ge2bMETFine2BTBin5"]["Znn"].value =  0;
+  resultsMap_["ge2bMETFine2BTBin5"]["Znn"].statError = 0.62;
+  resultsMap_["ge2bMETFine2BTBin5"]["Znn"].systError = 0; 
+  resultsMap_["ge2bMETFine2BTBin5"]["Znn"].trigErrorPlus = 0;
+  resultsMap_["ge2bMETFine2BTBin5"]["Znn"].trigErrorMinus = 0;
+
+  writeResultsMapToText("DDresults_METfinebins2BT.dat");
+
+}
+
 
 //read back the file generated above and make a plot
 void drawDD() 
@@ -2570,8 +2646,11 @@ void drawDD()
   gROOT->SetStyle("CMS");
   loadSamples();
 
-  setSearchRegions("METbins");
-  ifstream file("DDresults_METbins3B.dat");
+  //  setSearchRegions("METbins");
+  //  ifstream file("DDresults_METbins3B.dat");
+
+  setSearchRegions("METfinebins2BT");
+  ifstream file("DDresults_METfinebins2BT.dat");
 
   //  setSearchRegions("METfinebins");
   //  ifstream file("DDresults_METfinebins3B_1BLSL.dat");
@@ -2678,7 +2757,11 @@ void drawDD()
   
   TCut baseline = "cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && passCleaning==1 && minDeltaPhiN>=4";
   TCut htcut = searchRegions_[0].htSelection.Data();
-  TCut btagging="nbjets>=3";
+  TCut btagging="";
+  if (searchRegions_[0].btagSelection == "ge1b") btagging="nbjets>=1";
+  else  if (searchRegions_[0].btagSelection == "ge2b") btagging="nbjets>=2";
+  else  if (searchRegions_[0].btagSelection == "ge3b") btagging="nbjets>=3";
+  else assert(0);
   TCut thecut = baseline&&htcut&&btagging;
   gROOT->cd();
   dtree->Project("hdata","MET",thecut.GetTitle()); //oy...we should use getCutString
@@ -2686,6 +2769,7 @@ void drawDD()
   hdata->SetLineWidth(2);
   hdata->SetMarkerStyle(kFullCircle);
   hdata->SetMarkerSize(1);
+  addOverflowBin(hdata);
   hdata->Draw("SAME");
 
   double mymax = thestack->GetMaximum();
