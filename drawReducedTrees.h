@@ -2692,6 +2692,7 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
     thecanvas->cd();
     gPad->SetRightMargin(0.1);
     gPad->Modified();
+    hinteractive = hdata;
     hdata->Draw();
     drawPlotHeader(-.1);
     if (doleg_)  leg->Draw();
