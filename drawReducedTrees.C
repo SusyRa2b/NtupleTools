@@ -900,11 +900,13 @@ std::pair<double,std::vector<double> > anotherABCD( const SearchRegion & region,
     hPVprescaleFail_RW->Multiply(hPV_W);
 
     delete [] pvbins;
-    
+
     ///////////////////////////////////////////////////////////////////////////////stat///////
     double dR2 = 0;
     double myA=0, myB=0;
     for(int k=1; k<=hPVphysics->GetNbinsX(); k++){
+      myA=0;
+      myB=0;
       double dNk = hPVphysics->GetBinError(k);
       double dPk = hPVprescalePass->GetBinError(k);
       double dFk = hPVprescaleFail->GetBinError(k);
@@ -3066,10 +3068,11 @@ void AN2011_PUQCD( TString btagselection="ge1b",const int mode=1 ) {
   setColorScheme("nostack");
   drawTotalSM_=true;  
 
+  /*
   setPlotMaximum(0.5); setPlotMinimum(0);
   selection_ =TCut("HT>=400 && MET >=50 && MET <100 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 &&passCleaning==1")&&util&&btagcut;
   drawR("minDeltaPhiN", 4, "nGoodPV", 14, 0.5, 14.5, "nGoodPV_"+btagselection+modestring);
-  return;
+  */
 
     
   drawTotalSM_=false;  
@@ -3077,7 +3080,7 @@ void AN2011_PUQCD( TString btagselection="ge1b",const int mode=1 ) {
   setPlotMaximum(0.5); setPlotMinimum(0);
   selection_ =TCut("HT>=400 && MET >=50 && MET <100 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && passCleaning==1")&&util&&btagcut;
   drawR("minDeltaPhiN", 4, "runNumber", 10, 160300, 180300, "runNumber_"+btagselection+modestring,0,true);
-  
+  return;
   
   lumiScale_ = holdLumiScale;
   selection_ =TCut("HT>=400 && MET >=50 && MET <100 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && passCleaning==1")&&util&&btagcut;
@@ -3112,6 +3115,7 @@ void AN2011_PUQCD( TString btagselection="ge1b",const int mode=1 ) {
   
 
 }
+
 
 void AN2011_ttbarw( double& r_sl, double& r_sl_err, double& r_nom, double& r_nom_err, 
 		    TString btagselection="ge1b", TString HTselection="Loose" , TString samplename="TTbarJets", TString ttbarcomponent="All") {
@@ -5634,6 +5638,142 @@ void ptresABCD(bool loose = true){
 
 }
 
+
+void studybtagLSB(TString btagselection="ge1b", const int mode=1){
+ 
+  loadSamples();
+
+  doOverflowAddition(true);
+  setQuiet(false);
+  doData(true);
+  drawMCErrors_=true;
+  doRatioPlot(false);
+    
+  TString modestring="";
+  if (mode==1) {
+    usePUweight_=false;
+    useHTeff_=false;
+    useMHTeff_=false;
+    thebnnMHTeffMode_ = kOff;
+    btagSFweight_="1";
+    currentConfig_=configDescriptions_.getDefault(); //completely raw MC
+  }
+  else if (mode==2 || mode==3) {
+    usePUweight_=true;
+    useHTeff_=true;
+    useMHTeff_=false;//SPECIAL for prescaled data!
+    thebnnMHTeffMode_ = kOff;
+    currentConfig_=configDescriptions_.getCorrected(); //JER bias
+    if (mode==2) modestring="-JER-PU-HLT";
+    else if(mode==3) modestring="-JER-PU-HLT-bSF";
+  }
+  else assert(0);
+  
+  /*
+  TCut btagcut = "nbjetsCSVM>=1";
+  if (mode==1 || mode==2) {
+    if ( btagselection=="ge1b") {} //do nothing
+    else  if ( btagselection=="ge2b" ) {
+      btagcut = "nbjetsCSVM>=2";
+    }
+    else if ( btagselection=="eq1b" ) {
+      btagcut = "nbjetsCSVM==1";
+    }
+    else if ( btagselection=="eq0b" ) {
+      btagcut = "nbjetsCSVM==0";
+    }
+    else if ( btagselection=="eq2b" ) {
+      btagcut = "nbjetsCSVM==2";
+    }
+    else if (btagselection=="ge3b" ){
+      btagcut = "nbjetsCSVM>=3";
+    }
+    else {
+      assert(0);
+    }
+  }
+  else if (mode==3) {
+    if ( btagselection=="ge1b") {
+      btagcut="1";
+      btagSFweight_="probge1";
+    }
+    else  if ( btagselection=="ge2b" ) {
+      btagcut = "1";
+      btagSFweight_="probge2";
+    }
+    else  if ( btagselection=="ge3b" ) {
+      btagcut = "1";
+      btagSFweight_="probge3";
+    }
+    else if ( btagselection=="eq1b" ) {
+      btagcut = "1";
+      btagSFweight_="prob1";
+    }
+    else if ( btagselection=="eq0b" ) {
+      btagcut = "1";
+      btagSFweight_="prob0";
+    }
+    else if ( btagselection=="eq2b" ) {
+      btagcut = "1";
+      btagSFweight_="(1-prob1-prob0-probge3)";
+    }
+    else {
+      assert(0);
+    }
+  }
+  */  
+
+  int nbins;
+  float low,high;
+  TString var,xtitle;
+  
+  setStackMode(false); //regular stack
+  setColorScheme("nostack");
+  drawTotalSM_=true;  
+  
+  TCut baseline = "cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && passCleaning==1";
+  TCut util = "pass_utilityHLT==1 && weight<1000";
+  TCut LSBmet = "MET>=50 && MET<100";
+
+  double holdLumiScale = lumiScale_;
+  lumiScale_ = 30.15471; 
+  
+  setPlotMaximum(0.5); setPlotMinimum(0);
+
+  selection_ =TCut("HT>=600 && nbjetsCSVM==0")&&baseline&&util&&LSBmet;
+  drawR("minDeltaPhiN", 4, "runNumber", 1, 160300, 180300, "runNumber_"+btagselection+modestring,0,true);
+  TH1D heq0b = *hinteractive;
+
+  selection_ =TCut("HT>=600 && nbjetsCSVM>=1")&&baseline&&util&&LSBmet;
+  drawR("minDeltaPhiN", 4, "runNumber", 1, 160300, 180300, "runNumber_"+btagselection+modestring,0,true);
+  TH1D hge1b = *hinteractive;
+
+  selection_ =TCut("HT>=600 && nbjetsCSVM>=2")&&baseline&&util&&LSBmet;
+  drawR("minDeltaPhiN", 4, "runNumber", 1, 160300, 180300, "runNumber_"+btagselection+modestring,0,true);
+  TH1D hge2b = *hinteractive;
+
+  selection_ =TCut("HT>=600 && nbjetsCSVM>=3")&&baseline&&util&&LSBmet;
+  drawR("minDeltaPhiN", 4, "runNumber", 1, 160300, 180300, "runNumber_"+btagselection+modestring,0,true);
+  TH1D hge3b = *hinteractive;
+
+  heq0b.SetMarkerColor(kOrange);
+  hge1b.SetMarkerColor(kRed);
+  hge2b.SetMarkerColor(kBlue);
+  hge3b.SetMarkerColor(kBlack);
+  heq0b.SetLineColor(kOrange);
+  hge1b.SetLineColor(kRed);
+  hge2b.SetLineColor(kBlue);
+  hge3b.SetLineColor(kBlack);
+
+  TCanvas * c1 = new TCanvas("c1", "c1", 640,480);
+  c1->cd();
+  heq0b.Draw("E1");
+  hge1b.Draw("SAME E1");
+  hge2b.Draw("SAME E1");
+  //hge3b.Draw("SAME E1");
+  c1->SaveAs("c1.png");
+
+}
 
 void studyPrescale_r(int ibtag = 4) {
   loadSamples();
