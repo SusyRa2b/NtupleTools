@@ -274,6 +274,9 @@ void EventCalculator::setOptions( const TString & opt) {
   else  if ( getOptPiece("BTag",opt)== theBTagEffNames_[kBTagEff03]) theBTagEffType_ = kBTagEff03;
   else  if ( getOptPiece("BTag",opt)== theBTagEffNames_[kBTagEffup3]) theBTagEffType_ = kBTagEffup3;
   else  if ( getOptPiece("BTag",opt)== theBTagEffNames_[kBTagEffdown3]) theBTagEffType_ = kBTagEffdown3;
+  else  if ( getOptPiece("BTag",opt)== theBTagEffNames_[kBTagEff04]) theBTagEffType_ = kBTagEff04;
+  else  if ( getOptPiece("BTag",opt)== theBTagEffNames_[kBTagEffup4]) theBTagEffType_ = kBTagEffup4;
+  else  if ( getOptPiece("BTag",opt)== theBTagEffNames_[kBTagEffdown4]) theBTagEffType_ = kBTagEffdown4;
   else {cout<<"problem with opt in btag"<<endl; assert(0) ;} //enforce a complete set of options!
 
   if ( getOptPiece("HLT",opt)== theHLTEffNames_[kHLTEff0]) theHLTEffType_ = kHLTEff0;
@@ -3946,16 +3949,94 @@ float EventCalculator::jetTagEff(unsigned int ijet, TH1F* h_btageff, TH1F* h_cta
 				 const float extraSFb, const float extraSFc, const float extraSFl) {
 
   float tageff=0;
-  float pt = getJetPt(ijet);
-  //float eta = myJetsPF->at(ijet).eta;
+  const float pt = getJetPt(ijet);
+  const float eta = fabs(myJetsPF->at(ijet).eta);
   int flavor = myJetsPF->at(ijet).partonFlavour;
 
   float noEfficiencyThreshold=350; //threshold for the highest SF bin, which we sometimes set to 0 efficiency
 
-  if(isGoodJet30(ijet)){
+  if(isGoodJet30(ijet)) {
 
-    //SSVHPT
-    //float SF[3] = {0.9,0.9,0.9}; //3 bins of pT (<240, 240 to 350, and >350)
+    if (theBTagEffType_ == kBTagEff04 || theBTagEffType_ == kBTagEffup4 || theBTagEffType_ == kBTagEffdown4) { //new 2012 BTV prescription 
+
+      if (abs(flavor) ==4 || abs(flavor)==5) { //heavy flavor
+	float errFactor = 1;
+	float x=pt;
+	// Tagger: CSVM within 30 < pt < 670 GeV, abs(eta) < 2.4, x = pt
+	if (x >670) { //use SF for 670 with twice the errors
+	  x=670;
+	  errFactor=2;
+	}
+	if (abs(flavor) == 4)  errFactor=2; //charm has double the errors   "SFc = SFb with twice the quoted uncertainty"
+
+	float  SFb = 0.6981*((1.+(0.414063*x))/(1.+(0.300155*x)));
+
+	if (theBTagEffType_ == kBTagEffup4 || theBTagEffType_ == kBTagEffdown4) {
+	  const int nbins=14;
+	  float ptmin[] = {30, 40, 50, 60, 70, 80, 100, 120, 160, 210, 260, 320, 400, 500};
+	  float ptmax[] = {40, 50, 60, 70, 80,100, 120, 160, 210, 260, 320, 400, 500, 670};
+	  float  SFb_error[] = {
+	    0.0295675, //1
+	    0.0295095,
+	    0.0210867,
+	    0.0219349,
+	    0.0227033,
+	    0.0204062,
+	    0.0185857,
+	    0.0256242,
+	    0.0383341,
+	    0.0409675,
+	    0.0420284,
+	    0.0541299,
+	    0.0578761,
+	    0.0655432 }; //14
+	//need to figure out which bin i'm in
+	  float myErr = SFb_error[nbins-1]; //put the high pT guys in the last bin
+	  for (int i=0; i<nbins; i++) {
+	    if (pt >= ptmin[i] && pt<ptmax[i]) { //found it
+	      myErr = SFb_error[i]; 
+	      break;
+	    }
+	  }
+	  myErr *= errFactor; //high pT and charm get scaled up
+
+	  if (theBTagEffType_ == kBTagEffup4) SFb += myErr;
+	  else if (theBTagEffType_ == kBTagEffdown4) SFb -= myErr;
+	  else assert(0);
+	}
+
+	tageff = SFb * h_btageff->GetBinContent( h_btageff->FindBin( pt ) );
+
+	if (abs(flavor) == 4) tageff*=extraSFc;
+	else if (abs(flavor)==5) tageff*=extraSFb;
+	else assert(0);
+      }
+      else { //light flavor [ see https://twiki.cern.ch/twiki/pub/CMS/BtagPOG/SFlightFuncs.C ]
+	float SF=0;
+	if ( eta < 0.8 ) {
+	  if       (theBTagEffType_ == kBTagEff04)    SF = ((1.06182+(0.000617034*pt))+(-1.5732e-06*(pt*pt)))+(3.02909e-10*(pt*(pt*pt)));
+	  else  if (theBTagEffType_ == kBTagEffdown4) SF = ((0.972455+(7.51396e-06*pt))+(4.91857e-07*(pt*pt)))+(-1.47661e-09*(pt*(pt*pt)));
+	  else  if (theBTagEffType_ == kBTagEffup4)   SF = ((1.15116+(0.00122657*pt))+(-3.63826e-06*(pt*pt)))+(2.08242e-09*(pt*(pt*pt)));
+	}
+	else if (eta>=0.8 && eta<1.6) {
+	  if       (theBTagEffType_ == kBTagEff04)    SF = ((1.111+(-9.64191e-06*pt))+(1.80811e-07*(pt*pt)))+(-5.44868e-10*(pt*(pt*pt)));
+	  else  if (theBTagEffType_ == kBTagEffdown4) SF = ((1.02055+(-0.000378856*pt))+(1.49029e-06*(pt*pt)))+(-1.74966e-09*(pt*(pt*pt)));
+	  else  if (theBTagEffType_ == kBTagEffup4)   SF = ((1.20146+(0.000359543*pt))+(-1.12866e-06*(pt*pt)))+(6.59918e-10*(pt*(pt*pt)));
+	}
+	else if (eta>=1.6 && eta<=2.4) {
+	  if       (theBTagEffType_ == kBTagEff04)    SF = ((1.08498+(-0.000701422*pt))+(3.43612e-06*(pt*pt)))+(-4.11794e-09*(pt*(pt*pt)));
+	  else  if (theBTagEffType_ == kBTagEffdown4) SF = ((0.983476+(-0.000607242*pt))+(3.17997e-06*(pt*pt)))+(-4.01242e-09*(pt*(pt*pt)));
+	  else  if (theBTagEffType_ == kBTagEffup4)   SF = ((1.18654+(-0.000795808*pt))+(3.69226e-06*(pt*pt)))+(-4.22347e-09*(pt*(pt*pt)));
+	}
+	//design question -- what do to for jets at eta>2.4? assert? or return tageff=0?
+	//i guess tageff 0 makes the most sense
+
+	tageff = SF * extraSFl * h_ltageff->GetBinContent( h_ltageff->FindBin( pt )); 
+
+      }
+
+    }
+    else {
     //CSVM
     float SF[3] = {0.96,0.96,0.96}; //3 bins of pT (<240, 240 to 350, and >350)
     float SFU[3] = {1,1,1};
@@ -4024,7 +4105,7 @@ float EventCalculator::jetTagEff(unsigned int ijet, TH1F* h_btageff, TH1F* h_cta
       tageff = extraSFl*h_ltageff->GetBinContent( h_ltageff->FindBin( pt ) );
       //std::cout << "l: tag eff = " << tageff << std::endl;
     }
-    
+    }
     
   }
 
