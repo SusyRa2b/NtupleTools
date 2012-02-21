@@ -111,7 +111,7 @@ double lumiScale_ = 4683.719;//nov4
 const bool reweightLSBdata_=true; //whether or not LSB data is reweighted based on PV distribution
 const bool useScaleFactors_=true; //whether or not to use MC scale factors when doing subtraction for data-driven estimates
 const bool useBNNEffCurves_=false; 
-const bool btaggedLSB_=true;
+const bool btaggedLSB_=false;
 const bool use1B_SL_=false; // use ge1b selection for SL sample in ttbar method
 const bool doNJetRWClosure_ = true; //should usually be true; set it to false only to save time
 
@@ -626,6 +626,7 @@ TString getLSBbsel(const SearchRegion & r) {
   if (btaggedLSB_) { //in case we want btagged LSB
     if (r.btagSelection.Contains("3")) lsbbsel = "ge2b"; //use >=2b in place of >=3b
     else lsbbsel = r.btagSelection;
+    //lsbbsel = r.btagSelection;
   }
 
   return lsbbsel;
@@ -968,13 +969,14 @@ std::pair<double,std::vector<double> > anotherABCD( const SearchRegion & region,
     //A   -- aka 50 - 100 and high MPT,MET
     selection_ = baseline && cleaning && dpcut  && SBMET && failOther; //auto cast to TString seems to work
     Acutjm = selection_;
-    drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_A");
+    if(!doNjetRW) drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_A");
     A=getIntegral(sampleOfInterest);
     Aerr=getIntegralErr(sampleOfInterest);
+    
     //B
     selection_ = baseline && cleaning && dpcut  && SBMET && passOther; //auto cast to TString seems to work
     Bcutjm = selection_;
-    drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_B");
+    if(!doNjetRW) drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_B");
     B=getIntegral(sampleOfInterest);
     Berr=getIntegralErr(sampleOfInterest);
   }
@@ -984,7 +986,7 @@ std::pair<double,std::vector<double> > anotherABCD( const SearchRegion & region,
   
   //D
   selection_ = baseline && cleaning && dpcut  && SRMET && failOther; //auto cast to TString seems to work
-  drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_D");
+  if(!doNjetRW) drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_D");
   Dcutjm = selection_;
   D=getIntegral(sampleOfInterest);
   Derr=getIntegralErr(sampleOfInterest);
@@ -1066,7 +1068,7 @@ std::pair<double,std::vector<double> > anotherABCD( const SearchRegion & region,
   //SIG
   selection_ = baseline && cleaning && dpcut  && SRMET && passOther; //auto cast to TString seems to work
   SIGcutjm = selection_;
-  drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_C");
+  if(!doNjetRW) drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_C");
   SIG=getIntegral(sampleOfInterest);
   SIGerr=getIntegralErr(sampleOfInterest);
   
