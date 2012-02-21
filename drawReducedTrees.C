@@ -1189,7 +1189,7 @@ std::pair<double,std::vector<double> > anotherABCD( const SearchRegion & region,
     cout<<output<<endl;
   }
   else {
-    if(!(forTTbarEstimate)){
+    if(!(forTTbarEstimate)) {
       if(reweightLSBdata_){
 	sprintf(output,"%s & $%f \\pm %f$ & %d & %s & %s$^{+%.2f}_{-%.2f}$  \\\\ %% %f +/- %f",name.Data(),
 		RLSB_RW,dRLSB_RW,
@@ -1420,14 +1420,13 @@ void runDataQCD2011(const bool forOwen=false) {
       qcdSystErrors["Total"].push_back( sqrt( pow(qcdSystErrors["MCsub"].at(j),2) +  pow(qcdSystErrors["Closure"].at(j),2)+ pow(qcdSystErrors["SBshift"].at(j),2)));
       cout<<thisregion.id()<<"\t& $"<<qcdSystErrors["MCsub"].at(j)<<"$ & $"<<qcdSystErrors["Closure"].at(j)<<"$ & $"<<qcdSystErrors["SBshift"].at(j)<<"$ & $"<<qcdSystErrors["Total"].at(j)<< "$ \\\\"<< endl;
     }
-    cout.unsetf(ios_base::fixed); //reset the cout precision
-    cout.precision(6);
-
     //we only want to fill this data for the SIG regions
     if (thisregion.isSIG) resultsMap_[ thisregion.id()]["QCD"].systError = 0.01*qcdSystErrors["Total"].at(j)*resultsMap_[ thisregion.id()]["QCD"].value;
     //note that the qcdSystErrors is in %, so I need to convert to a number of events here
   }
-  
+  cout.unsetf(ios_base::fixed); //reset the cout precision
+  cout.precision(6);
+
 }
 
 double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const TString & mode="", const TString & closureMode="nominal", bool fillResultsGlobal=false, const bool bShape=false ) {
@@ -1848,9 +1847,43 @@ modifications for SHAPE analysis: (bShape = true)
   double mu_SB_1m_1b_temp = mu_SB_1m_1b; //shape
   double mu_SB_1m_1b_err_temp = mu_SB_1m_1b_err; //shape
   double D_temp = D, Derr_temp = Derr;
+
+  double A_1e_bnnPlus=A_1e,A_1e_bnnMinus=A_1e,A_1m_bnnPlus=A_1m,A_1m_bnnMinus=A_1m;
+
   if(useScaleFactors_ && datamode) {
     if(useBNNEffCurves_){ 
-      assert(0);
+      if (use1B_SL_)  assert(0); //we're not supporting this yet
+
+      //clobber A_1e and A_1m with the efficiency-corrected versions
+
+      thebnnMHTeffMode_ = kOn;
+
+      selection_ = baseline && cleaning && dpcut  && SBMET && failOther_1e; //single electron selection
+      drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_B");
+      A_1e=getIntegral(sampleOfInterest);
+      Aerr_1e=getIntegralErr(sampleOfInterest);
+      //now vary the trigger efficiency
+      thebnnMHTeffMode_ = kOnPlus;
+      drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_B");
+      A_1e_bnnPlus=getIntegral(sampleOfInterest);
+      thebnnMHTeffMode_ = kOnMinus;
+      drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_B");
+      A_1e_bnnMinus=getIntegral(sampleOfInterest);
+
+      selection_ = baseline && cleaning && dpcut  && SBMET && failOther_1m; //single muon selection
+      drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_B");
+      A_1m=getIntegral(sampleOfInterest);
+      Aerr_1m=getIntegralErr(sampleOfInterest);
+      //now vary the trigger efficiency
+      thebnnMHTeffMode_ = kOnPlus;
+      drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_B");
+      A_1m_bnnPlus=getIntegral(sampleOfInterest);
+      thebnnMHTeffMode_ = kOnMinus;
+      drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_B");
+      A_1m_bnnMinus=getIntegral(sampleOfInterest);
+      
+      thebnnMHTeffMode_ = kOff;//turn it back off
+
     }
     else {
       A_1e /= eff_1e_SB_MHT;
@@ -1945,8 +1978,8 @@ modifications for SHAPE analysis: (bShape = true)
   btagSFweight_ = btagSFweight;
 
   double SBtrue=0,SBtrueErr=0;
-  if (!datamode && bShape) {
-    //for closure test of bShape, need the true number in SB
+  if (bShape) {
+    //for closure test of bShape, need the true number in SB (also useful for datamode)
     selection_ = baseline && cleaning && dpcut  && SBMET && passOther;
     drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_B");
     SBtrue=getIntegral(sampleOfInterest);
@@ -1980,7 +2013,7 @@ modifications for SHAPE analysis: (bShape = true)
   TString name = btagselection;
   name += region.owenId;
 
-  double SBestimate=0,SBestimate_err=0;
+  double SBestimate=0,SBestimate_err=0;//,SBestimate_temp=0,SBestimate_err_temp=0; TODO
   if (bShape) { //calculate SB and SIG estimates
     double Bprime = B-SBsubMisc-SBsubQCD-SBsubZ;
     double Bprimeerr= sqrt(suberr*suberr + Berr*Berr);
@@ -1993,9 +2026,9 @@ modifications for SHAPE analysis: (bShape = true)
     double SIGestimate_err = jmt::errAoverB(D,Derr,mu_SB_SL_1b,mu_SB_SL_1b_err);
     SIGestimate_err = jmt::errAtimesB(Bprime,Bprimeerr,D / mu_SB_SL_1b,SIGestimate_err);
     //closure test output
-    cout<<"SHAPE "<<name.Data()
-	<<" SB: " <<SBestimate<<" +/- "<<SBestimate_err<<" true: "<<SBtrue<<" +/- "<<SBtrueErr
-	<<" SIG: "<<SIGestimate<<" +/- "<<SIGestimate_err<<" true: "<<SIG<<" +/- "<<SIGerr<<endl;
+//     cout<<"SHAPE "<<name.Data()
+// 	<<" SB: " <<SBestimate<<" +/- "<<SBestimate_err<<" true: "<<SBtrue<<" +/- "<<SBtrueErr
+// 	<<" SIG: "<<SIGestimate<<" +/- "<<SIGestimate_err<<" true: "<<SIG<<" +/- "<<SIGerr<<endl;
     estimate = SIGestimate;
     estimateerr = SIGestimate_err;
   }
@@ -2007,20 +2040,21 @@ modifications for SHAPE analysis: (bShape = true)
     estimateerr= jmt::errAoverB(num,numerr,A,Aerr);
   }
   estimate_temp = estimate; estimateerr_temp = estimateerr;
+  //  if (bShape) { SBestimate_temp = SBestimate; SBestimate_err_temp = SBestimate_err;} TODO
 
   if(useScaleFactors_ && datamode){
     
     //double estimateerrMinus = 0;
     estimate = eff_MHT*estimate_temp;
     estimateerr = eff_MHT*estimateerr_temp;
-    //estimateerr = jmt::errAtimesB(estimate_temp, estimateerr_temp, eff_MHT, eff_MHT_err[0]);
-    // estimateerrMinus = jmt::errAtimesB(estimate_temp, estimateerr_temp, eff_MHT, eff_MHT_err[1]);
-    //std::cout << "estimate: "<< estimate << "+" << estimateerr << "- " <<estimateerrMinus << std::endl;
-    //use the larger of the two as the error in the estimate
-    //estimateerr = estimateerr > estimateerrMinus ? estimateerr: estimateerrMinus;
+ 
+    //    if (bShape) {    } //TODO
 
     //for bShape, divide by SB,SL,1b; for normal, divide by A
     double mu_SB_SL_jb = bShape ? mu_SB_SL_1b : A; 
+
+    //Don's convention here is that all delta_down variables correspond to a lower ttbar  prediction
+    //                              all delta_up   variables correspond to a higher ttbar prediction
 
     //vary the trigger efficiencies by their statistical error to get trigger error on estimate
     //first vary QCD trigger efficiency
@@ -2082,11 +2116,72 @@ modifications for SHAPE analysis: (bShape = true)
     double delta_up3_unscaled = (estimate_down_unscaled - estimate_temp);
 
 
-    estimateerrTrigPlus  = sqrt(delta_up*delta_up + delta_up2*delta_up2 + delta_up3*delta_up3);
-    estimateerrTrigMinus = sqrt(delta_down*delta_down + delta_down2*delta_down2 + delta_down3*delta_down3);
+    //now vary SL trigger eff ; this is regions 'A' and 'D', but we're going to ignore the error on 'D' (SL,SIG)
+    num = (B-SBsubMisc-SBsubQCD-SBsubZ)*D;
+    double delta_up4=1e9,delta_down4=1e9;
+    double delta_up4_unscaled=1e9,delta_down4_unscaled=1e9;
+    if (useBNNEffCurves_) {
+      double estimate_up_e = num / (A_1m + A_1e_bnnPlus);
+      double estimate_up_m = num / (A_1m_bnnPlus + A_1e);
 
-    estimateerrTrigPlus_unscaled  = sqrt(delta_up_unscaled*delta_up_unscaled + delta_up3_unscaled*delta_up3_unscaled);
-    estimateerrTrigMinus_unscaled = sqrt(delta_down_unscaled*delta_down_unscaled + delta_down3_unscaled*delta_down3_unscaled);
+      double delta_up_e = eff_MHT*estimate_up_e - estimate;
+      double delta_up_m = eff_MHT*estimate_up_m - estimate;
+      double delta_up_e_unscaled = estimate_up_e - estimate_temp;
+      double delta_up_m_unscaled = estimate_up_m - estimate_temp;
+      //      cout<<"up nom,e,m = "<<estimate<<"\t"<<eff_MHT*estimate_up_e<<" "<<eff_MHT*estimate_up_m<<endl;
+      delta_up4 = jmt::addInQuad(delta_up_e,delta_up_m);
+      delta_up4_unscaled = jmt::addInQuad(delta_up_e_unscaled,delta_up_m_unscaled);
+
+      double estimate_down_e = num / (A_1m + A_1e_bnnMinus);
+      double estimate_down_m = num / (A_1m_bnnMinus + A_1e);
+
+      double delta_down_e = eff_MHT*estimate_down_e - estimate;
+      double delta_down_m = eff_MHT*estimate_down_m - estimate;
+      double delta_down_e_unscaled = estimate_down_e - estimate_temp;
+      double delta_down_m_unscaled = estimate_down_m - estimate_temp;
+      //      cout<<"down nom,e,m = "<<estimate<<"\t"<<eff_MHT*estimate_down_e<<" "<<eff_MHT*estimate_down_m<<endl;
+      delta_down4 = jmt::addInQuad(delta_down_e,delta_down_m);
+      delta_down4_unscaled = jmt::addInQuad(delta_down_e_unscaled,delta_down_m_unscaled);
+
+    }
+    else {
+      float eff_1e_SB_MHT_up = eff_1e_SB_MHT + eff_1e_SB_MHT_err[0];
+      float eff_1m_SB_MHT_up = eff_1m_SB_MHT + eff_1m_SB_MHT_err[0];
+
+      //careful, A_1m and A_1e are already corected for trig eff; use the _temp variables instead
+      double estimate_up_e = num / (A_1m_temp / eff_1m_SB_MHT + A_1e_temp / eff_1e_SB_MHT_up);
+      double estimate_up_m = num / (A_1m_temp / eff_1m_SB_MHT_up + A_1e_temp / eff_1e_SB_MHT);
+
+      double delta_up_e = eff_MHT*estimate_up_e - estimate;
+      double delta_up_m = eff_MHT*estimate_up_m - estimate;
+      double delta_up_e_unscaled = estimate_up_e - estimate_temp;
+      double delta_up_m_unscaled = estimate_up_m - estimate_temp;
+      //      cout<<"up nom,e,m = "<<estimate<<"\t"<<eff_MHT*estimate_up_e<<" "<<eff_MHT*estimate_up_m<<endl;
+      delta_up4 = jmt::addInQuad(delta_up_e,delta_up_m);
+      delta_up4_unscaled = jmt::addInQuad(delta_up_e_unscaled,delta_up_m_unscaled);
+
+      float eff_1e_SB_MHT_down = eff_1e_SB_MHT - eff_1e_SB_MHT_err[1];
+      float eff_1m_SB_MHT_down = eff_1m_SB_MHT - eff_1m_SB_MHT_err[1];
+
+      double estimate_down_e = num / (A_1m_temp / eff_1m_SB_MHT + A_1e_temp / eff_1e_SB_MHT_down);
+      double estimate_down_m = num / (A_1m_temp / eff_1m_SB_MHT_down + A_1e_temp / eff_1e_SB_MHT);
+
+      double delta_down_e = eff_MHT*estimate_down_e - estimate;
+      double delta_down_m = eff_MHT*estimate_down_m - estimate;
+      double delta_down_e_unscaled = estimate_down_e - estimate_temp;
+      double delta_down_m_unscaled = estimate_down_m - estimate_temp;
+      //      cout<<"down nom,e,m = "<<estimate<<"\t"<<eff_MHT*estimate_down_e<<" "<<eff_MHT*estimate_down_m<<endl;
+      delta_down4 = jmt::addInQuad(delta_down_e,delta_down_m);
+      delta_down4_unscaled = jmt::addInQuad(delta_down_e_unscaled,delta_down_m_unscaled);
+      //      cout<<"Error term from SB,SL = "<<delta_up4<<"\t"<<delta_down4<<endl;
+    }
+
+
+    estimateerrTrigPlus  = sqrt(delta_up*delta_up + delta_up2*delta_up2 + delta_up3*delta_up3 + delta_up4*delta_up4);
+    estimateerrTrigMinus = sqrt(delta_down*delta_down + delta_down2*delta_down2 + delta_down3*delta_down3 + delta_down4*delta_down4);
+
+    estimateerrTrigPlus_unscaled  = sqrt(delta_up_unscaled*delta_up_unscaled + delta_up3_unscaled*delta_up3_unscaled + delta_up4_unscaled*delta_up4_unscaled);
+    estimateerrTrigMinus_unscaled = sqrt(delta_down_unscaled*delta_down_unscaled + delta_down3_unscaled*delta_down3_unscaled + delta_down4_unscaled*delta_down4_unscaled);
 
 
     /////////////////////////////////
@@ -2149,7 +2244,7 @@ modifications for SHAPE analysis: (bShape = true)
     mu_SB_SL_1b_err = 0;//mu_SB_SL_1b_err_temp; //FIXME
   }
 
-  if (!datamode) {
+  if (!datamode) { //closure test results
     if (bShape) {
       sprintf(output,"%s SB  & %s & %s & %s & %s & %s & $%f \\pm %f$ \\\\ ",name.Data(),
 	      jmt::format_nevents(B,Berr).Data(),jmt::format_nevents(mu_SB_SL_1b,mu_SB_SL_1b_err).Data(),
@@ -2170,18 +2265,22 @@ modifications for SHAPE analysis: (bShape = true)
 	      jmt::format_nevents(SIG,SIGerr).Data(), 100*(estimate-SIG)/estimate, 100*closureStat, fc);
     }
   }
-  else {
+  else { //data mode
     if (!bShape)
       sprintf(output,"ttbar DATA %s & %d & %d & %d & %s & %s$^{+%.2f}_{-%.2f}$  \\\\",name.Data(),
 	      TMath::Nint(D),TMath::Nint(A),
 	      TMath::Nint(B), jmt::format_nevents(SBsubMisc+SBsubQCD+SBsubZ,suberr).Data(),
 	      jmt::format_nevents(estimate,estimateerr).Data(),estimateerrTrigPlus,estimateerrTrigMinus);
-    else 
-      sprintf(output,"ttbar SHAPE DATA %s & %d & %d & %d & %s & %s$^{+%.2f}_{-%.2f}$  \\\\",name.Data(),
+    else {
+      sprintf(output,"ttbar SHAPE DATA SB  %s & %d & %d & %d & %s & %s$^{+%.2f}_{-%.2f}$  \\\\ observed data: %f [note that estimate is for perfect trigger]",name.Data(),
+	      TMath::Nint(A),TMath::Nint(mu_SB_SL_1b),
+	      TMath::Nint(B), jmt::format_nevents(SBsubMisc+SBsubQCD+SBsubZ,suberr).Data(),
+	      jmt::format_nevents(SBestimate,SBestimate_err).Data(),0,0,SBtrue); //FIXME trigger error
+      sprintf(output,"ttbar SHAPE DATA SIG %s & %d & %d & %d & %s & %s$^{+%.2f}_{-%.2f}$  \\\\",name.Data(),
 	      TMath::Nint(D),TMath::Nint(mu_SB_SL_1b),
 	      TMath::Nint(B), jmt::format_nevents(SBsubMisc+SBsubQCD+SBsubZ,suberr).Data(),
 	      jmt::format_nevents(estimate,estimateerr).Data(),estimateerrTrigPlus,estimateerrTrigMinus);
-
+    }
     sprintf(output2,"ttbar+QCD DATA %s & %s$^{+%.2f}_{-%.2f}$  \\\\",name.Data(),
 	    jmt::format_nevents(estimateQCDANDTTbar,estimateerrQCDANDTTbar).Data(),
 	    estimateerrQCDANDTTbarTrigPlus,estimateerrQCDANDTTbarTrigMinus);
