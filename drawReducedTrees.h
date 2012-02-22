@@ -333,7 +333,44 @@ void setSearchRegions( TString  which="") {
     sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=200&&MET<250","METFineBin6",false));
     searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=500","METFineBin6"));
   }
+  else if (which=="METfinebins2BL") {
+    sbRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=200&&MET<250","METFineBin1",false));
+    searchRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=250 &&MET<300","METFineBin1"));
+    
+    sbRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=200&&MET<250","METFineBin2",false));
+    searchRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=300 &&MET<350","METFineBin2"));
+    
+    sbRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=200&&MET<250","METFineBin3",false));
+    searchRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=350 &&MET<400","METFineBin3"));
 
+    sbRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=200&&MET<250","METFineBin4",false));
+    searchRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=400 &&MET<450","METFineBin4"));
+
+    sbRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=200&&MET<250","METFineBin5",false));
+    searchRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=450 &&MET<500","METFineBin5"));
+
+    sbRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=200&&MET<250","METFineBin6",false));
+    searchRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=500","METFineBin6"));
+  }
+  else if (which=="METfinebins1BL") {
+    sbRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=200&&MET<250","METFineBin1",false));
+    searchRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=250 &&MET<300","METFineBin1"));
+    
+    sbRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=200&&MET<250","METFineBin2",false));
+    searchRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=300 &&MET<350","METFineBin2"));
+    
+    sbRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=200&&MET<250","METFineBin3",false));
+    searchRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=350 &&MET<400","METFineBin3"));
+
+    sbRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=200&&MET<250","METFineBin4",false));
+    searchRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=400 &&MET<450","METFineBin4"));
+
+    sbRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=200&&MET<250","METFineBin5",false));
+    searchRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=450 &&MET<500","METFineBin5"));
+
+    sbRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=200&&MET<250","METFineBin6",false));
+    searchRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=500","METFineBin6"));
+  }
   else if (which=="METfinebins2BT") {
     
     sbRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=200&&MET<250","METFine2BTBin1",false));

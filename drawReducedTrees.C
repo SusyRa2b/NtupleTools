@@ -1519,7 +1519,7 @@ modifications for SHAPE analysis: (bShape = true)
     double zinvscale = 4.68/4.65;
     bool doMean = true;
 
-    if (qcdsubregion.owenId == "Loose" && qcdsubregion.btagSelection=="ge1b") {
+    if ((qcdsubregion.owenId == "Loose" || qcdsubregion.owenId.Contains( "METFineBin"))&& qcdsubregion.btagSelection=="ge1b") {
       doMean=false;//averaging already done
       zv[0] = 82; ze[0]=20;
       zsbsyst = 0.0;//ze is stat+syst error combined
@@ -1529,7 +1529,7 @@ modifications for SHAPE analysis: (bShape = true)
       zv[0] = 44; ze[0]=13;
       zsbsyst = 0.0;
     }
-    else if (qcdsubregion.owenId == "Loose" && qcdsubregion.btagSelection=="ge2b") {
+    else if ((qcdsubregion.owenId == "Loose" || qcdsubregion.owenId.Contains( "METFineBin"))&& qcdsubregion.btagSelection=="ge2b") {
       doMean=false;//averaging already done
       zv[0] = 14; ze[0]=9;
       zsbsyst = 0.0;
@@ -2742,6 +2742,106 @@ void runFineBinsOfMET_2BT() {
 
 }
 
+void runFineBinsOfMET_2BL() {
+  setSearchRegions("METfinebins2BL");
+
+  //run estimates with full syst
+  runDataQCD2011();
+  runTtbarEstimate2011(); 
+
+  //now hard-code Ale's results
+  //http://www.slac.stanford.edu/~gaz/RA2b/Znn_Binned.txt
+  resultsMap_["ge2bMETFineBin1"]["Zinvisible"].value = 9.76;
+  resultsMap_["ge2bMETFineBin1"]["Zinvisible"].statError = 5.46;
+  resultsMap_["ge2bMETFineBin1"]["Zinvisible"].systError = 0;
+  resultsMap_["ge2bMETFineBin1"]["Zinvisible"].trigErrorPlus = 0;
+  resultsMap_["ge2bMETFineBin1"]["Zinvisible"].trigErrorMinus = 0;
+
+  resultsMap_["ge2bMETFineBin2"]["Zinvisible"].value = 5.45;
+  resultsMap_["ge2bMETFineBin2"]["Zinvisible"].statError = 3.21;
+  resultsMap_["ge2bMETFineBin2"]["Zinvisible"].systError = 0;
+  resultsMap_["ge2bMETFineBin2"]["Zinvisible"].trigErrorPlus = 0;
+  resultsMap_["ge2bMETFineBin2"]["Zinvisible"].trigErrorMinus = 0;
+
+  resultsMap_["ge2bMETFineBin3"]["Zinvisible"].value = 2.48 ;
+  resultsMap_["ge2bMETFineBin3"]["Zinvisible"].statError = 1.64;
+  resultsMap_["ge2bMETFineBin3"]["Zinvisible"].systError = 0 ;
+  resultsMap_["ge2bMETFineBin3"]["Zinvisible"].trigErrorPlus = 0;
+  resultsMap_["ge2bMETFineBin3"]["Zinvisible"].trigErrorMinus = 0;
+
+  resultsMap_["ge2bMETFineBin4"]["Zinvisible"].value = 1.89;
+  resultsMap_["ge2bMETFineBin4"]["Zinvisible"].statError =  1.30;
+  resultsMap_["ge2bMETFineBin4"]["Zinvisible"].systError = 0;
+  resultsMap_["ge2bMETFineBin4"]["Zinvisible"].trigErrorPlus = 0;
+  resultsMap_["ge2bMETFineBin4"]["Zinvisible"].trigErrorMinus = 0;
+
+  resultsMap_["ge2bMETFineBin5"]["Zinvisible"].value =  0.93;
+  resultsMap_["ge2bMETFineBin5"]["Zinvisible"].statError = 0.76;
+  resultsMap_["ge2bMETFineBin5"]["Zinvisible"].systError = 0; 
+  resultsMap_["ge2bMETFineBin5"]["Zinvisible"].trigErrorPlus = 0;
+  resultsMap_["ge2bMETFineBin5"]["Zinvisible"].trigErrorMinus = 0;
+
+  resultsMap_["ge2bMETFineBin6"]["Zinvisible"].value = 0.72;
+  resultsMap_["ge2bMETFineBin6"]["Zinvisible"].statError = 0.64;
+  resultsMap_["ge2bMETFineBin6"]["Zinvisible"].systError = 0;
+  resultsMap_["ge2bMETFineBin6"]["Zinvisible"].trigErrorPlus = 0;
+  resultsMap_["ge2bMETFineBin6"]["Zinvisible"].trigErrorMinus = 0;
+
+  writeResultsMapToText("DDresults_METfinebins2BL.dat");
+
+}
+
+
+void runFineBinsOfMET_1BL() {
+  setSearchRegions("METfinebins1BL");
+
+  //run estimates with full syst
+  runDataQCD2011();
+  runTtbarEstimate2011(); 
+
+  //now hard-code Ale's results
+  //http://www.slac.stanford.edu/~gaz/RA2b/Znn_Binned.txt
+  resultsMap_["ge1bMETFineBin1"]["Zinvisible"].value = 60.3;
+  resultsMap_["ge1bMETFineBin1"]["Zinvisible"].statError = 15.9;
+  resultsMap_["ge1bMETFineBin1"]["Zinvisible"].systError = 0;
+  resultsMap_["ge1bMETFineBin1"]["Zinvisible"].trigErrorPlus = 0;
+  resultsMap_["ge1bMETFineBin1"]["Zinvisible"].trigErrorMinus = 0;
+
+  resultsMap_["ge1bMETFineBin2"]["Zinvisible"].value = 32.5;
+  resultsMap_["ge1bMETFineBin2"]["Zinvisible"].statError = 10.3;
+  resultsMap_["ge1bMETFineBin2"]["Zinvisible"].systError = 0;
+  resultsMap_["ge1bMETFineBin2"]["Zinvisible"].trigErrorPlus = 0;
+  resultsMap_["ge1bMETFineBin2"]["Zinvisible"].trigErrorMinus = 0;
+
+  resultsMap_["ge1bMETFineBin3"]["Zinvisible"].value = 15.1 ;
+  resultsMap_["ge1bMETFineBin3"]["Zinvisible"].statError = 6.34;
+  resultsMap_["ge1bMETFineBin3"]["Zinvisible"].systError = 0 ;
+  resultsMap_["ge1bMETFineBin3"]["Zinvisible"].trigErrorPlus = 0;
+  resultsMap_["ge1bMETFineBin3"]["Zinvisible"].trigErrorMinus = 0;
+
+  resultsMap_["ge1bMETFineBin4"]["Zinvisible"].value = 10.8;
+  resultsMap_["ge1bMETFineBin4"]["Zinvisible"].statError =  5.24;
+  resultsMap_["ge1bMETFineBin4"]["Zinvisible"].systError = 0;
+  resultsMap_["ge1bMETFineBin4"]["Zinvisible"].trigErrorPlus = 0;
+  resultsMap_["ge1bMETFineBin4"]["Zinvisible"].trigErrorMinus = 0;
+
+  resultsMap_["ge1bMETFineBin5"]["Zinvisible"].value =  5.42;
+  resultsMap_["ge1bMETFineBin5"]["Zinvisible"].statError = 3.57;
+  resultsMap_["ge1bMETFineBin5"]["Zinvisible"].systError = 0; 
+  resultsMap_["ge1bMETFineBin5"]["Zinvisible"].trigErrorPlus = 0;
+  resultsMap_["ge1bMETFineBin5"]["Zinvisible"].trigErrorMinus = 0;
+
+  resultsMap_["ge1bMETFineBin6"]["Zinvisible"].value = 4.30;
+  resultsMap_["ge1bMETFineBin6"]["Zinvisible"].statError = 3.15;
+  resultsMap_["ge1bMETFineBin6"]["Zinvisible"].systError = 0;
+  resultsMap_["ge1bMETFineBin6"]["Zinvisible"].trigErrorPlus = 0;
+  resultsMap_["ge1bMETFineBin6"]["Zinvisible"].trigErrorMinus = 0;
+
+  writeResultsMapToText("DDresults_METfinebins1BL.dat");
+
+}
+
+
 
 //read back the file generated above and make a plot
 void drawDD() 
@@ -2752,8 +2852,14 @@ void drawDD()
   //  setSearchRegions("METbins");
   //  ifstream file("DDresults_METbins3B.dat");
 
-  setSearchRegions("METfinebins2BT");
-  ifstream file("DDresults_METfinebins2BT.dat");
+  //  setSearchRegions("METfinebins2BT");
+  //  ifstream file("DDresults_METfinebins2BT.dat");
+
+  //  setSearchRegions("METfinebins2BL");
+  //  ifstream file("DDresults_METfinebins2BL.dat");
+
+  setSearchRegions("METfinebins1BL");
+  ifstream file("DDresults_METfinebins1BL.dat");
 
   //  setSearchRegions("METfinebins");
   //  ifstream file("DDresults_METfinebins3B_1BLSL.dat");
