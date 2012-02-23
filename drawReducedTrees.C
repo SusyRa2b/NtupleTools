@@ -2275,7 +2275,7 @@ modifications for SHAPE analysis: (bShape = true)
       sprintf(output,"ttbar SHAPE DATA SB  %s & %d & %d & %d & %s & %s$^{+%.2f}_{-%.2f}$  \\\\ observed data: %f [note that estimate is for perfect trigger]",name.Data(),
 	      TMath::Nint(A),TMath::Nint(mu_SB_SL_1b),
 	      TMath::Nint(B), jmt::format_nevents(SBsubMisc+SBsubQCD+SBsubZ,suberr).Data(),
-	      jmt::format_nevents(SBestimate,SBestimate_err).Data(),0,0,SBtrue); //FIXME trigger error
+	      jmt::format_nevents(SBestimate,SBestimate_err).Data(),0.0,0.0,SBtrue); //FIXME trigger error
       sprintf(output,"ttbar SHAPE DATA SIG %s & %d & %d & %d & %s & %s$^{+%.2f}_{-%.2f}$  \\\\",name.Data(),
 	      TMath::Nint(D),TMath::Nint(mu_SB_SL_1b),
 	      TMath::Nint(B), jmt::format_nevents(SBsubMisc+SBsubQCD+SBsubZ,suberr).Data(),
@@ -2614,35 +2614,33 @@ void printOwenSyst(TString regions) {
 
 }
 
-void runBinsOfMET() {
-  setSearchRegions("METbins");
+void runBinsOfMET_3B() {
+  setSearchRegions("METbins3B");
 
   //run estimates with full syst
   runDataQCD2011();
   runTtbarEstimate2011(); 
 
-  //now hard-code Keith's results
-  //https://indico.cern.ch/getFile.py/access?contribId=1&resId=0&materialId=slides&confId=175106
-  //page 2
-  resultsMap_["ge3bMETBin1"]["Znn"].value = 1.4;
-  resultsMap_["ge3bMETBin1"]["Znn"].statError = 0.6;
-  resultsMap_["ge3bMETBin1"]["Znn"].systError = 1.5;
-  resultsMap_["ge3bMETBin1"]["Znn"].trigErrorPlus = 0;
-  resultsMap_["ge3bMETBin1"]["Znn"].trigErrorMinus = 0;
+  //updated with Ale's numbers http://www.slac.stanford.edu/~gaz/RA2b/Znn_Binned.txt
+  resultsMap_["ge3bMETBin1"]["Zinvisible"].value = 1.42;
+  resultsMap_["ge3bMETBin1"]["Zinvisible"].statError = 1.67;
+  resultsMap_["ge3bMETBin1"]["Zinvisible"].systError = 0;
+  resultsMap_["ge3bMETBin1"]["Zinvisible"].trigErrorPlus = 0;
+  resultsMap_["ge3bMETBin1"]["Zinvisible"].trigErrorMinus = 0;
 
-  resultsMap_["ge3bMETBin2"]["Znn"].value = 0.9;
-  resultsMap_["ge3bMETBin2"]["Znn"].statError = 0.4;
-  resultsMap_["ge3bMETBin2"]["Znn"].systError = 1.0;
-  resultsMap_["ge3bMETBin2"]["Znn"].trigErrorPlus = 0;
-  resultsMap_["ge3bMETBin2"]["Znn"].trigErrorMinus = 0;
+  resultsMap_["ge3bMETBin2"]["Zinvisible"].value = 0.74;
+  resultsMap_["ge3bMETBin2"]["Zinvisible"].statError = 0.88;
+  resultsMap_["ge3bMETBin2"]["Zinvisible"].systError = 0;
+  resultsMap_["ge3bMETBin2"]["Zinvisible"].trigErrorPlus = 0;
+  resultsMap_["ge3bMETBin2"]["Zinvisible"].trigErrorMinus = 0;
 
-  resultsMap_["ge3bMETBin3"]["Znn"].value = 0.4 + 0.2 + 0.1 + 0.1;
-  resultsMap_["ge3bMETBin3"]["Znn"].statError = sqrt( 0.2*0.2 + 0.2*0.2 + 0.1*0.1 + 0.1*0.1);
-  resultsMap_["ge3bMETBin3"]["Znn"].systError = 0.4 + 0.2 + 0.1 + 0.1; //the sum in quadrature of 100% errors is not a 100% error, so i'll put in 100% error here by hand
-  resultsMap_["ge3bMETBin3"]["Znn"].trigErrorPlus = 0;
-  resultsMap_["ge3bMETBin3"]["Znn"].trigErrorMinus = 0;
+  resultsMap_["ge3bMETBin3"]["Zinvisible"].value = 0.78;
+  resultsMap_["ge3bMETBin3"]["Zinvisible"].statError = 0.93;
+  resultsMap_["ge3bMETBin3"]["Zinvisible"].systError = 0;
+  resultsMap_["ge3bMETBin3"]["Zinvisible"].trigErrorPlus = 0;
+  resultsMap_["ge3bMETBin3"]["Zinvisible"].trigErrorMinus = 0;
 
-  writeResultsMapToText("DDresults_METbins3B_1BLSL.dat");
+  writeResultsMapToText("DDresults_METbins3B.dat");
 
 }
 
@@ -2708,35 +2706,35 @@ void runFineBinsOfMET_2BT() {
 
   //now hard-code Ale's results
   //http://www.slac.stanford.edu/~gaz/RA2b/Znn_Binned.txt
-  resultsMap_["ge2bMETFine2BTBin1"]["Znn"].value = 2.37;
-  resultsMap_["ge2bMETFine2BTBin1"]["Znn"].statError = 1.59;
-  resultsMap_["ge2bMETFine2BTBin1"]["Znn"].systError = 0;
-  resultsMap_["ge2bMETFine2BTBin1"]["Znn"].trigErrorPlus = 0;
-  resultsMap_["ge2bMETFine2BTBin1"]["Znn"].trigErrorMinus = 0;
+  resultsMap_["ge2bMETFine2BTBin1"]["Zinvisible"].value = 2.37;
+  resultsMap_["ge2bMETFine2BTBin1"]["Zinvisible"].statError = 1.59;
+  resultsMap_["ge2bMETFine2BTBin1"]["Zinvisible"].systError = 0;
+  resultsMap_["ge2bMETFine2BTBin1"]["Zinvisible"].trigErrorPlus = 0;
+  resultsMap_["ge2bMETFine2BTBin1"]["Zinvisible"].trigErrorMinus = 0;
 
-  resultsMap_["ge2bMETFine2BTBin2"]["Znn"].value = 0.93;
-  resultsMap_["ge2bMETFine2BTBin2"]["Znn"].statError = 0.78;
-  resultsMap_["ge2bMETFine2BTBin2"]["Znn"].systError = 0;
-  resultsMap_["ge2bMETFine2BTBin2"]["Znn"].trigErrorPlus = 0;
-  resultsMap_["ge2bMETFine2BTBin2"]["Znn"].trigErrorMinus = 0;
+  resultsMap_["ge2bMETFine2BTBin2"]["Zinvisible"].value = 0.93;
+  resultsMap_["ge2bMETFine2BTBin2"]["Zinvisible"].statError = 0.78;
+  resultsMap_["ge2bMETFine2BTBin2"]["Zinvisible"].systError = 0;
+  resultsMap_["ge2bMETFine2BTBin2"]["Zinvisible"].trigErrorPlus = 0;
+  resultsMap_["ge2bMETFine2BTBin2"]["Zinvisible"].trigErrorMinus = 0;
 
-  resultsMap_["ge2bMETFine2BTBin3"]["Znn"].value = 0.88 ;
-  resultsMap_["ge2bMETFine2BTBin3"]["Znn"].statError = 0.74;
-  resultsMap_["ge2bMETFine2BTBin3"]["Znn"].systError = 0 ;
-  resultsMap_["ge2bMETFine2BTBin3"]["Znn"].trigErrorPlus = 0;
-  resultsMap_["ge2bMETFine2BTBin3"]["Znn"].trigErrorMinus = 0;
+  resultsMap_["ge2bMETFine2BTBin3"]["Zinvisible"].value = 0.88 ;
+  resultsMap_["ge2bMETFine2BTBin3"]["Zinvisible"].statError = 0.74;
+  resultsMap_["ge2bMETFine2BTBin3"]["Zinvisible"].systError = 0 ;
+  resultsMap_["ge2bMETFine2BTBin3"]["Zinvisible"].trigErrorPlus = 0;
+  resultsMap_["ge2bMETFine2BTBin3"]["Zinvisible"].trigErrorMinus = 0;
 
-  resultsMap_["ge2bMETFine2BTBin4"]["Znn"].value = 0.35;
-  resultsMap_["ge2bMETFine2BTBin4"]["Znn"].statError =  0.62;
-  resultsMap_["ge2bMETFine2BTBin4"]["Znn"].systError = 0;
-  resultsMap_["ge2bMETFine2BTBin4"]["Znn"].trigErrorPlus = 0;
-  resultsMap_["ge2bMETFine2BTBin4"]["Znn"].trigErrorMinus = 0;
+  resultsMap_["ge2bMETFine2BTBin4"]["Zinvisible"].value = 0.35;
+  resultsMap_["ge2bMETFine2BTBin4"]["Zinvisible"].statError =  0.62;
+  resultsMap_["ge2bMETFine2BTBin4"]["Zinvisible"].systError = 0;
+  resultsMap_["ge2bMETFine2BTBin4"]["Zinvisible"].trigErrorPlus = 0;
+  resultsMap_["ge2bMETFine2BTBin4"]["Zinvisible"].trigErrorMinus = 0;
 
-  resultsMap_["ge2bMETFine2BTBin5"]["Znn"].value =  0;
-  resultsMap_["ge2bMETFine2BTBin5"]["Znn"].statError = 0.62;
-  resultsMap_["ge2bMETFine2BTBin5"]["Znn"].systError = 0; 
-  resultsMap_["ge2bMETFine2BTBin5"]["Znn"].trigErrorPlus = 0;
-  resultsMap_["ge2bMETFine2BTBin5"]["Znn"].trigErrorMinus = 0;
+  resultsMap_["ge2bMETFine2BTBin5"]["Zinvisible"].value =  0;
+  resultsMap_["ge2bMETFine2BTBin5"]["Zinvisible"].statError = 0.62;
+  resultsMap_["ge2bMETFine2BTBin5"]["Zinvisible"].systError = 0; 
+  resultsMap_["ge2bMETFine2BTBin5"]["Zinvisible"].trigErrorPlus = 0;
+  resultsMap_["ge2bMETFine2BTBin5"]["Zinvisible"].trigErrorMinus = 0;
 
   writeResultsMapToText("DDresults_METfinebins2BT.dat");
 
@@ -2849,17 +2847,17 @@ void drawDD()
   gROOT->SetStyle("CMS");
   loadSamples();
 
-  //  setSearchRegions("METbins");
-  //  ifstream file("DDresults_METbins3B.dat");
+    setSearchRegions("METbins3B");
+    ifstream file("DDresults_METbins3B.dat");
 
-  //  setSearchRegions("METfinebins2BT");
-  //  ifstream file("DDresults_METfinebins2BT.dat");
+  // setSearchRegions("METfinebins2BT");
+  // ifstream file("DDresults_METfinebins2BT.dat");
 
   //  setSearchRegions("METfinebins2BL");
-  //  ifstream file("DDresults_METfinebins2BL.dat");
+  // ifstream file("DDresults_METfinebins2BL.dat");
 
-  setSearchRegions("METfinebins1BL");
-  ifstream file("DDresults_METfinebins1BL.dat");
+  //  setSearchRegions("METfinebins1BL");
+  //  ifstream file("DDresults_METfinebins1BL.dat");
 
   //  setSearchRegions("METfinebins");
   //  ifstream file("DDresults_METfinebins3B_1BLSL.dat");
