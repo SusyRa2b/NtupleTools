@@ -702,6 +702,7 @@ TString SignalEffData::translateVariation(const TString & which) {
   //maybe i should use .Contains() but that can be dangerous
 
   if (which == "BTagEff03") return "btag"; //hardcoding this 03 is a really bad idea...
+  else if (which == "BTagEff04") return "btag"; //a bad idea indeed...
   else if (which=="JERbias") return "JER";
   else if (which=="JES0") return "JES";
   else if (which=="METunc0") return "MET";
@@ -1446,7 +1447,7 @@ for legacy purposes I am keeping all of the weight and selection TStrings, altho
     weightedcut +="*hltHTeff";
   }
   if (useMHTeff_ &&  type!=kData) {
-    weightedcut +="*hltMHTeff"; //not compatible with Summer reducedTrees
+    weightedcut +="*hltMHTeff";
   }
   if (thebnnMHTeffMode_==kOn &&  type==kData) {
     weightedcut +="*(1/hltMHTeffBNN)"; 
@@ -1853,37 +1854,37 @@ void loadSamples(bool joinSingleTop=true) {
   
   //FOR PLOTS
   ////////////
-
+/*
     configDescriptions_.setDefault("CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
     configDescriptions_.setCorrected("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
-   
+  */ 
   //Only for signal systematics
-/*       
-  configDescriptions_.setDefault("CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff03_HLTEff0");
-  configDescriptions_.setCorrected("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff03_HLTEff0");
+       
+  configDescriptions_.setDefault("CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff04_HLTEff0");
+  configDescriptions_.setCorrected("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff04_HLTEff0");
 
   //convention: put 'down' variation first and 'up' variation second
 
   //JES //LM9 and scans
-  configDescriptions_.addVariation("CSVM_PF2PATjets_JESdown_JERbias_PFMET_METunc0_PUunc0_BTagEff03_HLTEff0",
-				   "CSVM_PF2PATjets_JESup_JERbias_PFMET_METunc0_PUunc0_BTagEff03_HLTEff0");
+  configDescriptions_.addVariation("CSVM_PF2PATjets_JESdown_JERbias_PFMET_METunc0_PUunc0_BTagEff04_HLTEff0",
+				   "CSVM_PF2PATjets_JESup_JERbias_PFMET_METunc0_PUunc0_BTagEff04_HLTEff0");
   //JER //LM9 only
-//     configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERdown_PFMET_METunc0_PUunc0_BTagEff03_HLTEff0",
-//   				   "CSVM_PF2PATjets_JES0_JERup_PFMET_METunc0_PUunc0_BTagEff03_HLTEff0");
+     configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERdown_PFMET_METunc0_PUunc0_BTagEff04_HLTEff0",
+   				   "CSVM_PF2PATjets_JES0_JERup_PFMET_METunc0_PUunc0_BTagEff04_HLTEff0");
 
   //unclustered MET //LM9 and scans
-  configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERbias_PFMET_METuncDown_PUunc0_BTagEff03_HLTEff0", 
-  				   "CSVM_PF2PATjets_JES0_JERbias_PFMET_METuncUp_PUunc0_BTagEff03_HLTEff0");
+  configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERbias_PFMET_METuncDown_PUunc0_BTagEff04_HLTEff0", 
+  				   "CSVM_PF2PATjets_JES0_JERbias_PFMET_METuncUp_PUunc0_BTagEff04_HLTEff0");
 
   //PU //LM9 only
-//   configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncDown_BTagEff03_HLTEff0",
-//   				   "CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncUp_BTagEff03_HLTEff0");
+  configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncDown_BTagEff04_HLTEff0",
+   				   "CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncUp_BTagEff04_HLTEff0");
 
   //btag eff //LM9 and scans
-  configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffdown3_HLTEff0",
-  				   "CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffup3_HLTEff0");
+  configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffdown4_HLTEff0",
+  				   "CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffup4_HLTEff0");
     
-*/
+
   //HLT eff //never use this one
   //    configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffdown",
   //"CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffup");
