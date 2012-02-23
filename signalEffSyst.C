@@ -44,7 +44,7 @@ gSystem->Load("CrossSectionTable_cxx.so");
 
 //*** AFTER SUMMER
 //***************************
-TString inputPath = "/cu3/joshmt/reducedTrees/V00-02-35g/"; 
+TString inputPath = "/cu3/joshmt/reducedTrees/V00-02-35l/"; 
 TString dataInputPath =  "dummy"; //no data needed!
 TString inputPathTTbar = "dummy";
 
@@ -74,10 +74,14 @@ SignalEffData signalSystematics2011(const SearchRegion & region, bool isSL=false
   if (isLDP) cout<<"   == LDP "<<endl;
   if (isSL) cout<<"   == SL "<<endl;
 
-  //take care of trigger efficiency systematics, which differs between SB and SIG
-  if (region.isSIG) results.set("trigger",3.7e-2,3.7e-2);
-  else results.set("trigger",9.8e-2,9.8e-2); //since we don't have a facility for asymmetric systematics, use the largest one
-
+  //take care of trigger efficiency systematics, which differs between SB and SIG, SL, LDP, etc
+  if (region.isSIG && !isSL &&!isLDP) results.set("trigger",eff_SIG_MHT_err_[0],eff_SIG_MHT_err_[1]);
+  else if (!region.isSIG && !isSL && !isLDP) results.set("trigger",eff_SB_MHT_err_[0],eff_SB_MHT_err_[1]);
+  else if (region.isSIG && isSL) results.set("trigger",eff_SIG_SL_MHT_err_[0],eff_SIG_SL_MHT_err_[1]);
+  else if (!region.isSIG && isSL) results.set("trigger",eff_SB_1m_MHT_err_[0],eff_SB_1m_MHT_err_[1]);
+  else if (region.isSIG && isLDP) results.set("trigger",eff_SIG_ldp_MHT_err_[0],eff_SIG_ldp_MHT_err_[1]);
+  else if (!region.isSIG && isLDP) results.set("trigger",eff_SB_ldp_MHT_err_[0],eff_SB_ldp_MHT_err_[1]);
+  else assert(0);
 
   //for susy scan; harmless for non-susy scan
   m0_=m0;
@@ -190,52 +194,53 @@ each of the systematics variations was done with JERbias turned on.
   results.effCorr = nominal / raw0;
   results.rawYield = raw0;
 
+  // this code was for special checks
   //now we can test the effect of the changing the charm and LF tag rates
   //all of this is done with the regular JERbias file
-  TString btagprobbase=btagSFweight_;
+//   TString btagprobbase=btagSFweight_;
 
-  //b +
-  btagSFweight_ = btagprobbase + "_bplus";
-  drawPlots(var,nbins,low,high,xtitle,"events","dummyH");
-  double bplus=  getIntegral(sampleOfInterest);
+//   //b +
+//   btagSFweight_ = btagprobbase + "_bplus";
+//   drawPlots(var,nbins,low,high,xtitle,"events","dummyH");
+//   double bplus=  getIntegral(sampleOfInterest);
 
-  //b -
-  btagSFweight_ = btagprobbase + "_bminus";
-  drawPlots(var,nbins,low,high,xtitle,"events","dummyH");
-  double bminus=  getIntegral(sampleOfInterest);
+//   //b -
+//   btagSFweight_ = btagprobbase + "_bminus";
+//   drawPlots(var,nbins,low,high,xtitle,"events","dummyH");
+//   double bminus=  getIntegral(sampleOfInterest);
 
-  //charm +
-  btagSFweight_ = btagprobbase + "_cplus";
-  drawPlots(var,nbins,low,high,xtitle,"events","dummyH");
-  double cplus=  getIntegral(sampleOfInterest);
+//   //charm +
+//   btagSFweight_ = btagprobbase + "_cplus";
+//   drawPlots(var,nbins,low,high,xtitle,"events","dummyH");
+//   double cplus=  getIntegral(sampleOfInterest);
 
-  //charm -
-  btagSFweight_ = btagprobbase + "_cminus";
-  drawPlots(var,nbins,low,high,xtitle,"events","dummyH");
-  double cminus=  getIntegral(sampleOfInterest);
+//   //charm -
+//   btagSFweight_ = btagprobbase + "_cminus";
+//   drawPlots(var,nbins,low,high,xtitle,"events","dummyH");
+//   double cminus=  getIntegral(sampleOfInterest);
 
-  //LF +
-  btagSFweight_ = btagprobbase + "_lplus";
-  drawPlots(var,nbins,low,high,xtitle,"events","dummyH");
-  double lplus=  getIntegral(sampleOfInterest);
+//   //LF +
+//   btagSFweight_ = btagprobbase + "_lplus";
+//   drawPlots(var,nbins,low,high,xtitle,"events","dummyH");
+//   double lplus=  getIntegral(sampleOfInterest);
 
-  //LF -
-  btagSFweight_ = btagprobbase + "_lminus";
-  drawPlots(var,nbins,low,high,xtitle,"events","dummyH");
-  double lminus=  getIntegral(sampleOfInterest);
+//   //LF -
+//   btagSFweight_ = btagprobbase + "_lminus";
+//   drawPlots(var,nbins,low,high,xtitle,"events","dummyH");
+//   double lminus=  getIntegral(sampleOfInterest);
 
-  results.eff_derivative_b = ( ((1.0/0.1)* (bplus - nominal) / nominal) + ((-1.0/0.1)* (bminus - nominal) / nominal))*0.5;
-  results.eff_derivative_c = ( ((1.0/0.1)* (cplus - nominal) / nominal) + ((-1.0/0.1)* (cminus - nominal) / nominal))*0.5;
-  results.eff_derivative_l = ( ((1.0/0.1)* (lplus - nominal) / nominal) + ((-1.0/0.1)* (lminus - nominal) / nominal))*0.5;
+//   results.eff_derivative_b = ( ((1.0/0.1)* (bplus - nominal) / nominal) + ((-1.0/0.1)* (bminus - nominal) / nominal))*0.5;
+//   results.eff_derivative_c = ( ((1.0/0.1)* (cplus - nominal) / nominal) + ((-1.0/0.1)* (cminus - nominal) / nominal))*0.5;
+//   results.eff_derivative_l = ( ((1.0/0.1)* (lplus - nominal) / nominal) + ((-1.0/0.1)* (lminus - nominal) / nominal))*0.5;
 
-  //reset the sf weight string
-  btagSFweight_ = bweightstring;
+//   //reset the sf weight string
+//   btagSFweight_ = bweightstring;
 
-  //for LM9 the histogram should have exactly 1 bin
-  TH1D* btageff_avg_nominal = (TH1D*) files_[currentConfig_][sampleOfInterest]->Get("btageff_avg");
-  double av_btageff_nominal = btageff_avg_nominal->GetBinContent(1);
-  double av_btageff_var1=0;
-  double av_btageff_var2=0;
+//   //for LM9 the histogram should have exactly 1 bin
+//   TH1D* btageff_avg_nominal = (TH1D*) files_[currentConfig_][sampleOfInterest]->Get("btageff_avg");
+//   double av_btageff_nominal = btageff_avg_nominal->GetBinContent(1);
+//   double av_btageff_var1=0;
+//   double av_btageff_var2=0;
 
   // NLO k factor uncertainty
   susyCrossSectionVariation_="Plus";
@@ -263,20 +268,20 @@ each of the systematics variations was done with JERbias turned on.
     double thisn=getIntegral(sampleOfInterest);
     if (j%2==0) { //this one runs first; by convention this one should be "down"
       var2=(thisn-nominal)/nominal;
-      if (configDescriptions_.getVariedSubstring(currentConfig_).Contains("BTag")) {
-	TH1D* btageff_avg_2 = (TH1D*) files_[currentConfig_][sampleOfInterest]->Get("btageff_avg");
-	av_btageff_var2=btageff_avg_2->GetBinContent(1);
-	bminus=thisn;
-      }
+//       if (configDescriptions_.getVariedSubstring(currentConfig_).Contains("BTag")) {
+// 	TH1D* btageff_avg_2 = (TH1D*) files_[currentConfig_][sampleOfInterest]->Get("btageff_avg");
+// 	av_btageff_var2=btageff_avg_2->GetBinContent(1);
+// 	bminus=thisn;
+//       }
     }
     else { //this one runs second; by convention this one should be "up"
       var1=(thisn-nominal)/nominal;
       results.set(configDescriptions_.getVariedSubstring(currentConfig_), var2,var1);
-      if (configDescriptions_.getVariedSubstring(currentConfig_).Contains("BTag")) { //capitalization ok?
-	TH1D* btageff_avg_1 = (TH1D*) files_[currentConfig_][sampleOfInterest]->Get("btageff_avg");
-	av_btageff_var1=btageff_avg_1->GetBinContent(1);
-	bplus=thisn;
-      }
+//       if (configDescriptions_.getVariedSubstring(currentConfig_).Contains("BTag")) { //capitalization ok?
+// 	TH1D* btageff_avg_1 = (TH1D*) files_[currentConfig_][sampleOfInterest]->Get("btageff_avg");
+// 	av_btageff_var1=btageff_avg_1->GetBinContent(1);
+// 	bplus=thisn;
+//       }
     }
   }
   
@@ -284,13 +289,13 @@ each of the systematics variations was done with JERbias turned on.
   currentConfig_=configDescriptions_.getCorrected();
 
   //var2 is down, var1 is up
-  double delta_btageff_plus =  (av_btageff_var1 - av_btageff_nominal) / av_btageff_nominal;
-  double delta_btageff_minus = (av_btageff_var2 - av_btageff_nominal) / av_btageff_nominal;
-  //this is the error on the <btageff> for +/- 1 sigma variations on the SF
-  results.sigma_btageff = 0.5*(fabs(delta_btageff_plus) + fabs(delta_btageff_minus));
-  results.eff_derivative_b_1s =  0.5* ( (((bplus - nominal) / nominal)/delta_btageff_plus ) 
-					+ (((bminus - nominal) / nominal)/delta_btageff_minus)
-					);
+//   double delta_btageff_plus =  (av_btageff_var1 - av_btageff_nominal) / av_btageff_nominal;
+//   double delta_btageff_minus = (av_btageff_var2 - av_btageff_nominal) / av_btageff_nominal;
+//   //this is the error on the <btageff> for +/- 1 sigma variations on the SF
+//   results.sigma_btageff = 0.5*(fabs(delta_btageff_plus) + fabs(delta_btageff_minus));
+//   results.eff_derivative_b_1s =  0.5* ( (((bplus - nominal) / nominal)/delta_btageff_plus ) 
+// 					+ (((bminus - nominal) / nominal)/delta_btageff_minus)
+// 					);
 
   double largest=0;
   double smallest=1e9;
@@ -516,42 +521,42 @@ void runSystematics2011_LM9(  TString sampleOfInterest="LM9" ) {
     (*textfiles_human[i])<<" \\hline                   &"<<endl;
     (*textfiles_human[i])<<" \\hline                   &"<<endl;
 
-    cout<<" === cross-check "<<endl;
-    cout<<"SB DeltaEff / DeltaBtagEff = "<<SB.eff_derivative_b_1s<<endl;
-    cout<<"SIG DeltaEff / DeltaBtagEff = "<<SIG.eff_derivative_b_1s<<endl;
+//     cout<<" === cross-check "<<endl;
+//     cout<<"SB DeltaEff / DeltaBtagEff = "<<SB.eff_derivative_b_1s<<endl;
+//     cout<<"SIG DeltaEff / DeltaBtagEff = "<<SIG.eff_derivative_b_1s<<endl;
 
-    cout<<"SBSL DeltaEff / DeltaBtagEff = "<<SBSL.eff_derivative_b_1s<<endl;
-    cout<<"SIGSL DeltaEff / DeltaBtagEff = "<<SIGSL.eff_derivative_b_1s<<endl;
+//     cout<<"SBSL DeltaEff / DeltaBtagEff = "<<SBSL.eff_derivative_b_1s<<endl;
+//     cout<<"SIGSL DeltaEff / DeltaBtagEff = "<<SIGSL.eff_derivative_b_1s<<endl;
 
-    cout<<"SBLDP DeltaEff / DeltaBtagEff = "<<SBLDP.eff_derivative_b_1s<<endl;
-    cout<<"SIGLDP DeltaEff / DeltaBtagEff = "<<SIGLDP.eff_derivative_b_1s<<endl;
-    cout<<" === new "<<endl;
-    cout<<"SB DeltaEff / DeltaBtagEff = "<<SB.eff_derivative_b<<endl;
-    cout<<"SIG DeltaEff / DeltaBtagEff = "<<SIG.eff_derivative_b<<endl;
+//     cout<<"SBLDP DeltaEff / DeltaBtagEff = "<<SBLDP.eff_derivative_b_1s<<endl;
+//     cout<<"SIGLDP DeltaEff / DeltaBtagEff = "<<SIGLDP.eff_derivative_b_1s<<endl;
+//     cout<<" === new "<<endl;
+//     cout<<"SB DeltaEff / DeltaBtagEff = "<<SB.eff_derivative_b<<endl;
+//     cout<<"SIG DeltaEff / DeltaBtagEff = "<<SIG.eff_derivative_b<<endl;
 
-    cout<<"SBSL DeltaEff / DeltaBtagEff = "<<SBSL.eff_derivative_b<<endl;
-    cout<<"SIGSL DeltaEff / DeltaBtagEff = "<<SIGSL.eff_derivative_b<<endl;
+//     cout<<"SBSL DeltaEff / DeltaBtagEff = "<<SBSL.eff_derivative_b<<endl;
+//     cout<<"SIGSL DeltaEff / DeltaBtagEff = "<<SIGSL.eff_derivative_b<<endl;
 
-    cout<<"SBLDP DeltaEff / DeltaBtagEff = "<<SBLDP.eff_derivative_b<<endl;
-    cout<<"SIGLDP DeltaEff / DeltaBtagEff = "<<SIGLDP.eff_derivative_b<<endl;
-    cout<<" === charm "<<endl;
-    cout<<"SB DeltaEff / DeltaCtagEff = "<<SB.eff_derivative_c<<endl;
-    cout<<"SIG DeltaEff / DeltaCtagEff = "<<SIG.eff_derivative_c<<endl;
+//     cout<<"SBLDP DeltaEff / DeltaBtagEff = "<<SBLDP.eff_derivative_b<<endl;
+//     cout<<"SIGLDP DeltaEff / DeltaBtagEff = "<<SIGLDP.eff_derivative_b<<endl;
+//     cout<<" === charm "<<endl;
+//     cout<<"SB DeltaEff / DeltaCtagEff = "<<SB.eff_derivative_c<<endl;
+//     cout<<"SIG DeltaEff / DeltaCtagEff = "<<SIG.eff_derivative_c<<endl;
 
-    cout<<"SBSL DeltaEff / DeltaCtagEff = "<<SBSL.eff_derivative_c<<endl;
-    cout<<"SIGSL DeltaEff / DeltaCtagEff = "<<SIGSL.eff_derivative_c<<endl;
+//     cout<<"SBSL DeltaEff / DeltaCtagEff = "<<SBSL.eff_derivative_c<<endl;
+//     cout<<"SIGSL DeltaEff / DeltaCtagEff = "<<SIGSL.eff_derivative_c<<endl;
 
-    cout<<"SBLDP DeltaEff / DeltaCtagEff = "<<SBLDP.eff_derivative_c<<endl;
-    cout<<"SIGLDP DeltaEff / DeltaCtagEff = "<<SIGLDP.eff_derivative_c<<endl;
-    cout<<" === LF "<<endl;
-    cout<<"SB DeltaEff / DeltaLFtagEff = "<<SB.eff_derivative_l<<endl;
-    cout<<"SIG DeltaEff / DeltaLFtagEff = "<<SIG.eff_derivative_l<<endl;
+//     cout<<"SBLDP DeltaEff / DeltaCtagEff = "<<SBLDP.eff_derivative_c<<endl;
+//     cout<<"SIGLDP DeltaEff / DeltaCtagEff = "<<SIGLDP.eff_derivative_c<<endl;
+//     cout<<" === LF "<<endl;
+//     cout<<"SB DeltaEff / DeltaLFtagEff = "<<SB.eff_derivative_l<<endl;
+//     cout<<"SIG DeltaEff / DeltaLFtagEff = "<<SIG.eff_derivative_l<<endl;
 
-    cout<<"SBSL DeltaEff / DeltaLFtagEff = "<<SBSL.eff_derivative_l<<endl;
-    cout<<"SIGSL DeltaEff / DeltaLFtagEff = "<<SIGSL.eff_derivative_l<<endl;
+//     cout<<"SBSL DeltaEff / DeltaLFtagEff = "<<SBSL.eff_derivative_l<<endl;
+//     cout<<"SIGSL DeltaEff / DeltaLFtagEff = "<<SIGSL.eff_derivative_l<<endl;
 
-    cout<<"SBLDP DeltaEff / DeltaLFtagEff = "<<SBLDP.eff_derivative_l<<endl;
-    cout<<"SIGLDP DeltaEff / DeltaLFtagEff = "<<SIGLDP.eff_derivative_l<<endl;
+//     cout<<"SBLDP DeltaEff / DeltaLFtagEff = "<<SBLDP.eff_derivative_l<<endl;
+//     cout<<"SIGLDP DeltaEff / DeltaLFtagEff = "<<SIGLDP.eff_derivative_l<<endl;
 
   }
 
