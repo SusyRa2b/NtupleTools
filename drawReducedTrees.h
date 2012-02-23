@@ -304,7 +304,7 @@ void setSearchRegions( TString  which="") {
   else    cout<<"Setting search regions to set: "<<which<<endl;
 
   //27 Jan 2012 -- (preliminary) regions for testing shapes of background....
-  if (which=="METbins") {
+  if (which=="METbins3B") {
     sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=200&&MET<250","METBin1",false));
     searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=250 &&MET<300","METBin1"));
     
