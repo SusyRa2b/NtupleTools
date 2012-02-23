@@ -4193,7 +4193,7 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   float minDeltaPhiN_DJR, minDeltaPhiN_DJR_otherEta5, minDeltaPhiK_DJR, minDeltaPhiK_DJR_otherEta5;
   float minDeltaPhiN_otherPt10, minDeltaPhiN_otherPt20, minDeltaPhiN_otherPt30, minDeltaPhiN_otherPt40, minDeltaPhiN_otherPt50;
   float minDeltaPhiN_DJR_otherPt10, minDeltaPhiN_DJR_otherPt20, minDeltaPhiN_DJR_otherPt30, minDeltaPhiN_DJR_otherPt40, minDeltaPhiN_DJR_otherPt50;
-  
+  int minDeltaPhiN_chosenJet;
 
 
   float maxJetMis, max2JetMis, maxJetMisAll30, max2JetMisAll30;
@@ -4601,6 +4601,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("deltaPhiN1", &deltaPhiN1, "deltaPhiN1/F");
   reducedTree.Branch("deltaPhiN2", &deltaPhiN2, "deltaPhiN2/F");
   reducedTree.Branch("deltaPhiN3", &deltaPhiN3, "deltaPhiN3/F");
+  reducedTree.Branch("minDeltaPhiN_chosenJet", &minDeltaPhiN_chosenJet, "minDeltaPhiN_chosenJet/I");
 
   reducedTree.Branch("minDeltaPhiN_otherEta5", &minDeltaPhiN_otherEta5, "minDeltaPhiN_otherEta5/F");
   reducedTree.Branch("minDeltaPhiN_otherEta5idNo", &minDeltaPhiN_otherEta5idNo, "minDeltaPhiN_otherEta5idNo/F");
@@ -5078,6 +5079,12 @@ Also the pdfWeightSum* histograms that are used for LM9.
       deltaPhiN1 = getDeltaPhiMETN(0);
       deltaPhiN2 = getDeltaPhiMETN(1);
       deltaPhiN3 = getDeltaPhiMETN(2);
+
+      //a hack that could be put into getMinDeltaPhiMETN with some work
+      if(deltaPhiN1<=deltaPhiN2 && deltaPhiN1<=deltaPhiN3) minDeltaPhiN_chosenJet = 1;
+      else if(deltaPhiN2<=deltaPhiN1 && deltaPhiN2<=deltaPhiN3) minDeltaPhiN_chosenJet = 2;
+      else if(deltaPhiN3<=deltaPhiN1 && deltaPhiN3<=deltaPhiN2) minDeltaPhiN_chosenJet = 3;
+      else minDeltaPhiN_chosenJet=0;
 
       hltMHTeff = getHLTMHTeff(MET, HT, nElectrons, nMuons, minDeltaPhiN);
       double effUp, effDown;
