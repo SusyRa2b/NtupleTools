@@ -1000,6 +1000,8 @@ std::pair<double,std::vector<double> > anotherABCD( const SearchRegion & region,
       D=getIntegral(sampleOfInterest);
       Derr=getIntegralErr(sampleOfInterest);      
 
+      cout<<" high MET LDP, eff_eff = "<<D_temp / D<<endl;
+
       thebnnMHTeffMode_ = kOnPlus;
       drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_D");
       D_bnnPlus=getIntegral(sampleOfInterest);
@@ -1432,6 +1434,8 @@ void runDataQCD2011(const bool forOwen=false) {
 double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const TString & mode="", const TString & closureMode="nominal", bool fillResultsGlobal=false, const bool bShape=false ) {
   //in datamode, return the estimate; in non-datamode, return the Closure Test results (true-pred)/pred
 
+  const TString bShape_refSB = "eq1b"; //which SB to use as a 'reference' for bshape analysis. default is eq1b
+
 /*
 modifications for SHAPE analysis: (bShape = true)
 -- new formula mu_i,jb = mu_SB,1b * ( mu_i,SL,jb / mu_SB,SL,1b )
@@ -1448,12 +1452,17 @@ modifications for SHAPE analysis: (bShape = true)
   const SearchRegion region = searchRegions_[searchRegionIndex];
   SearchRegion qcdsubregion = sbRegions_[searchRegionIndex];
   if (bShape) { //qcdsubregion should be the eq1b region
-    for (int rr = searchRegionIndex; rr>=0; rr--) { //loop backwards; assumes that the vector is filled a certain way, of course
-      if (sbRegions_[rr].btagSelection=="eq1b") {
-	qcdsubregion = sbRegions_[rr];
+    //on the other hand, what if we want to use eq2b as the "reference" SB (and predict the 1b and 3b SBs)
+    //in that case we need to do something else...
+    //more robust: just loop over the potential SBs and check that the HT cut is identical to the search region cut
+    //this logic ought to handle the eq1b case up there too.....
+    for (unsigned int sbindex=0; sbindex<=sbRegions_.size(); sbindex++) {
+      if ((region.htSelection == sbRegions_[sbindex].htSelection ) && (sbRegions_[sbindex].btagSelection == bShape_refSB)) {
+	qcdsubregion = sbRegions_[sbindex];
 	break;
       }
     }
+    cout<<" Found reference SB (new algorithm) = "<<qcdsubregion.id()<<endl;
   }
 
   TString btagselection = region.btagSelection;
@@ -1677,13 +1686,19 @@ modifications for SHAPE analysis: (bShape = true)
   
   // --  count events
   TCut btagcut = "nbjetsCSVM>=1";
-  TCut btagcut_1b = bShape ? "nbjetsCSVM==1" : "nbjetsCSVM>=1"; //for the new shape analysis (and also for checks with a ge1b SL sample)
+  TCut btagcut_1b = "nbjetsCSVM>=1"; //for the new shape analysis (and also for checks with a ge1b SL sample)
+  if (bShape) {
+    if (bShape_refSB=="eq1b")    btagcut_1b = "nbjetsCSVM==1" ;
+    else if (bShape_refSB=="eq2b")    btagcut_1b = "nbjetsCSVM==2" ;
+    else assert(0);
+  }
   btagSFweight_="1";
   TString btagSFweight=""; //we're going to have to switch this one in and out of the global var
   TString btagSFweight_1b="";
   if (useScaleFactors_) {
     btagcut="1";
-    if (bShape)    {btagcut_1b="1"; btagSFweight_1b="prob1";} // shape
+    if      (bShape && (bShape_refSB=="eq1b"))  {btagcut_1b="1"; btagSFweight_1b="prob1";} // shape
+    else if (bShape && (bShape_refSB=="eq2b"))  {btagcut_1b="1"; btagSFweight_1b="prob2";} // shape
     else           {btagcut_1b="1"; btagSFweight_1b="probge1";} // ge1b SL cross-check
     usePUweight_=true;
     useHTeff_=true;
@@ -1956,6 +1971,7 @@ modifications for SHAPE analysis: (bShape = true)
       drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_B");
       B=getIntegral(sampleOfInterest);
       Berr=getIntegralErr(sampleOfInterest);
+      cout<<" SB 0l, eff_eff = "<<B_temp / B<<endl;
 
       thebnnMHTeffMode_ = kOnPlus;
       drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_B");
@@ -2013,7 +2029,8 @@ modifications for SHAPE analysis: (bShape = true)
   TString name = btagselection;
   name += region.owenId;
 
-  double SBestimate=0,SBestimate_err=0;//,SBestimate_temp=0,SBestimate_err_temp=0; TODO
+  double SBestimate=0,SBestimate_err=0;//SHAPE
+  double SBestimate_temp=0,SBestimate_err_temp=0;//SHAPE
   if (bShape) { //calculate SB and SIG estimates
     double Bprime = B-SBsubMisc-SBsubQCD-SBsubZ;
     double Bprimeerr= sqrt(suberr*suberr + Berr*Berr);
@@ -2040,7 +2057,7 @@ modifications for SHAPE analysis: (bShape = true)
     estimateerr= jmt::errAoverB(num,numerr,A,Aerr);
   }
   estimate_temp = estimate; estimateerr_temp = estimateerr;
-  //  if (bShape) { SBestimate_temp = SBestimate; SBestimate_err_temp = SBestimate_err;} TODO
+  if (bShape) { SBestimate_temp = SBestimate; SBestimate_err_temp = SBestimate_err;} 
 
   if(useScaleFactors_ && datamode){
     
@@ -2048,7 +2065,10 @@ modifications for SHAPE analysis: (bShape = true)
     estimate = eff_MHT*estimate_temp;
     estimateerr = eff_MHT*estimateerr_temp;
  
-    //    if (bShape) {    } //TODO
+    if (bShape) {    
+      SBestimate = eff_SB_MHT*SBestimate_temp;
+      SBestimate_err = eff_SB_MHT*SBestimate_err_temp;
+    }
 
     //for bShape, divide by SB,SL,1b; for normal, divide by A
     double mu_SB_SL_jb = bShape ? mu_SB_SL_1b : A; 
@@ -2272,10 +2292,11 @@ modifications for SHAPE analysis: (bShape = true)
 	      TMath::Nint(B), jmt::format_nevents(SBsubMisc+SBsubQCD+SBsubZ,suberr).Data(),
 	      jmt::format_nevents(estimate,estimateerr).Data(),estimateerrTrigPlus,estimateerrTrigMinus);
     else {
-      sprintf(output,"ttbar SHAPE DATA SB  %s & %d & %d & %d & %s & %s$^{+%.2f}_{-%.2f}$  \\\\ observed data: %f [note that estimate is for perfect trigger]",name.Data(),
+      sprintf(output,"ttbar SHAPE DATA SB  %s & %d & %d & %d & %s & %s$^{+%.2f}_{-%.2f}$  \\\\ observed data: %f",name.Data(),
 	      TMath::Nint(A),TMath::Nint(mu_SB_SL_1b),
 	      TMath::Nint(B), jmt::format_nevents(SBsubMisc+SBsubQCD+SBsubZ,suberr).Data(),
 	      jmt::format_nevents(SBestimate,SBestimate_err).Data(),0.0,0.0,SBtrue); //FIXME trigger error
+      cout<<output<<endl;
       sprintf(output,"ttbar SHAPE DATA SIG %s & %d & %d & %d & %s & %s$^{+%.2f}_{-%.2f}$  \\\\",name.Data(),
 	      TMath::Nint(D),TMath::Nint(mu_SB_SL_1b),
 	      TMath::Nint(B), jmt::format_nevents(SBsubMisc+SBsubQCD+SBsubZ,suberr).Data(),
@@ -2455,8 +2476,15 @@ void runTtbarEstimate2011(const bool forOwen=false, const bool bShape=false) {
 //these 2 functions run the bshape version of the analysis
 void runDDbShape() {
 
+  setSearchRegions("bShapeLoose");
+
   runDataQCD2011(true);
   runTtbarEstimate2011(true,true); //turn on shape analysis
+
+  for (std::map<TString,OwenData>::iterator i=owenMap_.begin(); i!=owenMap_.end(); ++i) {
+    printOwenShape( i->first);
+  }
+  cout<<"luminosity = "<<lumiScale_<<endl;
 
 }
 void runDDwithSystShape() {

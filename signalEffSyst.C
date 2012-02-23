@@ -568,6 +568,66 @@ void runSystematics2011_LM9(  TString sampleOfInterest="LM9" ) {
 
 }
 
+void runSystematicsSlow_shape(  TString sampleOfInterest="LM9" ) {
+  loadSamples();
+  setSearchRegions("bShapeLoose");
+
+  //validate assumption that sb regions are all the same (except b tag)
+  for (unsigned int ii=0; ii<sbRegions_.size() -1; ii++) {
+    assert( sbRegions_[ii].htSelection == sbRegions_[ii+1].htSelection);
+    assert( sbRegions_[ii].metSelection == sbRegions_[ii+1].metSelection);
+  }
+
+  vector< SignalEffData> SB;
+  vector< SignalEffData> SIG;
+  vector< SignalEffData> SBSL;
+  vector< SignalEffData> SIGSL;
+  vector< SignalEffData> SBLDP;
+  vector< SignalEffData> SIGLDP;
+
+  //crunch the numbers
+  for (unsigned int i=0; i< searchRegions_.size(); i++) {
+
+    SB.push_back(  signalSystematics2011(sbRegions_[i],false,false,sampleOfInterest));
+    SIG.push_back(   signalSystematics2011(searchRegions_[i],false,false,sampleOfInterest));
+    
+    SBSL.push_back(  signalSystematics2011(sbRegions_[i],true,false,sampleOfInterest));
+    SIGSL.push_back(   signalSystematics2011(searchRegions_[i],true,false,sampleOfInterest));
+    
+    SBLDP.push_back(    signalSystematics2011(sbRegions_[i],false,true,sampleOfInterest));
+    SIGLDP.push_back(   signalSystematics2011(searchRegions_[i],false,true,sampleOfInterest));
+    
+    //  m1  m2  ngen  (raw yields, 1b)  (raw yields, 2b) (raw yields, 3b)  (eff corr, 1b) (eff corr, 2b) (eff cor, 3b) (eff err, 1b) (eff err, 2b) (eff err, 3b)
+    //sig, sb, sig-sl, sb-sl, sig-ldp, sb-ldp
+  }
+
+  //now output
+  cout<<0.0<<" "<<0.0<<" "<<0.0<<" ";
+  for (unsigned int i=0; i< searchRegions_.size(); i++) {
+    cout<<SIG[i].rawYield<<" "<<SB[i].rawYield<<" "<<SIGSL[i].rawYield<<" "<<SBSL[i].rawYield<<" "<<SIGLDP[i].rawYield<<" "<<SBLDP[i].rawYield<<" ";
+  }
+  for (unsigned int i=0; i< searchRegions_.size(); i++) {
+    cout<<SIG[i].effCorr<<" "<<SB[i].effCorr<<" "<<SIGSL[i].effCorr<<" "<<SBSL[i].effCorr<<" "<<SIGLDP[i].effCorr<<" "<<SBLDP[i].effCorr<<" ";
+  }
+  for (unsigned int i=0; i< searchRegions_.size(); i++) {
+    cout<<SIG[i].totalSystematicWithoutB()<<" "<<SB[i].totalSystematicWithoutB()<<" "
+	<<SIGSL[i].totalSystematicWithoutB()<<" "<<SBSL[i].totalSystematicWithoutB()<<" "
+	<<SIGLDP[i].totalSystematicWithoutB()<<" "<<SBLDP[i].totalSystematicWithoutB()<<" ";
+  }
+
+  cout<<endl;
+
+
+  cout<<0.0<<" "<<0.0<<" "<<0.0<<" ";
+  for (unsigned int i=0; i< searchRegions_.size(); i++) {
+    cout<<100*SIG[i].symmetrizeWithSign("btag")<<" "<<100*SB[i].symmetrizeWithSign("btag")<<" "
+	<<100*SIGSL[i].symmetrizeWithSign("btag")<<" "<<100*SBSL[i].symmetrizeWithSign("btag")<<" "
+	<<100*SIGLDP[i].symmetrizeWithSign("btag")<<" "<<100*SBLDP[i].symmetrizeWithSign("btag")<<" ";
+  }
+  cout<<endl;
+
+}
+
 
 //much more efficienct signal efficiency systematics calculation for mSugra and SMS
 map<pair<int,int>, SignalEffData>  runTH2Syst2011_mSugra(const SearchRegion & region, 

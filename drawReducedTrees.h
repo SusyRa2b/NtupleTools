@@ -441,7 +441,9 @@ void setSearchRegions( TString  which="") {
     sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=150&&MET<250","LooseWideSB",false));
     searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=250","LooseWideSB")); //3B
   }
-  else if (which=="bShape") {
+  //important note -- i am writing the signal systematics code to _assume_  that the SB region is shared for the shape analysis.
+  //so don't try to combine the different sets of HT cuts into one set of regions
+  else if (which=="bShapeLoose") {
     //Tentative search regions for the b-shape analysis
     //Loose exclusive regions
     sbRegions_.push_back( SearchRegion( "eq1b","HT>=400","MET>=200&&MET<250","Loose",false));
@@ -452,7 +454,8 @@ void setSearchRegions( TString  which="") {
     
     sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=200&&MET<250","Loose",false));
     searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=250","Loose")); //3B
-    
+  }
+  else if (which=="bShapeTightHT") {
     //2BT exclusive regions
     sbRegions_.push_back( SearchRegion( "eq1b","HT>=600","MET>=200&&MET<250","TightHT",false));
     searchRegions_.push_back( SearchRegion( "eq1b","HT>=600","MET>=300","TightHT")); //2BT
@@ -462,7 +465,8 @@ void setSearchRegions( TString  which="") {
     
     sbRegions_.push_back( SearchRegion( "ge3b","HT>=600","MET>=200&&MET<250","TightHT",false));
     searchRegions_.push_back( SearchRegion( "ge3b","HT>=600","MET>=300","TightHT")); //2BT
-    
+  }
+  else if (which=="bShapeTightMET") {
     //1BT exclusive regions
     sbRegions_.push_back( SearchRegion( "eq1b","HT>=500","MET>=200&&MET<250","TightMET",false));
     searchRegions_.push_back( SearchRegion( "eq1b","HT>=500","MET>=500","TightMET")); //1BT
@@ -553,7 +557,9 @@ public:
   float eff_derivative_b_1s; //NOT persisted (cross-check)
 
   float totalSystematic(); 
+  float totalSystematicWithoutB(); 
   float symmetrize(const TString & which);
+  float symmetrizeWithSign(const TString & which);
 
   float value(const TString &which) {return symmetrize(which);}
   float valuePlus(const TString &which);
@@ -751,6 +757,21 @@ float SignalEffData::symmetrize(const TString & which) {
   return s;
 }
 
+float SignalEffData::symmetrizeWithSign(const TString & which) {
+
+  float s=-1;
+
+  map<TString, SystInfo >::iterator it=systematics.find(which);
+  if (it==systematics.end() ) {
+    cout<<"ERROR -- cannot find in systematics list: "<<which<<endl;
+  }
+  else {
+    s=    (it->second.plus - it->second.minus)*0.5;
+  }
+  
+  return s;
+}
+
 float SignalEffData::valuePlus(const TString & which) {
 
   float s=-1;
@@ -790,6 +811,19 @@ float SignalEffData::totalSystematic() {
 
   return 100*sqrt(total2);
 }
+float SignalEffData::totalSystematicWithoutB() {
+
+  float total2=0;
+  for (map<TString, SystInfo >::iterator isyst=systematics.begin(); isyst!=systematics.end(); ++isyst) {
+    if ( isyst->second.status == 0) { 
+      cout<<"WARNING -- systematic is unset! "<<isyst->first<<endl;
+    }
+    if ( isyst->first != "btag")  total2 += pow( symmetrize(isyst->first),2);
+  }
+
+  return 100*sqrt(total2);
+}
+
 
 struct OwenData {
   double Nsig; //number in signal region , data //done
@@ -999,6 +1033,51 @@ void printOwen(const TString& owenKey) {
   //  cout<<"lsf_Zjmc         "<<  owenMap_[owenKey].lsf_Zjmc<<endl;
   cout<<"NZjmc_sig_ldp    "<<  owenMap_[owenKey].NZjmc_sig_ldp<<endl;
   cout<<"NZjmc_sb_ldp     "<<  owenMap_[owenKey].NZjmc_sb_ldp<<endl;
+
+}
+void printOwenShape(const TString& owenKey) {
+
+  //  cout<< " === "<<owenKey<<" === "<<endl;
+
+  TString bstr="";
+  if (owenKey.BeginsWith("eq1b")) bstr="_1b";
+  else  if (owenKey.BeginsWith("eq2b")) bstr="_2b";
+  else  if (owenKey.BeginsWith("ge3b")) bstr="_3b";
+  else assert(0);
+
+  cout<<"Nsig"<<bstr<<"              "<<  owenMap_[owenKey].Nsig<<endl;
+  cout<<"Nsb"<<bstr<<"               "<<  owenMap_[owenKey].Nsb<<endl;
+
+  cout<<"Nsig_sl"<<bstr<<"           "<<  owenMap_[owenKey].Nsig_sl<<endl;
+  //  cout<<"Nsb_sl            "<<  owenMap_[owenKey].Nsb_sl<<endl;
+  cout<<"Nsb_1e"<<bstr<<"            "<<  owenMap_[owenKey].Nsb_1e<<endl;
+  cout<<"Nsb_1m"<<bstr<<"            "<<  owenMap_[owenKey].Nsb_1m<<endl;
+
+  cout<<"Nsig_ldp"<<bstr<<"          "<<  owenMap_[owenKey].Nsig_ldp<<endl;
+  cout<<"Nsb_ldp"<<bstr<<"           "<<  owenMap_[owenKey].Nsb_ldp<<endl;
+
+  //  cout<<"Nlsb_0b           "<<  owenMap_[owenKey].Nlsb_0b<<endl;
+  //  cout<<"Nlsb_0b_ldp       "<<  owenMap_[owenKey].Nlsb_0b_ldp<<endl;
+  cout<<"Rlsb_passfail     "<<owenMap_[owenKey].Rlsb_passfail<<endl;
+  cout<<"Rlsb_passfail_err "<<owenMap_[owenKey].Rlsb_passfail_err<<endl;
+
+  cout<<"Nttbarmc_sig_ldp"<<bstr<<"  "<<  owenMap_[owenKey].Nttbarmc_sig_ldp<<endl;
+  cout<<"Nttbarmc_sb_ldp"<<bstr<<"   "<<  owenMap_[owenKey].Nttbarmc_sb_ldp<<endl;
+
+  cout<<"Nsingletopmc_sig_ldp"<<bstr<<"  "<<  owenMap_[owenKey].Nsingletopmc_sig_ldp<<endl;
+  cout<<"Nsingletopmc_sb_ldp"<<bstr<<"   "<<  owenMap_[owenKey].Nsingletopmc_sb_ldp<<endl;
+
+  //  cout<<"lsf_WJmc          "<<  owenMap_[owenKey].lsf_WJmc<<endl;
+  cout<<"NWJmc_sig_ldp"<<bstr<<"     "<<  owenMap_[owenKey].NWJmc_sig_ldp<<endl;
+  cout<<"NWJmc_sb_ldp"<<bstr<<"      "<<  owenMap_[owenKey].NWJmc_sb_ldp<<endl;
+
+  //  cout<<"lsf_Znnmc         "<<  owenMap_[owenKey].lsf_Znnmc<<endl;
+  cout<<"NZnnmc_sig_ldp"<<bstr<<"    "<<  owenMap_[owenKey].NZnnmc_sig_ldp<<endl;
+  cout<<"NZnnmc_sb_ldp"<<bstr<<"     "<<  owenMap_[owenKey].NZnnmc_sb_ldp<<endl;
+
+  //  cout<<"lsf_Zjmc         "<<  owenMap_[owenKey].lsf_Zjmc<<endl;
+  cout<<"NZjmc_sig_ldp"<<bstr<<"    "<<  owenMap_[owenKey].NZjmc_sig_ldp<<endl;
+  cout<<"NZjmc_sb_ldp"<<bstr<<"     "<<  owenMap_[owenKey].NZjmc_sb_ldp<<endl;
 
 }
 
@@ -1857,9 +1936,9 @@ void loadSamples(bool joinSingleTop=true) {
 
     configDescriptions_.setDefault("CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
     configDescriptions_.setCorrected("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
- 
+    /*
   //Only for signal systematics
-/*       
+      
   configDescriptions_.setDefault("CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff04_HLTEff0");
   configDescriptions_.setCorrected("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff04_HLTEff0");
 
