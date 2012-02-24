@@ -158,6 +158,9 @@ void EventCalculator::initEnumNames() {
   theBTagEffNames_[kBTagEff03]="BTagEff03";
   theBTagEffNames_[kBTagEffup3]="BTagEffup3";
   theBTagEffNames_[kBTagEffdown3]="BTagEffdown3";
+  theBTagEffNames_[kBTagEff04]="BTagEff04";
+  theBTagEffNames_[kBTagEffup4]="BTagEffup4";
+  theBTagEffNames_[kBTagEffdown4]="BTagEffdown4";
 
 
   theHLTEffNames_[kHLTEff0]="HLTEff0";
