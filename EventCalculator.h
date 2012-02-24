@@ -145,10 +145,13 @@ public:
   bool cutRequired(const TString cutTag);
   int Cut();
 
+  unsigned int getNthGoodJet(unsigned int goodJetN, float mainpt, float maineta, bool mainid);
   double getMinDeltaPhiMET(unsigned int maxjets);
   double getTransverseMETError(unsigned int thisJet);
   double getDeltaPhiMET(unsigned int n, float ptThreshold = 50, bool bjetsonly = false);
   double getDeltaPhiNMET(unsigned int thisJet); //Luke
+  double getDeltaPhiMETN_deltaT(unsigned int ijet, float otherpt, float othereta, bool otherid, bool dataJetRes, bool keith);
+  double getDeltaPhiMETN_deltaT(unsigned int ijet) { return getDeltaPhiMETN_deltaT(ijet,30,2.4,true,false,false);  } //overloaded
   double getDeltaPhiMETN( unsigned int goodJetN, float mainpt, float maineta, bool mainid, float otherpt, float othereta, bool otherid, bool dataJetRes, bool keith ); //Ben
   double getDeltaPhiMETN( unsigned int goodJetN ) {return getDeltaPhiMETN(goodJetN,50,2.4,true,30,2.4,true,false,false); }; //Ben, overloaded
   double getMinDeltaPhiNMET(unsigned int maxjets); //Luke

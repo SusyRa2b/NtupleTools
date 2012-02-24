@@ -1348,6 +1348,46 @@ double EventCalculator::getDeltaPhiNMET(unsigned int thisJet) {//Luke
 
 }
 
+unsigned int EventCalculator::getNthGoodJet(unsigned int goodJetN, float mainpt, float maineta, bool mainid) {
+  //return nth good jet starting at 0, or 999999 if it doesn't exist
+ 
+  unsigned int ijet = 999999;
+  unsigned int goodJetI=0;
+  for (unsigned int i=0; i< myJetsPF->size(); i++) {
+    if (isGoodJet(i, mainpt, maineta, mainid)) {
+      if(goodJetI == goodJetN){
+        ijet = i;
+        break;
+      }
+      goodJetI++;
+    }
+  }
+  return ijet;
+}
+
+double EventCalculator::getDeltaPhiMETN_deltaT(unsigned int ijet, float otherpt, float othereta, bool otherid, bool dataJetRes, bool keith) {
+
+  if(ijet==999999) return -99;
+
+  double METx = myMETPF->at(0).pt * cos(myMETPF->at(0).phi);
+  double METy = myMETPF->at(0).pt * sin(myMETPF->at(0).phi);
+  
+  //get sum for deltaT
+  double sum = 0;
+  for (unsigned int i=0; i< myJetsPF->size(); i++) {
+    if(i==ijet) continue;
+    if(isGoodJet(i, otherpt, othereta, otherid)){
+      double jetres = dataJetRes ? getDataJetRes(getJetPt(i), myJetsPF->at(i).eta) : 0.1;
+      if(keith)  sum += pow( jetres*(METx*getJetPy(i) - METy*getJetPx(i)), 2);
+      else sum += pow( jetres*(getJetPx(ijet)*getJetPy(i) - getJetPy(ijet)*getJetPx(i)), 2);
+    }//is good jet
+  }//i
+  
+  double deltaT = keith ? sqrt(sum)/getMET() : sqrt(sum)/getJetPt(ijet);
+  return deltaT;
+}
+
+
 double EventCalculator::getDeltaPhiMETN( unsigned int goodJetN, float mainpt, float maineta, bool mainid,
 					 float otherpt, float othereta, bool otherid, bool dataJetRes, bool keith) {//Ben
   
@@ -1364,31 +1404,15 @@ double EventCalculator::getDeltaPhiMETN( unsigned int goodJetN, float mainpt, fl
     }
   }
   if(ijet == 999999) return -99;
-  
-  double METx = myMETPF->at(0).pt * cos(myMETPF->at(0).phi);
-  double METy = myMETPF->at(0).pt * sin(myMETPF->at(0).phi);
-  
-  //get sum for deltaT
-  double sum = 0;
-  for (unsigned int i=0; i< myJetsPF->size(); i++) {
-    if(i==ijet) continue; 
-    if(isGoodJet(i, otherpt, othereta, otherid)){
-      double jetres = dataJetRes ? getDataJetRes(getJetPt(i), myJetsPF->at(i).eta) : 0.1;
-      if(keith)  sum += pow( jetres*(METx*getJetPy(i) - METy*getJetPx(i)), 2);      
-      else sum += pow( jetres*(getJetPx(ijet)*getJetPy(i) - getJetPy(ijet)*getJetPx(i)), 2);      
-    }//is good jet
-  }//i
-  
-  //get deltaT
-  double deltaT = keith ? sqrt(sum)/getMET() : sqrt(sum)/getJetPt(ijet);
-    
+
+  double deltaT = getDeltaPhiMETN_deltaT(ijet, otherpt, othereta, otherid, dataJetRes, keith);
+
   //calculate deltaPhiMETN
   double dp =  getDeltaPhi(myJetsPF->at(ijet).phi, getMETphi());
   double dpN = dp / atan2(deltaT, getMET());
   
   return dpN;
 }
-
 
 
 double EventCalculator::getMinDeltaPhiMETN(unsigned int maxjets, float mainpt, float maineta, bool mainid, 
@@ -4186,14 +4210,16 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   float HT, MHT, MET, METphi, minDeltaPhi, minDeltaPhiAll, minDeltaPhiAll30,minDeltaPhi30_eta5_noIdAll;
   float correctedMET, correctedMETphi;
   float maxDeltaPhi, maxDeltaPhiAll, maxDeltaPhiAll30, maxDeltaPhi30_eta5_noIdAll;
+  float deltaPhi1, deltaPhi2, deltaPhi3;
   float sumDeltaPhi, diffDeltaPhi;
   float minDeltaPhiN, deltaPhiN1, deltaPhiN2, deltaPhiN3;
+  float minDeltaPhiN_deltaT, deltaT1, deltaT2, deltaT3; 
   float minDeltaPhiN_otherEta5, minDeltaPhiN_otherEta5idNo, minDeltaPhiN_mainPt30_otherEta5idNo, minDeltaPhiN_mainPt30Eta5_otherEta5idNo, minDeltaPhiN_mainPt30Eta5idNo_otherEta5idNo;
   float minDeltaPhiK, minDeltaPhiK_otherEta5, minDeltaPhiK_otherEta5idNo, minDeltaPhiK_mainPt30_otherEta5idNo, minDeltaPhiK_mainPt30Eta5_otherEta5idNo, minDeltaPhiK_mainPt30Eta5idNo_otherEta5idNo;
   float minDeltaPhiN_DJR, minDeltaPhiN_DJR_otherEta5, minDeltaPhiK_DJR, minDeltaPhiK_DJR_otherEta5;
   float minDeltaPhiN_otherPt10, minDeltaPhiN_otherPt20, minDeltaPhiN_otherPt30, minDeltaPhiN_otherPt40, minDeltaPhiN_otherPt50;
   float minDeltaPhiN_DJR_otherPt10, minDeltaPhiN_DJR_otherPt20, minDeltaPhiN_DJR_otherPt30, minDeltaPhiN_DJR_otherPt40, minDeltaPhiN_DJR_otherPt50;
-  int minDeltaPhiN_chosenJet;
+  UInt_t minDeltaPhiN_chosenJet;
 
 
   float maxJetMis, max2JetMis, maxJetMisAll30, max2JetMisAll30;
@@ -4589,6 +4615,10 @@ Also the pdfWeightSum* histograms that are used for LM9.
 
   reducedTree.Branch("minDeltaPhiMetTau",&minDeltaPhiMetTau,"minDeltaPhiMetTau/F");
 
+  reducedTree.Branch("deltaPhi1", &deltaPhi1, "deltaPhi1/F");
+  reducedTree.Branch("deltaPhi2", &deltaPhi2, "deltaPhi2/F");
+  reducedTree.Branch("deltaPhi3", &deltaPhi3, "deltaPhi3/F");
+
   reducedTree.Branch("maxDeltaPhi",&maxDeltaPhi,"maxDeltaPhi/F");
   reducedTree.Branch("maxDeltaPhiAll",&maxDeltaPhiAll,"maxDeltaPhiAll/F");
   reducedTree.Branch("maxDeltaPhiAll30",&maxDeltaPhiAll30,"maxDeltaPhiAll30/F");
@@ -4601,7 +4631,12 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("deltaPhiN1", &deltaPhiN1, "deltaPhiN1/F");
   reducedTree.Branch("deltaPhiN2", &deltaPhiN2, "deltaPhiN2/F");
   reducedTree.Branch("deltaPhiN3", &deltaPhiN3, "deltaPhiN3/F");
-  reducedTree.Branch("minDeltaPhiN_chosenJet", &minDeltaPhiN_chosenJet, "minDeltaPhiN_chosenJet/I");
+  reducedTree.Branch("minDeltaPhiN_chosenJet", &minDeltaPhiN_chosenJet, "minDeltaPhiN_chosenJet/i");
+
+  reducedTree.Branch("minDeltaPhiN_deltaT", &minDeltaPhiN_deltaT, "minDeltaPhiN_deltaT/F");
+  reducedTree.Branch("deltaT1", &deltaT1, "deltaT1/F");
+  reducedTree.Branch("deltaT2", &deltaT2, "deltaT2/F");
+  reducedTree.Branch("deltaT3", &deltaT3, "deltaT3/F");
 
   reducedTree.Branch("minDeltaPhiN_otherEta5", &minDeltaPhiN_otherEta5, "minDeltaPhiN_otherEta5/F");
   reducedTree.Branch("minDeltaPhiN_otherEta5idNo", &minDeltaPhiN_otherEta5idNo, "minDeltaPhiN_otherEta5idNo/F");
@@ -5080,11 +5115,20 @@ Also the pdfWeightSum* histograms that are used for LM9.
       deltaPhiN2 = getDeltaPhiMETN(1);
       deltaPhiN3 = getDeltaPhiMETN(2);
 
+      deltaPhi1 = getDeltaPhiMET(1,50,false);
+      deltaPhi2 = getDeltaPhiMET(2,50,false);
+      deltaPhi3 = getDeltaPhiMET(3,50,false);
+
       //a hack that could be put into getMinDeltaPhiMETN with some work
       if(deltaPhiN1<=deltaPhiN2 && deltaPhiN1<=deltaPhiN3) minDeltaPhiN_chosenJet = 1;
       else if(deltaPhiN2<=deltaPhiN1 && deltaPhiN2<=deltaPhiN3) minDeltaPhiN_chosenJet = 2;
       else if(deltaPhiN3<=deltaPhiN1 && deltaPhiN3<=deltaPhiN2) minDeltaPhiN_chosenJet = 3;
       else minDeltaPhiN_chosenJet=0;
+
+      deltaT1 = getDeltaPhiMETN_deltaT( getNthGoodJet(0,50,2.4,true) );
+      deltaT2 = getDeltaPhiMETN_deltaT( getNthGoodJet(1,50,2.4,true) );
+      deltaT3 = getDeltaPhiMETN_deltaT( getNthGoodJet(2,50,2.4,true) );
+      minDeltaPhiN_deltaT = getDeltaPhiMETN_deltaT( getNthGoodJet((unsigned int)(minDeltaPhiN_chosenJet-1),50,2.4,true) );//
 
       hltMHTeff = getHLTMHTeff(MET, HT, nElectrons, nMuons, minDeltaPhiN);
       double effUp, effDown;
