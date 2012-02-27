@@ -77,6 +77,8 @@ public:
   enum HLTEffType {kHLTEff0=0,kHLTEffup,kHLTEffdown};
   enum BTaggerType {kSSVM=0, kTCHET, kSSVHPT, kTCHPT, kTCHPM, kCSVM, Nbtaggers};
 
+  enum BTagEffModifier {kBTagModifier0=0,kLFdown,kLFup,kHFdown,kHFup}; //ugg...not in love with this design
+
   EventCalculator(const TString & sampleName, jetType theJetType, METType theMETType);
   ~EventCalculator();
 
@@ -267,13 +269,13 @@ public:
   double getScanCrossSection( SUSYProcess p, const TString & variation );
   double getSMSScanCrossSection( const double mgluino);
   void calculateTagProb(float &Prob0, float &ProbGEQ1, float &Prob1, float &ProbGEQ2, float & Prob2, float &ProbGEQ3, 
-			float extraSFb=1, float extraSFc=1, float extraSFl=1);
-  void averageBeff(double & bjetEffSum);// , Long64_t & bjetSum);
+			float extraSFb=1, float extraSFc=1, float extraSFl=1, BTagEffModifier modifier=kBTagModifier0);
+  //  void averageBeff(double & bjetEffSum);// , Long64_t & bjetSum);
 
   //btag stuff
   float getBTagIPWeight(); //this function should be called *after* offline tagging 
   float jetTagEff(unsigned int ijet, TH1F* h_btageff, TH1F* h_ctageff, TH1F* h_ltageff,
-		  const float extraSFb, const float extraSFc, const float extraSFl);
+		  const float extraSFb, const float extraSFc, const float extraSFl,const BTagEffModifier modifier=kBTagModifier0);
 
   //other stuff
   double getDeltaPhi(double a, double b) { return jmt::deltaPhi(a,b);}

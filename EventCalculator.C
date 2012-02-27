@@ -3826,7 +3826,7 @@ void EventCalculator::loadJetTagEffMaps() {
 }
 
 void EventCalculator::calculateTagProb(float &Prob0, float &ProbGEQ1, float &Prob1, float &ProbGEQ2, float &Prob2, float &ProbGEQ3,
-				       const float extraSFb, const float extraSFc, const float extraSFl) {
+				       const float extraSFb, const float extraSFc, const float extraSFl, BTagEffModifier modifier) {
 
   char btageffname[200], ctageffname[200], ltageffname[200];
   std::string sbtageff = "h_btageff";  std::string sctageff = "h_ctageff";  std::string sltageff = "h_ltageff";
@@ -3845,15 +3845,17 @@ void EventCalculator::calculateTagProb(float &Prob0, float &ProbGEQ1, float &Pro
     float subprob1=0;
     if(isGoodJet30(ijet)){
 
-      float effi = jetTagEff(ijet, h_btageff, h_ctageff, h_ltageff, extraSFb,extraSFc,extraSFl);
+      float effi = jetTagEff(ijet, h_btageff, h_ctageff, h_ltageff, extraSFb,extraSFc,extraSFl,modifier);
+      //      cout<<"effi = "<<effi<<endl;
       Prob0 = Prob0* ( 1 - effi);
       
       double product = 1;
       for (unsigned int kjet=0; kjet<myJetsPF->size(); ++kjet) {
 	if(isGoodJet30(kjet)){
-	  float effk = jetTagEff(kjet, h_btageff, h_ctageff, h_ltageff,extraSFb,extraSFc,extraSFl);
+	  float effk = jetTagEff(kjet, h_btageff, h_ctageff, h_ltageff,extraSFb,extraSFc,extraSFl,modifier);
 	  if(kjet != ijet){
 	    product = product*(1-effk);
+	    //      cout<<"effk = "<<effk<<endl;
 	  }
 	  if(kjet > ijet){
 	    double subproduct = 1;
@@ -3861,7 +3863,8 @@ void EventCalculator::calculateTagProb(float &Prob0, float &ProbGEQ1, float &Pro
 	      //if(jjet > kjet && jjet > ijet){
 	      if(jjet != kjet && jjet != ijet){
 		if(isGoodJet30(jjet)){
-		  float effj = jetTagEff(jjet, h_btageff, h_ctageff, h_ltageff,extraSFb,extraSFc,extraSFl);
+		  float effj = jetTagEff(jjet, h_btageff, h_ctageff, h_ltageff,extraSFb,extraSFc,extraSFl,modifier);
+		  //      cout<<"effj = "<<effj<<endl;
 		  subproduct = subproduct*(1-effj);
 		}
 	      }
@@ -3879,7 +3882,7 @@ void EventCalculator::calculateTagProb(float &Prob0, float &ProbGEQ1, float &Pro
     }
   }
 
-  //std::cout << "prob0 = " << Prob0 << ", prob1 = " << Prob1 << ", prob2 = " << Prob2 << std::endl;  
+  //  std::cout << "prob0 = " << Prob0 << ", prob1 = " << Prob1 << ", prob2 = " << Prob2 << std::endl;  
 
   ProbGEQ1 = 1 - Prob0;
   ProbGEQ2 = 1 - Prob1 - Prob0;
@@ -3950,6 +3953,7 @@ float EventCalculator::getBTagIPWeight() {//this function should be called *afte
   return w_event;
 }
 
+/*
 void EventCalculator::averageBeff(double & bjetEffSum) {// , Long64_t & bjetSum) {
 
   char btageffname[200];
@@ -3969,11 +3973,12 @@ void EventCalculator::averageBeff(double & bjetEffSum) {// , Long64_t & bjetSum)
   } 
 
 }
-
+*/
 
 //get MC btag efficiency
 float EventCalculator::jetTagEff(unsigned int ijet, TH1F* h_btageff, TH1F* h_ctageff, TH1F* h_ltageff,
-				 const float extraSFb, const float extraSFc, const float extraSFl) {
+				 const float extraSFb, const float extraSFc, const float extraSFl,//options that were added but aren't used much
+				 BTagEffModifier modifier ) { 
 
   float tageff=0;
   const float pt = getJetPt(ijet);
@@ -3998,7 +4003,7 @@ float EventCalculator::jetTagEff(unsigned int ijet, TH1F* h_btageff, TH1F* h_cta
 
 	float  SFb = 0.6981*((1.+(0.414063*x))/(1.+(0.300155*x)));
 
-	if (theBTagEffType_ == kBTagEffup4 || theBTagEffType_ == kBTagEffdown4) {
+	if (theBTagEffType_ == kBTagEffup4 || theBTagEffType_ == kBTagEffdown4 || modifier==kHFup || modifier == kHFdown) {
 	  const int nbins=14;
 	  float ptmin[] = {30, 40, 50, 60, 70, 80, 100, 120, 160, 210, 260, 320, 400, 500};
 	  float ptmax[] = {40, 50, 60, 70, 80,100, 120, 160, 210, 260, 320, 400, 500, 670};
@@ -4027,11 +4032,12 @@ float EventCalculator::jetTagEff(unsigned int ijet, TH1F* h_btageff, TH1F* h_cta
 	  }
 	  myErr *= errFactor; //high pT and charm get scaled up
 
-	  if (theBTagEffType_ == kBTagEffup4) SFb += myErr;
-	  else if (theBTagEffType_ == kBTagEffdown4) SFb -= myErr;
+	  if ((theBTagEffType_ == kBTagEffup4) || (modifier==kHFup)) SFb += myErr;
+	  else if ((theBTagEffType_ == kBTagEffdown4) || (modifier==kHFdown)) SFb -= myErr;
 	  else assert(0);
 	}
 
+	//	cout<<"jet flavor, pt, SF = "<<abs(flavor)<<" "<<pt<<" "<<SFb<<endl;
 	tageff = SFb * h_btageff->GetBinContent( h_btageff->FindBin( pt ) );
 
 	if (abs(flavor) == 4) tageff*=extraSFc;
@@ -4041,29 +4047,33 @@ float EventCalculator::jetTagEff(unsigned int ijet, TH1F* h_btageff, TH1F* h_cta
       else { //light flavor [ see https://twiki.cern.ch/twiki/pub/CMS/BtagPOG/SFlightFuncs.C ]
 	float SF=0;
 	if ( eta < 0.8 ) {
-	  if       (theBTagEffType_ == kBTagEff04)    SF = ((1.06182+(0.000617034*pt))+(-1.5732e-06*(pt*pt)))+(3.02909e-10*(pt*(pt*pt)));
-	  else  if (theBTagEffType_ == kBTagEffdown4) SF = ((0.972455+(7.51396e-06*pt))+(4.91857e-07*(pt*pt)))+(-1.47661e-09*(pt*(pt*pt)));
-	  else  if (theBTagEffType_ == kBTagEffup4)   SF = ((1.15116+(0.00122657*pt))+(-3.63826e-06*(pt*pt)))+(2.08242e-09*(pt*(pt*pt)));
+	  if       (theBTagEffType_ == kBTagEff04 && (modifier==kBTagModifier0 || modifier==kHFdown||modifier==kHFup))    SF = ((1.06182+(0.000617034*pt))+(-1.5732e-06*(pt*pt)))+(3.02909e-10*(pt*(pt*pt)));
+	  else  if (theBTagEffType_ == kBTagEffdown4 || (modifier==kLFdown)) SF = ((0.972455+(7.51396e-06*pt))+(4.91857e-07*(pt*pt)))+(-1.47661e-09*(pt*(pt*pt)));
+	  else  if (theBTagEffType_ == kBTagEffup4 || (modifier==kLFup))   SF = ((1.15116+(0.00122657*pt))+(-3.63826e-06*(pt*pt)))+(2.08242e-09*(pt*(pt*pt)));
 	}
 	else if (eta>=0.8 && eta<1.6) {
-	  if       (theBTagEffType_ == kBTagEff04)    SF = ((1.111+(-9.64191e-06*pt))+(1.80811e-07*(pt*pt)))+(-5.44868e-10*(pt*(pt*pt)));
-	  else  if (theBTagEffType_ == kBTagEffdown4) SF = ((1.02055+(-0.000378856*pt))+(1.49029e-06*(pt*pt)))+(-1.74966e-09*(pt*(pt*pt)));
-	  else  if (theBTagEffType_ == kBTagEffup4)   SF = ((1.20146+(0.000359543*pt))+(-1.12866e-06*(pt*pt)))+(6.59918e-10*(pt*(pt*pt)));
+	  if       (theBTagEffType_ == kBTagEff04 && (modifier==kBTagModifier0 || modifier==kHFdown||modifier==kHFup))    SF = ((1.111+(-9.64191e-06*pt))+(1.80811e-07*(pt*pt)))+(-5.44868e-10*(pt*(pt*pt)));
+	  else  if (theBTagEffType_ == kBTagEffdown4 || (modifier==kLFdown)) SF = ((1.02055+(-0.000378856*pt))+(1.49029e-06*(pt*pt)))+(-1.74966e-09*(pt*(pt*pt)));
+	  else  if (theBTagEffType_ == kBTagEffup4 || (modifier==kLFup))   SF = ((1.20146+(0.000359543*pt))+(-1.12866e-06*(pt*pt)))+(6.59918e-10*(pt*(pt*pt)));
 	}
 	else if (eta>=1.6 && eta<=2.4) {
-	  if       (theBTagEffType_ == kBTagEff04)    SF = ((1.08498+(-0.000701422*pt))+(3.43612e-06*(pt*pt)))+(-4.11794e-09*(pt*(pt*pt)));
-	  else  if (theBTagEffType_ == kBTagEffdown4) SF = ((0.983476+(-0.000607242*pt))+(3.17997e-06*(pt*pt)))+(-4.01242e-09*(pt*(pt*pt)));
-	  else  if (theBTagEffType_ == kBTagEffup4)   SF = ((1.18654+(-0.000795808*pt))+(3.69226e-06*(pt*pt)))+(-4.22347e-09*(pt*(pt*pt)));
+	  if       (theBTagEffType_ == kBTagEff04 && (modifier==kBTagModifier0 || modifier==kHFdown||modifier==kHFup))    SF = ((1.08498+(-0.000701422*pt))+(3.43612e-06*(pt*pt)))+(-4.11794e-09*(pt*(pt*pt)));
+	  else  if (theBTagEffType_ == kBTagEffdown4 || (modifier==kLFdown)) SF = ((0.983476+(-0.000607242*pt))+(3.17997e-06*(pt*pt)))+(-4.01242e-09*(pt*(pt*pt)));
+	  else  if (theBTagEffType_ == kBTagEffup4 || (modifier==kLFup))   SF = ((1.18654+(-0.000795808*pt))+(3.69226e-06*(pt*pt)))+(-4.22347e-09*(pt*(pt*pt)));
 	}
 	//design question -- what do to for jets at eta>2.4? assert? or return tageff=0?
 	//i guess tageff 0 makes the most sense
 
 	tageff = SF * extraSFl * h_ltageff->GetBinContent( h_ltageff->FindBin( pt )); 
+	//	cout<<"jet flavor, pt, SF = "<<abs(flavor)<<" "<<pt<<" "<<SF<<endl;
 
       }
 
     }
     else {
+
+      assert(modifier==kBTagModifier0);// not implementing this for the old options
+
     //CSVM
     float SF[3] = {0.96,0.96,0.96}; //3 bins of pT (<240, 240 to 350, and >350)
     float SFU[3] = {1,1,1};
@@ -4314,12 +4324,10 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
 
   float prob0,probge1,prob1,probge2,probge3,prob2;
   
-  float prob0_bplus,probge1_bplus,prob1_bplus,probge2_bplus,probge3_bplus,prob2_bplus;
-  float prob0_bminus,probge1_bminus,prob1_bminus,probge2_bminus,probge3_bminus,prob2_bminus;
-  float prob0_cplus,probge1_cplus,prob1_cplus,probge2_cplus,probge3_cplus,prob2_cplus;
-  float prob0_cminus,probge1_cminus,prob1_cminus,probge2_cminus,probge3_cminus,prob2_cminus;
-  float prob0_lplus,probge1_lplus,prob1_lplus,probge2_lplus,probge3_lplus,prob2_lplus;
-  float prob0_lminus,probge1_lminus,prob1_lminus,probge2_lminus,probge3_lminus,prob2_lminus;
+  float prob0_HFplus,probge1_HFplus,prob1_HFplus,probge2_HFplus,probge3_HFplus,prob2_HFplus;
+  float prob0_HFminus,probge1_HFminus,prob1_HFminus,probge2_HFminus,probge3_HFminus,prob2_HFminus;
+  float prob0_LFplus,probge1_LFplus,prob1_LFplus,probge2_LFplus,probge3_LFplus,prob2_LFplus;
+  float prob0_LFminus,probge1_LFminus,prob1_LFminus,probge2_LFminus,probge3_LFminus,prob2_LFminus;
 
   std::vector<int> vrun,vlumi,vevent;
   loadEventList(vrun, vlumi, vevent);
@@ -4336,6 +4344,7 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   // bookkeeping for screen output only
   pair<int,int> lastpoint = make_pair(0,0);
 
+  /* this was something I thought I needed for the shape analysis signal eff, but now I don't think I do
   //keep track of the average b-tagging efficiency for the sample
   //for scans, need to break it up by scan point, hence the map
   map<pair<int,int> , double> bjetEffSum; //numerator
@@ -4345,6 +4354,7 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   //for charm
   map<pair<int,int> , double> cjetEffSum; //numerator
   map<pair<int,int> , Long64_t> cjetSum;    //denominator
+  */
 
   /*
 scanProcessTotalsMap has been extended to handle PDF weight sums.
@@ -4492,48 +4502,34 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("prob2",&prob2,"prob2/F");
   reducedTree.Branch("probge3",&probge3,"probge3/F");
 
-  //for tag eff derivatives
-  reducedTree.Branch("prob0_bplus",&prob0_bplus,"prob0_bplus/F");
-  reducedTree.Branch("probge1_bplus",&probge1_bplus,"probge1_bplus/F");
-  reducedTree.Branch("prob1_bplus",&prob1_bplus,"prob1_bplus/F");
-  reducedTree.Branch("probge2_bplus",&probge2_bplus,"probge2_bplus/F");
-  reducedTree.Branch("prob2_bplus",&prob2_bplus,"prob2_bplus/F");
-  reducedTree.Branch("probge3_bplus",&probge3_bplus,"probge3_bplus/F");
+  //for tag eff variations
+  reducedTree.Branch("prob0_HFplus",&prob0_HFplus,"prob0_HFplus/F");
+  reducedTree.Branch("probge1_HFplus",&probge1_HFplus,"probge1_HFplus/F");
+  reducedTree.Branch("prob1_HFplus",&prob1_HFplus,"prob1_HFplus/F");
+  reducedTree.Branch("probge2_HFplus",&probge2_HFplus,"probge2_HFplus/F");
+  reducedTree.Branch("prob2_HFplus",&prob2_HFplus,"prob2_HFplus/F");
+  reducedTree.Branch("probge3_HFplus",&probge3_HFplus,"probge3_HFplus/F");
 
-  reducedTree.Branch("prob0_bminus",&prob0_bminus,"prob0_bminus/F");
-  reducedTree.Branch("probge1_bminus",&probge1_bminus,"probge1_bminus/F");
-  reducedTree.Branch("prob1_bminus",&prob1_bminus,"prob1_bminus/F");
-  reducedTree.Branch("probge2_bminus",&probge2_bminus,"probge2_bminus/F");
-  reducedTree.Branch("prob2_bminus",&prob2_bminus,"prob2_bminus/F");
-  reducedTree.Branch("probge3_bminus",&probge3_bminus,"probge3_bminus/F");
+  reducedTree.Branch("prob0_HFminus",&prob0_HFminus,"prob0_HFminus/F");
+  reducedTree.Branch("probge1_HFminus",&probge1_HFminus,"probge1_HFminus/F");
+  reducedTree.Branch("prob1_HFminus",&prob1_HFminus,"prob1_HFminus/F");
+  reducedTree.Branch("probge2_HFminus",&probge2_HFminus,"probge2_HFminus/F");
+  reducedTree.Branch("prob2_HFminus",&prob2_HFminus,"prob2_HFminus/F");
+  reducedTree.Branch("probge3_HFminus",&probge3_HFminus,"probge3_HFminus/F");
 
-  reducedTree.Branch("prob0_cplus",&prob0_cplus,"prob0_cplus/F");
-  reducedTree.Branch("probge1_cplus",&probge1_cplus,"probge1_cplus/F");
-  reducedTree.Branch("prob1_cplus",&prob1_cplus,"prob1_cplus/F");
-  reducedTree.Branch("probge2_cplus",&probge2_cplus,"probge2_cplus/F");
-  reducedTree.Branch("prob2_cplus",&prob2_cplus,"prob2_cplus/F");
-  reducedTree.Branch("probge3_cplus",&probge3_cplus,"probge3_cplus/F");
+  reducedTree.Branch("prob0_LFplus",&prob0_LFplus,"prob0_LFplus/F");
+  reducedTree.Branch("probge1_LFplus",&probge1_LFplus,"probge1_LFplus/F");
+  reducedTree.Branch("prob1_LFplus",&prob1_LFplus,"prob1_LFplus/F");
+  reducedTree.Branch("probge2_LFplus",&probge2_LFplus,"probge2_LFplus/F");
+  reducedTree.Branch("prob2_LFplus",&prob2_LFplus,"prob2_LFplus/F");
+  reducedTree.Branch("probge3_LFplus",&probge3_LFplus,"probge3_LFplus/F");
 
-  reducedTree.Branch("prob0_cminus",&prob0_cminus,"prob0_cminus/F");
-  reducedTree.Branch("probge1_cminus",&probge1_cminus,"probge1_cminus/F");
-  reducedTree.Branch("prob1_cminus",&prob1_cminus,"prob1_cminus/F");
-  reducedTree.Branch("probge2_cminus",&probge2_cminus,"probge2_cminus/F");
-  reducedTree.Branch("prob2_cminus",&prob2_cminus,"prob2_cminus/F");
-  reducedTree.Branch("probge3_cminus",&probge3_cminus,"probge3_cminus/F");
-
-  reducedTree.Branch("prob0_lplus",&prob0_lplus,"prob0_lplus/F");
-  reducedTree.Branch("probge1_lplus",&probge1_lplus,"probge1_lplus/F");
-  reducedTree.Branch("prob1_lplus",&prob1_lplus,"prob1_lplus/F");
-  reducedTree.Branch("probge2_lplus",&probge2_lplus,"probge2_lplus/F");
-  reducedTree.Branch("prob2_lplus",&prob2_lplus,"prob2_lplus/F");
-  reducedTree.Branch("probge3_lplus",&probge3_lplus,"probge3_lplus/F");
-
-  reducedTree.Branch("prob0_lminus",&prob0_lminus,"prob0_lminus/F");
-  reducedTree.Branch("probge1_lminus",&probge1_lminus,"probge1_lminus/F");
-  reducedTree.Branch("prob1_lminus",&prob1_lminus,"prob1_lminus/F");
-  reducedTree.Branch("probge2_lminus",&probge2_lminus,"probge2_lminus/F");
-  reducedTree.Branch("prob2_lminus",&prob2_lminus,"prob2_lminus/F");
-  reducedTree.Branch("probge3_lminus",&probge3_lminus,"probge3_lminus/F");
+  reducedTree.Branch("prob0_LFminus",&prob0_LFminus,"prob0_LFminus/F");
+  reducedTree.Branch("probge1_LFminus",&probge1_LFminus,"probge1_LFminus/F");
+  reducedTree.Branch("prob1_LFminus",&prob1_LFminus,"prob1_LFminus/F");
+  reducedTree.Branch("probge2_LFminus",&probge2_LFminus,"probge2_LFminus/F");
+  reducedTree.Branch("prob2_LFminus",&prob2_LFminus,"prob2_LFminus/F");
+  reducedTree.Branch("probge3_LFminus",&probge3_LFminus,"probge3_LFminus/F");
 
 
   //should consider whether some of these should be killed off
@@ -5014,19 +5010,18 @@ Also the pdfWeightSum* histograms that are used for LM9.
 
       calculateTagProb(prob0,probge1,prob1,probge2,prob2,probge3);
 
-      calculateTagProb(prob0_bplus,probge1_bplus,prob1_bplus,probge2_bplus,prob2_bplus,probge3_bplus,1.1,1.0,1.0);
-      calculateTagProb(prob0_bminus,probge1_bminus,prob1_bminus,probge2_bminus,prob2_bminus,probge3_bminus,0.9,1.0,1.0);
+      calculateTagProb(prob0_HFplus,probge1_HFplus,prob1_HFplus,probge2_HFplus,prob2_HFplus,probge3_HFplus,1,1,1,kHFup);
+      calculateTagProb(prob0_HFminus,probge1_HFminus,prob1_HFminus,probge2_HFminus,prob2_HFminus,probge3_HFminus,1,1,1,kHFdown);
 
-      calculateTagProb(prob0_cplus,probge1_cplus,prob1_cplus,probge2_cplus,prob2_cplus,probge3_cplus,1.0,1.1,1.0);
-      calculateTagProb(prob0_cminus,probge1_cminus,prob1_cminus,probge2_cminus,prob2_cminus,probge3_cminus,1.0,0.9,1.0);
+      calculateTagProb(prob0_LFplus,probge1_LFplus,prob1_LFplus,probge2_LFplus,prob2_LFplus,probge3_LFplus,1,1,1,kLFup);
+      calculateTagProb(prob0_LFminus,probge1_LFminus,prob1_LFminus,probge2_LFminus,prob2_LFminus,probge3_LFminus,1,1,1,kLFdown);
 
-      calculateTagProb(prob0_lplus,probge1_lplus,prob1_lplus,probge2_lplus,prob2_lplus,probge3_lplus,1.0,1.0,1.1);
-      calculateTagProb(prob0_lminus,probge1_lminus,prob1_lminus,probge2_lminus,prob2_lminus,probge3_lminus,1.0,1.0,0.9);
-
+      /*
       if ( bjetEffSum.count(thispoint)==0) bjetEffSum[thispoint]=0;
       //      if ( bjetSum.count(thispoint)==0) bjetSum[thispoint]=0;
       if ( bjetSumSUSY.count(thispoint)==0) bjetSumSUSY[thispoint]=0;
       averageBeff(bjetEffSum[thispoint]);//,bjetSum[thispoint]);
+      */
 
       isRealData = isSampleRealData();
       int version = 0, prescale = 0;
@@ -5039,7 +5034,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
       nGoodPV = countGoodPV();
 
       SUSY_nb = sampleIsSignal_ ? getSUSYnb() : 0;
-      bjetSumSUSY[thispoint] += SUSY_nb;
+      //      bjetSumSUSY[thispoint] += SUSY_nb;
       //if(SUSY_process==NotFound) cout<<"SUSY_nb = "<<SUSY_nb<<endl;
 
       njets = nGoodJets();
@@ -5291,6 +5286,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
   // TH1 storing m0
   // TH1 storing m12
   // TH1 storing <eff>
+  /* probably don't need this anymore
   unsigned int nhistobins = bjetEffSum.size();
   TH1I * btageff_m0 = new TH1I("btageff_m0","m0/mGL coordinate for btag eff",nhistobins, 0,nhistobins);
   TH1I * btageff_m12 = new TH1I("btageff_m12","m12/mLSP coordinate for btag eff",nhistobins, 0,nhistobins);
@@ -5304,7 +5300,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
 
     ++ibin;
   }
-
+  */
 
 
   fout.Write();
