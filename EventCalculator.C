@@ -30,7 +30,7 @@ EventCalculator::EventCalculator(const TString & sampleName, jetType theJetType,
   theJERType_(kJER0),
   theMETuncType_(kMETunc0),
   thePUuncType_(kPUunc0),
-  theBTagEffType_(kBTagEff0),
+  theBTagEffType_(kBTagEff04),
   theHLTEffType_(kHLTEff0),
   theBTaggerType_(kCSVM),
   //default settings for the collection pointers

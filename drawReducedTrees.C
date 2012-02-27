@@ -1431,6 +1431,308 @@ void runDataQCD2011(const bool forOwen=false) {
 
 }
 
+//we've resorted to all sorts of ugly solutions for returning values (vectors, pairs, pass by reference, etc)
+//here's another ugly solution
+map<TString, double> slABCD_shape(bool datamode, bool iIsSIG, const unsigned int searchRegionIndex, bool kIsSIG, int n) {
+
+  map<TString, double> values;
+
+/*
+Want to calculate a more generic form:
+
+mu_i,0L,jb = (mu_k,0L,nb / mu_k,SL,nb) * mu_i,SL,jb
+
+where i and k = {SB, SIG}
+and   j and n = {eq1b, eq2b, ge3b}
+
+k and n describe the "reference" bins and are specified by the arguments to the function: kIsSIG and n
+
+  i and j describe the region being predicted. j is defined by the searchRegionIdex. i is defined by iIsSIG
+
+  For region k,0L,nb we will have to also get the QCD and Z numbers
+
+
+FOR NOW WE ARE IGNORING SL TRIG EFF (<1% effect)
+*/
+
+  loadSamples(); //needs to come first! this is why this should be turned into a class, with this guy in the ctor
+
+
+  const SearchRegion region = searchRegions_[searchRegionIndex];
+  SearchRegion qcdsubregion = sbRegions_[searchRegionIndex];
+  TString btagselection = region.btagSelection;
+
+  setStackMode(false);
+  doData(true);
+  setQuiet(true);
+
+  TString sampleOfInterest = "totalsm";
+  useFlavorHistoryWeights_=false;
+  setColorScheme("nostack");
+  clearSamples();
+  if (datamode) {
+    addSample("ZJets");
+    addSample("VV");
+    sampleOfInterest="data";
+  }
+  else {
+  /*  if (closureMode!="justw" && closureMode!="justsingletop") */ addSample("TTbarJets");
+  /*  if (closureMode!="justttbar") {
+      if (closureMode!="justsingletop")*/  addSample("WJets");
+  /*    if (closureMode!="justw")   */       addSample("SingleTop");
+  // }
+  }
+
+  savePlots_=false;
+
+  setLogY(false);
+  TString var,xtitle;
+  int nbins;
+  float low,high;
+ var="HT"; xtitle=var;
+  nbins=10; low=0; high=5000;
+
+  TString btagSF_j;
+  TString btagSF_n;
+
+  // --  count events
+  if (useScaleFactors_) {
+    usePUweight_=true;
+    useHTeff_=true;
+    useMHTeff_=false;
+    currentConfig_=configDescriptions_.getCorrected(); //add JERbias
+
+    //now fill the btagSF weight for each btag selection
+    if (btagselection=="ge2b")     btagSF_j="probge2";
+    else if (btagselection=="ge1b")   btagSF_j="probge1";
+    else if (btagselection=="ge3b")   btagSF_j="probge3";
+    else if (btagselection=="eq1b")    btagSF_j="prob1";
+    else if (btagselection=="eq2b")     btagSF_j="(1-prob1-prob0-probge3)"; //prob2
+    else {assert(0);}
+
+    if (n==1)      btagSF_n="prob1";
+    else if (n==2)      btagSF_n="(1-prob1-prob0-probge3)"; //prob2
+    else if (n==3)       btagSF_n="probge3";
+    else {assert(0);}
+  }
+  else assert(0);
+
+  TCut HTcut=region.htSelection.Data(); 
+  TCut SRMET = region.metSelection.Data();
+  TCut baseline = "cutPV==1 && cut3Jets==1 && cutTrigger==1";
+  baseline = baseline&&HTcut;
+  TCut cleaning = "weight<1000 && passCleaning==1";
+  TCut SBMET = qcdsubregion.metSelection.Data();
+  TCut dpcut = "minDeltaPhiN>=4";
+  TCut singleLepton = getSingleLeptonCut();//"(((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && MT_Wlep>=0&&MT_Wlep<100)";
+  TCut leptonVeto = getLeptonVetoCut();//"nElectrons==0 && nMuons==0";
+
+  TCut iMET = iIsSIG ? SRMET : SBMET;
+  TCut kMET = kIsSIG ? SRMET : SBMET;
+
+  /*
+    mu_i,0L,jb = (mu_k,0L,nb / mu_k,SL,nb) * mu_i,SL,jb
+    
+    where i and k = {SB, SIG}
+    and   j and n = {eq1b, eq2b, ge3b}
+  */
+  
+  //set cuts and b tagging
+  selection_ = baseline && cleaning && dpcut && iMET && leptonVeto;
+  btagSFweight_ = btagSF_j;
+  //count events
+  drawPlots(var,nbins,low,high,xtitle,"events","plotA");
+  double mu_i_0L_jb=getIntegral(sampleOfInterest);
+  double mu_i_0L_jb_err=getIntegralErr(sampleOfInterest);
+
+  //set cuts and b tagging
+  selection_ = baseline && cleaning && dpcut && kMET && leptonVeto;
+  btagSFweight_ = btagSF_n;
+  //count events
+  drawPlots(var,nbins,low,high,xtitle,"events","plotA");
+  double mu_k_0L_nb = getIntegral(sampleOfInterest);
+  double mu_k_0L_nb_err = getIntegralErr(sampleOfInterest);
+
+  //set cuts and b tagging
+  selection_ = baseline && cleaning && dpcut && kMET && singleLepton;
+  btagSFweight_ = btagSF_n;
+  //count events
+  drawPlots(var,nbins,low,high,xtitle,"events","plotA");
+  double mu_k_SL_nb = getIntegral(sampleOfInterest);
+  double mu_k_SL_nb_err = getIntegralErr(sampleOfInterest);
+
+  //set cuts and b tagging
+  selection_ = baseline && cleaning && dpcut && iMET && singleLepton;
+  btagSFweight_ = btagSF_j;
+  //count events
+  drawPlots(var,nbins,low,high,xtitle,"events","plotA");
+  double mu_i_SL_jb = getIntegral(sampleOfInterest);
+  double mu_i_SL_jb_err = getIntegralErr(sampleOfInterest);
+
+  if (datamode) {
+
+    //in data, need to correct for trigger inefficiency
+    double trigeff = kIsSIG? eff_SIG_MHT_: eff_SB_MHT_  ;
+    mu_k_0L_nb     /= trigeff;
+    mu_k_0L_nb_err /= trigeff;
+
+    //in data, we need to go subtract contamination from mu_k_0L_nb
+    double qcdsub=0,qcdsub_err=0;
+    double zsub=0,zsub_err=0;
+    std::pair<double,std::vector<double> > SBsubQCDp;
+    //need to get QCD for k={SB,SIG} with n btags
+    for (unsigned int ir=0; ir<sbRegions_.size(); ir++) {
+      if (sbRegions_[ir].isSIG != kIsSIG) continue;
+      if (sbRegions_[ir].htSelection != region.htSelection) continue;
+      if (n == TString(sbRegions_[ir].btagSelection(2)).Atoi()) qcdsubregion = sbRegions_[ir];
+    }
+    for (unsigned int ir=0; ir<searchRegions_.size(); ir++) {
+      if (searchRegions_[ir].isSIG != kIsSIG) continue;
+      if (searchRegions_[ir].htSelection != region.htSelection) continue;
+      if (n == TString(searchRegions_[ir].btagSelection(2)).Atoi()) qcdsubregion = sbRegions_[ir];
+    }
+    cout<<" qcd sub region = "<<qcdsubregion.id()<<endl;
+    SBsubQCDp = anotherABCD(qcdsubregion, datamode, 1 ,0,getLSBbsel(qcdsubregion),0,false,true) ;//set "forTTbarEstimate" flag to true
+    qcdsub = SBsubQCDp.first;
+    qcdsub_err=SBsubQCDp.second.at(0);
+
+    if (qcdsubregion.owenId == "Loose" && qcdsubregion.btagSelection=="eq1b") {
+      zsub= 68;      zsub_err=15;
+    }
+    else if (qcdsubregion.owenId == "Loose" && qcdsubregion.btagSelection=="eq2b") {
+      zsub =12; zsub_err=8;
+    }
+    else if ( qcdsubregion.owenId == "Loose"   && qcdsubregion.btagSelection=="ge3b") {
+      zsub = 1.9; zsub_err=2.8;
+    }
+    else assert(0);
+
+    mu_k_0L_nb -= qcdsub;
+    mu_k_0L_nb -= zsub;
+
+    mu_k_0L_nb_err = jmt::addInQuad( mu_k_0L_nb_err,qcdsub_err,zsub_err);
+
+  }
+
+  double r01 = mu_k_0L_nb / mu_k_SL_nb;
+  double r01_err = jmt::errAoverB(mu_k_0L_nb,mu_k_0L_nb_err, mu_k_SL_nb, mu_k_SL_nb_err);
+
+  double estimate = r01 * mu_i_SL_jb;
+  double estimate_err = jmt::errAtimesB(r01,r01_err, mu_i_SL_jb,mu_i_SL_jb_err);
+
+  values["r01"]=r01;
+  values["r01_err"]=r01_err;
+  values["mu_i_SL_jb"]=mu_i_SL_jb;
+  values["mu_i_SL_jb_err"]=mu_i_SL_jb_err;
+
+  if (datamode) {
+    double trigeff = iIsSIG ? eff_SIG_MHT_ : eff_SB_MHT_;
+    estimate     *= trigeff;
+    estimate_err *= trigeff;
+  }
+
+  char output[500];
+  TString metstring = iIsSIG? "SIG":"SB";
+  TString refsb = kIsSIG ? "SIG" : "SB";
+
+  if (datamode) {
+    sprintf(output, "%s %s (ref: %s %d) -- predicted (ttWt only) = %.1f +/- %.1f ; obs = %.0f",
+	    metstring.Data(), btagselection.Data(), 
+	    refsb.Data(), n,
+	    estimate, estimate_err, mu_i_0L_jb);
+
+  }
+  else { //closure test 
+    sprintf(output, "%s %s (ref: %s %d) -- predicted = %.1f +/- %.1f ; true = %.1f +/- %.1f",
+	    metstring.Data(), btagselection.Data(), 
+	    refsb.Data(), n,
+	    estimate, estimate_err, mu_i_0L_jb,mu_i_0L_jb_err);
+  }
+  cout<<output<<endl;
+
+  return values;
+}
+
+void runShapeClosure() {
+  setSearchRegions("bShapeLoose");
+
+  for (int sigorsb_p=0; sigorsb_p<=1; sigorsb_p++) {
+    bool predSIG = (sigorsb_p==0); 
+    for (unsigned int rr=0; rr<searchRegions_.size(); rr++) {
+      //here's where we start a new 'set' of 5 closure tests
+
+      //for the set of 5, the r01 values are all independent.
+      //the mu_i_SL_jb values should all be the same
+      double mu_i_SL_jb=-1;
+      double mu_i_SL_jb_err=-1;
+      double r01OverSigmaSquaredSum=0;
+      double oneOverSigmaSquaredSum=0;
+      int counter=0;
+      for (int sigorsb=0; sigorsb<=1; sigorsb++) {
+	bool refSIG = (sigorsb==1); 
+	for (int refb=1; refb<=3; refb++) {
+
+	  //avoid the case where the formula is a meaningless identity
+	  TString refb_str="";
+	  refb_str+=refb;
+	  if (!(predSIG==refSIG && ( searchRegions_[rr].btagSelection.Contains( refb_str)))) {
+	    map<TString, double> val= slABCD_shape(false, predSIG, rr, refSIG, refb);
+	    oneOverSigmaSquaredSum += 1.0 / pow(val["r01_err"],2);
+	    r01OverSigmaSquaredSum += val["r01"] / pow(val["r01_err"],2);
+	    ++counter;
+
+	    if (counter==1) {
+	      mu_i_SL_jb = val["mu_i_SL_jb"];
+	      mu_i_SL_jb_err = val["mu_i_SL_jb_err"];
+	    }
+	    else {
+	      assert ( mu_i_SL_jb == val["mu_i_SL_jb"]);
+	      assert ( mu_i_SL_jb_err == val["mu_i_SL_jb_err"]);
+	    }
+	  }
+	  else {
+	    cout<<searchRegions_[rr].btagSelection<<"  "<< refb<<endl;
+	  }
+	}
+      }
+      //tally up the averages for this set of closure tests
+      assert(counter==5);
+      double r01_av = r01OverSigmaSquaredSum / oneOverSigmaSquaredSum;
+      double r01_av_err = sqrt(1.0/oneOverSigmaSquaredSum);
+      double pred_av = r01_av * mu_i_SL_jb;
+      double pred_av_err = jmt::errAtimesB(r01_av,r01_av_err,mu_i_SL_jb,mu_i_SL_jb_err);
+      char output[200];
+      sprintf(output, "        av r01 = %.2f +/- %.2f ; av pred = %.1f +/- %.1f",r01_av,r01_av_err,pred_av,pred_av_err);
+      cout<<output<<endl;
+      cout<<" ----- "<<endl;
+    }
+  }
+  
+}
+
+void runShapeData() {
+  setSearchRegions("bShapeLoose");
+
+  for (int sigorsb_p=0; sigorsb_p<=1; sigorsb_p++) {
+    bool predSIG = (sigorsb_p==0); 
+    for (unsigned int rr=0; rr<searchRegions_.size(); rr++) {
+      for (int sigorsb=0; sigorsb<=1; sigorsb++) {
+	bool refSIG = (sigorsb==1); 
+	for (int refb=1; refb<=3; refb++) {
+
+	  //avoid the case where the formula is a meaningless identity
+	  if (!(predSIG==refSIG && ( searchRegions_[rr].btagSelection.Contains( TString(refb))))) {
+	    slABCD_shape(true, predSIG, rr, refSIG, refb);
+	  }
+	  
+	}
+      }
+      cout<<" ----- "<<endl;
+    }
+  }
+  
+}
+
 double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const TString & mode="", const TString & closureMode="nominal", bool fillResultsGlobal=false, const bool bShape=false ) {
   //in datamode, return the estimate; in non-datamode, return the Closure Test results (true-pred)/pred
 
