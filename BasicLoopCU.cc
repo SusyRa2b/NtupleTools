@@ -21,9 +21,9 @@ int main(int argc, char** argv)
  
   //code for sampleName_ and output path
 
-  //TString outputDir = "./"; //this is where reducedTrees will go, use "./" for T3
+  TString outputDir = "./"; //this is where reducedTrees will go, use "./" for T3
   //TString outputDir = "/uscmst1b_scratch/lpc1/3DayLifetime/wdteo/"; //this is where reducedTrees will go
-  TString outputDir = "/tmp/joshmt/";
+  //TString outputDir = "/tmp/joshmt/";
 
   TString options="";
   if (argc>2) options = argv[2];
