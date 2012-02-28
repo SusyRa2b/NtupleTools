@@ -44,7 +44,7 @@ gSystem->Load("CrossSectionTable_cxx.so");
 
 //*** AFTER SUMMER
 //***************************
-TString inputPath = "/cu3/joshmt/reducedTrees/V00-02-35l/"; 
+TString inputPath = "/cu3/joshmt/reducedTrees/V00-02-35m/"; 
 TString dataInputPath =  "dummy"; //no data needed!
 TString inputPathTTbar = "dummy";
 
@@ -59,9 +59,8 @@ double lumiScale_ = 4683.719;//nov4
 //works fine for small samples, completely unusable for mSugra
 SignalEffData signalSystematics2011(const SearchRegion & region, bool isSL=false, bool isLDP=false, TString sampleOfInterest="LM9", int m0=0,int m12=0) {
   useFlavorHistoryWeights_=false;
-  loadSamples(); //needs to come first! this is why this should be turned into a class, with this guy in the ctor
-
-  assert(configDescriptions_.size() == 12); //to avoid stupid mistakes on LM9 (no more HLT eff)
+  loadSamples(true,"complete"); //needs to come first! this is why this should be turned into a class, with this guy in the ctor
+  assert(configDescriptions_.size() == 10); //to avoid stupid mistakes on LM9 (no more HLT eff, and no more btag eff)
 
   dodata_=false;
   savePlots_ =false;
@@ -196,7 +195,6 @@ each of the systematics variations was done with JERbias turned on.
 
   // this code was for special checks
   //now we can test the effect of the changing the charm and LF tag rates
-  //all of this is done with the regular JERbias file
 //   TString btagprobbase=btagSFweight_;
 
 //   //b +
@@ -259,6 +257,35 @@ each of the systematics variations was done with JERbias turned on.
 
   susyCrossSectionVariation_=""; //reset to default k factors
   //all other uncertainties
+
+  //now HF b-tag scale factor variaion
+  //all of this is done with the regular JERbias file
+  TString btagprobbase=btagSFweight_;
+  //b/c +
+  btagSFweight_ = btagprobbase + "_HFplus";
+  drawPlots(var,nbins,low,high,xtitle,"events","dummyH");
+  double bplus=  getIntegral(sampleOfInterest);
+  //b/c -
+  btagSFweight_ = btagprobbase + "_HFminus";
+  drawPlots(var,nbins,low,high,xtitle,"events","dummyH");
+  double bminus=  getIntegral(sampleOfInterest);
+
+  results.set("btag",(bminus-nominal)/nominal,(bplus-nominal)/nominal);
+
+  //LF +
+  btagSFweight_ = btagprobbase + "_LFplus";
+  drawPlots(var,nbins,low,high,xtitle,"events","dummyH");
+  double lplus=  getIntegral(sampleOfInterest);
+  //LF -
+  btagSFweight_ = btagprobbase + "_LFminus";
+  drawPlots(var,nbins,low,high,xtitle,"events","dummyH");
+  double lminus=  getIntegral(sampleOfInterest);
+
+  results.set("lftag",(lminus-nominal)/nominal,(lplus-nominal)/nominal);
+
+
+  //reset the sf weight string
+  btagSFweight_ = bweightstring;
 
   //we're gonna hard code the fact that these variations come in pairs
   double var1=0,var2=0;
@@ -458,7 +485,8 @@ each of the systematics variations was done with JERbias turned on.
 
 //not only for LM9; can also be used for other samples e.g. ttbar. Just change sampleOfInterest
 void runSystematics2011_LM9(  TString sampleOfInterest="LM9" ) {
-  setSearchRegions();
+  setSearchRegions("Moriond");
+  loadSamples(true,"complete"); // "complete" 
 
   //  signalSystematics2011(sbRegions_[0],false,false,"T1bbbb",1175,75);
   //     return;
@@ -569,7 +597,8 @@ void runSystematics2011_LM9(  TString sampleOfInterest="LM9" ) {
 }
 
 void runSystematicsSlow_shape(  TString sampleOfInterest="LM9" ) {
-  loadSamples();
+  loadSamples(true,"complete"); // "complete" 
+
   setSearchRegions("bShapeLoose");
 
   //validate assumption that sb regions are all the same (except b tag)
@@ -623,6 +652,14 @@ void runSystematicsSlow_shape(  TString sampleOfInterest="LM9" ) {
     cout<<100*SIG[i].symmetrizeWithSign("btag")<<" "<<100*SB[i].symmetrizeWithSign("btag")<<" "
 	<<100*SIGSL[i].symmetrizeWithSign("btag")<<" "<<100*SBSL[i].symmetrizeWithSign("btag")<<" "
 	<<100*SIGLDP[i].symmetrizeWithSign("btag")<<" "<<100*SBLDP[i].symmetrizeWithSign("btag")<<" ";
+  }
+  cout<<endl;
+
+  cout<<0.0<<" "<<0.0<<" "<<0.0<<" ";
+  for (unsigned int i=0; i< searchRegions_.size(); i++) {
+    cout<<100*SIG[i].symmetrizeWithSign("lftag")<<" "<<100*SB[i].symmetrizeWithSign("lftag")<<" "
+	<<100*SIGSL[i].symmetrizeWithSign("lftag")<<" "<<100*SBSL[i].symmetrizeWithSign("lftag")<<" "
+	<<100*SIGLDP[i].symmetrizeWithSign("lftag")<<" "<<100*SBLDP[i].symmetrizeWithSign("lftag")<<" ";
   }
   cout<<endl;
 
@@ -843,8 +880,8 @@ map<pair<int,int>, SignalEffData>  runTH2Syst2011_mSugra(const SearchRegion & re
 
 //now try to use the 'modular' version (1 box at a time)
 void runSystematics2011_scanBoxByBox(TString sampleOfInterest, const unsigned int iregion, const unsigned int ibox) {
+  loadSamples(true,"scan");
 
-  loadSamples();
   clearSamples();
   addSample(sampleOfInterest);
   
@@ -872,8 +909,8 @@ void runSystematics2011_scanBoxByBox(TString sampleOfInterest, const unsigned in
 }
 
 void loadSystematics2011_scanBoxByBox(TString sampleOfInterest, const unsigned int iregion) {
- 
-  loadSamples();
+  loadSamples(true,"scan");
+
   clearSamples();
   addSample(sampleOfInterest);
   setSearchRegions();
@@ -989,180 +1026,10 @@ void loadSystematics2011_scanBoxByBox(TString sampleOfInterest, const unsigned i
 
 }
 
-/* the version that runs all 6 boxes serially
-void runSystematics2011_scan(TString sampleOfInterest, const unsigned int i) {
-  //now converting this to work also on mSugra "mSUGRAtanb40" as well as simplified models e.g. T1bbbb
-  
-  loadSamples();
-  clearSamples();
-  addSample(sampleOfInterest);
-  
-  setSearchRegions();
-
-  loadSusyScanHistograms();
-  
-  if (i>=searchRegions_.size() ) { cout<<"There are only "<<searchRegions_.size()<<" search regions!"<<endl; return;}
-  
-  //open the output files
-  //-- these are the text, root files for Owen et al
-  char effoutput[500];
-  sprintf(effoutput,"signalSyst.%s.%s%s.dat",sampleOfInterest.Data(),searchRegions_[i].btagSelection.Data(),searchRegions_[i].owenId.Data());
-  ofstream*  textfiles= new ofstream(effoutput);
-  sprintf(effoutput,"RA2b.%s.%s%s.root",sampleOfInterest.Data(),searchRegions_[i].btagSelection.Data(),searchRegions_[i].owenId.Data());
-  TFile*  rootfiles  =new TFile(effoutput,"RECREATE");
-
-  //as specified by mariarosaria for T1bbbb
-  // -- also works for T2bb and T2tt (see https://twiki.cern.ch/twiki/bin/viewauth/CMS?SUSY42XSUSYScan)
-  int    nbinsx=60;
-  int    nbinsy=60;
-  double    lowx=0;
-  double    lowy=0;
-  double    highx=1500;
-  double    highy=1500;
-  if ( sampleOfInterest.Contains("mSUGRA")) {
-    nbinsx=200;
-    nbinsy=100;
-    lowx=0;
-    lowy=0;
-    highx=2000;
-    highy=1000;
-  }
-
-  //despite the name, runTH2Syst2011_mSugra also works for SMS
-    map<pair<int,int>, SignalEffData> SB =  runTH2Syst2011_mSugra(sbRegions_[i],false,false,sampleOfInterest);
-    map<pair<int,int>, SignalEffData> SIG =  runTH2Syst2011_mSugra(searchRegions_[i],false,false,sampleOfInterest);
-    
-    map<pair<int,int>, SignalEffData> SBSL =  runTH2Syst2011_mSugra(sbRegions_[i],true,false,sampleOfInterest);
-    map<pair<int,int>, SignalEffData> SIGSL =  runTH2Syst2011_mSugra(searchRegions_[i],true,false,sampleOfInterest);
-    
-    map<pair<int,int>, SignalEffData> SBLDP =  runTH2Syst2011_mSugra(sbRegions_[i],false,true,sampleOfInterest);
-    map<pair<int,int>, SignalEffData> SIGLDP =  runTH2Syst2011_mSugra(searchRegions_[i],false,true,sampleOfInterest);
-
-    //big question: does this loop over SB work for mSugra? I think it should, but in the mSugra version I used scanProcessTotalsMap
-
-    for (map<pair<int,int>, SignalEffData >::iterator iscanpoint = SB.begin(); iscanpoint!= SB.end(); ++iscanpoint) {
-      int nentries=  sampleOfInterest.Contains("mSUGRA") ?
-	scanProcessTotalsMap[iscanpoint->first]->GetEntries() :
-	TMath::Nint(scanSMSngen->GetBinContent(scanSMSngen->FindBin(iscanpoint->first.first,iscanpoint->first.second ))); 
-      
-      (*textfiles)<<iscanpoint->first.first <<" "<<iscanpoint->first.second <<" "<<nentries<<" "
-		     <<SIG[iscanpoint->first].rawYield<<" "<<SB[iscanpoint->first].rawYield<<" "<<SIGSL[iscanpoint->first].rawYield<<" "<<SBSL[iscanpoint->first].rawYield<<" "<<SIGLDP[iscanpoint->first].rawYield<<" "<<SBLDP[iscanpoint->first].rawYield<<" "
-		     <<SIG[iscanpoint->first].effCorr<<" "<<SB[iscanpoint->first].effCorr<<" "<<SIGSL[iscanpoint->first].effCorr<<" "<<SBSL[iscanpoint->first].effCorr<<" "<<SIGLDP[iscanpoint->first].effCorr<<" "<<SBLDP[iscanpoint->first].effCorr<<" "
-		     <<SIG[iscanpoint->first].totalSystematic()<<" "<<SB[iscanpoint->first].totalSystematic()<<" "<<SIGSL[iscanpoint->first].totalSystematic()<<" "<<SBSL[iscanpoint->first].totalSystematic()<<" "<<SIGLDP[iscanpoint->first].totalSystematic()<<" "<<SBLDP[iscanpoint->first].totalSystematic()<<endl;
-    }
-
-    //now output to root. need to convert back to TH2D
-    rootfiles->cd();
-    TString hsuffix = sampleOfInterest; hsuffix+="_"; hsuffix+=searchRegions_[i].btagSelection; hsuffix+=searchRegions_[i].owenId;
-    TString hname=sampleOfInterest.Contains("mSUGRA") ? "correctedYield_": "efficiency_"; hname+=hsuffix;
-    TH2D efficiency(hname,hname,nbinsx,lowx,highx,nbinsy,lowy,highy);
-    hname="statError_"; hname+=hsuffix;
-    TH2D statError(hname,hname,nbinsx,lowx,highx,nbinsy,lowy,highy);
-    hname="btagError_"; hname+=hsuffix;
-    TH2D btagError(hname,hname,nbinsx,lowx,highx,nbinsy,lowy,highy);
-    hname="jesError_"; hname+=hsuffix;
-    TH2D jesError(hname,hname,nbinsx,lowx,highx,nbinsy,lowy,highy);
-    hname="metError_"; hname+=hsuffix;
-    TH2D metError(hname,hname,nbinsx,lowx,highx,nbinsy,lowy,highy);
-    hname="pdfError_"; hname+=hsuffix;
-    TH2D pdfError(hname,hname,nbinsx,lowx,highx,nbinsy,lowy,highy);
-    //    hname="otherError_"; hname+=hsuffix;
-    //    TH2D otherError(hname,hname,nbinsx,lowx,highx,nbinsy,lowy,highy);
-
-    hname="totalSystematicError_"; hname+=hsuffix;
-    TH2D totalSystematicError(hname,hname,nbinsx,lowx,highx,nbinsy,lowy,highy);
-    //only SIG for now
-    for (map<pair<int,int>, SignalEffData>::iterator iscan=SIG.begin(); iscan!=SIG.end(); ++iscan) {
-      double N = iscan->second.rawYield * iscan->second.effCorr ;
-
-      double effval=0;
-      double staterrval=0;
-      if (sampleOfInterest.Contains("mSUGRA") ) {
-	effval = N;
-      }
-      else {
-	double ngen=  TMath::Nint(scanSMSngen->GetBinContent(scanSMSngen->FindBin(iscan->first.first,iscan->first.second ))); 
-	effval = N/ngen;
-	staterrval = sqrt( N*(1-N/ngen));
-      }
-
-      efficiency.Fill( iscan->first.first, iscan->first.second, effval );
-      statError.Fill(  iscan->first.first, iscan->first.second, staterrval );
-      btagError.Fill(  iscan->first.first, iscan->first.second, iscan->second.value("btag") );
-      jesError.Fill(  iscan->first.first, iscan->first.second, iscan->second.value("JES") );
-      metError.Fill(  iscan->first.first, iscan->first.second, iscan->second.value("MET") );
-      pdfError.Fill(  iscan->first.first, iscan->first.second, iscan->second.value("PDF") );
-      //      otherError.Fill(  iscan->first.first, iscan->first.second,  );
-      totalSystematicError.Fill(iscan->first.first, iscan->first.second, iscan->second.totalSystematic() );
-    }
-    rootfiles->Write();
-    
-    textfiles->close();
-    rootfiles->Close();
-    //}
-
-
-}
-*/
-/* hope to deprecate this function
-//run mSugra systematics in the efficient way
-void runSystematics2011_mSugra(const unsigned int i) {
-  //add index i argument to define the search region we're interested in.
-
-  TString sampleOfInterest="mSUGRAtanb40";
-  loadSamples();
-  clearSamples();
-  addSample(sampleOfInterest);
-
-  setSearchRegions();
-  loadSusyScanHistograms();
-  //  runTH2Syst2011_mSugra(searchRegions_[0]);
-  //    return;
-
-  if (i>=searchRegions_.size() ) { cout<<"There are only "<<searchRegions_.size()<<" search regions!"<<endl; return;}
-
-
-  //open the output files
-  vector<ofstream*> textfiles;
-  //  for (unsigned int i=0; i<searchRegions_.size(); i++) {
-    char effoutput[500];
-    sprintf(effoutput,"signalSyst.%s.%s%s.dat",sampleOfInterest.Data(),searchRegions_[i].btagSelection.Data(),searchRegions_[i].owenId.Data());
-    textfiles.push_back( new ofstream(effoutput));
-    //  }
-
-    //  for (unsigned int i=0; i<searchRegions_.size(); i++) {
-    
-    map<pair<int,int>, SignalEffData> SB =  runTH2Syst2011_mSugra(sbRegions_[i],false,false,sampleOfInterest);
-    map<pair<int,int>, SignalEffData> SIG =  runTH2Syst2011_mSugra(searchRegions_[i],false,false,sampleOfInterest);
-    
-    map<pair<int,int>, SignalEffData> SBSL =  runTH2Syst2011_mSugra(sbRegions_[i],true,false,sampleOfInterest);
-    map<pair<int,int>, SignalEffData> SIGSL =  runTH2Syst2011_mSugra(searchRegions_[i],true,false,sampleOfInterest);
-    
-    map<pair<int,int>, SignalEffData> SBLDP =  runTH2Syst2011_mSugra(sbRegions_[i],false,true,sampleOfInterest);
-    map<pair<int,int>, SignalEffData> SIGLDP =  runTH2Syst2011_mSugra(searchRegions_[i],false,true,sampleOfInterest);
-     
-  
-    for (map<pair<int,int>, TH1D* >::iterator iscanpoint = scanProcessTotalsMap.begin(); iscanpoint!=scanProcessTotalsMap.end(); ++iscanpoint) {
-      int nentries=    scanProcessTotalsMap[iscanpoint->first]->GetEntries();
-      cout<<iscanpoint->first.first<<" "<<iscanpoint->first.second<<" NEntries = "<<nentries<<endl;
-      (*textfiles[0])<<iscanpoint->first.first <<" "<<iscanpoint->first.second <<" "<<nentries<<" "
-		     <<SIG[iscanpoint->first].rawYield<<" "<<SB[iscanpoint->first].rawYield<<" "<<SIGSL[iscanpoint->first].rawYield<<" "<<SBSL[iscanpoint->first].rawYield<<" "<<SIGLDP[iscanpoint->first].rawYield<<" "<<SBLDP[iscanpoint->first].rawYield<<" "
-		     <<SIG[iscanpoint->first].effCorr<<" "<<SB[iscanpoint->first].effCorr<<" "<<SIGSL[iscanpoint->first].effCorr<<" "<<SBSL[iscanpoint->first].effCorr<<" "<<SIGLDP[iscanpoint->first].effCorr<<" "<<SBLDP[iscanpoint->first].effCorr<<" "
-		     <<SIG[iscanpoint->first].totalSystematic()<<" "<<SB[iscanpoint->first].totalSystematic()<<" "<<SIGSL[iscanpoint->first].totalSystematic()<<" "<<SBSL[iscanpoint->first].totalSystematic()<<" "<<SIGLDP[iscanpoint->first].totalSystematic()<<" "<<SBLDP[iscanpoint->first].totalSystematic()<<endl;
-    }
-    //  }
-
-    //  for (unsigned int i=0; i<searchRegions_.size(); i++) {
-    textfiles.at(0)->close();
-    //  }
-
-}
-*/
-
 // working but not polished code to draw efficiency over mSugra space
 void drawmSugraEfficiency() {
   gROOT->SetStyle("CMS");
-  loadSamples();
+  loadSamples(true,"scan");
   clearSamples();
   addSample("mSUGRAtanb40");
   setSearchRegions();

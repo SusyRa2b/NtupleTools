@@ -549,12 +549,12 @@ public:
   float yield_JER_PU;      //NOT persisted when object is saved to file
   float yield_JER_PU_HLT;  //NOT persisted when object is saved to file
 
-  float eff_derivative_b;
-  float eff_derivative_c;
-  float eff_derivative_l;
+//   float eff_derivative_b;
+//   float eff_derivative_c;
+//   float eff_derivative_l;
 
-  float sigma_btageff; //TODO persist this
-  float eff_derivative_b_1s; //NOT persisted (cross-check)
+//  float sigma_btageff; //TODO persist this
+  //  float eff_derivative_b_1s; //NOT persisted (cross-check)
 
   float totalSystematic(); 
   float totalSystematicWithoutB(); 
@@ -598,9 +598,9 @@ void SignalEffData::write(TString id) const {
   ofstream output(filename.Data());
   output<<rawYield<<endl<<effCorr<<endl;
 
-  output<<eff_derivative_b<<endl;
-  output<<eff_derivative_c<<endl;
-  output<<eff_derivative_l<<endl;
+//   output<<eff_derivative_b<<endl;
+//   output<<eff_derivative_c<<endl;
+//   output<<eff_derivative_l<<endl;
 
   for (map<TString, SystInfo >::const_iterator isyst=systematics.begin(); isyst!=systematics.end(); ++isyst) {
     output << isyst->first<<" ";
@@ -616,7 +616,7 @@ SignalEffData::SignalEffData(TString idtoload) :
   //  id(idtoload),
   rawYield(0),
   effCorr(1),
-  yield_JER(0), yield_JER_PU(0),yield_JER_PU_HLT(0),eff_derivative_b(0),eff_derivative_c(0),eff_derivative_l(0)
+  yield_JER(0), yield_JER_PU(0),yield_JER_PU_HLT(0)//,eff_derivative_b(0),eff_derivative_c(0),eff_derivative_l(0)
 {
   //filename constructed from id
   TString filename = "SignalEffData.";
@@ -628,9 +628,9 @@ SignalEffData::SignalEffData(TString idtoload) :
   input>>rawYield;
   input>>effCorr;
 
-  input>>eff_derivative_b;
-  input>>eff_derivative_c;
-  input>>eff_derivative_l;
+//   input>>eff_derivative_b;
+//   input>>eff_derivative_c;
+//   input>>eff_derivative_l;
 
   TString akey;
   while (input>>akey) {
@@ -646,11 +646,12 @@ SignalEffData::SignalEffData() :
   //  id("noname"),
   rawYield(0),
   effCorr(1),
-  yield_JER(0), yield_JER_PU(0),yield_JER_PU_HLT(0),eff_derivative_b(0),eff_derivative_c(0),eff_derivative_l(0)
+  yield_JER(0), yield_JER_PU(0),yield_JER_PU_HLT(0)//,eff_derivative_b(0),eff_derivative_c(0),eff_derivative_l(0)
 { 
 
   systematics["JES"] = SystInfo();             
   systematics["btag"] = SystInfo();            
+  systematics["lftag"] = SystInfo();            
   systematics["PDF"] = SystInfo();             
   systematics["MET"] = SystInfo();             
   systematics["PU"] = SystInfo();              
@@ -660,9 +661,6 @@ SignalEffData::SignalEffData() :
   systematics["LepVeto"] = SystInfo(2e-2,2e-2,1);     //ok for now
   systematics["trigger"] = SystInfo(); //to be set box by box
   systematics["lumi"] = SystInfo(4.5e-2 , 4.5e-2,1);   //was 6% but lately people seem to be using 4.5% again
-  //we don't really want this one this time.
-  //keep it for now just for the sake of comparison with old results
-  //  systematics["L2L3"] = SystInfo(1e-2 , 1e-2,1);
 
   //list of signal systematics:
   //  JES
@@ -707,9 +705,10 @@ TString SignalEffData::translateVariation(const TString & which) {
   //for now I will just "translate" them here in a hard-coded way.
   //maybe i should use .Contains() but that can be dangerous
 
-  if (which == "BTagEff03") return "btag"; //hardcoding this 03 is a really bad idea...
-  else if (which == "BTagEff04") return "btag"; //a bad idea indeed...
-  else if (which=="JERbias") return "JER";
+  // the b-tag ones are not needed anymore
+//   if (which == "BTagEff03") return "btag"; //hardcoding this 03 is a really bad idea...
+//   else if (which == "BTagEff04") return "btag"; //a bad idea indeed...
+  if (which=="JERbias") return "JER";
   else if (which=="JES0") return "JES";
   else if (which=="METunc0") return "MET";
   else if (which =="PUunc0") return "PU";
@@ -818,7 +817,7 @@ float SignalEffData::totalSystematicWithoutB() {
     if ( isyst->second.status == 0) { 
       cout<<"WARNING -- systematic is unset! "<<isyst->first<<endl;
     }
-    if ( isyst->first != "btag")  total2 += pow( symmetrize(isyst->first),2);
+    if ( isyst->first != "btag" && isyst->first != "lftag")  total2 += pow( symmetrize(isyst->first),2);
   }
 
   return 100*sqrt(total2);
@@ -1881,7 +1880,7 @@ void resetSamples(bool joinSingleTop=true) {
 }
 
 
-void loadSamples(bool joinSingleTop=true) {
+void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   if (loaded_) return;
   loaded_=true;
 
@@ -1933,41 +1932,45 @@ void loadSamples(bool joinSingleTop=true) {
   
   //FOR PLOTS
   ////////////
-
+  if (signalEffMode=="") {
     configDescriptions_.setDefault("CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
     configDescriptions_.setCorrected("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
-    /*
-  //Only for signal systematics
+  }
+  else if (signalEffMode=="scan" || signalEffMode=="complete") {  //Only for signal systematics
       
-  configDescriptions_.setDefault("CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff04_HLTEff0");
-  configDescriptions_.setCorrected("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff04_HLTEff0");
+    configDescriptions_.setDefault("CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff04_HLTEff0");
+    configDescriptions_.setCorrected("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff04_HLTEff0");
 
-  //convention: put 'down' variation first and 'up' variation second
+    //convention: put 'down' variation first and 'up' variation second
 
-  //JES //LM9 and scans
-  configDescriptions_.addVariation("CSVM_PF2PATjets_JESdown_JERbias_PFMET_METunc0_PUunc0_BTagEff04_HLTEff0",
-				   "CSVM_PF2PATjets_JESup_JERbias_PFMET_METunc0_PUunc0_BTagEff04_HLTEff0");
-  //JER //LM9 only
-     configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERdown_PFMET_METunc0_PUunc0_BTagEff04_HLTEff0",
-   				   "CSVM_PF2PATjets_JES0_JERup_PFMET_METunc0_PUunc0_BTagEff04_HLTEff0");
+    //JES //LM9 and scans
+    configDescriptions_.addVariation("CSVM_PF2PATjets_JESdown_JERbias_PFMET_METunc0_PUunc0_BTagEff04_HLTEff0",
+				     "CSVM_PF2PATjets_JESup_JERbias_PFMET_METunc0_PUunc0_BTagEff04_HLTEff0");
+    //JER //LM9 only
+    if (signalEffMode=="complete") {
+      configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERdown_PFMET_METunc0_PUunc0_BTagEff04_HLTEff0",
+				       "CSVM_PF2PATjets_JES0_JERup_PFMET_METunc0_PUunc0_BTagEff04_HLTEff0");
+    }
+    //unclustered MET //LM9 and scans
+    configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERbias_PFMET_METuncDown_PUunc0_BTagEff04_HLTEff0", 
+				     "CSVM_PF2PATjets_JES0_JERbias_PFMET_METuncUp_PUunc0_BTagEff04_HLTEff0");
 
-  //unclustered MET //LM9 and scans
-  configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERbias_PFMET_METuncDown_PUunc0_BTagEff04_HLTEff0", 
-  				   "CSVM_PF2PATjets_JES0_JERbias_PFMET_METuncUp_PUunc0_BTagEff04_HLTEff0");
-
-  //PU //LM9 only
-  configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncDown_BTagEff04_HLTEff0",
-   				   "CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncUp_BTagEff04_HLTEff0");
-
-  //btag eff //LM9 and scans
-  configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffdown4_HLTEff0",
-  				   "CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffup4_HLTEff0");
+    if (signalEffMode=="complete") {
+      //PU //LM9 only
+      configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncDown_BTagEff04_HLTEff0",
+				       "CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncUp_BTagEff04_HLTEff0");
+    }
     
-*/
-  //HLT eff //never use this one
-  //    configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffdown",
-  //"CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffup");
-
+    //UPDATE -- with 'm' series reducedTrees, don't do this one anymore
+    //btag eff //LM9 and scans
+    //    configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffdown4_HLTEff0",
+    //				     "CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffup4_HLTEff0");
+    
+    //HLT eff //never use this one
+    //    configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffdown",
+    //"CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffup");
+  }
+  else assert(0);
   ///////////////
   //////////////
  
