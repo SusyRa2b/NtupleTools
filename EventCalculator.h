@@ -218,6 +218,7 @@ public:
   float getJetCSV( unsigned int ijet );
 
   float jetPtOfN(unsigned int n);
+  float jetGenPtOfN(unsigned int n);
   float jetPhiOfN(unsigned int n);
   float jetEtaOfN(unsigned int n);
   float jetEnergyOfN(unsigned int n);

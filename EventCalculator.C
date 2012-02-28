@@ -2338,6 +2338,25 @@ float EventCalculator::tauPtOfN(unsigned int n) {
 }
 
 
+float  EventCalculator::jetGenPtOfN(unsigned int n) {
+
+  unsigned int ngood=0;
+  for (unsigned int i=0; i<myJetsPF->size(); i++) {
+
+    if( isSampleRealData() ) return 0;
+
+    bool pass=false;
+    pass = isGoodJet(i);
+
+    if (pass ) {
+      ngood++;
+      if (ngood==n) return myJetsPF->at(i).genJet_pt;
+    }
+  }
+  return 0;
+}
+
+
 float  EventCalculator::jetPtOfN(unsigned int n) {
 
   unsigned int ngood=0;
@@ -2354,6 +2373,7 @@ float  EventCalculator::jetPtOfN(unsigned int n) {
   return 0;
 }
 
+
 float  EventCalculator::jetPhiOfN(unsigned int n) {
 
   unsigned int ngood=0;
@@ -2369,6 +2389,7 @@ float  EventCalculator::jetPhiOfN(unsigned int n) {
   }
   return 0;
 }
+
 
 float  EventCalculator::jetEtaOfN(unsigned int n) {
 
@@ -4278,9 +4299,9 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   int nElectrons5, nElectrons15;
   int nMuons5, nMuons15;
 
-  float jetpt1,jetphi1, jeteta1, jetenergy1, bjetpt1, bjetphi1, bjeteta1, bjetenergy1;
-  float jetpt2,jetphi2, jeteta2, jetenergy2, bjetpt2, bjetphi2, bjeteta2, bjetenergy2;
-  float jetpt3,jetphi3, jeteta3, jetenergy3, bjetpt3, bjetphi3, bjeteta3, bjetenergy3;
+  float jetpt1,jetgenpt1,jetphi1, jeteta1, jetenergy1, bjetpt1, bjetphi1, bjeteta1, bjetenergy1;
+  float jetpt2,jetgenpt2,jetphi2, jeteta2, jetenergy2, bjetpt2, bjetphi2, bjeteta2, bjetenergy2;
+  float jetpt3,jetgenpt3,jetphi3, jeteta3, jetenergy3, bjetpt3, bjetphi3, bjeteta3, bjetenergy3;
   int jetflavor1, jetflavor2, jetflavor3, bjetflavor1, bjetflavor2, bjetflavor3;
   float eleet1;
   float muonpt1;
@@ -4690,18 +4711,21 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("deltaPhiN3_lostJet", &deltaPhiN3_lostJet, "deltaPhiN3_lostJet/F");
 
   reducedTree.Branch("jetpt1",&jetpt1,"jetpt1/F");
+  reducedTree.Branch("jetgenpt1",&jetgenpt1,"jetgenpt1/F");
   reducedTree.Branch("jeteta1",&jeteta1,"jeteta1/F");
   reducedTree.Branch("jetphi1",&jetphi1,"jetphi1/F");
   reducedTree.Branch("jetenergy1",&jetenergy1,"jetenergy1/F");
   reducedTree.Branch("jetflavor1",&jetflavor1,"jetflavor1/I");
 
   reducedTree.Branch("jetpt2",&jetpt2,"jetpt2/F");
+  reducedTree.Branch("jetgenpt2",&jetgenpt2,"jetgenpt2/F");
   reducedTree.Branch("jeteta2",&jeteta2,"jeteta2/F");
   reducedTree.Branch("jetphi2",&jetphi2,"jetphi2/F");
   reducedTree.Branch("jetenergy2",&jetenergy2,"jetenergy2/F");
   reducedTree.Branch("jetflavor2",&jetflavor2,"jetflavor2/I");
 
   reducedTree.Branch("jetpt3",&jetpt3,"jetpt3/F");
+  reducedTree.Branch("jetgenpt3",&jetgenpt3,"jetgenpt3/F");
   reducedTree.Branch("jeteta3",&jeteta3,"jeteta3/F");
   reducedTree.Branch("jetphi3",&jetphi3,"jetphi3/F");
   reducedTree.Branch("jetenergy3",&jetenergy3,"jetenergy3/F");
@@ -5173,18 +5197,21 @@ Also the pdfWeightSum* histograms that are used for LM9.
       
 
       jetpt1 = jetPtOfN(1);
+      jetgenpt1 = jetGenPtOfN(1);
       jetphi1 = jetPhiOfN(1);
       jeteta1 = jetEtaOfN(1);
       jetenergy1 = jetEnergyOfN(1);
       jetflavor1 = jetFlavorOfN(1);
 
       jetpt2 = jetPtOfN(2);
+      jetgenpt2 = jetGenPtOfN(2); 
       jetphi2 = jetPhiOfN(2);
       jeteta2 = jetEtaOfN(2);
       jetenergy2 = jetEnergyOfN(2);
       jetflavor2 = jetFlavorOfN(2);
 
       jetpt3 = jetPtOfN(3);
+      jetgenpt3 = jetGenPtOfN(3); 
       jetphi3 = jetPhiOfN(3);
       jeteta3 = jetEtaOfN(3);
       jetenergy3 = jetEnergyOfN(3);      
