@@ -5952,7 +5952,9 @@ int EventCalculator::findTop(int& top1, int& top2)
 //if W->taunu->enunu, returns 1511
 //if W->taunu->mununu, returns 1513
 //if W->taunu->hadrnic decay, return 15
-//else if W->hadrons, returns 1
+//else if W->ud, returns 112
+//else if W->cs, returns 134
+//else returns 1 (should never be the case)
 int EventCalculator::WDecayType(const int Wparent,int& Wdaughter)
 {
   int thisParticle = TMath::Nint(myGenParticles->at(Wparent).firstDaughter); 
@@ -6012,6 +6014,8 @@ int EventCalculator::WDecayType(const int Wparent,int& Wdaughter)
 	  Wdaughter = thisParticle;
 	  return -15;
 	}
+      if( abs(TMath::Nint(myGenParticles->at(thisParticle).pdgId)) == 1){Wdaughter = Wparent; return 112;}
+      if( abs(TMath::Nint(myGenParticles->at(thisParticle).pdgId)) == 3){Wdaughter = Wparent; return 134;}
     }
   {Wdaughter = Wparent;return 1;}
 }
@@ -6126,7 +6130,7 @@ int EventCalculator::daughterMatch(const int Wdaughter, const int WdecayType)
     {
       return tauMatch(Wdaughter);
     }
-  if(WdecayType == 1)
+  if(WdecayType == 1 || WdecayType == 112 || WdecayType == 134 )
     {
       return 0;
     }
@@ -6385,9 +6389,9 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
   cout<<"Running..."<<endl;  
   int npass = 0;
 
-  //int decayType;
-  //int W1decayType, W2decayType;
-  //int nSemiMu=0,nSemiEle=0,nSemiTauHad=0,nDilep=0,nHad=0,nOther=0;
+  int decayType;
+  int W1decayType, W2decayType;
+  int nSemiMu=0,nSemiEle=0,nSemiTauHad=0,nDilep=0,nHad=0,nOther=0;
 
   startTimer();
   for(int entry=0; entry < nevents; ++entry){
@@ -6430,8 +6434,8 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
     //		<< std::endl;
     //  }
     //}
-    //decayType = getTTbarDecayType(W1decayType, W2decayType);
-    //std::cout << "decaytype = " << decayType << ", W1decayType = " << W1decayType << ", W2decayType = " << W2decayType << std::endl;
+    decayType = getTTbarDecayType(W1decayType, W2decayType);
+    std::cout << "decaytype = " << decayType << ", W1decayType = " << W1decayType << ", W2decayType = " << W2decayType << std::endl;
 
     //if((W1decayType==13 && W2decayType==1) || (W1decayType==1 && W2decayType==13) || (W1decayType==1513 && W2decayType==1) || (W1decayType==1 && W2decayType==1513)){
     //  nSemiMu++;
@@ -6784,12 +6788,12 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
   
   //std::cout << "npass = " << npass << std::endl;
   
-  //std::cout << "nSemiMu = " << nSemiMu << std::endl;  
-  //std::cout << "nSemiEle = " << nSemiEle << std::endl;  
-  //std::cout << "nSemiTauHad = " << nSemiTauHad << std::endl;  
-  //std::cout << "nDilep = " << nDilep << std::endl;  
-  //std::cout << "nHad = " << nHad << std::endl;  
-  //std::cout << "nOther = " << nOther << std::endl;  
+  std::cout << "nSemiMu = " << nSemiMu << std::endl;  
+  std::cout << "nSemiEle = " << nSemiEle << std::endl;  
+  std::cout << "nSemiTauHad = " << nSemiTauHad << std::endl;  
+  std::cout << "nDilep = " << nDilep << std::endl;  
+  std::cout << "nHad = " << nHad << std::endl;  
+  std::cout << "nOther = " << nOther << std::endl;  
   
   
   //fout.Write();
