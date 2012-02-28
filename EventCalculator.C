@@ -3601,6 +3601,8 @@ double EventCalculator::getCrossSection(){
   if (sampleName_.Contains("LM9_SUSY_sftsht_7TeV-pythia6_v2") )                         return 7.134 * 1.48; //from ProductionSpring2011 twiki
   
   if (sampleName_.Contains("TTJets_TuneZ2_7TeV-madgraph-tauola_Fall11_v2") )         return 158; 
+
+  //if (sampleName_.Contains("ttZ") )                                                  return 0.09775; 
   
   /*
   if (sampleName_.Contains("DYJetsToLL_TuneD6T_M-10To50_7TeV-madgraph-tauola") )     return 310;
@@ -3695,6 +3697,8 @@ TString EventCalculator::getSampleNameOutputString(){
   if (sampleName_.Contains("tbar_tW-channel") )                                      return "SingleTopBar-tWChannel";
 
   if (sampleName_.Contains("LM9_SUSY_sftsht_7TeV-pythia6_v2") )                         return "LM9";
+
+  //if (sampleName_.Contains("ttZ") )                                                  return "ttZ";
 
   /*
   if (sampleName_.Contains("LM13_SUSY_sftsht_7TeV-pythia6") )                        return "LM13";
@@ -5344,6 +5348,7 @@ unsigned int EventCalculator::getSeed(){
 
   //V00-02-35
 
+  //if (sampleName_.Contains("ttZ") )                                                  return 4380;
   if (sampleName_.Contains("ttjets_madgraph") )                                      return 4381;
   if (sampleName_.Contains("TTJets_TuneZ2_7TeV-madgraph-tauola_Fall11_v2") )         return 4381;
   if (sampleName_.Contains("zjets") )                                                return 4382;
