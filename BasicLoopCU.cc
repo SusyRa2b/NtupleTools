@@ -62,6 +62,7 @@ int main(int argc, char** argv)
 
   //ec.cutflow(stream, -1);
   //ec.sampleAnalyzer(stream);
+  //ec.plotBTagEffMC(stream);
 
   return 0;
 

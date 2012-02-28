@@ -3842,8 +3842,13 @@ void EventCalculator::loadJetTagEffMaps() {
 	  ||sampleName_.Contains("T1tttt") 
 	  )   
     f_tageff_ = new TFile("histos_btageff_csvm_lm9.root","READ");
-  else //if all else fails, use ttbar
-    f_tageff_ = new TFile("histos_btageff_csvm.root","READ");
+  else if (sampleName_.Contains("TTJets_TuneZ2_7TeV-madgraph-tauola_Fall11_v2") )
+    f_tageff_ = new TFile("histos_btageff_csvm_ttbarjets_fall11.root","READ");
+  else{ //if all else fails, use fall11 ttbar
+    std::cout << "loadJetTagEffMaps: could not find sample - using Fall11 ttbar efficiencies." << std::endl;
+    //f_tageff_ = new TFile("histos_btageff_csvm.root","READ");
+    f_tageff_ = new TFile("histos_btageff_csvm_ttbarjets_fall11.root","READ");
+  }
 }
 
 void EventCalculator::calculateTagProb(float &Prob0, float &ProbGEQ1, float &Prob1, float &ProbGEQ2, float &Prob2, float &ProbGEQ3,
@@ -6339,26 +6344,8 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
   //TH1F * h_met_1mu0e_den_mht110      = new TH1F("h_met_1mu0e_den_mht110","HT",1000,0,1000);
   //TH1F * h_met_1mu0e_trig_mht110     = new TH1F("h_met_1mu0e_trig_mht110","HT",1000,0,1000);
 
-  ////check the MC efficiencies from Summer11 TTbar
-  ////this histogram has bin edges {30,50,75,100,150,200,240,500,1000}
-  //double bins[10] = {30,50,75,100,150,200,240,350,500,1000};
-  //TH1F * h_bjet = new TH1F("h_bjet","bjet",9,bins);
-  //TH1F * h_cjet = new TH1F("h_cjet","cjet",9,bins);
-  //TH1F * h_ljet = new TH1F("h_ljet","ljet",9,bins);
-  //TH1F * h_btag = new TH1F("h_btag","btag",9,bins);
-  //TH1F * h_ctag = new TH1F("h_ctag","ctag",9,bins);
-  //TH1F * h_ltag = new TH1F("h_ltag","ltag",9,bins);
-  //h_bjet->Sumw2();
-  //h_cjet->Sumw2();
-  //h_ljet->Sumw2();
-  //h_btag->Sumw2();
-  //h_ctag->Sumw2();
-  //h_ltag->Sumw2();
-
   //std::vector<int> vrun,vlumi,vevent;
   //loadEventList(vrun, vlumi, vevent);
-
-
 
   int nevents = stream.size();
 
@@ -6397,11 +6384,6 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
 
   cout<<"Running..."<<endl;  
   int npass = 0;
-
-  //int ntaggedjets = 0;
-  //int ntaggedjets_b = 0;
-  //int ntaggedjets_c = 0;
-  //int ntaggedjets_l = 0;
 
   //int decayType;
   //int W1decayType, W2decayType;
@@ -6501,12 +6483,12 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
 
       npass++;
 
-      double effUp,effDown;     
-      if( (countMu()==1 && countEle()==0) || (countMu()==0 && countEle()==1)){
-      	std::cout << "HT = " << getHT() << ",MET = " << getMET() << ", eff = "
-      		  << getHLTMHTeffBNN(getMET(),getHT(),countEle(),countMu(),getMinDeltaPhiMETN(3),effUp,effDown) << std::endl;
-      	std::cout << ", effUp = " << effUp << ", effDown = " << effDown << std::endl;
-      }
+      //double effUp,effDown;     
+      //if( (countMu()==1 && countEle()==0) || (countMu()==0 && countEle()==1)){
+      //	std::cout << "HT = " << getHT() << ",MET = " << getMET() << ", eff = "
+      //		  << getHLTMHTeffBNN(getMET(),getHT(),countEle(),countMu(),getMinDeltaPhiMETN(3),effUp,effDown) << std::endl;
+      //	std::cout << ", effUp = " << effUp << ", effDown = " << effDown << std::endl;
+      //}
       //std::cout << "MET = " << getMET() << ", eff = " << getHLTMHTeff(getMET()) << std::endl;
       //std::cout << "HT = " << getHT() << ", eff = " << getHLTHTeff(getHT()) << std::endl;
 
@@ -6786,47 +6768,6 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
       //nge2b += probge2;      
       //nge3b += probge3;
 
-      /*      
-      for (unsigned int i = 0; i < myJetsPF->size(); ++i) {
-      	int flavor = myJetsPF->at(i).partonFlavour;
-      
-      	if(isGoodJet(i,30)){
-      
-      
-      	  if(abs(flavor)==5)
-      	    h_bjet->Fill( getJetPt(i) ) ;
-      	  else if(abs(flavor)==4)
-      	    h_cjet->Fill( getJetPt(i) ) ;
-      	  else if(abs(flavor)==3 ||abs(flavor)==2 ||abs(flavor)==1 ||abs(flavor)==21 )
-      	    h_ljet->Fill( getJetPt(i) ) ;
-      
-      	  if(passBTagger(i)){
-      	    if(abs(flavor)==5)
-      	      h_btag->Fill( getJetPt(i) ) ;
-      	    else if(abs(flavor)==4)
-      	      h_ctag->Fill( getJetPt(i) ) ;
-      	    else if(abs(flavor)==3 ||abs(flavor)==2 ||abs(flavor)==1 ||abs(flavor)==21 )
-      	      h_ltag->Fill( getJetPt(i) ) ;
-      	  }
-      
-      	}
-      
-      	if (isGoodJet(i,30) && passBTagger(i) ){
-      	    ntaggedjets++;
-      
-      	    if(abs(flavor)==5)
-      	      ntaggedjets_b++;
-      	    else if(abs(flavor)==4)
-      	      ntaggedjets_c++;
-      	    else if(abs(flavor)==3 ||abs(flavor)==2 ||abs(flavor)==1 ||abs(flavor)==21 )
-      	      ntaggedjets_l++;
-      	}
-       
-      }
-      */      
-
-
-
       //}//end Cut
 
   }
@@ -6842,10 +6783,6 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
   //std::cout << "nge3b = " << nge3b << std::endl;
   
   //std::cout << "npass = " << npass << std::endl;
-  //std::cout << "ntaggedjets = "   << ntaggedjets << std::endl;
-  //std::cout << "ntaggedjets_b = " << ntaggedjets_b << std::endl;
-  //std::cout << "ntaggedjets_c = " << ntaggedjets_c << std::endl;
-  //std::cout << "ntaggedjets_l = " << ntaggedjets_l << std::endl;
   
   //std::cout << "nSemiMu = " << nSemiMu << std::endl;  
   //std::cout << "nSemiEle = " << nSemiEle << std::endl;  
@@ -6854,19 +6791,126 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
   //std::cout << "nHad = " << nHad << std::endl;  
   //std::cout << "nOther = " << nOther << std::endl;  
   
-  ////TH1F *h_btageff = (TH1F*) h_btag->Clone();
-  //TH1F * h_btageff = new TH1F("h_btageff","btageff",9,bins);
-  //h_btageff->Divide(h_btag,h_bjet,1,1,"B");
-  ////TH1F *h_ctageff = (TH1F*) h_ctag->Clone();
-  //TH1F * h_ctageff = new TH1F("h_ctageff","ctageff",9,bins);
-  //h_ctageff->Divide(h_ctag,h_cjet,1,1,"B");
-  ////TH1F *h_ltageff = (TH1F*) h_ltag->Clone();
-  //TH1F * h_ltageff = new TH1F("h_ltageff","ltageff",9,bins);
-  //h_ltageff->Divide(h_ltag,h_ljet,1,1,"B");
-  
   
   //fout.Write();
   //fout.Close();
+
+
+  return;
+}
+
+//separate out the jettag efficiency code from sampleAnalyzer for ease of use
+void EventCalculator::plotBTagEffMC(itreestream& stream){
+
+
+  TFile fout("histos.root","RECREATE");
+  
+  //check the MC efficiencies from Summer11 TTbar
+  //this histogram has bin edges {30,50,75,100,150,200,240,500,1000}
+  //double bins[10] = {30,50,75,100,150,200,240,350,500,1000};
+  double bins[16] = {30, 40, 50, 60, 70, 80, 100, 120, 160, 210, 260, 320, 400, 500, 670, 2000};
+  TH1F * h_bjet = new TH1F("h_bjet","bjet",15,bins);
+  TH1F * h_cjet = new TH1F("h_cjet","cjet",15,bins);
+  TH1F * h_ljet = new TH1F("h_ljet","ljet",15,bins);
+  TH1F * h_btag = new TH1F("h_btag","btag",15,bins);
+  TH1F * h_ctag = new TH1F("h_ctag","ctag",15,bins);
+  TH1F * h_ltag = new TH1F("h_ltag","ltag",15,bins);
+  h_bjet->Sumw2();
+  h_cjet->Sumw2();
+  h_ljet->Sumw2();
+  h_btag->Sumw2();
+  h_ctag->Sumw2();
+  h_ltag->Sumw2();
+
+
+  int nevents = stream.size();
+
+  setCutScheme();
+  setIgnoredCut("cut1b");
+  setIgnoredCut("cut2b");
+  setIgnoredCut("cut3b");
+
+  cout<<"Running..."<<endl;  
+  int npass = 0;
+
+  int ntaggedjets = 0;
+  int ntaggedjets_b = 0;
+  int ntaggedjets_c = 0;
+  int ntaggedjets_l = 0;
+
+
+  startTimer();
+  for(int entry=0; entry < nevents; ++entry){
+
+    // Read event into memory
+    stream.read(entry);
+    fillObjects();
+
+    if(entry%10000==0) cout << "entry: " << entry << ", percent done=" << (int)(entry/(double)nevents*100.)<<  endl;
+    
+    npass++;
+    
+    for (unsigned int i = 0; i < myJetsPF->size(); ++i) {
+      int flavor = myJetsPF->at(i).partonFlavour;
+      
+      if(isGoodJet(i,30)){
+      
+	  
+	if(abs(flavor)==5)
+	  h_bjet->Fill( getJetPt(i) ) ;
+	else if(abs(flavor)==4)
+	  h_cjet->Fill( getJetPt(i) ) ;
+	else if(abs(flavor)==3 ||abs(flavor)==2 ||abs(flavor)==1 ||abs(flavor)==21 )
+	  h_ljet->Fill( getJetPt(i) ) ;
+      
+	if(passBTagger(i)){
+	  if(abs(flavor)==5)
+	    h_btag->Fill( getJetPt(i) ) ;
+	  else if(abs(flavor)==4)
+	    h_ctag->Fill( getJetPt(i) ) ;
+	  else if(abs(flavor)==3 ||abs(flavor)==2 ||abs(flavor)==1 ||abs(flavor)==21 )
+	    h_ltag->Fill( getJetPt(i) ) ;
+	}
+      
+      }
+	
+      if (isGoodJet(i,30) && passBTagger(i) ){
+	ntaggedjets++;
+	  
+	if(abs(flavor)==5)
+	  ntaggedjets_b++;
+	else if(abs(flavor)==4)
+	  ntaggedjets_c++;
+	else if(abs(flavor)==3 ||abs(flavor)==2 ||abs(flavor)==1 ||abs(flavor)==21 )
+	  ntaggedjets_l++;
+      }
+	
+    }
+      
+  }
+  
+  cout<<endl;
+  stopTimer(nevents);
+
+  std::cout << "npass = " << npass << std::endl;
+  std::cout << "ntaggedjets = "   << ntaggedjets << std::endl;
+  std::cout << "ntaggedjets_b = " << ntaggedjets_b << std::endl;
+  std::cout << "ntaggedjets_c = " << ntaggedjets_c << std::endl;
+  std::cout << "ntaggedjets_l = " << ntaggedjets_l << std::endl;
+    
+  //TH1F *h_btageff = (TH1F*) h_btag->Clone();
+  TH1F * h_btageff = new TH1F("h_btageff","btageff",15,bins);
+  h_btageff->Divide(h_btag,h_bjet,1,1,"B");
+  //TH1F *h_ctageff = (TH1F*) h_ctag->Clone();
+  TH1F * h_ctageff = new TH1F("h_ctageff","ctageff",15,bins);
+  h_ctageff->Divide(h_ctag,h_cjet,1,1,"B");
+  //TH1F *h_ltageff = (TH1F*) h_ltag->Clone();
+  TH1F * h_ltageff = new TH1F("h_ltageff","ltageff",15,bins);
+  h_ltageff->Divide(h_ltag,h_ljet,1,1,"B");
+  
+  
+  fout.Write();
+  fout.Close();
 
 
   return;

@@ -91,6 +91,7 @@ public:
 
   void cutflow(itreestream& stream, int maxevents);
   void sampleAnalyzer(itreestream& stream);
+  void plotBTagEffMC(itreestream& stream);
 
   //load external list of event ID's
   void loadEventList(std::vector<int> &vrun, std::vector<int> &vlumi, std::vector<int> &vevent);
