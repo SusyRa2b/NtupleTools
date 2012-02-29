@@ -1048,35 +1048,35 @@ void printOwenShape(const TString& owenKey) {
   cout<<"Nsb"<<bstr<<"               "<<  owenMap_[owenKey].Nsb<<endl;
 
   cout<<"Nsig_sl"<<bstr<<"           "<<  owenMap_[owenKey].Nsig_sl<<endl;
-  //  cout<<"Nsb_sl            "<<  owenMap_[owenKey].Nsb_sl<<endl;
-  cout<<"Nsb_1e"<<bstr<<"            "<<  owenMap_[owenKey].Nsb_1e<<endl;
-  cout<<"Nsb_1m"<<bstr<<"            "<<  owenMap_[owenKey].Nsb_1m<<endl;
+   cout<<"Nsb_1e"<<bstr<<"            "<<  owenMap_[owenKey].Nsb_1e<<endl;
+   cout<<"Nsb_1m"<<bstr<<"            "<<  owenMap_[owenKey].Nsb_1m<<endl;
+
+  cout<<"Nsb_sl"<<bstr<<"            "<<  owenMap_[owenKey].Nsb_1e+owenMap_[owenKey].Nsb_1m<<endl;
+
 
   cout<<"Nsig_ldp"<<bstr<<"          "<<  owenMap_[owenKey].Nsig_ldp<<endl;
   cout<<"Nsb_ldp"<<bstr<<"           "<<  owenMap_[owenKey].Nsb_ldp<<endl;
 
-  //  cout<<"Nlsb_0b           "<<  owenMap_[owenKey].Nlsb_0b<<endl;
-  //  cout<<"Nlsb_0b_ldp       "<<  owenMap_[owenKey].Nlsb_0b_ldp<<endl;
   cout<<"Rlsb_passfail     "<<owenMap_[owenKey].Rlsb_passfail<<endl;
   cout<<"Rlsb_passfail_err "<<owenMap_[owenKey].Rlsb_passfail_err<<endl;
 
-  cout<<"Nttbarmc_sig_ldp"<<bstr<<"  "<<  owenMap_[owenKey].Nttbarmc_sig_ldp<<endl;
-  cout<<"Nttbarmc_sb_ldp"<<bstr<<"   "<<  owenMap_[owenKey].Nttbarmc_sb_ldp<<endl;
+  cout<<"Nttbarsingletopzjetsmc_sig_ldp"<<bstr<<"  "<<  owenMap_[owenKey].Nttbarmc_sig_ldp+owenMap_[owenKey].Nsingletopmc_sig_ldp+owenMap_[owenKey].NZjmc_sig_ldp<<endl;
+  cout<<"Nttbarsingletopzjetsmc_sb_ldp"<<bstr<<"  "<<  owenMap_[owenKey].Nttbarmc_sb_ldp+owenMap_[owenKey].Nsingletopmc_sb_ldp+owenMap_[owenKey].NZjmc_sb_ldp<<endl;
 
-  cout<<"Nsingletopmc_sig_ldp"<<bstr<<"  "<<  owenMap_[owenKey].Nsingletopmc_sig_ldp<<endl;
-  cout<<"Nsingletopmc_sb_ldp"<<bstr<<"   "<<  owenMap_[owenKey].Nsingletopmc_sb_ldp<<endl;
+//   cout<<"Nttbarmc_sig_ldp"<<bstr<<"  "<<  owenMap_[owenKey].Nttbarmc_sig_ldp<<endl;
+//   cout<<"Nttbarmc_sb_ldp"<<bstr<<"   "<<  owenMap_[owenKey].Nttbarmc_sb_ldp<<endl;
 
-  //  cout<<"lsf_WJmc          "<<  owenMap_[owenKey].lsf_WJmc<<endl;
+//   cout<<"Nsingletopmc_sig_ldp"<<bstr<<"  "<<  owenMap_[owenKey].Nsingletopmc_sig_ldp<<endl;
+//   cout<<"Nsingletopmc_sb_ldp"<<bstr<<"   "<<  owenMap_[owenKey].Nsingletopmc_sb_ldp<<endl;
+
   cout<<"NWJmc_sig_ldp"<<bstr<<"     "<<  owenMap_[owenKey].NWJmc_sig_ldp<<endl;
   cout<<"NWJmc_sb_ldp"<<bstr<<"      "<<  owenMap_[owenKey].NWJmc_sb_ldp<<endl;
 
-  //  cout<<"lsf_Znnmc         "<<  owenMap_[owenKey].lsf_Znnmc<<endl;
   cout<<"NZnnmc_sig_ldp"<<bstr<<"    "<<  owenMap_[owenKey].NZnnmc_sig_ldp<<endl;
   cout<<"NZnnmc_sb_ldp"<<bstr<<"     "<<  owenMap_[owenKey].NZnnmc_sb_ldp<<endl;
 
-  //  cout<<"lsf_Zjmc         "<<  owenMap_[owenKey].lsf_Zjmc<<endl;
-  cout<<"NZjmc_sig_ldp"<<bstr<<"    "<<  owenMap_[owenKey].NZjmc_sig_ldp<<endl;
-  cout<<"NZjmc_sb_ldp"<<bstr<<"     "<<  owenMap_[owenKey].NZjmc_sb_ldp<<endl;
+//   cout<<"NZjmc_sig_ldp"<<bstr<<"    "<<  owenMap_[owenKey].NZjmc_sig_ldp<<endl;
+//   cout<<"NZjmc_sb_ldp"<<bstr<<"     "<<  owenMap_[owenKey].NZjmc_sb_ldp<<endl;
 
 }
 

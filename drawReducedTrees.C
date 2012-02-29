@@ -1433,7 +1433,7 @@ void runDataQCD2011(const bool forOwen=false) {
 
 //we've resorted to all sorts of ugly solutions for returning values (vectors, pairs, pass by reference, etc)
 //here's another ugly solution
-map<TString, double> slABCD_shape(bool datamode, bool iIsSIG, const unsigned int searchRegionIndex, bool kIsSIG, int n) {
+map<TString, double> slABCD_shape(bool datamode, bool iIsSIG, const unsigned int searchRegionIndex, bool kIsSIG, int n,const TString & closureMode="nominal") {
 
   map<TString, double> values;
 
@@ -1482,6 +1482,22 @@ FOR NOW WE ARE IGNORING SL TRIG EFF (<1% effect)
   /*    if (closureMode!="justw")   */       addSample("SingleTop");
   // }
   }
+
+  if (!datamode && (closureMode=="wtplus" )) {
+    setSampleScaleFactor("WJets",1.38);
+    setSampleScaleFactor("SingleTop",2);
+  }
+  else if (!datamode && (closureMode=="wtminus" )) {
+    setSampleScaleFactor("WJets",1-0.38);
+    setSampleScaleFactor("SingleTop",0);
+  }
+  else if (!datamode && (closureMode=="nominal")) {
+    resetSampleScaleFactors();
+  }
+  else if (datamode) {
+    resetSampleScaleFactors();
+  }
+  else assert(0);//ensure sanity
 
   savePlots_=false;
 
@@ -1647,8 +1663,13 @@ FOR NOW WE ARE IGNORING SL TRIG EFF (<1% effect)
 	    metstring.Data(), btagselection.Data(), 
 	    refsb.Data(), n,
 	    estimate, estimate_err, mu_i_0L_jb,mu_i_0L_jb_err);
+
+    values["true"]= mu_i_0L_jb;
+    values["true_err"]=mu_i_0L_jb_err;
   }
   cout<<output<<endl;
+
+  resetSampleScaleFactors();
 
   return values;
 }
@@ -1656,55 +1677,82 @@ FOR NOW WE ARE IGNORING SL TRIG EFF (<1% effect)
 void runShapeClosure() {
   setSearchRegions("bShapeLoose");
 
+  vector<TString> closureTestOptions;
+  closureTestOptions.push_back("nominal");
+  closureTestOptions.push_back("wtplus");
+  closureTestOptions.push_back("wtminus");
+
   for (int sigorsb_p=0; sigorsb_p<=1; sigorsb_p++) {
     bool predSIG = (sigorsb_p==0); 
     for (unsigned int rr=0; rr<searchRegions_.size(); rr++) {
-      //here's where we start a new 'set' of 5 closure tests
-
-      //for the set of 5, the r01 values are all independent.
-      //the mu_i_SL_jb values should all be the same
-      double mu_i_SL_jb=-1;
-      double mu_i_SL_jb_err=-1;
-      double r01OverSigmaSquaredSum=0;
-      double oneOverSigmaSquaredSum=0;
-      int counter=0;
-      for (int sigorsb=0; sigorsb<=1; sigorsb++) {
-	bool refSIG = (sigorsb==1); 
-	for (int refb=1; refb<=3; refb++) {
-
-	  //avoid the case where the formula is a meaningless identity
-	  TString refb_str="";
-	  refb_str+=refb;
-	  if (!(predSIG==refSIG && ( searchRegions_[rr].btagSelection.Contains( refb_str)))) {
-	    map<TString, double> val= slABCD_shape(false, predSIG, rr, refSIG, refb);
-	    oneOverSigmaSquaredSum += 1.0 / pow(val["r01_err"],2);
-	    r01OverSigmaSquaredSum += val["r01"] / pow(val["r01_err"],2);
-	    ++counter;
-
-	    if (counter==1) {
-	      mu_i_SL_jb = val["mu_i_SL_jb"];
-	      mu_i_SL_jb_err = val["mu_i_SL_jb_err"];
+ 
+     //here's where we start a new 'set' of 5 closure tests
+      double largestClosureSystematic=0;
+      for (unsigned int iopt=0; iopt<closureTestOptions.size() ; iopt++) { //repeat the whole thing for different variations (cross-section, etc)
+	cout<<" ~~~~ closure mode is "<<closureTestOptions.at(iopt)<<endl;
+	//for the set of 5, the r01 values are all independent.
+	//the mu_i_SL_jb values should all be the same
+	double mu_i_SL_jb=-1;
+	double mu_i_SL_jb_err=-1;
+	double Ntrue=-1;
+	double Ntrue_err=-1;
+	double r01OverSigmaSquaredSum=0;
+	double oneOverSigmaSquaredSum=0;
+	int counter=0;
+	for (int sigorsb=0; sigorsb<=1; sigorsb++) {
+	  bool refSIG = (sigorsb==1); 
+	  for (int refb=1; refb<=3; refb++) {
+	    
+	    //avoid the case where the formula is a meaningless identity
+	    TString refb_str="";
+	    refb_str+=refb;
+	    if (!(predSIG==refSIG && ( searchRegions_[rr].btagSelection.Contains( refb_str)))) {
+	      map<TString, double> val= slABCD_shape(false, predSIG, rr, refSIG, refb, closureTestOptions.at(iopt));
+	      oneOverSigmaSquaredSum += 1.0 / pow(val["r01_err"],2);
+	      r01OverSigmaSquaredSum += val["r01"] / pow(val["r01_err"],2);
+	      ++counter;
+	      
+	      if (counter==1) {
+		mu_i_SL_jb = val["mu_i_SL_jb"];
+		mu_i_SL_jb_err = val["mu_i_SL_jb_err"];
+		Ntrue = val["true"];
+		Ntrue_err = val["true_err"];
+	      }
+	      else {
+		assert ( mu_i_SL_jb == val["mu_i_SL_jb"]);
+		assert ( mu_i_SL_jb_err == val["mu_i_SL_jb_err"]);
+		assert(Ntrue == val["true"]);
+		assert(Ntrue_err == val["true_err"]);
+	      }
 	    }
 	    else {
-	      assert ( mu_i_SL_jb == val["mu_i_SL_jb"]);
-	      assert ( mu_i_SL_jb_err == val["mu_i_SL_jb_err"]);
+	      cout<<searchRegions_[rr].btagSelection<<"  "<< refb<<endl;
 	    }
 	  }
-	  else {
-	    cout<<searchRegions_[rr].btagSelection<<"  "<< refb<<endl;
-	  }
 	}
+	//tally up the averages for this set of closure tests
+	assert(counter==5);
+	double r01_av = r01OverSigmaSquaredSum / oneOverSigmaSquaredSum;
+	double r01_av_err = sqrt(1.0/oneOverSigmaSquaredSum);
+	double pred_av = r01_av * mu_i_SL_jb;
+	double pred_av_err = jmt::errAtimesB(r01_av,r01_av_err,mu_i_SL_jb,mu_i_SL_jb_err);
+	double closure = (pred_av - Ntrue) / pred_av;
+	double closure_err = jmt::errAoverB(Ntrue,Ntrue_err,pred_av,pred_av_err);
+	double nsigma = (pred_av - Ntrue) / jmt::addInQuad(pred_av_err,Ntrue_err);
+	char output[200];
+	sprintf(output, "        av r01 = %.2f +/- %.2f ; av pred = %.1f +/- %.1f ; Closure in %% = %.1f +/- %.1f sigma = %.1f",r01_av,r01_av_err,pred_av,pred_av_err,100*closure,100*closure_err,nsigma);
+	cout<<output<<endl;
+
+	double closureSystematic = jmt::addInQuad(closure,closure_err);
+	if (closureSystematic>largestClosureSystematic) largestClosureSystematic=closureSystematic;
       }
-      //tally up the averages for this set of closure tests
-      assert(counter==5);
-      double r01_av = r01OverSigmaSquaredSum / oneOverSigmaSquaredSum;
-      double r01_av_err = sqrt(1.0/oneOverSigmaSquaredSum);
-      double pred_av = r01_av * mu_i_SL_jb;
-      double pred_av_err = jmt::errAtimesB(r01_av,r01_av_err,mu_i_SL_jb,mu_i_SL_jb_err);
-      char output[200];
-      sprintf(output, "        av r01 = %.2f +/- %.2f ; av pred = %.1f +/- %.1f",r01_av,r01_av_err,pred_av,pred_av_err);
-      cout<<output<<endl;
+      TString predictedbin = predSIG ? "sig":"sb";
+      TString bpiece= searchRegions_[rr].btagSelection(2,2);
+      cout<<"sf_ttwj_"<<predictedbin<<"_"<<bpiece<<"      "<<1<<endl;
+      cout<<"sf_ttwj_"<<predictedbin<<"_"<<bpiece<<"_err  "<<largestClosureSystematic <<endl;
+      
       cout<<" ----- "<<endl;
+      
     }
   }
   
@@ -2792,8 +2840,22 @@ void runDDbShape() {
 void runDDwithSystShape() {
 
   runDataQCD2011(false);
-  runTtbarEstimate2011(false,true); //turn on shape analysis
+  
+  //  runTtbarEstimate2011(false,true); //turn on shape analysis
+  char effoutput[500];
+  sprintf(effoutput,"backgroundSystShape.%s.%dinvpb.dat",searchRegions_[0].owenId.Data(),TMath::Nint(lumiScale_));
+  ofstream textfile(effoutput);
+  textfile<<"sf_mc            "<<1<<endl;
+  textfile<<"sf_mc_err        "<<0.4<<endl;
+  for (unsigned int i=0; i<searchRegions_.size(); i++) {
+    TString bpiece= searchRegions_[i].btagSelection(2,2);
 
+    textfile<<"sf_qcd_sb_"<<bpiece<<"        "<<1<<endl;
+    textfile<<"sf_qcd_sb_"<<bpiece<<"_err    "<<0.01*sqrt(pow(qcdSystErrors["Closure"].at(2*i),2)+pow(qcdSystErrors["SBshift"].at(2*i),2) + pow(qcdSystErrors["LSBrw"].at(2*i),2))<<endl;
+    textfile<<"sf_qcd_sig_"<<bpiece<<"        "<<1<<endl;
+    textfile<<"sf_qcd_sig_"<<bpiece<<"_err    "<<0.01*sqrt(pow(qcdSystErrors["Closure"].at(2*i+1),2)+pow(qcdSystErrors["SBshift"].at(2*i+1),2)+ pow(qcdSystErrors["LSBrw"].at(2*i+1),2))<<endl;
+  }
+  
 }
 
 
