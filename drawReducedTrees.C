@@ -6699,6 +6699,221 @@ void studyRqcd(int ibtag = 4){
 }
 
 
+void studyMDPNscaling(const int mode = 3, TString htcutvalue = "400", TString htmax = "-1") {
+  
+  loadSamples();
+  clearSamples();
+  addSample("PythiaPUQCD");
+  setColorScheme("nostack");
+
+  doOverflowAddition(true);
+  setQuiet(false);
+  doData(false);
+  drawMCErrors_=true;
+  doRatioPlot(false);
+  
+  TString modestring="";
+  if (mode==1) {
+    usePUweight_=false;
+    useHTeff_=false;
+    useMHTeff_=false;
+    thebnnMHTeffMode_ = kOff;
+    btagSFweight_="1";
+    currentConfig_=configDescriptions_.getDefault(); //completely raw MC
+  }
+  else if (mode==2 || mode==3) {
+    usePUweight_=true;
+    useHTeff_=false; //SPECIAL!!
+    useMHTeff_=false;//SPECIAL!!
+    thebnnMHTeffMode_ = kOff;
+    currentConfig_=configDescriptions_.getCorrected(); //JER bias
+    if (mode==2) modestring="-JER-PU-HLT";
+    else if(mode==3) modestring="-JER-PU-HLT-bSF";
+  }
+  else assert(0);
+
+
+  /*
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////
+  setPlotMaximum(1); setPlotMinimum(0);
+  
+  const int nvarbins=15;
+  const float varbins[]={0,20,40,60,80,100,120,140,160,180,200,250,300,400,500,600}; //15 bins
+  
+  TCut HTcut = "HT>=1000";
+  selection_ =TCut("cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && weight<1 &&passCleaning==1") && HTcut;
+  btagSFweight_="prob0";
+
+  drawR("minDeltaPhiN_otherPt10",4, "MET", nvarbins, varbins,"eq0b");
+  TH1D* h10 = (TH1D*)hinteractive->Clone("h10");
+  
+  drawR("minDeltaPhiN_otherPt20",4, "MET", nvarbins, varbins,"eq0b");
+  TH1D* h20 = (TH1D*)hinteractive->Clone("h20");
+  
+  drawR("minDeltaPhiN",4, "MET", nvarbins, varbins,"eq0b");
+  TH1D* h30 = (TH1D*)hinteractive->Clone("h30");
+  
+  drawR("minDeltaPhiN_otherPt40",4, "MET", nvarbins, varbins,"eq0b");
+  TH1D* h40 = (TH1D*)hinteractive->Clone("h40");
+  
+  drawR("minDeltaPhiN_otherPt50",4, "MET", nvarbins, varbins,"eq0b");
+  TH1D* h50 = (TH1D*)hinteractive->Clone("h50");
+  
+  TCanvas* c1 = new TCanvas("c1", "c1", 640, 480);
+  c1->cd();
+
+  h10->SetMaximum(0.5);
+
+  h10->SetLineColor(kBlue-8);
+  h20->SetLineColor(kBlue-6);
+  h30->SetLineColor(kBlue);
+  h40->SetLineColor(kBlue+2);
+  h50->SetLineColor(kBlue+4);
+
+  h10->SetMarkerColor(kBlue-8);
+  h20->SetMarkerColor(kBlue-6);
+  h30->SetMarkerColor(kBlue);
+  h40->SetMarkerColor(kBlue+2);
+  h50->SetMarkerColor(kBlue+4);
+  
+  TLegend* myLegend = new TLegend(0.615,0.84,0.81,0.6);
+  myLegend->SetFillColor(0);
+  myLegend->SetBorderSize(0);
+  myLegend->SetLineStyle(0);
+  myLegend->SetTextFont(42);
+  myLegend->SetFillStyle(0);
+  myLegend->AddEntry(h10, "pT>10GeV", "lp");
+  myLegend->AddEntry(h20, "pT>20GeV", "lp");
+  myLegend->AddEntry(h30, "pT>30GeV", "lp");
+  myLegend->AddEntry(h40, "pT>40GeV", "lp");
+  myLegend->AddEntry(h50, "pT>50GeV", "lp");
+  
+  h10->Draw("HIST E1");
+  h20->Draw("SAME HIST E1");
+  h30->Draw("SAME HIST E1");
+  h40->Draw("SAME HIST E1");
+  h50->Draw("SAME HIST E1");
+  myLegend->Draw();
+
+  c1->Print("mdpnscale.png");
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////
+  */
+
+
+
+  //////////////////////////////////////////////////////////////////////////////make Owen's plots and more//
+  doOverflowAddition(false); //check sum over bin later for P/F 
+  //btagSFweight_="prob0";
+  //useHTeff_=true;
+  
+
+  TString HTcutstring = "";
+  HTcutstring += "HT>=";
+  HTcutstring += htcutvalue;
+  if(htmax != "-1") {
+    HTcutstring += " && HT<";
+    HTcutstring += htmax;
+  }
+  TCut HTcut = TCut(HTcutstring);
+
+  //baseline cut -- no MET, mdpN, btag
+  TCut baseline =TCut("cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && passCleaning==1 && weight<1000") && HTcut;  
+  
+  const int nMETbins = 10;
+  TString METbins[] = {"0","25","50","75","100","150","200","250","300","350"};
+  //const int nMETbins = 2;//for testing
+  //TString METbins[] = {"50","100"};
+
+  TCanvas * myC = new TCanvas("myC","myC",1000,1000);
+  
+  for(int i=0; i<nMETbins; i++) {
+
+    TString METcutstring = "MET>=";
+    METcutstring += METbins[i];
+    if(i!=(nMETbins-1)) {
+      METcutstring += " && MET<";
+      METcutstring += METbins[i+1];
+    }
+    cout << METcutstring << endl;
+    TCut METcut = TCut(METcutstring);
+    
+    selection_ = baseline && METcut;
+
+    const int numx = 7;
+    toPlot* myplots[numx]; // should make this a vector
+    myplots[0] = new toPlot("HT",100,0,2000);
+    myplots[1] = new toPlot("njets30",7,2.5,9.5);
+    myplots[2] = new toPlot("deltaPhiN1",30,0,30);
+    myplots[3] = new toPlot("deltaPhiN2",30,0,30);
+    myplots[4] = new toPlot("deltaPhiN3",30,0,30);
+    myplots[5] = new toPlot("minDeltaPhiN",20,0,10);
+    myplots[6] = new toPlot("minDeltaPhiN_chosenJet",3,0.5,3.5);
+    //myplots[7] = new toPlot(""
+    //...
+    //can add more here. also change numx, and maybe canvas size
+    // -- consider jet mismeasurement variables, deltaT
+    if(i==0) myC->Divide(numx,nMETbins);
+    
+    const int nh=numx;
+    TH1D* h[numx];
+    
+    TString plotopt = "HIST E1";
+    for(int j=0; j<numx; j++) {
+      
+      drawSimple(myplots[j]->getVarName(),myplots[j]->getNBins(),myplots[j]->getBinLow(),myplots[j]->getBinHigh(),"dummy.root","","PythiaPUQCD");
+      h[j]=(TH1D*)hinteractive->Clone( myplots[j]->getVarName() );
+
+      //Drawing
+      h[j]->SetFillColor(2+j);
+      h[j]->GetXaxis()->SetTitle(myplots[j]->getVarName());
+      myC->cd(i*numx+j+1);
+      h[j]->Draw(plotopt);
+      myC->Update();
+
+      if(myplots[j]->getVarName()=="minDeltaPhiN") {
+	TLine * myL = new TLine(4,h[j]->GetMinimum(),4,gPad->GetUymax());
+	myL->SetLineColor(kGray+1);
+	myL->SetLineWidth(2);
+	myL->Draw();
+
+	double perr, ferr;
+	double p = h[j]->IntegralAndError(9,21,perr); //severely hardcoded
+	double f = h[j]->IntegralAndError(1,8,ferr);
+	double PFr = p/f;
+	double PFrerr = jmt::errAoverB(p,perr,f,ferr);
+	char output[500];
+	sprintf(output,"P/F = %s", jmt::format_nevents(PFr,PFrerr).Data());
+	TLatex* myX = new TLatex(2,10,output);
+	myX->SetNDC();
+	myX->SetTextAlign(13);
+	myX->SetX(0.2);
+	myX->SetY(.8);
+	myX->SetTextFont(42);
+	myX->SetTextSizePixels(10);
+	myX->Draw();
+      }
+      
+    }
+
+  }//MET loop
+  
+  myC->Draw();
+
+  TString htmaxname = "";
+  if(htmax != "-1") {
+    htmaxname += "-";
+    htmaxname += htmax;
+  }
+  myC->SaveAs("mdpN_plots_HT"+htcutvalue+htmaxname+".pdf");  
+  myC->SaveAs("mdpN_plots_HT"+htcutvalue+htmaxname+".png");
+  myC->SaveAs("mdpN_plots_HT"+htcutvalue+htmaxname+".eps");
+
+}
+
+
+
 void studyRtt_0lep() {
 
   const  float exval=  gStyle->GetErrorX();

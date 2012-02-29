@@ -1081,6 +1081,30 @@ void printOwenShape(const TString& owenKey) {
 }
 
 
+// class for holding inputs to drawSimple (could be expanded)
+class toPlot {
+  TString varname;
+  int nbins;
+  double binlow, binhigh;
+public:
+  toPlot(TString,int,double,double);
+  void print();
+  TString getVarName() {return varname;}
+  int getNBins() {return nbins;}
+  double getBinLow() {return binlow;}
+  double getBinHigh() {return binhigh;}
+};
+toPlot::toPlot(TString a, int b, double c, double d) {
+  varname = a;
+  nbins = b;
+  binlow = c;
+  binhigh = d;
+}
+void toPlot::print() {
+  cout << varname << ": " << nbins << " bins, from " << binlow << " to " << binhigh << endl;
+}
+
+
 bool quiet_=false;
 //bool quiet_=true;
 bool doRatio_=false;
