@@ -356,8 +356,8 @@ bool EventCalculator::noPUWeight() {
 }
 
 //FIXME can we make this const & ???
-float EventCalculator::getPUWeight(reweight::LumiReWeighting lumiWeights) {
-  //float EventCalculator::getPUWeight(Lumi3DReWeighting lumiWeights) {
+//float EventCalculator::getPUWeight(reweight::LumiReWeighting lumiWeights) {
+float EventCalculator::getPUWeight(Lumi3DReWeighting lumiWeights) {
 
   if (isSampleRealData() ) return 1;
   if (noPUWeight()) return 1;
@@ -393,10 +393,10 @@ float EventCalculator::getPUWeight(reweight::LumiReWeighting lumiWeights) {
   //weight = lumiWeights.ITweight3BX( ave_nvtx );
 
   //in-time PU only
-  weight = lumiWeights.ITweight( npv );
+  //weight = lumiWeights.ITweight( npv );
 
   //3d reweighting
-  //weight = lumiWeights.weight3D( nm1,n0,np1);
+  weight = lumiWeights.weight3D( nm1,n0,np1);
 
 
   //Outdated.  PU systematics now done via scale-factor in reducedTree()
@@ -4472,27 +4472,27 @@ Also the pdfWeightSum* histograms that are used for LM9.
   std::vector< float > MCDist2011;
   for( int i=0; i<35; ++i) {
     //for PU_S3 (only in-time)
-    DataDist2011.push_back(pu::ObsDist2011_f[i]);
+    //DataDist2011.push_back(pu::ObsDist2011_f[i]);
     //MCDist2011.push_back(pu::PoissonOneXDist_f[i]);
     //for 3dPU reweighting 
-    //DataDist2011.push_back(pu::TrueDist2011_f[i]);
+    DataDist2011.push_back(pu::TrueDist2011_f[i]);
     //if(i<25)
       MCDist2011.push_back(pu::probdistFlat10_f[i]);
   }  
-  reweight::LumiReWeighting LumiWeights = reweight::LumiReWeighting( MCDist2011, DataDist2011 );
+  //reweight::LumiReWeighting LumiWeights = reweight::LumiReWeighting( MCDist2011, DataDist2011 );
   //LumiWeights.weight3D_init("Weight3D.root");
-  //Lumi3DReWeighting LumiWeights = Lumi3DReWeighting( MCDist2011, DataDist2011);
-  //if(thePUuncType_ == kPUunc0){
-  //  LumiWeights.weight3D_init(1);    
-  //}
+  Lumi3DReWeighting LumiWeights = Lumi3DReWeighting( MCDist2011, DataDist2011);
+  if(thePUuncType_ == kPUunc0){
+    LumiWeights.weight3D_init(1);    
+  }
   //8% uncertainty in total inelastic cross-section (68 mb vs 73.5 mb)
   //see https://hypernews.cern.ch/HyperNews/CMS/get/physics-validation/1479/3/1/1.html
-  //else if(thePUuncType_ == kPUuncDown){
-  //  LumiWeights.weight3D_init(0.92);    
-  //}
-  //else if(thePUuncType_ == kPUuncUp){
-  //  LumiWeights.weight3D_init(1.08);    
-  //}
+  else if(thePUuncType_ == kPUuncDown){
+    LumiWeights.weight3D_init(0.92);    
+  }
+  else if(thePUuncType_ == kPUuncUp){
+    LumiWeights.weight3D_init(1.08);    
+  }
 
 
 
