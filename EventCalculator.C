@@ -4263,6 +4263,7 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   float minDeltaPhiN_otherPt10, minDeltaPhiN_otherPt20, minDeltaPhiN_otherPt30, minDeltaPhiN_otherPt40, minDeltaPhiN_otherPt50;
   float minDeltaPhiN_DJR_otherPt10, minDeltaPhiN_DJR_otherPt20, minDeltaPhiN_DJR_otherPt30, minDeltaPhiN_DJR_otherPt40, minDeltaPhiN_DJR_otherPt50;
   UInt_t minDeltaPhiN_chosenJet;
+  UInt_t maxJetMis_chosenJet, maxJetFracMis_chosenJet;
 
 
   float maxJetMis, max2JetMis, maxJetMisAll30, max2JetMisAll30;
@@ -4661,6 +4662,8 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("deltaPhiN2", &deltaPhiN2, "deltaPhiN2/F");
   reducedTree.Branch("deltaPhiN3", &deltaPhiN3, "deltaPhiN3/F");
   reducedTree.Branch("minDeltaPhiN_chosenJet", &minDeltaPhiN_chosenJet, "minDeltaPhiN_chosenJet/i");
+  reducedTree.Branch("maxJetMis_chosenJet", &maxJetMis_chosenJet, "maxJetMis_chosenJet/i");
+  reducedTree.Branch("maxJetFracMis_chosenJet", &maxJetFracMis_chosenJet, "maxJetFracMis_chosenJet/i");
 
   reducedTree.Branch("minDeltaPhiN_deltaT", &minDeltaPhiN_deltaT, "minDeltaPhiN_deltaT/F");
   reducedTree.Branch("deltaT1", &deltaT1, "deltaT1/F");
@@ -5135,6 +5138,16 @@ Also the pdfWeightSum* histograms that are used for LM9.
       max2JetFracMisAll30=getMaxJetFracMis(2,99,30);
       deltaPhiMETJetMaxMis = getDeltaPhiMETJetMaxMis(50);
       deltaPhiMETJetMaxMis30 = getDeltaPhiMETJetMaxMis(30);
+
+      maxJetMis_chosenJet=1;
+      float maxJetMis2_tmp =getMaxJetMis(1,2,50); 
+      if(maxJetMis2_tmp > getMaxJetMis(1,1,50)) maxJetMis_chosenJet=2;
+      if(maxJetMis > maxJetMis2_tmp) maxJetMis_chosenJet=3;
+
+      maxJetFracMis_chosenJet=1;
+      float maxJetFracMis2_tmp =getMaxJetFracMis(1,2,50); 
+      if(maxJetFracMis2_tmp > getMaxJetFracMis(1,1,50)) maxJetFracMis_chosenJet=2;
+      if(maxJetFracMis > maxJetFracMis2_tmp) maxJetFracMis_chosenJet=3;
 
       minDeltaPhiMetTau = getMinDeltaPhiMETTaus();
 
