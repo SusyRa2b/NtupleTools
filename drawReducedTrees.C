@@ -67,7 +67,9 @@ in order to get one file per sample.
 
   //TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35g/";
 //TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35h/";
-TString inputPath = "/cu2/wteo/reducedTrees/Fall11/V00-02-35k/";
+//TString inputPath = "/cu2/wteo/reducedTrees/Fall11/V00-02-35k/";
+
+TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35l/";
 TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35k/";
 
 //TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35d/";
@@ -6808,7 +6810,6 @@ void studyMDPNscaling(const int mode = 3, TString htcutvalue = "400", TString ht
   //btagSFweight_="prob0";
   //useHTeff_=true;
   
-
   TString HTcutstring = "";
   HTcutstring += "HT>=";
   HTcutstring += htcutvalue;
@@ -6819,14 +6820,15 @@ void studyMDPNscaling(const int mode = 3, TString htcutvalue = "400", TString ht
   TCut HTcut = TCut(HTcutstring);
 
   //baseline cut -- no MET, mdpN, btag
-  TCut baseline =TCut("cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && passCleaning==1 && weight<1000") && HTcut;  
+  TCut baseline =TCut("cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && passCleaning==1 && weight<1") && HTcut;  
   
   const int nMETbins = 10;
   TString METbins[] = {"0","25","50","75","100","150","200","250","300","350"};
   //const int nMETbins = 2;//for testing
   //TString METbins[] = {"50","100"};
 
-  TCanvas * myC = new TCanvas("myC","myC",1000,1000);
+  TCanvas * myC = new TCanvas("myC","myC",2200,1000);
+  
   
   for(int i=0; i<nMETbins; i++) {
 
@@ -6841,19 +6843,27 @@ void studyMDPNscaling(const int mode = 3, TString htcutvalue = "400", TString ht
     
     selection_ = baseline && METcut;
 
-    const int numx = 7;
-    toPlot* myplots[numx]; // should make this a vector
-    myplots[0] = new toPlot("HT",100,0,2000);
-    myplots[1] = new toPlot("njets30",7,2.5,9.5);
-    myplots[2] = new toPlot("deltaPhiN1",30,0,30);
-    myplots[3] = new toPlot("deltaPhiN2",30,0,30);
-    myplots[4] = new toPlot("deltaPhiN3",30,0,30);
-    myplots[5] = new toPlot("minDeltaPhiN",20,0,10);
-    myplots[6] = new toPlot("minDeltaPhiN_chosenJet",3,0.5,3.5);
-    //myplots[7] = new toPlot(""
-    //...
-    //can add more here. also change numx, and maybe canvas size
-    // -- consider jet mismeasurement variables, deltaT
+    std::vector<toPlot*> myplots;
+    myplots.push_back(new toPlot("HT",100,0,2000));
+    myplots.push_back(new toPlot("njets30",7,2.5,9.5));
+    myplots.push_back(new toPlot("deltaPhi1",30,0,3.142));
+    myplots.push_back(new toPlot("deltaPhi2",30,0,3.142));
+    myplots.push_back(new toPlot("deltaPhi3",30,0,3.142));
+    myplots.push_back(new toPlot("deltaT1",30,0,60));
+    myplots.push_back(new toPlot("deltaT2",30,0,60));
+    myplots.push_back(new toPlot("deltaT3",30,0,60));
+    myplots.push_back(new toPlot("deltaPhiN1",30,0,30));
+    myplots.push_back(new toPlot("deltaPhiN2",30,0,30));
+    myplots.push_back(new toPlot("deltaPhiN3",30,0,30));
+    myplots.push_back(new toPlot("minDeltaPhiN",20,0,10));
+    myplots.push_back(new toPlot("minDeltaPhiN_chosenJet",3,0.5,3.5));
+    myplots.push_back(new toPlot("jetgenpt1-jetpt1",50,-1000,1000));
+    myplots.push_back(new toPlot("jetgenpt2-jetpt2",50,-1000,1000));
+    myplots.push_back(new toPlot("jetgenpt3-jetpt3",50,-1000,1000));
+    myplots.push_back(new toPlot("max2JetMis/maxJetMis",20,0,1));
+    myplots.push_back(new toPlot("max2JetFracMis/maxJetFracMis",20,0,1));
+
+    int numx = myplots.size();
     if(i==0) myC->Divide(numx,nMETbins);
     
     const int nh=numx;
@@ -6866,7 +6876,8 @@ void studyMDPNscaling(const int mode = 3, TString htcutvalue = "400", TString ht
       h[j]=(TH1D*)hinteractive->Clone( myplots[j]->getVarName() );
 
       //Drawing
-      h[j]->SetFillColor(2+j);
+      if(j<8) h[j]->SetFillColor(2+j);
+      else h[j]->SetFillColor(32+j);
       h[j]->GetXaxis()->SetTitle(myplots[j]->getVarName());
       myC->cd(i*numx+j+1);
       h[j]->Draw(plotopt);
@@ -6901,14 +6912,16 @@ void studyMDPNscaling(const int mode = 3, TString htcutvalue = "400", TString ht
   
   myC->Draw();
 
+  TString prepend = "";
   TString htmaxname = "";
   if(htmax != "-1") {
+    prepend += "excl_";
     htmaxname += "-";
     htmaxname += htmax;
   }
-  myC->SaveAs("mdpN_plots_HT"+htcutvalue+htmaxname+".pdf");  
-  myC->SaveAs("mdpN_plots_HT"+htcutvalue+htmaxname+".png");
-  myC->SaveAs("mdpN_plots_HT"+htcutvalue+htmaxname+".eps");
+  myC->SaveAs(prepend+"mdpN_plots_HT"+htcutvalue+htmaxname+".pdf");  
+  myC->SaveAs(prepend+"mdpN_plots_HT"+htcutvalue+htmaxname+".png");
+  myC->SaveAs(prepend+"mdpN_plots_HT"+htcutvalue+htmaxname+".eps");
 
 }
 
