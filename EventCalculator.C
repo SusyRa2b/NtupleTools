@@ -356,8 +356,8 @@ bool EventCalculator::noPUWeight() {
 }
 
 //FIXME can we make this const & ???
-//float EventCalculator::getPUWeight(reweight::LumiReWeighting lumiWeights) {
-float EventCalculator::getPUWeight(Lumi3DReWeighting lumiWeights) {
+float EventCalculator::getPUWeight(reweight::LumiReWeighting lumiWeights) {
+  //float EventCalculator::getPUWeight(Lumi3DReWeighting lumiWeights) {
 
   if (isSampleRealData() ) return 1;
   if (noPUWeight()) return 1;
@@ -393,10 +393,10 @@ float EventCalculator::getPUWeight(Lumi3DReWeighting lumiWeights) {
   //weight = lumiWeights.ITweight3BX( ave_nvtx );
 
   //in-time PU only
-  //weight = lumiWeights.ITweight( npv );
+  weight = lumiWeights.ITweight( npv );
 
   //3d reweighting
-  weight = lumiWeights.weight3D( nm1,n0,np1);
+  //weight = lumiWeights.weight3D( nm1,n0,np1);
 
 
   //Outdated.  PU systematics now done via scale-factor in reducedTree()
@@ -4262,7 +4262,7 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   float minDeltaPhiN_DJR, minDeltaPhiN_DJR_otherEta5, minDeltaPhiK_DJR, minDeltaPhiK_DJR_otherEta5;
   float minDeltaPhiN_otherPt10, minDeltaPhiN_otherPt20, minDeltaPhiN_otherPt30, minDeltaPhiN_otherPt40, minDeltaPhiN_otherPt50;
   float minDeltaPhiN_DJR_otherPt10, minDeltaPhiN_DJR_otherPt20, minDeltaPhiN_DJR_otherPt30, minDeltaPhiN_DJR_otherPt40, minDeltaPhiN_DJR_otherPt50;
-  UInt_t minDeltaPhiN_chosenJet;
+  UInt_t minDeltaPhi_chosenJet, minDeltaPhiN_chosenJet;
   UInt_t maxJetMis_chosenJet, maxJetFracMis_chosenJet;
 
 
@@ -4472,27 +4472,27 @@ Also the pdfWeightSum* histograms that are used for LM9.
   std::vector< float > MCDist2011;
   for( int i=0; i<35; ++i) {
     //for PU_S3 (only in-time)
-    //DataDist2011.push_back(pu::ObsDist2011_f[i]);
+    DataDist2011.push_back(pu::ObsDist2011_f[i]);
     //MCDist2011.push_back(pu::PoissonOneXDist_f[i]);
     //for 3dPU reweighting 
-    DataDist2011.push_back(pu::TrueDist2011_f[i]);
+    //DataDist2011.push_back(pu::TrueDist2011_f[i]);
     //if(i<25)
       MCDist2011.push_back(pu::probdistFlat10_f[i]);
   }  
-  //reweight::LumiReWeighting LumiWeights = reweight::LumiReWeighting( MCDist2011, DataDist2011 );
+  reweight::LumiReWeighting LumiWeights = reweight::LumiReWeighting( MCDist2011, DataDist2011 );
   //LumiWeights.weight3D_init("Weight3D.root");
-  Lumi3DReWeighting LumiWeights = Lumi3DReWeighting( MCDist2011, DataDist2011);
-  if(thePUuncType_ == kPUunc0){
-    LumiWeights.weight3D_init(1);    
-  }
+  //Lumi3DReWeighting LumiWeights = Lumi3DReWeighting( MCDist2011, DataDist2011);
+  //if(thePUuncType_ == kPUunc0){
+  //  LumiWeights.weight3D_init(1);    
+  //}
   //8% uncertainty in total inelastic cross-section (68 mb vs 73.5 mb)
   //see https://hypernews.cern.ch/HyperNews/CMS/get/physics-validation/1479/3/1/1.html
-  else if(thePUuncType_ == kPUuncDown){
-    LumiWeights.weight3D_init(0.92);    
-  }
-  else if(thePUuncType_ == kPUuncUp){
-    LumiWeights.weight3D_init(1.08);    
-  }
+  //else if(thePUuncType_ == kPUuncDown){
+  //  LumiWeights.weight3D_init(0.92);    
+  //}
+  //else if(thePUuncType_ == kPUuncUp){
+  //  LumiWeights.weight3D_init(1.08);    
+  //}
 
 
 
@@ -4661,6 +4661,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("deltaPhiN1", &deltaPhiN1, "deltaPhiN1/F");
   reducedTree.Branch("deltaPhiN2", &deltaPhiN2, "deltaPhiN2/F");
   reducedTree.Branch("deltaPhiN3", &deltaPhiN3, "deltaPhiN3/F");
+  reducedTree.Branch("minDeltaPhi_chosenJet", &minDeltaPhi_chosenJet, "minDeltaPhi_chosenJet/i");
   reducedTree.Branch("minDeltaPhiN_chosenJet", &minDeltaPhiN_chosenJet, "minDeltaPhiN_chosenJet/i");
   reducedTree.Branch("maxJetMis_chosenJet", &maxJetMis_chosenJet, "maxJetMis_chosenJet/i");
   reducedTree.Branch("maxJetFracMis_chosenJet", &maxJetFracMis_chosenJet, "maxJetFracMis_chosenJet/i");
@@ -5168,6 +5169,11 @@ Also the pdfWeightSum* histograms that are used for LM9.
       else if(deltaPhiN2<=deltaPhiN1 && deltaPhiN2<=deltaPhiN3) minDeltaPhiN_chosenJet = 2;
       else if(deltaPhiN3<=deltaPhiN1 && deltaPhiN3<=deltaPhiN2) minDeltaPhiN_chosenJet = 3;
       else minDeltaPhiN_chosenJet=0;
+
+      if(deltaPhi1<=deltaPhi2 && deltaPhi1<=deltaPhi3) minDeltaPhi_chosenJet = 1;
+      else if(deltaPhi2<=deltaPhi1 && deltaPhi2<=deltaPhi3) minDeltaPhi_chosenJet = 2;
+      else if(deltaPhi3<=deltaPhi1 && deltaPhi3<=deltaPhi2) minDeltaPhi_chosenJet = 3;
+      else minDeltaPhi_chosenJet=0;
 
       deltaT1 = getDeltaPhiMETN_deltaT( getNthGoodJet(0,50,2.4,true) );
       deltaT2 = getDeltaPhiMETN_deltaT( getNthGoodJet(1,50,2.4,true) );
