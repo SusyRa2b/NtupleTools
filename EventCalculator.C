@@ -313,69 +313,43 @@ double EventCalculator::getWeight(Long64_t nentries) {
 }
 
 
-bool EventCalculator::noPUWeight() {
 
-  //jmt -- i would prefer that this function has *every* sample defined and then asserts if the sample is not found
-
-  if (sampleName_.Contains("T1bbbb"))                                                return true;
-  if (sampleName_.Contains("T2bb"))                                                  return true; //dunno if it has PU weights or not
-  if (sampleName_.Contains("T2tt"))                                                  return true; //dunno if it has PU weights or not
-
-  /*
-  //Old name for Summer11 QCD. Newer versions should have PU weight.
-  if (sampleName_.Contains("qcd_tunez2_pt0to5_summer11") )                           return true;
-  if (sampleName_.Contains("qcd_tunez2_pt1000to1400_summer11") )                     return true;
-  if (sampleName_.Contains("qcd_tunez2_pt120to170_summer11") )                       return true; 
-  if (sampleName_.Contains("qcd_tunez2_pt1400to1800_summer11") )                     return true;
-  if (sampleName_.Contains("qcd_tunez2_pt15to3000_summer11") )                       return true;
-  if (sampleName_.Contains("qcd_tunez2_pt15to30_summer11") )                         return true;
-  if (sampleName_.Contains("qcd_tunez2_pt170to300_summer11") )                       return true;
-  if (sampleName_.Contains("qcd_tunez2_pt1800_summer11") )                           return true;
-  if (sampleName_.Contains("qcd_tunez2_pt300to470_summer11") )                       return true;
-  if (sampleName_.Contains("qcd_tunez2_pt30to50_summer11") )                         return true;
-  if (sampleName_.Contains("qcd_tunez2_pt470to600_summer11") )                       return true;
-  if (sampleName_.Contains("qcd_tunez2_pt50to80_summer11") )                         return true;
-  if (sampleName_.Contains("qcd_tunez2_pt5to15_summer11") )                          return true;
-  if (sampleName_.Contains("qcd_tunez2_pt600to800_summer11") )                       return true;
-  if (sampleName_.Contains("qcd_tunez2_pt800to1000_summer11") )                      return true;
-  if (sampleName_.Contains("qcd_tunez2_pt80to120_summer11") )                        return true;
-  
-  //spring 11
-  if (sampleName_.Contains("TToBLNu_TuneZ2_s-channel_7TeV-madgraph") )               return true;
-  if (sampleName_.Contains("TToBLNu_TuneZ2_t-channel_7TeV-madgraph") )               return true; 
-  if (sampleName_.Contains("TToBLNu_TuneZ2_tW-channel_7TeV-madgraph") )              return true;
-  if (sampleName_.Contains("WWtoAnything_TuneZ2_7TeV-pythia6-tauola") )              return true;
-  if (sampleName_.Contains("WZtoAnything_TuneZ2_7TeV-pythia6-tauola") )              return true;
-  if (sampleName_.Contains("ZZtoAnything_TuneZ2_7TeV-pythia6-tauola") )              return true;
-  if (sampleName_.Contains("DYJetsToLL_TuneD6T_M-10To50_7TeV-madgraph-tauola") )     return true;
-  if (sampleName_.Contains("DYJetsToLL_TuneD6T_M-50_7TeV-madgraph-tauola") )         return true;
-  */
-
-  return false;
-
-}
-
-//FIXME can we make this const & ???
-//float EventCalculator::getPUWeight(reweight::LumiReWeighting lumiWeights) {
-float EventCalculator::getPUWeight(Lumi3DReWeighting lumiWeights) {
-
+//1d reweighting
+float EventCalculator::getPUWeight(reweight::LumiReWeighting lumiWeights) {
   if (isSampleRealData() ) return 1;
-  if (noPUWeight()) return 1;
-  
+
   float weight;
   //float sum_nvtx = 0;
   int npv = 0;
+  for ( unsigned int i = 0; i<pileupsummaryinfo.size() ; i++) {
+    //consider only in-time PU
+    int BX = pileupsummaryinfo.at(i).addpileupinfo_getBunchCrossing;
+    if(BX == 0) { 
+      npv = pileupsummaryinfo.at(i).addpileupinfo_getPU_NumInteractions;
+    }
+    else {
+      cout<<"[EventCalculator::getPUweight 1D] is this supposed to happen?"<<endl;
+    }
+  }
+  //in-time PU only
+  weight = lumiWeights.ITweight( npv );
+
+  return weight;
+}
+
+//3d reweighting
+float EventCalculator::getPUWeight(Lumi3DReWeighting lumiWeights) {
+  if (isSampleRealData() ) return 1;
+
+  
+  float weight;
   int nm1 = -1; int n0 = -1; int np1 = -1;
 
   for ( unsigned int i = 0; i<pileupsummaryinfo.size() ; i++) {
     //npv = pileupsummaryinfo.at(i).addpileupinfo_getPU_NumInteractions;
     //sum_nvtx += float(npv);
 
-    //consider only in-time PU
     int BX = pileupsummaryinfo.at(i).addpileupinfo_getBunchCrossing;
-    if(BX == 0) { 
-      npv = pileupsummaryinfo.at(i).addpileupinfo_getPU_NumInteractions;
-    }
 
     if(BX == -1) { 
       nm1 = pileupsummaryinfo.at(i).addpileupinfo_getPU_NumInteractions;
@@ -388,12 +362,7 @@ float EventCalculator::getPUWeight(Lumi3DReWeighting lumiWeights) {
     }
 
   }
-      
-  //float ave_nvtx = sum_nvtx/3.;
-  //weight = lumiWeights.ITweight3BX( ave_nvtx );
 
-  //in-time PU only
-  //weight = lumiWeights.ITweight( npv );
 
   //3d reweighting
   weight = lumiWeights.weight3D( nm1,n0,np1);
@@ -4467,34 +4436,41 @@ Also the pdfWeightSum* histograms that are used for LM9.
   TH2D* scanSMSngen=0; //should be redundant to the scanProcessTotals histograms, but let's keep it for now
   if (theScanType_==kSMS) scanSMSngen = new TH2D("scanSMSngen","number of generated events",150,0,1500,150,0,1500); //mgluino,mLSP
 
+  const  bool puReweightIs1D = ((theScanType_!=kNotScan) || sampleName_.Contains("QCD"));
+
   //initialize PU things
   std::vector< float > DataDist2011;
   std::vector< float > MCDist2011;
   for( int i=0; i<35; ++i) {
     //for PU_S3 (only in-time)
-    //DataDist2011.push_back(pu::ObsDist2011_f[i]);
+    //1D reweighting -- for QCD and Fastsim scans
+    if (puReweightIs1D)    DataDist2011.push_back(pu::ObsDist2011_f[i]);
     //MCDist2011.push_back(pu::PoissonOneXDist_f[i]);
     //for 3dPU reweighting 
-    DataDist2011.push_back(pu::TrueDist2011_f[i]);
+    else DataDist2011.push_back(pu::TrueDist2011_f[i]);
     //if(i<25)
       MCDist2011.push_back(pu::probdistFlat10_f[i]);
   }  
-  //reweight::LumiReWeighting LumiWeights = reweight::LumiReWeighting( MCDist2011, DataDist2011 );
+
+  reweight::LumiReWeighting * LumiWeights=0;
+  Lumi3DReWeighting * LumiWeights3D=0;
+  if (puReweightIs1D)  LumiWeights = new reweight::LumiReWeighting( MCDist2011, DataDist2011 );
+  else                 LumiWeights3D = new Lumi3DReWeighting( MCDist2011, DataDist2011);
   //LumiWeights.weight3D_init("Weight3D.root");
-  Lumi3DReWeighting LumiWeights = Lumi3DReWeighting( MCDist2011, DataDist2011);
-  if(thePUuncType_ == kPUunc0){
-    LumiWeights.weight3D_init(1);    
-  }
-  //8% uncertainty in total inelastic cross-section (68 mb vs 73.5 mb)
-  //see https://hypernews.cern.ch/HyperNews/CMS/get/physics-validation/1479/3/1/1.html
-  else if(thePUuncType_ == kPUuncDown){
-    LumiWeights.weight3D_init(0.92);    
-  }
-  else if(thePUuncType_ == kPUuncUp){
-    LumiWeights.weight3D_init(1.08);    
-  }
 
-
+  if (!puReweightIs1D) {
+    if(thePUuncType_ == kPUunc0) {
+      LumiWeights3D->weight3D_init(1);    
+    }
+    //8% uncertainty in total inelastic cross-section (68 mb vs 73.5 mb)
+    //see https://hypernews.cern.ch/HyperNews/CMS/get/physics-validation/1479/3/1/1.html
+    else if(thePUuncType_ == kPUuncDown) {
+      LumiWeights3D->weight3D_init(0.92);    
+    }
+    else if(thePUuncType_ == kPUuncUp) {
+      LumiWeights3D->weight3D_init(1.08);    
+    }
+  }
 
   // ~~~~~~~ define tree branches ~~~~~~~
   reducedTree.Branch("weight",&weight,"weight/D");
@@ -5033,7 +5009,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
 
       HT=getHT();
       hltHTeff = getHLTHTeff(HT);
-      PUweight = getPUWeight(LumiWeights);
+      PUweight = puReweightIs1D ? getPUWeight(*LumiWeights) : getPUWeight(*LumiWeights3D);
       btagIPweight = getBTagIPWeight();
       //      pfmhtweight = getPFMHTWeight();
 

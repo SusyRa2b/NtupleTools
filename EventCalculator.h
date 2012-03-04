@@ -9,7 +9,7 @@
 
 //Pile-up reweighting stuff
 //NOTE: Grab this header from PhysicsTools/Utilities/interface/LumiReweightingStandAlone.h
-//#include "LumiReweightingStandAlone.h"
+#include "LumiReweightingStandAlone.h"
 #include "Lumi3DReWeighting.h"
 //JES on the fly
 #include "JetCorrectorParameters.h"
@@ -99,8 +99,7 @@ public:
 
   // functions that calculate stuff
   double getWeight(Long64_t nentries);
-  bool noPUWeight();
-  //float getPUWeight(reweight::LumiReWeighting lumiWeights);
+  float getPUWeight(reweight::LumiReWeighting lumiWeights);
   float getPUWeight(Lumi3DReWeighting lumiWeights);
 
   bool isGoodMuon(const unsigned int imuon, const bool disableRelIso=false, const float ptthreshold=10);
