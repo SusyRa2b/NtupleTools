@@ -5002,8 +5002,15 @@ Also the pdfWeightSum* histograms that are used for LM9.
 
       //if we are running over ttbar, fill info on decay mode
       if (sampleName_.Contains("ttjets_madgraph") || sampleName_.Contains("TTJets_TuneZ2_7TeV-madgraph-tauola_Fall11_v2")){
-	decayType = getTTbarDecayType(W1decayType, W2decayType);
+	int W1, W1daughter, W2, W2daughter;
+	decayType = getTTbarDecayType(W1decayType, W2decayType, W1, W1daughter, W2, W2daughter);
       }
+      //if we are running of w+jets fill info on decay mode
+      if (sampleName_.Contains("WJetsToLNu")){
+	int W1, W1daughter;
+	decayType = getWDecayType(W1decayType, W1, W1daughter);
+      }
+
 
       HT=getHT();
       hltHTeff = getHLTHTeff(HT);
@@ -6135,16 +6142,16 @@ int EventCalculator::daughterMatch(const int Wdaughter, const int WdecayType)
   return -1;
 }
 
-int EventCalculator::getTTbarDecayType(int& W1decayType, int& W2decayType)
+int EventCalculator::getTTbarDecayType(int& W1decayType, int& W2decayType, int& W1, int& W1daughter, int& W2, int& W2daughter)
 {
   if(myGenParticles == 0 || myGenParticles->size() == 0) return -1;
   int top1=-1;
   int top2=-1;
   int nTops = findTop(top1,top2);
-  int W1 = 0;
-  int W2 = 0;
-  int W1daughter = 0;
-  int W2daughter = 0;
+  W1 = 0;
+  W2 = 0;
+  W1daughter = 0;
+  W2daughter = 0;
   //int W1decayType = 0;
   //int W2decayType = 0;
   if(nTops>0)
@@ -6273,10 +6280,101 @@ int EventCalculator::getTTbarDecayType(int& W1decayType, int& W2decayType)
   return 0;
 }
 
+
+int EventCalculator::getWDecayType(int& WdecayType, int& W, int& Wdaughter)
+{
+  if(myGenParticles == 0 || myGenParticles->size() == 0) return -1;
+
+  WdecayType = findW(W,Wdaughter);
+  
+  int WdaughterMatch = -1;
+
+  if( WdecayType > 0 ) WdaughterMatch = daughterMatch(Wdaughter,WdecayType);
+
+  //cout << "done with matching" << endl;
+
+  if(WdecayType == 11 || WdecayType == 1511) //electron
+    {
+      //cout << "electron match" << endl;
+      if( WdaughterMatch > -1 ) // electron on electron list
+	{
+	  if( isGoodElectron(WdaughterMatch) ) 
+	    return 101100;//there is match, and it passes all cuts
+	  else if( 
+		  fabs(myElectronsPF->at(WdaughterMatch).superCluster_eta) > 2.5
+		  || fabs(myGenParticles->at(Wdaughter).eta) > 2.5 ) 
+	    //there is a match, but it is out of eta range
+	    return 101101;
+	  else if( myElectronsPF->at(WdaughterMatch).pt < 10 
+		   || myGenParticles->at(Wdaughter).pt < 10 ) 
+	    //there is a match, it is in eta range, but it is out of pt range
+	    return 101102;
+	  else if ((myElectronsPF->at(WdaughterMatch).chargedHadronIso
+		    + myElectronsPF->at(WdaughterMatch).photonIso
+		    + myElectronsPF->at(WdaughterMatch).neutralHadronIso)/myElectronsPF->at(WdaughterMatch).pt >=0.2 )
+	    //there is a match, it is in eta and pt range, but it fails isolation cut
+	    return 101103;
+	  else return 101104;//it fails some other quality cut
+	}
+      else
+	{
+	  if(fabs(myGenParticles->at(Wdaughter).eta) > 2.5) return 201101;//
+	  else if(myGenParticles->at(Wdaughter).pt < 10) return 201102;//
+	  else return 201103;
+	}
+    }
+  if(WdecayType == 13 || WdecayType == 1513) //muon
+    {
+      //cout << "muon match" << endl;
+      if( WdaughterMatch > -1 ) // muon on muon list
+	{
+	  //cout << "matched daughter" << endl;
+	  //cout << "true index " << Wdaughter << endl;
+	  //cout << "match index " << WdaughterMatch << endl;
+	  if( isGoodMuon(WdaughterMatch) ) return 101300;
+	  else if( fabs(myMuonsPF->at(WdaughterMatch).eta) > 2.4 
+		   || fabs(myGenParticles->at(Wdaughter).eta) > 2.4 ) 
+	    return 101301;
+	  else if( myMuonsPF->at(WdaughterMatch).pt < 10 
+		   || myGenParticles->at(Wdaughter).pt < 10 ) 
+	    return 101302;
+	  else if ( (myMuonsPF->at(WdaughterMatch).chargedHadronIso
+		     + myMuonsPF->at(WdaughterMatch).photonIso
+		     + myMuonsPF->at(WdaughterMatch).neutralHadronIso)/myMuonsPF->at(WdaughterMatch).pt >=0.2 )
+	    return 101303;
+	  else return 101304;
+	}
+      else
+	{
+	  //cout << "unmatched daughter" << endl;
+	  //cout << "true index " << Wdaughter << endl;
+	  if(fabs(myGenParticles->at(Wdaughter).eta) > 2.4) return 201301;//
+	  else if(myGenParticles->at(Wdaughter).pt < 10) return 201302;//
+	  else return 201303;
+	}
+    }
+  if(WdecayType == 15)//tau
+    {
+      //cout << "tau match" << endl;
+      if( WdaughterMatch > -1 ) // tau on jet list
+	{
+	  if( isGoodJet(WdaughterMatch) ) return 101500;
+	  else return 101501;
+	}
+      else
+	{
+	  return 201500;
+	}
+    }
+  
+  
+  return 0;
+}
+
 void EventCalculator::sampleAnalyzer(itreestream& stream){
 
 
-  //TFile fout("histos.root","RECREATE");
+  TFile fout("histos.root","RECREATE");
   
   //TH1F * h_MCPU = new TH1F("h_MCPU","unweighted PU distribution",35,0.5,34.5);
   //TH1F * h_MCPUr = new TH1F("h_MCPUr","reweighted PU distribution",35,-0.5,34.5);
@@ -6345,6 +6443,13 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
   //TH1F * h_met_1mu0e_trig_mht90_ht350= new TH1F("h_met_1mu0e_trig_mht90_ht350","HT",1000,0,1000);
   //TH1F * h_met_1mu0e_den_mht110      = new TH1F("h_met_1mu0e_den_mht110","HT",1000,0,1000);
   //TH1F * h_met_1mu0e_trig_mht110     = new TH1F("h_met_1mu0e_trig_mht110","HT",1000,0,1000);
+
+
+  TH2F * h_Wlnueta = new TH2F("h_Wlnueta","lepton eta vs neutrino eta",100,-5,5,100,-5,5);
+  TH2F * h_Wlnupt = new TH2F("h_Wlnupt","lepton pt vs neutrino pt",100,0,300,100,0,300);
+
+  TH2F * h_Wtaulnueta = new TH2F("h_Wtaulnueta","tautolepton eta vs neutrino eta",100,-5,5,100,-5,5);
+  TH2F * h_Wtaulnupt = new TH2F("h_Wtaulnupt","tautolepton pt vs neutrino pt",100,0,300,100,0,300);
 
   //std::vector<int> vrun,vlumi,vevent;
   //loadEventList(vrun, vlumi, vevent);
@@ -6432,9 +6537,169 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
     //		<< std::endl;
     //  }
     //}
-    decayType = getTTbarDecayType(W1decayType, W2decayType);
-    std::cout << "decaytype = " << decayType << ", W1decayType = " << W1decayType << ", W2decayType = " << W2decayType << std::endl;
+    int W1, W1daughter, W2, W2daughter, returnvalue;
 
+    returnvalue = getWDecayType(W1decayType, W1, W1daughter);
+   
+    //W1decayType = findW(W1,W1daughter);
+    if(returnvalue==101302){
+    std::cout << "W1decayType = " << W1decayType << ", W1 = " << W1 << ", W1daughter = " << W1daughter << std::endl;
+    std::cout << "\t returnvalue = " << returnvalue << std::endl;
+    }
+    //std::cout << "myGenparticles size = " << myGenParticles->size() << std::endl;
+    /*
+    decayType = getTTbarDecayType(W1decayType, W2decayType, W1, W1daughter, W2, W2daughter);
+
+    if(W1decayType == 11 || W1decayType == 13 ){
+      //|| W1decayType == 1511 || W1decayType == 1513 ){
+    //if(W1decayType == 1511 || W1decayType == 1513 ){
+       //|| W2decayType == 11 || W2decayType == 13 || W2decayType == 1511 || W2decayType == 1513){
+
+      //std::cout << "decaytype = " << decayType << ", W1decayType = " << W1decayType << ", W2decayType = " << W2decayType 
+      //		<< ", W1 = " << W1 << ", W1 daughter = " << W1daughter << ", W2 = " << W2 << ", W2daughter = " << W2daughter << std::endl;
+      
+      //std::cout << "\t W1 daughter: pdgId = " << myGenParticles->at(W1daughter).pdgId << ", eta = " << myGenParticles->at(W1daughter).eta << ", pt = " << myGenParticles->at(W1daughter).pt  << std::endl;
+      //std::cout << "\t W1 daughter+1: pdgId = " << myGenParticles->at(W1daughter+1).pdgId << ", eta = " << myGenParticles->at(W1daughter+1).eta << ", pt = " << myGenParticles->at(W1daughter+1).pt  << std::endl;
+
+       int W1firstdaughter = TMath::Nint(myGenParticles->at(W1).firstDaughter);
+       //std::cout << "W1 first daughter = " << W1firstdaughter << std::endl;
+       int d1_id = abs(myGenParticles->at(W1firstdaughter).pdgId);
+       int d2_id = abs(myGenParticles->at(W1firstdaughter+1).pdgId);
+       float d1_eta = myGenParticles->at(W1firstdaughter).eta;
+       float d2_eta = myGenParticles->at(W1firstdaughter+1).eta;
+       float d1_pt = myGenParticles->at(W1firstdaughter).pt;
+       float d2_pt = myGenParticles->at(W1firstdaughter+1).pt;
+       //std::cout << "\t W1 daughter 1: pdgId = " << d1_id << ", eta = " << d1_eta << ", pt = " << d1_pt  << std::endl;
+       //std::cout << "\t W1 daughter 2: pdgId = " << d2_id << ", eta = " << d2_eta << ", pt = " << d2_pt  << std::endl;
+
+       float l_eta, nu_eta, l_pt, nu_pt;
+       if( d1_id == 12 || d1_id == 14 || d1_id == 16){
+	 nu_eta = d1_eta; nu_pt = d1_pt;
+	 l_eta = d2_eta; l_pt = d2_pt;
+       }
+       else if( d2_id == 12 || d2_id == 14 || d2_id == 16){
+	 nu_eta = d2_eta; nu_pt = d2_pt;
+	 l_eta = d1_eta; l_pt = d1_pt;
+       }
+       else{std::cout << "error - expected a neutrino" << std::endl; assert(0);}
+      //std::cout << "\t W2 daughter: pdgID = " << myGenParticles->at(W2daughter).pdgid << ", eta = " << myGenParticles->at(W2daughter).eta << ", pt = " << myGenParticles->at(W2daughter).pt  << std::endl;
+      
+       h_Wlnueta->Fill(l_eta, nu_eta);
+       h_Wlnupt->Fill(l_pt, nu_pt);
+
+    }
+    
+    if(W2decayType == 11 || W2decayType == 13 ){
+
+       int W2firstdaughter = TMath::Nint(myGenParticles->at(W2).firstDaughter);
+       //std::cout << "W1 first daughter = " << W1firstdaughter << std::endl;
+       int d1_id = abs(myGenParticles->at(W2firstdaughter).pdgId);
+       int d2_id = abs(myGenParticles->at(W2firstdaughter+1).pdgId);
+       float d1_eta = myGenParticles->at(W2firstdaughter).eta;
+       float d2_eta = myGenParticles->at(W2firstdaughter+1).eta;
+       float d1_pt = myGenParticles->at(W2firstdaughter).pt;
+       float d2_pt = myGenParticles->at(W2firstdaughter+1).pt;
+
+       float l_eta, nu_eta, l_pt, nu_pt;
+       if( d1_id == 12 || d1_id == 14 || d1_id == 16){
+	 nu_eta = d1_eta; nu_pt = d1_pt;
+	 l_eta = d2_eta; l_pt = d2_pt;
+       }
+       else if( d2_id == 12 || d2_id == 14 || d2_id == 16){
+	 nu_eta = d2_eta; nu_pt = d2_pt;
+	 l_eta = d1_eta; l_pt = d1_pt;
+       }
+       else{std::cout << "error - expected a neutrino" << std::endl; assert(0);}
+
+      
+       h_Wlnueta->Fill(l_eta, nu_eta);
+       h_Wlnupt->Fill(l_pt, nu_pt);
+
+    }
+
+    //tautolepton
+    if(W1decayType == 1511 || W1decayType == 1513 ){
+
+      //W1 daughter is always the e/mu
+      int wd_pdgid = abs(myGenParticles->at(W1daughter).pdgId);
+      float wd_eta = myGenParticles->at(W1daughter).eta;
+      float wd_pt = myGenParticles->at(W1daughter).pt;
+
+      if(wd_pdgid != 11 && wd_pdgid !=13){std::cout << "error- expected an electron or muon" << std::endl; assert(0);}
+
+      //std::cout << "decaytype = " << decayType << ", W1decayType = " << W1decayType << ", W2decayType = " << W2decayType 
+      //		<< ", W1 = " << W1 << ", W1 daughter = " << W1daughter << ", W2 = " << W2 << ", W2daughter = " << W2daughter << std::endl;
+      //std::cout << "\t W1 daughter: pdgId = " << wd_pdgid << ", eta = " << wd_eta << ", pt = " << wd_pt  << std::endl;
+      //std::cout << "\t W1 daughter+1: pdgId = " << myGenParticles->at(W1daughter+1).pdgId << ", eta = " << myGenParticles->at(W1daughter+1).eta << ", pt = " << myGenParticles->at(W1daughter+1).pt  << std::endl;
+      
+      int W1firstdaughter = TMath::Nint(myGenParticles->at(W1).firstDaughter);
+      //std::cout << "W1 first daughter = " << W1firstdaughter << std::endl;
+      int d1_id = abs(myGenParticles->at(W1firstdaughter).pdgId);
+      int d2_id = abs(myGenParticles->at(W1firstdaughter+1).pdgId);
+      float d1_eta = myGenParticles->at(W1firstdaughter).eta;
+      float d2_eta = myGenParticles->at(W1firstdaughter+1).eta;
+      float d1_pt = myGenParticles->at(W1firstdaughter).pt;
+      float d2_pt = myGenParticles->at(W1firstdaughter+1).pt;
+      //std::cout << "\t W1 daughter 1: pdgId = " << d1_id << ", eta = " << d1_eta << ", pt = " << d1_pt  << std::endl;
+      //std::cout << "\t W1 daughter 2: pdgId = " << d2_id << ", eta = " << d2_eta << ", pt = " << d2_pt  << std::endl;
+         
+      float l_eta, nu_eta, l_pt, nu_pt;
+      l_eta = wd_eta; l_pt = wd_pt;
+      if( d1_id == 16){
+	nu_eta = d1_eta; nu_pt = d1_pt;
+      }
+      else if( d2_id == 16){
+	nu_eta = d2_eta; nu_pt = d2_pt;
+      }
+      else{std::cout << "d1_id = " << d1_id << std::endl; std::cout << "error - expected a neutrino" << std::endl; assert(0);}
+      ////std::cout << "\t W2 daughter: pdgID = " << myGenParticles->at(W2daughter).pdgid << ", eta = " << myGenParticles->at(W2daughter).eta << ", pt = " << myGenParticles->at(W2daughter).pt  << std::endl;
+      
+      h_Wtaulnueta->Fill(l_eta, nu_eta);
+      h_Wtaulnupt->Fill(l_pt, nu_pt);
+    }
+
+    if(W2decayType == 1511 || W2decayType == 1513 ){
+      
+      //W1 daughter is always the e/mu
+      int wd_pdgid = abs(myGenParticles->at(W2daughter).pdgId);
+      float wd_eta = myGenParticles->at(W2daughter).eta;
+      float wd_pt = myGenParticles->at(W2daughter).pt;
+
+      if(wd_pdgid != 11 && wd_pdgid !=13){std::cout << "error- expected an electron or muon" << std::endl; assert(0);}
+
+      //std::cout << "decaytype = " << decayType << ", W1decayType = " << W1decayType << ", W2decayType = " << W2decayType 
+      //		<< ", W1 = " << W1 << ", W1 daughter = " << W1daughter << ", W2 = " << W2 << ", W2daughter = " << W2daughter << std::endl;
+      //std::cout << "\t W1 daughter: pdgId = " << wd_pdgid << ", eta = " << wd_eta << ", pt = " << wd_pt  << std::endl;
+
+      int W2firstdaughter = TMath::Nint(myGenParticles->at(W2).firstDaughter);
+      //std::cout << "W1 first daughter = " << W1firstdaughter << std::endl;
+      int d1_id = abs(myGenParticles->at(W2firstdaughter).pdgId);
+      int d2_id = abs(myGenParticles->at(W2firstdaughter+1).pdgId);
+      float d1_eta = myGenParticles->at(W2firstdaughter).eta;
+      float d2_eta = myGenParticles->at(W2firstdaughter+1).eta;
+      float d1_pt = myGenParticles->at(W2firstdaughter).pt;
+      float d2_pt = myGenParticles->at(W2firstdaughter+1).pt;
+      //std::cout << "\t W2 daughter 1: pdgId = " << d1_id << ", eta = " << d1_eta << ", pt = " << d1_pt  << std::endl;
+      //std::cout << "\t W2 daughter 2: pdgId = " << d2_id << ", eta = " << d2_eta << ", pt = " << d2_pt  << std::endl;
+   
+
+      float l_eta, nu_eta, l_pt, nu_pt;
+      l_eta = wd_eta; l_pt = wd_pt;
+      if( d1_id == 16){
+	nu_eta = d1_eta; nu_pt = d1_pt;
+      }
+      else if( d2_id == 16){
+	nu_eta = d2_eta; nu_pt = d2_pt;
+      }
+      else{std::cout << "d1_id = " << d1_id << std::endl; std::cout << "error - expected a neutrino" << std::endl; assert(0);}
+      ////std::cout << "\t W2 daughter: pdgID = " << myGenParticles->at(W2daughter).pdgid << ", eta = " << myGenParticles->at(W2daughter).eta << ", pt = " << myGenParticles->at(W2daughter).pt  << std::endl;
+      
+      h_Wtaulnueta->Fill(l_eta, nu_eta);
+      h_Wtaulnupt->Fill(l_pt, nu_pt);
+    }
+    */
+
+    
     //if((W1decayType==13 && W2decayType==1) || (W1decayType==1 && W2decayType==13) || (W1decayType==1513 && W2decayType==1) || (W1decayType==1 && W2decayType==1513)){
     //  nSemiMu++;
     //}
@@ -6794,8 +7059,8 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
   std::cout << "nOther = " << nOther << std::endl;  
   
   
-  //fout.Write();
-  //fout.Close();
+  fout.Write();
+  fout.Close();
 
 
   return;
