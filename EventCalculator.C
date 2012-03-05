@@ -327,9 +327,9 @@ float EventCalculator::getPUWeight(reweight::LumiReWeighting lumiWeights) {
     if(BX == 0) { 
       npv = pileupsummaryinfo.at(i).addpileupinfo_getPU_NumInteractions;
     }
-    else {
-      cout<<"[EventCalculator::getPUweight 1D] is this supposed to happen?"<<endl;
-    }
+    //else {
+    //  cout<<"[EventCalculator::getPUweight 1D] is this supposed to happen?"<<endl;
+    //}
   }
   //in-time PU only
   weight = lumiWeights.ITweight( npv );
