@@ -4037,10 +4037,8 @@ float EventCalculator::jetTagEff(unsigned int ijet, TH1F* h_btageff, TH1F* h_cta
 	}
 
 	//	cout<<"jet flavor, pt, SF = "<<abs(flavor)<<" "<<pt<<" "<<SFb<<endl;
-	tageff = SFb * h_btageff->GetBinContent( h_btageff->FindBin( pt ) );
-
-	if (abs(flavor) == 4) tageff*=extraSFc;
-	else if (abs(flavor)==5) tageff*=extraSFb;
+	if      (abs(flavor) == 5) tageff = extraSFb * SFb * h_btageff->GetBinContent( h_btageff->FindBin( pt ) );
+	else if (abs(flavor) == 4) tageff = extraSFc * SFb * h_ctageff->GetBinContent( h_ctageff->FindBin( pt ) );
 	else assert(0);
       }
       else { //light flavor [ see https://twiki.cern.ch/twiki/pub/CMS/BtagPOG/SFlightFuncs.C ]
