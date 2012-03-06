@@ -223,12 +223,17 @@ public:
   float jetEtaOfN(unsigned int n);
   float jetEnergyOfN(unsigned int n);
   int jetFlavorOfN(unsigned int n);
+  float jetChargedHadronFracOfN(unsigned int n);
+  int jetChargedHadronMultOfN(unsigned int n);
+
   float bjetPtOfN(unsigned int n);
   float bjetPhiOfN(unsigned int n);
   float bjetEtaOfN(unsigned int n);
   float bjetEnergyOfN(unsigned int n);
   float bjetCSVOfN(unsigned int n);
   int bjetFlavorOfN(unsigned int n);
+  float bjetChargedHadronFracOfN(unsigned int n);
+  int bjetChargedHadronMultOfN(unsigned int n);
 
   float elePtOfN(unsigned int n, const float ptthreshold=10);
   float eleEtaOfN(unsigned int n, const float ptthreshold=10);
@@ -318,7 +323,7 @@ private:
   //pointers to the critical jet, etc collections
   std::vector<jet2_s> * myJetsPF;
   std::vector<jethelper2_s> * myJetsPFhelper;
-  
+
   std::vector<electron1_s> * myElectronsPF;
   std::vector<electronhelper1_s> * myElectronsPFhelper;
   std::vector<muon1_s> * myMuonsPF;

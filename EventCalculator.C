@@ -2379,6 +2379,7 @@ float  EventCalculator::jetPtOfN(unsigned int n) {
 }
 
 
+
 float  EventCalculator::jetPhiOfN(unsigned int n) {
 
   unsigned int ngood=0;
@@ -2439,6 +2440,36 @@ int  EventCalculator::jetFlavorOfN(unsigned int n) {
     if (pass ) {
       ngood++;
       if (ngood==n) return  myJetsPF->at(i).partonFlavour;
+    }
+  }
+  return 0;
+}
+
+float  EventCalculator::jetChargedHadronFracOfN(unsigned int n) {
+
+  unsigned int ngood=0;
+  for (unsigned int i=0; i<myJetsPF->size(); i++) {
+    bool pass=false;
+    pass = isGoodJet(i);
+
+    if (pass ) {
+      ++ngood;
+      if (ngood==n) return  myJetsPF->at(i).chargedHadronEnergyFraction;
+    }
+  }
+  return 0;
+}
+
+int  EventCalculator::jetChargedHadronMultOfN(unsigned int n) {
+
+  unsigned int ngood=0;
+  for (unsigned int i=0; i<myJetsPF->size(); i++) {
+    bool pass=false;
+    pass = isGoodJet(i);
+
+    if (pass ) {
+      ++ngood;
+      if (ngood==n) return  TMath::Nint(myJetsPF->at(i).chargedHadronMultiplicity);
     }
   }
   return 0;
@@ -2542,6 +2573,37 @@ int  EventCalculator::bjetFlavorOfN(unsigned int n) {
   return 0;
 }
 
+float  EventCalculator::bjetChargedHadronFracOfN(unsigned int n) {
+
+  unsigned int ngood=0;
+  for (unsigned int i=0; i<myJetsPF->size(); i++) {
+
+    bool pass=false;
+    pass = (isGoodJet30(i) && passBTagger(i));
+
+    if (pass ) {
+      ngood++;
+      if (ngood==n) return   myJetsPF->at(i).chargedHadronEnergyFraction;
+    }
+  }
+  return 0;
+}
+
+int  EventCalculator::bjetChargedHadronMultOfN(unsigned int n) {
+
+  unsigned int ngood=0;
+  for (unsigned int i=0; i<myJetsPF->size(); i++) {
+
+    bool pass=false;
+    pass = (isGoodJet30(i) && passBTagger(i));
+
+    if (pass ) {
+      ngood++;
+      if (ngood==n) return   TMath::Nint(myJetsPF->at(i).chargedHadronMultiplicity);
+    }
+  }
+  return 0;
+}
 
 //-- first two jets are from W.  third is b jet
 void EventCalculator::calcCosHel( unsigned int j1i, unsigned int j2i, unsigned int j3i, float & wcoshel,float &tcoshel) {
@@ -4316,6 +4378,10 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   float jetpt2,jetgenpt2,jetphi2, jeteta2, jetenergy2, bjetpt2, bjetphi2, bjeteta2, bjetenergy2;
   float jetpt3,jetgenpt3,jetphi3, jeteta3, jetenergy3, bjetpt3, bjetphi3, bjeteta3, bjetenergy3;
   int jetflavor1, jetflavor2, jetflavor3, bjetflavor1, bjetflavor2, bjetflavor3;
+
+  float jetchargedhadronfrac1, jetchargedhadronfrac2, jetchargedhadronfrac3, bjetchargedhadronfrac1, bjetchargedhadronfrac2, bjetchargedhadronfrac3;
+  int jetchargedhadronmult1, jetchargedhadronmult2, jetchargedhadronmult3, bjetchargedhadronmult1, bjetchargedhadronmult2, bjetchargedhadronmult3;
+
   float eleet1, eleeta1;
   float muonpt1, muoneta1;
   float taupt1, taueta1;
@@ -4331,6 +4397,7 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   int SUSY_process;
 
   //new variables from Luke
+/* jmt -- remove for now
   float lambda1_allJets;
   float lambda2_allJets;
   float determinant_allJets;
@@ -4343,10 +4410,11 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   float lambda1_topThreeJetsPlusMET;
   float lambda2_topThreeJetsPlusMET;
   float determinant_topThreeJetsPlusMET;
-
+*/
+/*
   float transverseThrust,transverseThrustPhi;
   float transverseThrustWithMET,transverseThrustWithMETPhi;
-
+*/
   float minDeltaPhiN_Luke, maxDeltaPhiN_Luke, deltaPhiN1_Luke, deltaPhiN2_Luke, deltaPhiN3_Luke;
   float minTransverseMETSignificance, maxTransverseMETSignificance, transverseMETSignificance1, transverseMETSignificance2, transverseMETSignificance3;
 
@@ -4739,6 +4807,8 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("jetphi1",&jetphi1,"jetphi1/F");
   reducedTree.Branch("jetenergy1",&jetenergy1,"jetenergy1/F");
   reducedTree.Branch("jetflavor1",&jetflavor1,"jetflavor1/I");
+  reducedTree.Branch("jetchargedhadronfrac1",&jetchargedhadronfrac1,"jetchargedhadronfrac1/F");
+  reducedTree.Branch("jetchargedhadronmult1",&jetchargedhadronmult1,"jetchargedhadronmult1/I");
 
   reducedTree.Branch("jetpt2",&jetpt2,"jetpt2/F");
   reducedTree.Branch("jetgenpt2",&jetgenpt2,"jetgenpt2/F");
@@ -4746,6 +4816,8 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("jetphi2",&jetphi2,"jetphi2/F");
   reducedTree.Branch("jetenergy2",&jetenergy2,"jetenergy2/F");
   reducedTree.Branch("jetflavor2",&jetflavor2,"jetflavor2/I");
+  reducedTree.Branch("jetchargedhadronfrac2",&jetchargedhadronfrac2,"jetchargedhadronfrac2/F");
+  reducedTree.Branch("jetchargedhadronmult2",&jetchargedhadronmult2,"jetchargedhadronmult2/I");
 
   reducedTree.Branch("jetpt3",&jetpt3,"jetpt3/F");
   reducedTree.Branch("jetgenpt3",&jetgenpt3,"jetgenpt3/F");
@@ -4753,24 +4825,32 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("jetphi3",&jetphi3,"jetphi3/F");
   reducedTree.Branch("jetenergy3",&jetenergy3,"jetenergy3/F");
   reducedTree.Branch("jetflavor3",&jetflavor3,"jetflavor3/I");
+  reducedTree.Branch("jetchargedhadronfrac3",&jetchargedhadronfrac3,"jetchargedhadronfrac3/F");
+  reducedTree.Branch("jetchargedhadronmult3",&jetchargedhadronmult3,"jetchargedhadronmult3/I");
 
   reducedTree.Branch("bjetpt1",&bjetpt1,"bjetpt1/F");
   reducedTree.Branch("bjeteta1",&bjeteta1,"bjeteta1/F");
   reducedTree.Branch("bjetphi1",&bjetphi1,"bjetphi1/F");
   reducedTree.Branch("bjetenergy1",&bjetenergy1,"bjetenergy1/F");  
   reducedTree.Branch("bjetflavor1",&bjetflavor1,"bjetflavor1/I");
+  reducedTree.Branch("bjetchargedhadronfrac1",&bjetchargedhadronfrac1,"bjetchargedhadronfrac1/F");
+  reducedTree.Branch("bjetchargedhadronmult1",&bjetchargedhadronmult1,"bjetchargedhadronmult1/I");
 
   reducedTree.Branch("bjetpt2",&bjetpt2,"bjetpt2/F");
   reducedTree.Branch("bjeteta2",&bjeteta2,"bjeteta2/F");
   reducedTree.Branch("bjetphi2",&bjetphi2,"bjetphi2/F");
   reducedTree.Branch("bjetenergy2",&bjetenergy2,"bjetenergy2/F");
-  reducedTree.Branch("bjetflavor2",&bjetflavor2,"bjetflavor2/I");  
+  reducedTree.Branch("bjetflavor2",&bjetflavor2,"bjetflavor2/I");
+  reducedTree.Branch("bjetchargedhadronfrac2",&bjetchargedhadronfrac2,"bjetchargedhadronfrac2/F");
+  reducedTree.Branch("bjetchargedhadronmult2",&bjetchargedhadronmult2,"bjetchargedhadronmult2/I");
   
   reducedTree.Branch("bjetpt3",&bjetpt3,"bjetpt3/F");
   reducedTree.Branch("bjeteta3",&bjeteta3,"bjeteta3/F");
   reducedTree.Branch("bjetphi3",&bjetphi3,"bjetphi3/F");
   reducedTree.Branch("bjetenergy3",&bjetenergy3,"bjetenergy3/F");  
   reducedTree.Branch("bjetflavor3",&bjetflavor3,"bjetflavor3/I");
+  reducedTree.Branch("bjetchargedhadronfrac3",&bjetchargedhadronfrac3,"bjetchargedhadronfrac3/F");
+  reducedTree.Branch("bjetchargedhadronmult3",&bjetchargedhadronmult3,"bjetchargedhadronmult3/I");
 
   reducedTree.Branch("eleet1",&eleet1,"eleet1/F");
   reducedTree.Branch("eleeta1",&eleeta1,"eleeta1/F");
@@ -4782,6 +4862,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("eleRelIso",&eleRelIso,"eleRelIso/F");
   reducedTree.Branch("muonRelIso",&muonRelIso,"muonRelIso/F");
 
+/*
   reducedTree.Branch("lambda1_allJets",&lambda1_allJets,"lambda1_allJets/F");
   reducedTree.Branch("lambda2_allJets",&lambda2_allJets,"lambda2_allJets/F");
   reducedTree.Branch("determinant_allJets",&determinant_allJets,"determinant_allJets/F");
@@ -4794,13 +4875,14 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("lambda1_topThreeJetsPlusMET",&lambda1_topThreeJetsPlusMET,"lambda1_topThreeJetsPlusMET/F");
   reducedTree.Branch("lambda2_topThreeJetsPlusMET",&lambda2_topThreeJetsPlusMET,"lambda2_topThreeJetsPlusMET/F");
   reducedTree.Branch("determinant_topThreeJetsPlusMET",&determinant_topThreeJetsPlusMET,"determinant_topThreeJetsPlusMET/F");
-
+*/
+/*
   reducedTree.Branch("transverseThrust",&transverseThrust,"transverseThrust/F");
   reducedTree.Branch("transverseThrustPhi",&transverseThrustPhi,"transverseThrustPhi/F");
 
   reducedTree.Branch("transverseThrustWithMET",&transverseThrustWithMET,"transverseThrustWithMET/F");
   reducedTree.Branch("transverseThrustWithMETPhi",&transverseThrustWithMETPhi,"transverseThrustWithMETPhi/F");
-
+*/
   reducedTree.Branch("minDeltaPhiN_Luke", &minDeltaPhiN_Luke, "minDeltaPhiN_Luke/F");
   reducedTree.Branch("maxDeltaPhiN_Luke", &maxDeltaPhiN_Luke, "maxDeltaPhiN_Luke/F");
   reducedTree.Branch("deltaPhiN1_Luke", &deltaPhiN1_Luke, "deltaPhiN1_Luke/F");
@@ -5250,6 +5332,8 @@ Also the pdfWeightSum* histograms that are used for LM9.
       jeteta1 = jetEtaOfN(1);
       jetenergy1 = jetEnergyOfN(1);
       jetflavor1 = jetFlavorOfN(1);
+      jetchargedhadronfrac1 = jetChargedHadronFracOfN(1);
+      jetchargedhadronmult1 = jetChargedHadronMultOfN(1);
 
       jetpt2 = jetPtOfN(2);
       jetgenpt2 = jetGenPtOfN(2); 
@@ -5257,6 +5341,8 @@ Also the pdfWeightSum* histograms that are used for LM9.
       jeteta2 = jetEtaOfN(2);
       jetenergy2 = jetEnergyOfN(2);
       jetflavor2 = jetFlavorOfN(2);
+      jetchargedhadronfrac2 = jetChargedHadronFracOfN(2);
+      jetchargedhadronmult2 = jetChargedHadronMultOfN(2);
 
       jetpt3 = jetPtOfN(3);
       jetgenpt3 = jetGenPtOfN(3); 
@@ -5264,24 +5350,32 @@ Also the pdfWeightSum* histograms that are used for LM9.
       jeteta3 = jetEtaOfN(3);
       jetenergy3 = jetEnergyOfN(3);      
       jetflavor3 = jetFlavorOfN(3);
+      jetchargedhadronfrac3 = jetChargedHadronFracOfN(3);
+      jetchargedhadronmult3 = jetChargedHadronMultOfN(3);
 
       bjetpt1 = bjetPtOfN(1);
       bjetphi1 = bjetPhiOfN(1);
       bjeteta1 = bjetEtaOfN(1);
       bjetenergy1 = bjetEnergyOfN(1); 
       bjetflavor1 = bjetFlavorOfN(1);
+      bjetchargedhadronfrac1 = bjetChargedHadronFracOfN(1);
+      bjetchargedhadronmult1 = bjetChargedHadronMultOfN(1);
 
       bjetpt2 = bjetPtOfN(2);
       bjetphi2 = bjetPhiOfN(2);
       bjeteta2 = bjetEtaOfN(2);
       bjetenergy2 = bjetEnergyOfN(2); 
       bjetflavor2 = bjetFlavorOfN(2);
+      bjetchargedhadronfrac2 = bjetChargedHadronFracOfN(2);
+      bjetchargedhadronmult2 = bjetChargedHadronMultOfN(2);
 
       bjetpt3 = bjetPtOfN(3);
       bjetphi3 = bjetPhiOfN(3);
       bjeteta3 = bjetEtaOfN(3);
       bjetenergy3 = bjetEnergyOfN(3);       
       bjetflavor3 = bjetFlavorOfN(3);
+      bjetchargedhadronfrac3 = bjetChargedHadronFracOfN(3);
+      bjetchargedhadronmult3 = bjetChargedHadronMultOfN(3);
 
       eleet1 = elePtOfN(1);
       eleeta1 = eleEtaOfN(1);
@@ -5314,10 +5408,12 @@ Also the pdfWeightSum* histograms that are used for LM9.
       buggyEvent = inEventList(vrun, vlumi, vevent);
       
       //fill new variables from Luke
+/*
       getSphericityJetMET(lambda1_allJets,lambda2_allJets,determinant_allJets,99,false);
       getSphericityJetMET(lambda1_allJetsPlusMET,lambda2_allJetsPlusMET,determinant_allJetsPlusMET,99,true);
       getSphericityJetMET(lambda1_topThreeJets,lambda2_topThreeJets,determinant_topThreeJets,3,false);
       getSphericityJetMET(lambda1_topThreeJetsPlusMET,lambda2_topThreeJetsPlusMET,determinant_topThreeJetsPlusMET,3,true);
+*/
       //Uncomment next two lines to do thrust calculations
       //getTransverseThrustVariables(transverseThrust, transverseThrustPhi, false);
       //getTransverseThrustVariables(transverseThrustWithMET, transverseThrustWithMETPhi, true);
