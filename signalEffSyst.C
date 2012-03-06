@@ -538,6 +538,7 @@ void runSystematics2011_LM9(  TString sampleOfInterest="LM9" ) {
     (*textfiles_human[i])<<"   Unclustered energy     &"<<100*SIG.value("MET")<<endl;
     (*textfiles_human[i])<<"   PU                     &"<<100*SIG.value("PU")<<endl;
     (*textfiles_human[i])<<"  \\b tag efficiency       &"<<100*SIG.value("btag")<<endl;
+    (*textfiles_human[i])<<"  LF mistag efficiency    &"<<100*SIG.value("lftag")<<endl;
     (*textfiles_human[i])<<"   PDF                    &"<<100*SIG.value("PDF")<<endl;
     (*textfiles_human[i])<<"   kFactor                &"<<100*SIG.value("kFactor")<<endl;
     (*textfiles_human[i])<<"   Trigger efficiency     &"<<100*SIG.value("trigger")<<endl;
