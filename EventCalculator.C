@@ -1360,6 +1360,74 @@ double EventCalculator::getDeltaPhiMETN_deltaT(unsigned int ijet, float otherpt,
 }
 
 
+double EventCalculator::getDeltaPhiMETN_electron_deltaT(unsigned int ielectron, float otherpt, float othereta, bool otherid, bool dataJetRes, bool keith) {
+
+  double METx = myMETPF->at(0).pt * cos(myMETPF->at(0).phi);
+  double METy = myMETPF->at(0).pt * sin(myMETPF->at(0).phi);
+  
+  const double px = myElectronsPF->at(ielectron).pt * cos(myElectronsPF->at(ielectron).phi);
+  const double py = myElectronsPF->at(ielectron).pt * sin(myElectronsPF->at(ielectron).phi);
+
+  //get sum for deltaT
+  double sum = 0;
+  for (unsigned int i=0; i< myJetsPF->size(); i++) {
+    if(isGoodJet(i, otherpt, othereta, otherid)){
+      double jetres = dataJetRes ? getDataJetRes(getJetPt(i), myJetsPF->at(i).eta) : 0.1;
+      if(keith)  sum += pow( jetres*(METx*getJetPy(i) - METy*getJetPx(i)), 2);
+      else sum += pow( jetres*( px*getJetPy(i) - py*getJetPx(i)), 2);
+    }//is good jet
+  }//i
+  
+  double deltaT = keith ? sqrt(sum)/getMET() : sqrt(sum)/ (myElectronsPF->at(ielectron).pt);
+  return deltaT;
+}
+double EventCalculator::getDeltaPhiMETN_muon_deltaT(unsigned int imuon, float otherpt, float othereta, bool otherid, bool dataJetRes, bool keith) {
+
+  double METx = myMETPF->at(0).pt * cos(myMETPF->at(0).phi);
+  double METy = myMETPF->at(0).pt * sin(myMETPF->at(0).phi);
+  
+  const double px = myMuonsPF->at(imuon).pt * cos(myMuonsPF->at(imuon).phi);
+  const double py = myMuonsPF->at(imuon).pt * sin(myMuonsPF->at(imuon).phi);
+
+  //get sum for deltaT
+  double sum = 0;
+  for (unsigned int i=0; i< myJetsPF->size(); i++) {
+    if(isGoodJet(i, otherpt, othereta, otherid)){
+      double jetres = dataJetRes ? getDataJetRes(getJetPt(i), myJetsPF->at(i).eta) : 0.1;
+      if(keith)  sum += pow( jetres*(METx*getJetPy(i) - METy*getJetPx(i)), 2);
+      else sum += pow( jetres*( px*getJetPy(i) - py*getJetPx(i)), 2);
+    }//is good jet
+  }//i
+  
+  double deltaT = keith ? sqrt(sum)/getMET() : sqrt(sum)/ (myMuonsPF->at(imuon).pt);
+  return deltaT;
+}
+
+//the ielectron is a different logic than is used for the jet index in getDeltaPhiMETN()
+//it usable directly on the electron list. we have already checked that it is a good electron
+double EventCalculator::getDeltaPhiMETN_electron( const unsigned int ielectron, 
+						  float otherpt, float othereta, bool otherid, bool dataJetRes, bool keith) {
+  double deltaT = getDeltaPhiMETN_electron_deltaT(ielectron, otherpt, othereta, otherid, dataJetRes, keith);
+
+  //calculate deltaPhiMETN
+  double dp =  getDeltaPhi(myElectronsPF->at(ielectron).phi, getMETphi());
+  double dpN = dp / atan2(deltaT, getMET());
+  
+  return dpN;
+}
+//the imuon is a different logic than is used for the jet index in getDeltaPhiMETN()
+//it usable directly on the muon list. we have already checked that it is a good muon
+double EventCalculator::getDeltaPhiMETN_muon( const unsigned int imuon, 
+						  float otherpt, float othereta, bool otherid, bool dataJetRes, bool keith) {
+  double deltaT = getDeltaPhiMETN_muon_deltaT(imuon, otherpt, othereta, otherid, dataJetRes, keith);
+
+  //calculate deltaPhiMETN
+  double dp =  getDeltaPhi(myMuonsPF->at(imuon).phi, getMETphi());
+  double dpN = dp / atan2(deltaT, getMET());
+  
+  return dpN;
+}
+
 double EventCalculator::getDeltaPhiMETN( unsigned int goodJetN, float mainpt, float maineta, bool mainid,
 					 float otherpt, float othereta, bool otherid, bool dataJetRes, bool keith) {//Ben
   
@@ -1388,7 +1456,7 @@ double EventCalculator::getDeltaPhiMETN( unsigned int goodJetN, float mainpt, fl
 
 
 double EventCalculator::getMinDeltaPhiMETN(unsigned int maxjets, float mainpt, float maineta, bool mainid, 
-					   float otherpt, float othereta, bool otherid, bool dataJetRes, bool keith){//Ben
+					   float otherpt, float othereta, bool otherid, bool dataJetRes, bool keith, bool includeLeptons) {//Ben
   
   double mdpN=1E12;
   
@@ -1397,6 +1465,30 @@ double EventCalculator::getMinDeltaPhiMETN(unsigned int maxjets, float mainpt, f
     double dpN =  getDeltaPhiMETN(i, mainpt, maineta, mainid, otherpt, othereta, otherid, dataJetRes, keith);//i is for i'th *good* jet, starting at i=0. returns -99 if bad jet.
     if (dpN>=0 && dpN<mdpN) mdpN=dpN;//checking that dpN>=0 shouldn't be necessary after break statement above, but add it anyway 
   }
+
+  //this option causes leptons to be treated like jets in calculating DeltaPhi(lepton, MET). the resolution term remains jets only
+  if (includeLeptons) { 
+
+    double  mdpN_e=2e12;
+    double  mdpN_m=2e12;
+    //need to get DeltaPhiMETN for any good leptons in the event
+    for (unsigned int i=0; i <myElectronsPF->size() ; i++) {
+      if (isGoodElectron(i,false,10)) { //pt threshold hard-coded to 10
+	double  dPN_e=  getDeltaPhiMETN_electron(i, otherpt, othereta, otherid, dataJetRes, keith);
+	if (dPN_e>=0 && dPN_e<mdpN_e) mdpN_e=dPN_e;
+      }
+    }
+    for (unsigned int i=0; i <myMuonsPF->size() ; i++) {
+      if (isCleanMuon(i,10)) { //pt threshold hard-coded to 10
+	double  dPN_m=  getDeltaPhiMETN_muon(i, otherpt, othereta, otherid, dataJetRes, keith);
+	if (dPN_m>=0 && dPN_m<mdpN_m) mdpN_m=dPN_m;
+      }
+    }
+    
+    if (mdpN_e < mdpN) mdpN = mdpN_e;
+    if (mdpN_m < mdpN) mdpN = mdpN_m;
+  }
+
   return mdpN;
 }
 
@@ -4329,7 +4421,7 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   float minDeltaPhiN_DJR_otherPt10, minDeltaPhiN_DJR_otherPt20, minDeltaPhiN_DJR_otherPt30, minDeltaPhiN_DJR_otherPt40, minDeltaPhiN_DJR_otherPt50;
   UInt_t minDeltaPhi_chosenJet, minDeltaPhiN_chosenJet;
   UInt_t maxJetMis_chosenJet, maxJetFracMis_chosenJet;
-
+  float minDeltaPhiN_withLepton;
 
   float maxJetMis, max2JetMis, maxJetMisAll30, max2JetMisAll30;
   float maxJetFracMis, max2JetFracMis, maxJetFracMisAll30, max2JetFracMisAll30;
@@ -4776,6 +4868,8 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("minDeltaPhiN_DJR_otherPt40", &minDeltaPhiN_DJR_otherPt40, "minDeltaPhiN_DJR_otherPt40/F");
   reducedTree.Branch("minDeltaPhiN_DJR_otherPt50", &minDeltaPhiN_DJR_otherPt50, "minDeltaPhiN_DJR_otherPt50/F");
   
+  reducedTree.Branch("minDeltaPhiN_withLepton", &minDeltaPhiN_withLepton, "minDeltaPhiN_withLepton/F");
+
   reducedTree.Branch("maxJetMis",&maxJetMis,"maxJetMis/F");
   reducedTree.Branch("max2JetMis",&max2JetMis,"max2JetMis/F");
   reducedTree.Branch("maxJetMisAll30",&maxJetMisAll30,"maxJetMisAll30/F");
@@ -5075,6 +5169,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
     cutHT = passCut("cutHT");
     if ( passCut("cutLumiMask") && (passCut("cutTrigger") || passCut("cutUtilityTrigger")) && cutHT ) {
     
+
       weight = getWeight(nevents);
 
       //for scans, fill correctly normalized pdf weights
@@ -5231,6 +5326,8 @@ Also the pdfWeightSum* histograms that are used for LM9.
       minDeltaPhiN_DJR_otherPt40                  = getMinDeltaPhiMETN(3,50,2.4,true, 40,2.4,true,true,false);
       minDeltaPhiN_DJR_otherPt50                  = getMinDeltaPhiMETN(3,50,2.4,true, 50,2.4,true,true,false);
             
+      minDeltaPhiN_withLepton = getMinDeltaPhiMETN(3,50,2.4,true,30,2.4,true,false,false,true);
+
       maxJetMis=getMaxJetMis(1,3,50);
       max2JetMis=getMaxJetMis(2,3,50);
       maxJetMisAll30=getMaxJetMis(1,99,30);

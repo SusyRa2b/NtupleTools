@@ -157,7 +157,7 @@ public:
   double getDeltaPhiMETN( unsigned int goodJetN, float mainpt, float maineta, bool mainid, float otherpt, float othereta, bool otherid, bool dataJetRes, bool keith ); //Ben
   double getDeltaPhiMETN( unsigned int goodJetN ) {return getDeltaPhiMETN(goodJetN,50,2.4,true,30,2.4,true,false,false); }; //Ben, overloaded
   double getMinDeltaPhiNMET(unsigned int maxjets); //Luke
-  double getMinDeltaPhiMETN(unsigned int maxjets, float mainmt, float maineta, bool mainid, float otherpt, float othereta, bool otherid, bool dataJetRes, bool keith ); //Ben
+  double getMinDeltaPhiMETN(unsigned int maxjets, float mainmt, float maineta, bool mainid, float otherpt, float othereta, bool otherid, bool dataJetRes, bool keith, bool includeLeptons=false ); //Ben
   double getMinDeltaPhiMETN(unsigned int maxjets) {return getMinDeltaPhiMETN(maxjets,50,2.4,true,30,2.4,true,false,false); }; //Ben, overloaded
 
   double getMaxDeltaPhiNMET(unsigned int maxjets);
@@ -171,6 +171,11 @@ public:
   double getMaxDeltaPhiMET30(unsigned int maxjets);
   double getMaxDeltaPhiMET30_eta5(unsigned int maxjets);
   double getMaxDeltaPhiMET30_eta5_noId(unsigned int maxjets);
+
+  double getDeltaPhiMETN_electron_deltaT(unsigned int ielectron, float otherpt, float othereta, bool otherid, bool dataJetRes, bool keith);
+  double getDeltaPhiMETN_muon_deltaT(unsigned int imuon, float otherpt, float othereta, bool otherid, bool dataJetRes, bool keith);
+  double getDeltaPhiMETN_electron( const unsigned int ielectron, float otherpt, float othereta, bool otherid, bool dataJetRes, bool keith) ;
+  double getDeltaPhiMETN_muon( const unsigned int imuon, float otherpt, float othereta, bool otherid, bool dataJetRes, bool keith) ;
 
   float getMaxJetMis(unsigned int rank, unsigned int maxjets, float jetpt);
   float getMaxJetFracMis(unsigned int rank, unsigned int maxjets, float jetpt);
