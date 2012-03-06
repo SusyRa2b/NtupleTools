@@ -231,12 +231,15 @@ public:
   int bjetFlavorOfN(unsigned int n);
 
   float elePtOfN(unsigned int n, const float ptthreshold=10);
+  float eleEtaOfN(unsigned int n, const float ptthreshold=10);
   float elePhiOfN(unsigned int n, const float ptthreshold=10);
 
   float muonPtOfN(unsigned int n, const float ptthreshold=10);
+  float muonEtaOfN(unsigned int n, const float ptthreshold=10);
   float muonPhiOfN(unsigned int n, const float ptthreshold=10);
 
   float tauPtOfN(unsigned int n);
+  float tauEtaOfN(unsigned int n);
 
   float getRelIsoForIsolationStudyEle();
   float getRelIsoForIsolationStudyMuon();

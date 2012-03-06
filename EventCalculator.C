@@ -2257,6 +2257,18 @@ float EventCalculator::elePtOfN(unsigned int n, const float ptthreshold) {
   return 0;
 }
 
+float EventCalculator::eleEtaOfN(unsigned int n, const float ptthreshold) {
+
+  unsigned int ngood=0;
+  for (unsigned int i=0; i < myElectronsPF->size(); i++) {
+    if(isGoodElectron(i,false,ptthreshold)){
+      ngood++;
+      if (ngood==n) return myElectronsPF->at(i).eta;
+    }
+  }
+  return 0;
+}
+
 float EventCalculator::elePhiOfN(unsigned int n, const float ptthreshold) {
 
   unsigned int ngood=0;
@@ -2276,6 +2288,18 @@ float EventCalculator::muonPtOfN(unsigned int n, const float ptthreshold) {
     if (isCleanMuon(i,ptthreshold)) {
       ngood++;
       if (ngood==n) return myMuonsPF->at(i).pt;
+    }
+  }
+  return 0;
+}
+
+float EventCalculator::muonEtaOfN(unsigned int n, const float ptthreshold) {
+
+  unsigned int ngood=0;
+  for (unsigned int i=0; i < myMuonsPF->size(); i++) {
+    if (isCleanMuon(i,ptthreshold)) {
+      ngood++;
+      if (ngood==n) return myMuonsPF->at(i).eta;
     }
   }
   return 0;
@@ -2301,6 +2325,18 @@ float EventCalculator::tauPtOfN(unsigned int n) {
     if(isGoodTau(i)){
       ngood++;
       if (ngood==n) return getTauPt(i);
+    }
+  }
+  return 0;
+}
+
+float EventCalculator::tauEtaOfN(unsigned int n) {
+
+  unsigned int ngood=0;
+  for (unsigned int i=0; i < myTausPF->size(); i++) {
+    if(isGoodTau(i)){
+      ngood++;
+      if (ngood==n) return myTausPF->at(i).eta;
     }
   }
   return 0;
@@ -4280,9 +4316,9 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   float jetpt2,jetgenpt2,jetphi2, jeteta2, jetenergy2, bjetpt2, bjetphi2, bjeteta2, bjetenergy2;
   float jetpt3,jetgenpt3,jetphi3, jeteta3, jetenergy3, bjetpt3, bjetphi3, bjeteta3, bjetenergy3;
   int jetflavor1, jetflavor2, jetflavor3, bjetflavor1, bjetflavor2, bjetflavor3;
-  float eleet1;
-  float muonpt1;
-  float taupt1;
+  float eleet1, eleeta1;
+  float muonpt1, muoneta1;
+  float taupt1, taueta1;
   float eleRelIso,muonRelIso;
 
   float MT_Wlep;
@@ -4737,8 +4773,11 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("bjetflavor3",&bjetflavor3,"bjetflavor3/I");
 
   reducedTree.Branch("eleet1",&eleet1,"eleet1/F");
+  reducedTree.Branch("eleeta1",&eleeta1,"eleeta1/F");
   reducedTree.Branch("muonpt1",&muonpt1,"muonpt1/F");
+  reducedTree.Branch("muoneta1",&muoneta1,"muoneta1/F");
   reducedTree.Branch("taupt1",&taupt1,"taupt1/F");
+  reducedTree.Branch("taueta1",&taueta1,"taueta1/F");
 
   reducedTree.Branch("eleRelIso",&eleRelIso,"eleRelIso/F");
   reducedTree.Branch("muonRelIso",&muonRelIso,"muonRelIso/F");
@@ -5245,8 +5284,11 @@ Also the pdfWeightSum* histograms that are used for LM9.
       bjetflavor3 = bjetFlavorOfN(3);
 
       eleet1 = elePtOfN(1);
+      eleeta1 = eleEtaOfN(1);
       muonpt1 = muonPtOfN(1);     
+      muoneta1 = muonEtaOfN(1);     
       taupt1 = tauPtOfN(1);     
+      taueta1 = tauEtaOfN(1);     
       
       //i'm giving these awkward names on purpose, so that they won't be used without understanding what they do
       eleRelIso = getRelIsoForIsolationStudyEle();
@@ -6445,11 +6487,11 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
   //TH1F * h_met_1mu0e_trig_mht110     = new TH1F("h_met_1mu0e_trig_mht110","HT",1000,0,1000);
 
 
-  TH2F * h_Wlnueta = new TH2F("h_Wlnueta","lepton eta vs neutrino eta",100,-5,5,100,-5,5);
-  TH2F * h_Wlnupt = new TH2F("h_Wlnupt","lepton pt vs neutrino pt",100,0,300,100,0,300);
-
-  TH2F * h_Wtaulnueta = new TH2F("h_Wtaulnueta","tautolepton eta vs neutrino eta",100,-5,5,100,-5,5);
-  TH2F * h_Wtaulnupt = new TH2F("h_Wtaulnupt","tautolepton pt vs neutrino pt",100,0,300,100,0,300);
+  //TH2F * h_Wlnueta = new TH2F("h_Wlnueta","lepton eta vs neutrino eta",100,-5,5,100,-5,5);
+  //TH2F * h_Wlnupt = new TH2F("h_Wlnupt","lepton pt vs neutrino pt",100,0,300,100,0,300);
+  //
+  //TH2F * h_Wtaulnueta = new TH2F("h_Wtaulnueta","tautolepton eta vs neutrino eta",100,-5,5,100,-5,5);
+  //TH2F * h_Wtaulnupt = new TH2F("h_Wtaulnupt","tautolepton pt vs neutrino pt",100,0,300,100,0,300);
 
   //std::vector<int> vrun,vlumi,vevent;
   //loadEventList(vrun, vlumi, vevent);
@@ -6492,8 +6534,9 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
   cout<<"Running..."<<endl;  
   int npass = 0;
 
-  int decayType;
-  int W1decayType, W2decayType;
+  //int decayType;
+  int W1decayType;
+  //int W2decayType;
   int nSemiMu=0,nSemiEle=0,nSemiTauHad=0,nDilep=0,nHad=0,nOther=0;
 
   startTimer();
@@ -6537,7 +6580,8 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
     //		<< std::endl;
     //  }
     //}
-    int W1, W1daughter, W2, W2daughter, returnvalue;
+    int W1, W1daughter, returnvalue;
+    //int W2, W2daughter;
 
     returnvalue = getWDecayType(W1decayType, W1, W1daughter);
    
