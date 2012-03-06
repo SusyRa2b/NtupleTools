@@ -4474,8 +4474,8 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   float jetchargedhadronfrac1, jetchargedhadronfrac2, jetchargedhadronfrac3, bjetchargedhadronfrac1, bjetchargedhadronfrac2, bjetchargedhadronfrac3;
   int jetchargedhadronmult1, jetchargedhadronmult2, jetchargedhadronmult3, bjetchargedhadronmult1, bjetchargedhadronmult2, bjetchargedhadronmult3;
 
-  float eleet1, eleeta1;
-  float muonpt1, muoneta1;
+  float eleet1, eleeta1, eleet1_5, eleeta1_5;
+  float muonpt1, muoneta1, muonpt1_5, muoneta1_5;;
   float taupt1, taueta1;
   float eleRelIso,muonRelIso;
 
@@ -4952,6 +4952,11 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("muoneta1",&muoneta1,"muoneta1/F");
   reducedTree.Branch("taupt1",&taupt1,"taupt1/F");
   reducedTree.Branch("taueta1",&taueta1,"taueta1/F");
+
+  reducedTree.Branch("eleet1_5",&eleet1_5,"eleet1_5/F");
+  reducedTree.Branch("eleeta1_5",&eleeta1_5,"eleeta1_5/F");
+  reducedTree.Branch("muonpt1_5",&muonpt1_5,"muonpt1_5/F");
+  reducedTree.Branch("muoneta1_5",&muoneta1_5,"muoneta1_5/F");
 
   reducedTree.Branch("eleRelIso",&eleRelIso,"eleRelIso/F");
   reducedTree.Branch("muonRelIso",&muonRelIso,"muonRelIso/F");
@@ -5480,6 +5485,11 @@ Also the pdfWeightSum* histograms that are used for LM9.
       muoneta1 = muonEtaOfN(1);     
       taupt1 = tauPtOfN(1);     
       taueta1 = tauEtaOfN(1);     
+
+      eleet1_5 = elePtOfN(1,5);
+      eleeta1_5 = eleEtaOfN(1,5);
+      muonpt1_5 = muonPtOfN(1,5);     
+      muoneta1_5 = muonEtaOfN(1,5);     
       
       //i'm giving these awkward names on purpose, so that they won't be used without understanding what they do
       eleRelIso = getRelIsoForIsolationStudyEle();
