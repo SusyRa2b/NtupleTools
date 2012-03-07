@@ -127,6 +127,7 @@ public:
   bool passPV() ;
 
   float getHT();
+  float getST();
 
   float getMET();
   float getMETphi();

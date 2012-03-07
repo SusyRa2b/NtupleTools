@@ -949,6 +949,22 @@ float EventCalculator::getHT() {
   return ht;
 }
 
+float EventCalculator::getST() {
+  float st=getHT();
+
+  const float ptthreshold=5;
+
+  for (unsigned int i=0; i <myElectronsPF->size() ; i++) {
+    if (isGoodElectron(i,false,ptthreshold)) st += myElectronsPF->at(i).pt;
+  }
+
+  for ( unsigned int i = 0; i< myMuonsPF->size(); i++) {
+    if (isCleanMuon(i,ptthreshold)) st += myMuonsPF->at(i).pt;
+  }
+  
+  return st;
+}
+
 
 float EventCalculator::getMET() {
   float myMET=-1;
@@ -4407,7 +4423,7 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
 
   ULong64_t lumiSection, eventNumber, runNumber;
   float METsig;
-  float HT, MHT, MET, METphi, minDeltaPhi, minDeltaPhiAll, minDeltaPhiAll30,minDeltaPhi30_eta5_noIdAll;
+  float ST, HT, MHT, MET, METphi, minDeltaPhi, minDeltaPhiAll, minDeltaPhiAll30,minDeltaPhi30_eta5_noIdAll;
   float correctedMET, correctedMETphi;
   float maxDeltaPhi, maxDeltaPhiAll, maxDeltaPhiAll30, maxDeltaPhi30_eta5_noIdAll;
   float deltaPhi1, deltaPhi2, deltaPhi3;
@@ -4474,8 +4490,8 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   float jetchargedhadronfrac1, jetchargedhadronfrac2, jetchargedhadronfrac3, bjetchargedhadronfrac1, bjetchargedhadronfrac2, bjetchargedhadronfrac3;
   int jetchargedhadronmult1, jetchargedhadronmult2, jetchargedhadronmult3, bjetchargedhadronmult1, bjetchargedhadronmult2, bjetchargedhadronmult3;
 
-  float eleet1, eleeta1, eleet1_5, eleeta1_5;
-  float muonpt1, muoneta1, muonpt1_5, muoneta1_5;;
+  float eleet1, elephi1, eleeta1, muonpt1, muonphi1, muoneta1;
+  float eleet2, elephi2, eleeta2, muonpt2, muonphi2, muoneta2;
   float taupt1, taueta1;
   float eleRelIso,muonRelIso;
 
@@ -4792,6 +4808,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("prescale_utilityHLT_HT300_CentralJet30_BTagIP", &prescale_utilityHLT_HT300_CentralJet30_BTagIP, "prescale_utilityHLT_HT300_CentralJet30_BTagIP/i");  
 
   reducedTree.Branch("HT",&HT,"HT/F");
+  reducedTree.Branch("ST",&ST,"ST/F"); //includes HT + leptons
   reducedTree.Branch("MET",&MET,"MET/F");
   reducedTree.Branch("METsig",&METsig,"METsig/F");
   reducedTree.Branch("METphi",&METphi,"METphi/F");
@@ -4947,16 +4964,21 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("bjetchargedhadronmult3",&bjetchargedhadronmult3,"bjetchargedhadronmult3/I");
 
   reducedTree.Branch("eleet1",&eleet1,"eleet1/F");
+  reducedTree.Branch("elephi1",&elephi1,"elephi1/F");
   reducedTree.Branch("eleeta1",&eleeta1,"eleeta1/F");
   reducedTree.Branch("muonpt1",&muonpt1,"muonpt1/F");
+  reducedTree.Branch("muonphi1",&muonphi1,"muonphi1/F");
   reducedTree.Branch("muoneta1",&muoneta1,"muoneta1/F");
+
+  reducedTree.Branch("eleet2",&eleet2,"eleet2/F");
+  reducedTree.Branch("elephi2",&elephi2,"elephi2/F");
+  reducedTree.Branch("eleeta2",&eleeta2,"eleeta2/F");
+  reducedTree.Branch("muonpt2",&muonpt2,"muonpt2/F");
+  reducedTree.Branch("muonphi2",&muonphi2,"muonphi2/F");
+  reducedTree.Branch("muoneta2",&muoneta2,"muoneta2/F");
+
   reducedTree.Branch("taupt1",&taupt1,"taupt1/F");
   reducedTree.Branch("taueta1",&taueta1,"taueta1/F");
-
-  reducedTree.Branch("eleet1_5",&eleet1_5,"eleet1_5/F");
-  reducedTree.Branch("eleeta1_5",&eleeta1_5,"eleeta1_5/F");
-  reducedTree.Branch("muonpt1_5",&muonpt1_5,"muonpt1_5/F");
-  reducedTree.Branch("muoneta1_5",&muoneta1_5,"muoneta1_5/F");
 
   reducedTree.Branch("eleRelIso",&eleRelIso,"eleRelIso/F");
   reducedTree.Branch("muonRelIso",&muonRelIso,"muonRelIso/F");
@@ -5014,43 +5036,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
   //jmt -- note that .size() returns an int. Will we ever hit the 32-bit limit with this datatype?
   int nevents = stream.size();
 
-  //unfortunately, for the scans I need to loop over events twice in order to store the correct
-  //normalization. There are probably clever ways around this but this is what we're going to do for the moment.
-/*
-  map<SUSYProcess, map<pair<int,int>, vector<double> > > scanPdfWeightsCTEQ;
-  map<SUSYProcess, map<pair<int,int>, vector<double> > > scanPdfWeightsMSTW;
-  map<SUSYProcess, map<pair<int,int>, vector<double> > > scanPdfWeightsNNPDF;
-  // NEW i think this loop will be deprecated by the new 2D scanProcessTotalsMap
-  if (theScanType_ != kNotScan) {
-    for(int entry=0; entry < nevents; ++entry) {
-      // Read event into memory
-      stream.read(entry);
-      fillObjects();
-      if(entry%100000==0) cout << "[pdf loop]  entry: " << entry << ", percent done=" << (int)(entry/(double)nevents*100.)<<  endl;
 
-      SUSYProcess thisprocess = (theScanType_==kmSugra) ? getSUSYProcess() : NotFound;
-
-      pair<int,int> thispoint;
-      if (theScanType_==kmSugra)  thispoint=make_pair(TMath::Nint(eventlhehelperextra_m0),TMath::Nint(eventlhehelperextra_m12)) ;
-      else if (theScanType_==kSMS) thispoint=getSMSmasses(); 
-      //CTEQ
-      for (unsigned int i=0; i<  geneventinfoproducthelper1.size(); i++) {
-	if (scanPdfWeightsCTEQ[thisprocess][thispoint].empty()) scanPdfWeightsCTEQ[thisprocess][thispoint].assign(45,0);
-	scanPdfWeightsCTEQ[thisprocess][thispoint][i] += checkPdfWeightSanity(geneventinfoproducthelper1.at(i).pdfweight);
-      }
-      //MSTW
-      for (unsigned int i=0; i<  geneventinfoproducthelper2.size(); i++) {
-	if (scanPdfWeightsMSTW[thisprocess][thispoint].empty()) scanPdfWeightsMSTW[thisprocess][thispoint].assign(41,0);
-	scanPdfWeightsMSTW[thisprocess][thispoint][i] += checkPdfWeightSanity(geneventinfoproducthelper2.at(i).pdfweight);
-      }
-      //NNPDF
-      for (unsigned int i=0; i<  geneventinfoproducthelper.size(); i++) {
-	if (scanPdfWeightsNNPDF[thisprocess][thispoint].empty()) scanPdfWeightsNNPDF[thisprocess][thispoint].assign(100,0);
-	scanPdfWeightsNNPDF[thisprocess][thispoint][i] += checkPdfWeightSanity(geneventinfoproducthelper.at(i).pdfweight);
-      }
-    }
-  }
-*/
 
   startTimer();
   // ~~~~ now start the real event loop
@@ -5163,47 +5149,13 @@ Also the pdfWeightSum* histograms that are used for LM9.
       }
     }
 
-    //code to hopefully be deprecated
-//     if (theScanType_ == kNotScan) {
-//       getPdfWeights("CTEQ",pdfWeightsCTEQ,&pdfWeightSumCTEQ);
-//       getPdfWeights("MSTW",pdfWeightsMSTW,&pdfWeightSumMSTW);
-//       getPdfWeights("NNPDF",pdfWeightsNNPDF,&pdfWeightSumNNPDF);
-//     }
 
     //very loose skim for reducedTrees (HT, trigger, throw out bad data)
-    cutHT = passCut("cutHT");
-    if ( passCut("cutLumiMask") && (passCut("cutTrigger") || passCut("cutUtilityTrigger")) && cutHT ) {
-    
+    ST = getST(); //ST is always bigger than HT
+    if ( passCut("cutLumiMask") && (passCut("cutTrigger") || passCut("cutUtilityTrigger")) && (ST>=400) ) {
+      cutHT = passCut("cutHT"); //should always be true
 
       weight = getWeight(nevents);
-
-      //for scans, fill correctly normalized pdf weights
-//       if (theScanType_ != kNotScan) {
-// 	//for T1bbbb, prodprocess will always be NotFound
-// 	for ( unsigned int j=0; j<scanPdfWeightsCTEQ[prodprocess][thispoint].size(); j++) {
-// 	  //this event's weight divided by the sum of the weights
-// 	  if (scanPdfWeightsCTEQ[prodprocess][thispoint][j] == 0) {
-// 	    cout<<"Something screwy in CTEQ weights!"<<endl;
-// 	    assert(0);
-// 	  }
-// 	  pdfWeightsCTEQ[j] = scanPdfWeightsCTEQ[prodprocess][thispoint][0]*checkPdfWeightSanity(geneventinfoproducthelper1.at(j).pdfweight) / scanPdfWeightsCTEQ[prodprocess][thispoint][j];
-// 	}
-// 	for ( unsigned int j=0; j<scanPdfWeightsMSTW[prodprocess][thispoint].size(); j++) {
-// 	  if (scanPdfWeightsMSTW[prodprocess][thispoint][j] == 0) {
-// 	    cout<<"Something screwy in MSTW weights!"<<endl;
-// 	    assert(0);
-// 	  }
-
-// 	  pdfWeightsMSTW[j] = scanPdfWeightsMSTW[prodprocess][thispoint][0]*checkPdfWeightSanity(geneventinfoproducthelper2.at(j).pdfweight) / scanPdfWeightsMSTW[prodprocess][thispoint][j];
-// 	}
-// 	for ( unsigned int j=0; j<scanPdfWeightsNNPDF[prodprocess][thispoint].size(); j++) {
-// 	  if (scanPdfWeightsNNPDF[prodprocess][thispoint][j] == 0) {
-// 	    cout<<"Something screwy in NNPDF weights!"<<endl;
-// 	    assert(0);
-// 	  }
-// 	  pdfWeightsNNPDF[j] = scanPdfWeightsNNPDF[prodprocess][thispoint][0]*checkPdfWeightSanity(geneventinfoproducthelper.at(j).pdfweight) / scanPdfWeightsNNPDF[prodprocess][thispoint][j];
-// 	}
-//       }
 
       
       if (theScanType_!=kSMS) {
@@ -5479,18 +5431,23 @@ Also the pdfWeightSum* histograms that are used for LM9.
       bjetchargedhadronfrac3 = bjetChargedHadronFracOfN(3);
       bjetchargedhadronmult3 = bjetChargedHadronMultOfN(3);
 
-      eleet1 = elePtOfN(1);
-      eleeta1 = eleEtaOfN(1);
-      muonpt1 = muonPtOfN(1);     
-      muoneta1 = muonEtaOfN(1);     
+      eleet1 = elePtOfN(1,5);
+      elephi1 = elePhiOfN(1,5);
+      eleeta1 = eleEtaOfN(1,5);
+      muonpt1 = muonPtOfN(1,5);
+      muonphi1 = muonPhiOfN(1,5);
+      muoneta1 = muonEtaOfN(1,5);
+
+      eleet2 = elePtOfN(2,5);
+      elephi2 = elePhiOfN(2,5);
+      eleeta2 = eleEtaOfN(2,5);
+      muonpt2 = muonPtOfN(2,5);
+      muonphi2 = muonPhiOfN(2,5);
+      muoneta2 = muonEtaOfN(2,5);
+
       taupt1 = tauPtOfN(1);     
       taueta1 = tauEtaOfN(1);     
 
-      eleet1_5 = elePtOfN(1,5);
-      eleeta1_5 = eleEtaOfN(1,5);
-      muonpt1_5 = muonPtOfN(1,5);     
-      muoneta1_5 = muonEtaOfN(1,5);     
-      
       //i'm giving these awkward names on purpose, so that they won't be used without understanding what they do
       eleRelIso = getRelIsoForIsolationStudyEle();
       muonRelIso = getRelIsoForIsolationStudyMuon();
@@ -5639,6 +5596,12 @@ unsigned int EventCalculator::getSeed(){
   if (sampleName_.Contains("ht_run2011b_promptrecov1_oct7") )                        return 4504;
   if (sampleName_.Contains("ht_run2011b_promptrecov1_oct14") )                       return 4505;
   if (sampleName_.Contains("ht_run2011a_promptrecov4_try3") )                        return 4506;
+
+  if (sampleName_.Contains("T1bbbb") )                        return 4901;
+  if (sampleName_.Contains("T1tttt") )                        return 4902;
+  if (sampleName_.Contains("T2bb") )                        return 4903;
+  if (sampleName_.Contains("T2tt") )                        return 4904;
+
 
   /*
   if (sampleName_.Contains("DYJetsToLL_TuneD6T_M-10To50_7TeV-madgraph-tauola") )     return 4357;
