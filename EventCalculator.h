@@ -134,6 +134,7 @@ public:
 
   float getMHT();
   float getMHTphi();
+  float getMHTphi(int ignoredJet);
 
   void getTransverseThrustVariables(float & thrust, float & thrustPhi, bool addMET);
   void getSphericityJetMET(float & lambda1, float & lambda2, float & det,const int jetmax, bool addMET);
@@ -181,6 +182,8 @@ public:
   float getMaxJetMis(unsigned int rank, unsigned int maxjets, float jetpt);
   float getMaxJetFracMis(unsigned int rank, unsigned int maxjets, float jetpt);
   float getDeltaPhiMETJetMaxMis(float jetpt);
+
+  float getDeltaPhiStar(int & badjet);
 
   double getMinDeltaPhiMETTaus();
   double getMinDeltaPhiMETMuons(unsigned int maxmuons);
@@ -259,7 +262,7 @@ public:
   void calcTopDecayVariables(float & wmass, float & tmass, float & wcoshel, float & tcoshel);
   void calcCosHel(unsigned int j1i, unsigned int j2i, unsigned int j3i, float & wcoshel,float &tcoshel);
 
-  std::pair<float,float> getJERAdjustedMHTxy();
+  std::pair<float,float> getJERAdjustedMHTxy(int ignoredJet=-1);
 
   //MC tools
   unsigned int findSUSYMaternity( unsigned int k );
@@ -338,6 +341,7 @@ private:
   std::vector<muonhelper_s> * myMuonsRECOhelper;
   std::vector<tau_s> * myTausPF;
   std::vector<met1_s> * myMETPF;
+  std::vector<met_s> * myMETcalo;
   std::vector<vertex_s> * myVertex;
   std::vector<genparticlehelperra2_s> * myGenParticles;
   double* myGenWeight;

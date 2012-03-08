@@ -45,6 +45,7 @@ EventCalculator::EventCalculator(const TString & sampleName, jetType theJetType,
   myMuonsRECOhelper(&muonhelper),
   myTausPF(&tau),
   myMETPF(&met1),
+  myMETcalo(&met),
   myVertex(&vertex),
   myGenParticles(&genparticlehelperra2),
   myGenWeight(&geneventinfoproduct_weight),
@@ -1016,6 +1017,12 @@ float EventCalculator::getMHTphi() {
   return atan2(mht.second,mht.first);
 }
 
+float EventCalculator::getMHTphi(int ignoredJet) {
+  std::pair<float,float> mht=getJERAdjustedMHTxy(ignoredJet);
+
+  return atan2(mht.second,mht.first);
+}
+
 //This is a function which is temporarily hard-coded to remove data that has become uncertified
 bool EventCalculator::passLumiMask(){
   if( !isSampleRealData()) return true;
@@ -1212,6 +1219,23 @@ void EventCalculator::resetRequiredCut() {
   requiredCut_.clear();
 }
 
+float EventCalculator::getDeltaPhiStar(int & badjet) {
+
+  float dpstar=1e9;
+  badjet=-1;
+
+  for (unsigned int i=0; i< myJetsPF->size(); i++) {
+    if ( isGoodJetMHT(i) ) {
+      float newmhtphi = getMHTphi(i);
+      float thisdp = getDeltaPhi( myJetsPF->at(i).phi, newmhtphi);
+      if ( thisdp < dpstar) {
+	dpstar = thisdp;
+	badjet = i;
+      }
+    }
+  }
+  return dpstar;
+}
 
 float EventCalculator::getDeltaPhiMETJetMaxMis(float jetpt = 50){
   if( isSampleRealData() ) return -1;
@@ -2913,31 +2937,22 @@ float EventCalculator::getMT_Wlep(const float ptthreshold) {
   return MT;
 }
 
-
-std::pair<float,float> EventCalculator::getJERAdjustedMHTxy() {
+//the ignored jet will be left out of the MHT calculation
+//default is -1 (meaning no jet will be ignored)
+std::pair<float,float> EventCalculator::getJERAdjustedMHTxy(int ignoredJet) {
   //no difference from MHT calculation -- just return both pieces
   float mhtx=0;
   float mhty=0;
 
   for (unsigned int i=0; i<myJetsPF->size(); i++) {
-    if (isGoodJetMHT( i ) ) {
-
+    if (isGoodJetMHT( i ) && (int(i) != ignoredJet) ) {
       mhtx -= getJetPx(i);
       mhty -= getJetPy(i);
     }
   }
 
-  //this is an experiment! add taus in!
-  //-->experiment successful! leave taus in.
-  //FIXME hard-coded for PF
-  for (unsigned int i=0; i<myTausPF->size(); i++) {
-    //start by using same pT threshold as jets
-    if ( myTausPF->at(i).pt > 30 && fabs(myTausPF->at(i).eta)<5 ) {
-
-      mhtx -= myTausPF->at(i).pt * cos(myTausPF->at(i).phi);
-      mhty -= myTausPF->at(i).pt * sin(myTausPF->at(i).phi);
-    }
-  }
+  //used to have taus here. 
+  //but i think that is not appropriate if the jet collection does not have the taus removed
   
   return make_pair(mhtx,mhty);
 }
@@ -4424,7 +4439,7 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   ULong64_t lumiSection, eventNumber, runNumber;
   float METsig;
   float ST, HT, MHT, MET, METphi, minDeltaPhi, minDeltaPhiAll, minDeltaPhiAll30,minDeltaPhi30_eta5_noIdAll;
-  float correctedMET, correctedMETphi;
+  float correctedMET, correctedMETphi,caloMET;
   float maxDeltaPhi, maxDeltaPhiAll, maxDeltaPhiAll30, maxDeltaPhi30_eta5_noIdAll;
   float deltaPhi1, deltaPhi2, deltaPhi3;
   float sumDeltaPhi, diffDeltaPhi;
@@ -4442,6 +4457,8 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   float maxJetMis, max2JetMis, maxJetMisAll30, max2JetMisAll30;
   float maxJetFracMis, max2JetFracMis, maxJetFracMisAll30, max2JetFracMisAll30;
   float deltaPhiMETJetMaxMis, deltaPhiMETJetMaxMis30;
+
+  float deltaPhiStar, deltaPhiStar_badjet_pt, deltaPhiStar_badjet_eta, deltaPhiStar_badjet_phi;
 
   float minDeltaPhiMetTau;
 
@@ -4817,6 +4834,8 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("correctedMET",&correctedMET,"correctedMET/F");
   reducedTree.Branch("correctedMETphi",&correctedMETphi,"correctedMETphi/F");
 
+  reducedTree.Branch("caloMET",&caloMET,"caloMET/F");
+
   reducedTree.Branch("bestWMass",&wMass,"bestWMass/F");
   reducedTree.Branch("bestTopMass",&topMass,"bestTopMass/F");
   reducedTree.Branch("topCosHel",&topCosHel,"topCosHel/F");
@@ -4843,6 +4862,11 @@ Also the pdfWeightSum* histograms that are used for LM9.
 
   reducedTree.Branch("sumDeltaPhi",&sumDeltaPhi,"sumDeltaPhi/F");
   reducedTree.Branch("diffDeltaPhi",&diffDeltaPhi,"diffDeltaPhi/F");
+
+  reducedTree.Branch("deltaPhiStar",&deltaPhiStar,"deltaPhiStar/F");
+  reducedTree.Branch("deltaPhiStar_badjet_pt",&deltaPhiStar_badjet_pt,"deltaPhiStar_badjet_pt/F");
+  reducedTree.Branch("deltaPhiStar_badjet_phi",&deltaPhiStar_badjet_phi,"deltaPhiStar_badjet_phi/F");
+  reducedTree.Branch("deltaPhiStar_badjet_eta",&deltaPhiStar_badjet_eta,"deltaPhiStar_badjet_eta/F");
 
   reducedTree.Branch("minDeltaPhiN", &minDeltaPhiN, "minDeltaPhiN/F");
   reducedTree.Branch("deltaPhiN1", &deltaPhiN1, "deltaPhiN1/F");
@@ -5263,6 +5287,8 @@ Also the pdfWeightSum* histograms that are used for LM9.
 
       getCorrectedMET(correctedMET, correctedMETphi);
 
+      caloMET = myMETcalo->at(0).pt;
+
       minDeltaPhi = getMinDeltaPhiMET(3);
       minDeltaPhiAll = getMinDeltaPhiMET(99);
       minDeltaPhiAll30 = getMinDeltaPhiMET30(99);
@@ -5284,6 +5310,12 @@ Also the pdfWeightSum* histograms that are used for LM9.
       minDeltaPhiN_DJR_otherPt50                  = getMinDeltaPhiMETN(3,50,2.4,true, 50,2.4,true,true,false);
             
       minDeltaPhiN_withLepton = getMinDeltaPhiMETN(3,50,2.4,true,30,2.4,true,false,false,true);
+
+      int badjet;
+      deltaPhiStar = getDeltaPhiStar(badjet);
+      deltaPhiStar_badjet_pt = (badjet>=0) ? myJetsPF->at(badjet).pt : -1;
+      deltaPhiStar_badjet_phi = (badjet>=0) ? myJetsPF->at(badjet).phi : -1;
+      deltaPhiStar_badjet_eta = (badjet>=0) ? myJetsPF->at(badjet).eta : -1;
 
       maxJetMis=getMaxJetMis(1,3,50);
       max2JetMis=getMaxJetMis(2,3,50);
