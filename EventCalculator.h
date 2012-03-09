@@ -63,6 +63,20 @@ double HT350MHT110elNew(std::vector<double>& inputvars, int first=0, int last=10
 double HT350MHT110muNew(std::vector<double>& inputvars, int first=0, int last=100-1);
 
 
+class cellECAL {
+public:
+  cellECAL(double,double,int);
+  double eta;
+  double phi;
+  int status;
+};
+cellECAL::cellECAL(double a, double b, int c) {
+  eta=a;
+  phi=b;
+  status=c;
+}
+  
+
 class EventCalculator {
 public:
   //enums for configuration
@@ -341,6 +355,7 @@ private:
   std::vector<muonhelper_s> * myMuonsRECOhelper;
   std::vector<tau_s> * myTausPF;
   std::vector<met1_s> * myMETPF;
+  std::vector<met4_s> * myMETPFType1;
   std::vector<met_s> * myMETcalo;
   std::vector<vertex_s> * myVertex;
   std::vector<genparticlehelperra2_s> * myGenParticles;
@@ -392,7 +407,13 @@ private:
   TH1D *hEta2_2p5_;
   TH1D *hEta2p5_3_;
   TH1D *hEta3_5_;
-  
+
+  //ecal dead cell
+  std::vector<cellECAL> badECAL_;
+  void loadECALStatus();
+  bool passBadECALFilter(TString nearmettype = "METphi", TString nearecaltype ="deadCell", int nbadcellsthr=10, int badcellstatusth=10);
+  bool jetNearMET(unsigned int i, TString type);
+  bool jetNearBadECALCell(unsigned int i, TString type, int nbadcellsthr, int badcellstatusthr);
 
   TString getOptPiece(const TString &key, const TString & opt);
 

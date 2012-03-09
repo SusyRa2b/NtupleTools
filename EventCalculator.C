@@ -45,6 +45,7 @@ EventCalculator::EventCalculator(const TString & sampleName, jetType theJetType,
   myMuonsRECOhelper(&muonhelper),
   myTausPF(&tau),
   myMETPF(&met1),
+  myMETPFType1(&met4),
   myMETcalo(&met),
   myVertex(&vertex),
   myGenParticles(&genparticlehelperra2),
@@ -108,6 +109,8 @@ EventCalculator::EventCalculator(const TString & sampleName, jetType theJetType,
   //loadHLTMHTeff();
   loadHLTHTeff();
   loadDataJetRes();
+
+  loadECALStatus();//could also be in reducedTree
 
   vPar_.clear(); //should be overkill
   vPar_.push_back(*L1JetPar_);
@@ -4440,6 +4443,7 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   float METsig;
   float ST, HT, MHT, MET, METphi, minDeltaPhi, minDeltaPhiAll, minDeltaPhiAll30,minDeltaPhi30_eta5_noIdAll;
   float correctedMET, correctedMETphi,caloMET;
+  float METPFType1,METPFType1phi;
   float maxDeltaPhi, maxDeltaPhiAll, maxDeltaPhiAll30, maxDeltaPhi30_eta5_noIdAll;
   float deltaPhi1, deltaPhi2, deltaPhi3;
   float sumDeltaPhi, diffDeltaPhi;
@@ -4548,6 +4552,9 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   float minDeltaPhiN_lostJet, deltaPhiN1_lostJet, deltaPhiN2_lostJet, deltaPhiN3_lostJet;
   float minDeltaPhiN_Luke_lostJet, maxDeltaPhiN_Luke_lostJet, deltaPhiN1_Luke_lostJet, deltaPhiN2_Luke_lostJet, deltaPhiN3_Luke_lostJet;
   float minTransverseMETSignificance_lostJet, maxTransverseMETSignificance_lostJet, transverseMETSignificance1_lostJet, transverseMETSignificance2_lostJet, transverseMETSignificance3_lostJet;
+
+  bool passBadECAL_METphi_n10_s10, passBadECAL_METphi_n10_s12, passBadECAL_METphi_n5_s10, passBadECAL_METphi_n5_s12;
+  bool passBadECAL_METphi_crack;
 
   float prob0,probge1,prob1,probge2,probge3,prob2;
   
@@ -4835,7 +4842,9 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("correctedMETphi",&correctedMETphi,"correctedMETphi/F");
 
   reducedTree.Branch("caloMET",&caloMET,"caloMET/F");
-
+  reducedTree.Branch("METPFType1",&METPFType1, "METPFType1/F");
+  reducedTree.Branch("METPFType1phi",&METPFType1phi, "METPFType1phi/F");
+  
   reducedTree.Branch("bestWMass",&wMass,"bestWMass/F");
   reducedTree.Branch("bestTopMass",&topMass,"bestTopMass/F");
   reducedTree.Branch("topCosHel",&topCosHel,"topCosHel/F");
@@ -4935,6 +4944,12 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("deltaPhiN1_lostJet", &deltaPhiN1_lostJet, "deltaPhiN1_lostJet/F");
   reducedTree.Branch("deltaPhiN2_lostJet", &deltaPhiN2_lostJet, "deltaPhiN2_lostJet/F");
   reducedTree.Branch("deltaPhiN3_lostJet", &deltaPhiN3_lostJet, "deltaPhiN3_lostJet/F");
+
+  reducedTree.Branch("passBadECAL_METphi_n10_s10", &passBadECAL_METphi_n10_s10, "passBadECAL_METphi_n10_s1/O");
+  reducedTree.Branch("passBadECAL_METphi_n10_s12", &passBadECAL_METphi_n10_s12, "passBadECAL_METphi_n10_s12/O");
+  reducedTree.Branch("passBadECAL_METphi_n5_s10", &passBadECAL_METphi_n5_s10, "passBadECAL_METphi_n5_s10/O");
+  reducedTree.Branch("passBadECAL_METphi_n5_s12", &passBadECAL_METphi_n5_s12, "passBadECAL_METphi_n5_s12/O");
+  reducedTree.Branch("passBadECAL_METphi_crack", &passBadECAL_METphi_crack, "passBadECAL_METphi_crack/O");
 
   reducedTree.Branch("jetpt1",&jetpt1,"jetpt1/F");
   reducedTree.Branch("jetgenpt1",&jetgenpt1,"jetgenpt1/F");
@@ -5288,6 +5303,8 @@ Also the pdfWeightSum* histograms that are used for LM9.
       getCorrectedMET(correctedMET, correctedMETphi);
 
       caloMET = myMETcalo->at(0).pt;
+      METPFType1 = myMETPFType1->at(0).pt;
+      METPFType1phi = myMETPFType1->at(0).phi;
 
       minDeltaPhi = getMinDeltaPhiMET(3);
       minDeltaPhiAll = getMinDeltaPhiMET(99);
@@ -5398,6 +5415,22 @@ Also the pdfWeightSum* histograms that are used for LM9.
       deltaPhiN1_Luke = getDeltaPhiNMET(0);
       deltaPhiN2_Luke = getDeltaPhiNMET(1);
       deltaPhiN3_Luke = getDeltaPhiNMET(2);
+      
+      //currently only set up for QCD MC
+      if (sampleName_.Contains("QCD")) {
+	passBadECAL_METphi_n10_s10 = passBadECALFilter("METphi","deadCell",10,10);
+	passBadECAL_METphi_n10_s12 = passBadECALFilter("METphi","deadCell",10,12);
+	passBadECAL_METphi_n5_s10 = passBadECALFilter("METphi","deadCell",5,10);
+	passBadECAL_METphi_n5_s12 = passBadECALFilter("METphi","deadCell",5,12);
+	passBadECAL_METphi_crack = passBadECALFilter("METphi","crackEBEE",0,0);
+      }
+      else {
+	passBadECAL_METphi_n10_s10 = 1; 
+	passBadECAL_METphi_n10_s12 = 1;
+	passBadECAL_METphi_n5_s10 = 1;
+	passBadECAL_METphi_n5_s12 = 1;
+	passBadECAL_METphi_crack = 1;
+      }
 
       minTransverseMETSignificance = getMinTransverseMETSignificance(3);
       maxTransverseMETSignificance = getMaxTransverseMETSignificance(3);
@@ -7423,4 +7456,94 @@ void EventCalculator::plotBTagEffMC(itreestream& stream){
 
 
   return;
+}
+
+
+void EventCalculator::loadECALStatus() {
+  cout << "loading ECAL Status" << endl;
+  assert(badECAL_.size()==0);//don't want to load it twice
+  
+  TChain *tDetector = new TChain("tree_detector");
+  tDetector->Add("ECALStatus_QCD.root");//this file is for QCD MC - only one run.
+  //will need to make code more sophisticated if input file contains multiple runs
+  
+  double td_eta, td_phi;
+  int td_status;
+  //unsigned int td_run;
+  //int td_det;
+  //int td_status_simp;
+  
+  tDetector->SetBranchAddress("eta",&td_eta);
+  tDetector->SetBranchAddress("phi",&td_phi);
+  tDetector->SetBranchAddress("status",&td_status);
+  //tDetector->SetBranchAddress("run",&td_run);
+  //tDetector->SetBranchAddress("det",&td_det);
+  //tDetector->SetBranchAddress("status_simp",&td_status_simp);
+
+  const int numD = tDetector->GetEntries();
+  for(int i=0; i<numD; i++) {
+    tDetector->GetEvent(i);
+   
+    if(td_status>=10) {
+      cellECAL thisCell(td_eta,td_phi,td_status);
+      badECAL_.push_back(thisCell);
+    }
+ 
+  }//end loop over input tree
+
+  return;
+}
+
+
+bool EventCalculator::passBadECALFilter(TString nearmettype, TString nearecaltype, int nbadcellsthr, int badcellstatusthr) {
+  
+  for (unsigned int i=0; i< myJetsPF->size(); i++) {
+    if (getJetPt(i) > 30 && fabs(myJetsPF->at(i).eta) < 5) {
+      
+      if( jetNearMET(i, nearmettype) ) {
+	if( jetNearBadECALCell(i, nearecaltype, nbadcellsthr, badcellstatusthr) ) return 0;
+      }
+      
+    }
+  }
+  return 1;
+}
+
+
+bool EventCalculator::jetNearMET(unsigned int i, TString type) {
+  
+  if(type=="METphi") {
+    double dp =  getDeltaPhi( myJetsPF->at(i).phi , getMETphi());
+    if(dp<=0.5) return 1;
+    else return 0;
+  }
+  else assert(0);//no other types yet. future: RA1 deltaPhi* method
+  
+}
+
+bool EventCalculator::jetNearBadECALCell(unsigned int i, TString type, int nbadcellsthr, int badcellstatusthr) {
+  
+  if(type=="deadCell") {
+    
+    double jeteta= myJetsPF->at(i).eta;
+    double jetphi= myJetsPF->at(i).phi;
+    
+    int nbad =0;
+    for(unsigned int j=0; j<badECAL_.size(); j++) {
+      if( (jmt::deltaR(jeteta,jetphi,badECAL_[j].eta,badECAL_[j].phi) <= 0.3) && badECAL_[j].status>= badcellstatusthr) nbad++;
+    }
+    if(nbad>=nbadcellsthr) return 1;
+    else return 0;
+    
+  }
+  else if(type=="crackEBEE") {
+    
+    double jeteta= myJetsPF->at(i).eta;
+    
+    if( fabs(fabs(jeteta) - 1.5) <= 0.3 ) return 1;
+    else return 0;
+
+  }
+  else assert(0);
+
 }
