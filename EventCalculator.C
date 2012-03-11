@@ -3776,12 +3776,20 @@ double EventCalculator::getCrossSection(){
   if (sampleName_.Contains("ww") )                                                   return 27.83;//from PREP
   if (sampleName_.Contains("wz") )                                                   return 10.47;//from PREP
   if (sampleName_.Contains("zz") )                                                   return 4.287;//from PREP
-  if (sampleName_.Contains("t_s-channel") )                                          return 3.19; //from our twiki
-  if (sampleName_.Contains("tbar_s-channel") )                                       return 1.44;
-  if (sampleName_.Contains("t_t-channel") )                                          return 41.92;
-  if (sampleName_.Contains("tbar_t-channel") )                                       return 22.65;
-  if (sampleName_.Contains("t_tW-channel") )                                         return 7.87;
-  if (sampleName_.Contains("tbar_tW-channel") )                                      return 7.87;
+  //if (sampleName_.Contains("t_s-channel") )                                          return 3.19; //from our twiki
+  //if (sampleName_.Contains("tbar_s-channel") )                                       return 1.44; 
+  //if (sampleName_.Contains("t_t-channel") )                                          return 41.92;
+  //if (sampleName_.Contains("tbar_t-channel") )                                       return 22.65;
+  //if (sampleName_.Contains("t_tW-channel") )                                         return 7.87; 
+  //if (sampleName_.Contains("tbar_tW-channel") )                                      return 7.87; 
+  if (sampleName_.Contains("T_TuneZ2_s-channel_7TeV-powheg-tauola") )                return 3.19; 
+  if (sampleName_.Contains("Tbar_TuneZ2_s-channel_7TeV-powheg-tauola") )             return 1.44; 
+  if (sampleName_.Contains("T_TuneZ2_t-channel_7TeV-powheg-tauola") )                return 41.92;
+  if (sampleName_.Contains("Tbar_TuneZ2_t-channel_7TeV-powheg-tauola") )             return 22.65;
+  if (sampleName_.Contains("T_TuneZ2_tW-channel-DR_7TeV-powheg-tauola") )            return 7.87; 
+  if (sampleName_.Contains("Tbar_TuneZ2_tW-channel-DR_7TeV-powheg-tauola") )         return 7.87; 
+
+
   //if (sampleName_.Contains("wjets") )                                                return 31314;
   if (sampleName_.Contains("WJetsToLNu_TuneZ2_7TeV-madgraph-tauola") )               return 31314;
   if (sampleName_.Contains("WJetsToLNu_250_HT_300_TuneZ2_7TeV-madgraph-tauola") )    return 34.8;
@@ -3882,12 +3890,20 @@ TString EventCalculator::getSampleNameOutputString(){
   if (sampleName_.Contains("ww") )                                                   return "WW";
   if (sampleName_.Contains("wz") )                                                   return "WZ";
   if (sampleName_.Contains("zz") )                                                   return "ZZ";
-  if (sampleName_.Contains("t_s-channel") )                                          return "SingleTop-sChannel";
-  if (sampleName_.Contains("tbar_s-channel") )                                       return "SingleTopBar-sChannel";
-  if (sampleName_.Contains("t_t-channel") )                                          return "SingleTop-tChannel";
-  if (sampleName_.Contains("tbar_t-channel") )                                       return "SingleTopBar-tChannel";
-  if (sampleName_.Contains("t_tW-channel") )                                         return "SingleTop-tWChannel";
-  if (sampleName_.Contains("tbar_tW-channel") )                                      return "SingleTopBar-tWChannel";
+  //if (sampleName_.Contains("t_s-channel") )                                          return "SingleTop-sChannel";
+  //if (sampleName_.Contains("tbar_s-channel") )                                       return "SingleTopBar-sChannel";
+  //if (sampleName_.Contains("t_t-channel") )                                          return "SingleTop-tChannel";
+  //if (sampleName_.Contains("tbar_t-channel") )                                       return "SingleTopBar-tChannel";
+  //if (sampleName_.Contains("t_tW-channel") )                                         return "SingleTop-tWChannel";
+  //if (sampleName_.Contains("tbar_tW-channel") )                                      return "SingleTopBar-tWChannel";
+  if (sampleName_.Contains("T_TuneZ2_s-channel_7TeV-powheg-tauola") )                return "SingleTop-sChannel";
+  if (sampleName_.Contains("Tbar_TuneZ2_s-channel_7TeV-powheg-tauola") )             return "SingleTopBar-sChannel";
+  if (sampleName_.Contains("T_TuneZ2_t-channel_7TeV-powheg-tauola") )                return "SingleTop-tChannel";
+  if (sampleName_.Contains("Tbar_TuneZ2_t-channel_7TeV-powheg-tauola") )             return "SingleTopBar-tChannel";
+  if (sampleName_.Contains("T_TuneZ2_tW-channel-DR_7TeV-powheg-tauola") )            return "SingleTop-tWChannel";
+  if (sampleName_.Contains("Tbar_TuneZ2_tW-channel-DR_7TeV-powheg-tauola") )         return "SingleTopBar-tWChannel";
+
+
 
   if (sampleName_.Contains("LM9_SUSY_sftsht_7TeV-pythia6_v2") )                         return "LM9";
 
@@ -4005,17 +4021,23 @@ void EventCalculator::loadJetTagEffMaps() {
   //load the sample's efficiency maps
   if (sampleName_.Contains("QCD"))
     f_tageff_ = new TFile("histos_btageff_csvm_qcd.root","READ");
-  else if(sampleName_.Contains("t_s-channel"))
+  //else if(sampleName_.Contains("t_s-channel"))
+  else if (sampleName_.Contains("T_TuneZ2_s-channel_7TeV-powheg-tauola") )
     f_tageff_ = new TFile("histos_btageff_csvm_singletop_s.root","READ");
-  else if(sampleName_.Contains("tbar_s-channel"))
+  //else if(sampleName_.Contains("tbar_s-channel"))
+  else if (sampleName_.Contains("Tbar_TuneZ2_s-channel_7TeV-powheg-tauola") )
     f_tageff_ = new TFile("histos_btageff_csvm_singletopbar_s.root","READ");
-  else if(sampleName_.Contains("t_t-channel"))
+  //else if(sampleName_.Contains("t_t-channel"))
+  else if (sampleName_.Contains("T_TuneZ2_t-channel_7TeV-powheg-tauola") )   
     f_tageff_ = new TFile("histos_btageff_csvm_singletop_t.root","READ");
-  else if(sampleName_.Contains("tbar_t-channel"))
+  //else if(sampleName_.Contains("tbar_t-channel"))
+  else if (sampleName_.Contains("Tbar_TuneZ2_t-channel_7TeV-powheg-tauola") )
     f_tageff_ = new TFile("histos_btageff_csvm_singletopbar_t.root","READ");
-  else if(sampleName_.Contains("t_tW-channel"))
+  //else if(sampleName_.Contains("t_tW-channel"))
+  else if (sampleName_.Contains("T_TuneZ2_tW-channel-DR_7TeV-powheg-tauola") )
     f_tageff_ = new TFile("histos_btageff_csvm_singletop_tW.root","READ");
-  else if(sampleName_.Contains("tbar_tW-channel"))
+  //else if(sampleName_.Contains("tbar_tW-channel"))
+  else if (sampleName_.Contains("Tbar_TuneZ2_tW-channel-DR_7TeV-powheg-tauola") )
     f_tageff_ = new TFile("histos_btageff_csvm_singletopbar_tW.root","READ");
   else if (sampleName_.Contains("zjets"))   
     f_tageff_ = new TFile("histos_btageff_csvm_zinvisible.root","READ");
@@ -5215,12 +5237,21 @@ Also the pdfWeightSum* histograms that are used for LM9.
       //if we are running over ttbar, fill info on decay mode
       if (sampleName_.Contains("ttjets_madgraph") || sampleName_.Contains("TTJets_TuneZ2_7TeV-madgraph-tauola_Fall11_v2")){
 	int W1, W1daughter, W2, W2daughter;
-	decayType = getTTbarDecayType(W1decayType, W2decayType, W1, W1daughter, W2, W2daughter);
+	decayType = getTTbarDecayType(W1decayType, W2decayType, W1, W1daughter, W2, W2daughter,false);
+      }
+      //single-top tW-channel has two W's (one from a top)
+      if (sampleName_.Contains("T_TuneZ2_tW-channel") || sampleName_.Contains("Tbar_TuneZ2_tW-channel")) {
+	int W1, W1daughter, W2, W2daughter;	
+	getWDecayType(W2decayType, W2, W2daughter, false);
+	decayType = getTTbarDecayType(W1decayType, W2decayType, W1, W1daughter, W2, W2daughter,true);
       }
       //if we are running of w+jets fill info on decay mode
-      if (sampleName_.Contains("WJetsToLNu")){
+      //single-top s/t-channel also has one W (from a top)
+      if (sampleName_.Contains("WJetsToLNu") 
+	  || sampleName_.Contains("T_TuneZ2_s-channel") || sampleName_.Contains("Tbar_TuneZ2_s-channel") 
+	  || sampleName_.Contains("T_TuneZ2_t-channel") || sampleName_.Contains("Tbar_TuneZ2_t-channel")){
 	int W1, W1daughter;
-	decayType = getWDecayType(W1decayType, W1, W1daughter);
+	decayType = getWDecayType(W1decayType, W1, W1daughter, false);
       }
 
 
@@ -5622,12 +5653,21 @@ unsigned int EventCalculator::getSeed(){
   if (sampleName_.Contains("ww") )                                                   return 4383;
   if (sampleName_.Contains("wz") )                                                   return 4384;
   if (sampleName_.Contains("zz") )                                                   return 4385;
-  if (sampleName_.Contains("t_s-channel") )                                          return 4386;
-  if (sampleName_.Contains("tbar_s-channel") )                                       return 4387;
-  if (sampleName_.Contains("t_t-channel") )                                          return 4388;
-  if (sampleName_.Contains("tbar_t-channel") )                                       return 4389;
-  if (sampleName_.Contains("t_tW-channel") )                                         return 4390;
-  if (sampleName_.Contains("tbar_tW-channel") )                                      return 4391;
+  //if (sampleName_.Contains("t_s-channel") )                                          return 4386;
+  //if (sampleName_.Contains("tbar_s-channel") )                                       return 4387;
+  //if (sampleName_.Contains("t_t-channel") )                                          return 4388;
+  //if (sampleName_.Contains("tbar_t-channel") )                                       return 4389;
+  //if (sampleName_.Contains("t_tW-channel") )                                         return 4390;
+  //if (sampleName_.Contains("tbar_tW-channel") )                                      return 4391;
+  if (sampleName_.Contains("T_TuneZ2_s-channel_7TeV-powheg-tauola") )                return 4386;
+  if (sampleName_.Contains("Tbar_TuneZ2_s-channel_7TeV-powheg-tauola") )             return 4387;
+  if (sampleName_.Contains("T_TuneZ2_t-channel_7TeV-powheg-tauola") )                return 4388;
+  if (sampleName_.Contains("Tbar_TuneZ2_t-channel_7TeV-powheg-tauola") )             return 4389;
+  if (sampleName_.Contains("T_TuneZ2_tW-channel-DR_7TeV-powheg-tauola") )            return 4390;
+  if (sampleName_.Contains("Tbar_TuneZ2_tW-channel-DR_7TeV-powheg-tauola") )         return 4391;
+
+
+
   //if (sampleName_.Contains("wjets") )                                                return 4392;
   if (sampleName_.Contains("WJetsToLNu_TuneZ2_7TeV-madgraph-tauola") )               return 4392;
   if (sampleName_.Contains("WJetsToLNu_250_HT_300_TuneZ2_7TeV-madgraph-tauola") )    return 4401;
@@ -6131,17 +6171,23 @@ void EventCalculator::loadEventList(std::vector<int> &vrun, std::vector<int> &vl
   //inFile.open("eventlist_pfht350_r178866_SUM.txt"); 
   if (sampleName_.Contains("ttjets_madgraph") )
     inFile.open("badeventlist_pythia6bug_ttjets_madgraph.txt");
-  else if (sampleName_.Contains("t_s-channel") )
+  //else if (sampleName_.Contains("t_s-channel") )
+  else if (sampleName_.Contains("T_TuneZ2_s-channel_7TeV-powheg-tauola") )            
     inFile.open("badeventlist_pythia6bug_t_schannel_madgraph.txt");
-  else if (sampleName_.Contains("tbar_s-channel") )
+  //else if (sampleName_.Contains("tbar_s-channel") )
+  else if (sampleName_.Contains("Tbar_TuneZ2_s-channel_7TeV-powheg-tauola") )         
     inFile.open("badeventlist_pythia6bug_tbar_schannel_madgraph.txt");
-  else if (sampleName_.Contains("t_t-channel") )
+  //else if (sampleName_.Contains("t_t-channel") )
+  else if (sampleName_.Contains("T_TuneZ2_t-channel_7TeV-powheg-tauola") )            
     inFile.open("badeventlist_pythia6bug_t_tchannel_madgraph.txt");
-  else if (sampleName_.Contains("tbar_t-channel") )
+  //else if (sampleName_.Contains("tbar_t-channel") )
+  else if (sampleName_.Contains("Tbar_TuneZ2_t-channel_7TeV-powheg-tauola") )         
     inFile.open("badeventlist_pythia6bug_tbar_tchannel_madgraph.txt");
-  else if (sampleName_.Contains("t_tW-channel") )
+  //else if (sampleName_.Contains("t_tW-channel") )
+  else if (sampleName_.Contains("T_TuneZ2_tW-channel-DR_7TeV-powheg-tauola") )        
     inFile.open("badeventlist_pythia6bug_t_tWchannel_madgraph.txt");
-  else if (sampleName_.Contains("tbar_tW-channel") )
+  //else if (sampleName_.Contains("tbar_tW-channel") )
+  else if (sampleName_.Contains("Tbar_TuneZ2_tW-channel-DR_7TeV-powheg-tauola") )     
     inFile.open("badeventlist_pythia6bug_tbar_tWchannel_madgraph.txt");
   else if (sampleName_.Contains("WJetsToLNu_300_HT_inf_TuneZ2_7TeV-madgraph-tauola") )
     inFile.open("badeventlist_pythia6bug_wjets_ht300_madgraph.txt");
@@ -6298,7 +6344,7 @@ int EventCalculator::WDecayType(const int Wparent,int& Wdaughter)
   {Wdaughter = Wparent;return 1;}
 }
 
-int EventCalculator::findW(int& W, int& Wdaughter,int parent=0)
+int EventCalculator::findW(int& W, int& Wdaughter,int parent=0, bool fromtop=true)
 {
    int thisParticle;
    int maxParticle;
@@ -6316,6 +6362,10 @@ int EventCalculator::findW(int& W, int& Wdaughter,int parent=0)
      {
        if(abs(TMath::Nint(myGenParticles->at(thisParticle).pdgId)) == 24)
 	 {
+	   //if fromtop is false, this W is required to NOT be from a top
+	   //the flag is only relevant for the singletop-tW-channel sample
+	   if( !fromtop && abs(TMath::Nint(myGenParticles->at( myGenParticles->at(thisParticle).firstMother ).pdgId))==6) continue;
+
 	   int nextDaughter = TMath::Nint(myGenParticles->at(thisParticle).firstDaughter);
 	   if(abs(TMath::Nint(myGenParticles->at(nextDaughter).pdgId)) == 24)
 	     {
@@ -6415,18 +6465,21 @@ int EventCalculator::daughterMatch(const int Wdaughter, const int WdecayType)
   return -1;
 }
 
-int EventCalculator::getTTbarDecayType(int& W1decayType, int& W2decayType, int& W1, int& W1daughter, int& W2, int& W2daughter)
+int EventCalculator::getTTbarDecayType(int& W1decayType, int& W2decayType, int& W1, int& W1daughter, int& W2, int& W2daughter, bool passW2info=false)
 {
   if(myGenParticles == 0 || myGenParticles->size() == 0) return -1;
   int top1=-1;
   int top2=-1;
   int nTops = findTop(top1,top2);
   W1 = 0;
-  W2 = 0;
   W1daughter = 0;
-  W2daughter = 0;
-  //int W1decayType = 0;
-  //int W2decayType = 0;
+  W1decayType = -1;
+  if(!passW2info){//for single-top-tW-channel
+    W2 = 0;
+    W2daughter = 0;
+    W2decayType = -1;
+  }
+
   if(nTops>0)
     {
       W1decayType = findW(W1,W1daughter,top1);
@@ -6443,21 +6496,26 @@ int EventCalculator::getTTbarDecayType(int& W1decayType, int& W2decayType, int& 
 
   //cout << "done with matching" << endl;
 
-  //considering only (W->had,W->e/mu), (W->tau->had,W->e/mu), (W->had,W->had), (W->had,W->tau->had) 
-  if((W1decayType == 1 || W2decayType == 1 || W1decayType == 15 || W2decayType == 15) && !(W1decayType == 15 && W2decayType == 15)) //hadronic decay
+  //for ttbar, considering only (W->had,W->e/mu), (W->tau->had,W->e/mu), (W->had,W->had), (W->had,W->tau->had) 
+  if( ((sampleName_.Contains("TTJets_TuneZ2") || sampleName_.Contains("T_TuneZ2_tW") || sampleName_.Contains("Tbar_TuneZ2_tW"))
+       && (W1decayType == 112 || W2decayType == 112 || W1decayType == 134 || W2decayType == 134 || W1decayType == 15 || W2decayType == 15) 
+       && !(W1decayType == 15 && W2decayType == 15))
+      || (sampleName_.Contains("T_TuneZ2_s-channel") || sampleName_.Contains("Tbar_TuneZ2_s-channel")
+	  || sampleName_.Contains("T_TuneZ2_t-channel") || sampleName_.Contains("Tbar_TuneZ2_t-channel"))
+      )
   //considering only semileptonic decay: (W->had,W->e/mu)
   //if( ((W1decayType==13 && W2decayType==1) || (W1decayType==1 && W2decayType==13) || (W1decayType==1513 && W2decayType==1) || (W1decayType==1 && W2decayType==1513))
   //    || ((W1decayType==11 && W2decayType==1) || (W1decayType==1 && W2decayType==11) || (W1decayType==1511 && W2decayType==1) || (W1decayType==1 && W2decayType==1511)))
     {
       //find the e/mu decay one
       int WdecayType, Wdaughter,WdaughterMatch;
-      if(W1decayType!=1) //if W1 is the non-hadronic one
+      if(W1decayType!=112 && W1decayType!=134) //if W1 is the non-hadronic one
 	{
 	  WdecayType =  W1decayType;
 	  Wdaughter = W1daughter;
 	  WdaughterMatch = W1daughterMatch;
 	}
-      else if(W2decayType!=1)
+      else if(W2decayType!=112 && W2decayType!=134)
 	{
 	  WdecayType =  W2decayType;
 	  Wdaughter = W2daughter;
@@ -6554,11 +6612,11 @@ int EventCalculator::getTTbarDecayType(int& W1decayType, int& W2decayType, int& 
 }
 
 
-int EventCalculator::getWDecayType(int& WdecayType, int& W, int& Wdaughter)
+int EventCalculator::getWDecayType(int& WdecayType, int& W, int& Wdaughter, bool fromtop=true)
 {
   if(myGenParticles == 0 || myGenParticles->size() == 0) return -1;
 
-  WdecayType = findW(W,Wdaughter);
+  WdecayType = findW(W,Wdaughter, fromtop);
   
   int WdaughterMatch = -1;
 
@@ -6811,16 +6869,29 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
     //		<< std::endl;
     //  }
     //}
+
+    //for (unsigned int k = 0; k<myGenParticles->size(); k++) {
+    //  //      for debugging
+    //  if(myGenParticles->at(k).status==3)
+    //	cout<<k<<"\t"<<TMath::Nint(myGenParticles->at(k).pdgId )<<"\t"<< TMath::Nint(myGenParticles->at(k).firstMother)<<"\t"<<TMath::Nint(myGenParticles->at(k).lastMother)<<"\t"<<TMath::Nint(myGenParticles->at(k).status ) <<endl;
+    //}
+
     int W1, W1daughter, returnvalue;
     //int W2, W2daughter;
 
-    returnvalue = getWDecayType(W1decayType, W1, W1daughter);
-   
-    //W1decayType = findW(W1,W1daughter);
-    if(returnvalue==101302){
-    std::cout << "W1decayType = " << W1decayType << ", W1 = " << W1 << ", W1daughter = " << W1daughter << std::endl;
-    std::cout << "\t returnvalue = " << returnvalue << std::endl;
-    }
+    returnvalue = getWDecayType(W1decayType, W1, W1daughter, false);
+    //decayType = getTTbarDecayType(W1decayType, W2decayType, W1, W1daughter, W2, W2daughter,true);
+
+
+    //std::cout << "decaytype = " << decayType << ", W1decayType = " << W1decayType << ", W2decayType = " << W2decayType 
+    //  		<< ", W1 = " << W1 << ", W1 daughter = " << W1daughter << ", W2 = " << W2 << ", W2daughter = " << W2daughter << std::endl;
+
+    //
+    ////W1decayType = findW(W1,W1daughter);
+    //if(returnvalue==101302){
+      std::cout << "W1decayType = " << W1decayType << ", W1 = " << W1 << ", W1daughter = " << W1daughter << std::endl;
+      std::cout << "\t returnvalue = " << returnvalue << std::endl;
+    //}
     //std::cout << "myGenparticles size = " << myGenParticles->size() << std::endl;
     /*
     decayType = getTTbarDecayType(W1decayType, W2decayType, W1, W1daughter, W2, W2daughter);
