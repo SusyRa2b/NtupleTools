@@ -4575,8 +4575,12 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   float minDeltaPhiN_Luke_lostJet, maxDeltaPhiN_Luke_lostJet, deltaPhiN1_Luke_lostJet, deltaPhiN2_Luke_lostJet, deltaPhiN3_Luke_lostJet;
   float minTransverseMETSignificance_lostJet, maxTransverseMETSignificance_lostJet, transverseMETSignificance1_lostJet, transverseMETSignificance2_lostJet, transverseMETSignificance3_lostJet;
 
-  bool passBadECAL_METphi_n10_s10, passBadECAL_METphi_n10_s12, passBadECAL_METphi_n5_s10, passBadECAL_METphi_n5_s12;
-  bool passBadECAL_METphi_crack;
+  bool passBadECAL_METphi53_n10_s12, passBadECAL_METphi33_n10_s12, passBadECAL_METphi52_n10_s12; 
+  float worstMisA_badECAL_METphi53_n10_s12, worstMisF_badECAL_METphi53_n10_s12;
+  float worstMisA_badECAL_METphi33_n10_s12, worstMisF_badECAL_METphi33_n10_s12;
+  float worstMisA_badECAL_METphi52_n10_s12, worstMisF_badECAL_METphi52_n10_s12;
+  bool passBadECAL_METphi53_n5_s12;
+  bool passBadECAL_METphi53_crack;
 
   float prob0,probge1,prob1,probge2,probge3,prob2;
   
@@ -4967,11 +4971,21 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("deltaPhiN2_lostJet", &deltaPhiN2_lostJet, "deltaPhiN2_lostJet/F");
   reducedTree.Branch("deltaPhiN3_lostJet", &deltaPhiN3_lostJet, "deltaPhiN3_lostJet/F");
 
-  reducedTree.Branch("passBadECAL_METphi_n10_s10", &passBadECAL_METphi_n10_s10, "passBadECAL_METphi_n10_s1/O");
-  reducedTree.Branch("passBadECAL_METphi_n10_s12", &passBadECAL_METphi_n10_s12, "passBadECAL_METphi_n10_s12/O");
-  reducedTree.Branch("passBadECAL_METphi_n5_s10", &passBadECAL_METphi_n5_s10, "passBadECAL_METphi_n5_s10/O");
-  reducedTree.Branch("passBadECAL_METphi_n5_s12", &passBadECAL_METphi_n5_s12, "passBadECAL_METphi_n5_s12/O");
-  reducedTree.Branch("passBadECAL_METphi_crack", &passBadECAL_METphi_crack, "passBadECAL_METphi_crack/O");
+  reducedTree.Branch("passBadECAL_METphi53_n10_s12", &passBadECAL_METphi53_n10_s12, "passBadECAL_METphi53_n10_s12/O");
+  reducedTree.Branch("worstMisA_badECAL_METphi53_n10_s12",&worstMisA_badECAL_METphi53_n10_s12, "worstMisA_badECAL_METphi53_n10_s12/F");
+  reducedTree.Branch("worstMisF_badECAL_METphi53_n10_s12",&worstMisF_badECAL_METphi53_n10_s12, "worstMisF_badECAL_METphi53_n10_s12/F");
+
+  reducedTree.Branch("passBadECAL_METphi33_n10_s12", &passBadECAL_METphi33_n10_s12, "passBadECAL_METphi33_n10_s12/O");
+  reducedTree.Branch("worstMisA_badECAL_METphi33_n10_s12",&worstMisA_badECAL_METphi33_n10_s12, "worstMisA_badECAL_METphi33_n10_s12/F");
+  reducedTree.Branch("worstMisF_badECAL_METphi33_n10_s12",&worstMisF_badECAL_METphi33_n10_s12, "worstMisF_badECAL_METphi33_n10_s12/F");
+
+
+  reducedTree.Branch("passBadECAL_METphi52_n10_s12", &passBadECAL_METphi52_n10_s12, "passBadECAL_METphi52_n10_s12/O");
+  reducedTree.Branch("worstMisA_badECAL_METphi52_n10_s12",&worstMisA_badECAL_METphi52_n10_s12, "worstMisA_badECAL_METphi52_n10_s12/F");
+  reducedTree.Branch("worstMisF_badECAL_METphi52_n10_s12",&worstMisF_badECAL_METphi52_n10_s12, "worstMisF_badECAL_METphi52_n10_s12/F");
+
+  reducedTree.Branch("passBadECAL_METphi53_n5_s12", &passBadECAL_METphi53_n5_s12, "passBadECAL_METphi53_n5_s12/O");
+  reducedTree.Branch("passBadECAL_METphi53_crack", &passBadECAL_METphi53_crack, "passBadECAL_METphi53_crack/O");
 
   reducedTree.Branch("jetpt1",&jetpt1,"jetpt1/F");
   reducedTree.Branch("jetgenpt1",&jetgenpt1,"jetgenpt1/F");
@@ -5449,18 +5463,36 @@ Also the pdfWeightSum* histograms that are used for LM9.
       
       //currently only set up for QCD MC
       if (sampleName_.Contains("QCD")) {
-	passBadECAL_METphi_n10_s10 = passBadECALFilter("METphi","deadCell",10,10);
-	passBadECAL_METphi_n10_s12 = passBadECALFilter("METphi","deadCell",10,12);
-	passBadECAL_METphi_n5_s10 = passBadECALFilter("METphi","deadCell",5,10);
-	passBadECAL_METphi_n5_s12 = passBadECALFilter("METphi","deadCell",5,12);
-	passBadECAL_METphi_crack = passBadECALFilter("METphi","crackEBEE",0,0);
+	passBadECAL_METphi53_n10_s12 = passBadECALFilter("METphi",0.5,"deadCell",0.3,10,12);
+	worstMisA_badECAL_METphi53_n10_s12 = passBadECALFilter_worstMis("METphi",0.5,"deadCell",0.3,10,12,"abs");
+	worstMisF_badECAL_METphi53_n10_s12 = passBadECALFilter_worstMis("METphi",0.5,"deadCell",0.3,10,12,"frac");
+
+	passBadECAL_METphi33_n10_s12 = passBadECALFilter("METphi",0.3,"deadCell",0.3,10,12);
+	worstMisA_badECAL_METphi33_n10_s12 = passBadECALFilter_worstMis("METphi",0.3,"deadCell",0.3,10,12,"abs");
+	worstMisF_badECAL_METphi33_n10_s12 = passBadECALFilter_worstMis("METphi",0.3,"deadCell",0.3,10,12,"frac");
+
+	passBadECAL_METphi52_n10_s12 = passBadECALFilter("METphi",0.5,"deadCell",0.2,10,12);
+	worstMisA_badECAL_METphi52_n10_s12 = passBadECALFilter_worstMis("METphi",0.5,"deadCell",0.2,10,12,"abs");
+	worstMisF_badECAL_METphi52_n10_s12 = passBadECALFilter_worstMis("METphi",0.5,"deadCell",0.2,10,12,"frac");
+
+	passBadECAL_METphi53_n5_s12 = passBadECALFilter("METphi",0.5,"deadCell",0.3,5,12);
+	passBadECAL_METphi53_crack = passBadECALFilter("METphi",0.5,"crackEBEE",0.3,0,0);
       }
       else {
-	passBadECAL_METphi_n10_s10 = 1; 
-	passBadECAL_METphi_n10_s12 = 1;
-	passBadECAL_METphi_n5_s10 = 1;
-	passBadECAL_METphi_n5_s12 = 1;
-	passBadECAL_METphi_crack = 1;
+	passBadECAL_METphi53_n10_s12 = 1;
+	worstMisA_badECAL_METphi53_n10_s12 = -1;
+	worstMisF_badECAL_METphi53_n10_s12 = -1;
+
+	passBadECAL_METphi33_n10_s12 = 1;
+	worstMisA_badECAL_METphi33_n10_s12 = -1;
+	worstMisF_badECAL_METphi33_n10_s12 = -1;
+
+	passBadECAL_METphi52_n10_s12 = 1;
+	worstMisA_badECAL_METphi52_n10_s12 = -1;
+	worstMisF_badECAL_METphi52_n10_s12 = -1;
+
+	passBadECAL_METphi53_n5_s12 = 1;
+	passBadECAL_METphi53_crack = 1;
       }
 
       minTransverseMETSignificance = getMinTransverseMETSignificance(3);
@@ -7566,33 +7598,65 @@ void EventCalculator::loadECALStatus() {
 }
 
 
-bool EventCalculator::passBadECALFilter(TString nearmettype, TString nearecaltype, int nbadcellsthr, int badcellstatusthr) {
+bool EventCalculator::passBadECALFilter(TString nearmettype, double nearmetphicut, TString nearecaltype, double nearecalRcut, int nbadcellsthr, int badcellstatusthr) {
   
   for (unsigned int i=0; i< myJetsPF->size(); i++) {
     if (getJetPt(i) > 30 && fabs(myJetsPF->at(i).eta) < 5) {
       
-      if( jetNearMET(i, nearmettype) ) {
-	if( jetNearBadECALCell(i, nearecaltype, nbadcellsthr, badcellstatusthr) ) return 0;
+      if( jetNearMET(i, nearmettype, nearmetphicut) ) {
+	if( jetNearBadECALCell(i, nearecaltype, nearecalRcut, nbadcellsthr, badcellstatusthr) ) return 0;
       }
-      
     }
   }
   return 1;
 }
 
 
-bool EventCalculator::jetNearMET(unsigned int i, TString type) {
+float EventCalculator::passBadECALFilter_worstMis(TString nearmettype, double nearmetphicut, TString nearecaltype, double nearecalRcut, int nbadcellsthr, int badcellstatusthr, TString mistype) {
+  
+  float worst = -1;//assume undermeasurement!
+  
+  for (unsigned int i=0; i< myJetsPF->size(); i++) {
+    if (getJetPt(i) > 30 && fabs(myJetsPF->at(i).eta) < 5) {
+      
+      if( jetNearMET(i, nearmettype, nearmetphicut) ) {
+	if( jetNearBadECALCell(i, nearecaltype, nearecalRcut, nbadcellsthr, badcellstatusthr) ) {
+
+	  float genpt = myJetsPF->at(i).genJet_pt;
+	  float pt = getJetPt(i);
+	  
+	  float thisworst;
+	  if(mistype=="abs") {
+	    thisworst = genpt - pt;//large for undermeasurement
+	  }
+	  else if(mistype=="frac") {
+	    thisworst = genpt/pt;//large for undermeasurement
+	  }
+	  else assert(0);
+	  
+	  if(thisworst>worst) worst=thisworst;
+	  
+	}
+      }
+    }
+  }
+
+  return worst;
+}
+
+  
+bool EventCalculator::jetNearMET(unsigned int i, TString type, double nearmetphicut) {
   
   if(type=="METphi") {
     double dp =  getDeltaPhi( myJetsPF->at(i).phi , getMETphi());
-    if(dp<=0.5) return 1;
+    if(dp<=nearmetphicut) return 1;
     else return 0;
   }
   else assert(0);//no other types yet. future: RA1 deltaPhi* method
   
 }
 
-bool EventCalculator::jetNearBadECALCell(unsigned int i, TString type, int nbadcellsthr, int badcellstatusthr) {
+bool EventCalculator::jetNearBadECALCell(unsigned int i, TString type, double nearecalRcut, int nbadcellsthr, int badcellstatusthr) {
   
   if(type=="deadCell") {
     
@@ -7601,7 +7665,7 @@ bool EventCalculator::jetNearBadECALCell(unsigned int i, TString type, int nbadc
     
     int nbad =0;
     for(unsigned int j=0; j<badECAL_.size(); j++) {
-      if( (jmt::deltaR(jeteta,jetphi,badECAL_[j].eta,badECAL_[j].phi) <= 0.3) && badECAL_[j].status>= badcellstatusthr) nbad++;
+      if( (jmt::deltaR(jeteta,jetphi,badECAL_[j].eta,badECAL_[j].phi) <= nearecalRcut) && badECAL_[j].status>= badcellstatusthr) nbad++;
     }
     if(nbad>=nbadcellsthr) return 1;
     else return 0;
@@ -7618,3 +7682,5 @@ bool EventCalculator::jetNearBadECALCell(unsigned int i, TString type, int nbadc
   else assert(0);
 
 }
+
+

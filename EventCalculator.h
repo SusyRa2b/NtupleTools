@@ -411,9 +411,10 @@ private:
   //ecal dead cell
   std::vector<cellECAL> badECAL_;
   void loadECALStatus();
-  bool passBadECALFilter(TString nearmettype = "METphi", TString nearecaltype ="deadCell", int nbadcellsthr=10, int badcellstatusth=10);
-  bool jetNearMET(unsigned int i, TString type);
-  bool jetNearBadECALCell(unsigned int i, TString type, int nbadcellsthr, int badcellstatusthr);
+  bool passBadECALFilter(TString nearmettype = "METphi", double nearmetphicut=0.5,TString nearecaltype ="deadCell", double nearecalRcut=0.3,int nbadcellsthr=10, int badcellstatusth=10);
+  float passBadECALFilter_worstMis(TString nearmettype = "METphi", double nearmetphicut=0.5,TString nearecaltype ="deadCell", double nearecalRcut=0.3, int nbadcellsthr=10, int badcellstatusth=10, TString mistype ="abs");
+  bool jetNearMET(unsigned int i, TString type, double nearmetphicut);
+  bool jetNearBadECALCell(unsigned int i, TString type, double nearecalRcut, int nbadcellsthr, int badcellstatusthr);
 
   TString getOptPiece(const TString &key, const TString & opt);
 
