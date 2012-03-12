@@ -95,13 +95,14 @@ void printEff() {
   cout<<"eff_SB_ldp_MHT_err_plus   "<<eff_SB_ldp_MHT_err_[0]<<endl;
   cout<<"eff_SB_ldp_MHT_err_minus  "<<eff_SB_ldp_MHT_err_[1]<<endl;
 
-  cout<<"eff_SB_1e_MHT             "<<eff_SB_1e_MHT_<<endl;
-  cout<<"eff_SB_1e_MHT_err_plus    "<<eff_SB_1e_MHT_err_[0]<<endl;
-  cout<<"eff_SB_1e_MHT_err_minus   "<<eff_SB_1e_MHT_err_[1]<<endl;
+  assert(eff_SB_1e_MHT_ == eff_SB_1m_MHT_);
+  cout<<"eff_SB_sl_MHT             "<<eff_SB_1e_MHT_<<endl;
+  cout<<"eff_SB_sl_MHT_err_plus    "<<eff_SB_1e_MHT_err_[0]<<endl;
+  cout<<"eff_SB_sl_MHT_err_minus   "<<eff_SB_1e_MHT_err_[1]<<endl;
 
-  cout<<"eff_SB_1m_MHT             "<<eff_SB_1m_MHT_<<endl;
-  cout<<"eff_SB_1m_MHT_err_plus    "<<eff_SB_1m_MHT_err_[0]<<endl;
-  cout<<"eff_SB_1m_MHT_err_minus   "<<eff_SB_1m_MHT_err_[1]<<endl;
+  //  cout<<"eff_SB_1m_MHT             "<<eff_SB_1m_MHT_<<endl;
+  //  cout<<"eff_SB_1m_MHT_err_plus    "<<eff_SB_1m_MHT_err_[0]<<endl;
+  //  cout<<"eff_SB_1m_MHT_err_minus   "<<eff_SB_1m_MHT_err_[1]<<endl;
 
   cout<<"eff_SIG_MHT               "<<eff_SIG_MHT_<<endl;
   cout<<"eff_SIG_MHT_err_plus      "<<eff_SIG_MHT_err_[0]<<endl;
@@ -111,9 +112,9 @@ void printEff() {
   cout<<"eff_SIG_ldp_MHT_err_plus  "<<eff_SIG_ldp_MHT_err_[0]<<endl;
   cout<<"eff_SIG_ldp_MHT_err_minus "<<eff_SIG_ldp_MHT_err_[1]<<endl;
 
-  cout<<"eff_SIG_SL_MHT            "<<eff_SIG_SL_MHT_<<endl;
-  cout<<"eff_SIG_SL_MHT_err_plus   "<<eff_SIG_SL_MHT_err_[0]<<endl;
-  cout<<"eff_SIG_SL_MHT_err_minus  "<<eff_SIG_SL_MHT_err_[1]<<endl;
+  cout<<"eff_SIG_sl_MHT            "<<eff_SIG_SL_MHT_<<endl;
+  cout<<"eff_SIG_sl_MHT_err_plus   "<<eff_SIG_SL_MHT_err_[0]<<endl;
+  cout<<"eff_SIG_sl_MHT_err_minus  "<<eff_SIG_SL_MHT_err_[1]<<endl;
 
 }
 
@@ -1057,8 +1058,10 @@ void printOwenShape(const TString& owenKey) {
   cout<<"Nsig_ldp"<<bstr<<"          "<<  owenMap_[owenKey].Nsig_ldp<<endl;
   cout<<"Nsb_ldp"<<bstr<<"           "<<  owenMap_[owenKey].Nsb_ldp<<endl;
 
-  cout<<"Rlsb_passfail     "<<owenMap_[owenKey].Rlsb_passfail<<endl;
-  cout<<"Rlsb_passfail_err "<<owenMap_[owenKey].Rlsb_passfail_err<<endl;
+  if (owenKey.BeginsWith("eq1b")) {
+    cout<<"Rlsb_passfail     "<<owenMap_[owenKey].Rlsb_passfail<<endl;
+    cout<<"Rlsb_passfail_err "<<owenMap_[owenKey].Rlsb_passfail_err<<endl;
+  }
 
   cout<<"Nttbarsingletopzjetsmc_sig_ldp"<<bstr<<"  "<<  owenMap_[owenKey].Nttbarmc_sig_ldp+owenMap_[owenKey].Nsingletopmc_sig_ldp+owenMap_[owenKey].NZjmc_sig_ldp<<endl;
   cout<<"Nttbarsingletopzjetsmc_sb_ldp"<<bstr<<"  "<<  owenMap_[owenKey].Nttbarmc_sb_ldp+owenMap_[owenKey].Nsingletopmc_sb_ldp+owenMap_[owenKey].NZjmc_sb_ldp<<endl;
@@ -1565,14 +1568,19 @@ for legacy purposes I am keeping all of the weight and selection TStrings, altho
   }
   if (btagSFweight_=="") btagSFweight_="1";
   if ( type==kData) {
-    if (btagSFweight_=="probge1") weightedcut += "*(nbjets>=1)";
-    else if (btagSFweight_=="probge2") weightedcut += "*(nbjets>=2)";
-    else if (btagSFweight_=="probge3") weightedcut += "*(nbjets>=3)";
-    else if (btagSFweight_=="prob2") weightedcut += "*(nbjets==2)";
-    else if (btagSFweight_=="(1-prob1-prob0-probge3)") weightedcut += "*(nbjets==2)";
-    else if (btagSFweight_=="prob1") weightedcut += "*(nbjets==1)";
-    else if (btagSFweight_=="prob0") weightedcut += "*(nbjets==0)";
-    else if (btagSFweight_=="1") {} //do nothing
+
+    TString btagSFweight = btagSFweight_;
+    //need to chop off the trailing _HFplus _LFminus etc
+    if (btagSFweight.Contains("_")) btagSFweight = btagSFweight(0,btagSFweight.Index("_"));
+
+    if (btagSFweight=="probge1") weightedcut += "*(nbjets>=1)";
+    else if (btagSFweight=="probge2") weightedcut += "*(nbjets>=2)";
+    else if (btagSFweight=="probge3") weightedcut += "*(nbjets>=3)";
+    else if (btagSFweight=="prob2") weightedcut += "*(nbjets==2)";
+    else if (btagSFweight=="(1-prob1-prob0-probge3)") weightedcut += "*(nbjets==2)";
+    else if (btagSFweight=="prob1") weightedcut += "*(nbjets==1)";
+    else if (btagSFweight=="prob0") weightedcut += "*(nbjets==0)";
+    else if (btagSFweight=="1") {} //do nothing
     else {cout<<"btagSF problem with data"<<endl; assert(0);}
   }
   else {
@@ -1957,8 +1965,8 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   //FOR PLOTS
   ////////////
   if (signalEffMode=="") {
-    configDescriptions_.setDefault("CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
-    configDescriptions_.setCorrected("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0");
+    configDescriptions_.setDefault("CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff04_HLTEff0");
+    configDescriptions_.setCorrected("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff04_HLTEff0");
   }
   else if (signalEffMode=="scan" || signalEffMode=="complete") {  //Only for signal systematics
       

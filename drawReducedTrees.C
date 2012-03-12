@@ -67,9 +67,10 @@ in order to get one file per sample.
 
   //TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35g/";
 //TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35h/";
-//TString inputPath = "/cu2/wteo/reducedTrees/Fall11/V00-02-35k/";
+  //TString inputPath = "/cu2/wteo/reducedTrees/Fall11/V00-02-35k/";
 
-TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35l/";
+TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35n/Fall11/";
+  //TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35l/";
 TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35k/";
 
 //TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35d/";
@@ -1795,7 +1796,10 @@ modifications for SHAPE analysis: (bShape = true)
 -- for DATA, this means the data-driven subtraction must always be for the 1b case
 */
 
-  assert( closureMode=="nominal" || closureMode=="justttbar" || closureMode=="wtplus" ||closureMode=="wtminus" ||closureMode=="slonlywtplus" ||closureMode=="slonlywtminus" ||closureMode=="0lonlywtplus" ||closureMode=="0lonlywtminus" || closureMode=="justw"|| closureMode=="justsingletop");
+  assert( closureMode=="nominal" || closureMode=="justttbar" || closureMode=="wtplus" ||closureMode=="wtminus"
+	  ||closureMode=="slonlywtplus" ||closureMode=="slonlywtminus" ||closureMode=="0lonlywtplus" ||closureMode=="0lonlywtminus"
+	  || closureMode=="justw"|| closureMode=="justsingletop"
+	  || closureMode=="HFplus" || closureMode=="HFminus"||closureMode=="LFplus"||closureMode=="LFminus");
 
   if (closureMode=="justttbar") cout<<"Will run closure test in ttbar only mode!"<<endl;
   else if (closureMode=="nominal") {}
@@ -2077,12 +2081,20 @@ modifications for SHAPE analysis: (bShape = true)
       btagSFweight="prob1";
     }
     else if (btagselection=="eq2b") {
-      btagSFweight="(1-prob1-prob0-probge3)";
+      btagSFweight="prob2";
     }
     else {assert(0);}
+
+    if (closureMode.BeginsWith("HF") || closureMode.BeginsWith("LF")) {
+      btagSFweight += "_";
+      btagSFweight += closureMode;
+      assert(!bShape); //not implemented
+    }
+
     btagSFweight_=btagSFweight;
   }
   else {
+    if (closureMode.BeginsWith("HF") || closureMode.BeginsWith("LF")) assert(0);
     usePUweight_=false;
     useHTeff_=false;
     useMHTeff_=false;
@@ -2685,6 +2697,13 @@ void runSLClosureTest2011(const bool bShape=false) {
   setSearchRegions();
   cout<<"Note that the following is the joint tt+W+t closure test only!"<<endl;
   for (unsigned int j=0; j<searchRegions_.size();j++)    slABCD(j,false,"","nominal",false,bShape);
+
+  for (unsigned int j=0; j<searchRegions_.size();j++)    slABCD(j,false,"","HFplus",false,bShape);
+  for (unsigned int j=0; j<searchRegions_.size();j++)    slABCD(j,false,"","HFminus",false,bShape);
+
+  for (unsigned int j=0; j<searchRegions_.size();j++)    slABCD(j,false,"","LFplus",false,bShape);
+  for (unsigned int j=0; j<searchRegions_.size();j++)    slABCD(j,false,"","LFminus",false,bShape);
+
 
 /*
   cout<<"Note that the following is the tt closure test only!"<<endl;
@@ -4520,7 +4539,6 @@ void drawMSugraTest() {
 }
 
 void AN2011_excess() {
-
   //these plots certainly duplicate what we already have, but what the hell
 
   loadSamples();
@@ -4546,7 +4564,6 @@ void AN2011_excess() {
   doOverflowAddition(true);
   drawMCErrors_=true;
   
-/*
   btagSFweight_="probge2";
   selection_ =TCut("HT>=600 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=200 &&passCleaning==1 && minDeltaPhiN>=4");
   var="MET"; xtitle="E_{T}^{miss}";
@@ -4572,18 +4589,29 @@ void AN2011_excess() {
   setLogY(true); setPlotMinimum(0.7);
   drawPlots(var,nbins,low,high,xtitle,"Events", "HT_2BT"+modestring,0,"GeV");
   setLogY(false); resetPlotMinimum();
-*/
+
   btagSFweight_="probge3";
   selection_ =TCut("HT>=400 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=250 &&passCleaning==1 && minDeltaPhiN>=4");
 
-/*
+
   var="HT"; xtitle="H_{T}";
   low=400; high = 1400; nbins=5;
   drawPlots(var,nbins,low,high,xtitle,"Events", "HT_3B"+modestring,0,"GeV");
   setLogY(true); setPlotMinimum(0.7);
   drawPlots(var,nbins,low,high,xtitle,"Events", "HT_3B"+modestring,0,"GeV");
   setLogY(false); resetPlotMinimum();
-*/
+
+  ratioMax=2.5;
+  removeSample("LM9");
+  var="minDeltaPhi30_eta5_noIdAll"; xtitle="minDeltaPhi30_eta5_noIdAll";
+  low=0; high = 3; nbins=20;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "minDeltaPhi30eta5noIdAll_3B"+modestring,0,"");
+
+  btagSFweight_="probge2"; //2BT
+  selection_ =TCut("HT>=600 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=300 &&passCleaning==1 && minDeltaPhiN>=4");
+  var="minDeltaPhi30_eta5_noIdAll"; xtitle="minDeltaPhi30_eta5_noIdAll";
+  low=0; high = 3; nbins=20;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "minDeltaPhi30eta5noIdAll_2BT"+modestring,0,"");
 
   float binsHT[]={400,600,800,1400};
   float binsMET[]={250,300,350,500};
@@ -4638,6 +4666,76 @@ void AN2011_excess() {
   drawPlots(var,nbins,low,high,xtitle,"Events", "HT_SL_3B"+modestring,0,"GeV");
 
 }
+
+void DSchecks_2jtau() {
+
+  loadSamples();
+  setSearchRegions("Moriond");
+
+  usePUweight_=true;
+
+  //don't add in extra effects!
+  useHTeff_=false;
+  useMHTeff_=false;    
+
+  currentConfig_=configDescriptions_.getCorrected(); //JER bias
+  
+  int nbins;
+  float low,high;
+  TString var,xtitle;
+  
+  doOverflowAddition(true);
+  clearSamples();
+  addSample("TTbarJets");
+  setStackMode(false,true); //normalized
+  setColorScheme("nostack");
+  doData(false);
+
+  setLogY(true);
+
+  var="MET"; xtitle="MET";
+  nbins = 30; low=150; high=450;
+
+  btagSFweight_="probge2";
+  //use tighter HT selection to avoid the fact that the skim starts at 400 GeV
+  TCut baseline = "MET>=150 && HT>=500 && cutPV==1 && cutTrigger==1 && minDeltaPhiN >= 4 &&passCleaning==1";
+
+  selection_ =baseline && TCut("njets==3 && nTaus==1") && getLeptonVetoCut();
+  drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "METspectrum_ttbar_HT500_ge2b");
+  TH1D* signalsample=(TH1D*)  hinteractive->Clone("signalsample");
+
+  selection_ =baseline && TCut("njets==3") && getSingleLeptonCut();
+  drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "METspectrum_ttbar_SL_HT500_ge2b");
+  TH1D* slsample=(TH1D*)  hinteractive->Clone("slsample");
+
+  selection_ =baseline && TCut("njets==2") && getSingleLeptonCut();
+  drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "METspectrum_ttbar_SL_HT500_ge2b");
+  TH1D* slsample2j=(TH1D*)  hinteractive->Clone("slsample2j");
+
+  TCut alt = "MET>=150 && ( (((HT+muonpt1)>=500)&&(nMuons==1)) || ((nElectrons==1)&& ((HT+eleet1)>=500))) && cutPV==1 && cutTrigger==1 && minDeltaPhiN >= 4 &&passCleaning==1";
+  selection_=alt && TCut("njets==2") && getSingleLeptonCut();
+  drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "METspectrum_ttbar_SL_ST500_ge2b");
+  TH1D* slsample2jST=(TH1D*)  hinteractive->Clone("slsample2jST");
+
+  renewCanvas();
+  signalsample->SetLineColor(kBlue);
+  signalsample->SetMarkerColor(kBlue);
+  signalsample->Draw("hist e");
+
+  slsample->SetLineColor(kRed);
+  slsample->SetMarkerColor(kRed);
+  slsample->Draw("same e");
+
+  slsample2j->SetLineColor(kGreen);
+  slsample2j->SetMarkerColor(kGreen);
+  slsample2j->Draw("same e");
+
+  slsample2jST->SetLineColor(kMagenta);
+  slsample2jST->SetMarkerColor(kMagenta);
+  slsample2jST->Draw("same e");
+
+}
+
 
 //for the actual AN and paper, use mode 3, logy and doRatio false
 void AN2011( TString btagselection="ge1b",const int mode=1, bool logy=false, bool doRatio=false ) {
