@@ -1935,6 +1935,7 @@ bool EventCalculator::passBTagger(int ijet, BTaggerType btagger ) {
   else if (btagger==kTCHPT ) return myJetsPF->at(ijet).trackCountingHighPurBJetTags >= 3.41;
   else if (btagger==kTCHPM ) return myJetsPF->at(ijet).trackCountingHighPurBJetTags >= 1.93;
   else if (btagger==kCSVM  ) return myJetsPF->at(ijet).combinedSecondaryVertexBJetTags >=0.679;
+  else if (btagger==kCSVL  ) return myJetsPF->at(ijet).combinedSecondaryVertexBJetTags >=0.244;
   else{
     cout << "Invalid b tagger!" << endl;
     assert(0);
@@ -4521,7 +4522,7 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   UInt_t prescale_utilityHLT_HT300_CentralJet30_BTagIP;
 
   int njets, njets30, nbjets, ntruebjets, nElectrons, nMuons, nTaus;
-  int nbjetsSSVM,nbjetsTCHET,nbjetsSSVHPT,nbjetsTCHPT,nbjetsTCHPM,nbjetsCSVM;
+  int nbjetsSSVM,nbjetsTCHET,nbjetsSSVHPT,nbjetsTCHPT,nbjetsTCHPM,nbjetsCSVM,nbjetsCSVL;
   int nElectrons5, nElectrons15;
   int nMuons5, nMuons15;
 
@@ -4849,6 +4850,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("nbjetsTCHET",&nbjetsTCHET,"nbjetsTCHET/I");
   reducedTree.Branch("nbjetsTCHPM",&nbjetsTCHPM,"nbjetsTCHPM/I");
   reducedTree.Branch("nbjetsCSVM",&nbjetsCSVM,"nbjetsCSVM/I");
+  reducedTree.Branch("nbjetsCSVL",&nbjetsCSVL,"nbjetsCSVL/I");
 
   reducedTree.Branch("isRealData",&isRealData,"isRealData/O");
   reducedTree.Branch("pass_utilityHLT",&pass_utilityHLT,"pass_utilityHLT/O");
@@ -5323,6 +5325,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
       nbjetsTCHPT = nGoodBJets( kTCHPT);
       nbjetsTCHPM = nGoodBJets( kTCHPM);
       nbjetsCSVM = nGoodBJets( kCSVM);
+      nbjetsCSVL = nGoodBJets( kCSVL);
 
       CSVout1=bjetCSVOfN(1);
       CSVout2=bjetCSVOfN(2);
