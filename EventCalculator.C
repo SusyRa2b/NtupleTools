@@ -7614,7 +7614,7 @@ bool EventCalculator::passBadECALFilter(TString nearmettype, double nearmetphicu
 
 float EventCalculator::passBadECALFilter_worstMis(TString nearmettype, double nearmetphicut, TString nearecaltype, double nearecalRcut, int nbadcellsthr, int badcellstatusthr, TString mistype) {
   
-  float worst = -1;//assume undermeasurement!
+  float worst = -9e9;//assume undermeasurement!
   
   for (unsigned int i=0; i< myJetsPF->size(); i++) {
     if (getJetPt(i) > 30 && fabs(myJetsPF->at(i).eta) < 5) {
