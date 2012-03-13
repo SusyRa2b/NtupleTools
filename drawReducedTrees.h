@@ -1675,54 +1675,75 @@ TString getCutString(bool isData, TString extraSelection="",TString extraWeight=
   return    getCutString(st, extraWeight, selection_,extraSelection, pdfWeightIndex,pdfSet,susySubProcess) ;
 }
 
+
 void addOverflowBin(TH1D* theHist) {
-  //this code was written for when there was a customizable plot range (post-histo creation)
-  //it could be made a lot simpler now
 
-  int lastVisibleBin = theHist->GetNbinsX();
-  //  cout<<theHist<<"  "<<lastVisibleBin<<"\t";
-
-  //in case there is no custom range, the code should just add the overflow bin to the last bin of the histo
-  double lastBinContent = theHist->GetBinContent(lastVisibleBin);
-  double lastBinError = pow(theHist->GetBinError(lastVisibleBin),2); //square in prep for addition
-
-  //  cout<<"Overflow addition: "<<lastBinContent<<" +/- "<<sqrt(lastBinError)<<" --> ";
-
-  //now loop over the bins that aren't being shown at the moment (including the overflow bin)
-  for (int ibin = lastVisibleBin+1; ibin <= 1 + theHist->GetNbinsX() ; ++ibin) {
-    lastBinContent += theHist->GetBinContent( ibin);
-    lastBinError += pow(theHist->GetBinError( ibin),2);
+  if (theHist->GetBinErrorOption() == TH1::kPoisson) { //for new error treatment
+    //    cout<<"Using kPoisson overflow addition: ";
+    int nbins=    theHist->GetNbinsX();
+    //    cout<<theHist->GetBinContent(nbins);
+    theHist->SetBinContent(nbins,theHist->GetBinContent(nbins)+theHist->GetBinContent(nbins+1));
+    //    cout<<" --> "<<theHist->GetBinContent(nbins)<<endl;
   }
-  lastBinError = sqrt(lastBinError);
+  else { //legacy code
+    //this code was written for when there was a customizable plot range (post-histo creation)
+    //it could be made a lot simpler now
+    
+    int lastVisibleBin = theHist->GetNbinsX();
+    //  cout<<theHist<<"  "<<lastVisibleBin<<"\t";
+    
+    //in case there is no custom range, the code should just add the overflow bin to the last bin of the histo
+    double lastBinContent = theHist->GetBinContent(lastVisibleBin);
+    double lastBinError = pow(theHist->GetBinError(lastVisibleBin),2); //square in prep for addition
+    
+    //  cout<<"Overflow addition: "<<lastBinContent<<" +/- "<<sqrt(lastBinError)<<" --> ";
+    
+    //now loop over the bins that aren't being shown at the moment (including the overflow bin)
+    for (int ibin = lastVisibleBin+1; ibin <= 1 + theHist->GetNbinsX() ; ++ibin) {
+      lastBinContent += theHist->GetBinContent( ibin);
+      lastBinError += pow(theHist->GetBinError( ibin),2);
+    }
+    lastBinError = sqrt(lastBinError);
+    
+    theHist->SetBinContent(lastVisibleBin,lastBinContent);
+    theHist->SetBinError(lastVisibleBin,lastBinError);
+  }
 
-  theHist->SetBinContent(lastVisibleBin,lastBinContent);
-  theHist->SetBinError(lastVisibleBin,lastBinError);
 }
 
 
 void addOverflowBin(TH1F* theHist) {
-  //this code was written for when there was a customizable plot range (post-histo creation)
-  //it could be made a lot simpler now
-  //this one is copied from the function of the same name that takes a TH1D
-
-  int lastVisibleBin = theHist->GetNbinsX();
-  //  cout<<theHist<<"  "<<lastVisibleBin<<"\t";
-
-  //in case there is no custom range, the code should just add the overflow bin to the last bin of the histo
-  double lastBinContent = theHist->GetBinContent(lastVisibleBin);
-  double lastBinError = pow(theHist->GetBinError(lastVisibleBin),2); //square in prep for addition
-
-  //  cout<<"Overflow addition: "<<lastBinContent<<" +/- "<<sqrt(lastBinError)<<" --> ";
-
-  //now loop over the bins that aren't being shown at the moment (including the overflow bin)
-  for (int ibin = lastVisibleBin+1; ibin <= 1 + theHist->GetNbinsX() ; ++ibin) {
-    lastBinContent += theHist->GetBinContent( ibin);
-    lastBinError += pow(theHist->GetBinError( ibin),2);
+  //copied from TH1D implementation
+  if (theHist->GetBinErrorOption() == TH1::kPoisson) { //for new error treatment
+    //    cout<<"Using kPoisson overflow addition: ";
+    int nbins=    theHist->GetNbinsX();
+    //    cout<<theHist->GetBinContent(nbins);
+    theHist->SetBinContent(nbins,theHist->GetBinContent(nbins)+theHist->GetBinContent(nbins+1));
+    //    cout<<" --> "<<theHist->GetBinContent(nbins)<<endl;
   }
-  lastBinError = sqrt(lastBinError);
-
-  theHist->SetBinContent(lastVisibleBin,lastBinContent);
-  theHist->SetBinError(lastVisibleBin,lastBinError);
+  else { //legacy code
+    //this code was written for when there was a customizable plot range (post-histo creation)
+    //it could be made a lot simpler now
+    
+    int lastVisibleBin = theHist->GetNbinsX();
+    //  cout<<theHist<<"  "<<lastVisibleBin<<"\t";
+    
+    //in case there is no custom range, the code should just add the overflow bin to the last bin of the histo
+    double lastBinContent = theHist->GetBinContent(lastVisibleBin);
+    double lastBinError = pow(theHist->GetBinError(lastVisibleBin),2); //square in prep for addition
+    
+    //  cout<<"Overflow addition: "<<lastBinContent<<" +/- "<<sqrt(lastBinError)<<" --> ";
+    
+    //now loop over the bins that aren't being shown at the moment (including the overflow bin)
+    for (int ibin = lastVisibleBin+1; ibin <= 1 + theHist->GetNbinsX() ; ++ibin) {
+      lastBinContent += theHist->GetBinContent( ibin);
+      lastBinError += pow(theHist->GetBinError( ibin),2);
+    }
+    lastBinError = sqrt(lastBinError);
+    
+    theHist->SetBinContent(lastVisibleBin,lastBinContent);
+    theHist->SetBinError(lastVisibleBin,lastBinError);
+  }
 }
 
 void drawVerticalLine() {
@@ -2622,12 +2643,12 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
     if (hdata != 0) delete hdata;
     TString hname = jmt::fortranize(var); hname += "_"; hname += "data";
     hdata = (varbins==0) ? new TH1D(hname,"",nbins,low,high) : new TH1D(hname,"",nbins,varbins);
-    hdata->Sumw2();
     gROOT->cd();
     dtree->Project(hname,var,getCutString(true));
+
+    hdata->SetBinErrorOption(TH1::kPoisson);
     //now the histo is filled
     
-    hdata->UseCurrentStyle(); //maybe not needed anymore
     hdata->SetMarkerColor(kBlack);
     hdata->SetLineWidth(2);
     hdata->SetMarkerStyle(kFullCircle);
@@ -2637,7 +2658,7 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
     leg->AddEntry(hdata,"Data");
 
     if (!quiet_)    cout<<"Data underflow: " <<hdata->GetBinContent(0)<<endl;//BEN
-    hdata->Draw("SAME");
+    hdata->Draw("SAME E");
     if (!doCustomPlotMax_) {
       double mymax=-1e9;
       if (dostack_) mymax = thestack->GetMaximum();

@@ -70,8 +70,8 @@ in order to get one file per sample.
   //TString inputPath = "/cu2/wteo/reducedTrees/Fall11/V00-02-35k/";
 
 TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35n/Fall11/";
-  //TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35l/";
-TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35k/";
+//TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35p/";
+TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35p/";
 
 //TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35d/";
 //TString inputPath = "/cu1/joshmt/reducedTrees/test/"; 
@@ -4580,7 +4580,7 @@ void AN2011_excess() {
   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_3B_MET"+modestring,0,"GeV");
   setLogY(false); resetPlotMinimum();
 
-
+  //2BT loose HT
   btagSFweight_="probge2";
   selection_ =TCut("HT>=400 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=300 &&passCleaning==1 && minDeltaPhiN>=4");
   var="HT"; xtitle="H_{T}";
@@ -4590,9 +4590,9 @@ void AN2011_excess() {
   drawPlots(var,nbins,low,high,xtitle,"Events", "HT_2BT"+modestring,0,"GeV");
   setLogY(false); resetPlotMinimum();
 
+  //3B signal region
   btagSFweight_="probge3";
   selection_ =TCut("HT>=400 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=250 &&passCleaning==1 && minDeltaPhiN>=4");
-
 
   var="HT"; xtitle="H_{T}";
   low=400; high = 1400; nbins=5;
@@ -4607,11 +4607,25 @@ void AN2011_excess() {
   low=0; high = 3; nbins=20;
   drawPlots(var,nbins,low,high,xtitle,"Events", "minDeltaPhi30eta5noIdAll_3B"+modestring,0,"");
 
+
+  var="deltaPhiStar"; xtitle="#Delta#phi *";
+  low=0; high = 2; nbins=10;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "deltaPhiStar_3B"+modestring);
+
+
+  //2BT signal region
   btagSFweight_="probge2"; //2BT
   selection_ =TCut("HT>=600 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=300 &&passCleaning==1 && minDeltaPhiN>=4");
   var="minDeltaPhi30_eta5_noIdAll"; xtitle="minDeltaPhi30_eta5_noIdAll";
   low=0; high = 3; nbins=20;
   drawPlots(var,nbins,low,high,xtitle,"Events", "minDeltaPhi30eta5noIdAll_2BT"+modestring,0,"");
+
+
+  var="deltaPhiStar"; xtitle="#Delta#phi *";
+  low=0; high = 2; nbins=20;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "deltaPhiStar_2BT"+modestring);
+
+
 
   float binsHT[]={400,600,800,1400};
   float binsMET[]={250,300,350,500};
@@ -4649,7 +4663,7 @@ void AN2011_excess() {
   h2d_sigma->Draw("text same");
 
 
-  // Now take a look at the 3B SL sample
+  // Now take a look at the 3B SL sample //MET 200 and up
   btagSFweight_="probge3";
   selection_ =TCut("HT>=400 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0))&& MT_Wlep>=0 && MT_Wlep<100 && MET>=200 &&passCleaning==1 && minDeltaPhiN>=4");
 
@@ -4660,12 +4674,56 @@ void AN2011_excess() {
 //   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_SL_3B_MET"+modestring,0,"GeV");
 //   setLogY(false); resetPlotMinimum();
 
+//switch to 3B SIG
+
   selection_ =TCut("HT>=400 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0))&& MT_Wlep>=0 && MT_Wlep<100 && MET>=250 &&passCleaning==1 && minDeltaPhiN>=4");
   var="HT"; xtitle="H_{T}";
   low=400; high = 1400; nbins=5;
   drawPlots(var,nbins,low,high,xtitle,"Events", "HT_SL_3B"+modestring,0,"GeV");
 
+  //still 3B SL
+  var="eleet1"; xtitle="electron p_{T}";
+  low=10; high = 90; nbins=4;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "elept_SL_3B_"+modestring,0,"GeV");
+
+  //still 3B SL
+  var="muonpt1"; xtitle="muon p_{T}";
+  low=10; high = 90; nbins=4;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "muonpt_SL_3B_"+modestring,0,"GeV");
+
+  //relax to 3B SB+SIG
+  btagSFweight_="probge3";
+
+  selection_ =TCut("HT>=400 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0))&& MT_Wlep>=0 && MT_Wlep<100 && MET>=200 &&passCleaning==1 && minDeltaPhiN>=4");
+
+  //still 3B SL SB+SIG
+  var="eleet1"; xtitle="electron p_{T}";
+  low=10; high = 150; nbins=7;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_elept_SL_3B_"+modestring,0,"GeV");
+
+  //still 3B SL SB+SIG
+  var="muonpt1"; xtitle="muon p_{T}";
+  low=10; high = 150; nbins=7;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_muonpt_SL_3B_"+modestring,0,"GeV");
+
+  //try using no b-tag SF, replot the 3B SL electrons SB+SIG
+  btagSFweight_="1";
+  selection_ =TCut("HT>=400 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0))&& MT_Wlep>=0 && MT_Wlep<100 && MET>=200 &&passCleaning==1 && minDeltaPhiN>=4 &&nbjets>=3");
+ modestring="-JER-PU-HLT";
+  var="eleet1"; xtitle="electron p_{T}";
+  low=10; high = 150; nbins=7;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_elept_SL_3B_"+modestring,0,"GeV");
+  //ok, so b-tag SF doesn't make a huge difference (as expected)
+  //try looser btagger?
+  selection_ =TCut("HT>=400 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0))&& MT_Wlep>=0 && MT_Wlep<100 && MET>=200 &&passCleaning==1 && minDeltaPhiN>=4 && nbjetsSSVM>=3");
+  drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_elept_SL_3B-SSVM_"+modestring,0,"GeV");
+  //not much difference here
+
+  //could try splitting by nPV?
+
+
 }
+
 
 void DSchecks_2jtau() {
 
