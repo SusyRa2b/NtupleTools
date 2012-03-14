@@ -243,7 +243,9 @@ public:
   float jetPtOfN(unsigned int n);
   float jetGenPtOfN(unsigned int n);
   float jetPhiOfN(unsigned int n);
+  float jetGenPhiOfN(unsigned int n);
   float jetEtaOfN(unsigned int n);
+  float jetGenEtaOfN(unsigned int n);
   float jetEnergyOfN(unsigned int n);
   int jetFlavorOfN(unsigned int n);
   float jetChargedHadronFracOfN(unsigned int n);
