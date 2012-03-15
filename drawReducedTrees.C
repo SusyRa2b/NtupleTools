@@ -65,16 +65,10 @@ in order to get one file per sample.
 //*** AFTER SUMMER
 //***************************
 
-  //TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35g/";
+//TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35g/";
 //TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35h/";
-  //TString inputPath = "/cu2/wteo/reducedTrees/Fall11/V00-02-35k/";
-
-TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35n/Fall11/";
-//TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35p/";
+TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35p/Fall11/";
 TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35p/";
-
-//TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35d/";
-//TString inputPath = "/cu1/joshmt/reducedTrees/test/"; 
 
 //-- reducedTrees for Oct 25 SUSY meeting. 3464.581/pb. 
 //TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35a/";
@@ -1789,6 +1783,10 @@ double slABCD(const unsigned int searchRegionIndex, bool datamode=false, const T
 
   const TString bShape_refSB = "eq1b"; //which SB to use as a 'reference' for bshape analysis. default is eq1b
 
+  splitTTbarForClosureTest_ =false; 
+  splitWJetsForClosureTest_ =false;
+  splitSingleTopForClosureTest_=false;
+
 /*
 modifications for SHAPE analysis: (bShape = true)
 -- new formula mu_i,jb = mu_SB,1b * ( mu_i,SL,jb / mu_SB,SL,1b )
@@ -1796,14 +1794,86 @@ modifications for SHAPE analysis: (bShape = true)
 -- for DATA, this means the data-driven subtraction must always be for the 1b case
 */
 
-  assert( closureMode=="nominal" || closureMode=="justttbar" || closureMode=="wtplus" ||closureMode=="wtminus"
-	  ||closureMode=="slonlywtplus" ||closureMode=="slonlywtminus" ||closureMode=="0lonlywtplus" ||closureMode=="0lonlywtminus"
-	  || closureMode=="justw"|| closureMode=="justsingletop"
-	  || closureMode=="HFplus" || closureMode=="HFminus"||closureMode=="LFplus"||closureMode=="LFminus");
+  assert( closureMode=="nominal" || closureMode=="justttbar" 
+	  || closureMode=="wtplus" || closureMode=="wtminus" 
+	  || closureMode=="slonlywtplus" || closureMode=="slonlywtminus" 
+	  || closureMode=="0lonlywtplus" || closureMode=="0lonlywtminus" 
+	  || closureMode=="justw" || closureMode=="justsingletop"
+	  || closureMode=="HFplus" || closureMode=="HFminus"||closureMode=="LFplus"||closureMode=="LFminus"
+	  || closureMode=="justttbar0lonlyfailetaplus" || closureMode=="justttbar0lonlyfailetaminus" 
+	  || closureMode=="justttbar0lonlyfailptplus" || closureMode=="justttbar0lonlyfailptminus" 
+	  || closureMode=="justttbar0lonlyfailrecoisoplus" || closureMode=="justttbar0lonlyfailrecoisominus" 
+	  || closureMode=="justttbar0lonlyfailotherplus" || closureMode=="justttbar0lonlyfailotherminus" 
+	  || closureMode=="justttbar0lonlysemitauhadplus" || closureMode=="justttbar0lonlysemitauhadminus"
+	  || closureMode=="justw0lonlyfailetaplus" || closureMode=="justw0lonlyfailetaminus" 
+	  || closureMode=="justw0lonlyfailptplus" || closureMode=="justw0lonlyfailptminus" 
+	  || closureMode=="justw0lonlyfailrecoisoplus" || closureMode=="justw0lonlyfailrecoisominus" 
+	  || closureMode=="justw0lonlyfailotherplus" || closureMode=="justw0lonlyfailotherminus" 
+	  || closureMode=="justw0lonlytauhadplus" || closureMode=="justw0lonlytauhadminus"
+	  || closureMode=="justttbarsemilfaileta" || closureMode=="justttbarsemilfailpt"
+	  || closureMode=="justttbarsemilfailrecoiso" || closureMode=="justttbarsemilfailother"
+	  || closureMode=="justttbarsemitauhad"	|| closureMode=="justttbardilephadother"    
+	  || closureMode=="justwlfaileta" || closureMode=="justwlfailpt"
+	  || closureMode=="justwlfailrecoiso" || closureMode=="justwlfailother"
+	  || closureMode=="justwtauhad"
+	  || closureMode=="0lonlyfailetaplus" || closureMode=="0lonlyfailetaminus"
+	  || closureMode=="0lonlyfailptplus" || closureMode=="0lonlyfailptminus"
+	  || closureMode=="0lonlyfailrecoisoplus" || closureMode=="0lonlyfailrecoisominus"
+	  || closureMode=="0lonlyfailotherplus" || closureMode=="0lonlyfailotherminus"
+	  || closureMode=="0lonlytauhadplus" || closureMode=="0lonlytauhadminus"
+	  );
 
   if (closureMode=="justttbar") cout<<"Will run closure test in ttbar only mode!"<<endl;
   else if (closureMode=="nominal") {}
   else cout<<"Running closure test in mode: "<<closureMode<<endl;
+
+  //make sure all the flags are correcty set
+  if( (closureMode=="justttbar0lonlyfailetaplus" || closureMode=="justttbar0lonlyfailetaminus" 
+       || closureMode=="justttbar0lonlyfailptplus" || closureMode=="justttbar0lonlyfailptminus" 
+       || closureMode=="justttbar0lonlyfailrecoisoplus" || closureMode=="justttbar0lonlyfailrecoisominus" 
+       || closureMode=="justttbar0lonlyfailotherplus" || closureMode=="justttbar0lonlyfailotherminus" 
+       || closureMode=="justttbar0lonlysemitauhadplus" || closureMode=="justttbar0lonlysemitauhadminus"
+       || closureMode=="justttbarsemilfaileta" || closureMode=="justttbarsemilfailpt"
+       || closureMode=="justttbarsemilfailrecoiso" || closureMode=="justttbarsemilfailother"
+       || closureMode=="justttbarsemitauhad"	|| closureMode=="justttbardilephadother")) {
+    splitTTbarForClosureTest_ = true;
+  }
+  else if( (closureMode=="justw0lonlyfailetaplus" || closureMode=="justw0lonlyfailetaminus" 
+	    || closureMode=="justw0lonlyfailptplus" || closureMode=="justw0lonlyfailptminus" 
+	    || closureMode=="justw0lonlyfailrecoisoplus" || closureMode=="justw0lonlyfailrecoisominus" 
+	    || closureMode=="justw0lonlyfailotherplus" || closureMode=="justw0lonlyfailotherminus" 
+	    || closureMode=="justw0lonlytauhadplus" || closureMode=="justw0lonlytauhadminus"
+	    || closureMode=="justwlfaileta" || closureMode=="justwlfailpt"
+	    || closureMode=="justwlfailrecoiso" || closureMode=="justwlfailother"
+	    || closureMode=="justwtauhad")){
+    splitWJetsForClosureTest_ = true;
+  }
+  else if( (closureMode=="0lonlyfailetaplus" || closureMode=="0lonlyfailetaminus"
+	    || closureMode=="0lonlyfailptplus" || closureMode=="0lonlyfailptminus"
+	    || closureMode=="0lonlyfailrecoisoplus" || closureMode=="0lonlyfailrecoisominus"
+	    || closureMode=="0lonlyfailotherplus" || closureMode=="0lonlyfailotherminus"
+	    || closureMode=="0lonlytauhadplus" || closureMode=="0lonlytauhadminus")){
+    splitTTbarForClosureTest_ = true; 
+    splitWJetsForClosureTest_ = true;
+    splitSingleTopForClosureTest_ = true;
+  }
+
+  ///////////////////////////////////////////////////////////
+  //For the fancy closure tests only:
+  //Define here the amounts that each piece should be varied  
+  double SF_faileta_up = 2.0;
+  double SF_faileta_down = 0.0;
+  double SF_failpt_up = 2.0;
+  double SF_failpt_down = 0.5;
+  double SF_failrecoiso_up = 1.1;
+  double SF_failrecoiso_down = 0.9;
+  double SF_failother_up = 1.1;
+  double SF_failother_down = 0.9;
+  double SF_tauhad_up = 1.2;
+  double SF_tauhad_down = 0.8;
+  ////////////////////////////////////////////////////////////
+
+  TString closureModeString = "";  
 
   const SearchRegion region = searchRegions_[searchRegionIndex];
   SearchRegion qcdsubregion = sbRegions_[searchRegionIndex];
@@ -2017,13 +2087,47 @@ modifications for SHAPE analysis: (bShape = true)
     sampleOfInterest="data";
   }
   else {
-    if (closureMode!="justw" && closureMode!="justsingletop")  addSample("TTbarJets");
-    if (closureMode!="justttbar") {
+    if (closureMode!="justw" && closureMode!="justsingletop" &&
+	!(
+	  closureMode=="justw0lonlyfailetaplus" || closureMode=="justw0lonlyfailetaminus" 
+	  || closureMode=="justw0lonlyfailptplus" || closureMode=="justw0lonlyfailptminus" 
+	  || closureMode=="justw0lonlyfailrecoisoplus" || closureMode=="justw0lonlyfailrecoisominus" 
+	  || closureMode=="justw0lonlyfailotherplus" || closureMode=="justw0lonlyfailotherminus" 
+	  || closureMode=="justw0lonlytauhadplus" || closureMode=="justw0lonlytauhadminus"
+	  || closureMode=="justwlfaileta" || closureMode=="justwlfailpt"
+	  || closureMode=="justwlfailrecoiso" || closureMode=="justwlfailother"
+	  || closureMode=="justwtauhad" )
+	){
+      addSample("TTbarJets");
+    }
+    if (closureMode!="justttbar" &&
+	!(
+	  closureMode=="justttbar0lonlyfailetaplus" || closureMode=="justttbar0lonlyfailetaminus" 
+	  || closureMode=="justttbar0lonlyfailptplus" || closureMode=="justttbar0lonlyfailptminus" 
+	  || closureMode=="justttbar0lonlyfailrecoisoplus" || closureMode=="justttbar0lonlyfailrecoisominus" 
+	  || closureMode=="justttbar0lonlyfailotherplus" || closureMode=="justttbar0lonlyfailotherminus" 
+	  || closureMode=="justttbar0lonlysemitauhadplus" || closureMode=="justttbar0lonlysemitauhadminus"
+	  || closureMode=="justttbarsemilfaileta" || closureMode=="justttbarsemilfailpt"
+	  || closureMode=="justttbarsemilfailrecoiso" || closureMode=="justttbarsemilfailother"
+	  || closureMode=="justttbarsemitauhad"	|| closureMode=="justttbardilephadother"
+	  )
+	) {
       if (closureMode!="justsingletop")  addSample("WJets");
-      if (closureMode!="justw")          addSample("SingleTop");
+      if (closureMode!="justw" && 
+	  !(
+	    closureMode=="justw0lonlyfailetaplus" || closureMode=="justw0lonlyfailetaminus" 
+	    || closureMode=="justw0lonlyfailptplus" || closureMode=="justw0lonlyfailptminus" 
+	    || closureMode=="justw0lonlyfailrecoisoplus" || closureMode=="justw0lonlyfailrecoisominus" 
+	    || closureMode=="justw0lonlyfailotherplus" || closureMode=="justw0lonlyfailotherminus" 
+	    || closureMode=="justw0lonlytauhadplus" || closureMode=="justw0lonlytauhadminus"
+	    || closureMode=="justwlfaileta" || closureMode=="justwlfailpt"
+	    || closureMode=="justwlfailrecoiso" || closureMode=="justwlfailother"
+	    || closureMode=="justwtauhad" )
+	  ) 
+	addSample("SingleTop");
     }
   }
-
+  
   savePlots_=false;
 
   setLogY(false);
@@ -2156,6 +2260,7 @@ modifications for SHAPE analysis: (bShape = true)
   var="HT"; xtitle=var;
   nbins=10; low=0; high=5000;
   drawPlots(var,nbins,low,high,xtitle,"events","qcdstudy_ABCDkludge_row1_A");
+
   A_1e=getIntegral(sampleOfInterest);
   Aerr_1e=getIntegralErr(sampleOfInterest);
 
@@ -2305,6 +2410,385 @@ modifications for SHAPE analysis: (bShape = true)
     setSampleScaleFactor("WJets",0.5);
     setSampleScaleFactor("SingleTop",0.5);
   }
+
+  //For the OL boxes ONLY, we want to have the ability to 
+  //manually vary the various subcomponents
+  if(!datamode) {
+    clearSamples();
+    if (closureMode!="justw" && closureMode!="justsingletop" &&
+	!(
+	  closureMode=="justw0lonlyfailetaplus" || closureMode=="justw0lonlyfailetaminus" 
+	  || closureMode=="justw0lonlyfailptplus" || closureMode=="justw0lonlyfailptminus" 
+	  || closureMode=="justw0lonlyfailrecoisoplus" || closureMode=="justw0lonlyfailrecoisominus" 
+	  || closureMode=="justw0lonlyfailotherplus" || closureMode=="justw0lonlyfailotherminus" 
+	  || closureMode=="justw0lonlytauhadplus" || closureMode=="justw0lonlytauhadminus"	
+	  || closureMode=="justwlfaileta" || closureMode=="justwlfailpt"
+	  || closureMode=="justwlfailrecoiso" || closureMode=="justwlfailother"
+	  || closureMode=="justwtauhad" )
+	){
+      if(splitTTbarForClosureTest_){
+
+	if(closureMode=="justttbarsemilfaileta"){
+	  addSample("TTbarJets-semiMuFailEta");
+	  addSample("TTbarJets-semiEleFailEta");	
+	}
+	else if(closureMode=="justttbarsemilfailpt"){
+	  addSample("TTbarJets-semiMuFailPt");
+	  addSample("TTbarJets-semiEleFailPt");	
+	}
+	else if(closureMode=="justttbarsemilfailrecoiso"){
+	  addSample("TTbarJets-semiMuFailRecoIso");
+	  addSample("TTbarJets-semiEleFailRecoIso");	
+	} 
+	else if(closureMode=="justttbarsemilfailother"){
+	  addSample("TTbarJets-semiMuFailOther");
+	  addSample("TTbarJets-semiEleFailOther");	
+	}
+	else if(closureMode=="justttbarsemitauhad")
+	  addSample("TTbarJets-semiTauHad");
+	else if(closureMode=="justttbardilephadother"){
+	  addSample("TTbarJets-dilep");
+	  addSample("TTbarJets-had");
+	  addSample("TTbarJets-other");
+	}
+	else{
+	  addSample("TTbarJets-semiMuGood");
+	  addSample("TTbarJets-semiMuFailEta");
+	  addSample("TTbarJets-semiMuFailPt");
+	  addSample("TTbarJets-semiMuFailRecoIso");
+	  addSample("TTbarJets-semiMuFailOther");
+	  addSample("TTbarJets-semiEleGood");
+	  addSample("TTbarJets-semiEleFailEta");
+	  addSample("TTbarJets-semiEleFailPt");
+	  addSample("TTbarJets-semiEleFailRecoIso");
+	  addSample("TTbarJets-semiEleFailOther");
+	  addSample("TTbarJets-semiTauHad");
+	  addSample("TTbarJets-dilep");
+	  addSample("TTbarJets-had");
+	  addSample("TTbarJets-other");
+	}
+      }
+      else if(splitTTbar_){
+	addSample("TTbarJets-semiMu");
+	addSample("TTbarJets-semiEle");
+	addSample("TTbarJets-semiTauHad");
+	addSample("TTbarJets-dilep");
+	addSample("TTbarJets-had");
+	addSample("TTbarJets-other");
+      }
+      else addSample("TTbarJets");
+    }
+    if (closureMode!="justttbar" &&
+	!(
+	  closureMode=="justttbar0lonlyfailetaplus" || closureMode=="justttbar0lonlyfailetaminus" 
+	  || closureMode=="justttbar0lonlyfailptplus" || closureMode=="justttbar0lonlyfailptminus" 
+	  || closureMode=="justttbar0lonlyfailrecoisoplus" || closureMode=="justttbar0lonlyfailrecoisominus" 
+	  || closureMode=="justttbar0lonlyfailotherplus" || closureMode=="justttbar0lonlyfailotherminus" 
+	  || closureMode=="justttbar0lonlysemitauhadplus" || closureMode=="justttbar0lonlysemitauhadminus"	
+
+	  || closureMode=="justttbarsemilfaileta" || closureMode=="justttbarsemilfailpt"
+	  || closureMode=="justttbarsemilfailrecoiso" || closureMode=="justttbarsemilfailother"
+	  || closureMode=="justttbarsemitauhad" || closureMode=="justttbardilephadother")
+	) {
+
+      if (closureMode!="justsingletop"){  
+	if(splitWJetsForClosureTest_){
+	  if(closureMode=="justwlfaileta"){
+	    addSample("WJets-muFailEta");
+	    addSample("WJets-eleFailEta");	
+	  }
+	  else if(closureMode=="justwlfailpt"){
+	    addSample("WJets-muFailPt");
+	    addSample("WJets-eleFailPt");	
+	  }
+	  else if(closureMode=="justwlfailrecoiso"){
+	    addSample("WJets-muFailRecoIso");
+	    addSample("WJets-eleFailRecoIso");	
+	  } 
+	  else if(closureMode=="justwlfailother"){
+	    addSample("WJets-muFailOther");
+	    addSample("WJets-eleFailOther");	
+	  }
+	  else if(closureMode=="justwtauhad")
+	    addSample("WJets-tauHad");
+	  else{
+	    addSample("WJets-muGood");
+	    addSample("WJets-muFailEta");
+	    addSample("WJets-muFailPt");
+	    addSample("WJets-muFailRecoIso");
+	    addSample("WJets-muFailOther");
+	    addSample("WJets-eleGood");
+	    addSample("WJets-eleFailEta");
+	    addSample("WJets-eleFailPt");
+	    addSample("WJets-eleFailRecoIso");
+	    addSample("WJets-eleFailOther");
+	    addSample("WJets-tauHad");
+	  }
+	}
+	else if(splitWJets_){
+	  addSample("WJets-mu");
+	  addSample("WJets-ele");
+	  addSample("WJets-tauHad");
+	}	
+	else addSample("WJets");	  
+      }
+      
+      if (closureMode!="justw" &&
+	  !(
+	    closureMode=="justw0lonlyfailetaplus" || closureMode=="justw0lonlyfailetaminus" 
+	    || closureMode=="justw0lonlyfailptplus" || closureMode=="justw0lonlyfailptminus" 
+	    || closureMode=="justw0lonlyfailrecoisoplus" || closureMode=="justw0lonlyfailrecoisominus" 
+	    || closureMode=="justw0lonlyfailotherplus" || closureMode=="justw0lonlyfailotherminus" 
+	    || closureMode=="justw0lonlytauhadplus" || closureMode=="justw0lonlytauhadminus"	
+	    || closureMode=="justwlfaileta" || closureMode=="justwlfailpt"
+	    || closureMode=="justwlfailrecoiso" || closureMode=="justwlfailother"
+	    || closureMode=="justwtauhad" )
+	  ){
+	if(closureMode=="0lonlyfailetaplus" || closureMode=="0lonlyfailetaminus"
+	   || closureMode=="0lonlyfailptplus" || closureMode=="0lonlyfailptminus"
+	   || closureMode=="0lonlyfailrecoisoplus" || closureMode=="0lonlyfailrecoisominus"
+	   || closureMode=="0lonlyfailotherplus" || closureMode=="0lonlyfailotherminus"
+	   || closureMode=="0lonlytauhadplus" || closureMode=="0lonlytauhadminus"
+	   ){
+	  if(splitSingleTopForClosureTest_){
+	    addSample("SingleTop-sandtCombined-muGood");
+	    addSample("SingleTop-sandtCombined-muFailEta");
+	    addSample("SingleTop-sandtCombined-muFailPt");
+	    addSample("SingleTop-sandtCombined-muFailRecoIso");
+	    addSample("SingleTop-sandtCombined-muFailOther");
+	    addSample("SingleTop-sandtCombined-eleGood");
+	    addSample("SingleTop-sandtCombined-eleFailEta");
+	    addSample("SingleTop-sandtCombined-eleFailPt");
+	    addSample("SingleTop-sandtCombined-eleFailRecoIso");
+	    addSample("SingleTop-sandtCombined-eleFailOther");
+	    addSample("SingleTop-sandtCombined-tauHad");
+	    addSample("SingleTop-tWCombined-semiMuGood");
+	    addSample("SingleTop-tWCombined-semiMuFailEta");
+	    addSample("SingleTop-tWCombined-semiMuFailPt");
+	    addSample("SingleTop-tWCombined-semiMuFailRecoIso");
+	    addSample("SingleTop-tWCombined-semiMuFailOther");
+	    addSample("SingleTop-tWCombined-semiEleGood");
+	    addSample("SingleTop-tWCombined-semiEleFailEta");
+	    addSample("SingleTop-tWCombined-semiEleFailPt");
+	    addSample("SingleTop-tWCombined-semiEleFailRecoIso");
+	    addSample("SingleTop-tWCombined-semiEleFailOther");
+	    addSample("SingleTop-tWCombined-semiTauHad");
+	    addSample("SingleTop-tWCombined-dilep");
+	    addSample("SingleTop-tWCombined-had");
+	    addSample("SingleTop-tWCombined-other");
+	  }
+	  else{std::cout <<"Error in slABCD: For 0lonlyfail* and 0lonlytauhad* modes, splitSingleTopForClosureTest_ must be set to true." << std::endl;assert(0);}
+	}
+	else addSample("SingleTop");
+      }
+    }
+  }
+
+  //vary the ttbar subcomponents
+  if (!datamode && (closureMode=="justttbar0lonlyfailetaplus")) {
+    closureModeString = "(semil-faileta up)";
+    setSampleScaleFactor("TTbarJets-semiMuFailEta" ,SF_faileta_up);
+    setSampleScaleFactor("TTbarJets-semiEleFailEta",SF_faileta_up);
+  }
+  else if (!datamode && (closureMode=="justttbar0lonlyfailetaminus")) {
+    closureModeString = "(semil-faileta down)";
+    setSampleScaleFactor("TTbarJets-semiMuFailEta" ,SF_faileta_down);
+    setSampleScaleFactor("TTbarJets-semiEleFailEta",SF_faileta_down);
+  }
+  else if (!datamode && (closureMode=="justttbar0lonlyfailptplus")) {
+    closureModeString = "(semil-failpt up)";
+    setSampleScaleFactor("TTbarJets-semiMuFailPt" ,SF_failpt_up);
+    setSampleScaleFactor("TTbarJets-semiEleFailPt",SF_failpt_up);
+  }
+  else if (!datamode && (closureMode=="justttbar0lonlyfailptminus")) {
+    closureModeString = "(semil-failpt down)";
+    setSampleScaleFactor("TTbarJets-semiMuFailPt" ,SF_failpt_down);
+    setSampleScaleFactor("TTbarJets-semiEleFailPt",SF_failpt_down);
+  }
+  else if (!datamode && (closureMode=="justttbar0lonlyfailrecoisoplus")) {
+    closureModeString = "(semil-failrecoiso up)";
+    setSampleScaleFactor("TTbarJets-semiMuFailRecoIso" ,SF_failrecoiso_up);
+    setSampleScaleFactor("TTbarJets-semiEleFailRecoIso",SF_failrecoiso_up);
+  }
+  else if (!datamode && (closureMode=="justttbar0lonlyfailrecoisominus")) {
+    closureModeString = "(semil-failrecoiso down)";
+    setSampleScaleFactor("TTbarJets-semiMuFailRecoIso" ,SF_failrecoiso_down);
+    setSampleScaleFactor("TTbarJets-semiEleFailRecoIso",SF_failrecoiso_down);
+  }
+  else if (!datamode && (closureMode=="justttbar0lonlyfailotherplus")) {
+    closureModeString = "(semil-failother up)";
+    setSampleScaleFactor("TTbarJets-semiMuFailOther" ,SF_failother_up);
+    setSampleScaleFactor("TTbarJets-semiEleFailOther",SF_failother_up);
+  }
+  else if (!datamode && (closureMode=="justttbar0lonlyfailotherminus")) {
+    closureModeString = "(semil-failother down)";
+    setSampleScaleFactor("TTbarJets-semiMuFailOther" ,SF_failother_down);
+    setSampleScaleFactor("TTbarJets-semiEleFailOther",SF_failother_down);
+  }
+  else if (!datamode && (closureMode=="justttbar0lonlysemitauhadplus")) {
+    closureModeString = "(semitauhad up)";
+    setSampleScaleFactor("TTbarJets-semiTauHad",SF_tauhad_up);
+  }
+  else if (!datamode && (closureMode=="justttbar0lonlysemitauhadminus")) {
+    closureModeString = "(semitauhad down)";
+    setSampleScaleFactor("TTbarJets-semiTauHad",SF_tauhad_down);
+  }
+
+  //vary the w subcomponents
+  if (!datamode && (closureMode=="justw0lonlyfailetaplus")) {
+    closureModeString = "(l-faileta up)";
+    setSampleScaleFactor("WJets-muFailEta" ,SF_faileta_up);
+    setSampleScaleFactor("WJets-eleFailEta",SF_faileta_up);
+  }
+  else if (!datamode && (closureMode=="justw0lonlyfailetaminus")) {
+    closureModeString = "(l-faileta down)";
+    setSampleScaleFactor("WJets-muFailEta" ,SF_faileta_down);
+    setSampleScaleFactor("WJets-eleFailEta",SF_faileta_down);
+  }
+  else if (!datamode && (closureMode=="justw0lonlyfailptplus")) {
+    closureModeString = "(l-failpt up)";
+    setSampleScaleFactor("WJets-muFailPt" ,SF_failpt_up);
+    setSampleScaleFactor("WJets-eleFailPt",SF_failpt_up);
+  }
+  else if (!datamode && (closureMode=="justw0lonlyfailptminus")) {
+    closureModeString = "(l-failpt down)";
+    setSampleScaleFactor("WJets-muFailPt" ,SF_failpt_down);
+    setSampleScaleFactor("WJets-eleFailPt",SF_failpt_down);
+  }
+  else if (!datamode && (closureMode=="justw0lonlyfailrecoisoplus")) {
+    closureModeString = "(l-failrecoiso up)";
+    setSampleScaleFactor("WJets-muFailRecoIso" ,SF_failrecoiso_up);
+    setSampleScaleFactor("WJets-eleFailRecoIso",SF_failrecoiso_up);
+  }
+  else if (!datamode && (closureMode=="justw0lonlyfailrecoisominus")) {
+    closureModeString = "(l-failrecoiso down)";
+    setSampleScaleFactor("WJets-muFailRecoIso" ,SF_failrecoiso_down);
+    setSampleScaleFactor("WJets-eleFailRecoIso",SF_failrecoiso_down);
+  }
+  else if (!datamode && (closureMode=="justw0lonlyfailotherplus")) {
+    closureModeString = "(l-failother up)";
+    setSampleScaleFactor("WJets-muFailOther" ,SF_failother_up);
+    setSampleScaleFactor("WJets-eleFailOther",SF_failother_up);
+  }
+  else if (!datamode && (closureMode=="justw0lonlyfailotherminus")) {
+    closureModeString = "(l-failother down)";
+    setSampleScaleFactor("WJets-muFailOther" ,SF_failother_down);
+    setSampleScaleFactor("WJets-eleFailOther",SF_failother_down);
+  }
+  else if (!datamode && (closureMode=="justw0lonlytauhadplus")) {
+    closureModeString = "(tauhad up)";
+    setSampleScaleFactor("WJets-tauHad",SF_tauhad_up);
+  }
+  else if (!datamode && (closureMode=="justw0lonlytauhadminus")) {
+    closureModeString = "(tauhad down)";
+    setSampleScaleFactor("WJets-tauHad",SF_tauhad_down);
+  }
+
+  //vary the same piece in tt+W+t coherently
+  if (!datamode && (closureMode=="0lonlyfailetaplus")) {
+    closureModeString = "(l-faileta up)";
+    setSampleScaleFactor("TTbarJets-semiMuFailEta",SF_faileta_up);
+    setSampleScaleFactor("TTbarJets-semiEleFailEta",SF_faileta_up);
+    setSampleScaleFactor("WJets-muFailEta",SF_faileta_up);
+    setSampleScaleFactor("WJets-eleFailEta",SF_faileta_up);
+    setSampleScaleFactor("SingleTop-sandtCombined-muFailEta",SF_faileta_up);
+    setSampleScaleFactor("SingleTop-sandtCombined-eleFailEta",SF_faileta_up);
+    setSampleScaleFactor("SingleTop-tWCombined-semiMuFailEta",SF_faileta_up);
+    setSampleScaleFactor("SingleTop-tWCombined-semiEleFailEta",SF_faileta_up);
+  }
+  else if (!datamode && (closureMode=="0lonlyfailetaminus")) {
+    closureModeString = "(l-faileta down)";
+    setSampleScaleFactor("TTbarJets-semiMuFailEta",SF_faileta_down);
+    setSampleScaleFactor("TTbarJets-semiEleFailEta",SF_faileta_down);
+    setSampleScaleFactor("WJets-muFailEta",SF_faileta_down);
+    setSampleScaleFactor("WJets-eleFailEta",SF_faileta_down);
+    setSampleScaleFactor("SingleTop-sandtCombined-muFailEta",SF_faileta_down);
+    setSampleScaleFactor("SingleTop-sandtCombined-eleFailEta",SF_faileta_down);
+    setSampleScaleFactor("SingleTop-tWCombined-semiMuFailEta",SF_faileta_down);
+    setSampleScaleFactor("SingleTop-tWCombined-semiEleFailEta",SF_faileta_down);
+  }
+  else if (!datamode && (closureMode=="0lonlyfailptplus")) {
+    closureModeString = "(l-failpt up)";
+    setSampleScaleFactor("TTbarJets-semiMuFailPt",SF_failpt_up);
+    setSampleScaleFactor("TTbarJets-semiEleFailPt",SF_failpt_up);
+    setSampleScaleFactor("WJets-muFailPt",SF_failpt_up);
+    setSampleScaleFactor("WJets-eleFailPt",SF_failpt_up);
+    setSampleScaleFactor("SingleTop-sandtCombined-muFailPt",SF_failpt_up);
+    setSampleScaleFactor("SingleTop-sandtCombined-eleFailPt",SF_failpt_up);
+    setSampleScaleFactor("SingleTop-tWCombined-semiMuFailPt",SF_failpt_up);
+    setSampleScaleFactor("SingleTop-tWCombined-semiEleFailPt",SF_failpt_up);
+  }
+  else if (!datamode && (closureMode=="0lonlyfailptminus")) {
+    closureModeString = "(l-failpt down)";
+    setSampleScaleFactor("TTbarJets-semiMuFailPt",SF_failpt_down);
+    setSampleScaleFactor("TTbarJets-semiEleFailPt",SF_failpt_down);
+    setSampleScaleFactor("WJets-muFailPt",SF_failpt_down);
+    setSampleScaleFactor("WJets-eleFailPt",SF_failpt_down);
+    setSampleScaleFactor("SingleTop-sandtCombined-muFailPt",SF_failpt_down);
+    setSampleScaleFactor("SingleTop-sandtCombined-eleFailPt",SF_failpt_down);
+    setSampleScaleFactor("SingleTop-tWCombined-semiMuFailPt",SF_failpt_down);
+    setSampleScaleFactor("SingleTop-tWCombined-semiEleFailPt",SF_failpt_down);
+  }
+  else if (!datamode && (closureMode=="0lonlyfailrecoisoplus")) {
+    closureModeString = "(l-failrecoiso up)";
+    setSampleScaleFactor("TTbarJets-semiMuFailRecoIso",SF_failrecoiso_up);
+    setSampleScaleFactor("TTbarJets-semiEleFailRecoIso",SF_failrecoiso_up);
+    setSampleScaleFactor("WJets-muFailRecoIso",SF_failrecoiso_up);
+    setSampleScaleFactor("WJets-eleFailRecoIso",SF_failrecoiso_up);
+    setSampleScaleFactor("SingleTop-sandtCombined-muFailRecoIso",SF_failrecoiso_up);
+    setSampleScaleFactor("SingleTop-sandtCombined-eleFailRecoIso",SF_failrecoiso_up);
+    setSampleScaleFactor("SingleTop-tWCombined-semiMuFailRecoIso",SF_failrecoiso_up);
+    setSampleScaleFactor("SingleTop-tWCombined-semiEleFailRecoIso",SF_failrecoiso_up);
+  }
+  else if (!datamode && (closureMode=="0lonlyfailrecoisominus")) {
+    closureModeString = "(l-failrecoiso down)";
+    setSampleScaleFactor("TTbarJets-semiMuFailRecoIso",SF_failrecoiso_down);
+    setSampleScaleFactor("TTbarJets-semiEleFailRecoIso",SF_failrecoiso_down);
+    setSampleScaleFactor("WJets-muFailRecoIso",SF_failrecoiso_down);
+    setSampleScaleFactor("WJets-eleFailRecoIso",SF_failrecoiso_down);
+    setSampleScaleFactor("SingleTop-sandtCombined-muFailRecoIso",SF_failrecoiso_down);
+    setSampleScaleFactor("SingleTop-sandtCombined-eleFailRecoIso",SF_failrecoiso_down);
+    setSampleScaleFactor("SingleTop-tWCombined-semiMuFailRecoIso",SF_failrecoiso_down);
+    setSampleScaleFactor("SingleTop-tWCombined-semiEleFailRecoIso",SF_failrecoiso_down);
+  }
+  else if (!datamode && (closureMode=="0lonlyfailotherplus")) {
+    closureModeString = "(l-failother up)";
+    setSampleScaleFactor("TTbarJets-semiMuFailOther",SF_failother_up);
+    setSampleScaleFactor("TTbarJets-semiEleFailOther",SF_failother_up);
+    setSampleScaleFactor("WJets-muFailOther",SF_failother_up);
+    setSampleScaleFactor("WJets-eleFailOther",SF_failother_up);
+    setSampleScaleFactor("SingleTop-sandtCombined-muFailOther",SF_failother_up);
+    setSampleScaleFactor("SingleTop-sandtCombined-eleFailOther",SF_failother_up);
+    setSampleScaleFactor("SingleTop-tWCombined-semiMuFailOther",SF_failother_up);
+    setSampleScaleFactor("SingleTop-tWCombined-semiEleFailOther",SF_failother_up);
+  }
+  else if (!datamode && (closureMode=="0lonlyfailotherminus")) {
+    closureModeString = "(l-failother down)";
+    setSampleScaleFactor("TTbarJets-semiMuFailOther",SF_failother_down);
+    setSampleScaleFactor("TTbarJets-semiEleFailOther",SF_failother_down);
+    setSampleScaleFactor("WJets-muFailOther",SF_failother_down);
+    setSampleScaleFactor("WJets-eleFailOther",SF_failother_down);
+    setSampleScaleFactor("SingleTop-sandtCombined-muFailOther",SF_failother_down);
+    setSampleScaleFactor("SingleTop-sandtCombined-eleFailOther",SF_failother_down);
+    setSampleScaleFactor("SingleTop-tWCombined-semiMuFailOther",SF_failother_down);
+    setSampleScaleFactor("SingleTop-tWCombined-semiEleFailOther",SF_failother_down);
+  }
+  else if (!datamode && (closureMode=="0lonlytauhadplus")) {
+    closureModeString = "(tauhad up)";
+    setSampleScaleFactor("TTbarJets-semiTauHad",SF_tauhad_up);
+    setSampleScaleFactor("WJets-tauHad",SF_tauhad_up);
+    setSampleScaleFactor("SingleTop-sandtCombined-tauHad",SF_tauhad_up);
+    setSampleScaleFactor("SingleTop-tWCombined-semiTauHad",SF_tauhad_up);
+	    
+  }
+  else if (!datamode && (closureMode=="0lonlytauhadminus")) {
+    closureModeString = "(tauhad down)";
+    setSampleScaleFactor("TTbarJets-semiTauHad",SF_tauhad_down);
+    setSampleScaleFactor("WJets-tauHad",SF_tauhad_down);
+    setSampleScaleFactor("SingleTop-sandtCombined-tauHad",SF_tauhad_down);
+    setSampleScaleFactor("SingleTop-tWCombined-semiTauHad",SF_tauhad_down);
+  }
+
 
   //B = SB
   btagSFweight=btagSFweight_;
@@ -2642,8 +3126,8 @@ modifications for SHAPE analysis: (bShape = true)
 	      100*closureStat);
     }
     else {
-    float fc = (estimate-SIG)/sqrt(estimateerr*estimateerr + SIGerr*SIGerr);
-      sprintf(output,"%s & %s & %s & %s & %s & %s & $%f \\pm %f$ \\\\ %% %f",name.Data(),
+      float fc = (estimate-SIG)/sqrt(estimateerr*estimateerr + SIGerr*SIGerr);
+      sprintf(output,"%s %s & %s & %s & %s & %s & %s & $%.2f \\pm %.2f$ \\\\ %% %f",name.Data(),closureModeString.Data(),
 	    jmt::format_nevents(D,Derr).Data(),jmt::format_nevents(A,Aerr).Data(),
 	    jmt::format_nevents(B,Berr).Data(),jmt::format_nevents(estimate,estimateerr).Data(),
 	      jmt::format_nevents(SIG,SIGerr).Data(), 100*(estimate-SIG)/estimate, 100*closureStat, fc);
@@ -2687,6 +3171,10 @@ modifications for SHAPE analysis: (bShape = true)
   if(datamode ||bShape) cout << output2 << endl;
 
   resetSampleScaleFactors();
+  //turn these flags back off
+  splitTTbarForClosureTest_ =false; 
+  splitWJetsForClosureTest_ =false;
+  splitSingleTopForClosureTest_=false;
 
   if (datamode) return estimate;
   return 100*sqrt(pow((SIG-estimate)/estimate,2) + pow(closureStat,2));
@@ -2696,11 +3184,78 @@ void runSLClosureTest2011(const bool bShape=false) {
 
   setSearchRegions();
   cout<<"Note that the following is the joint tt+W+t closure test only!"<<endl;
-  for (unsigned int j=0; j<searchRegions_.size();j++)    slABCD(j,false,"","nominal",false,bShape);
+
+  //i'm going to load the samples here because it's easier to
+  //load the split samples once and for all before calling slABCD
+  splitTTbarForClosureTest_ =true;   splitWJetsForClosureTest_ =true;  splitSingleTopForClosureTest_=true;
+  loadSamples(); 
+  splitTTbarForClosureTest_ =false;   splitWJetsForClosureTest_ =false;  splitSingleTopForClosureTest_=false;
+
+  for (unsigned int j=0; j<searchRegions_.size();j++){
+
+    slABCD(j,false,"","nominal",false,bShape);
+    //slABCD(j,false,"","justttbar",false,bShape);
+    //slABCD(j,false,"","justw",false,bShape);
+
+    //Use only ttbar, closure test for each component
+    //slABCD(j,false,"","justttbarsemilfaileta",false,bShape);
+    //slABCD(j,false,"","justttbarsemilfailpt",false,bShape);
+    //slABCD(j,false,"","justttbarsemilfailrecoiso",false,bShape);
+    //slABCD(j,false,"","justttbarsemilfailother",false,bShape);
+    //slABCD(j,false,"","justttbarsemitauhad",false,bShape);
+    //slABCD(j,false,"","justttbardilephadother",false,bShape);
+
+    //Use only w+jets, closure test for each component
+    //slABCD(j,false,"","justwlfaileta",false,bShape);
+    //slABCD(j,false,"","justwlfailpt",false,bShape);
+    //slABCD(j,false,"","justwlfailrecoiso",false,bShape);
+    //slABCD(j,false,"","justwlfailother",false,bShape);
+    //slABCD(j,false,"","justwtauhad",false,bShape);
+
+    //Warning: The below variations (esp. any involving ttbar) take a while to run 
+    //(~10 minutes per estimate)
+    /*
+    //Use only ttbar sample
+    slABCD(j,false,"","justttbar0lonlyfailetaplus",false,bShape); 
+    slABCD(j,false,"","justttbar0lonlyfailetaminus",false,bShape);
+    slABCD(j,false,"","justttbar0lonlyfailptplus",false,bShape);
+    slABCD(j,false,"","justttbar0lonlyfailptminus",false,bShape); 
+    slABCD(j,false,"","justttbar0lonlyfailrecoisoplus",false,bShape);
+    slABCD(j,false,"","justttbar0lonlyfailrecoisominus",false,bShape); 
+    slABCD(j,false,"","justttbar0lonlyfailotherplus",false,bShape); 
+    slABCD(j,false,"","justttbar0lonlyfailotherminus",false,bShape); 
+    slABCD(j,false,"","justttbar0lonlysemitauhadplus",false,bShape);
+    slABCD(j,false,"","justttbar0lonlysemitauhadminus",false,bShape);
+    
+    //Use only w+jets
+    slABCD(j,false,"","justw0lonlyfailetaplus",false,bShape); 
+    slABCD(j,false,"","justw0lonlyfailetaminus",false,bShape);
+    slABCD(j,false,"","justw0lonlyfailptplus",false,bShape);
+    slABCD(j,false,"","justw0lonlyfailptminus",false,bShape); 
+    slABCD(j,false,"","justw0lonlyfailrecoisoplus",false,bShape);
+    slABCD(j,false,"","justw0lonlyfailrecoisominus",false,bShape); 
+    slABCD(j,false,"","justw0lonlyfailotherplus",false,bShape); 
+    slABCD(j,false,"","justw0lonlyfailotherminus",false,bShape); 
+    slABCD(j,false,"","justw0lonlytauhadplus",false,bShape);
+    slABCD(j,false,"","justw0lonlytauhadminus",false,bShape);
+    
+    //Combined tt+W+t estimate
+    slABCD(j,false,"","0lonlyfailetaplus",false,bShape); 
+    slABCD(j,false,"","0lonlyfailetaminus",false,bShape);
+    slABCD(j,false,"","0lonlyfailptplus",false,bShape);
+    slABCD(j,false,"","0lonlyfailptminus",false,bShape); 
+    slABCD(j,false,"","0lonlyfailrecoisoplus",false,bShape);
+    slABCD(j,false,"","0lonlyfailrecoisominus",false,bShape); 
+    slABCD(j,false,"","0lonlyfailotherplus",false,bShape); 
+    slABCD(j,false,"","0lonlyfailotherminus",false,bShape); 
+    slABCD(j,false,"","0lonlytauhadplus",false,bShape);
+    slABCD(j,false,"","0lonlytauhadminus",false,bShape);
+    */
+  }
 
   for (unsigned int j=0; j<searchRegions_.size();j++)    slABCD(j,false,"","HFplus",false,bShape);
   for (unsigned int j=0; j<searchRegions_.size();j++)    slABCD(j,false,"","HFminus",false,bShape);
-
+  
   for (unsigned int j=0; j<searchRegions_.size();j++)    slABCD(j,false,"","LFplus",false,bShape);
   for (unsigned int j=0; j<searchRegions_.size();j++)    slABCD(j,false,"","LFminus",false,bShape);
 
@@ -3736,7 +4291,7 @@ void AN2011_PUQCD( TString btagselection="ge1b",const int mode=1 ) {
 
 
 void AN2011_ttbarw( double& r_sl, double& r_sl_err, double& r_nom, double& r_nom_err, 
-		    TString btagselection="ge1b", TString HTselection="Loose" , TString samplename="TTbarJets", TString ttbarcomponent="All") {
+		    TString btagselection="ge1b", TString HTselection="Loose" , TString samplename="TTbarJets", TString component="All") {
 
   /*
 goal:
@@ -3971,43 +4526,81 @@ other.
     if (PVhack)  selection_ =TCut("cutPV==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==0)||(nElectrons==0 && nMuons==0)) && minDeltaPhiN >= 4 && MT_Wlep>=-2 && MT_Wlep<100 && passCleaning==1 && nGoodPV<10")&&btagcut&&HTcut;
     else{    
 
-      if(ttbarcomponent=="All"){
+      if(component=="All"){
 	selection_ =TCut("cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4 && passCleaning==1 ")&&btagcut&&HTcut;
       }
       else{
-	if(!splitTTbar_){std::cout << "ERROR: For mode " << ttbarcomponent << " the splitTTbar_ flag must be true!" << std::endl; assert(0);}
+	if(samplename=="TTbarJets" && !splitTTbar_){std::cout << "ERROR: For mode " << component << " the splitTTbar_ flag must be true!" << std::endl; assert(0);}
+	else if(samplename=="WJets" && !splitWJets_){std::cout << "ERROR: For mode " << component << " the splitWJets_ flag must be true!" << std::endl; assert(0);}
 	clearSamples();
-	if(ttbarcomponent=="TauHad"){
-	  addSample("TTbarJets-semiTauHad");
+	if(component=="TauHad"){
+	  if(samplename=="TTbarJets") addSample("TTbarJets-semiTauHad");
+	  else if(samplename=="WJets") addSample("WJets-tauHad");
 	  selection_ =TCut("cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4 && passCleaning==1 ")&&btagcut&&HTcut;
 	}
-         
-	else if(ttbarcomponent=="SemiEleFailEta"){
-	  addSample("TTbarJets-semiEle");
+	else if(component=="SemiEleAll"){
+	  if(samplename=="TTbarJets") addSample("TTbarJets-semiEle");
+	  else if(samplename=="WJets") addSample("WJets-ele");
+	  selection_ =TCut("cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4 && passCleaning==1 ")&&btagcut&&HTcut;
+	}
+	else if(component=="SemiEleFailEta"){
+	  if(samplename=="TTbarJets") addSample("TTbarJets-semiEle");
+	  else if(samplename=="WJets") addSample("WJets-ele");
 	  selection_ =TCut(" cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN>=4 && passCleaning==1 && (decayType==101101 || decayType==201101)")&&btagcut&&HTcut;
 	}
-	else if(ttbarcomponent=="SemiEleFailPt"){
-	  addSample("TTbarJets-semiEle");
+	else if(component=="SemiEleFailPt"){
+	  if(samplename=="TTbarJets") addSample("TTbarJets-semiEle");
+	  else if(samplename=="WJets") addSample("WJets-ele");
 	  selection_ =TCut(" cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN>=4 && passCleaning==1 && (decayType==101102 || decayType==201102)")&&btagcut&&HTcut;
 	}
-	else if(ttbarcomponent=="SemiEleFailOther"){
-	  addSample("TTbarJets-semiEle");
+	else if(component=="SemiEleFailPtOrEta"){
+	  if(samplename=="TTbarJets") addSample("TTbarJets-semiEle");
+	  else if(samplename=="WJets") addSample("WJets-ele");
+	  selection_ =TCut(" cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN>=4 && passCleaning==1 && (decayType==101102 || decayType==201102 || decayType==101101 || decayType==201101)")&&btagcut&&HTcut;
+	}
+	else if(component=="SemiEleFailRecoIso"){
+	  if(samplename=="TTbarJets") addSample("TTbarJets-semiEle");
+	  else if(samplename=="WJets") addSample("WJets-ele");
+	  selection_ =TCut(" cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN>=4 && passCleaning==1 && decayType==201103")&&btagcut&&HTcut;
+	}
+	else if(component=="SemiEleFailOther"){
+	  if(samplename=="TTbarJets") addSample("TTbarJets-semiEle");
+	  else if(samplename=="WJets") addSample("WJets-ele");
 	  selection_ =TCut(" cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN>=4 && passCleaning==1 && decayType==101104")&&btagcut&&HTcut;
 	}
 	
-	else if(ttbarcomponent=="SemiMuFailEta"){
-	  addSample("TTbarJets-semiMu");
+
+	else if(component=="SemiMuAll"){
+	  if(samplename=="TTbarJets") addSample("TTbarJets-semiMu");
+	  else if(samplename=="WJets") addSample("WJets-mu");
+	  selection_ =TCut("cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4 && passCleaning==1 ")&&btagcut&&HTcut;
+	}
+	else if(component=="SemiMuFailEta"){
+	  if(samplename=="TTbarJets") addSample("TTbarJets-semiMu");
+	  else if(samplename=="WJets") addSample("WJets-mu");
 	  selection_ =TCut(" cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN>=4 && passCleaning==1 && (decayType==101301 || decayType==201301)")&&btagcut&&HTcut;
 	}
-	else if(ttbarcomponent=="SemiMuFailPt"){
-	  addSample("TTbarJets-semiMu");
+	else if(component=="SemiMuFailPt"){
+	  if(samplename=="TTbarJets") addSample("TTbarJets-semiMu");
+	  else if(samplename=="WJets") addSample("WJets-mu");
 	  selection_ =TCut(" cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN>=4 && passCleaning==1 && (decayType==101302 || decayType==201302)")&&btagcut&&HTcut;
 	}
-	else if(ttbarcomponent=="SemiMuFailOther"){
-	  addSample("TTbarJets-semiMu");
+	else if(component=="SemiMuFailPtOrEta"){
+	  if(samplename=="TTbarJets") addSample("TTbarJets-semiMu");
+	  else if(samplename=="WJets") addSample("WJets-mu");
+	  selection_ =TCut(" cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN>=4 && passCleaning==1 && (decayType==101302 || decayType==201302 || decayType==101301 || decayType==201301)")&&btagcut&&HTcut;
+	}
+	else if(component=="SemiMuFailRecoIso"){
+	  if(samplename=="TTbarJets") addSample("TTbarJets-semiMu");
+	  else if(samplename=="WJets") addSample("WJets-mu");
+	  selection_ =TCut(" cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN>=4 && passCleaning==1 && decayType==201303")&&btagcut&&HTcut;
+	}
+	else if(component=="SemiMuFailOther"){
+	  if(samplename=="TTbarJets") addSample("TTbarJets-semiMu");
+	  else if(samplename=="WJets") addSample("WJets-mu");
 	  selection_ =TCut(" cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN>=4 && passCleaning==1 && decayType==101304")&&btagcut&&HTcut;
 	}
-	else{std::cout << "ttbarcomponent not recognized.  Quitting" << std::endl; assert(0);}
+	else{std::cout << "component not recognized.  Quitting" << std::endl; assert(0);}
 
       }
     }
@@ -4124,18 +4717,20 @@ other.
       }
       else {
 	
-	if(ttbarcomponent=="All"){
+	if(component=="All"){
 	  myLegend->AddEntry(SIGplot,"t#bar{t}, 0 leptons", "lp");
 	}
 	else{
-	  if(ttbarcomponent=="TauHad"){
+	  if(component=="TauHad"){
 	    myLegend->AddEntry(SIGplot,"t#bar{t}, 0 leptons - semi-#tau-had", "lp");
 	  }
-	  else if(ttbarcomponent=="SemiEleFailEta" || ttbarcomponent=="SemiEleFailPt" || ttbarcomponent=="SemiEleFailOther"){
+	  else if(component=="SemiEleAll" ||component=="SemiEleFailEta" || component=="SemiEleFailPt" || component=="SemiEleFailPtOrEta" 
+		  || component=="SemiEleFailRecoIso"|| component=="SemiEleFailOther"){
 	    myLegend->AddEntry(SIGplot,"t#bar{t}, 0 leptons - semi-e", "lp");
 	  }
 
-	  else if(ttbarcomponent=="SemiMuFailEta" || ttbarcomponent=="SemiMuFailPt" || ttbarcomponent=="SemiMuFailOther"){
+	  else if(component=="SemiMuAll" || component=="SemiMuFailEta" || component=="SemiMuFailPt" || component=="SemiMuFailPtOrEta" 
+		  || component=="SemiMuFailRecoIso" || component=="SemiMuFailOther"){
 	    myLegend->AddEntry(SIGplot,"t#bar{t}, 0 leptons - semi-#mu", "lp");
 	  }
 	  
@@ -4145,7 +4740,26 @@ other.
       }
     }
     else if(sample=="wjets"){
-      myLegend->AddEntry(SIGplot,"wjets, 0 leptons", "lp");
+
+      if(component=="All"){
+	myLegend->AddEntry(SIGplot,"wjets, 0 leptons", "lp");
+      }
+      else{
+	if(component=="TauHad"){
+	  myLegend->AddEntry(SIGplot,"wjets, 0 leptons - semi-#tau-had", "lp");
+	}
+	else if(component=="SemiEleAll" ||component=="SemiEleFailEta" || component=="SemiEleFailPt" || component=="SemiEleFailPtOrEta" 
+		|| component=="SemiEleFailRecoIso"|| component=="SemiEleFailOther"){
+	  myLegend->AddEntry(SIGplot,"wjets, 0 leptons - semi-e", "lp");
+	}
+
+	else if(component=="SemiMuAll" || component=="SemiMuFailEta" || component=="SemiMuFailPt" || component=="SemiMuFailPtOrEta" 
+		|| component=="SemiMuFailRecoIso" || component=="SemiMuFailOther"){
+	  myLegend->AddEntry(SIGplot,"wjets, 0 leptons - semi-#mu", "lp");
+	}
+	  
+      }
+	
       myLegend->AddEntry(SLplot, "wjets, 1 lepton", "lp");
     }
     else if(sample=="singletop"){
@@ -4156,18 +4770,18 @@ other.
     if (PVhack)    myC->Print("METshape_logAndRatio_"+sample+"_0LinPVbins_"+btagselection+"_"+HTselection+".pdf");
     //else     myC->Print("METshape_logAndRatio_"+sample+"_SLandStandard_"+btagselection+"_"+HTselection+".pdf");
     else{
-      if(ttbarcomponent=="All"){
+      if(component=="All"){
 	myC->Print("METshape_logAndRatio_"+sample+"_SLandStandard_"+btagselection+"_"+HTselection+".pdf");	
       }
       else{
-	myC->Print("METshape_Fall11_"+ttbarcomponent+"_logAndRatio_"+sample+"_SLandStandard_"+btagselection+"_"+HTselection+".pdf");	
+	myC->Print("METshape_Fall11_"+component+"_logAndRatio_"+sample+"_SLandStandard_"+btagselection+"_"+HTselection+".png");	
       }
     }
   }
 }
 
 //kludgy , but it suffices for now
-void makeTTbarWMETPlots(bool forttbarbreakdown=false) {
+void makeTTbarWMETPlots(bool forttbarbreakdown=false, bool forwjetsbreakdown=false) {
   
   double ratio_sl = 0, ratio_sl_err = 0, ratio_nom = 0, ratio_nom_err = 0;
   std::vector<double> ratios_sl, ratios_sl_err, ratios_nom, ratios_nom_err;
@@ -4176,12 +4790,17 @@ void makeTTbarWMETPlots(bool forttbarbreakdown=false) {
 
   if(forttbarbreakdown){
 
-
     AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Loose" , "TTbarJets", "TauHad");
     AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Tight" , "TTbarJets", "TauHad");
     AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Loose" , "TTbarJets", "TauHad");
     AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Tight" , "TTbarJets", "TauHad");
     AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge3b", "Loose" , "TTbarJets", "TauHad");
+    
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Loose" , "TTbarJets", "SemiEleAll");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Tight" , "TTbarJets", "SemiEleAll");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Loose" , "TTbarJets", "SemiEleAll");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Tight" , "TTbarJets", "SemiEleAll");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge3b", "Loose" , "TTbarJets", "SemiEleAll");
     
     AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Loose" , "TTbarJets", "SemiEleFailEta");
     AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Tight" , "TTbarJets", "SemiEleFailEta");
@@ -4195,12 +4814,30 @@ void makeTTbarWMETPlots(bool forttbarbreakdown=false) {
     AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Tight" , "TTbarJets", "SemiEleFailPt");
     AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge3b", "Loose" , "TTbarJets", "SemiEleFailPt");
     
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Loose" , "TTbarJets", "SemiEleFailPtOrEta");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Tight" , "TTbarJets", "SemiEleFailPtOrEta");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Loose" , "TTbarJets", "SemiEleFailPtOrEta");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Tight" , "TTbarJets", "SemiEleFailPtOrEta");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge3b", "Loose" , "TTbarJets", "SemiEleFailPtOrEta");
+    
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Loose" , "TTbarJets", "SemiEleFailRecoIso");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Tight" , "TTbarJets", "SemiEleFailRecoIso");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Loose" , "TTbarJets", "SemiEleFailRecoIso");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Tight" , "TTbarJets", "SemiEleFailRecoIso");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge3b", "Loose" , "TTbarJets", "SemiEleFailRecoIso");
+    
     AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Loose" , "TTbarJets", "SemiEleFailOther");
     AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Tight" , "TTbarJets", "SemiEleFailOther");
     AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Loose" , "TTbarJets", "SemiEleFailOther");
     AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Tight" , "TTbarJets", "SemiEleFailOther");
     AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge3b", "Loose" , "TTbarJets", "SemiEleFailOther");
     
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Loose" , "TTbarJets", "SemiMuAll");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Tight" , "TTbarJets", "SemiMuAll");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Loose" , "TTbarJets", "SemiMuAll");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Tight" , "TTbarJets", "SemiMuAll");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge3b", "Loose" , "TTbarJets", "SemiMuAll");
+
     AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Loose" , "TTbarJets", "SemiMuFailEta");
     AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Tight" , "TTbarJets", "SemiMuFailEta");
     AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Loose" , "TTbarJets", "SemiMuFailEta");
@@ -4213,11 +4850,105 @@ void makeTTbarWMETPlots(bool forttbarbreakdown=false) {
     AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Tight" , "TTbarJets", "SemiMuFailPt");
     AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge3b", "Loose" , "TTbarJets", "SemiMuFailPt");
     
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Loose" , "TTbarJets", "SemiMuFailPtOrEta");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Tight" , "TTbarJets", "SemiMuFailPtOrEta");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Loose" , "TTbarJets", "SemiMuFailPtOrEta");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Tight" , "TTbarJets", "SemiMuFailPtOrEta");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge3b", "Loose" , "TTbarJets", "SemiMuFailPtOrEta");
+    
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Loose" , "TTbarJets", "SemiMuFailRecoIso");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Tight" , "TTbarJets", "SemiMuFailRecoIso");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Loose" , "TTbarJets", "SemiMuFailRecoIso");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Tight" , "TTbarJets", "SemiMuFailRecoIso");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge3b", "Loose" , "TTbarJets", "SemiMuFailRecoIso");
+    
     AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Loose" , "TTbarJets", "SemiMuFailOther");
     AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Tight" , "TTbarJets", "SemiMuFailOther");
     AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Loose" , "TTbarJets", "SemiMuFailOther");
     AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Tight" , "TTbarJets", "SemiMuFailOther");
     AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge3b", "Loose" , "TTbarJets", "SemiMuFailOther");
+
+  }
+
+  if(forwjetsbreakdown){
+
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Loose" , "WJets", "TauHad");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Tight" , "WJets", "TauHad");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Loose" , "WJets", "TauHad");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Tight" , "WJets", "TauHad");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge3b", "Loose" , "WJets", "TauHad");
+    
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Loose" , "WJets", "SemiEleAll");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Tight" , "WJets", "SemiEleAll");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Loose" , "WJets", "SemiEleAll");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Tight" , "WJets", "SemiEleAll");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge3b", "Loose" , "WJets", "SemiEleAll");
+    
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Loose" , "WJets", "SemiEleFailEta");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Tight" , "WJets", "SemiEleFailEta");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Loose" , "WJets", "SemiEleFailEta");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Tight" , "WJets", "SemiEleFailEta");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge3b", "Loose" , "WJets", "SemiEleFailEta");
+    
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Loose" , "WJets", "SemiEleFailPt");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Tight" , "WJets", "SemiEleFailPt");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Loose" , "WJets", "SemiEleFailPt");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Tight" , "WJets", "SemiEleFailPt");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge3b", "Loose" , "WJets", "SemiEleFailPt");
+    
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Loose" , "WJets", "SemiEleFailPtOrEta");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Tight" , "WJets", "SemiEleFailPtOrEta");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Loose" , "WJets", "SemiEleFailPtOrEta");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Tight" , "WJets", "SemiEleFailPtOrEta");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge3b", "Loose" , "WJets", "SemiEleFailPtOrEta");
+    
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Loose" , "WJets", "SemiEleFailRecoIso");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Tight" , "WJets", "SemiEleFailRecoIso");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Loose" , "WJets", "SemiEleFailRecoIso");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Tight" , "WJets", "SemiEleFailRecoIso");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge3b", "Loose" , "WJets", "SemiEleFailRecoIso");
+    
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Loose" , "WJets", "SemiEleFailOther");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Tight" , "WJets", "SemiEleFailOther");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Loose" , "WJets", "SemiEleFailOther");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Tight" , "WJets", "SemiEleFailOther");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge3b", "Loose" , "WJets", "SemiEleFailOther");
+    
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Loose" , "WJets", "SemiMuAll");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Tight" , "WJets", "SemiMuAll");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Loose" , "WJets", "SemiMuAll");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Tight" , "WJets", "SemiMuAll");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge3b", "Loose" , "WJets", "SemiMuAll");
+
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Loose" , "WJets", "SemiMuFailEta");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Tight" , "WJets", "SemiMuFailEta");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Loose" , "WJets", "SemiMuFailEta");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Tight" , "WJets", "SemiMuFailEta");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge3b", "Loose" , "WJets", "SemiMuFailEta");
+    
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Loose" , "WJets", "SemiMuFailPt");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Tight" , "WJets", "SemiMuFailPt");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Loose" , "WJets", "SemiMuFailPt");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Tight" , "WJets", "SemiMuFailPt");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge3b", "Loose" , "WJets", "SemiMuFailPt");
+    
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Loose" , "WJets", "SemiMuFailPtOrEta");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Tight" , "WJets", "SemiMuFailPtOrEta");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Loose" , "WJets", "SemiMuFailPtOrEta");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Tight" , "WJets", "SemiMuFailPtOrEta");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge3b", "Loose" , "WJets", "SemiMuFailPtOrEta");
+    
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Loose" , "WJets", "SemiMuFailRecoIso");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Tight" , "WJets", "SemiMuFailRecoIso");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Loose" , "WJets", "SemiMuFailRecoIso");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Tight" , "WJets", "SemiMuFailRecoIso");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge3b", "Loose" , "WJets", "SemiMuFailRecoIso");
+    
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Loose" , "WJets", "SemiMuFailOther");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Tight" , "WJets", "SemiMuFailOther");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Loose" , "WJets", "SemiMuFailOther");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Tight" , "WJets", "SemiMuFailOther");
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge3b", "Loose" , "WJets", "SemiMuFailOther");
 
   }
   else{
@@ -5055,8 +5786,20 @@ void AN2011( TString btagselection="ge1b",const int mode=1, bool logy=false, boo
   var="eleet1"; xtitle="electron p_{T} [GeV]";
   nbins = 20; low=0; high=200;
   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_eleET_1e0mu_"+btagselection+modestring,0,"GeV");
-  
-  
+    
+  //selection_ =TCut("MET>=200 && HT>=400 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && nElectrons==1 && nMuons==0 && minDeltaPhiN >= 4 && MT_Wlep>=0 && MT_Wlep<100 &&passCleaning==1")&&btagcut;
+  //var="eleeta1"; xtitle="electron #eta";
+  //nbins = 20; low=-2.5; high=2.5;
+  ////nbins = 10; low=-2.5; high=2.5;
+  //drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_eleeta_1e0mu_"+btagselection+modestring);
+  //
+  ////electronpt for SL with 5 gev cut
+  //selection_ =TCut("MET>=200 && HT>=400 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && nElectrons5==1 && nMuons5==0 && minDeltaPhiN >= 4 && MT_Wlep5>=0 && MT_Wlep5<100 &&passCleaning==1")&&btagcut;
+  //var="eleet1"; xtitle="electron p_{T} [GeV]";
+  //nbins = 30; low=0; high=150;
+  //drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_elepT_1e0mu5_"+btagselection+modestring,0,"GeV");
+
+
   // == MET for the muon sample
   selection_ =TCut("MET>=200 && HT>=400 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && nElectrons==0 && nMuons==1 && minDeltaPhiN >= 4 && MT_Wlep>=0 && MT_Wlep<100 &&passCleaning==1")&&btagcut;
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
@@ -5066,6 +5809,18 @@ void AN2011( TString btagselection="ge1b",const int mode=1, bool logy=false, boo
   var="muonpt1"; xtitle="muon p_{T} [GeV]";
   nbins = 20; low=0; high=200;
   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_muonpT_0e1mu_"+btagselection+modestring,0,"GeV");
+  
+  //selection_ =TCut("MET>=200 && HT>=400 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && nElectrons==0 && nMuons==1 && minDeltaPhiN >= 4 && MT_Wlep>=0 && MT_Wlep<100 &&passCleaning==1")&&btagcut;
+  //var="muoneta1"; xtitle="muon #eta";
+  //nbins = 20; low=-2.5; high=2.5;
+  ////nbins = 10; low=-2.5; high=2.5;
+  //drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_muoneta_0e1mu_"+btagselection+modestring);
+  //
+  ////muonpt for SL with 5 gev cut
+  //selection_ =TCut("MET>=200 && HT>=400 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && nElectrons5==0 && nMuons5==1 && minDeltaPhiN >= 4 && MT_Wlep5>=0 && MT_Wlep5<100 &&passCleaning==1")&&btagcut;
+  //var="muonpt1"; xtitle="muon p_{T} [GeV]";
+  //nbins = 30; low=0; high=150;
+  //drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_muonpT_0e1mu5_"+btagselection+modestring,0,"GeV");
    
   
   // == MET for the combined sample
@@ -5161,8 +5916,9 @@ void AN2011( TString btagselection="ge1b",const int mode=1, bool logy=false, boo
   selection_ =TCut("HT>=400 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && nTaus==1 && minDeltaPhiN >= 4 &&passCleaning==1")&&btagcut;
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
   //nbins = 14; low=150; high=500;
-  const int nvarbins=3;
-  const float varbins[]={150, 200, 250, 500}; //AN and PAS 
+  const int nvarbins=6;
+  //const float varbins[]={150, 175, 200, 225, 250, 275, 300, 350, 500}; //AN and PAS 
+  const float varbins[]={200, 225, 250, 275, 300, 350, 500}; //AN and PAS 
   //drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_ST_"+btagselection+modestring,0,"GeV");
   drawPlots(var,nvarbins,varbins,xtitle,"Events", "SBandSIG_MET_ST_"+btagselection+modestring);
   */

@@ -1156,6 +1156,11 @@ double customPlotMin_=0;
 float maxScaleFactor_ = 1.05;
 
 bool splitTTbar_ = false;
+bool splitWJets_ = false;
+//the next three are automatically configured in slABCD()
+bool splitTTbarForClosureTest_ = false;
+bool splitWJetsForClosureTest_ = false;
+bool splitSingleTopForClosureTest_ = false;
 
 //bool latexMode_=false;
 bool latexMode_=true;
@@ -1834,13 +1839,36 @@ void setColorScheme(const TString & name) {
     sampleColor_["TTbarJets"]=kRed+1;
     sampleColor_["ttbar"]=kRed+1;
     sampleColor_["TTbarJets-semiMu"]=kViolet;
+    sampleColor_["TTbarJets-semiMuGood"]=kViolet;
+    sampleColor_["TTbarJets-semiMuFailEta"]=kViolet;
+    sampleColor_["TTbarJets-semiMuFailPt"]=kViolet;
+    sampleColor_["TTbarJets-semiMuFailRecoIso"]=kViolet;
+    sampleColor_["TTbarJets-semiMuFailOther"]=kViolet;
     sampleColor_["TTbarJets-semiEle"]=kViolet-9;
+    sampleColor_["TTbarJets-semiEleGood"]=kViolet-9;
+    sampleColor_["TTbarJets-semiEleFailEta"]=kViolet-9;
+    sampleColor_["TTbarJets-semiEleFailPt"]=kViolet-9;
+    sampleColor_["TTbarJets-semiEleFailRecoIso"]=kViolet-9;
+    sampleColor_["TTbarJets-semiEleFailOther"]=kViolet-9;
     sampleColor_["TTbarJets-semiTauHad"]=kViolet-7;
     sampleColor_["TTbarJets-dilep"]=kMagenta-10;
     sampleColor_["TTbarJets-had"]=kRed-5;
     sampleColor_["TTbarJets-other"]=kPink-9;
     sampleColor_["SingleTop"] = kMagenta;
     sampleColor_["WJets"] = kGreen-3;
+    sampleColor_["WJets-mu"]=kSpring+9;
+    sampleColor_["WJets-muGood"]=kSpring+9;
+    sampleColor_["WJets-muFailEta"]=kSpring+9;
+    sampleColor_["WJets-muFailPt"]=kSpring+9;
+    sampleColor_["WJets-muFailRecoIso"]=kSpring+9;
+    sampleColor_["WJets-muFailOther"]=kSpring+9;
+    sampleColor_["WJets-ele"]=kCyan;
+    sampleColor_["WJets-eleGood"]=kCyan;
+    sampleColor_["WJets-eleFailEta"]=kCyan;
+    sampleColor_["WJets-eleFailPt"]=kCyan;
+    sampleColor_["WJets-eleFailRecoIso"]=kCyan;
+    sampleColor_["WJets-eleFailOther"]=kCyan;
+    sampleColor_["WJets-tauHad"]=kGreen-10;
     sampleColor_["WJetsZ2"] = kGreen-3;
     sampleColor_["ZJets"] = kAzure-2;
     sampleColor_["Zinvisible"] = kOrange-3;
@@ -1850,6 +1878,33 @@ void setColorScheme(const TString & name) {
     sampleColor_["SingleTopBar-sChannel"] = kMagenta+4; //for special cases
     sampleColor_["SingleTopBar-tChannel"] = kMagenta+5; //for special cases
     sampleColor_["SingleTopBar-tWChannel"] = kMagenta+6; //for special cases
+    //sampleColor_["SingleTop-sandtCombined"] = kMagenta+1; //for special cases
+    //sampleColor_["SingleTop-tWCombined"] = kMagenta+3; //for special cases
+    sampleColor_["SingleTop-sandtCombined-muGood"] = kMagenta+1;
+    sampleColor_["SingleTop-sandtCombined-muFailEta"] = kMagenta+1;
+    sampleColor_["SingleTop-sandtCombined-muFailPt"] = kMagenta+1;
+    sampleColor_["SingleTop-sandtCombined-muFailRecoIso"] = kMagenta+1;
+    sampleColor_["SingleTop-sandtCombined-muFailOther"] = kMagenta+1;
+    sampleColor_["SingleTop-sandtCombined-eleGood"] = kMagenta+1;
+    sampleColor_["SingleTop-sandtCombined-eleFailEta"] = kMagenta+1;
+    sampleColor_["SingleTop-sandtCombined-eleFailPt"] = kMagenta+1;
+    sampleColor_["SingleTop-sandtCombined-eleFailRecoIso"] = kMagenta+1;
+    sampleColor_["SingleTop-sandtCombined-eleFailOther"] = kMagenta+1;
+    sampleColor_["SingleTop-sandtCombined-tauHad"] = kMagenta+1;
+    sampleColor_["SingleTop-tWCombined-semiMuGood"] = kMagenta+3;
+    sampleColor_["SingleTop-tWCombined-semiMuFailEta"] = kMagenta+3;
+    sampleColor_["SingleTop-tWCombined-semiMuFailPt"] = kMagenta+3;
+    sampleColor_["SingleTop-tWCombined-semiMuFailRecoIso"] = kMagenta+3;
+    sampleColor_["SingleTop-tWCombined-semiMuFailOther"] = kMagenta+3;
+    sampleColor_["SingleTop-tWCombined-semiEleGood"] = kMagenta+3;
+    sampleColor_["SingleTop-tWCombined-semiEleFailEta"] = kMagenta+3;
+    sampleColor_["SingleTop-tWCombined-semiEleFailPt"] = kMagenta+3;
+    sampleColor_["SingleTop-tWCombined-semiEleFailRecoIso"] = kMagenta+3;
+    sampleColor_["SingleTop-tWCombined-semiEleFailOther"] = kMagenta+3;
+    sampleColor_["SingleTop-tWCombined-semiTauHad"] = kMagenta+3;
+    sampleColor_["SingleTop-tWCombined-dilep"] = kMagenta+3;
+    sampleColor_["SingleTop-tWCombined-had"] = kMagenta+3;
+    sampleColor_["SingleTop-tWCombined-other"] = kMagenta+3;
     sampleColor_["TotalSM"] = kBlue+2;
     sampleColor_["Total"] = kGreen+3;
     sampleColor_["VV"] = kCyan+1;
@@ -1869,19 +1924,72 @@ void setColorScheme(const TString & name) {
     sampleColor_["PythiaPUQCDFlat"] =2;
     sampleColor_["TTbarJets"]=4;
     sampleColor_["TTbarJets-semiMu"]=kGreen-3;
+    sampleColor_["TTbarJets-semiMuGood"]=kGreen-3;
+    sampleColor_["TTbarJets-semiMuFailEta"]=kGreen-3;
+    sampleColor_["TTbarJets-semiMuFailPt"]=kGreen-3;
+    sampleColor_["TTbarJets-semiMuFailRecoIso"]=kGreen-3;
+    sampleColor_["TTbarJets-semiMuFailOther"]=kGreen-3;
     sampleColor_["TTbarJets-semiEle"]=kAzure-2;
+    sampleColor_["TTbarJets-semiEleGood"]=kAzure-2;
+    sampleColor_["TTbarJets-semiEleFailEta"]=kAzure-2;
+    sampleColor_["TTbarJets-semiEleFailPt"]=kAzure-2;
+    sampleColor_["TTbarJets-semiEleFailRecoIso"]=kAzure-2;
+    sampleColor_["TTbarJets-semiEleFailOther"]=kAzure-2;
     sampleColor_["TTbarJets-semiTauHad"]=kBlack;
     sampleColor_["TTbarJets-dilep"]=kYellow;
     sampleColor_["TTbarJets-had"]=kRed-5;
     sampleColor_["TTbarJets-other"]=kPink-9;
     sampleColor_["SingleTop"] = kMagenta;
     sampleColor_["WJets"] = kOrange;
+    sampleColor_["WJets-mu"]=kSpring+9;
+    sampleColor_["WJets-muGood"]=kSpring+9;
+    sampleColor_["WJets-muFailEta"]=kSpring+9;
+    sampleColor_["WJets-muFailPt"]=kSpring+9;
+    sampleColor_["WJets-muFailRecoIso"]=kSpring+9;
+    sampleColor_["WJets-muFailOther"]=kSpring+9;
+    sampleColor_["WJets-ele"]=kCyan;
+    sampleColor_["WJets-eleGood"]=kCyan;
+    sampleColor_["WJets-eleFailEta"]=kCyan;
+    sampleColor_["WJets-eleFailPt"]=kCyan;
+    sampleColor_["WJets-eleFailRecoIso"]=kCyan;
+    sampleColor_["WJets-eleFailOther"]=kCyan;
+    sampleColor_["WJets-tauHad"]=kGreen-10;
     sampleColor_["WJetsZ2"] = kOrange;
     sampleColor_["ZJets"] = 7;
     sampleColor_["Zinvisible"] = kOrange+7;
     sampleColor_["SingleTop-sChannel"] = kMagenta+1; //for special cases
     sampleColor_["SingleTop-tChannel"] = kMagenta+2; //for special cases
     sampleColor_["SingleTop-tWChannel"] = kMagenta+3; //for special cases
+    sampleColor_["SingleTopBar-sChannel"] = kMagenta+4; //for special cases
+    sampleColor_["SingleTopBar-tChannel"] = kMagenta+5; //for special cases
+    sampleColor_["SingleTopBar-tWChannel"] = kMagenta+6; //for special cases
+    //sampleColor_["SingleTop-sandtCombined"] = kMagenta+1; //for special cases
+    //sampleColor_["SingleTop-tWCombined"] = kMagenta+3; //for special cases
+    sampleColor_["SingleTop-sandtCombined-muGood"] = kMagenta+1;
+    sampleColor_["SingleTop-sandtCombined-muFailEta"] = kMagenta+1;
+    sampleColor_["SingleTop-sandtCombined-muFailPt"] = kMagenta+1;
+    sampleColor_["SingleTop-sandtCombined-muFailRecoIso"] = kMagenta+1;
+    sampleColor_["SingleTop-sandtCombined-muFailOther"] = kMagenta+1;
+    sampleColor_["SingleTop-sandtCombined-eleGood"] = kMagenta+1;
+    sampleColor_["SingleTop-sandtCombined-eleFailEta"] = kMagenta+1;
+    sampleColor_["SingleTop-sandtCombined-eleFailPt"] = kMagenta+1;
+    sampleColor_["SingleTop-sandtCombined-eleFailRecoIso"] = kMagenta+1;
+    sampleColor_["SingleTop-sandtCombined-eleFailOther"] = kMagenta+1;
+    sampleColor_["SingleTop-sandtCombined-tauHad"] = kMagenta+1;
+    sampleColor_["SingleTop-tWCombined-semiMuGood"] = kMagenta+3;
+    sampleColor_["SingleTop-tWCombined-semiMuFailEta"] = kMagenta+3;
+    sampleColor_["SingleTop-tWCombined-semiMuFailPt"] = kMagenta+3;
+    sampleColor_["SingleTop-tWCombined-semiMuFailRecoIso"] = kMagenta+3;
+    sampleColor_["SingleTop-tWCombined-semiMuFailOther"] = kMagenta+3;
+    sampleColor_["SingleTop-tWCombined-semiEleGood"] = kMagenta+3;
+    sampleColor_["SingleTop-tWCombined-semiEleFailEta"] = kMagenta+3;
+    sampleColor_["SingleTop-tWCombined-semiEleFailPt"] = kMagenta+3;
+    sampleColor_["SingleTop-tWCombined-semiEleFailRecoIso"] = kMagenta+3;
+    sampleColor_["SingleTop-tWCombined-semiEleFailOther"] = kMagenta+3;
+    sampleColor_["SingleTop-tWCombined-semiTauHad"] = kMagenta+3;
+    sampleColor_["SingleTop-tWCombined-dilep"] = kMagenta+3;
+    sampleColor_["SingleTop-tWCombined-had"] = kMagenta+3;
+    sampleColor_["SingleTop-tWCombined-other"] = kMagenta+3;
     sampleColor_["TotalSM"] =kGreen+1; //owen requested 3
     sampleColor_["Total"] = 6;
     sampleColor_["VV"] = kOrange-3;
@@ -1905,7 +2013,23 @@ void resetSamples(bool joinSingleTop=true) {
   samples_.push_back("PythiaPUQCD"); 
   //samples_.push_back("PythiaPUQCDFlat");
 
-  if(splitTTbar_){// "load" the decay modes separately
+  if(splitTTbarForClosureTest_){
+    samples_.push_back("TTbarJets-semiMuGood");
+    samples_.push_back("TTbarJets-semiMuFailEta");
+    samples_.push_back("TTbarJets-semiMuFailPt");
+    samples_.push_back("TTbarJets-semiMuFailRecoIso");
+    samples_.push_back("TTbarJets-semiMuFailOther");
+    samples_.push_back("TTbarJets-semiEleGood");
+    samples_.push_back("TTbarJets-semiEleFailEta");
+    samples_.push_back("TTbarJets-semiEleFailPt");
+    samples_.push_back("TTbarJets-semiEleFailRecoIso");
+    samples_.push_back("TTbarJets-semiEleFailOther");
+    samples_.push_back("TTbarJets-semiTauHad");
+    samples_.push_back("TTbarJets-dilep");
+    samples_.push_back("TTbarJets-had");
+    samples_.push_back("TTbarJets-other");
+  }
+  else if(splitTTbar_){// "load" the decay modes separately
     samples_.push_back("TTbarJets-semiMu");
     samples_.push_back("TTbarJets-semiEle");
     samples_.push_back("TTbarJets-semiTauHad");
@@ -1916,14 +2040,68 @@ void resetSamples(bool joinSingleTop=true) {
   else{
     samples_.push_back("TTbarJets");
   }
+  if(splitWJetsForClosureTest_){// "load" the decay modes separately
+    samples_.push_back("WJets-muGood");
+    samples_.push_back("WJets-muFailEta");
+    samples_.push_back("WJets-muFailPt");
+    samples_.push_back("WJets-muFailRecoIso");
+    samples_.push_back("WJets-muFailOther");
+    samples_.push_back("WJets-eleGood");
+    samples_.push_back("WJets-eleFailEta");
+    samples_.push_back("WJets-eleFailPt");
+    samples_.push_back("WJets-eleFailRecoIso");
+    samples_.push_back("WJets-eleFailOther");
+    samples_.push_back("WJets-tauHad");
+  }
+  else if(splitWJets_){// "load" the decay modes separately
+    samples_.push_back("WJets-mu");
+    samples_.push_back("WJets-ele");
+    samples_.push_back("WJets-tauHad");
+  }
+  else{
+    samples_.push_back("WJets");
+  }
   //flip this bool to control whether SingleTop is loaded as one piece or 3
-  if (joinSingleTop) samples_.push_back("SingleTop");
+  //or two pieces for the tt+W+t enhanced closure test
+  if(splitSingleTopForClosureTest_){
+    //samples_.push_back("SingleTop-sandtCombined");
+    samples_.push_back("SingleTop-sandtCombined-muGood");
+    samples_.push_back("SingleTop-sandtCombined-muFailEta");
+    samples_.push_back("SingleTop-sandtCombined-muFailPt");
+    samples_.push_back("SingleTop-sandtCombined-muFailRecoIso");
+    samples_.push_back("SingleTop-sandtCombined-muFailOther");
+    samples_.push_back("SingleTop-sandtCombined-eleGood");
+    samples_.push_back("SingleTop-sandtCombined-eleFailEta");
+    samples_.push_back("SingleTop-sandtCombined-eleFailPt");
+    samples_.push_back("SingleTop-sandtCombined-eleFailRecoIso");
+    samples_.push_back("SingleTop-sandtCombined-eleFailOther");
+    samples_.push_back("SingleTop-sandtCombined-tauHad");
+
+    //samples_.push_back("SingleTop-tWCombined");
+    samples_.push_back("SingleTop-tWCombined-semiMuGood");
+    samples_.push_back("SingleTop-tWCombined-semiMuFailEta");
+    samples_.push_back("SingleTop-tWCombined-semiMuFailPt");
+    samples_.push_back("SingleTop-tWCombined-semiMuFailRecoIso");
+    samples_.push_back("SingleTop-tWCombined-semiMuFailOther");
+    samples_.push_back("SingleTop-tWCombined-semiEleGood");
+    samples_.push_back("SingleTop-tWCombined-semiEleFailEta");
+    samples_.push_back("SingleTop-tWCombined-semiEleFailPt");
+    samples_.push_back("SingleTop-tWCombined-semiEleFailRecoIso");
+    samples_.push_back("SingleTop-tWCombined-semiEleFailOther");
+    samples_.push_back("SingleTop-tWCombined-semiTauHad");
+    samples_.push_back("SingleTop-tWCombined-dilep");
+    samples_.push_back("SingleTop-tWCombined-had");
+    samples_.push_back("SingleTop-tWCombined-other");
+  }
+  else if (joinSingleTop) samples_.push_back("SingleTop");
   else {
     samples_.push_back("SingleTop-sChannel");
     samples_.push_back("SingleTop-tChannel");
     samples_.push_back("SingleTop-tWChannel");
+    samples_.push_back("SingleTopBar-sChannel");
+    samples_.push_back("SingleTopBar-tChannel");
+    samples_.push_back("SingleTopBar-tWChannel");
   }
-  samples_.push_back("WJets");
   samples_.push_back("ZJets");
   samples_.push_back("VV");
   samples_.push_back("Zinvisible");
@@ -1951,12 +2129,35 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   //samplesAll_.insert("PythiaPUQCDFlat");
   samplesAll_.insert("TTbarJets");
   samplesAll_.insert("TTbarJets-semiMu");
+  samplesAll_.insert("TTbarJets-semiMuGood");
+  samplesAll_.insert("TTbarJets-semiMuFailEta");
+  samplesAll_.insert("TTbarJets-semiMuFailPt");
+  samplesAll_.insert("TTbarJets-semiMuFailRecoIso");
+  samplesAll_.insert("TTbarJets-semiMuFailOther");
   samplesAll_.insert("TTbarJets-semiEle");
+  samplesAll_.insert("TTbarJets-semiEleGood");
+  samplesAll_.insert("TTbarJets-semiEleFailEta");
+  samplesAll_.insert("TTbarJets-semiEleFailPt");
+  samplesAll_.insert("TTbarJets-semiEleFailRecoIso");
+  samplesAll_.insert("TTbarJets-semiEleFailOther");
   samplesAll_.insert("TTbarJets-semiTauHad");
   samplesAll_.insert("TTbarJets-dilep");
   samplesAll_.insert("TTbarJets-had");
   samplesAll_.insert("TTbarJets-other");
   samplesAll_.insert("WJets");
+  samplesAll_.insert("WJets-muGood");
+  samplesAll_.insert("WJets-muFailEta");
+  samplesAll_.insert("WJets-muFailPt");
+  samplesAll_.insert("WJets-muFailRecoIso");
+  samplesAll_.insert("WJets-muFailOther");
+  samplesAll_.insert("WJets-eleGood");
+  samplesAll_.insert("WJets-eleFailEta");
+  samplesAll_.insert("WJets-eleFailPt");
+  samplesAll_.insert("WJets-eleFailRecoIso");
+  samplesAll_.insert("WJets-eleFailOther");
+  samplesAll_.insert("WJets-mu");
+  samplesAll_.insert("WJets-ele");
+  samplesAll_.insert("WJets-tauHad");
   samplesAll_.insert("ZJets");
   samplesAll_.insert("Zinvisible");
   samplesAll_.insert("SingleTop");
@@ -1966,6 +2167,33 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   samplesAll_.insert("SingleTopBar-sChannel");
   samplesAll_.insert("SingleTopBar-tChannel");
   samplesAll_.insert("SingleTopBar-tWChannel");
+  //samplesAll_.insert("SingleTop-sandtCombined");
+  //samplesAll_.insert("SingleTop-tWCombined");
+  samplesAll_.insert("SingleTop-sandtCombined-muGood");
+  samplesAll_.insert("SingleTop-sandtCombined-muFailEta");
+  samplesAll_.insert("SingleTop-sandtCombined-muFailPt");
+  samplesAll_.insert("SingleTop-sandtCombined-muFailRecoIso");
+  samplesAll_.insert("SingleTop-sandtCombined-muFailOther");
+  samplesAll_.insert("SingleTop-sandtCombined-eleGood");
+  samplesAll_.insert("SingleTop-sandtCombined-eleFailEta");
+  samplesAll_.insert("SingleTop-sandtCombined-eleFailPt");
+  samplesAll_.insert("SingleTop-sandtCombined-eleFailRecoIso");
+  samplesAll_.insert("SingleTop-sandtCombined-eleFailOther");
+  samplesAll_.insert("SingleTop-sandtCombined-tauHad");
+  samplesAll_.insert("SingleTop-tWCombined-semiMuGood");
+  samplesAll_.insert("SingleTop-tWCombined-semiMuFailEta");
+  samplesAll_.insert("SingleTop-tWCombined-semiMuFailPt");
+  samplesAll_.insert("SingleTop-tWCombined-semiMuFailRecoIso");
+  samplesAll_.insert("SingleTop-tWCombined-semiMuFailOther");
+  samplesAll_.insert("SingleTop-tWCombined-semiEleGood");
+  samplesAll_.insert("SingleTop-tWCombined-semiEleFailEta");
+  samplesAll_.insert("SingleTop-tWCombined-semiEleFailPt");
+  samplesAll_.insert("SingleTop-tWCombined-semiEleFailRecoIso");
+  samplesAll_.insert("SingleTop-tWCombined-semiEleFailOther");
+  samplesAll_.insert("SingleTop-tWCombined-semiTauHad");
+  samplesAll_.insert("SingleTop-tWCombined-dilep");
+  samplesAll_.insert("SingleTop-tWCombined-had");
+  samplesAll_.insert("SingleTop-tWCombined-other");
   samplesAll_.insert("HerwigQCDFlat");
   //  samplesAll_.insert("WJetsZ2");
   //  samplesAll_.insert("ZJetsZ2");
@@ -2048,13 +2276,36 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   sampleLabel_["TTbarJets"]="t#bar{t}";
   sampleLabel_["ttbar"]="t#bar{t}+W+t"; //for DD ttwt
   sampleLabel_["TTbarJets-semiMu"]="t#bar{t}:semi-#mu";
+  sampleLabel_["TTbarJets-semiMuGood"]="t#bar{t}:semi-#mu - good";
+  sampleLabel_["TTbarJets-semiMuFailEta"]="t#bar{t}:semi-#mu - faileta";
+  sampleLabel_["TTbarJets-semiMuFailPt"]="t#bar{t}:semi-#mu - failpt";
+  sampleLabel_["TTbarJets-semiMuFailRecoIso"]="t#bar{t}:semi-#mu - failrecoiso";
+  sampleLabel_["TTbarJets-semiMuFailOther"]="t#bar{t}:semi-#mu - failother";
   sampleLabel_["TTbarJets-semiEle"]="t#bar{t}:semi-e";
+  sampleLabel_["TTbarJets-semiEleGood"]="t#bar{t}:semi-e - good";
+  sampleLabel_["TTbarJets-semiEleFailEta"]="t#bar{t}:semi-e -faileta";
+  sampleLabel_["TTbarJets-semiEleFailPt"]="t#bar{t}:semi-e - failpt";
+  sampleLabel_["TTbarJets-semiEleFailRecoIso"]="t#bar{t}:semi-e - failrecoiso";
+  sampleLabel_["TTbarJets-semiEleFailOther"]="t#bar{t}:semi-e - failother";
   sampleLabel_["TTbarJets-semiTauHad"]="t#bar{t}:semi-#tau(#rightarrow had)";
   sampleLabel_["TTbarJets-dilep"]="t#bar{t}:ee,#mu#mu,e#mu";
   sampleLabel_["TTbarJets-had"]="t#bar{t}:fully hadronic";
   sampleLabel_["TTbarJets-other"]="t#bar{t}:other";
   sampleLabel_["SingleTop"] = "Single-Top";
   sampleLabel_["WJets"] = "W#rightarrowl#nu";
+  sampleLabel_["WJets-mu"] = "W#rightarrow#mu#nu";
+  sampleLabel_["WJets-muGood"] = "W#rightarrow#mu#nu - good";
+  sampleLabel_["WJets-muFailEta"] = "W#rightarrow#mu#nu - faileta";
+  sampleLabel_["WJets-muFailPt"] = "W#rightarrow#mu#nu - failpt";
+  sampleLabel_["WJets-muFailRecoIso"] = "W#rightarrow#mu#nu - failrecoiso";
+  sampleLabel_["WJets-muFailOther"] = "W#rightarrow#mu#nu - failother";
+  sampleLabel_["WJets-ele"] = "W#rightarrow e#nu";
+  sampleLabel_["WJets-eleGood"] = "W#rightarrow e#nu - good";
+  sampleLabel_["WJets-eleFailEta"] = "W#rightarrow e#nu - faileta";
+  sampleLabel_["WJets-eleFailPt"] = "W#rightarrow e#nu - failpt";
+  sampleLabel_["WJets-eleFailRecoIso"] = "W#rightarrow e#nu - failrecoiso";
+  sampleLabel_["WJets-eleFailOther"] = "W#rightarrow e#nu - failother";
+  sampleLabel_["WJets-tauHad"] = "W#rightarrow#tau(#rightarrow had)#nu";
   sampleLabel_["WJetsZ2"] = "W#rightarrowl#nu (Z2)";
   sampleLabel_["ZJets"] = "Z/#gamma*#rightarrowl^{+}l^{-}";
   sampleLabel_["Zinvisible"] = "Z#rightarrow#nu#nu";
@@ -2064,6 +2315,33 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   sampleLabel_["SingleTopBar-sChannel"] = "Single-TopBar (s)";
   sampleLabel_["SingleTopBar-tChannel"] = "Single-TopBar (t)";
   sampleLabel_["SingleTopBar-tWChannel"] = "Single-TopBar (tW)";
+  //sampleLabel_["SingleTop-sandtCombined"] = "Single-Top (s and t)";
+  //sampleLabel_["SingleTop-tWCombined"] = "Single-Top (tW)";
+  sampleLabel_["SingleTop-sandtCombined-muGood"] = "Single-Top (s and t)-mu-good";
+  sampleLabel_["SingleTop-sandtCombined-muFailEta"] = "Single-Top (s and t)-mu-faileta";
+  sampleLabel_["SingleTop-sandtCombined-muFailPt"] = "Single-Top (s and t)-mu-failpt";
+  sampleLabel_["SingleTop-sandtCombined-muFailRecoIso"] = "Single-Top (s and t)-mu-failrecoiso";
+  sampleLabel_["SingleTop-sandtCombined-muFailOther"] = "Single-Top (s and t)-mu-failother";
+  sampleLabel_["SingleTop-sandtCombined-eleGood"] = "Single-Top (s and t)-e-good";
+  sampleLabel_["SingleTop-sandtCombined-eleFailEta"] = "Single-Top (s and t)-e-faileta";
+  sampleLabel_["SingleTop-sandtCombined-eleFailPt"] = "Single-Top (s and t)-e-failpt";
+  sampleLabel_["SingleTop-sandtCombined-eleFailRecoIso"] = "Single-Top (s and t)-e-failrecoiso";
+  sampleLabel_["SingleTop-sandtCombined-eleFailOther"] = "Single-Top (s and t)-e-failother";
+  sampleLabel_["SingleTop-sandtCombined-tauHad"] = "Single-Top (s and t)-tauhad";
+  sampleLabel_["SingleTop-tWCombined-semiMuGood"] = "Single-Top (tW)-mu-good";
+  sampleLabel_["SingleTop-tWCombined-semiMuFailEta"] = "Single-Top (tW)-mu-faileta";
+  sampleLabel_["SingleTop-tWCombined-semiMuFailPt"] = "Single-Top (tW)-mu-failpt";
+  sampleLabel_["SingleTop-tWCombined-semiMuFailRecoIso"] = "Single-Top (tW)-mu-failrecoiso";
+  sampleLabel_["SingleTop-tWCombined-semiMuFailOther"] = "Single-Top (tW)-mu-failother";
+  sampleLabel_["SingleTop-tWCombined-semiEleGood"] = "Single-Top (tW)-e-good";
+  sampleLabel_["SingleTop-tWCombined-semiEleFailEta"] = "Single-Top (tW)-e-faileta";
+  sampleLabel_["SingleTop-tWCombined-semiEleFailPt"] = "Single-Top (tW)-e-failpt";
+  sampleLabel_["SingleTop-tWCombined-semiEleFailRecoIso"] = "Single-Top (tW)-e-failrecoiso";
+  sampleLabel_["SingleTop-tWCombined-semiEleFailOther"] = "Single-Top (tW)-e-failother";
+  sampleLabel_["SingleTop-tWCombined-semiTauHad"] = "Single-Top (tW)-tauhad";
+  sampleLabel_["SingleTop-tWCombined-dilep"] = "Single-Top (tW)-dilep";
+  sampleLabel_["SingleTop-tWCombined-had"] = "Single-Top (tW)-had";
+  sampleLabel_["SingleTop-tWCombined-other"] = "Single-Top (tW)-other";
   sampleLabel_["VV"] = "Diboson";
   sampleLabel_["HerwigQCDFlat"] = "Herwig QCD";
   sampleLabel_["TotalSM"] = "SM";
@@ -2083,13 +2361,36 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   sampleMarkerStyle_["TTbarJets"]= kFullSquare;
   sampleMarkerStyle_["ttbar"]= kFullSquare;
   sampleMarkerStyle_["TTbarJets-semiMu"]= kFullSquare;
+  sampleMarkerStyle_["TTbarJets-semiMuGood"]= kFullSquare;
+  sampleMarkerStyle_["TTbarJets-semiMuFailEta"]= kFullSquare;
+  sampleMarkerStyle_["TTbarJets-semiMuFailPt"]= kFullSquare;
+  sampleMarkerStyle_["TTbarJets-semiMuFailRecoIso"]= kFullSquare;
+  sampleMarkerStyle_["TTbarJets-semiMuFailOther"]= kFullSquare;
   sampleMarkerStyle_["TTbarJets-semiEle"]= kFullSquare;
+  sampleMarkerStyle_["TTbarJets-semiEleGood"]= kFullSquare;
+  sampleMarkerStyle_["TTbarJets-semiEleFailEta"]= kFullSquare;
+  sampleMarkerStyle_["TTbarJets-semiEleFailPt"]= kFullSquare;
+  sampleMarkerStyle_["TTbarJets-semiEleFailRecoIso"]= kFullSquare;
+  sampleMarkerStyle_["TTbarJets-semiEleFailOther"]= kFullSquare;
   sampleMarkerStyle_["TTbarJets-semiTauHad"]= kFullSquare;
   sampleMarkerStyle_["TTbarJets-dilep"]= kFullSquare;
   sampleMarkerStyle_["TTbarJets-had"]= kFullSquare;
   sampleMarkerStyle_["TTbarJets-other"]= kFullSquare;
   sampleMarkerStyle_["SingleTop"] = kOpenSquare;
   sampleMarkerStyle_["WJets"] = kMultiply;
+  sampleMarkerStyle_["WJets-mu"] = kMultiply;
+  sampleMarkerStyle_["WJets-muGood"] = kMultiply;
+  sampleMarkerStyle_["WJets-muFailEta"] = kMultiply;
+  sampleMarkerStyle_["WJets-muFailPt"] = kMultiply;
+  sampleMarkerStyle_["WJets-muFailRecoIso"] = kMultiply;
+  sampleMarkerStyle_["WJets-muFailOther"] = kMultiply;
+  sampleMarkerStyle_["WJets-ele"] = kMultiply;
+  sampleMarkerStyle_["WJets-eleGood"] = kMultiply;
+  sampleMarkerStyle_["WJets-eleFailEta"] = kMultiply;
+  sampleMarkerStyle_["WJets-eleFailPt"] = kMultiply;
+  sampleMarkerStyle_["WJets-eleFailRecoIso"] = kMultiply;
+  sampleMarkerStyle_["WJets-eleFailOther"] = kMultiply;
+  sampleMarkerStyle_["WJets-tauHad"] = kMultiply;
   sampleMarkerStyle_["WJetsZ2"] = kMultiply;
   sampleMarkerStyle_["ZJets"] = kFullTriangleUp;
   sampleMarkerStyle_["Zinvisible"] = kFullTriangleDown;
@@ -2101,6 +2402,33 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   sampleMarkerStyle_["SingleTopBar-sChannel"] = kOpenSquare;
   sampleMarkerStyle_["SingleTopBar-tChannel"] = kOpenSquare;
   sampleMarkerStyle_["SingleTopBar-tWChannel"] = kOpenSquare;
+  //sampleMarkerStyle_["SingleTop-sandtCombined"] = kOpenSquare;
+  //sampleMarkerStyle_["SingleTop-tWCombined"] = kOpenSquare;
+  sampleMarkerStyle_["SingleTop-sandtCombined-muGood"] = kOpenSquare;
+  sampleMarkerStyle_["SingleTop-sandtCombined-muFailEta"] = kOpenSquare;
+  sampleMarkerStyle_["SingleTop-sandtCombined-muFailPt"] = kOpenSquare;
+  sampleMarkerStyle_["SingleTop-sandtCombined-muFailRecoIso"] = kOpenSquare;
+  sampleMarkerStyle_["SingleTop-sandtCombined-muFailOther"] = kOpenSquare;
+  sampleMarkerStyle_["SingleTop-sandtCombined-eleGood"] = kOpenSquare;
+  sampleMarkerStyle_["SingleTop-sandtCombined-eleFailEta"] = kOpenSquare;
+  sampleMarkerStyle_["SingleTop-sandtCombined-eleFailPt"] = kOpenSquare;
+  sampleMarkerStyle_["SingleTop-sandtCombined-eleFailRecoIso"] = kOpenSquare;
+  sampleMarkerStyle_["SingleTop-sandtCombined-eleFailOther"] = kOpenSquare;
+  sampleMarkerStyle_["SingleTop-sandtCombined-tauHad"] = kOpenSquare;
+  sampleMarkerStyle_["SingleTop-tWCombined-semiMuGood"] = kOpenSquare;
+  sampleMarkerStyle_["SingleTop-tWCombined-semiMuFailEta"] = kOpenSquare;
+  sampleMarkerStyle_["SingleTop-tWCombined-semiMuFailPt"] = kOpenSquare;
+  sampleMarkerStyle_["SingleTop-tWCombined-semiMuFailRecoIso"] = kOpenSquare;
+  sampleMarkerStyle_["SingleTop-tWCombined-semiMuFailOther"] = kOpenSquare;
+  sampleMarkerStyle_["SingleTop-tWCombined-semiEleGood"] = kOpenSquare;
+  sampleMarkerStyle_["SingleTop-tWCombined-semiEleFailEta"] = kOpenSquare;
+  sampleMarkerStyle_["SingleTop-tWCombined-semiEleFailPt"] = kOpenSquare;
+  sampleMarkerStyle_["SingleTop-tWCombined-semiEleFailRecoIso"] = kOpenSquare;
+  sampleMarkerStyle_["SingleTop-tWCombined-semiEleFailOther"] = kOpenSquare;
+  sampleMarkerStyle_["SingleTop-tWCombined-semiTauHad"] = kOpenSquare;
+  sampleMarkerStyle_["SingleTop-tWCombined-dilep"] = kOpenSquare;
+  sampleMarkerStyle_["SingleTop-tWCombined-had"] = kOpenSquare;
+  sampleMarkerStyle_["SingleTop-tWCombined-other"] = kOpenSquare;
   sampleMarkerStyle_["TotalSM"] = kOpenCross; //FIXME?
   sampleMarkerStyle_["Total"] = kDot; //FIXME?
 
@@ -2130,6 +2458,33 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   sampleOwenName_["SingleTopBar-sChannel"] = "singletopbars";
   sampleOwenName_["SingleTopBar-tChannel"] = "singletopbart";
   sampleOwenName_["SingleTopBar-tWChannel"] = "singletopbartw";
+  //sampleOwenName_["SingleTop-sandtCombined"] = "singletopsandt";
+  //sampleOwenName_["SingleTop-tWCombined"] = "singletoptw";
+  sampleOwenName_["SingleTop-sandtCombined-muGood"] = "singletopsandt";
+  sampleOwenName_["SingleTop-sandtCombined-muFailEta"] = "singletopsandt";
+  sampleOwenName_["SingleTop-sandtCombined-muFailPt"] = "singletopsandt";
+  sampleOwenName_["SingleTop-sandtCombined-muFailRecoIso"] = "singletopsandt";
+  sampleOwenName_["SingleTop-sandtCombined-muFailOther"] = "singletopsandt";
+  sampleOwenName_["SingleTop-sandtCombined-eleGood"] = "singletopsandt";
+  sampleOwenName_["SingleTop-sandtCombined-eleFailEta"] = "singletopsandt";
+  sampleOwenName_["SingleTop-sandtCombined-eleFailPt"] = "singletopsandt";
+  sampleOwenName_["SingleTop-sandtCombined-eleFailRecoIso"] = "singletopsandt";
+  sampleOwenName_["SingleTop-sandtCombined-eleFailOther"] = "singletopsandt";
+  sampleOwenName_["SingleTop-sandtCombined-tauHad"] = "singletopsandt";
+  sampleOwenName_["SingleTop-tWCombined-semiMuGood"] = "singletoptw";
+  sampleOwenName_["SingleTop-tWCombined-semiMuFailEta"] = "singletoptw";
+  sampleOwenName_["SingleTop-tWCombined-semiMuFailPt"] = "singletoptw";
+  sampleOwenName_["SingleTop-tWCombined-semiMuFailRecoIso"] = "singletoptw";
+  sampleOwenName_["SingleTop-tWCombined-semiMuFailOther"] = "singletoptw";
+  sampleOwenName_["SingleTop-tWCombined-semiEleGood"] = "singletoptw";
+  sampleOwenName_["SingleTop-tWCombined-semiEleFailEta"] = "singletoptw";
+  sampleOwenName_["SingleTop-tWCombined-semiEleFailPt"] = "singletoptw";
+  sampleOwenName_["SingleTop-tWCombined-semiEleFailRecoIso"] = "singletoptw";
+  sampleOwenName_["SingleTop-tWCombined-semiEleFailOther"] = "singletoptw";
+  sampleOwenName_["SingleTop-tWCombined-semiTauHad"] = "singletoptw";
+  sampleOwenName_["SingleTop-tWCombined-dilep"] = "singletoptw";
+  sampleOwenName_["SingleTop-tWCombined-had"] = "singletoptw";
+  sampleOwenName_["SingleTop-tWCombined-other"] = "singletoptw";
   sampleOwenName_["TotalSM"] = "totalsm";
   sampleOwenName_["Total"] = "total";  
 
@@ -2144,8 +2499,14 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
       fname += thisconfig;
       fname+=".";
 
-      if(splitTTbar_ && (*isample).Contains("TTbarJets") )
+      if((splitTTbarForClosureTest_ || splitTTbar_) && (*isample).Contains("TTbarJets") )
 	fname += "TTbarJets";
+      else if((splitWJetsForClosureTest_ || splitWJets_) && (*isample).Contains("WJets") )
+	fname += "WJets";
+      else if((splitSingleTopForClosureTest_) && (*isample).Contains("SingleTop-sandtCombined"))
+	fname += "SingleTop-sandtCombined";
+      else if((splitSingleTopForClosureTest_) && (*isample).Contains("SingleTop-tWCombined"))
+	fname += "SingleTop-tWCombined";
       else
 	fname += *isample;
 
@@ -2483,18 +2844,50 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
 
     //treat ttbar in a special way 
     if(samples_[isample].Contains("TTbarJets-")){
-      if(splitTTbar_){
+      if(splitTTbarForClosureTest_){
 	//tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,"",0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
-	if(samples_[isample].Contains("TTbarJets-semiMu")){
-	  TString semiMuMode = "((W1decayType==13 && W2decayType==1) || (W1decayType==1 && W2decayType==13) || (W1decayType==1513 && W2decayType==1) || (W1decayType==1 && W2decayType==1513))";
+	if(samples_[isample].Contains("TTbarJets-semiMuGood")){
+	  TString semiMuMode = "(((W1decayType==13 && W2decayType==112) || (W1decayType==112 && W2decayType==13) || (W1decayType==1513 && W2decayType==112) || (W1decayType==112 && W2decayType==1513) || (W1decayType==13 && W2decayType==134) || (W1decayType==134 && W2decayType==13) || (W1decayType==1513 && W2decayType==134) || (W1decayType==134 && W2decayType==1513))&&(decayType==101300))";
 	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiMuMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
 	}
-	if(samples_[isample].Contains("TTbarJets-semiEle")){
-	  TString semiEleMode = "((W1decayType==11 && W2decayType==1) || (W1decayType==1 && W2decayType==11) || (W1decayType==1511 && W2decayType==1) || (W1decayType==1 && W2decayType==1511))";
+	if(samples_[isample].Contains("TTbarJets-semiMuFailEta")){
+	  TString semiMuMode = "(((W1decayType==13 && W2decayType==112) || (W1decayType==112 && W2decayType==13) || (W1decayType==1513 && W2decayType==112) || (W1decayType==112 && W2decayType==1513) || (W1decayType==13 && W2decayType==134) || (W1decayType==134 && W2decayType==13) || (W1decayType==1513 && W2decayType==134) || (W1decayType==134 && W2decayType==1513))&&(decayType==101301 || decayType==201301))";
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiMuMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	}
+	if(samples_[isample].Contains("TTbarJets-semiMuFailPt")){
+	  TString semiMuMode = "(((W1decayType==13 && W2decayType==112) || (W1decayType==112 && W2decayType==13) || (W1decayType==1513 && W2decayType==112) || (W1decayType==112 && W2decayType==1513) || (W1decayType==13 && W2decayType==134) || (W1decayType==134 && W2decayType==13) || (W1decayType==1513 && W2decayType==134) || (W1decayType==134 && W2decayType==1513))&&(decayType==101302 || decayType==201302))";
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiMuMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	}
+	if(samples_[isample].Contains("TTbarJets-semiMuFailRecoIso")){
+	  TString semiMuMode = "(((W1decayType==13 && W2decayType==112) || (W1decayType==112 && W2decayType==13) || (W1decayType==1513 && W2decayType==112) || (W1decayType==112 && W2decayType==1513) || (W1decayType==13 && W2decayType==134) || (W1decayType==134 && W2decayType==13) || (W1decayType==1513 && W2decayType==134) || (W1decayType==134 && W2decayType==1513))&&(decayType==201303))";
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiMuMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	}
+	if(samples_[isample].Contains("TTbarJets-semiMuFailOther")){
+	  TString semiMuMode = "(((W1decayType==13 && W2decayType==112) || (W1decayType==112 && W2decayType==13) || (W1decayType==1513 && W2decayType==112) || (W1decayType==112 && W2decayType==1513) || (W1decayType==13 && W2decayType==134) || (W1decayType==134 && W2decayType==13) || (W1decayType==1513 && W2decayType==134) || (W1decayType==134 && W2decayType==1513))&&(decayType==101304))";
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiMuMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	}
+	if(samples_[isample].Contains("TTbarJets-semiEleGood")){
+	  TString semiEleMode = "(((W1decayType==11 && W2decayType==112) || (W1decayType==112 && W2decayType==11) || (W1decayType==1511 && W2decayType==112) || (W1decayType==112 && W2decayType==1511) || (W1decayType==11 && W2decayType==134) || (W1decayType==134 && W2decayType==11) || (W1decayType==1511 && W2decayType==134) || (W1decayType==134 && W2decayType==1511))&&(decayType==101100))";
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiEleMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	}
+	if(samples_[isample].Contains("TTbarJets-semiEleFailEta")){
+	  TString semiEleMode = "(((W1decayType==11 && W2decayType==112) || (W1decayType==112 && W2decayType==11) || (W1decayType==1511 && W2decayType==112) || (W1decayType==112 && W2decayType==1511) || (W1decayType==11 && W2decayType==134) || (W1decayType==134 && W2decayType==11) || (W1decayType==1511 && W2decayType==134) || (W1decayType==134 && W2decayType==1511))&&(decayType==101101 || decayType==201101))";
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiEleMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	}
+	if(samples_[isample].Contains("TTbarJets-semiEleFailPt")){
+	  TString semiEleMode = "(((W1decayType==11 && W2decayType==112) || (W1decayType==112 && W2decayType==11) || (W1decayType==1511 && W2decayType==112) || (W1decayType==112 && W2decayType==1511) || (W1decayType==11 && W2decayType==134) || (W1decayType==134 && W2decayType==11) || (W1decayType==1511 && W2decayType==134) || (W1decayType==134 && W2decayType==1511))&&(decayType==101102 || decayType==201102))";
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiEleMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	}
+	if(samples_[isample].Contains("TTbarJets-semiEleFailRecoIso")){
+	  TString semiEleMode = "(((W1decayType==11 && W2decayType==112) || (W1decayType==112 && W2decayType==11) || (W1decayType==1511 && W2decayType==112) || (W1decayType==112 && W2decayType==1511) || (W1decayType==11 && W2decayType==134) || (W1decayType==134 && W2decayType==11) || (W1decayType==1511 && W2decayType==134) || (W1decayType==134 && W2decayType==1511))&&(decayType==201103))";
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiEleMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	}
+	if(samples_[isample].Contains("TTbarJets-semiEleFailOther")){
+	  TString semiEleMode = "(((W1decayType==11 && W2decayType==112) || (W1decayType==112 && W2decayType==11) || (W1decayType==1511 && W2decayType==112) || (W1decayType==112 && W2decayType==1511) || (W1decayType==11 && W2decayType==134) || (W1decayType==134 && W2decayType==11) || (W1decayType==1511 && W2decayType==134) || (W1decayType==134 && W2decayType==1511))&&(decayType==101104))";
 	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiEleMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
 	}
 	if(samples_[isample].Contains("TTbarJets-semiTauHad")){
-	  TString semiTauHadMode = "((W1decayType==15 && W2decayType==1) || (W1decayType==1 && W2decayType==15))";
+	  TString semiTauHadMode = "((W1decayType==15 && W2decayType==112) || (W1decayType==112 && W2decayType==15) || (W1decayType==15 && W2decayType==134) || (W1decayType==134 && W2decayType==15))";
 	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiTauHadMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
 	}
 	if(samples_[isample].Contains("TTbarJets-dilep")){
@@ -2502,7 +2895,34 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
 	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,dilepMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
 	}
 	if(samples_[isample].Contains("TTbarJets-had")){
-	  TString hadMode = "(W1decayType==1 && W2decayType==1)";
+	  TString hadMode = "(W1decayType==112 || W1decayType==134) && (W2decayType==112 || W2decayType==134)";
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,hadMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	}
+	if(samples_[isample].Contains("TTbarJets-other")){
+	  //includes tautau(both had), etau(had), mutau(had), 
+	  TString otherMode = "((W1decayType==15 && W2decayType==15)||(W1decayType==11 && W2decayType==15)||(W1decayType==15 && W2decayType==11)||(W1decayType==1511 && W2decayType==15)||(W1decayType==15 && W2decayType==1511)||(W1decayType==13 && W2decayType==15)||(W1decayType==15 && W2decayType==13)||(W1decayType==15 && W2decayType==1513)||(W1decayType==1513 && W2decayType==15))";
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,otherMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	}
+      }
+      else if(splitTTbar_){
+	if(samples_[isample].Contains("TTbarJets-semiMu")){
+	  TString semiMuMode = "((W1decayType==13 && W2decayType==112) || (W1decayType==112 && W2decayType==13) || (W1decayType==1513 && W2decayType==112) || (W1decayType==112 && W2decayType==1513) || (W1decayType==13 && W2decayType==134) || (W1decayType==134 && W2decayType==13) || (W1decayType==1513 && W2decayType==134) || (W1decayType==134 && W2decayType==1513))";
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiMuMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	}
+	if(samples_[isample].Contains("TTbarJets-semiEle")){
+	  TString semiEleMode = "((W1decayType==11 && W2decayType==112) || (W1decayType==112 && W2decayType==11) || (W1decayType==1511 && W2decayType==112) || (W1decayType==112 && W2decayType==1511) || (W1decayType==11 && W2decayType==134) || (W1decayType==134 && W2decayType==11) || (W1decayType==1511 && W2decayType==134) || (W1decayType==134 && W2decayType==1511))";
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiEleMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	}
+	if(samples_[isample].Contains("TTbarJets-semiTauHad")){
+	  TString semiTauHadMode = "((W1decayType==15 && W2decayType==112) || (W1decayType==112 && W2decayType==15) || (W1decayType==15 && W2decayType==134) || (W1decayType==134 && W2decayType==15))";
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiTauHadMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	}
+	if(samples_[isample].Contains("TTbarJets-dilep")){
+	  TString dilepMode = "((W1decayType==11 || W1decayType==13 || W1decayType==1511 || W1decayType==1513) && (W2decayType==11 || W2decayType==13 || W2decayType==1511 || W2decayType==1513))";
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,dilepMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	}
+	if(samples_[isample].Contains("TTbarJets-had")){
+	  TString hadMode = "((W1decayType==112 || W1decayType==134) && (W2decayType==112 || W2decayType==134))";
 	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,hadMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
 	}
 	if(samples_[isample].Contains("TTbarJets-other")){
@@ -2514,6 +2934,182 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
       }
       else tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,"",0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
     }
+    else if(samples_[isample].Contains("WJets-")){
+      if(splitWJetsForClosureTest_){
+	if(samples_[isample].Contains("WJets-muGood")){
+	  TString MuMode = "((W1decayType==13 || W1decayType==1513) && (decayType==101300))";
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,MuMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	}
+	if(samples_[isample].Contains("WJets-muFailEta")){
+	  TString MuMode = "((W1decayType==13 || W1decayType==1513) &&(decayType==101301 || decayType==201301))";
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,MuMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	}
+	if(samples_[isample].Contains("WJets-muFailPt")){
+	  TString MuMode = "((W1decayType==13 || W1decayType==1513) &&(decayType==101302 || decayType==201302))";
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,MuMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	}
+	if(samples_[isample].Contains("WJets-muFailRecoIso")){
+	  TString MuMode = "((W1decayType==13 || W1decayType==1513) &&(decayType==201303))";
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,MuMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	}
+	if(samples_[isample].Contains("WJets-muFailOther")){
+	  TString MuMode = "((W1decayType==13 || W1decayType==1513) && (decayType==101304))";
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,MuMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	}
+	if(samples_[isample].Contains("WJets-eleGood")){
+	  TString EleMode = "((W1decayType==11 || W1decayType==1511)&& (decayType==101100))";
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,EleMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	}
+	if(samples_[isample].Contains("WJets-eleFailEta")){
+	  TString EleMode = "((W1decayType==11 || W1decayType==1511)&&(decayType==101101 || decayType==201101))";
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,EleMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	}
+	if(samples_[isample].Contains("WJets-eleFailPt")){
+	  TString EleMode = "((W1decayType==11 || W1decayType==1511)&&(decayType==101102 || decayType==201102))";
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,EleMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	}
+	if(samples_[isample].Contains("WJets-eleFailRecoIso")){
+	  TString EleMode = "((W1decayType==11 || W1decayType==1511) &&(decayType==201103))";
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,EleMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	}
+	if(samples_[isample].Contains("WJets-eleFailOther")){
+	  TString EleMode = "((W1decayType==11 || W1decayType==1511) && (decayType==101104))";
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,EleMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	}
+	if(samples_[isample].Contains("WJets-tauHad")){
+	  TString TauHadMode = "(W1decayType==15)";
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,TauHadMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	}
+      }
+      else if(splitWJets_){
+	if(samples_[isample].Contains("WJets-mu")){
+	  TString MuMode = "(W1decayType==13 || W1decayType==1513)";
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,MuMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	}
+	if(samples_[isample].Contains("WJets-ele")){
+	  TString EleMode = "(W1decayType==11 || W1decayType==1511)";
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,EleMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	}
+	if(samples_[isample].Contains("WJets-tauHad")){
+	  TString TauHadMode = "(W1decayType==15)";
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,TauHadMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	}
+      }
+      else tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,"",0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+    }
+    else if(samples_[isample].Contains("SingleTop-sandtCombined")){
+      if(splitSingleTopForClosureTest_){
+	if(samples_[isample].Contains("SingleTop-sandtCombined-muGood")){
+	  TString MuMode = "((W1decayType==13 || W1decayType==1513) && (decayType==101300))";
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,MuMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	}
+	if(samples_[isample].Contains("SingleTop-sandtCombined-muFailEta")){
+	  TString MuMode = "((W1decayType==13 || W1decayType==1513) &&(decayType==101301 || decayType==201301))";
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,MuMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	}
+	if(samples_[isample].Contains("SingleTop-sandtCombined-muFailPt")){
+	  TString MuMode = "((W1decayType==13 || W1decayType==1513) &&(decayType==101302 || decayType==201302))";
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,MuMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	}
+	if(samples_[isample].Contains("SingleTop-sandtCombined-muFailRecoIso")){
+	  TString MuMode = "((W1decayType==13 || W1decayType==1513) &&(decayType==201303))";
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,MuMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	}
+	if(samples_[isample].Contains("SingleTop-sandtCombined-muFailOther")){
+	  TString MuMode = "((W1decayType==13 || W1decayType==1513) && (decayType==101304))";
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,MuMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	}
+	if(samples_[isample].Contains("SingleTop-sandtCombined-eleGood")){
+	  TString EleMode = "((W1decayType==11 || W1decayType==1511)&& (decayType==101100))";
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,EleMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	}
+	if(samples_[isample].Contains("SingleTop-sandtCombined-eleFailEta")){
+	  TString EleMode = "((W1decayType==11 || W1decayType==1511)&&(decayType==101101 || decayType==201101))";
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,EleMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	}
+	if(samples_[isample].Contains("SingleTop-sandtCombined-eleFailPt")){
+	  TString EleMode = "((W1decayType==11 || W1decayType==1511)&&(decayType==101102 || decayType==201102))";
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,EleMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	}
+	if(samples_[isample].Contains("SingleTop-sandtCombined-eleFailRecoIso")){
+	  TString EleMode = "((W1decayType==11 || W1decayType==1511) &&(decayType==201103))";
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,EleMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	}
+	if(samples_[isample].Contains("SingleTop-sandtCombined-eleFailOther")){
+	  TString EleMode = "((W1decayType==11 || W1decayType==1511) && (decayType==101104))";
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,EleMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	}
+	if(samples_[isample].Contains("SingleTop-sandtCombined-tauHad")){
+	  TString TauHadMode = "(W1decayType==15)";
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,TauHadMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	}
+      }
+      else tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,"",0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+    }
+
+    else if(samples_[isample].Contains("SingleTop-tWCombined")){
+      if(splitSingleTopForClosureTest_){
+	if(samples_[isample].Contains("SingleTop-tWCombined-semiMuGood")){
+	  TString semiMuMode = "(((W1decayType==13 && W2decayType==112) || (W1decayType==112 && W2decayType==13) || (W1decayType==1513 && W2decayType==112) || (W1decayType==112 && W2decayType==1513) || (W1decayType==13 && W2decayType==134) || (W1decayType==134 && W2decayType==13) || (W1decayType==1513 && W2decayType==134) || (W1decayType==134 && W2decayType==1513))&&(decayType==101300))";
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiMuMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	}
+	if(samples_[isample].Contains("SingleTop-tWCombined-semiMuFailEta")){
+	  TString semiMuMode = "(((W1decayType==13 && W2decayType==112) || (W1decayType==112 && W2decayType==13) || (W1decayType==1513 && W2decayType==112) || (W1decayType==112 && W2decayType==1513) || (W1decayType==13 && W2decayType==134) || (W1decayType==134 && W2decayType==13) || (W1decayType==1513 && W2decayType==134) || (W1decayType==134 && W2decayType==1513))&&(decayType==101301 || decayType==201301))";
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiMuMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	}
+	if(samples_[isample].Contains("SingleTop-tWCombined-semiMuFailPt")){
+	  TString semiMuMode = "(((W1decayType==13 && W2decayType==112) || (W1decayType==112 && W2decayType==13) || (W1decayType==1513 && W2decayType==112) || (W1decayType==112 && W2decayType==1513) || (W1decayType==13 && W2decayType==134) || (W1decayType==134 && W2decayType==13) || (W1decayType==1513 && W2decayType==134) || (W1decayType==134 && W2decayType==1513))&&(decayType==101302 || decayType==201302))";
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiMuMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	}
+	if(samples_[isample].Contains("SingleTop-tWCombined-semiMuFailRecoIso")){
+	  TString semiMuMode = "(((W1decayType==13 && W2decayType==112) || (W1decayType==112 && W2decayType==13) || (W1decayType==1513 && W2decayType==112) || (W1decayType==112 && W2decayType==1513) || (W1decayType==13 && W2decayType==134) || (W1decayType==134 && W2decayType==13) || (W1decayType==1513 && W2decayType==134) || (W1decayType==134 && W2decayType==1513))&&(decayType==201303))";
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiMuMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	}
+	if(samples_[isample].Contains("SingleTop-tWCombined-semiMuFailOther")){
+	  TString semiMuMode = "(((W1decayType==13 && W2decayType==112) || (W1decayType==112 && W2decayType==13) || (W1decayType==1513 && W2decayType==112) || (W1decayType==112 && W2decayType==1513) || (W1decayType==13 && W2decayType==134) || (W1decayType==134 && W2decayType==13) || (W1decayType==1513 && W2decayType==134) || (W1decayType==134 && W2decayType==1513))&&(decayType==101304))";
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiMuMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	}
+	if(samples_[isample].Contains("SingleTop-tWCombined-semiEleGood")){
+	  TString semiEleMode = "(((W1decayType==11 && W2decayType==112) || (W1decayType==112 && W2decayType==11) || (W1decayType==1511 && W2decayType==112) || (W1decayType==112 && W2decayType==1511) || (W1decayType==11 && W2decayType==134) || (W1decayType==134 && W2decayType==11) || (W1decayType==1511 && W2decayType==134) || (W1decayType==134 && W2decayType==1511))&&(decayType==101100))";
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiEleMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	}
+	if(samples_[isample].Contains("SingleTop-tWCombined-semiEleFailEta")){
+	  TString semiEleMode = "(((W1decayType==11 && W2decayType==112) || (W1decayType==112 && W2decayType==11) || (W1decayType==1511 && W2decayType==112) || (W1decayType==112 && W2decayType==1511) || (W1decayType==11 && W2decayType==134) || (W1decayType==134 && W2decayType==11) || (W1decayType==1511 && W2decayType==134) || (W1decayType==134 && W2decayType==1511))&&(decayType==101101 || decayType==201101))";
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiEleMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	}
+	if(samples_[isample].Contains("SingleTop-tWCombined-semiEleFailPt")){
+	  TString semiEleMode = "(((W1decayType==11 && W2decayType==112) || (W1decayType==112 && W2decayType==11) || (W1decayType==1511 && W2decayType==112) || (W1decayType==112 && W2decayType==1511) || (W1decayType==11 && W2decayType==134) || (W1decayType==134 && W2decayType==11) || (W1decayType==1511 && W2decayType==134) || (W1decayType==134 && W2decayType==1511))&&(decayType==101102 || decayType==201102))";
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiEleMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	}
+	if(samples_[isample].Contains("SingleTop-tWCombined-semiEleFailRecoIso")){
+	  TString semiEleMode = "(((W1decayType==11 && W2decayType==112) || (W1decayType==112 && W2decayType==11) || (W1decayType==1511 && W2decayType==112) || (W1decayType==112 && W2decayType==1511) || (W1decayType==11 && W2decayType==134) || (W1decayType==134 && W2decayType==11) || (W1decayType==1511 && W2decayType==134) || (W1decayType==134 && W2decayType==1511))&&(decayType==201103))";
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiEleMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	}
+	if(samples_[isample].Contains("SingleTop-tWCombined-semiEleFailOther")){
+	  TString semiEleMode = "(((W1decayType==11 && W2decayType==112) || (W1decayType==112 && W2decayType==11) || (W1decayType==1511 && W2decayType==112) || (W1decayType==112 && W2decayType==1511) || (W1decayType==11 && W2decayType==134) || (W1decayType==134 && W2decayType==11) || (W1decayType==1511 && W2decayType==134) || (W1decayType==134 && W2decayType==1511))&&(decayType==101104))";
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiEleMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	}
+	if(samples_[isample].Contains("SingleTop-tWCombined-semiTauHad")){
+	  TString semiTauHadMode = "((W1decayType==15 && W2decayType==112) || (W1decayType==112 && W2decayType==15) || (W1decayType==15 && W2decayType==134) || (W1decayType==134 && W2decayType==15))";
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiTauHadMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	}
+	if(samples_[isample].Contains("SingleTop-tWCombined-dilep")){
+	  TString dilepMode = "((W1decayType==11 || W1decayType==13 || W1decayType==1511 || W1decayType==1513) && (W2decayType==11 || W2decayType==13 || W2decayType==1511 || W2decayType==1513))";
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,dilepMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	}
+	if(samples_[isample].Contains("SingleTop-tWCombined-had")){
+	  TString hadMode = "(W1decayType==112 || W1decayType==134) && (W2decayType==112 || W2decayType==134)";
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,hadMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	}
+	if(samples_[isample].Contains("SingleTop-tWCombined-other")){
+	  //includes tautau(both had), etau(had), mutau(had), 
+	  TString otherMode = "((W1decayType==15 && W2decayType==15)||(W1decayType==11 && W2decayType==15)||(W1decayType==15 && W2decayType==11)||(W1decayType==1511 && W2decayType==15)||(W1decayType==15 && W2decayType==1511)||(W1decayType==13 && W2decayType==15)||(W1decayType==15 && W2decayType==13)||(W1decayType==15 && W2decayType==1513)||(W1decayType==1513 && W2decayType==15))";
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,otherMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	}
+      }
+      else tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,"",0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+    }
+
     else
       tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,"",0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
 
