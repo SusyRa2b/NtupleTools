@@ -204,7 +204,7 @@ void EventCalculator::checkConsistency() {
   std::string rawpfmet = "met1_s";
   //std::string type1pfmet = "met2_s";
   std::string type1pfmet = "met4_s";
-  if( theMETType_ == kPFMETTypeI &&  std::string::npos != jettype.find(type1pfmet)){
+  if( theMETType_ == kPFMETTypeI &&  std::string::npos != jettype.find(type1pfmet)){ //FIXME why a reference to jettype here?
     std::cout << "ERROR: theMETType_ is set to PFMETTypeI, while myMETsPF is also pointing to type1pfmet.  "
 	      << "This will double-correct the MET!  Aborting." << std::endl;
     assert(0);
@@ -984,6 +984,7 @@ float EventCalculator::getMET() {
 
   //JER and JES are automatically handled inside getCorrectedMET()
   if (theMETuncType_!=kMETunc0) {
+    assert( theMETType_ != kPFMETTypeI); //not implemented (or at least not checked)
     getSmearedUnclusteredMET(myMET,myMETphi);
   }
   return myMET;
@@ -1001,6 +1002,7 @@ float EventCalculator::getMETphi() {
   }
 
   if (theMETuncType_!=kMETunc0) {
+    assert( theMETType_ != kPFMETTypeI); //not implemented (or at least not checked)
     getSmearedUnclusteredMET(myMET,myMETphi);
   }
 
@@ -1384,8 +1386,8 @@ double EventCalculator::getDeltaPhiMETN_deltaT(unsigned int ijet, float otherpt,
 
   if(ijet==999999) return -99;
 
-  double METx = myMETPF->at(0).pt * cos(myMETPF->at(0).phi);
-  double METy = myMETPF->at(0).pt * sin(myMETPF->at(0).phi);
+  double METx = getMET() * cos(getMETphi());
+  double METy = getMET() * sin(getMETphi());
   
   //get sum for deltaT
   double sum = 0;
@@ -1405,8 +1407,8 @@ double EventCalculator::getDeltaPhiMETN_deltaT(unsigned int ijet, float otherpt,
 
 double EventCalculator::getDeltaPhiMETN_electron_deltaT(unsigned int ielectron, float otherpt, float othereta, bool otherid, bool dataJetRes, bool keith) {
 
-  double METx = myMETPF->at(0).pt * cos(myMETPF->at(0).phi);
-  double METy = myMETPF->at(0).pt * sin(myMETPF->at(0).phi);
+  double METx = getMET() * cos(getMETphi());
+  double METy = getMET() * sin(getMETphi());
   
   const double px = myElectronsPF->at(ielectron).pt * cos(myElectronsPF->at(ielectron).phi);
   const double py = myElectronsPF->at(ielectron).pt * sin(myElectronsPF->at(ielectron).phi);
@@ -1426,8 +1428,8 @@ double EventCalculator::getDeltaPhiMETN_electron_deltaT(unsigned int ielectron, 
 }
 double EventCalculator::getDeltaPhiMETN_muon_deltaT(unsigned int imuon, float otherpt, float othereta, bool otherid, bool dataJetRes, bool keith) {
 
-  double METx = myMETPF->at(0).pt * cos(myMETPF->at(0).phi);
-  double METy = myMETPF->at(0).pt * sin(myMETPF->at(0).phi);
+  double METx = getMET() * cos(getMETphi());
+  double METy = getMET() * sin(getMETphi());
   
   const double px = myMuonsPF->at(imuon).pt * cos(myMuonsPF->at(imuon).phi);
   const double py = myMuonsPF->at(imuon).pt * sin(myMuonsPF->at(imuon).phi);
@@ -1804,18 +1806,24 @@ double EventCalculator::getMinDeltaPhiMETMuons(unsigned int maxmuons) {
 
 void EventCalculator::getCorrectedMET(float& correctedMET, float& correctedMETPhi) {
 
-  double METx = myMETPF->at(0).pt * cos(myMETPF->at(0).phi);
-  double METy = myMETPF->at(0).pt * sin(myMETPF->at(0).phi);
+  correctedMET=myMETPFType1->at(0).pt;
+  correctedMETPhi = myMETPFType1->at(0).phi;
 
-  for(unsigned int thisJet = 0; thisJet < myJetsPF->size(); thisJet++)
-    {
-      if (isCleanJet(thisJet) ){//this only has an effect for recopfjets
-	METx += myJetsPF->at(thisJet).uncor_pt * cos(myJetsPF->at(thisJet).uncor_phi);
-	METx -= getJetPt(thisJet) * cos(myJetsPF->at(thisJet).phi);
-	METy += myJetsPF->at(thisJet).uncor_pt * sin(myJetsPF->at(thisJet).uncor_phi);
-	METy -= getJetPt(thisJet) * sin(myJetsPF->at(thisJet).phi);
+  if (theJESType_==kJES0 && theJERType_==kJER0) return;
+
+  double METx = correctedMET * cos(correctedMETPhi);
+  double METy = correctedMET * sin(correctedMETPhi);
+
+  for(unsigned int thisJet = 0; thisJet < myJetsPF->size(); thisJet++)   {
+    if (isCleanJet(thisJet) ){//this only has an effect for recopfjets
+      if ( myJetsPF->at(thisJet).pt >10) {
+	METx += myJetsPF->at(thisJet).pt * cos(myJetsPF->at(thisJet).phi);
+	METx -= getJetPt(thisJet,false) * cos(myJetsPF->at(thisJet).phi);
+	METy += myJetsPF->at(thisJet).pt * sin(myJetsPF->at(thisJet).phi);
+	METy -= getJetPt(thisJet,false) * sin(myJetsPF->at(thisJet).phi);
       }
     }
+  }
   correctedMET = sqrt(METx*METx + METy*METy);
   correctedMETPhi = atan2(METy,METx);
 }
@@ -2014,12 +2022,12 @@ unsigned int EventCalculator::nTrueBJets() {
 void EventCalculator::getSmearedUnclusteredMET(float & myMET, float & myMETphi) {
   assert(theJetType_ == kPF2PAT);
 
-  //in both cases start with uncorrected MET
-  if (theMETType_== kPFMET || theMETType_==kPFMETTypeI) {
+  //start with uncorrected MET
+  if (theMETType_== kPFMET ) {
     myMET = myMETPF->at(0).pt;
     myMETphi = myMETPF->at(0).phi;
   }
-  else {assert(0);}
+  else {assert(0);} //this code isn't set up to handle corrected MET
 
   float myMETx = myMET * cos(myMETphi);
   float myMETy = myMET * sin(myMETphi);
@@ -2064,8 +2072,6 @@ void EventCalculator::getSmearedUnclusteredMET(float & myMET, float & myMETphi) 
   myMETy *= factor;
 
   //now repeat everything but change all += to -=
-
-  //note that this time we use corrected jets in order to get corrected MET
 
   //jets
   for (unsigned int i=0; i<myJetsPF->size(); i++) {
@@ -3901,7 +3907,6 @@ double EventCalculator::getCrossSection(){
   if (sampleName_.Contains("T2bb")) return 1;
   if (sampleName_.Contains("T2tt")) return 1;
 
-  std::cout<<"Hello, Ben."<<std::endl;
   std::cout<<"Cannot find cross section for this sample!"<<std::endl;
   assert(0); 
   return -1;
@@ -3979,6 +3984,13 @@ TString EventCalculator::getCutDescriptionString(){
   TString cut = "";
   cut += theBTaggerNames_[theBTaggerType_];
   cut += "_";
+
+  if (theMETType_ ==kPFMET) {
+  }
+  else if (theMETType_ == kPFMETTypeI) {
+    cut += "PFMETTypeI_";
+  }
+  else assert(0);
 
   cut += theJetNames_[theJetType_];
   cut += "_";
@@ -4496,9 +4508,10 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   int decayType = -1;;
 
   ULong64_t lumiSection, eventNumber, runNumber;
-  float METsig;
+  //  float METsig;
   float ST, HT, MHT, MET, METphi, minDeltaPhi, minDeltaPhiAll, minDeltaPhiAll30,minDeltaPhi30_eta5_noIdAll;
-  float correctedMET, correctedMETphi,caloMET;
+  //  float correctedMET, correctedMETphi
+  float caloMET;
   float METPFType1,METPFType1phi;
   float maxDeltaPhi, maxDeltaPhiAll, maxDeltaPhiAll30, maxDeltaPhi30_eta5_noIdAll;
   float deltaPhi1, deltaPhi2, deltaPhi3;
@@ -4895,12 +4908,12 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("HT",&HT,"HT/F");
   reducedTree.Branch("ST",&ST,"ST/F"); //includes HT + leptons
   reducedTree.Branch("MET",&MET,"MET/F");
-  reducedTree.Branch("METsig",&METsig,"METsig/F");
+  //  reducedTree.Branch("METsig",&METsig,"METsig/F");
   reducedTree.Branch("METphi",&METphi,"METphi/F");
   reducedTree.Branch("MHT",&MHT,"MHT/F");
 
-  reducedTree.Branch("correctedMET",&correctedMET,"correctedMET/F");
-  reducedTree.Branch("correctedMETphi",&correctedMETphi,"correctedMETphi/F");
+  //  reducedTree.Branch("correctedMET",&correctedMET,"correctedMET/F");
+  //  reducedTree.Branch("correctedMETphi",&correctedMETphi,"correctedMETphi/F");
 
   reducedTree.Branch("caloMET",&caloMET,"caloMET/F");
   reducedTree.Branch("METPFType1",&METPFType1, "METPFType1/F");
@@ -5383,11 +5396,11 @@ Also the pdfWeightSum* histograms that are used for LM9.
       nMuons15 = countMu(15);
       nTaus = countTau();
       MET=getMET();
-      METsig = myMETPF->at(0).mEtSig; //FIXME hard coded for PF
+      //      METsig = myMETPF->at(0).mEtSig; //FIXME hard coded for PF
       MHT=getMHT();
       METphi = getMETphi();
 
-      getCorrectedMET(correctedMET, correctedMETphi);
+      //      getCorrectedMET(correctedMET, correctedMETphi);
 
       caloMET = myMETcalo->at(0).pt;
       METPFType1 = myMETPFType1->at(0).pt;
