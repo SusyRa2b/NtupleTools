@@ -5135,39 +5135,54 @@ void AN2011_r(TString btagselection="ge1b", const int mode=1) { //for paper, dat
 }
 
 
-void AN2011_r_SLreq() { //for paper, MC only plots all the way to high MET
-  //used for PAS
-  loadSamples();
+void AN2011_r_SLreq(int mode = 3) { //for paper, MC only plots all the way to high MET
   
-  // == draw r(MET)
+  loadSamples();
   clearSamples();
   addSample("PythiaPUQCD");
   setColorScheme("nostack");
   
-  usePUweight_=true;
-
-  drawLegend(false);
-  doRatioPlot(false);
-  doData(false);
-  setStackMode(false);
   doOverflowAddition(true);
+  setQuiet(false);
+  doData(false);
+  drawMCErrors_=true;
+  doRatioPlot(false);
   
-  setPlotMaximum(1); setPlotMinimum(0);
- 
+  TString modestring="";
+  if (mode==1) {
+    usePUweight_=false;
+    useHTeff_=false;
+    useMHTeff_=false;
+    thebnnMHTeffMode_ = kOff;
+    btagSFweight_="1";
+    currentConfig_=configDescriptions_.getDefault(); //completely raw MC
+  }
+  else if (mode==2 || mode==3) {
+    usePUweight_=true;
+    useHTeff_=false; //SPECIAL!!
+    useMHTeff_=false;//SPECIAL!!
+    thebnnMHTeffMode_ = kOff;
+    currentConfig_=configDescriptions_.getCorrected(); //JER bias
+    if (mode==2) modestring="-JER-PU-HLT";
+    else if(mode==3) modestring="-JER-PU-HLT-bSF";
+  }
+  else assert(0);
+
+
+
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////
+  
   const int nvarbins=15;
-  // const float varbins[]={0,15,30,45,80,110,140,170,200,230,260,290,320,350}; //PAS binning //13 bins
-   //const float varbins[]={0,15,30,45,60,90,120,150,180,210,240,270,300,400,500,600}; //15 bins
-  //  const float varbins[]={0,20,40,60,80,100,120,140,160,180,200,250,300,350,400,450,500,600}; //17 bins
   const float varbins[]={0,20,40,60,80,100,120,140,160,180,200,250,300,400,500,600}; //15 bins
-  //  const float varbins[]={0,10,20,30,40,50,60,70,100,130,160,200,240,280,320,360,400,450,500,550,600}; //for pub //20 bins
-
-  //  const float varbins[]={0,20,40,60,80,100,120,140,160,180,200,225,250,275,300,350,450,550,650}; //18 bins
-
-  selection_ ="cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && nbjets==0&&weight<1 &&passCleaning==1";
-  //   selection_ ="cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 &&weight<1000 &&passCleaning==1";
-  //  btagSFweight_="prob0";
-  drawR("minDeltaPhiN",4, "MET", nvarbins, varbins,"eq0b");
   
+  //selection_ ="cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && nbjets==0&&weight<1 &&passCleaning==1";
+  selection_ ="cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 &&weight<.00002 &&passCleaning==1";
+  btagSFweight_="prob0";
+  cout << "check1" << endl;
+  drawR("minDeltaPhiN",4, "MET", nvarbins, varbins,"eq0b");
+  return;
+
   selection_ ="cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && nbjets>=1&&weight<1 &&passCleaning==1";
   drawR("minDeltaPhiN",4, "MET", nvarbins, varbins,"ge1b");
   
@@ -7647,7 +7662,7 @@ void studyMDPNscaling(const int mode = 3, TString htcutvalue = "400", TString ht
   else assert(0);
 
 
-  /*
+
   //////////////////////////////////////////////////////////////////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////////////////////////////////////////
   setPlotMaximum(1); setPlotMinimum(0);
@@ -7655,13 +7670,14 @@ void studyMDPNscaling(const int mode = 3, TString htcutvalue = "400", TString ht
   const int nvarbins=15;
   const float varbins[]={0,20,40,60,80,100,120,140,160,180,200,250,300,400,500,600}; //15 bins
   
-  TCut HTcut = "HT>=1000";
-  selection_ =TCut("cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && weight<1 &&passCleaning==1") && HTcut;
+  TCut HTcut1 = "HT>=1000";
+  selection_ =TCut("cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && weight<1 &&passCleaning==1") && HTcut1;
   btagSFweight_="prob0";
 
   drawR("minDeltaPhiN_otherPt10",4, "MET", nvarbins, varbins,"eq0b");
   TH1D* h10 = (TH1D*)hinteractive->Clone("h10");
-  
+
+  /*
   drawR("minDeltaPhiN_otherPt20",4, "MET", nvarbins, varbins,"eq0b");
   TH1D* h20 = (TH1D*)hinteractive->Clone("h20");
   

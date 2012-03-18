@@ -4628,6 +4628,7 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   float worstMisA_badECAL_METphi52_n10_s12, worstMisF_badECAL_METphi52_n10_s12;
   bool passBadECAL_METphi53_n5_s12;
   bool passBadECAL_METphi53_crack;
+  float worstMisA_badECAL_METphi53_crack, worstMisF_badECAL_METphi53_crack;
 
   float prob0,probge1,prob1,probge2,probge3,prob2;
   
@@ -5034,6 +5035,8 @@ Also the pdfWeightSum* histograms that are used for LM9.
 
   reducedTree.Branch("passBadECAL_METphi53_n5_s12", &passBadECAL_METphi53_n5_s12, "passBadECAL_METphi53_n5_s12/O");
   reducedTree.Branch("passBadECAL_METphi53_crack", &passBadECAL_METphi53_crack, "passBadECAL_METphi53_crack/O");
+  reducedTree.Branch("worstMisA_badECAL_METphi53_crack",&worstMisA_badECAL_METphi53_crack, "worstMisA_badECAL_METphi53_crack/F");
+  reducedTree.Branch("worstMisF_badECAL_METphi53_crack",&worstMisF_badECAL_METphi53_crack, "worstMisF_badECAL_METphi53_crack/F");
 
   reducedTree.Branch("jetpt1",&jetpt1,"jetpt1/F");
   reducedTree.Branch("jetgenpt1",&jetgenpt1,"jetgenpt1/F");
@@ -5532,6 +5535,8 @@ Also the pdfWeightSum* histograms that are used for LM9.
 
 	passBadECAL_METphi53_n5_s12 = passBadECALFilter("METphi",0.5,"deadCell",0.3,5,12);
 	passBadECAL_METphi53_crack = passBadECALFilter("METphi",0.5,"crackEBEE",0.3,0,0);
+	worstMisA_badECAL_METphi53_crack = passBadECALFilter_worstMis("METphi",0.5,"crackEBEE",0.3,0,0,"abs");
+	worstMisF_badECAL_METphi53_crack = passBadECALFilter_worstMis("METphi",0.5,"crackEBEE",0.3,0,0,"frac");
       }
       else {
 	passBadECAL_METphi53_n10_s12 = 1;
@@ -5548,6 +5553,8 @@ Also the pdfWeightSum* histograms that are used for LM9.
 
 	passBadECAL_METphi53_n5_s12 = 1;
 	passBadECAL_METphi53_crack = 1;
+	worstMisA_badECAL_METphi53_crack = -1;
+	worstMisF_badECAL_METphi53_crack = -1;
       }
 
       minTransverseMETSignificance = getMinTransverseMETSignificance(3);

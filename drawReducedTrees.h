@@ -3403,7 +3403,7 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
   cstring2 += " < ";
   cstring1 += cutVal;
   cstring2 += cutVal;
-  
+
   loadSamples();
   
   gROOT->SetStyle("CMS");
@@ -3415,7 +3415,7 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
 
   resetLegendPositionR();
   renewLegend();
-  
+
   if(dodata_){
     if (hdata != 0) delete hdata;
     
@@ -3469,7 +3469,7 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
     thecanvas->SaveAs("mindpPassOverFail-"+savename+".png");
     return;
   }
-  
+
 
   TH1D * totalsm_pass = (varbins==0) ? new TH1D("totalsm_pass","",nbins,low,high) : new TH1D("totalsm_pass","",nbins,varbins);
   TH1D * totalsm_fail = (varbins==0) ? new TH1D("totalsm_fail","",nbins,low,high) : new TH1D("totalsm_fail","",nbins,varbins);
@@ -3510,6 +3510,7 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
     histos_[hnameR] = (varbins==0) ? new TH1D(hnameR,"",nbins,low,high) : new TH1D(hnameR,"",nbins,varbins);
     histos_[hnameR]->Sumw2();
 
+    
     //Fill histos
     if (useFlavorHistoryWeights_) assert(0); // this needs to be implemented
     tree->Project(hnameP,var,getCutString(getSampleType(samples_[isample],"point"),"",selection_,cstring1).Data());
