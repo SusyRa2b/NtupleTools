@@ -4023,6 +4023,10 @@ void AN2011_prescale( TString btagselection="ge1b",const int mode=1 ) {
       btagcut = "1";
       btagSFweight_="(1-prob1-prob0-probge3)";
     }
+    else  if ( btagselection=="ge3b" ) {
+      btagcut = "1";
+      btagSFweight_="probge3";
+    }
     else {
       assert(0);
     }
@@ -4774,7 +4778,7 @@ other.
 	myC->Print("METshape_logAndRatio_"+sample+"_SLandStandard_"+btagselection+"_"+HTselection+".pdf");	
       }
       else{
-	myC->Print("METshape_Fall11_"+component+"_logAndRatio_"+sample+"_SLandStandard_"+btagselection+"_"+HTselection+".png");	
+	myC->Print("METshape_"+component+"_logAndRatio_"+sample+"_SLandStandard_"+btagselection+"_"+HTselection+".pdf");	
       }
     }
   }
@@ -5711,12 +5715,14 @@ void AN2011( TString btagselection="ge1b",const int mode=1, bool logy=false, boo
   selection_ =TCut("cutHT==1&&cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=200 && minDeltaPhiN >= 4 &&passCleaning==1")&&btagcut;
   var="HT"; xtitle="H_{T} (GeV)";
   nbins = 20; low=400; high=1100;
+  if (btagselection=="ge3b") nbins=10;
   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_HT_"+btagselection+modestring,0,"GeV");
   
   //MET
   selection_ =TCut("HT>=400 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4 &&passCleaning==1")&&btagcut;
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
   nbins = 30; low=200; high=500;
+  if (btagselection=="ge3b") nbins=10;
   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_"+btagselection+modestring,0,"GeV");
 
     
@@ -5842,6 +5848,7 @@ void AN2011( TString btagselection="ge1b",const int mode=1, bool logy=false, boo
   selection_ =TCut("MET>=200 &&cutHT==1 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && minDeltaPhiN >= 4 && MT_Wlep>=0 && MT_Wlep<100 &&passCleaning==1")&&btagcut;
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
   nbins = 15; low=200; high=500;
+  if (btagselection=="ge3b") nbins=5;
   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_SL_"+btagselection+modestring,0,"GeV");
   
   // == HT for the combined sample
@@ -5931,9 +5938,10 @@ void AN2011( TString btagselection="ge1b",const int mode=1, bool logy=false, boo
   selection_ =TCut("HT>=400 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && nTaus==1 && minDeltaPhiN >= 4 &&passCleaning==1")&&btagcut;
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
   //nbins = 14; low=150; high=500;
-  const int nvarbins=6;
+  const int nvarbins=4;
   //const float varbins[]={150, 175, 200, 225, 250, 275, 300, 350, 500}; //AN and PAS 
   const float varbins[]={200, 225, 250, 275, 300, 350, 500}; //AN and PAS 
+  //const float varbins[]={200, 250, 300, 350, 500}; //AN and PAS -for 2BL
   //drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_ST_"+btagselection+modestring,0,"GeV");
   drawPlots(var,nvarbins,varbins,xtitle,"Events", "SBandSIG_MET_ST_"+btagselection+modestring);
   */
@@ -8177,6 +8185,7 @@ void drawTrigEff() {
   //output file 
   //TString histfilename = "mhteff_dec4.root";
   TString histfilename = "mhteff_dec8_eq0b.root";
+  //TString histfilename = "mhteff_dec8_eq0b_typeIMET.root";
   //TString histfilename = "mhteff_dec8_eq0b_HT500.root";
   //TString histfilename = "mhteff_dec8_eq0b_HT600.root";
   //TString histfilename = "mhteff_dec8_ge1b.root";
@@ -8186,7 +8195,7 @@ void drawTrigEff() {
   //TCut HTcut = "HT>=400";
   //TCut HTcut = "HT>=400";  TCut njetCut = "njets >=3";    TCut dpcut = "minDeltaPhiN>=4";
   //TCut HTcut = "HT>=400";  TCut njetCut = "nbjetsCSVM>=1";    TCut dpcut = "";
-  TCut HTcut = "HT>=600";  TCut njetCut = "nbjetsCSVM==0";    TCut dpcut = "";
+  TCut HTcut = "HT>=400";  TCut njetCut = "nbjetsCSVM==0";    TCut dpcut = "";
   //TCut dpcut = "";
   
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
