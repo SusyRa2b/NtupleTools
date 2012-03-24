@@ -5938,7 +5938,7 @@ void AN2011( TString btagselection="ge1b",const int mode=1, bool logy=false, boo
   selection_ =TCut("HT>=400 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && nTaus==1 && minDeltaPhiN >= 4 &&passCleaning==1")&&btagcut;
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
   //nbins = 14; low=150; high=500;
-  const int nvarbins=4;
+  const int nvarbins=6;
   //const float varbins[]={150, 175, 200, 225, 250, 275, 300, 350, 500}; //AN and PAS 
   const float varbins[]={200, 225, 250, 275, 300, 350, 500}; //AN and PAS 
   //const float varbins[]={200, 250, 300, 350, 500}; //AN and PAS -for 2BL
