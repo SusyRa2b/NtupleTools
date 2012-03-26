@@ -37,23 +37,51 @@ TH2D* scanSMSngen=0;
 //default selection
 TString selection_ ="cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1";
 
-// for now do this C-style, instead of making a class
-//nominal numbers used for frozen AN etc. SB corresponds to 200-250 GeV
-// float eff_SB_MHT_             = 0.841;
-// float eff_SB_MHT_err_[2]      = {0.059, 0.090};
-// float eff_SB_ldp_MHT_         = 0.936;   
-// float eff_SB_ldp_MHT_err_[2]  = {0.034, 0.118};
-// float eff_SIG_MHT_            = 0.982; 
-// float eff_SIG_MHT_err_[2]     = {0.012, 0.036};
-// float eff_SIG_ldp_MHT_        = eff_SIG_MHT_; 
-// float eff_SIG_ldp_MHT_err_[2] = {eff_SIG_MHT_err_[0], eff_SIG_MHT_err_[1]}; //due to low stats in SIG-LDP, use the SIG numbers for now.
-// float eff_SIG_SL_MHT_         = 0.999; 
-// float eff_SIG_SL_MHT_err_[2]  = {0.001, 0.001};
-// float eff_SB_1m_MHT_          = 0.996; 
-// float eff_SB_1m_MHT_err_[2]   = {0.002, 0.003};
-// float eff_SB_1e_MHT_          = 0.996; 
-// float eff_SB_1e_MHT_err_[2]   = {0.002, 0.003};
+//intentionally bogus values
+float eff_SB_MHT_             = 0.1;
+float eff_SB_MHT_err_[2]      = {0.1, 0.1};
+float eff_SB_ldp_MHT_         = 0.1;   
+float eff_SB_ldp_MHT_err_[2]  = {0.1, 0.1};
+float eff_SIG_MHT_            = 0.1; 
+float eff_SIG_MHT_err_[2]     = {0.1, 0.1};
+float eff_SIG_ldp_MHT_        = 0.1;
+float eff_SIG_ldp_MHT_err_[2] = {0.1, 0.1};
+float eff_SIG_SL_MHT_         = 0.1; 
+float eff_SIG_SL_MHT_err_[2]  = {0.1, 0.1};
+float eff_SB_1m_MHT_          = 0.1;
+float eff_SB_1m_MHT_err_[2]   = {0.1, 0.1};
+float eff_SB_1e_MHT_          = 0.1; 
+float eff_SB_1e_MHT_err_[2]   = {0.1, 0.1};
 
+void setTrigEff(const TString which) {
+
+
+  if (which=="WideSB") {
+    cout<<"Using efficiencies for 150-250 GeV SB"<<endl;
+    //150-250 GeV SB (almost FINAL numbers from Don, still averaged using non-final lumi weighting) 
+    eff_SB_MHT_             = 0.852;
+    eff_SB_MHT_err_[0]      = 0.033;
+    eff_SB_MHT_err_[1]      = 0.044;
+    eff_SB_ldp_MHT_         = 0.912;   
+    eff_SB_ldp_MHT_err_[0]  = 0.023;
+    eff_SB_ldp_MHT_err_[1]  = 0.056;
+    eff_SIG_MHT_            = 0.982; 
+    eff_SIG_MHT_err_[0]     = 0.012;
+    eff_SIG_MHT_err_[1]     = 0.036;
+    eff_SIG_ldp_MHT_        = eff_SIG_MHT_; 
+    eff_SIG_ldp_MHT_err_[0] = eff_SIG_MHT_err_[0]; //due to low stats in SIG-LDP, use the SIG numbers
+    eff_SIG_ldp_MHT_err_[1] = eff_SIG_MHT_err_[1];
+    eff_SIG_SL_MHT_         = 0.999; 
+    eff_SIG_SL_MHT_err_[0]  = 0.001;
+    eff_SIG_SL_MHT_err_[1]  = 0.001;
+    eff_SB_1m_MHT_          = 0.990;
+    eff_SB_1m_MHT_err_[0]   = 0.002;
+    eff_SB_1m_MHT_err_[1]   = 0.002;
+    eff_SB_1e_MHT_          = 0.955; 
+    eff_SB_1e_MHT_err_[0]   = 0.004;
+    eff_SB_1e_MHT_err_[1]   = 0.004;
+  }
+  //  else if (which=="LowSB") {
 //150-200 GeV SB
 // CAREFUL -- if we really move to this region this we have to split e and mu in the SL SB
 // float eff_SB_MHT_             = 0.832;
@@ -68,22 +96,35 @@ TString selection_ ="cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cut
 // float eff_SIG_SL_MHT_err_[2]  = {0.001, 0.001};
 // float eff_SB_SL_MHT_          = 0.996;  //not really true but need new numbers
 // float eff_SB_SL_MHT_err_[2]   = {0.002, 0.003};
+//  }
+  else if (which=="NominalSB") {
+     cout<<"Using efficiencies for 200-250 GeV SB"<<endl;
+   //nominal numbers used for frozen AN etc. SB corresponds to 200-250 GeV
+    eff_SB_MHT_             = 0.841;
+    eff_SB_MHT_err_[0]      = 0.059;
+    eff_SB_MHT_err_[1]      = 0.090;
+    eff_SB_ldp_MHT_         = 0.936;   
+    eff_SB_ldp_MHT_err_[0]  = 0.034;
+    eff_SB_ldp_MHT_err_[1]  = 0.118;
+    eff_SIG_MHT_            = 0.982; 
+    eff_SIG_MHT_err_[0]     = 0.012;
+    eff_SIG_MHT_err_[1]     = 0.036;
+    eff_SIG_ldp_MHT_        = eff_SIG_MHT_; 
+    eff_SIG_ldp_MHT_err_[0] = eff_SIG_MHT_err_[0];
+    eff_SIG_ldp_MHT_err_[1] = eff_SIG_MHT_err_[1]; //due to low stats in SIG-LDP, use the SIG numbers for now.
+    eff_SIG_SL_MHT_         = 0.999; 
+    eff_SIG_SL_MHT_err_[0]  = 0.001;
+    eff_SIG_SL_MHT_err_[1]  = 0.001;
+    eff_SB_1m_MHT_          = 0.996; 
+    eff_SB_1m_MHT_err_[0]   = 0.002;    
+    eff_SB_1m_MHT_err_[1]   = 0.003;
+    eff_SB_1e_MHT_          = 0.996; 
+    eff_SB_1e_MHT_err_[0]   = 0.002;
+    eff_SB_1e_MHT_err_[1]   = 0.003;
+  }
+  else assert(0);
 
-//150-250 GeV SB (almost FINAL numbers from Don, still averaged using non-final lumi weighting) 
-float eff_SB_MHT_             = 0.852;
-float eff_SB_MHT_err_[2]      = {0.033, 0.044};
-float eff_SB_ldp_MHT_         = 0.912;   
-float eff_SB_ldp_MHT_err_[2]  = {0.023, 0.056};
-float eff_SIG_MHT_            = 0.982; 
-float eff_SIG_MHT_err_[2]     = {0.012, 0.036};
-float eff_SIG_ldp_MHT_        = eff_SIG_MHT_; 
-float eff_SIG_ldp_MHT_err_[2] = {eff_SIG_MHT_err_[0], eff_SIG_MHT_err_[1]}; //due to low stats in SIG-LDP, use the SIG numbers for now.
-float eff_SIG_SL_MHT_         = 0.999; 
-float eff_SIG_SL_MHT_err_[2]  = {0.001, 0.001};
-float eff_SB_1m_MHT_          = 0.990;
-float eff_SB_1m_MHT_err_[2]   = {0.002, 0.002};
-float eff_SB_1e_MHT_          = 0.955; 
-float eff_SB_1e_MHT_err_[2]   = {0.004, 0.004};
+}
 
 void printEff() {
 
@@ -307,8 +348,10 @@ void setSearchRegions( TString  which="") {
   if (which=="") {cout<<"Setting default 'Moriond 2012' search regions"<<endl; which="Moriond";}
   else    cout<<"Setting search regions to set: "<<which<<endl;
 
+
   //27 Jan 2012 -- (preliminary) regions for testing shapes of background....
   if (which=="METbins3B") {
+    setTrigEff("NominalSB"); //set trigger efficiency
     sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=200&&MET<250","METBin1",false));
     searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=250 &&MET<300","METBin1"));
     
@@ -319,6 +362,7 @@ void setSearchRegions( TString  which="") {
     searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=350","METBin3"));
   }
   else if (which=="METfinebins") {
+    setTrigEff("NominalSB"); //set trigger efficiency
     sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=200&&MET<250","METFineBin1",false));
     searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=250 &&MET<300","METFineBin1"));
     
@@ -338,6 +382,7 @@ void setSearchRegions( TString  which="") {
     searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=500","METFineBin6"));
   }
   else if (which=="METfinebins2BL") {
+    setTrigEff("NominalSB"); //set trigger efficiency
     sbRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=200&&MET<250","METFineBin1",false));
     searchRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=250 &&MET<300","METFineBin1"));
     
@@ -357,6 +402,7 @@ void setSearchRegions( TString  which="") {
     searchRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=500","METFineBin6"));
   }
   else if (which=="METfinebins1BL") {
+    setTrigEff("NominalSB"); //set trigger efficiency
     sbRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=200&&MET<250","METFineBin1",false));
     searchRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=250 &&MET<300","METFineBin1"));
     
@@ -376,6 +422,7 @@ void setSearchRegions( TString  which="") {
     searchRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=500","METFineBin6"));
   }
   else if (which=="METfinebins2BT") {
+    setTrigEff("NominalSB"); //set trigger efficiency
     
     sbRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=200&&MET<250","METFine2BTBin1",false));
     searchRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=300 &&MET<350","METFine2BTBin1"));
@@ -395,6 +442,7 @@ void setSearchRegions( TString  which="") {
 //These are the nominal search regions for the "Moriond 2012" analysis
   else if (which=="Moriond") {
   //oct25
+    setTrigEff("NominalSB"); //set trigger efficiency
     
     sbRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=200&&MET<250","Loose",false));
     searchRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=250","Loose")); //1BL
@@ -412,6 +460,7 @@ void setSearchRegions( TString  which="") {
     searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=250","Loose")); //3B
   }
   else if (which=="MoriondLowSB") {
+    setTrigEff("LowSB"); //set trigger efficiency
     //move SB down to 150-200
     sbRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=150&&MET<200","LooseLowSB",false));
     searchRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=250","LooseLowSB")); //1BL
@@ -429,6 +478,7 @@ void setSearchRegions( TString  which="") {
     searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=250","LooseLowSB")); //3B
   }
   else if (which=="MoriondWideSB") {
+    setTrigEff("WideSB"); //set trigger efficiency
     //SB is 150-250
     sbRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=150&&MET<250","LooseWideSB",false));
     searchRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=250","LooseWideSB")); //1BL
@@ -448,6 +498,7 @@ void setSearchRegions( TString  which="") {
   //important note -- i am writing the signal systematics code to _assume_  that the SB region is shared for the shape analysis.
   //so don't try to combine the different sets of HT cuts into one set of regions
   else if (which=="bShapeLoose") {
+    setTrigEff("NominalSB"); //set trigger efficiency
     //Tentative search regions for the b-shape analysis
     //Loose exclusive regions
     sbRegions_.push_back( SearchRegion( "eq1b","HT>=400","MET>=200&&MET<250","Loose",false));
@@ -460,6 +511,7 @@ void setSearchRegions( TString  which="") {
     searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=250","Loose")); //3B
   }
   else if (which=="bShapeTightHT") {
+    setTrigEff("NominalSB"); //set trigger efficiency
     //2BT exclusive regions
     sbRegions_.push_back( SearchRegion( "eq1b","HT>=600","MET>=200&&MET<250","TightHT",false));
     searchRegions_.push_back( SearchRegion( "eq1b","HT>=600","MET>=300","TightHT")); //2BT
@@ -471,6 +523,7 @@ void setSearchRegions( TString  which="") {
     searchRegions_.push_back( SearchRegion( "ge3b","HT>=600","MET>=300","TightHT")); //2BT
   }
   else if (which=="bShapeTightMET") {
+    setTrigEff("NominalSB"); //set trigger efficiency
     //1BT exclusive regions
     sbRegions_.push_back( SearchRegion( "eq1b","HT>=500","MET>=200&&MET<250","TightMET",false));
     searchRegions_.push_back( SearchRegion( "eq1b","HT>=500","MET>=500","TightMET")); //1BT
@@ -482,6 +535,7 @@ void setSearchRegions( TString  which="") {
     searchRegions_.push_back( SearchRegion( "ge3b","HT>=500","MET>=500","TightMET")); //1BT
   }
   else if (which=="Summer2011") {
+    setTrigEff("LowSB"); //set trigger efficiency
     //2011 Summer result
     sbRegions_.push_back( SearchRegion( "ge1b","HT>=350","MET>=150&&MET<200","Loose",false)); //loose SB
     searchRegions_.push_back( SearchRegion( "ge1b","HT>=350","MET>=200","Loose")); //loose Sig

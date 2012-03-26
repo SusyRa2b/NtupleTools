@@ -101,8 +101,8 @@ TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35p/";//uncorrected MET
 
 //double lumiScale_ = 1143; //official summer conf lumi
 //double lumiScale_ = 3464.581;//oct25
-//double lumiScale_ = 4683.719;//nov4
-double lumiScale_ = 4982.91;//final pixel-based 2011 lumi
+double lumiScale_ = 4683.719;//nov4
+  //double lumiScale_ = 4982.91;//final pixel-based 2011 lumi
 
 #include "drawReducedTrees.h"
 
@@ -1996,21 +1996,21 @@ modifications for SHAPE analysis: (bShape = true)
     else if (qcdsubregion.owenId == "LooseLowSB" && qcdsubregion.btagSelection=="ge3b") {
       doMean=false;   zv[0] = 2.7; ze[0]=3.9;    zsbsyst = 0.0;
     }
-    //for 150-250 GeV SB -- take 150-200 and add the 200-250 numbers. PRELIMINARY...probably the errors are wrong
+    //for 150-250 GeV SB (from Ale in msg to RA2b list of 22 March)
     else if (qcdsubregion.owenId == "LooseWideSB" && qcdsubregion.btagSelection=="ge1b") {
-      doMean=false;   zv[0] = 116.7 + 82; ze[0]=jmt::addInQuad(26.9,20);    zsbsyst = 0.0;
+      doMean=false;   zv[0] = 200.2; ze[0]=42.4;    zsbsyst = 0.0;
     }
     else if (qcdsubregion.owenId == "TightWideSB" && qcdsubregion.btagSelection=="ge1b") {
-      doMean=false;   zv[0] = 58.9 + 44; ze[0]=jmt::addInQuad(15.8,13);    zsbsyst = 0.0;
+      doMean=false;   zv[0] = 105.0; ze[0]=24.7;    zsbsyst = 0.0;
     }
     else if (qcdsubregion.owenId == "LooseWideSB" && qcdsubregion.btagSelection=="ge2b") {
-      doMean=false;   zv[0] = 19.5 + 14; ze[0]=jmt::addInQuad(12.9,9);    zsbsyst = 0.0;
+      doMean=false;   zv[0] = 33.5; ze[0]=21.9;    zsbsyst = 0.0;
     }
     else if (qcdsubregion.owenId == "TightWideSB" && qcdsubregion.btagSelection=="ge2b") {
-      doMean=false;   zv[0] = 5.0 + 3.8; ze[0]=jmt::addInQuad(3.5,2.7);    zsbsyst = 0.0;
+      doMean=false;   zv[0] = 8.8; ze[0]=6.0;    zsbsyst = 0.0;
     }
     else if (qcdsubregion.owenId == "LooseWideSB" && qcdsubregion.btagSelection=="ge3b") {
-      doMean=false;   zv[0] = 2.7 + 1.9; ze[0]=jmt::addInQuad(3.9,2.8);    zsbsyst = 0.0;
+      doMean=false;   zv[0] = 4.6; ze[0]=6.7;    zsbsyst = 0.0;
     }
     else if (qcdsubregion.owenId == "Loose" && qcdsubregion.btagSelection=="eq1b") {
       doMean=false;//averaging already done
@@ -3473,112 +3473,112 @@ void printOwenSyst(TString regions) {
     textfile.close();
   }
 
-  if (regions=="Moriond") {
+  if (regions=="MoriondWideSB") {
     cout<<" == Last but not least, output for Results.tex =="<<endl;
-    resultsMap_["ge1bLoose"]["ttbarCC"].value = 322;
-    resultsMap_["ge1bLoose"]["ttbarCC"].statError = 30;
-    resultsMap_["ge1bLoose"]["ttbarCC"].systError = 37;
-    resultsMap_["ge1bLoose"]["ttbarCC"].trigErrorPlus = 0;
-    resultsMap_["ge1bLoose"]["ttbarCC"].trigErrorMinus = 0;
+    resultsMap_["ge1bLooseWideSB"]["ttbarCC"].value = 322;
+    resultsMap_["ge1bLooseWideSB"]["ttbarCC"].statError = 30;
+    resultsMap_["ge1bLooseWideSB"]["ttbarCC"].systError = 37;
+    resultsMap_["ge1bLooseWideSB"]["ttbarCC"].trigErrorPlus = 0;
+    resultsMap_["ge1bLooseWideSB"]["ttbarCC"].trigErrorMinus = 0;
     
-    resultsMap_["ge1bTight"]["ttbarCC"].value = 5.0;
-    resultsMap_["ge1bTight"]["ttbarCC"].statError = 2.3;
-    resultsMap_["ge1bTight"]["ttbarCC"].systError = 2.2;
-    resultsMap_["ge1bTight"]["ttbarCC"].trigErrorPlus = 0;
-    resultsMap_["ge1bTight"]["ttbarCC"].trigErrorMinus = 0;
-
-  resultsMap_["ge2bLoose"]["ttbarCC"].value = 123;
-  resultsMap_["ge2bLoose"]["ttbarCC"].statError = 16;
-  resultsMap_["ge2bLoose"]["ttbarCC"].systError = 16;
-  resultsMap_["ge2bLoose"]["ttbarCC"].trigErrorPlus = 0;
-  resultsMap_["ge2bLoose"]["ttbarCC"].trigErrorMinus = 0;
-
-  resultsMap_["ge2bTight"]["ttbarCC"].value = 21.0;
-  resultsMap_["ge2bTight"]["ttbarCC"].statError = 6.3;
-  resultsMap_["ge2bTight"]["ttbarCC"].systError = 4.3;
-  resultsMap_["ge2bTight"]["ttbarCC"].trigErrorPlus = 0;
-  resultsMap_["ge2bTight"]["ttbarCC"].trigErrorMinus = 0;
-
-  resultsMap_["ge3bLoose"]["ttbarCC"].value = 13.7;
-  resultsMap_["ge3bLoose"]["ttbarCC"].statError = 6.1;
-  resultsMap_["ge3bLoose"]["ttbarCC"].systError = 3.1;
-  resultsMap_["ge3bLoose"]["ttbarCC"].trigErrorPlus = 0;
-  resultsMap_["ge3bLoose"]["ttbarCC"].trigErrorMinus = 0;
-
-  resultsMap_["ge1bLoose"]["Znn"].value = 132;
-  resultsMap_["ge1bLoose"]["Znn"].statError = 17;
-  resultsMap_["ge1bLoose"]["Znn"].systError = 23;
-  resultsMap_["ge1bLoose"]["Znn"].trigErrorPlus = 0;
-  resultsMap_["ge1bLoose"]["Znn"].trigErrorMinus = 0;
-
-  resultsMap_["ge1bTight"]["Znn"].value = 2.5;
-  resultsMap_["ge1bTight"]["Znn"].statError = 1.9;
-  resultsMap_["ge1bTight"]["Znn"].systError = 0.5;
-  resultsMap_["ge1bTight"]["Znn"].trigErrorPlus = 0;
-  resultsMap_["ge1bTight"]["Znn"].trigErrorMinus = 0;
-
-  resultsMap_["ge2bLoose"]["Znn"].value = 23;
-  resultsMap_["ge2bLoose"]["Znn"].statError = 3.5;
-  resultsMap_["ge2bLoose"]["Znn"].systError = 11.5;
-  resultsMap_["ge2bLoose"]["Znn"].trigErrorPlus = 0;
-  resultsMap_["ge2bLoose"]["Znn"].trigErrorMinus = 0;
-
-  resultsMap_["ge2bTight"]["Znn"].value = 4.6;
-  resultsMap_["ge2bTight"]["Znn"].statError = 1.4;
-  resultsMap_["ge2bTight"]["Znn"].systError = 2.4;
-  resultsMap_["ge2bTight"]["Znn"].trigErrorPlus = 0;
-  resultsMap_["ge2bTight"]["Znn"].trigErrorMinus = 0;
-
-  resultsMap_["ge3bLoose"]["Znn"].value = 3;
-  resultsMap_["ge3bLoose"]["Znn"].statError = 0.9;
-  resultsMap_["ge3bLoose"]["Znn"].systError = 3.3;
-  resultsMap_["ge3bLoose"]["Znn"].trigErrorPlus = 0;
-  resultsMap_["ge3bLoose"]["Znn"].trigErrorMinus = 0;
-
-  cout<<"    & 1BL & 1BT & 2BL & 2BT & 3B \\"<<endl;
-  //we'll do this in a C way instead of a C++ way
-  cout<<"QCD & "
-      <<formatLatex( resultsMap_["ge1bLoose"]["QCD"])<<" & "
-      <<formatLatex( resultsMap_["ge1bTight"]["QCD"])<<" & "
-      <<formatLatex( resultsMap_["ge2bLoose"]["QCD"])<<" & "
-      <<formatLatex( resultsMap_["ge2bTight"]["QCD"])<<" & "
-      <<formatLatex( resultsMap_["ge3bLoose"]["QCD"])<<" \\ "<<endl;
-
-  cout<<"\\ttbar/W+jets & "
-      <<formatLatex( resultsMap_["ge1bLoose"]["ttbar"])<<" & "
-      <<formatLatex( resultsMap_["ge1bTight"]["ttbar"])<<" & "
-      <<formatLatex( resultsMap_["ge2bLoose"]["ttbar"])<<" & "
-      <<formatLatex( resultsMap_["ge2bTight"]["ttbar"])<<" & "
-      <<formatLatex( resultsMap_["ge3bLoose"]["ttbar"])<<" \\ "<<endl;
-  
-  cout<<"\\ttbar/W+jets CC & "
-      <<formatLatex( resultsMap_["ge1bLoose"]["ttbarCC"])<<" & "
-      <<formatLatex( resultsMap_["ge1bTight"]["ttbarCC"])<<" & "
-      <<formatLatex( resultsMap_["ge2bLoose"]["ttbarCC"])<<" & "
-      <<formatLatex( resultsMap_["ge2bTight"]["ttbarCC"])<<" & "
-      <<formatLatex( resultsMap_["ge3bLoose"]["ttbarCC"])<<" \\ "<<endl;
-  
-  cout<<"\\Zinvisible & "
-      <<formatLatex( resultsMap_["ge1bLoose"]["Znn"])<<" & "
-      <<formatLatex( resultsMap_["ge1bTight"]["Znn"])<<" & "
-      <<formatLatex( resultsMap_["ge2bLoose"]["Znn"])<<" & "
-      <<formatLatex( resultsMap_["ge2bTight"]["Znn"])<<" & "
-      <<formatLatex( resultsMap_["ge3bLoose"]["Znn"])<<" \\ "<<endl;
-
-  cout<<" \\hline"<<endl;
-
-  addResults("ge1bLoose","ttbarQCD","Znn","total");
-  addResults("ge1bTight","ttbarQCD","Znn","total");
-  addResults("ge2bLoose","ttbarQCD","Znn","total");
-  addResults("ge2bTight","ttbarQCD","Znn","total");
-  addResults("ge3bLoose","ttbarQCD","Znn","total");
-
-  cout<<"Total SM & "
-      <<formatLatex( resultsMap_["ge1bLoose"]["total"])<<" & "
-      <<formatLatex( resultsMap_["ge1bTight"]["total"])<<" & "
-      <<formatLatex( resultsMap_["ge2bLoose"]["total"])<<" & "
-      <<formatLatex( resultsMap_["ge2bTight"]["total"])<<" & "
-      <<formatLatex( resultsMap_["ge3bLoose"]["total"])<<" \\ "<<endl;
+    resultsMap_["ge1bTightWideSB"]["ttbarCC"].value = 5.0;
+    resultsMap_["ge1bTightWideSB"]["ttbarCC"].statError = 2.3;
+    resultsMap_["ge1bTightWideSB"]["ttbarCC"].systError = 2.2;
+    resultsMap_["ge1bTightWideSB"]["ttbarCC"].trigErrorPlus = 0;
+    resultsMap_["ge1bTightWideSB"]["ttbarCC"].trigErrorMinus = 0;
+    
+    resultsMap_["ge2bLooseWideSB"]["ttbarCC"].value = 123;
+    resultsMap_["ge2bLooseWideSB"]["ttbarCC"].statError = 16;
+    resultsMap_["ge2bLooseWideSB"]["ttbarCC"].systError = 16;
+    resultsMap_["ge2bLooseWideSB"]["ttbarCC"].trigErrorPlus = 0;
+    resultsMap_["ge2bLooseWideSB"]["ttbarCC"].trigErrorMinus = 0;
+    
+    resultsMap_["ge2bTightWideSB"]["ttbarCC"].value = 21.0;
+    resultsMap_["ge2bTightWideSB"]["ttbarCC"].statError = 6.3;
+    resultsMap_["ge2bTightWideSB"]["ttbarCC"].systError = 4.3;
+    resultsMap_["ge2bTightWideSB"]["ttbarCC"].trigErrorPlus = 0;
+    resultsMap_["ge2bTightWideSB"]["ttbarCC"].trigErrorMinus = 0;
+    
+    resultsMap_["ge3bLooseWideSB"]["ttbarCC"].value = 13.7;
+    resultsMap_["ge3bLooseWideSB"]["ttbarCC"].statError = 6.1;
+    resultsMap_["ge3bLooseWideSB"]["ttbarCC"].systError = 3.1;
+    resultsMap_["ge3bLooseWideSB"]["ttbarCC"].trigErrorPlus = 0;
+    resultsMap_["ge3bLooseWideSB"]["ttbarCC"].trigErrorMinus = 0;
+    
+    resultsMap_["ge1bLooseWideSB"]["Znn"].value = 132;
+    resultsMap_["ge1bLooseWideSB"]["Znn"].statError = 17;
+    resultsMap_["ge1bLooseWideSB"]["Znn"].systError = 23;
+    resultsMap_["ge1bLooseWideSB"]["Znn"].trigErrorPlus = 0;
+    resultsMap_["ge1bLooseWideSB"]["Znn"].trigErrorMinus = 0;
+    
+    resultsMap_["ge1bTightWideSB"]["Znn"].value = 2.5;
+    resultsMap_["ge1bTightWideSB"]["Znn"].statError = 1.9;
+    resultsMap_["ge1bTightWideSB"]["Znn"].systError = 0.5;
+    resultsMap_["ge1bTightWideSB"]["Znn"].trigErrorPlus = 0;
+    resultsMap_["ge1bTightWideSB"]["Znn"].trigErrorMinus = 0;
+    
+    resultsMap_["ge2bLooseWideSB"]["Znn"].value = 23;
+    resultsMap_["ge2bLooseWideSB"]["Znn"].statError = 3.5;
+    resultsMap_["ge2bLooseWideSB"]["Znn"].systError = 11.5;
+    resultsMap_["ge2bLooseWideSB"]["Znn"].trigErrorPlus = 0;
+    resultsMap_["ge2bLooseWideSB"]["Znn"].trigErrorMinus = 0;
+    
+    resultsMap_["ge2bTightWideSB"]["Znn"].value = 4.6;
+    resultsMap_["ge2bTightWideSB"]["Znn"].statError = 1.4;
+    resultsMap_["ge2bTightWideSB"]["Znn"].systError = 2.4;
+    resultsMap_["ge2bTightWideSB"]["Znn"].trigErrorPlus = 0;
+    resultsMap_["ge2bTightWideSB"]["Znn"].trigErrorMinus = 0;
+    
+    resultsMap_["ge3bLooseWideSB"]["Znn"].value = 3;
+    resultsMap_["ge3bLooseWideSB"]["Znn"].statError = 0.9;
+    resultsMap_["ge3bLooseWideSB"]["Znn"].systError = 3.3;
+    resultsMap_["ge3bLooseWideSB"]["Znn"].trigErrorPlus = 0;
+    resultsMap_["ge3bLooseWideSB"]["Znn"].trigErrorMinus = 0;
+    
+    cout<<"    & 1BL & 1BT & 2BL & 2BT & 3B \\"<<endl;
+    //we'll do this in a C way instead of a C++ way
+    cout<<"QCD & "
+	<<formatLatex( resultsMap_["ge1bLooseWideSB"]["QCD"])<<" & "
+	<<formatLatex( resultsMap_["ge1bTightWideSB"]["QCD"])<<" & "
+	<<formatLatex( resultsMap_["ge2bLooseWideSB"]["QCD"])<<" & "
+	<<formatLatex( resultsMap_["ge2bTightWideSB"]["QCD"])<<" & "
+	<<formatLatex( resultsMap_["ge3bLooseWideSB"]["QCD"])<<" \\ "<<endl;
+    
+    cout<<"\\ttbar/W+jets & "
+	<<formatLatex( resultsMap_["ge1bLooseWideSB"]["ttbar"])<<" & "
+	<<formatLatex( resultsMap_["ge1bTightWideSB"]["ttbar"])<<" & "
+	<<formatLatex( resultsMap_["ge2bLooseWideSB"]["ttbar"])<<" & "
+	<<formatLatex( resultsMap_["ge2bTightWideSB"]["ttbar"])<<" & "
+	<<formatLatex( resultsMap_["ge3bLooseWideSB"]["ttbar"])<<" \\ "<<endl;
+    
+    cout<<"\\ttbar/W+jets CC & "
+	<<formatLatex( resultsMap_["ge1bLooseWideSB"]["ttbarCC"])<<" & "
+	<<formatLatex( resultsMap_["ge1bTightWideSB"]["ttbarCC"])<<" & "
+	<<formatLatex( resultsMap_["ge2bLooseWideSB"]["ttbarCC"])<<" & "
+	<<formatLatex( resultsMap_["ge2bTightWideSB"]["ttbarCC"])<<" & "
+	<<formatLatex( resultsMap_["ge3bLooseWideSB"]["ttbarCC"])<<" \\ "<<endl;
+    
+    cout<<"\\Zinvisible & "
+	<<formatLatex( resultsMap_["ge1bLooseWideSB"]["Znn"])<<" & "
+	<<formatLatex( resultsMap_["ge1bTightWideSB"]["Znn"])<<" & "
+	<<formatLatex( resultsMap_["ge2bLooseWideSB"]["Znn"])<<" & "
+	<<formatLatex( resultsMap_["ge2bTightWideSB"]["Znn"])<<" & "
+	<<formatLatex( resultsMap_["ge3bLooseWideSB"]["Znn"])<<" \\ "<<endl;
+    
+    cout<<" \\hline"<<endl;
+    
+    addResults("ge1bLooseWideSB","ttbarQCD","Znn","total");
+    addResults("ge1bTightWideSB","ttbarQCD","Znn","total");
+    addResults("ge2bLooseWideSB","ttbarQCD","Znn","total");
+    addResults("ge2bTightWideSB","ttbarQCD","Znn","total");
+    addResults("ge3bLooseWideSB","ttbarQCD","Znn","total");
+    
+    cout<<"Total SM & "
+	<<formatLatex( resultsMap_["ge1bLooseWideSB"]["total"])<<" & "
+	<<formatLatex( resultsMap_["ge1bTightWideSB"]["total"])<<" & "
+	<<formatLatex( resultsMap_["ge2bLooseWideSB"]["total"])<<" & "
+	<<formatLatex( resultsMap_["ge2bTightWideSB"]["total"])<<" & "
+	<<formatLatex( resultsMap_["ge3bLooseWideSB"]["total"])<<" \\ "<<endl;
   }
 
 }
