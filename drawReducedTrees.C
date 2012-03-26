@@ -65,10 +65,10 @@ in order to get one file per sample.
 //*** AFTER SUMMER
 //***************************
 
-//TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35g/";
-//TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35h/";
-TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35p/Fall11/";
-TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35p/";
+  //  TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35q/Fall11/"; //Type 1 MET
+  //  TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35q/"; //Type 1 MET
+TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35p/Fall11/"; //uncorrected MET
+TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35p/";//uncorrected MET
 
 //-- reducedTrees for Oct 25 SUSY meeting. 3464.581/pb. 
 //TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35a/";
@@ -101,7 +101,8 @@ TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35p/";
 
 //double lumiScale_ = 1143; //official summer conf lumi
 //double lumiScale_ = 3464.581;//oct25
-double lumiScale_ = 4683.719;//nov4
+//double lumiScale_ = 4683.719;//nov4
+double lumiScale_ = 4982.91;//final pixel-based 2011 lumi
 
 #include "drawReducedTrees.h"
 
@@ -1956,27 +1957,27 @@ modifications for SHAPE analysis: (bShape = true)
 
     if ((qcdsubregion.owenId == "Loose" || qcdsubregion.owenId.Contains( "METFineBin"))&& qcdsubregion.btagSelection=="ge1b") {
       doMean=false;//averaging already done
-      zv[0] = 82; ze[0]=20;
+      zv[0] = 82; ze[0]=20; // *(70.3/67.4)
       zsbsyst = 0.0;//ze is stat+syst error combined
     }
     else if (qcdsubregion.owenId == "Tight" && qcdsubregion.btagSelection=="ge1b") {
       doMean=false;//averaging already done
-      zv[0] = 44; ze[0]=13;
+      zv[0] = 44; ze[0]=13; // * (36.9/35.4)
       zsbsyst = 0.0;
     }
     else if ((qcdsubregion.owenId == "Loose" || qcdsubregion.owenId.Contains( "METFineBin"))&& qcdsubregion.btagSelection=="ge2b") {
       doMean=false;//averaging already done
-      zv[0] = 14; ze[0]=9;
+      zv[0] = 14 ; ze[0]=9; //*(10.1/9.5)
       zsbsyst = 0.0;
     }
     else if ((qcdsubregion.owenId == "Tight" && qcdsubregion.btagSelection=="ge2b") || qcdsubregion.owenId.Contains( "METFine2BTBin")) {
       doMean=false;//averaging already done
-      zv[0] = 3.8; ze[0]=2.7;
+      zv[0] = 3.8; ze[0]=2.7;// *(2.6/2.5)
       zsbsyst = 0.0;
     }
     else if ( (qcdsubregion.owenId == "Loose" || qcdsubregion.owenId.Contains( "METBin")|| qcdsubregion.owenId.Contains( "METFineBin"))  && qcdsubregion.btagSelection=="ge3b") {
       doMean=false;//averaging already done
-      zv[0] = 1.9; ze[0]=2.8;
+      zv[0] = 1.9; ze[0]=2.8; // *(0.7/0.6)
       zsbsyst = 0.0;   
     }
     //for 150-200 GeV SB
@@ -5545,6 +5546,281 @@ void DSchecks_2jtau() {
 }
 
 
+void DSchecks_cutflow() {
+
+  loadSamples();
+  setSearchRegions("Moriond");
+
+  usePUweight_=true;
+
+  useHTeff_=true;
+  useMHTeff_=true;    
+
+  currentConfig_=configDescriptions_.getCorrected(); //JER bias
+  
+  int nbins;
+  float low,high;
+  TString var,xtitle;
+  
+  doOverflowAddition(true);
+  clearSamples();
+  addSample("ZJets");
+  //  setStackMode(false,true); //normalized
+  //  setColorScheme("nostack");
+  doData(false);
+
+  TCut baseline = "MET>=250 && HT>=400 && cutPV==1 &&njets>=3";
+  selection_ = baseline&&getLeptonVetoCut();
+
+  savePlots_=false;
+
+  var="minDeltaPhiN"; xtitle="minDeltaPhiN";
+  nbins = 10; low=0; high=20;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "minDeltaPhiN_cutflowcheck_ZJets");
+  //confirms what cut flow table says
+
+  useHTeff_=false;
+  useMHTeff_=false;    
+  baseline = "MET>=0 && HT>=400 && cutPV==1 &&njets>=3";
+  selection_ = baseline&&getLeptonVetoCut();
+  drawPlots(var,nbins,low,high,xtitle,"Events", "minDeltaPhiN_cutflowcheck_ZJets");
+  //hmmm...peak really is down at zero
+
+
+  baseline = "MET>=0 && HT>=400 && cutPV==1 &&njets>=3";
+  selection_ = baseline&&getSingleLeptonCut();
+  drawPlots(var,nbins,low,high,xtitle,"Events", "minDeltaPhiN_cutflowcheck_ZJets");
+  //still really peaks at 0
+
+  selection_=baseline;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "minDeltaPhiN_cutflowcheck_ZJets");
+
+  clearSamples();
+  addSample("TTbarJets");
+
+  //ok, now we want to look at W cut efficiencies. in particular what is left when the vetoes are applied
+
+  //must be run in splitWJets_ mod (compile time options)e
+
+  clearSamples();
+  addSample("WJets-mu");
+  addSample("WJets-ele");
+  addSample("WJets-tauHad");
+  addSample("TTbarJets-semiMu");
+  addSample("TTbarJets-semiEle");
+  addSample("TTbarJets-semiTauHad");
+  addSample("TTbarJets-dilep");
+  addSample("TTbarJets-had");
+  addSample("TTbarJets-other");
+
+  var="njets"; xtitle="njets";
+  nbins = 10; low=0; high=10;
+
+  baseline = "MET>=250 && HT>=400 && cutPV==1 &&njets>=3";
+  selection_=baseline;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "njets_cutflowcheck_WJets");
+
+  selection_ = baseline&&TCut("nElectrons==0");
+  drawPlots(var,nbins,low,high,xtitle,"Events", "njets_cutflowcheck_WJets");
+
+  selection_ = baseline&&TCut("nElectrons==0 && nMuons==0");
+  drawPlots(var,nbins,low,high,xtitle,"Events", "njets_cutflowcheck_WJets");
+
+  //now look at it with no MET cut?
+
+  var="MET"; xtitle="MET";
+  nbins = 40; low=0; high=400;
+
+  baseline = "MET>=0 && HT>=400 && cutPV==1 &&njets>=3";
+  selection_=baseline;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "njets_cutflowcheck_WJets");
+
+  selection_ = baseline&&TCut("nElectrons==0");
+  drawPlots(var,nbins,low,high,xtitle,"Events", "njets_cutflowcheck_WJets");
+
+  selection_ = baseline&&TCut("nElectrons==0 && nMuons==0");
+  drawPlots(var,nbins,low,high,xtitle,"Events", "njets_cutflowcheck_WJets");
+
+
+}
+
+void DSchecks_dataMCdiscrep() {
+
+
+  loadSamples();
+  setSearchRegions("Moriond");
+
+  usePUweight_=true;
+
+  currentConfig_=configDescriptions_.getCorrected(); //JER bias
+  
+  int nbins;
+  float low,high;
+  TString var,xtitle;
+  
+  doOverflowAddition(true);
+  doRatioPlot(true);
+  drawMCErrors_=true;
+
+  removeSample("LM9");
+
+  //1BL Sideband with no njet and upper ht cut
+  btagSFweight_="probge1";
+  selection_ = "cutTrigger==1 && cutPV==1 && HT>=400 && HT<600 && MET>=200 && MET<250 && minDeltaPhiN>=4 && nElectrons==0 && nMuons==0 && passCleaning==1";
+  nbins=10; low=0; high=10;
+  var="njets"; xtitle=var;
+
+  useHTeff_=true;
+  useMHTeff_=true;    
+  drawPlots(var,nbins,low,high,xtitle,"Events", "DSchecks_njets_lowHT_lowMET_ge1b_withEffCorr");
+
+  useHTeff_=false;
+  useMHTeff_=false;    
+  drawPlots(var,nbins,low,high,xtitle,"Events", "DSchecks_njets_lowHT_lowMET_ge1b_noEffCorr");
+
+  useHTeff_=true;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "DSchecks_njets_lowHT_lowMET_ge1b_htOnlyEffCorr");
+
+  //try BNN instead
+  thebnnMHTeffMode_ =kPlot;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "DSchecks_njets_lowHT_lowMET_ge1b_bnnEffCorr");
+
+  //let's just look at the met distribution again
+  selection_ = "cutTrigger==1 && cutPV==1 && HT>=400 &&njets>=3 && MET>=200 && minDeltaPhiN>=4 && nElectrons==0 && nMuons==0 && passCleaning==1";
+  nbins=30; low=200; high=500;
+  var="MET"; xtitle=var;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "DSchecks_MET_ge1b_bnnEffCorr");
+
+  //look at 150-200
+  selection_ = "cutTrigger==1 && cutPV==1 && HT>=400 &&njets>=3 && MET>=150 && minDeltaPhiN>=4 && nElectrons==0 && nMuons==0 && passCleaning==1";
+  nbins=35; low=150; high=500;
+  var="MET"; xtitle=var;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "DSchecks_MET_ge1b_bnnEffCorr");
+  //terrible as expected
+
+  thebnnMHTeffMode_ =kOff;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "DSchecks_MET_ge1b_htOnlyEffCorr");
+
+
+}
+
+void DSchecks_3Btest() {
+
+  loadSamples();
+  setSearchRegions("Moriond");
+
+  usePUweight_=true;
+
+  useHTeff_=true;
+  useMHTeff_=true;    
+
+  currentConfig_=configDescriptions_.getCorrected(); //JER bias
+  
+  int nbins;
+  float low,high;
+  TString var,xtitle;
+  
+  doOverflowAddition(true);
+
+  removeSample("LM9");
+
+  //3B signal region
+  selection_ = "cutTrigger==1 && cutPV==1 && njets>=3 && HT>=400 && MET>=250 && minDeltaPhiN>=4 && nElectrons==0 && nMuons==0 && passCleaning==1 && nbjets>=3";
+
+  //cannot use btag SFs for these plots
+  //plot b jet ch had fractions
+  var="bjetchargedhadronfrac1"; xtitle ="charged hadron frac (b jet 1)";
+  low=0;   high=1; nbins = 10;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "3B_chHadFrac_bjet1");
+
+  var="bjetchargedhadronfrac2"; xtitle ="charged hadron frac (b jet 2)";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "3B_chHadFrac_bjet2");
+
+  var="bjetchargedhadronfrac3"; xtitle ="charged hadron frac (b jet 3)";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "3B_chHadFrac_bjet3");
+
+  low=0;   high=40; nbins = 10;
+  var="bjetchargedhadronmult1"; xtitle ="charged hadron mult (b jet 1)";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "3B_chHadMult_bjet1");
+
+  var="bjetchargedhadronmult2"; xtitle ="charged hadron mult (b jet 2)";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "3B_chHadMult_bjet2");
+
+  var="bjetchargedhadronmult3"; xtitle ="charged hadron mult (b jet 3)";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "3B_chHadMult_bjet3");
+
+  low=0;   high=TMath::Pi()+1e-4; nbins = 10;
+  var="deltaPhib1"; xtitle="#Delta #phi (b1, MET)";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "3B_deltaPhiJetMET_bjet1");
+  var="deltaPhib2"; xtitle="#Delta #phi (b2, MET)";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "3B_deltaPhiJetMET_bjet2");
+  var="deltaPhib3"; xtitle="#Delta #phi (b3, MET)";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "3B_deltaPhiJetMET_bjet3");
+  
+
+  //plot for the *worst* b tag
+  var = "bjetchargedhadronfrac1*((CSVout1<CSVout2) && (CSVout1<CSVout3)) + bjetchargedhadronfrac2*((CSVout2<CSVout1) && (CSVout2<CSVout3)) + bjetchargedhadronfrac3*((CSVout3<CSVout1) && (CSVout3<CSVout2))";  
+  xtitle ="charged hadron frac (worst b tag)";
+  low=0;   high=1; nbins = 10;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "3B_chHadFrac_worstB");
+
+  var = "deltaPhib1*((CSVout1<CSVout2) && (CSVout1<CSVout3)) + deltaPhib2*((CSVout2<CSVout1) && (CSVout2<CSVout3)) + deltaPhib3*((CSVout3<CSVout1) && (CSVout3<CSVout2))";  
+  xtitle="#Delta #phi (worst b, MET)";
+  low=0;   high=TMath::Pi()+1e-4; nbins = 10;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "3B_deltaPhiJetMET_worstB");
+
+
+
+  //3B SL
+  selection_ = TCut("cutTrigger==1 && cutPV==1 && njets>=3 && HT>=400 && MET>=200 && minDeltaPhiN>=4 && passCleaning==1 && nbjets>=3")&&getSingleLeptonCut();
+
+  //cannot use btag SFs for these plots
+  //plot b jet ch had fractions
+  var="bjetchargedhadronfrac1"; xtitle ="charged hadron frac (b jet 1)";
+  low=0;   high=1; nbins = 10;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "3B_SBandSIG_SL_chHadFrac_bjet1");
+
+  var="bjetchargedhadronfrac2"; xtitle ="charged hadron frac (b jet 2)";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "3B_SBandSIG_SL_chHadFrac_bjet2");
+
+  var="bjetchargedhadronfrac3"; xtitle ="charged hadron frac (b jet 3)";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "3B_SBandSIG_SL_chHadFrac_bjet3");
+
+  low=0;   high=40; nbins = 10;
+  var="bjetchargedhadronmult1"; xtitle ="charged hadron mult (b jet 1)";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "3B_SBandSIG_SL_chHadMult_bjet1");
+
+  var="bjetchargedhadronmult2"; xtitle ="charged hadron mult (b jet 2)";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "3B_SBandSIG_SL_chHadMult_bjet2");
+
+  var="bjetchargedhadronmult3"; xtitle ="charged hadron mult (b jet 3)";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "3B_SBandSIG_SL_chHadMult_bjet3");
+
+  low=0;   high=TMath::Pi()+1e-4; nbins = 10;
+  var="deltaPhib1"; xtitle="#Delta #phi (b1, MET)";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "3B_SBandSIG_SL_deltaPhiJetMET_bjet1");
+  var="deltaPhib2"; xtitle="#Delta #phi (b2, MET)";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "3B_SBandSIG_SL_deltaPhiJetMET_bjet2");
+  var="deltaPhib3"; xtitle="#Delta #phi (b3, MET)";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "3B_SBandSIG_SL_deltaPhiJetMET_bjet3");
+  
+
+  //plot for the *worst* b tag
+  var = "bjetchargedhadronfrac1*((CSVout1<CSVout2) && (CSVout1<CSVout3)) + bjetchargedhadronfrac2*((CSVout2<CSVout1) && (CSVout2<CSVout3)) + bjetchargedhadronfrac3*((CSVout3<CSVout1) && (CSVout3<CSVout2))";  
+  xtitle ="charged hadron frac (worst b tag)";
+  low=0;   high=1; nbins = 10;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "3B_SBandSIG_SL_chHadFrac_worstB");
+
+  var = "deltaPhib1*((CSVout1<CSVout2) && (CSVout1<CSVout3)) + deltaPhib2*((CSVout2<CSVout1) && (CSVout2<CSVout3)) + deltaPhib3*((CSVout3<CSVout1) && (CSVout3<CSVout2))";  
+  xtitle="#Delta #phi (worst b, MET)";
+  low=0;   high=TMath::Pi()+1e-4; nbins = 10;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "3B_SBandSIG_SL_deltaPhiJetMET_worstB");
+
+
+
+}
+
+
 //for the actual AN and paper, use mode 3, logy and doRatio false
 void AN2011( TString btagselection="ge1b",const int mode=1, bool logy=false, bool doRatio=false ) {
   doRatioPlot(doRatio);
@@ -5555,12 +5831,14 @@ void AN2011( TString btagselection="ge1b",const int mode=1, bool logy=false, boo
   //this mode thing is a bit kludgey
   TString modestring="";
   if (mode==1) {
-    usePUweight_=false;
+    usePUweight_=true; //we used to have this set to false
     useHTeff_=false;
     useMHTeff_=false;
     thebnnMHTeffMode_ = kOff;
     btagSFweight_="1";
-    currentConfig_=configDescriptions_.getDefault(); //completely raw MC
+    //currentConfig_=configDescriptions_.getDefault(); //completely raw MC
+    currentConfig_=configDescriptions_.getCorrected(); //JER bias
+
   }
   else if (mode==2 || mode==3) {
     usePUweight_=true;
@@ -5633,19 +5911,22 @@ void AN2011( TString btagselection="ge1b",const int mode=1, bool logy=false, boo
   clearSamples();
   addSample("PythiaPUQCD");
   addSample("TTbarJets");
+  addSample("WJets");
+  addSample("ZJets");
+
   addSample("LM9");
 
   doData(false);
 
-  /*
-  var="minDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}";
-  nbins = 40; low=0; high=40;
-  //no delta phi cut, loose MET window (only good for MC)
-  selection_ =TCut("cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=100")&&btagcut;
-  drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "minDeltaPhiN_looseMET_MConly_"+btagselection+modestring);
-  */
   
-  //  return;
+//   var="minDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}";
+//   nbins = 40; low=0; high=40;
+//   //no delta phi cut, loose MET window (only good for MC)
+//   selection_ =TCut("cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=100")&&btagcut;
+//   drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "minDeltaPhiN_looseMET_MConly_"+btagselection+modestring);
+  
+  
+//     return;
   
   // ========= regular N-1 plots
 
