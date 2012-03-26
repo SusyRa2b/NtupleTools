@@ -5205,24 +5205,26 @@ void AN2011_r_SLreq(int mode = 3) { //for paper, MC only plots all the way to hi
   //////////////////////////////////////////////////////////////////////////////////////////////////////////
   
   const int nvarbins=15;
-  const float varbins[]={0,20,40,60,80,100,120,140,160,180,200,250,300,400,500,600}; //15 bins
-  
-  //selection_ ="cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && nbjets==0&&weight<1 &&passCleaning==1";
-  selection_ ="cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 &&weight<.00002 &&passCleaning==1";
-  btagSFweight_="prob0";
-  cout << "check1" << endl;
-  drawR("minDeltaPhiN",4, "MET", nvarbins, varbins,"eq0b");
-  return;
+  const float varbins[]={0,20,40,60,80,100,120,140,160,180,200,250,300,400,500,600}; //15 bins            
 
-  selection_ ="cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && nbjets>=1&&weight<1 &&passCleaning==1";
-  drawR("minDeltaPhiN",4, "MET", nvarbins, varbins,"ge1b");
-  
-  setPlotMaximum(3); setPlotMinimum(0);
-  drawR("minDeltaPhi",0.3, "MET", nvarbins, varbins,"old_ge1b");
+  selection_ ="cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 &&passCleaning==1";
 
   setPlotMaximum(1); setPlotMinimum(0);
-    selection_ ="cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && nbjets>=2&&weight<1 &&passCleaning==1";
+  btagSFweight_="prob0";
+  drawR("minDeltaPhiN",4, "MET", nvarbins, varbins,"eq0b");
+
+  btagSFweight_="probge1";
+  drawR("minDeltaPhiN",4, "MET", nvarbins, varbins,"ge1b");
+
+  btagSFweight_="probge2";
   drawR("minDeltaPhiN",4, "MET", nvarbins, varbins,"ge2b");
+
+  btagSFweight_="probge3";
+  drawR("minDeltaPhiN",4, "MET", nvarbins, varbins,"ge3b");
+
+  setPlotMaximum(3); setPlotMinimum(0);
+  btagSFweight_="probge1";
+  drawR("minDeltaPhi",0.3, "MET", nvarbins, varbins,"old_ge1b");
  
   /*
   //other plots looked at, but not in PAS, for example.
@@ -7980,6 +7982,7 @@ void studyMDPNscaling(const int mode = 3, TString htcutvalue = "400", TString ht
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////////////////////////////////////////
+  /*
   setPlotMaximum(1); setPlotMinimum(0);
   
   const int nvarbins=15;
@@ -7991,7 +7994,7 @@ void studyMDPNscaling(const int mode = 3, TString htcutvalue = "400", TString ht
 
   drawR("minDeltaPhiN_otherPt10",4, "MET", nvarbins, varbins,"eq0b");
   TH1D* h10 = (TH1D*)hinteractive->Clone("h10");
-
+  */
   /*
   drawR("minDeltaPhiN_otherPt20",4, "MET", nvarbins, varbins,"eq0b");
   TH1D* h20 = (TH1D*)hinteractive->Clone("h20");
@@ -8100,9 +8103,9 @@ void studyMDPNscaling(const int mode = 3, TString htcutvalue = "400", TString ht
     myplots.push_back(new toPlot("deltaPhiN3",30,0,30));
     myplots.push_back(new toPlot("minDeltaPhiN",20,0,10));
     myplots.push_back(new toPlot("minDeltaPhiN_chosenJet",3,0.5,3.5));
-    myplots.push_back(new toPlot("jetgenpt1-jetpt1",50,-1000,1000));
-    myplots.push_back(new toPlot("jetgenpt2-jetpt2",50,-1000,1000));
-    myplots.push_back(new toPlot("jetgenpt3-jetpt3",50,-1000,1000));
+    myplots.push_back(new toPlot("jetpt1/jetgenpt1",100,0,3));
+    myplots.push_back(new toPlot("jetpt2/jetgenpt2",100,0,3));
+    myplots.push_back(new toPlot("jetpt3/jetgenpt3",100,0,3));
     myplots.push_back(new toPlot("max2JetMis/maxJetMis",20,0,1));
     myplots.push_back(new toPlot("max2JetFracMis/maxJetFracMis",20,0,1));
 
@@ -8120,11 +8123,18 @@ void studyMDPNscaling(const int mode = 3, TString htcutvalue = "400", TString ht
 
       //Drawing
       if(j<8) h[j]->SetFillColor(2+j);
-      else h[j]->SetFillColor(32+j);
+      else if(j<18) h[j]->SetFillColor(32+j);
+      else h[j]->SetFillColor(12+j);
       h[j]->GetXaxis()->SetTitle(myplots[j]->getVarName());
-      myC->cd(i*numx+j+1);
+      TVirtualPad* thisPad = myC->cd(i*numx+j+1);
       h[j]->Draw(plotopt);
       myC->Update();
+
+      //if(myplots[j]->getVarName()=="genpt") {
+      //  thisPad->SetLogy();
+      //  myC->Update();
+      //}
+
 
       if(myplots[j]->getVarName()=="minDeltaPhiN") {
 	TLine * myL = new TLine(4,h[j]->GetMinimum(),4,gPad->GetUymax());
