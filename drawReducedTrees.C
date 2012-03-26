@@ -103,6 +103,7 @@ TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35p/";//uncorrected MET
 //double lumiScale_ = 3464.581;//oct25
   //double lumiScale_ = 4683.719;//nov4
 double lumiScale_ = 4982.91;//final pixel-based 2011 lumi
+double preLumiScale_ = 33.6589;//final pixel-based 2011 lumi for HT only triggers
 
 #include "drawReducedTrees.h"
 
@@ -412,7 +413,7 @@ std::pair<double,double> ABCD_njetRW(TString prescontrol, TString physcontrol, T
   fh.Close(); //going to open only when needed 
 
   double physlumiscale = lumiScale_;
-  double preslumiscale = 30.15471;//hardcoded for now
+  double preslumiscale = preLumiScale_;
   TString btagSFweight_nom = btagSFweight_;
 
   //going to use the same binning for the physics and prescaled samples
@@ -4072,8 +4073,7 @@ void AN2011_prescale( TString btagselection="ge1b",const int mode=1 ) {
   // ==========================
 
   TCut util = "pass_utilityHLT==1 && weight<1000";
-  //lumiScale_ = 19.23288; //customize lumiScale_
-  lumiScale_ = 30.15471; 
+  lumiScale_ = preLumiScale_;
 
   // ========= regular N-1 plots
 
@@ -4260,7 +4260,7 @@ void AN2011_PUQCD( TString btagselection="ge1b",const int mode=1 ) {
 
   TCut util = "pass_utilityHLT==1 && weight<1000";
   double holdLumiScale = lumiScale_;
-  lumiScale_ = 30.15471; 
+  lumiScale_ = preLumiScale_;
 
   resetSamples(); //use all samples
 
@@ -5147,7 +5147,7 @@ void AN2011_r(TString btagselection="ge1b", const int mode=1) { //for paper, dat
     }
   }
   
-  lumiScale_ = 30.15471; //customize lumiScale_
+  lumiScale_ = preLumiScale_;
   resetSamples();
   setPlotMinimum(0); setPlotMaximum(0.3);
   leg_x1 = 0.2380496; leg_x2=0.481167; leg_y1=0.5029892; leg_y2=0.9231433;
@@ -7310,7 +7310,7 @@ void drawQCDreweight(bool loose = true, bool njets50 = false){
   
   //-- LSB plots
   //------------
-  lumiScale_ = 19.23288;
+  lumiScale_ = preLumiScale_;
   if(njets50) {nbins=4; low=2.5; high=6.5;}
   else{        nbins=5; low=2.5; high=7.5;}
   selection_ = base && LSB && util && failmdpn && antitag;
@@ -7579,7 +7579,7 @@ void studybtagLSB(TString btagselection="ge1b", const int mode=1){
   TCut LSBmet = "MET>=50 && MET<100";
 
   double holdLumiScale = lumiScale_;
-  lumiScale_ = 30.15471; 
+  lumiScale_ = preLumiScale_;
   
   setPlotMaximum(0.5); setPlotMinimum(0);
 
@@ -7628,7 +7628,7 @@ void studyPrescale_r(int ibtag = 4) {
   doRatioPlot(true);
   doData(true);
 
-  lumiScale_ = 30.15471; 
+  lumiScale_ = preLumiScale_;
 
   //TString btagselection="antib";
   //TCut btagcut = "nbjets==0";
@@ -7756,7 +7756,7 @@ void lowMETcount(){
   doData(true);
   drawMCErrors_=true;
   
-  lumiScale_ = 19.23288; //customize lumiScale_
+  lumiScale_ = preLumiScale_;
   
   TString btagselection="antib";
   TCut theBTaggingCut = "nbjets==0";
@@ -7851,7 +7851,7 @@ void studyNjet(int ibtag=3){
   selection_ =TCut("HT>=350 && cutPV==1 && cutEleVeto==1 && cutMuVeto==1 && cutTrigger==1 && MET>=150 && weight<1000")&&theBTaggingCut && failmdp;
   drawPlots("njets",7,2.5,10,"njets","Events", "H_njets_physics_"+btagstring);
   
-  lumiScale_ = 19.23288; //customize lumiScale_
+  lumiScale_ = preLumiScale_;
   selection_ =TCut("HT>=350 && cutPV==1 && cutEleVeto==1 && cutMuVeto==1")&&util&&LSB&&theBTaggingCut&&failmdp;
   drawPlots("njets",7,2.5,10,"njets","Events", "H_njets_prescaled_"+btagstring);
 }
@@ -7866,7 +7866,7 @@ void studyRqcd(int ibtag = 4){
   doRatioPlot(true);
   doData(false);
 
-  lumiScale_ = 19.23288; //customize lumiScale_
+  lumiScale_ = preLumiScale_;
 
   //TString btagselection="antib";
   //TCut btagcut = "nbjets==0";
