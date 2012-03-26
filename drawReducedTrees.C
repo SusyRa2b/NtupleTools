@@ -1492,6 +1492,12 @@ FOR NOW WE ARE IGNORING SL TRIG EFF (<1% effect)
   else if (!datamode && (closureMode=="nominal")) {
     resetSampleScaleFactors();
   }
+  else if (!datamode && (closureMode.BeginsWith("HF"))) {
+    resetSampleScaleFactors();
+  }
+  else if (!datamode && (closureMode.BeginsWith("LF"))) {
+    resetSampleScaleFactors();
+  }
   else if (datamode) {
     resetSampleScaleFactors();
   }
@@ -1521,13 +1527,21 @@ FOR NOW WE ARE IGNORING SL TRIG EFF (<1% effect)
     else if (btagselection=="ge1b")   btagSF_j="probge1";
     else if (btagselection=="ge3b")   btagSF_j="probge3";
     else if (btagselection=="eq1b")    btagSF_j="prob1";
-    else if (btagselection=="eq2b")     btagSF_j="(1-prob1-prob0-probge3)"; //prob2
+    else if (btagselection=="eq2b")     btagSF_j="prob2";
     else {assert(0);}
 
     if (n==1)      btagSF_n="prob1";
-    else if (n==2)      btagSF_n="(1-prob1-prob0-probge3)"; //prob2
+    else if (n==2)      btagSF_n="prob2";
     else if (n==3)       btagSF_n="probge3";
     else {assert(0);}
+
+    if (closureMode.BeginsWith("HF") || closureMode.BeginsWith("LF")) {
+      btagSF_j += "_";
+      btagSF_n += "_";
+      
+      btagSF_j += closureMode;
+      btagSF_n += closureMode;
+    }
   }
   else assert(0);
 
@@ -1677,8 +1691,20 @@ void runShapeClosure() {
 
   vector<TString> closureTestOptions;
   closureTestOptions.push_back("nominal");
-  closureTestOptions.push_back("wtplus");
-  closureTestOptions.push_back("wtminus");
+  //  closureTestOptions.push_back("wtplus");
+  //  closureTestOptions.push_back("wtminus");
+
+  //  closureTestOptions.push_back("HFplus");
+  //  closureTestOptions.push_back("HFminus");
+
+  closureTestOptions.push_back("LFplus");
+  closureTestOptions.push_back("LFminus");
+
+  //not really clear that this logic is right for a big list of uncorrelated closure tests
+  //for instance, we don't really want to vary w-fraction and b-tag SFs and take the worst closure seen....
+  //instead we want to do something like vary them seperately, take the worst closure, and somehow add them together.
+
+  //for now just turn them on one at a time. (by hand)
 
   for (int sigorsb_p=0; sigorsb_p<=1; sigorsb_p++) {
     bool predSIG = (sigorsb_p==0); 
