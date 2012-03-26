@@ -101,8 +101,8 @@ TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35p/";//uncorrected MET
 
 //double lumiScale_ = 1143; //official summer conf lumi
 //double lumiScale_ = 3464.581;//oct25
-double lumiScale_ = 4683.719;//nov4
-  //double lumiScale_ = 4982.91;//final pixel-based 2011 lumi
+  //double lumiScale_ = 4683.719;//nov4
+double lumiScale_ = 4982.91;//final pixel-based 2011 lumi
 
 #include "drawReducedTrees.h"
 
