@@ -1410,7 +1410,7 @@ void drawPlotHeader(double xoffset = 0) {
     //astring.Form("%.0f pb^{-1} at #sqrt{s} = 7 TeV",lumiScale_);
     //astring.Form("%.1f fb^{-1} at #sqrt{s} = 7 TeV",lumiScale_/1000.);
     astring.Form("L_{int} = %.2f fb^{-1}, #sqrt{s} = 7 TeV",lumiScale_/1000.);
-    if(lumiScale_>30. && lumiScale_<31.) astring.Form("L_{int} = %.2f fb^{-1}, #sqrt{s} = 7 TeV", 4683.719/1000.);//hardcoded, but don't know what else to do for this...
+    if(lumiScale_>33. && lumiScale_<34.) astring.Form("L_{int} = %.2f fb^{-1}, #sqrt{s} = 7 TeV", 4982.91/1000.);//hardcoded, but don't know what else to do for this...
     if (text2 != 0 ) delete text2;
     text2 = new TLatex(3.570061,23.08044,astring);
     text2->SetNDC();
@@ -2273,8 +2273,8 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   if (signalEffMode=="") {
     configDescriptions_.setDefault("CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff04_HLTEff0");
     configDescriptions_.setCorrected("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff04_HLTEff0");
-
-    //  configDescriptions_.setDefault("CSVM_PFMETTypeI_PF2PATjets_JES0_JER0_PFMETTypeI_METunc0_PUunc0_BTagEff04_HLTEff0");
+    
+    //configDescriptions_.setDefault("CSVM_PFMETTypeI_PF2PATjets_JES0_JER0_PFMETTypeI_METunc0_PUunc0_BTagEff04_HLTEff0");
     //configDescriptions_.setCorrected("CSVM_PFMETTypeI_PF2PATjets_JES0_JERbias_PFMETTypeI_METunc0_PUunc0_BTagEff04_HLTEff0");
   }
   else if (signalEffMode=="scan" || signalEffMode=="complete") {  //Only for signal systematics
