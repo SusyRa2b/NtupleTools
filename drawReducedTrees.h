@@ -39,20 +39,20 @@ TString selection_ ="cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cut
 
 // for now do this C-style, instead of making a class
 //nominal numbers used for frozen AN etc. SB corresponds to 200-250 GeV
-float eff_SB_MHT_             = 0.841;
-float eff_SB_MHT_err_[2]      = {0.059, 0.090};
-float eff_SB_ldp_MHT_         = 0.936;   
-float eff_SB_ldp_MHT_err_[2]  = {0.034, 0.118};
-float eff_SIG_MHT_            = 0.982; 
-float eff_SIG_MHT_err_[2]     = {0.012, 0.036};
-float eff_SIG_ldp_MHT_        = eff_SIG_MHT_; 
-float eff_SIG_ldp_MHT_err_[2] = {eff_SIG_MHT_err_[0], eff_SIG_MHT_err_[1]}; //due to low stas in SIG-LDP, use the SIG numbers for now.
-float eff_SIG_SL_MHT_         = 0.999; 
-float eff_SIG_SL_MHT_err_[2]  = {0.001, 0.001};
-float eff_SB_1m_MHT_          = 0.996; 
-float eff_SB_1m_MHT_err_[2]   = {0.002, 0.003};
-float eff_SB_1e_MHT_          = 0.996; 
-float eff_SB_1e_MHT_err_[2]   = {0.002, 0.003};
+// float eff_SB_MHT_             = 0.841;
+// float eff_SB_MHT_err_[2]      = {0.059, 0.090};
+// float eff_SB_ldp_MHT_         = 0.936;   
+// float eff_SB_ldp_MHT_err_[2]  = {0.034, 0.118};
+// float eff_SIG_MHT_            = 0.982; 
+// float eff_SIG_MHT_err_[2]     = {0.012, 0.036};
+// float eff_SIG_ldp_MHT_        = eff_SIG_MHT_; 
+// float eff_SIG_ldp_MHT_err_[2] = {eff_SIG_MHT_err_[0], eff_SIG_MHT_err_[1]}; //due to low stats in SIG-LDP, use the SIG numbers for now.
+// float eff_SIG_SL_MHT_         = 0.999; 
+// float eff_SIG_SL_MHT_err_[2]  = {0.001, 0.001};
+// float eff_SB_1m_MHT_          = 0.996; 
+// float eff_SB_1m_MHT_err_[2]   = {0.002, 0.003};
+// float eff_SB_1e_MHT_          = 0.996; 
+// float eff_SB_1e_MHT_err_[2]   = {0.002, 0.003};
 
 //150-200 GeV SB
 // CAREFUL -- if we really move to this region this we have to split e and mu in the SL SB
@@ -69,21 +69,21 @@ float eff_SB_1e_MHT_err_[2]   = {0.002, 0.003};
 // float eff_SB_SL_MHT_          = 0.996;  //not really true but need new numbers
 // float eff_SB_SL_MHT_err_[2]   = {0.002, 0.003};
 
-//150-250 GeV SB (VERY CRUDE averages)
-// float eff_SB_MHT_             = 0.834665;
-// float eff_SB_MHT_err_[2]      = {0.04, 0.04};
-// float eff_SB_ldp_MHT_         = 0.916194;   
-// float eff_SB_ldp_MHT_err_[2]  = {0.04, 0.04};
-// float eff_SIG_MHT_            = 0.982; 
-// float eff_SIG_MHT_err_[2]     = {0.012, 0.036};
-// float eff_SIG_ldp_MHT_        = eff_SIG_MHT_; 
-// float eff_SIG_ldp_MHT_err_[2] = {eff_SIG_MHT_err_[0], eff_SIG_MHT_err_[1]}; //due to low stas in SIG-LDP, use the SIG numbers for now.
-// float eff_SIG_SL_MHT_         = 0.999; 
-// float eff_SIG_SL_MHT_err_[2]  = {0.001, 0.001};
-// float eff_SB_1m_MHT_          = 0.986095 ;
-// float eff_SB_1m_MHT_err_[2]   = {0.004, 0.004};
-// float eff_SB_1e_MHT_          = 0.96; 
-// float eff_SB_1e_MHT_err_[2]   = {0.005, 0.005};
+//150-250 GeV SB (almost FINAL numbers from Don, still averaged using non-final lumi weighting) 
+float eff_SB_MHT_             = 0.852;
+float eff_SB_MHT_err_[2]      = {0.033, 0.044};
+float eff_SB_ldp_MHT_         = 0.912;   
+float eff_SB_ldp_MHT_err_[2]  = {0.023, 0.056};
+float eff_SIG_MHT_            = 0.982; 
+float eff_SIG_MHT_err_[2]     = {0.012, 0.036};
+float eff_SIG_ldp_MHT_        = eff_SIG_MHT_; 
+float eff_SIG_ldp_MHT_err_[2] = {eff_SIG_MHT_err_[0], eff_SIG_MHT_err_[1]}; //due to low stats in SIG-LDP, use the SIG numbers for now.
+float eff_SIG_SL_MHT_         = 0.999; 
+float eff_SIG_SL_MHT_err_[2]  = {0.001, 0.001};
+float eff_SB_1m_MHT_          = 0.990;
+float eff_SB_1m_MHT_err_[2]   = {0.002, 0.002};
+float eff_SB_1e_MHT_          = 0.955; 
+float eff_SB_1e_MHT_err_[2]   = {0.004, 0.004};
 
 void printEff() {
 
@@ -95,14 +95,17 @@ void printEff() {
   cout<<"eff_SB_ldp_MHT_err_plus   "<<eff_SB_ldp_MHT_err_[0]<<endl;
   cout<<"eff_SB_ldp_MHT_err_minus  "<<eff_SB_ldp_MHT_err_[1]<<endl;
 
-  assert(eff_SB_1e_MHT_ == eff_SB_1m_MHT_);
-  cout<<"eff_SB_sl_MHT             "<<eff_SB_1e_MHT_<<endl;
-  cout<<"eff_SB_sl_MHT_err_plus    "<<eff_SB_1e_MHT_err_[0]<<endl;
-  cout<<"eff_SB_sl_MHT_err_minus   "<<eff_SB_1e_MHT_err_[1]<<endl;
+  //assert(eff_SB_1e_MHT_ == eff_SB_1m_MHT_);
+//   cout<<"eff_SB_sl_MHT             "<<eff_SB_1e_MHT_<<endl;
+//   cout<<"eff_SB_sl_MHT_err_plus    "<<eff_SB_1e_MHT_err_[0]<<endl;
+//   cout<<"eff_SB_sl_MHT_err_minus   "<<eff_SB_1e_MHT_err_[1]<<endl;
 
-  //  cout<<"eff_SB_1m_MHT             "<<eff_SB_1m_MHT_<<endl;
-  //  cout<<"eff_SB_1m_MHT_err_plus    "<<eff_SB_1m_MHT_err_[0]<<endl;
-  //  cout<<"eff_SB_1m_MHT_err_minus   "<<eff_SB_1m_MHT_err_[1]<<endl;
+  cout<<"eff_SB_1e_MHT             "<<eff_SB_1e_MHT_<<endl;
+  cout<<"eff_SB_1e_MHT_err_plus    "<<eff_SB_1e_MHT_err_[0]<<endl;
+  cout<<"eff_SB_1e_MHT_err_minus   "<<eff_SB_1e_MHT_err_[1]<<endl;
+  cout<<"eff_SB_1m_MHT             "<<eff_SB_1m_MHT_<<endl;
+  cout<<"eff_SB_1m_MHT_err_plus    "<<eff_SB_1m_MHT_err_[0]<<endl;
+  cout<<"eff_SB_1m_MHT_err_minus   "<<eff_SB_1m_MHT_err_[1]<<endl;
 
   cout<<"eff_SIG_MHT               "<<eff_SIG_MHT_<<endl;
   cout<<"eff_SIG_MHT_err_plus      "<<eff_SIG_MHT_err_[0]<<endl;
@@ -1352,8 +1355,8 @@ void drawPlotHeader(double xoffset = 0) {
     TString astring;
     //astring.Form("%.0f pb^{-1} at #sqrt{s} = 7 TeV",lumiScale_);
     //astring.Form("%.1f fb^{-1} at #sqrt{s} = 7 TeV",lumiScale_/1000.);
-    astring.Form("L_{int} = %.1f fb^{-1}, #sqrt{s} = 7 TeV",lumiScale_/1000.);
-    if(lumiScale_>30. && lumiScale_<31.) astring.Form("L_{int} = %.1f fb^{-1}, #sqrt{s} = 7 TeV", 4683.719/1000.);//hardcoded, but don't know what else to do for this...
+    astring.Form("L_{int} = %.2f fb^{-1}, #sqrt{s} = 7 TeV",lumiScale_/1000.);
+    if(lumiScale_>30. && lumiScale_<31.) astring.Form("L_{int} = %.2f fb^{-1}, #sqrt{s} = 7 TeV", 4683.719/1000.);//hardcoded, but don't know what else to do for this...
     if (text2 != 0 ) delete text2;
     text2 = new TLatex(3.570061,23.08044,astring);
     text2->SetNDC();
@@ -2216,6 +2219,9 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   if (signalEffMode=="") {
     configDescriptions_.setDefault("CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff04_HLTEff0");
     configDescriptions_.setCorrected("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff04_HLTEff0");
+
+    //  configDescriptions_.setDefault("CSVM_PFMETTypeI_PF2PATjets_JES0_JER0_PFMETTypeI_METunc0_PUunc0_BTagEff04_HLTEff0");
+    //configDescriptions_.setCorrected("CSVM_PFMETTypeI_PF2PATjets_JES0_JERbias_PFMETTypeI_METunc0_PUunc0_BTagEff04_HLTEff0");
   }
   else if (signalEffMode=="scan" || signalEffMode=="complete") {  //Only for signal systematics
       
