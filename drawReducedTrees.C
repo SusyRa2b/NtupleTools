@@ -5207,7 +5207,7 @@ void AN2011_r_SLreq(int mode = 3) { //for paper, MC only plots all the way to hi
   const int nvarbins=15;
   const float varbins[]={0,20,40,60,80,100,120,140,160,180,200,250,300,400,500,600}; //15 bins            
 
-  selection_ ="cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 &&passCleaning==1";
+  selection_ ="cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 &&passCleaning==1 && weight<2";
 
   setPlotMaximum(1); setPlotMinimum(0);
   btagSFweight_="prob0";
