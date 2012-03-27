@@ -435,6 +435,8 @@ bool EventCalculator::isGoodMuon(const unsigned int imuon, const bool disableRel
 
 bool EventCalculator::isGoodRecoMuon(const unsigned int imuon, const bool disableRelIso) {
 
+  assert(disableRelIso); //the iso calculation below is completely worthless. it uses PF quantities on RECO muons.
+
   if (myMuonsRECO->at(imuon).pt >= 10
       && fabs(myMuonsRECO->at(imuon).eta)<2.4
       && myMuonsRECO->at(imuon).GlobalMuonPromptTight == 1
@@ -2373,12 +2375,12 @@ float EventCalculator::getRelIsoForIsolationStudyMuon() {
   //return the most isolated reliso of that group
 
   float bestRelIso=1e9;
-
-  for (unsigned int imu=0; imu < myMuonsPF->size(); ++imu) {
-    if ( isGoodMuon(imu,true)) { //true means disable RelIso cut
-      float reliso = (myMuonsPF->at(imu).chargedHadronIso 
-		      + myMuonsPF->at(imu).photonIso 
-		      + myMuonsPF->at(imu).neutralHadronIso)/myMuonsPF->at(imu).pt;
+  for (unsigned int imu=0; imu < myMuonsRECO->size(); ++imu) {
+    if ( isGoodRecoMuon(imu,true)) { //true means disable RelIso cut
+      float reliso = (myMuonsRECO->at(imu).trackIso
+		      + myMuonsRECO->at(imu).ecalIso 
+		      + myMuonsRECO->at(imu).hcalIso)/myMuonsRECO->at(imu).pt;
+      
       if (reliso < bestRelIso) bestRelIso = reliso;
     }
   }
@@ -2459,6 +2461,67 @@ float EventCalculator::muonPhiOfN(unsigned int n, const float ptthreshold) {
   }
   return 0;
 }
+
+float EventCalculator::muonIsoOfN(unsigned int n, const float ptthreshold) {
+
+  unsigned int ngood=0;
+  for (unsigned int i=0; i < myMuonsPF->size(); i++) {
+    if (isCleanMuon(i,ptthreshold)) {
+      ngood++;
+      if (ngood==n) {
+	float reliso = ((myMuonsPF->at(i).chargedHadronIso 
+			 + myMuonsPF->at(i).photonIso 
+			 + myMuonsPF->at(i).neutralHadronIso)/myMuonsPF->at(i).pt);
+	return reliso;
+      }
+    }
+  }
+  return 0;
+}
+
+
+float EventCalculator::muonChHadIsoOfN(unsigned int n, const float ptthreshold) {
+
+  unsigned int ngood=0;
+  for (unsigned int i=0; i < myMuonsPF->size(); i++) {
+    if (isCleanMuon(i,ptthreshold)) {
+      ngood++;
+      if (ngood==n) {
+	return myMuonsPF->at(i).chargedHadronIso /myMuonsPF->at(i).pt;
+      }
+    }
+  }
+  return 0;
+}
+
+float EventCalculator::muonPhotonIsoOfN(unsigned int n, const float ptthreshold) {
+
+  unsigned int ngood=0;
+  for (unsigned int i=0; i < myMuonsPF->size(); i++) {
+    if (isCleanMuon(i,ptthreshold)) {
+      ngood++;
+      if (ngood==n) {
+	return myMuonsPF->at(i).photonIso /myMuonsPF->at(i).pt;
+      }
+    }
+  }
+  return 0;
+}
+
+float EventCalculator::muonNeutralHadIsoOfN(unsigned int n, const float ptthreshold) {
+
+  unsigned int ngood=0;
+  for (unsigned int i=0; i < myMuonsPF->size(); i++) {
+    if (isCleanMuon(i,ptthreshold)) {
+      ngood++;
+      if (ngood==n) {
+	return myMuonsPF->at(i).neutralHadronIso/myMuonsPF->at(i).pt;
+      }
+    }
+  }
+  return 0;
+}
+
 
 float EventCalculator::tauPtOfN(unsigned int n) {
 
@@ -4582,6 +4645,7 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
 
   float eleet1, elephi1, eleeta1, muonpt1, muonphi1, muoneta1;
   float eleet2, elephi2, eleeta2, muonpt2, muonphi2, muoneta2;
+  float muoniso1,muonchhadiso1,muonphotoniso1,muonneutralhadiso1;
   float taupt1, taueta1;
   float eleRelIso,muonRelIso;
 
@@ -5118,6 +5182,10 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("muonpt1",&muonpt1,"muonpt1/F");
   reducedTree.Branch("muonphi1",&muonphi1,"muonphi1/F");
   reducedTree.Branch("muoneta1",&muoneta1,"muoneta1/F");
+  reducedTree.Branch("muoniso1",&muoniso1,"muoniso1/F");
+  reducedTree.Branch("muonchhadiso1",&muonchhadiso1,"muonchhadiso1/F");
+  reducedTree.Branch("muonphotoniso1",&muonphotoniso1,"muonphotoniso1/F");
+  reducedTree.Branch("muonneutralhadiso1",&muonneutralhadiso1,"muonneutralhadiso1/F");
 
   reducedTree.Branch("eleet2",&eleet2,"eleet2/F");
   reducedTree.Branch("elephi2",&elephi2,"elephi2/F");
@@ -5639,6 +5707,10 @@ Also the pdfWeightSum* histograms that are used for LM9.
       muonpt1 = muonPtOfN(1,5);
       muonphi1 = muonPhiOfN(1,5);
       muoneta1 = muonEtaOfN(1,5);
+      muoniso1 = muonIsoOfN(1,5);
+      muonchhadiso1 = muonChHadIsoOfN(1,5);
+      muonphotoniso1 = muonPhotonIsoOfN(1,5);
+      muonneutralhadiso1 = muonNeutralHadIsoOfN(1,5);
 
       eleet2 = elePtOfN(2,5);
       elephi2 = elePhiOfN(2,5);
