@@ -435,6 +435,8 @@ bool EventCalculator::isGoodMuon(const unsigned int imuon, const bool disableRel
 
 bool EventCalculator::isGoodRecoMuon(const unsigned int imuon, const bool disableRelIso) {
 
+  assert(disableRelIso); //the iso calculation below is completely worthless. it uses PF quantities on RECO muons.
+
   if (myMuonsRECO->at(imuon).pt >= 10
       && fabs(myMuonsRECO->at(imuon).eta)<2.4
       && myMuonsRECO->at(imuon).GlobalMuonPromptTight == 1
@@ -2373,12 +2375,12 @@ float EventCalculator::getRelIsoForIsolationStudyMuon() {
   //return the most isolated reliso of that group
 
   float bestRelIso=1e9;
-
-  for (unsigned int imu=0; imu < myMuonsPF->size(); ++imu) {
-    if ( isGoodMuon(imu,true)) { //true means disable RelIso cut
-      float reliso = (myMuonsPF->at(imu).chargedHadronIso 
-		      + myMuonsPF->at(imu).photonIso 
-		      + myMuonsPF->at(imu).neutralHadronIso)/myMuonsPF->at(imu).pt;
+  for (unsigned int imu=0; imu < myMuonsRECO->size(); ++imu) {
+    if ( isGoodRecoMuon(imu,true)) { //true means disable RelIso cut
+      float reliso = (myMuonsRECO->at(imu).trackIso
+		      + myMuonsRECO->at(imu).ecalIso 
+		      + myMuonsRECO->at(imu).hcalIso)/myMuonsRECO->at(imu).pt;
+      
       if (reliso < bestRelIso) bestRelIso = reliso;
     }
   }
@@ -2459,6 +2461,67 @@ float EventCalculator::muonPhiOfN(unsigned int n, const float ptthreshold) {
   }
   return 0;
 }
+
+float EventCalculator::muonIsoOfN(unsigned int n, const float ptthreshold) {
+
+  unsigned int ngood=0;
+  for (unsigned int i=0; i < myMuonsPF->size(); i++) {
+    if (isCleanMuon(i,ptthreshold)) {
+      ngood++;
+      if (ngood==n) {
+	float reliso = ((myMuonsPF->at(i).chargedHadronIso 
+			 + myMuonsPF->at(i).photonIso 
+			 + myMuonsPF->at(i).neutralHadronIso)/myMuonsPF->at(i).pt);
+	return reliso;
+      }
+    }
+  }
+  return 0;
+}
+
+
+float EventCalculator::muonChHadIsoOfN(unsigned int n, const float ptthreshold) {
+
+  unsigned int ngood=0;
+  for (unsigned int i=0; i < myMuonsPF->size(); i++) {
+    if (isCleanMuon(i,ptthreshold)) {
+      ngood++;
+      if (ngood==n) {
+	return myMuonsPF->at(i).chargedHadronIso /myMuonsPF->at(i).pt;
+      }
+    }
+  }
+  return 0;
+}
+
+float EventCalculator::muonPhotonIsoOfN(unsigned int n, const float ptthreshold) {
+
+  unsigned int ngood=0;
+  for (unsigned int i=0; i < myMuonsPF->size(); i++) {
+    if (isCleanMuon(i,ptthreshold)) {
+      ngood++;
+      if (ngood==n) {
+	return myMuonsPF->at(i).photonIso /myMuonsPF->at(i).pt;
+      }
+    }
+  }
+  return 0;
+}
+
+float EventCalculator::muonNeutralHadIsoOfN(unsigned int n, const float ptthreshold) {
+
+  unsigned int ngood=0;
+  for (unsigned int i=0; i < myMuonsPF->size(); i++) {
+    if (isCleanMuon(i,ptthreshold)) {
+      ngood++;
+      if (ngood==n) {
+	return myMuonsPF->at(i).neutralHadronIso/myMuonsPF->at(i).pt;
+      }
+    }
+  }
+  return 0;
+}
+
 
 float EventCalculator::tauPtOfN(unsigned int n) {
 
@@ -4582,6 +4645,7 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
 
   float eleet1, elephi1, eleeta1, muonpt1, muonphi1, muoneta1;
   float eleet2, elephi2, eleeta2, muonpt2, muonphi2, muoneta2;
+  float muoniso1,muonchhadiso1,muonphotoniso1,muonneutralhadiso1;
   float taupt1, taueta1;
   float eleRelIso,muonRelIso;
 
@@ -4629,6 +4693,13 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   bool passBadECAL_METphi53_n5_s12;
   bool passBadECAL_METphi53_crack;
   float worstMisA_badECAL_METphi53_crack, worstMisF_badECAL_METphi53_crack;
+  bool passBadECAL_METphi52_crack;
+  float worstMisA_badECAL_METphi52_crack, worstMisF_badECAL_METphi52_crack;
+  bool passBadECAL_METphi53_crackF;
+  float worstMisA_badECAL_METphi53_crackF, worstMisF_badECAL_METphi53_crackF;
+  bool passBadECAL_METphi52_crackF;
+  float worstMisA_badECAL_METphi52_crackF, worstMisF_badECAL_METphi52_crackF;
+
 
   float prob0,probge1,prob1,probge2,probge3,prob2;
   
@@ -5037,6 +5108,16 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("passBadECAL_METphi53_crack", &passBadECAL_METphi53_crack, "passBadECAL_METphi53_crack/O");
   reducedTree.Branch("worstMisA_badECAL_METphi53_crack",&worstMisA_badECAL_METphi53_crack, "worstMisA_badECAL_METphi53_crack/F");
   reducedTree.Branch("worstMisF_badECAL_METphi53_crack",&worstMisF_badECAL_METphi53_crack, "worstMisF_badECAL_METphi53_crack/F");
+  reducedTree.Branch("passBadECAL_METphi52_crack", &passBadECAL_METphi52_crack, "passBadECAL_METphi52_crack/O");
+  reducedTree.Branch("worstMisA_badECAL_METphi52_crack",&worstMisA_badECAL_METphi52_crack, "worstMisA_badECAL_METphi52_crack/F");
+  reducedTree.Branch("worstMisF_badECAL_METphi52_crack",&worstMisF_badECAL_METphi52_crack, "worstMisF_badECAL_METphi52_crack/F");
+
+  reducedTree.Branch("passBadECAL_METphi53_crackF", &passBadECAL_METphi53_crackF, "passBadECAL_METphi53_crackF/O");
+  reducedTree.Branch("worstMisA_badECAL_METphi53_crackF",&worstMisA_badECAL_METphi53_crackF, "worstMisA_badECAL_METphi53_crackF/F");
+  reducedTree.Branch("worstMisF_badECAL_METphi53_crackF",&worstMisF_badECAL_METphi53_crackF, "worstMisF_badECAL_METphi53_crackF/F");
+  reducedTree.Branch("passBadECAL_METphi52_crackF", &passBadECAL_METphi52_crackF, "passBadECAL_METphi52_crackF/O");
+  reducedTree.Branch("worstMisA_badECAL_METphi52_crackF",&worstMisA_badECAL_METphi52_crackF, "worstMisA_badECAL_METphi52_crackF/F");
+  reducedTree.Branch("worstMisF_badECAL_METphi52_crackF",&worstMisF_badECAL_METphi52_crackF, "worstMisF_badECAL_METphi52_crackF/F");
 
   reducedTree.Branch("jetpt1",&jetpt1,"jetpt1/F");
   reducedTree.Branch("jetgenpt1",&jetgenpt1,"jetgenpt1/F");
@@ -5101,6 +5182,10 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("muonpt1",&muonpt1,"muonpt1/F");
   reducedTree.Branch("muonphi1",&muonphi1,"muonphi1/F");
   reducedTree.Branch("muoneta1",&muoneta1,"muoneta1/F");
+  reducedTree.Branch("muoniso1",&muoniso1,"muoniso1/F");
+  reducedTree.Branch("muonchhadiso1",&muonchhadiso1,"muonchhadiso1/F");
+  reducedTree.Branch("muonphotoniso1",&muonphotoniso1,"muonphotoniso1/F");
+  reducedTree.Branch("muonneutralhadiso1",&muonneutralhadiso1,"muonneutralhadiso1/F");
 
   reducedTree.Branch("eleet2",&eleet2,"eleet2/F");
   reducedTree.Branch("elephi2",&elephi2,"elephi2/F");
@@ -5519,44 +5604,33 @@ Also the pdfWeightSum* histograms that are used for LM9.
       deltaPhiN2_Luke = getDeltaPhiNMET(1);
       deltaPhiN3_Luke = getDeltaPhiNMET(2);
       
-      //currently only set up for QCD MC
-      if (sampleName_.Contains("QCD")) {
-	passBadECAL_METphi53_n10_s12 = passBadECALFilter("METphi",0.5,"deadCell",0.3,10,12);
-	worstMisA_badECAL_METphi53_n10_s12 = passBadECALFilter_worstMis("METphi",0.5,"deadCell",0.3,10,12,"abs");
-	worstMisF_badECAL_METphi53_n10_s12 = passBadECALFilter_worstMis("METphi",0.5,"deadCell",0.3,10,12,"frac");
+      passBadECAL_METphi53_n10_s12 = passBadECALFilter("METphi",0.5,"deadCell",0.3,10,12);
+      worstMisA_badECAL_METphi53_n10_s12 = passBadECALFilter_worstMis("METphi",0.5,"deadCell",0.3,10,12,"abs");
+      worstMisF_badECAL_METphi53_n10_s12 = passBadECALFilter_worstMis("METphi",0.5,"deadCell",0.3,10,12,"frac");
+      
+      passBadECAL_METphi33_n10_s12 = passBadECALFilter("METphi",0.3,"deadCell",0.3,10,12);
+      worstMisA_badECAL_METphi33_n10_s12 = passBadECALFilter_worstMis("METphi",0.3,"deadCell",0.3,10,12,"abs");
+      worstMisF_badECAL_METphi33_n10_s12 = passBadECALFilter_worstMis("METphi",0.3,"deadCell",0.3,10,12,"frac");
+      
+      passBadECAL_METphi52_n10_s12 = passBadECALFilter("METphi",0.5,"deadCell",0.2,10,12);
+      worstMisA_badECAL_METphi52_n10_s12 = passBadECALFilter_worstMis("METphi",0.5,"deadCell",0.2,10,12,"abs");
+      worstMisF_badECAL_METphi52_n10_s12 = passBadECALFilter_worstMis("METphi",0.5,"deadCell",0.2,10,12,"frac");
+      
+      passBadECAL_METphi53_n5_s12 = passBadECALFilter("METphi",0.5,"deadCell",0.3,5,12);
+      passBadECAL_METphi53_crack = passBadECALFilter("METphi",0.5,"crackEBEE",0.3,0,0);
+      worstMisA_badECAL_METphi53_crack = passBadECALFilter_worstMis("METphi",0.5,"crackEBEE",0.3,0,0,"abs");
+      worstMisF_badECAL_METphi53_crack = passBadECALFilter_worstMis("METphi",0.5,"crackEBEE",0.3,0,0,"frac");
+      passBadECAL_METphi52_crack = passBadECALFilter("METphi",0.5,"crackEBEE",0.2,0,0);
+      worstMisA_badECAL_METphi52_crack = passBadECALFilter_worstMis("METphi",0.5,"crackEBEE",0.2,0,0,"abs");
+      worstMisF_badECAL_METphi52_crack = passBadECALFilter_worstMis("METphi",0.5,"crackEBEE",0.2,0,0,"frac");
 
-	passBadECAL_METphi33_n10_s12 = passBadECALFilter("METphi",0.3,"deadCell",0.3,10,12);
-	worstMisA_badECAL_METphi33_n10_s12 = passBadECALFilter_worstMis("METphi",0.3,"deadCell",0.3,10,12,"abs");
-	worstMisF_badECAL_METphi33_n10_s12 = passBadECALFilter_worstMis("METphi",0.3,"deadCell",0.3,10,12,"frac");
-
-	passBadECAL_METphi52_n10_s12 = passBadECALFilter("METphi",0.5,"deadCell",0.2,10,12);
-	worstMisA_badECAL_METphi52_n10_s12 = passBadECALFilter_worstMis("METphi",0.5,"deadCell",0.2,10,12,"abs");
-	worstMisF_badECAL_METphi52_n10_s12 = passBadECALFilter_worstMis("METphi",0.5,"deadCell",0.2,10,12,"frac");
-
-	passBadECAL_METphi53_n5_s12 = passBadECALFilter("METphi",0.5,"deadCell",0.3,5,12);
-	passBadECAL_METphi53_crack = passBadECALFilter("METphi",0.5,"crackEBEE",0.3,0,0);
-	worstMisA_badECAL_METphi53_crack = passBadECALFilter_worstMis("METphi",0.5,"crackEBEE",0.3,0,0,"abs");
-	worstMisF_badECAL_METphi53_crack = passBadECALFilter_worstMis("METphi",0.5,"crackEBEE",0.3,0,0,"frac");
-      }
-      else {
-	passBadECAL_METphi53_n10_s12 = 1;
-	worstMisA_badECAL_METphi53_n10_s12 = -1;
-	worstMisF_badECAL_METphi53_n10_s12 = -1;
-
-	passBadECAL_METphi33_n10_s12 = 1;
-	worstMisA_badECAL_METphi33_n10_s12 = -1;
-	worstMisF_badECAL_METphi33_n10_s12 = -1;
-
-	passBadECAL_METphi52_n10_s12 = 1;
-	worstMisA_badECAL_METphi52_n10_s12 = -1;
-	worstMisF_badECAL_METphi52_n10_s12 = -1;
-
-	passBadECAL_METphi53_n5_s12 = 1;
-	passBadECAL_METphi53_crack = 1;
-	worstMisA_badECAL_METphi53_crack = -1;
-	worstMisF_badECAL_METphi53_crack = -1;
-      }
-
+      passBadECAL_METphi53_crackF = passBadECALFilter("METphi",0.5,"crackEEEF",0.3,0,0);
+      worstMisA_badECAL_METphi53_crackF = passBadECALFilter_worstMis("METphi",0.5,"crackEEEF",0.3,0,0,"abs");
+      worstMisF_badECAL_METphi53_crackF = passBadECALFilter_worstMis("METphi",0.5,"crackEEEF",0.3,0,0,"frac");
+      passBadECAL_METphi52_crackF = passBadECALFilter("METphi",0.5,"crackEEEF",0.2,0,0);
+      worstMisA_badECAL_METphi52_crackF = passBadECALFilter_worstMis("METphi",0.5,"crackEEEF",0.2,0,0,"abs");
+      worstMisF_badECAL_METphi52_crackF = passBadECALFilter_worstMis("METphi",0.5,"crackEEEF",0.2,0,0,"frac");
+      
       minTransverseMETSignificance = getMinTransverseMETSignificance(3);
       maxTransverseMETSignificance = getMaxTransverseMETSignificance(3);
       transverseMETSignificance1 = getTransverseMETSignificance(0);
@@ -5633,6 +5707,10 @@ Also the pdfWeightSum* histograms that are used for LM9.
       muonpt1 = muonPtOfN(1,5);
       muonphi1 = muonPhiOfN(1,5);
       muoneta1 = muonEtaOfN(1,5);
+      muoniso1 = muonIsoOfN(1,5);
+      muonchhadiso1 = muonChHadIsoOfN(1,5);
+      muonphotoniso1 = muonPhotonIsoOfN(1,5);
+      muonneutralhadiso1 = muonNeutralHadIsoOfN(1,5);
 
       eleet2 = elePtOfN(2,5);
       elephi2 = elePhiOfN(2,5);
@@ -7684,7 +7762,8 @@ bool EventCalculator::passBadECALFilter(TString nearmettype, double nearmetphicu
 float EventCalculator::passBadECALFilter_worstMis(TString nearmettype, double nearmetphicut, TString nearecaltype, double nearecalRcut, int nbadcellsthr, int badcellstatusthr, TString mistype) {
   
   float worst = -9e9;//assume undermeasurement!
-  
+  if (isSampleRealData()) return worst;
+
   for (unsigned int i=0; i< myJetsPF->size(); i++) {
     if (getJetPt(i) > 30 && fabs(myJetsPF->at(i).eta) < 5) {
       
@@ -7728,7 +7807,8 @@ bool EventCalculator::jetNearMET(unsigned int i, TString type, double nearmetphi
 bool EventCalculator::jetNearBadECALCell(unsigned int i, TString type, double nearecalRcut, int nbadcellsthr, int badcellstatusthr) {
   
   if(type=="deadCell") {
-    
+    if (!sampleName_.Contains("QCD")) return 0;
+
     double jeteta= myJetsPF->at(i).eta;
     double jetphi= myJetsPF->at(i).phi;
     
@@ -7744,7 +7824,15 @@ bool EventCalculator::jetNearBadECALCell(unsigned int i, TString type, double ne
     
     double jeteta= myJetsPF->at(i).eta;
     
-    if( fabs(fabs(jeteta) - 1.5) <= 0.3 ) return 1;
+    if( fabs(fabs(jeteta) - 1.5) <= nearecalRcut ) return 1;
+    else return 0;
+
+  }
+  else if(type=="crackEEEF") {
+    
+    double jeteta= myJetsPF->at(i).eta;
+    
+    if( fabs(fabs(jeteta) - 3.0) <= nearecalRcut ) return 1;
     else return 0;
 
   }
