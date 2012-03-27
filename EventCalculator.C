@@ -4629,6 +4629,13 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   bool passBadECAL_METphi53_n5_s12;
   bool passBadECAL_METphi53_crack;
   float worstMisA_badECAL_METphi53_crack, worstMisF_badECAL_METphi53_crack;
+  bool passBadECAL_METphi52_crack;
+  float worstMisA_badECAL_METphi52_crack, worstMisF_badECAL_METphi52_crack;
+  bool passBadECAL_METphi53_crackF;
+  float worstMisA_badECAL_METphi53_crackF, worstMisF_badECAL_METphi53_crackF;
+  bool passBadECAL_METphi52_crackF;
+  float worstMisA_badECAL_METphi52_crackF, worstMisF_badECAL_METphi52_crackF;
+
 
   float prob0,probge1,prob1,probge2,probge3,prob2;
   
@@ -5037,6 +5044,16 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("passBadECAL_METphi53_crack", &passBadECAL_METphi53_crack, "passBadECAL_METphi53_crack/O");
   reducedTree.Branch("worstMisA_badECAL_METphi53_crack",&worstMisA_badECAL_METphi53_crack, "worstMisA_badECAL_METphi53_crack/F");
   reducedTree.Branch("worstMisF_badECAL_METphi53_crack",&worstMisF_badECAL_METphi53_crack, "worstMisF_badECAL_METphi53_crack/F");
+  reducedTree.Branch("passBadECAL_METphi52_crack", &passBadECAL_METphi52_crack, "passBadECAL_METphi52_crack/O");
+  reducedTree.Branch("worstMisA_badECAL_METphi52_crack",&worstMisA_badECAL_METphi52_crack, "worstMisA_badECAL_METphi52_crack/F");
+  reducedTree.Branch("worstMisF_badECAL_METphi52_crack",&worstMisF_badECAL_METphi52_crack, "worstMisF_badECAL_METphi52_crack/F");
+
+  reducedTree.Branch("passBadECAL_METphi53_crackF", &passBadECAL_METphi53_crackF, "passBadECAL_METphi53_crackF/O");
+  reducedTree.Branch("worstMisA_badECAL_METphi53_crackF",&worstMisA_badECAL_METphi53_crackF, "worstMisA_badECAL_METphi53_crackF/F");
+  reducedTree.Branch("worstMisF_badECAL_METphi53_crackF",&worstMisF_badECAL_METphi53_crackF, "worstMisF_badECAL_METphi53_crackF/F");
+  reducedTree.Branch("passBadECAL_METphi52_crackF", &passBadECAL_METphi52_crackF, "passBadECAL_METphi52_crackF/O");
+  reducedTree.Branch("worstMisA_badECAL_METphi52_crackF",&worstMisA_badECAL_METphi52_crackF, "worstMisA_badECAL_METphi52_crackF/F");
+  reducedTree.Branch("worstMisF_badECAL_METphi52_crackF",&worstMisF_badECAL_METphi52_crackF, "worstMisF_badECAL_METphi52_crackF/F");
 
   reducedTree.Branch("jetpt1",&jetpt1,"jetpt1/F");
   reducedTree.Branch("jetgenpt1",&jetgenpt1,"jetgenpt1/F");
@@ -5535,6 +5552,16 @@ Also the pdfWeightSum* histograms that are used for LM9.
       passBadECAL_METphi53_crack = passBadECALFilter("METphi",0.5,"crackEBEE",0.3,0,0);
       worstMisA_badECAL_METphi53_crack = passBadECALFilter_worstMis("METphi",0.5,"crackEBEE",0.3,0,0,"abs");
       worstMisF_badECAL_METphi53_crack = passBadECALFilter_worstMis("METphi",0.5,"crackEBEE",0.3,0,0,"frac");
+      passBadECAL_METphi52_crack = passBadECALFilter("METphi",0.5,"crackEBEE",0.2,0,0);
+      worstMisA_badECAL_METphi52_crack = passBadECALFilter_worstMis("METphi",0.5,"crackEBEE",0.2,0,0,"abs");
+      worstMisF_badECAL_METphi52_crack = passBadECALFilter_worstMis("METphi",0.5,"crackEBEE",0.2,0,0,"frac");
+
+      passBadECAL_METphi53_crackF = passBadECALFilter("METphi",0.5,"crackEEEF",0.3,0,0);
+      worstMisA_badECAL_METphi53_crackF = passBadECALFilter_worstMis("METphi",0.5,"crackEEEF",0.3,0,0,"abs");
+      worstMisF_badECAL_METphi53_crackF = passBadECALFilter_worstMis("METphi",0.5,"crackEEEF",0.3,0,0,"frac");
+      passBadECAL_METphi52_crackF = passBadECALFilter("METphi",0.5,"crackEEEF",0.2,0,0);
+      worstMisA_badECAL_METphi52_crackF = passBadECALFilter_worstMis("METphi",0.5,"crackEEEF",0.2,0,0,"abs");
+      worstMisF_badECAL_METphi52_crackF = passBadECALFilter_worstMis("METphi",0.5,"crackEEEF",0.2,0,0,"frac");
       
       minTransverseMETSignificance = getMinTransverseMETSignificance(3);
       maxTransverseMETSignificance = getMaxTransverseMETSignificance(3);
@@ -7725,7 +7752,15 @@ bool EventCalculator::jetNearBadECALCell(unsigned int i, TString type, double ne
     
     double jeteta= myJetsPF->at(i).eta;
     
-    if( fabs(fabs(jeteta) - 1.5) <= 0.3 ) return 1;
+    if( fabs(fabs(jeteta) - 1.5) <= nearecalRcut ) return 1;
+    else return 0;
+
+  }
+  else if(type=="crackEEEF") {
+    
+    double jeteta= myJetsPF->at(i).eta;
+    
+    if( fabs(fabs(jeteta) - 3.0) <= nearecalRcut ) return 1;
     else return 0;
 
   }
