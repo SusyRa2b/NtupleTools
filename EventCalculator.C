@@ -5519,44 +5519,23 @@ Also the pdfWeightSum* histograms that are used for LM9.
       deltaPhiN2_Luke = getDeltaPhiNMET(1);
       deltaPhiN3_Luke = getDeltaPhiNMET(2);
       
-      //currently only set up for QCD MC
-      if (sampleName_.Contains("QCD")) {
-	passBadECAL_METphi53_n10_s12 = passBadECALFilter("METphi",0.5,"deadCell",0.3,10,12);
-	worstMisA_badECAL_METphi53_n10_s12 = passBadECALFilter_worstMis("METphi",0.5,"deadCell",0.3,10,12,"abs");
-	worstMisF_badECAL_METphi53_n10_s12 = passBadECALFilter_worstMis("METphi",0.5,"deadCell",0.3,10,12,"frac");
-
-	passBadECAL_METphi33_n10_s12 = passBadECALFilter("METphi",0.3,"deadCell",0.3,10,12);
-	worstMisA_badECAL_METphi33_n10_s12 = passBadECALFilter_worstMis("METphi",0.3,"deadCell",0.3,10,12,"abs");
-	worstMisF_badECAL_METphi33_n10_s12 = passBadECALFilter_worstMis("METphi",0.3,"deadCell",0.3,10,12,"frac");
-
-	passBadECAL_METphi52_n10_s12 = passBadECALFilter("METphi",0.5,"deadCell",0.2,10,12);
-	worstMisA_badECAL_METphi52_n10_s12 = passBadECALFilter_worstMis("METphi",0.5,"deadCell",0.2,10,12,"abs");
-	worstMisF_badECAL_METphi52_n10_s12 = passBadECALFilter_worstMis("METphi",0.5,"deadCell",0.2,10,12,"frac");
-
-	passBadECAL_METphi53_n5_s12 = passBadECALFilter("METphi",0.5,"deadCell",0.3,5,12);
-	passBadECAL_METphi53_crack = passBadECALFilter("METphi",0.5,"crackEBEE",0.3,0,0);
-	worstMisA_badECAL_METphi53_crack = passBadECALFilter_worstMis("METphi",0.5,"crackEBEE",0.3,0,0,"abs");
-	worstMisF_badECAL_METphi53_crack = passBadECALFilter_worstMis("METphi",0.5,"crackEBEE",0.3,0,0,"frac");
-      }
-      else {
-	passBadECAL_METphi53_n10_s12 = 1;
-	worstMisA_badECAL_METphi53_n10_s12 = -1;
-	worstMisF_badECAL_METphi53_n10_s12 = -1;
-
-	passBadECAL_METphi33_n10_s12 = 1;
-	worstMisA_badECAL_METphi33_n10_s12 = -1;
-	worstMisF_badECAL_METphi33_n10_s12 = -1;
-
-	passBadECAL_METphi52_n10_s12 = 1;
-	worstMisA_badECAL_METphi52_n10_s12 = -1;
-	worstMisF_badECAL_METphi52_n10_s12 = -1;
-
-	passBadECAL_METphi53_n5_s12 = 1;
-	passBadECAL_METphi53_crack = 1;
-	worstMisA_badECAL_METphi53_crack = -1;
-	worstMisF_badECAL_METphi53_crack = -1;
-      }
-
+      passBadECAL_METphi53_n10_s12 = passBadECALFilter("METphi",0.5,"deadCell",0.3,10,12);
+      worstMisA_badECAL_METphi53_n10_s12 = passBadECALFilter_worstMis("METphi",0.5,"deadCell",0.3,10,12,"abs");
+      worstMisF_badECAL_METphi53_n10_s12 = passBadECALFilter_worstMis("METphi",0.5,"deadCell",0.3,10,12,"frac");
+      
+      passBadECAL_METphi33_n10_s12 = passBadECALFilter("METphi",0.3,"deadCell",0.3,10,12);
+      worstMisA_badECAL_METphi33_n10_s12 = passBadECALFilter_worstMis("METphi",0.3,"deadCell",0.3,10,12,"abs");
+      worstMisF_badECAL_METphi33_n10_s12 = passBadECALFilter_worstMis("METphi",0.3,"deadCell",0.3,10,12,"frac");
+      
+      passBadECAL_METphi52_n10_s12 = passBadECALFilter("METphi",0.5,"deadCell",0.2,10,12);
+      worstMisA_badECAL_METphi52_n10_s12 = passBadECALFilter_worstMis("METphi",0.5,"deadCell",0.2,10,12,"abs");
+      worstMisF_badECAL_METphi52_n10_s12 = passBadECALFilter_worstMis("METphi",0.5,"deadCell",0.2,10,12,"frac");
+      
+      passBadECAL_METphi53_n5_s12 = passBadECALFilter("METphi",0.5,"deadCell",0.3,5,12);
+      passBadECAL_METphi53_crack = passBadECALFilter("METphi",0.5,"crackEBEE",0.3,0,0);
+      worstMisA_badECAL_METphi53_crack = passBadECALFilter_worstMis("METphi",0.5,"crackEBEE",0.3,0,0,"abs");
+      worstMisF_badECAL_METphi53_crack = passBadECALFilter_worstMis("METphi",0.5,"crackEBEE",0.3,0,0,"frac");
+      
       minTransverseMETSignificance = getMinTransverseMETSignificance(3);
       maxTransverseMETSignificance = getMaxTransverseMETSignificance(3);
       transverseMETSignificance1 = getTransverseMETSignificance(0);
@@ -7684,7 +7663,8 @@ bool EventCalculator::passBadECALFilter(TString nearmettype, double nearmetphicu
 float EventCalculator::passBadECALFilter_worstMis(TString nearmettype, double nearmetphicut, TString nearecaltype, double nearecalRcut, int nbadcellsthr, int badcellstatusthr, TString mistype) {
   
   float worst = -9e9;//assume undermeasurement!
-  
+  if (isSampleRealData()) return worst;
+
   for (unsigned int i=0; i< myJetsPF->size(); i++) {
     if (getJetPt(i) > 30 && fabs(myJetsPF->at(i).eta) < 5) {
       
@@ -7728,7 +7708,8 @@ bool EventCalculator::jetNearMET(unsigned int i, TString type, double nearmetphi
 bool EventCalculator::jetNearBadECALCell(unsigned int i, TString type, double nearecalRcut, int nbadcellsthr, int badcellstatusthr) {
   
   if(type=="deadCell") {
-    
+    if (!sampleName_.Contains("QCD")) return 0;
+
     double jeteta= myJetsPF->at(i).eta;
     double jetphi= myJetsPF->at(i).phi;
     
