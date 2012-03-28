@@ -669,6 +669,26 @@ bool EventCalculator::passUtilityHLT(int &version, int &prescale) {
   return passTrig;
 }
 
+
+bool EventCalculator::passUtilityPrescaleModuleHLT() {
+  if( !isSampleRealData()) return true; 
+  bool passTrig = false;
+
+  ULong64_t runnumber = getRunNumber();
+  
+  if (runnumber >= 173212 && runnumber <= 176544){
+    passTrig = (triggerresultshelper1_passprescaleHT300Filter > 0);
+  }
+  else if (runnumber >= 176545 && runnumber <= 178410){
+    passTrig = (triggerresultshelper1_passprescaleHT350Filter > 0);
+  }
+  else if (runnumber >= 178411){ 
+    passTrig = (triggerresultshelper1_passprescaleHT350Filter > 0);
+  }
+
+  return passTrig;
+}
+
 unsigned int EventCalculator::utilityHLT_HT300_CentralJet30_BTagIP(){
   if( !isSampleRealData()) return 999; //return a *large* dummy value for MC, so that we can use cuts like >=1
 
@@ -4629,6 +4649,7 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   UInt_t versionUtilityHLT;
   UInt_t pass_utilityHLT_HT300_CentralJet30_BTagIP;
   UInt_t prescale_utilityHLT_HT300_CentralJet30_BTagIP;
+  //bool pass_utilityPrescaleModuleHLT;
 
   int njets, njets30, nbjets, ntruebjets, nElectrons, nMuons, nTaus;
   int nbjetsSSVM,nbjetsTCHET,nbjetsSSVHPT,nbjetsTCHPT,nbjetsTCHPM,nbjetsCSVM,nbjetsCSVL;
@@ -4976,6 +4997,8 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("versionUtilityHLT", &versionUtilityHLT, "versionUtilityHLT/i");
   reducedTree.Branch("pass_utilityHLT_HT300_CentralJet30_BTagIP",&pass_utilityHLT_HT300_CentralJet30_BTagIP,"pass_utilityHLT_HT300_CentralJet30_BTagIP/i");
   reducedTree.Branch("prescale_utilityHLT_HT300_CentralJet30_BTagIP", &prescale_utilityHLT_HT300_CentralJet30_BTagIP, "prescale_utilityHLT_HT300_CentralJet30_BTagIP/i");  
+
+  //reducedTree.Branch("pass_utilityPrescaleModuleHLT",&pass_utilityPrescaleModuleHLT,"pass_utilityPrescaleModuleHLT/O");
 
   reducedTree.Branch("HT",&HT,"HT/F");
   reducedTree.Branch("ST",&ST,"ST/F"); //includes HT + leptons
@@ -5448,6 +5471,8 @@ Also the pdfWeightSum* histograms that are used for LM9.
       pass_utilityHLT_HT300_CentralJet30_BTagIP = utilityHLT_HT300_CentralJet30_BTagIP();
       prescale_utilityHLT_HT300_CentralJet30_BTagIP = 0;
 
+      //pass_utilityPrescaleModuleHLT = passUtilityPrescaleModuleHLT();
+
       nGoodPV = countGoodPV();
 
       SUSY_nb = sampleIsSignal_ ? getSUSYnb() : 0;
@@ -5785,7 +5810,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
       reducedTree.Fill();
       
 
-      } //end of reduced tree skim
+    } //end of reduced tree skim
   } //end of loop over events
   stopTimer(nevents);
 

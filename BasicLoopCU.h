@@ -797,6 +797,8 @@ double	triggerresultshelper1_eenoiseFilter;
 double	triggerresultshelper1_greedymuonFilter;
 double	triggerresultshelper1_hbhenoiseFilter;
 double	triggerresultshelper1_inconsistentmuonFilter;
+double	triggerresultshelper1_passprescaleHT300Filter;
+double	triggerresultshelper1_passprescaleHT350Filter;
 double	triggerresultshelper1_ra2ecaltpFilter;
 double	triggerresultshelper1_recovrechitFilter;
 double	triggerresultshelper1_scrapingvetoFilter;
@@ -1788,6 +1790,8 @@ void selectVariables(itreestream& stream)
   stream.select("edmTriggerResultsHelper_TriggerResults_PAT.greedymuonFilter", triggerresultshelper1_greedymuonFilter);
   stream.select("edmTriggerResultsHelper_TriggerResults_PAT.hbhenoiseFilter", triggerresultshelper1_hbhenoiseFilter);
   stream.select("edmTriggerResultsHelper_TriggerResults_PAT.inconsistentmuonFilter", triggerresultshelper1_inconsistentmuonFilter);
+  stream.select("edmTriggerResultsHelper_TriggerResults_PAT.passprescaleHT300Filter", triggerresultshelper1_passprescaleHT300Filter);
+  stream.select("edmTriggerResultsHelper_TriggerResults_PAT.passprescaleHT350Filter", triggerresultshelper1_passprescaleHT350Filter);
   stream.select("edmTriggerResultsHelper_TriggerResults_PAT.ra2ecaltpFilter", triggerresultshelper1_ra2ecaltpFilter);
   stream.select("edmTriggerResultsHelper_TriggerResults_PAT.recovrechitFilter", triggerresultshelper1_recovrechitFilter);
   stream.select("edmTriggerResultsHelper_TriggerResults_PAT.scrapingvetoFilter", triggerresultshelper1_scrapingvetoFilter);

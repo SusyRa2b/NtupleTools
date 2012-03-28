@@ -130,6 +130,7 @@ public:
   //  bool passBEFilter(); //TODO migrate this code
   bool passHLT();
   bool passUtilityHLT(int &version, int &prescale);
+  bool passUtilityPrescaleModuleHLT();
   unsigned int utilityHLT_HT300_CentralJet30_BTagIP();
   float getHLTHTeff(float offHT);
   float getHLTMHTeff(float offMET, float offHT, uint nElectrons, uint nMuons, double mindphin);
