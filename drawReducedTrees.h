@@ -81,23 +81,66 @@ void setTrigEff(const TString which) {
     eff_SB_1e_MHT_err_[0]   = 0.004;
     eff_SB_1e_MHT_err_[1]   = 0.004;
   }
-  //  else if (which=="LowSB") {
-//150-200 GeV SB
-// CAREFUL -- if we really move to this region this we have to split e and mu in the SL SB
-// float eff_SB_MHT_             = 0.832;
-// float eff_SB_MHT_err_[2]      = {0.042, 0.054};
-// float eff_SB_ldp_MHT_         = 0.91;   
-// float eff_SB_ldp_MHT_err_[2]  = {0.026, 0.059};
-// float eff_SIG_MHT_            = 0.982; 
-// float eff_SIG_MHT_err_[2]     = {0.012, 0.036};
-// float eff_SIG_ldp_MHT_        = eff_SIG_MHT_; 
-// float eff_SIG_ldp_MHT_err_[2] = {eff_SIG_MHT_err_[0], eff_SIG_MHT_err_[1]}; //due to low stas in SIG-LDP, use the SIG numbers for now.
-// float eff_SIG_SL_MHT_         = 0.999; 
-// float eff_SIG_SL_MHT_err_[2]  = {0.001, 0.001};
-// float eff_SB_SL_MHT_          = 0.996;  //not really true but need new numbers
-// float eff_SB_SL_MHT_err_[2]   = {0.002, 0.003};
-//  }
-  else if (which=="NominalSB") {
+  else if (which=="LowSB") {
+    //150-200 GeV SB
+    // CAREFUL -- if we really move to this region this we have to split e and mu in the SL SB
+    eff_SB_MHT_             = 0.832;
+    eff_SB_MHT_err_[0]      = 0.042;
+    eff_SB_MHT_err_[1]      = 0.054;
+    eff_SB_ldp_MHT_         = 0.91;   
+    eff_SB_ldp_MHT_err_[0]  = 0.026;
+    eff_SB_ldp_MHT_err_[1]  = 0.059;
+    eff_SIG_MHT_            = 0.982; 
+    eff_SIG_MHT_err_[0]     = 0.012;
+    eff_SIG_MHT_err_[1]     = 0.036;
+    eff_SIG_ldp_MHT_        = eff_SIG_MHT_; 
+    eff_SIG_ldp_MHT_err_[0] = eff_SIG_MHT_err_[0];
+    eff_SIG_ldp_MHT_err_[1] = eff_SIG_MHT_err_[1];
+    eff_SIG_SL_MHT_         = 0.999; 
+    eff_SIG_SL_MHT_err_[0]  = 0.001;
+    eff_SIG_SL_MHT_err_[1]  = 0.001;
+
+    //bullshit numbers! (copied from wide SB)
+    eff_SB_1m_MHT_          = 0.990;
+    eff_SB_1m_MHT_err_[0]   = 0.002;
+    eff_SB_1m_MHT_err_[1]   = 0.002;
+    eff_SB_1e_MHT_          = 0.955; 
+    eff_SB_1e_MHT_err_[0]   = 0.004;
+    eff_SB_1e_MHT_err_[1]   = 0.004;
+
+    //old numbers?
+//     eff_SB_SL_MHT_          = 0.996;  //not really true but need new numbers
+//     eff_SB_SL_MHT_err_[0]   = 0.002;
+//     eff_SB_SL_MHT_err_[1]   = 0.003;
+  }
+   else if (which=="LowSBSpecialTest1") {
+    //150-200 GeV SB
+    eff_SB_MHT_             = 0.832;
+    eff_SB_MHT_err_[0]      = 0.042;
+    eff_SB_MHT_err_[1]      = 0.054;
+    eff_SB_ldp_MHT_         = 0.91;   
+    eff_SB_ldp_MHT_err_[0]  = 0.026;
+    eff_SB_ldp_MHT_err_[1]  = 0.059;
+    eff_SIG_MHT_            = 0.841;  //use 200-250 SB number
+    eff_SIG_MHT_err_[0]     = 0.059;
+    eff_SIG_MHT_err_[1]     = 0.090;
+    eff_SIG_ldp_MHT_        = 0.936; 
+    eff_SIG_ldp_MHT_err_[0] = 0.034;
+    eff_SIG_ldp_MHT_err_[1] = 0.118;
+    eff_SIG_SL_MHT_         = 0.996; 
+    eff_SIG_SL_MHT_err_[0]  = 0.002;
+    eff_SIG_SL_MHT_err_[1]  = 0.003;
+
+
+    //bullshit numbers! (copied from wide SB)
+    eff_SB_1m_MHT_          = 0.990;
+    eff_SB_1m_MHT_err_[0]   = 0.002;
+    eff_SB_1m_MHT_err_[1]   = 0.002;
+    eff_SB_1e_MHT_          = 0.955; 
+    eff_SB_1e_MHT_err_[0]   = 0.004;
+    eff_SB_1e_MHT_err_[1]   = 0.004;
+  }
+ else if (which=="NominalSB") {
      cout<<"Using efficiencies for 200-250 GeV SB"<<endl;
    //nominal numbers used for frozen AN etc. SB corresponds to 200-250 GeV
     eff_SB_MHT_             = 0.841;
@@ -494,6 +537,12 @@ void setSearchRegions( TString  which="") {
     
     sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=150&&MET<250","LooseWideSB",false));
     searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=250","LooseWideSB")); //3B
+  }
+  else if (which=="SpecialTest1") {
+    setTrigEff("LowSBSpecialTest1"); //set trigger efficiency
+    sbRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=150&&MET<200","LooseLowSB",false));
+    searchRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=210 && MET<230","LooseLowSB")); //1BL
+
   }
   //important note -- i am writing the signal systematics code to _assume_  that the SB region is shared for the shape analysis.
   //so don't try to combine the different sets of HT cuts into one set of regions
@@ -1190,7 +1239,7 @@ float flavorHistoryScaling_=-1;
 bool usePUweight_=false;
 bool useHTeff_ = false;
 bool useMHTeff_ = false;
-enum bnnMHTeffMode {kOff=0, kOn, kOnPlus, kOnMinus, kPlot};
+enum bnnMHTeffMode {kOff=0, kOn, kOnPlus, kOnMinus, kPlot, kPlotPlus, kPlotMinus};
 bnnMHTeffMode thebnnMHTeffMode_ = kOff;
 
 TString btagSFweight_="1";
@@ -1621,6 +1670,12 @@ for legacy purposes I am keeping all of the weight and selection TStrings, altho
   }
   if (thebnnMHTeffMode_==kPlot &&  type!=kData) {
     weightedcut +="*hltMHTeffBNN"; 
+  }
+  if (thebnnMHTeffMode_==kPlotPlus &&  type!=kData) {
+    weightedcut +="*hltMHTeffBNNUp"; 
+  }
+  if (thebnnMHTeffMode_==kPlotMinus &&  type!=kData) {
+    weightedcut +="*hltMHTeffBNNDown"; 
   }
   if (thebnnMHTeffMode_==kOnPlus &&  type==kData) {
     weightedcut +="*(1/hltMHTeffBNNUp)"; 
