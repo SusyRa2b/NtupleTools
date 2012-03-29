@@ -2353,11 +2353,11 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   //FOR PLOTS
   ////////////
   if (signalEffMode=="") {
-    //configDescriptions_.setDefault("CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff04_HLTEff0");
-    //configDescriptions_.setCorrected("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff04_HLTEff0");
+    configDescriptions_.setDefault("CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff04_HLTEff0");
+    configDescriptions_.setCorrected("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff04_HLTEff0");
     
-    configDescriptions_.setDefault("CSVM_PFMETTypeI_PF2PATjets_JES0_JER0_PFMETTypeI_METunc0_PUunc0_BTagEff04_HLTEff0");
-    configDescriptions_.setCorrected("CSVM_PFMETTypeI_PF2PATjets_JES0_JERbias_PFMETTypeI_METunc0_PUunc0_BTagEff04_HLTEff0");
+    //configDescriptions_.setDefault("CSVM_PFMETTypeI_PF2PATjets_JES0_JER0_PFMETTypeI_METunc0_PUunc0_BTagEff04_HLTEff0");
+    //configDescriptions_.setCorrected("CSVM_PFMETTypeI_PF2PATjets_JES0_JERbias_PFMETTypeI_METunc0_PUunc0_BTagEff04_HLTEff0");
   }
   else if (signalEffMode=="scan" || signalEffMode=="complete") {  //Only for signal systematics
       
