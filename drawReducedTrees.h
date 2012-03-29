@@ -113,7 +113,7 @@ void setTrigEff(const TString which) {
 //     eff_SB_SL_MHT_err_[0]   = 0.002;
 //     eff_SB_SL_MHT_err_[1]   = 0.003;
   }
-   else if (which=="LowSBSpecialTest1") {
+  else if (which=="LowSBSpecialTest1") {
     //150-200 GeV SB
     eff_SB_MHT_             = 0.832;
     eff_SB_MHT_err_[0]      = 0.042;
@@ -140,9 +140,9 @@ void setTrigEff(const TString which) {
     eff_SB_1e_MHT_err_[0]   = 0.004;
     eff_SB_1e_MHT_err_[1]   = 0.004;
   }
- else if (which=="NominalSB") {
-     cout<<"Using efficiencies for 200-250 GeV SB"<<endl;
-   //nominal numbers used for frozen AN etc. SB corresponds to 200-250 GeV
+  else if (which=="NominalSB") {
+    cout<<"Using efficiencies for 200-250 GeV SB"<<endl;
+    //nominal numbers used for frozen AN etc. SB corresponds to 200-250 GeV
     eff_SB_MHT_             = 0.841;
     eff_SB_MHT_err_[0]      = 0.059;
     eff_SB_MHT_err_[1]      = 0.090;
@@ -155,6 +155,33 @@ void setTrigEff(const TString which) {
     eff_SIG_ldp_MHT_        = eff_SIG_MHT_; 
     eff_SIG_ldp_MHT_err_[0] = eff_SIG_MHT_err_[0];
     eff_SIG_ldp_MHT_err_[1] = eff_SIG_MHT_err_[1]; //due to low stats in SIG-LDP, use the SIG numbers for now.
+    eff_SIG_SL_MHT_         = 0.999; 
+    eff_SIG_SL_MHT_err_[0]  = 0.001;
+    eff_SIG_SL_MHT_err_[1]  = 0.001;
+    eff_SB_1m_MHT_          = 0.996; 
+    eff_SB_1m_MHT_err_[0]   = 0.002;    
+    eff_SB_1m_MHT_err_[1]   = 0.003;
+    eff_SB_1e_MHT_          = 0.996; 
+    eff_SB_1e_MHT_err_[0]   = 0.002;
+    eff_SB_1e_MHT_err_[1]   = 0.003;
+  }
+  else if (which == "NominalSBTypeI") {
+    //200-250 GeV type I MET
+    cout<<"Using efficiencies for 200-250 GeV SB (Type I MET)"<<endl;
+    eff_SB_MHT_             = 0.857;
+    eff_SB_MHT_err_[0]      = 0.043; //plus
+    eff_SB_MHT_err_[1]      = 0.085; //minus
+    eff_SB_ldp_MHT_         = 0.858;   
+    eff_SB_ldp_MHT_err_[0]  = 0.053;
+    eff_SB_ldp_MHT_err_[1]  = 0.082;
+    eff_SIG_MHT_            = 0.982; 
+    eff_SIG_MHT_err_[0]     = 0.012;
+    eff_SIG_MHT_err_[1]     = 0.036;
+    eff_SIG_ldp_MHT_        = eff_SIG_MHT_; 
+    eff_SIG_ldp_MHT_err_[0] = eff_SIG_MHT_err_[0];
+    eff_SIG_ldp_MHT_err_[1] = eff_SIG_MHT_err_[1]; //due to low stats in SIG-LDP, use the SIG numbers for now.
+    //numbers below here are not done yet
+    cout<<" WARNING ---- SL trig eff not done yet!"<<endl;
     eff_SIG_SL_MHT_         = 0.999; 
     eff_SIG_SL_MHT_err_[0]  = 0.001;
     eff_SIG_SL_MHT_err_[1]  = 0.001;
@@ -764,10 +791,10 @@ SignalEffData::SignalEffData() :
   systematics["PU"] = SystInfo();              
   systematics["JER"] = SystInfo();             
   systematics["kFactor"] = SystInfo();         
-  systematics["cleaning"] = SystInfo(1e-2,1e-2,1);    //ok for now
-  systematics["LepVeto"] = SystInfo(2e-2,2e-2,1);     //ok for now
-  systematics["trigger"] = SystInfo(); //to be set box by box
-  systematics["lumi"] = SystInfo(4.5e-2 , 4.5e-2,1);   //was 6% but lately people seem to be using 4.5% again
+  systematics["cleaning"] = SystInfo(1e-2,1e-2,1);
+  systematics["LepVeto"] = SystInfo(3e-2,3e-2,1); 
+  systematics["trigger"] = SystInfo(); //now going to be done directly in likelihood (at least for MHT leg)
+  systematics["lumi"] = SystInfo(2.2e-2 , 2.2e-2,1);   //final 2011 number is 2.2%
 
   //list of signal systematics:
   //  JES
@@ -2326,11 +2353,11 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   //FOR PLOTS
   ////////////
   if (signalEffMode=="") {
-    configDescriptions_.setDefault("CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff04_HLTEff0");
-    configDescriptions_.setCorrected("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff04_HLTEff0");
+    //configDescriptions_.setDefault("CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff04_HLTEff0");
+    //configDescriptions_.setCorrected("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff04_HLTEff0");
     
-    //configDescriptions_.setDefault("CSVM_PFMETTypeI_PF2PATjets_JES0_JER0_PFMETTypeI_METunc0_PUunc0_BTagEff04_HLTEff0");
-    //configDescriptions_.setCorrected("CSVM_PFMETTypeI_PF2PATjets_JES0_JERbias_PFMETTypeI_METunc0_PUunc0_BTagEff04_HLTEff0");
+    configDescriptions_.setDefault("CSVM_PFMETTypeI_PF2PATjets_JES0_JER0_PFMETTypeI_METunc0_PUunc0_BTagEff04_HLTEff0");
+    configDescriptions_.setCorrected("CSVM_PFMETTypeI_PF2PATjets_JES0_JERbias_PFMETTypeI_METunc0_PUunc0_BTagEff04_HLTEff0");
   }
   else if (signalEffMode=="scan" || signalEffMode=="complete") {  //Only for signal systematics
       
@@ -4174,19 +4201,22 @@ void getCutStringForCutflow(vector<TString> &vectorOfCuts, vector<TString> &stag
   TString selectionEq1bLoose;
   TString selectionEq2bLoose;
   TString selectionGe3bLoose;  
-  //TString selectionGe1bLoose;
-  //TString selectionGe2bLoose;
+  TString selectionGe1bLoose;
+  TString selectionGe2bLoose;
   TString selectionEq1bTightHT;
   TString selectionEq2bTightHT;  
   TString selectionGe3bTightHT;  
-  //TString selectionGe1bTightHT;
-  //TString selectionGe2bTightHT;  
+  TString selectionGe1bTightHT;
+  TString selectionGe2bTightHT;  
   TString selectionEq1bTightMET;
   TString selectionEq2bTightMET;  
   TString selectionGe3bTightMET;  
-  //TString selectionGe1bTightMET;
-  //TString selectionGe2bTightMET;  
-  
+  TString selectionGe1bTightMET;
+  TString selectionGe2bTightMET;  
+
+  TString selectionGe1bTight;
+  TString selectionGe2bTight;  
+
   //inclusive
   thisSelection="";
   cut=getCutString(kMC,thisSelection);
@@ -4284,15 +4314,17 @@ void getCutStringForCutflow(vector<TString> &vectorOfCuts, vector<TString> &stag
 
   //loose selection
   ////>= 1 b
-  //selectionGe1bLoose=selectionPreB;
-  //if (btagSF) btagSFweight_="probge1";
-  //else selectionGe1bLoose += " && nbjetsCSVM>=1";
-  //cut=getCutString(kMC,selectionGe1bLoose);
-  //vectorOfCuts.push_back(cut);
-  //if (latexMode_) stageCut.push_back("HT$\\ge$400, \\MET$\\ge$250, $\\ge$1 b");
-  //else stageCut.push_back("HT>=400, MET>=250, >= 1 b");
+  selectionGe1bLoose=selectionPreB;
+  if (btagSF) btagSFweight_="probge1";
+  else selectionGe1bLoose += " && nbjetsCSVM>=1";
+  cut=getCutString(kMC,selectionGe1bLoose);
+  vectorOfCuts.push_back(cut);
+  if (latexMode_) stageCut.push_back("HT$\\ge$400, \\MET$\\ge$250, $\\ge$1 b");
+  else stageCut.push_back("HT>=400, MET>=250, >= 1 b");
+
 
   //==1b
+/* shape
   selectionEq1bLoose=selectionPreB; 
   if (btagSF) btagSFweight_="prob1";
   else selectionEq1bLoose +=" && nbjetsCSVM==1";
@@ -4300,17 +4332,19 @@ void getCutStringForCutflow(vector<TString> &vectorOfCuts, vector<TString> &stag
   vectorOfCuts.push_back(cut);
   if (latexMode_) stageCut.push_back("HT$\\ge$400, \\MET$\\ge$250, $==$1 b");
   else stageCut.push_back("HT>=400, MET>=250, == 1 b");
+*/
 
   ////>= 2 b
-  //selectionGe2bLoose=selectionPreB; 
-  //if (btagSF) btagSFweight_="probge2";
-  //else selectionGe2bLoose += " && nbjetsCSVM>=2";
-  //cut=getCutString(kMC,selectionGe2bLoose);
-  //vectorOfCuts.push_back(cut);
-  //if (latexMode_) stageCut.push_back("HT$\\ge$400, \\MET$\\ge$250, $\\ge$2 b");
-  //else stageCut.push_back("HT>=400, MET>=250, >= 2 b");
+  selectionGe2bLoose=selectionPreB; 
+  if (btagSF) btagSFweight_="probge2";
+  else selectionGe2bLoose += " && nbjetsCSVM>=2";
+  cut=getCutString(kMC,selectionGe2bLoose);
+  vectorOfCuts.push_back(cut);
+  if (latexMode_) stageCut.push_back("HT$\\ge$400, \\MET$\\ge$250, $\\ge$2 b");
+  else stageCut.push_back("HT>=400, MET>=250, >= 2 b");
 
   //== 2 b
+  /* shape
   selectionEq2bLoose=selectionPreB; 
   if (btagSF) btagSFweight_="(1-prob1-prob0-probge3)";
   else selectionEq2bLoose += " && nbjetsCSVM==2";
@@ -4318,6 +4352,7 @@ void getCutStringForCutflow(vector<TString> &vectorOfCuts, vector<TString> &stag
   vectorOfCuts.push_back(cut);
   if (latexMode_) stageCut.push_back("HT$\\ge$400, \\MET$\\ge$250, $==$2 b");
   else stageCut.push_back("HT>=400, MET>=250, == 2 b");
+*/
 
   //>= 3 b
   selectionGe3bLoose=selectionPreB; 
@@ -4334,25 +4369,26 @@ void getCutStringForCutflow(vector<TString> &vectorOfCuts, vector<TString> &stag
 
     ////OLD 1BT and 2BT cuts
     ////>=1 b
-    //selectionGe1bTight=selectionPreB; 
-    //if (btagSF) {btagSFweight_="probge1"; selectionGe1bTight += " && HT>=500 && MET>=500";}
-    //else selectionGe1bTight += " && nbjetsCSVM>=1 && HT>=500 && MET>=500"; //hard-coded!
-    //cut=getCutString(kMC,selectionGe1bTight);
-    //vectorOfCuts.push_back(cut);
-    //if (latexMode_) stageCut.push_back("HT$\\ge$500, \\MET$\\ge$500, $\\ge$1 b");
-    //else stageCut.push_back("HT>=500, MET>=500, >= 1 b");
+    selectionGe1bTight=selectionPreB; 
+    if (btagSF) {btagSFweight_="probge1"; selectionGe1bTight += " && HT>=500 && MET>=500";}
+    else selectionGe1bTight += " && nbjetsCSVM>=1 && HT>=500 && MET>=500"; //hard-coded!
+    cut=getCutString(kMC,selectionGe1bTight);
+    vectorOfCuts.push_back(cut);
+    if (latexMode_) stageCut.push_back("HT$\\ge$500, \\MET$\\ge$500, $\\ge$1 b");
+    else stageCut.push_back("HT>=500, MET>=500, >= 1 b");
     ////>=2 b
-    //selectionGe1bTight=selectionPreB;
-    //if (btagSF) {btagSFweight_="probge2"; selectionGe1bTight += " && HT>=600 && MET>=300";}
-    //else selectionGe1bTight += " && nbjetsCSVM>=2 && HT>=600 && MET>=300"; //hard-coded!
-    //cut=getCutString(kMC,selectionGe1bTight);
-    //vectorOfCuts.push_back(cut);
-    //if (latexMode_) stageCut.push_back("HT$\\ge$600, \\MET$\\ge$300, $\\ge$2 b");
-    //else stageCut.push_back("HT>=600, MET>=300, >= 2 b");  
+    selectionGe1bTight=selectionPreB;
+    if (btagSF) {btagSFweight_="probge2"; selectionGe1bTight += " && HT>=600 && MET>=300";}
+    else selectionGe1bTight += " && nbjetsCSVM>=2 && HT>=600 && MET>=300"; //hard-coded!
+    cut=getCutString(kMC,selectionGe1bTight);
+    vectorOfCuts.push_back(cut);
+    if (latexMode_) stageCut.push_back("HT$\\ge$600, \\MET$\\ge$300, $\\ge$2 b");
+    else stageCut.push_back("HT>=600, MET>=300, >= 2 b");  
 
     //TIGHT MET
     //==1 b
-    selectionEq1bTightMET=selectionPreB; 
+/*  shape
+   selectionEq1bTightMET=selectionPreB; 
     if (btagSF) {btagSFweight_="prob1"; selectionEq1bTightMET += " && HT>=500 && MET>=500";}
     else selectionEq1bTightMET += " && nbjetsCSVM==1 && HT>=500 && MET>=500"; //hard-coded!
     cut=getCutString(kMC,selectionEq1bTightMET);
@@ -4401,7 +4437,7 @@ void getCutStringForCutflow(vector<TString> &vectorOfCuts, vector<TString> &stag
     vectorOfCuts.push_back(cut);
     if (latexMode_) stageCut.push_back("HT$\\ge$600, \\MET$\\ge$300, $\\ge$3 b");
     else stageCut.push_back("HT>=600, MET>=300, >= 3 b");
-        
+     */   
   }
   
   //  //check output
