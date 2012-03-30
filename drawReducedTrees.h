@@ -33,6 +33,7 @@ TH2D* hdata2d=0;
 
 TString currentConfig_;
 TH2D* scanSMSngen=0;
+TH1D* referenceCrossSectionGluino=0;
 
 //default selection
 TString selection_ ="cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1";
@@ -1409,6 +1410,19 @@ void loadScanSMSngen(const TString& sampleOfInterest) {
   if (scanSMSngen==0) scanSMSngen = (TH2D*) files_[currentConfig_][sampleOfInterest]->Get("scanSMSngen");
 }
 
+void loadReferenceCrossSections() {
+  if (referenceCrossSectionGluino==0) {
+    cout<<"Loading reference cross section file"<<endl;
+    TFile fxs("dalfonso_T1bbbb_reference_xSec.root");
+    if (fxs.IsZombie()) {cout<<"Problem with cross section file!"<<endl; assert(0);}
+    TH1D* hxs = (TH1D*) fxs.Get("gluino");
+    gROOT->cd();
+    referenceCrossSectionGluino = (TH1D*) hxs->Clone("referenceCrossSectionGluino");
+    fxs.Close();
+  }
+
+}
+
 //m0, m12            //pdf set
 map<pair<int,int>, map<TString, TH2D*> >  scanProcessTotalsMap;
 void loadSusyScanHistograms() {
@@ -1648,8 +1662,8 @@ for legacy purposes I am keeping all of the weight and selection TStrings, altho
   //for now treat sms point just like smsplane
 
   if (type==kData)    lumiscale=1;
-  else if (type==kMC || type==kmSugraPoint || type==kmSugraPlane ) lumiscale=lumiScale_;
-  else if (type==kSMSPlane||type==kSMSPoint) lumiscale=1;
+  else if (type==kMC || type==kmSugraPoint || type==kmSugraPlane ||type==kSMSPoint) lumiscale=lumiScale_;
+  else if (type==kSMSPlane) lumiscale=1;
   else {assert(0);}
 
   TString weightedcut="weight"; 
@@ -1789,14 +1803,16 @@ for legacy purposes I am keeping all of the weight and selection TStrings, altho
     weightedcut += thisweight;
   }
   else if (type == kSMSPoint) {
-    //need to weight with the standard sigma / N
-    //sigma should be stored in the scanCrossSection field. N needs to be pulled out of the histogram
-    //not too important so implement later
-
-    //forget cross section and just return without weight
-
-    //    cout<<"not implemented yet!"<<endl;
-    //    assert(0);
+    //need to weight with the standard sigma / N ; lumi factor is done above
+    assert(scanSMSngen!=0);
+    int bin=  scanSMSngen->FindBin(m0_,m12_);
+    double ngen=scanSMSngen->GetBinContent(bin);
+    loadReferenceCrossSections();
+    int xsbin=    referenceCrossSectionGluino->FindBin(m0_);
+    double xs = referenceCrossSectionGluino->GetBinContent(xsbin);
+    char xsweight[100];
+    sprintf(xsweight,"*(%f/%f)",xs,ngen);
+    weightedcut += xsweight;
   }
   else if (type == kmSugraPlane && susySubProcess<0) { //sanity check
     cout<<"You need to specify the susySubProcess!"<<endl; assert(0);
