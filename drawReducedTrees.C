@@ -5503,6 +5503,42 @@ void AN2011_excess() {
 
 }
 
+void drawT1bbbb() {
+
+
+  loadSamples();
+  setSearchRegions("MoriondWideSB");
+
+  usePUweight_=true;
+
+  useHTeff_=true;
+  useMHTeff_=false;    
+  thebnnMHTeffMode_ =kPlot;
+
+  currentConfig_=configDescriptions_.getCorrected(); //JER bias
+  
+  int nbins;
+  float low,high;
+  TString var,xtitle;
+  
+  doOverflowAddition(true);
+  removeSample("LM9");
+  addSample("T1bbbb");
+  loadScanSMSngen("T1bbbb");
+
+  //3B signal region
+  selection_ = "cutTrigger==1 && cutPV==1 && njets>=3 && HT>=400 && MET>=250 && minDeltaPhiN>=4 && nElectrons==0 && nMuons==0 && passCleaning==1";
+  btagSFweight_="probge3";
+
+  nbins=20;  low=250; high=500;
+  var="MET"; xtitle=var;
+  m0_=700; m12_=100;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "T1bbbbTEST");
+
+
+
+}
+
 
 void DSchecks_2jtau() {
 
