@@ -5149,20 +5149,24 @@ void AN2011_r(TString btagselection="ge1b", const int mode=1) { //for paper, dat
   
   lumiScale_ = preLumiScale_;
   resetSamples();
-  setPlotMinimum(0); setPlotMaximum(0.3);
+  setPlotMinimum(0); setPlotMaximum(1);
   leg_x1 = 0.2380496; leg_x2=0.481167; leg_y1=0.5029892; leg_y2=0.9231433;
   
   TCut util = "pass_utilityHLT==1 && weight<2"; //don't use weight<1 when plotting data!
 
+  setPlotMinimum(0); setPlotMaximum(.7);
   selection_ =TCut("HT>=400 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && passCleaning==1")&&util&&btagcut;
   drawR("minDeltaPhiN",4,15,0,150,"Data_HT400_"+btagselection+modestring);
-  
+
+  setPlotMinimum(0); setPlotMaximum(.5);
   selection_ =TCut("HT>=500 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && passCleaning==1")&&util&&btagcut;
   drawR("minDeltaPhiN",4,15,0,150,"Data_HT500_"+btagselection+modestring); 
 
+  setPlotMinimum(0); setPlotMaximum(.3);
   selection_ =TCut("HT>=600 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && passCleaning==1")&&util&&btagcut;
-  drawR("minDeltaPhiN",4,15,0,150,"Data_HT600_"+btagselection+modestring); 
+  drawR("minDeltaPhiN",4,14,0,140,"Data_HT600_"+btagselection+modestring); //only go up to 140 to ensure >10 events in pass and fail 
 
+  return;
 }
 
 
@@ -5205,13 +5209,15 @@ void AN2011_r_SLreq(int mode = 3) { //for paper, MC only plots all the way to hi
   //////////////////////////////////////////////////////////////////////////////////////////////////////////
   
   const int nvarbins=15;
-  const float varbins[]={0,20,40,60,80,100,120,140,160,180,200,250,300,400,500,600}; //15 bins            
+  const float varbins[]={0,20,40,60,80,100,120,140,160,180,200,250,300,400,500,600}; //15 bins
+  //const float varbins[]={0,10,20,30,40,50,60,70,80,90,100,110,120,130,140,150}; //15 bins            
 
   selection_ ="cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 &&passCleaning==1 && weight<2";
 
   setPlotMaximum(1); setPlotMinimum(0);
   btagSFweight_="prob0";
   drawR("minDeltaPhiN",4, "MET", nvarbins, varbins,"eq0b");
+  return;
 
   btagSFweight_="probge1";
   drawR("minDeltaPhiN",4, "MET", nvarbins, varbins,"ge1b");
