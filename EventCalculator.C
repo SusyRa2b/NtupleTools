@@ -4004,6 +4004,7 @@ double EventCalculator::getHLTMHTeffBNN(float offMET, float offHT, uint nElectro
     stddeveff = sqrt(stddeveff / 99); trigeffserr.push_back(stddeveff);
 
     trigeffs.push_back(HT300MHT90muNew( pfmet ));
+    stddeveff = 0;
     for(uint i = 0; i < 100; ++i){
       effn[i] = HT300MHT90muNew(pfmet, i, i);
       stddeveff += (effn[i] - trigeffs.back())*(effn[i] - trigeffs.back());
