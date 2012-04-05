@@ -433,11 +433,11 @@ bool EventCalculator::isGoodMuon(const unsigned int imuon, const bool disableRel
   return false;
 }
 
-bool EventCalculator::isGoodRecoMuon(const unsigned int imuon, const bool disableRelIso) {
+bool EventCalculator::isGoodRecoMuon(const unsigned int imuon, const bool disableRelIso, const float ptthreshold) {
 
   assert(disableRelIso); //the iso calculation below is completely worthless. it uses PF quantities on RECO muons.
 
-  if (myMuonsRECO->at(imuon).pt >= 10
+  if (myMuonsRECO->at(imuon).pt >= ptthreshold
       && fabs(myMuonsRECO->at(imuon).eta)<2.4
       && myMuonsRECO->at(imuon).GlobalMuonPromptTight == 1
       && myMuonsRECO->at(imuon).isTrackerMuon == 1 
@@ -1814,7 +1814,7 @@ double EventCalculator::getMinDeltaPhiMETMuons(unsigned int maxmuons) {
   //get the minimum angle between the first n muons and MET
   for (unsigned int i=0; i< myMuonsRECO->size(); i++) {
     
-    if (isGoodRecoMuon(i,true)) {//disable iso
+    if (isGoodRecoMuon(i,true,10)) {//disable iso
       ++ngood;
       double dp =  getDeltaPhi( myMuonsRECO->at(i).phi , getMETphi());
       if (dp<mindp) mindp=dp;
@@ -2396,7 +2396,7 @@ float EventCalculator::getRelIsoForIsolationStudyMuon() {
 
   float bestRelIso=1e9;
   for (unsigned int imu=0; imu < myMuonsRECO->size(); ++imu) {
-    if ( isGoodRecoMuon(imu,true)) { //true means disable RelIso cut
+    if ( isGoodRecoMuon(imu,true,10)) { //true means disable RelIso cut
       float reliso = (myMuonsRECO->at(imu).trackIso
 		      + myMuonsRECO->at(imu).ecalIso 
 		      + myMuonsRECO->at(imu).hcalIso)/myMuonsRECO->at(imu).pt;
@@ -2540,6 +2540,99 @@ float EventCalculator::muonNeutralHadIsoOfN(unsigned int n, const float ptthresh
     }
   }
   return 0;
+}
+
+
+float EventCalculator::recoMuonPtOfN(unsigned int n, const float ptthreshold) {
+
+  unsigned int ngood=0;
+  for (unsigned int imu=0; imu < myMuonsRECO->size(); ++imu) {
+    if ( isGoodRecoMuon(imu,true,ptthreshold)) { //true means disable RelIso cut
+      ngood++;
+      if (ngood==n) {
+	return myMuonsRECO->at(imu).pt;
+      }
+    }
+  }
+  return 0;
+}
+
+float EventCalculator::recoMuonEtaOfN(unsigned int n, const float ptthreshold) {
+
+  unsigned int ngood=0;
+  for (unsigned int imu=0; imu < myMuonsRECO->size(); ++imu) {
+    if ( isGoodRecoMuon(imu,true,ptthreshold)) { //true means disable RelIso cut
+      ngood++;
+      if (ngood==n) {
+	return myMuonsRECO->at(imu).eta;;
+      }
+    }
+  }
+  return 0;
+}
+
+
+float EventCalculator::recoMuonPhiOfN(unsigned int n, const float ptthreshold) {
+
+  unsigned int ngood=0;
+  for (unsigned int imu=0; imu < myMuonsRECO->size(); ++imu) {
+    if ( isGoodRecoMuon(imu,true,ptthreshold)) { //true means disable RelIso cut
+      ngood++;
+      if (ngood==n) {
+	return myMuonsRECO->at(imu).phi;;
+      }
+    }
+  }
+  return 0;
+}
+
+float EventCalculator::recoMuonIsoOfN(unsigned int n, const float ptthreshold) {
+
+  unsigned int ngood=0;
+  for (unsigned int imu=0; imu < myMuonsRECO->size(); ++imu) {
+    if ( isGoodRecoMuon(imu,true,ptthreshold)) { //true means disable RelIso cut
+      ngood++;
+      if (ngood==n) {
+
+      float reliso = (myMuonsRECO->at(imu).trackIso
+		      + myMuonsRECO->at(imu).ecalIso 
+		      + myMuonsRECO->at(imu).hcalIso)/myMuonsRECO->at(imu).pt;
+
+	return reliso;
+      }
+    }
+  }
+  return 0;
+}
+
+//i want to know if this reco muon is nearby a jet
+float EventCalculator::recoMuonMinDeltaPhiJetOfN(unsigned int n, const float ptthreshold) {
+
+  float mindp=99;
+
+  unsigned int ngood=0;
+
+  for (unsigned int i=0; i< myMuonsRECO->size(); i++) {
+    
+    if (isGoodRecoMuon(i,true,ptthreshold)) {//disable iso
+      ++ngood;
+      if(ngood==n){
+
+	//get the minimum angle between the this muon and all the good jets
+	for (unsigned int ijet=0; ijet<myJetsPF->size(); ijet++) {
+	  if (isGoodJet( ijet ) ){
+	    
+	    float dp =  getDeltaPhi( myMuonsRECO->at(i).phi , myJetsPF->at(ijet).phi);
+	    if (dp<mindp) mindp=dp;
+
+	  }
+	}
+	return mindp;
+      }
+    }
+  }
+  
+  return mindp;
 }
 
 
@@ -4670,6 +4763,12 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   float taupt1, taueta1;
   float eleRelIso,muonRelIso;
 
+  float recomuonpt1, recomuonphi1, recomuoneta1;
+  float recomuonpt2, recomuonphi2, recomuoneta2;
+  float recomuoniso1, recomuoniso2;
+  float recomuonmindphijet1, recomuonmindphijet2;
+
+
   float MT_Wlep;
   float MT_Wlep5,MT_Wlep15;
   float wMass, topMass, wCosHel, topCosHel;
@@ -5223,6 +5322,20 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("eleRelIso",&eleRelIso,"eleRelIso/F");
   reducedTree.Branch("muonRelIso",&muonRelIso,"muonRelIso/F");
 
+
+  reducedTree.Branch("recomuonpt1",&recomuonpt1,"recomuonpt1/F");
+  reducedTree.Branch("recomuonphi1",&recomuonphi1,"recomuonphi1/F");
+  reducedTree.Branch("recomuoneta1",&recomuoneta1,"recomuoneta1/F");
+  reducedTree.Branch("recomuoniso1",&recomuoniso1,"recomuoniso1/F");
+  reducedTree.Branch("recomuonmindphijet1",&recomuonmindphijet1,"recomuonmindphijet1/F");
+
+  reducedTree.Branch("recomuonpt2",&recomuonpt2,"recomuonpt2/F");
+  reducedTree.Branch("recomuonphi2",&recomuonphi2,"recomuonphi2/F");
+  reducedTree.Branch("recomuoneta2",&recomuoneta2,"recomuoneta2/F");
+  reducedTree.Branch("recomuoniso2",&recomuoniso2,"recomuoniso2/F");
+  reducedTree.Branch("recomuonmindphijet2",&recomuonmindphijet1,"recomuonmindphijet2/F");
+
+
 /*
   reducedTree.Branch("lambda1_allJets",&lambda1_allJets,"lambda1_allJets/F");
   reducedTree.Branch("lambda2_allJets",&lambda2_allJets,"lambda2_allJets/F");
@@ -5750,6 +5863,20 @@ Also the pdfWeightSum* histograms that are used for LM9.
       //i'm giving these awkward names on purpose, so that they won't be used without understanding what they do
       eleRelIso = getRelIsoForIsolationStudyEle();
       muonRelIso = getRelIsoForIsolationStudyMuon();
+
+
+      recomuonpt1  = recoMuonPtOfN(1,5);
+      recomuonphi1 = recoMuonPhiOfN(1,5);
+      recomuoneta1 = recoMuonEtaOfN(1,5);
+      recomuoniso1 = recoMuonIsoOfN(1,5);
+      recomuonmindphijet1 = recoMuonMinDeltaPhiJetOfN(1,5);
+
+      recomuonpt2  = recoMuonPtOfN(2,5);
+      recomuonphi2 = recoMuonPhiOfN(2,5);
+      recomuoneta2 = recoMuonEtaOfN(2,5);
+      recomuoniso2 = recoMuonIsoOfN(2,5);
+      recomuonmindphijet2 = recoMuonMinDeltaPhiJetOfN(2,5);
+
 
       csctighthaloFilter = jmt::doubleToBool(triggerresultshelper1_csctighthaloFilter);
       eenoiseFilter = jmt::doubleToBool(triggerresultshelper1_eenoiseFilter) ;

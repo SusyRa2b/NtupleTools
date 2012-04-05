@@ -117,7 +117,7 @@ public:
   float getPUWeight(Lumi3DReWeighting lumiWeights);
 
   bool isGoodMuon(const unsigned int imuon, const bool disableRelIso=false, const float ptthreshold=10);
-  bool isGoodRecoMuon(const unsigned int imuon, const bool disableRelIso=false);
+  bool isGoodRecoMuon(const unsigned int imuon, const bool disableRelIso=false, const float ptthreshold=10);
   bool isGoodElectron(const unsigned int iele, const bool disableRelIso=false, const float ptthreshold=10);
   unsigned int countEle(const float ptthreshold=10) ;
   bool isCleanMuon(const unsigned int imuon, const float ptthreshold=10);
@@ -275,6 +275,12 @@ public:
 
   float tauPtOfN(unsigned int n);
   float tauEtaOfN(unsigned int n);
+
+  float recoMuonPtOfN(unsigned int n, const float ptthreshold=10);
+  float recoMuonEtaOfN(unsigned int n, const float ptthreshold=10);
+  float recoMuonPhiOfN(unsigned int n, const float ptthreshold=10);
+  float recoMuonIsoOfN(unsigned int n, const float ptthreshold=10);
+  float recoMuonMinDeltaPhiJetOfN(unsigned int n, const float ptthreshold=10);
 
   float getRelIsoForIsolationStudyEle();
   float getRelIsoForIsolationStudyMuon();
