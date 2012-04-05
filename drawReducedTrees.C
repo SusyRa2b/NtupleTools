@@ -65,10 +65,10 @@ in order to get one file per sample.
 //*** AFTER SUMMER
 //***************************
 
-  //  TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35q/Fall11/"; //Type 1 MET
-  //  TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35q/"; //Type 1 MET
-TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35p/Fall11/"; //uncorrected MET
-TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35p/";//uncorrected MET
+//  TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35q/Fall11/"; //Type 1 MET
+//  TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35q/"; //Type 1 MET
+TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35s/Fall11/"; //uncorrected MET
+TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35s/";//uncorrected MET
 
 //-- reducedTrees for Oct 25 SUSY meeting. 3464.581/pb. 
 //TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35a/";
@@ -102,7 +102,7 @@ TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35p/";//uncorrected MET
 //double lumiScale_ = 1143; //official summer conf lumi
 //double lumiScale_ = 3464.581;//oct25
   //double lumiScale_ = 4683.719;//nov4
-double lumiScale_ = 4982.91;//final pixel-based 2011 lumi
+double lumiScale_ = 4982;//final pixel-based 2011 lumi
 double preLumiScale_ = 33.6589;//final pixel-based 2011 lumi for HT only triggers
 
 #include "drawReducedTrees.h"
@@ -8543,7 +8543,10 @@ void drawTrigEff() {
 
   //output file 
   //TString histfilename = "mhteff_dec4.root";
-  TString histfilename = "mhteff_dec8_eq0b.root";
+  //TString histfilename = "mhteff_dec8_eq0b.root";
+  //TString histfilename = "hteff_mar27_eq0b.root";
+  //TString histfilename = "hteff_mar27_eq0b_small.root";
+  TString histfilename = "hteff_badevents.root";
   //TString histfilename = "mhteff_dec8_eq0b_typeIMET.root";
   //TString histfilename = "mhteff_dec8_eq0b_HT500.root";
   //TString histfilename = "mhteff_dec8_eq0b_HT600.root";
@@ -8556,12 +8559,12 @@ void drawTrigEff() {
   //TCut HTcut = "HT>=400";  TCut njetCut = "nbjetsCSVM>=1";    TCut dpcut = "";
   TCut HTcut = "HT>=400";  TCut njetCut = "nbjetsCSVM==0";    TCut dpcut = "";
   //TCut dpcut = "";
-  
+
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
   nbins = 100; low=0; high=1000;
   setLogY(false); resetPlotMinimum();
 
-
+  /*
   /////////////////
   // HT260_MHT60_v2
   /////////////////
@@ -8964,6 +8967,114 @@ void drawTrigEff() {
   selection_ =TCut("cutTrigger==1 && pass_utilityHLT==1  && minDeltaPhiN < 4 && cutEleVeto==1 && cutMuVeto==1 && runNumber>=178411")&&njetCut&&dpcut&&HTcut;
   drawSimple(var,nbins,low,high,histfilename, "MET_ht350mht110v3_NoLepLDP", "data");
 
+  */
+ 
+
+  var="HT"; xtitle="H_{T} [GeV]";
+
+  //selection_ =TCut("pass_utilityPrescaleModuleHLT==1  && runNumber >= 173212 && runNumber <= 176544");
+  //drawSimple(var,nbins,low,high,histfilename, "HT_ht300_den", "data");
+  //selection_ =TCut("pass_utilityPrescaleModuleHLT==1  && pass_utilityHLT==1 && runNumber >= 173212 && runNumber <= 176544");
+  //drawSimple(var,nbins,low,high,histfilename, "HT_ht300", "data");
+  ////
+  //selection_ =TCut("pass_utilityPrescaleModuleHLT==1  && runNumber>=176545");
+  //drawSimple(var,nbins,low,high,histfilename, "HT_ht350_den", "data");
+  //selection_ =TCut("pass_utilityPrescaleModuleHLT==1  && pass_utilityHLT==1 && runNumber>=176545");
+  //drawSimple(var,nbins,low,high,histfilename, "HT_ht350", "data");
+  //
+  //selection_ =TCut("pass_utilityPrescaleModuleHLT==1  && nGoodPV>=1 && nGoodPV<5 && runNumber>=176545");
+  //drawSimple(var,nbins,low,high,histfilename, "HT_ht350_npv1to5_den", "data");
+  //selection_ =TCut("pass_utilityPrescaleModuleHLT==1  && nGoodPV>=1 && nGoodPV<5 && pass_utilityHLT==1 && runNumber>=176545");
+  //drawSimple(var,nbins,low,high,histfilename, "HT_ht350_npv1to5", "data");
+  //
+  //selection_ =TCut("pass_utilityPrescaleModuleHLT==1  && nGoodPV>=5 && nGoodPV<10 && runNumber>=176545");
+  //drawSimple(var,nbins,low,high,histfilename, "HT_ht350_npv5to10_den", "data");
+  //selection_ =TCut("pass_utilityPrescaleModuleHLT==1  && nGoodPV>=5 && nGoodPV<10 && pass_utilityHLT==1 && runNumber>=176545");
+  //drawSimple(var,nbins,low,high,histfilename, "HT_ht350_npv5to10", "data");
+  //
+  //selection_ =TCut("pass_utilityPrescaleModuleHLT==1  && nGoodPV>=10 && runNumber>=176545");
+  //drawSimple(var,nbins,low,high,histfilename, "HT_ht350_npv10_den", "data");
+  //selection_ =TCut("pass_utilityPrescaleModuleHLT==1  && nGoodPV>=10 && pass_utilityHLT==1 && runNumber>=176545");
+  //drawSimple(var,nbins,low,high,histfilename, "HT_ht350_npv10", "data");
+  //
+  //
+  //selection_ =TCut("MET>200  && pass_utilityPrescaleModuleHLT==1  && runNumber >= 173212 && runNumber <= 176544");
+  //drawSimple(var,nbins,low,high,histfilename, "HT_ht300_prescmod_met200cut_den", "data");
+  //selection_ =TCut("MET>200  && pass_utilityPrescaleModuleHLT==1  && pass_utilityHLT==1 && runNumber >= 173212 && runNumber <= 176544");
+  //drawSimple(var,nbins,low,high,histfilename, "HT_ht300_prescmod_met200cut", "data");
+  ////
+  //selection_ =TCut("MET>200  && pass_utilityPrescaleModuleHLT==1  && runNumber>=176545");
+  //drawSimple(var,nbins,low,high,histfilename, "HT_ht350_prescmod_met200cut_den", "data");
+  //selection_ =TCut("MET>200  && pass_utilityPrescaleModuleHLT==1  && pass_utilityHLT==1 && runNumber>=176545");
+  //drawSimple(var,nbins,low,high,histfilename, "HT_ht350_prescmod_met200cut", "data");
+  //
+  //
+  //selection_ =TCut("MET>250  && runNumber >= 173212 && runNumber <= 176544");
+  //drawSimple(var,nbins,low,high,histfilename, "HT_ht300_met250cut_den", "data");
+  //selection_ =TCut("MET>250 && cutTrigger==1 && runNumber >= 173212 && runNumber <= 176544");
+  //drawSimple(var,nbins,low,high,histfilename, "HT_ht300_met250cut", "data");
+  ////
+  //selection_ =TCut("MET>250 && runNumber>=176545");
+  //drawSimple(var,nbins,low,high,histfilename, "HT_ht350_met250cut_den", "data");
+  //selection_ =TCut("MET>250 && cutTrigger==1 && runNumber>=176545");
+  //drawSimple(var,nbins,low,high,histfilename, "HT_ht350_met250cut", "data");
+  //
+  //selection_ =TCut("MET>300  && runNumber >= 173212 && runNumber <= 176544");
+  //drawSimple(var,nbins,low,high,histfilename, "HT_ht300_met300cut_den", "data");
+  //selection_ =TCut("MET>300 && cutTrigger==1 && runNumber >= 173212 && runNumber <= 176544");
+  //drawSimple(var,nbins,low,high,histfilename, "HT_ht300_met300cut", "data");
+  ////
+  //selection_ =TCut("MET>300 && runNumber>=176545");
+  //drawSimple(var,nbins,low,high,histfilename, "HT_ht350_met300cut_den", "data");
+  //selection_ =TCut("MET>300 && cutTrigger==1 && runNumber>=176545");
+  //drawSimple(var,nbins,low,high,histfilename, "HT_ht350_met300cut", "data");
+
+  //selection_ =TCut("MET>350 && runNumber>=176545");
+  //drawSimple(var,nbins,low,high,histfilename, "HT_ht350_met350cut_den", "data");
+  //selection_ =TCut("MET>350 && cutTrigger==1 && runNumber>=176545");
+  //drawSimple(var,nbins,low,high,histfilename, "HT_ht350_met350cut", "data");
+
+  //selection_ =TCut("MET>400 && runNumber>=176545");
+  //drawSimple(var,nbins,low,high,histfilename, "HT_ht350_met400cut_den", "data");
+  //selection_ =TCut("MET>400 && cutTrigger==1 && runNumber>=176545");
+  //drawSimple(var,nbins,low,high,histfilename, "HT_ht350_met400cut", "data");
+  
+
+  ////isolate these inefficient events
+  //selection_ =TCut("MET>250 && HT>600 && cutTrigger==0 && runNumber>=176545");
+  //
+  //var="recomuonpt1"; xtitle="recomuonpt1 [GeV]";
+  //nbins = 100; low=0; high=100;
+  //drawSimple(var,nbins,low,high,histfilename, "recomuonpt1_met250_ht600_failtrig", "data");
+  //
+  //var="recomuoniso1"; xtitle="recomuoniso1";
+  //nbins = 100; low=0; high=5;
+  //drawSimple(var,nbins,low,high,histfilename, "recomuoniso1_met250_ht600_failtrig", "data");
+  //
+  //var="recomuonmindphijet1"; xtitle="recomuonmindphijet1";
+  //nbins = 100; low=0; high=4;
+  //drawSimple(var,nbins,low,high,histfilename, "recomuonmindphijet1_met250_ht600_failtrig", "data");
+
+  
+  //selection_ =TCut("MET>250 && passCleaning==1 && runNumber >= 173212 && runNumber <= 176544");
+  //drawSimple(var,nbins,low,high,histfilename, "HT_ht300_met250cut_cleaned_den", "data");
+  //selection_ =TCut("MET>250 && passCleaning==1 && cutTrigger==1 && runNumber >= 173212 && runNumber <= 176544");
+  //drawSimple(var,nbins,low,high,histfilename, "HT_ht300_met250cut_cleaned", "data");
+  ////
+  //selection_ =TCut("MET>250 && passCleaning==1 && runNumber>=176545");
+  //drawSimple(var,nbins,low,high,histfilename, "HT_ht350_met250cut_cleaned_den", "data");
+  //selection_ =TCut("MET>250 && passCleaning==1 && cutTrigger==1 && runNumber>=176545");
+  //drawSimple(var,nbins,low,high,histfilename, "HT_ht350_met250cut_cleaned", "data");
+  //
+  //selection_ =TCut("MET>250 && minDeltaPhiN >= 4 && passCleaning==1 && runNumber >= 173212 && runNumber <= 176544");
+  //drawSimple(var,nbins,low,high,histfilename, "HT_ht300_met250cut_cleaned_HDP_den", "data");
+  //selection_ =TCut("MET>250 && minDeltaPhiN >= 4 && passCleaning==1 && cutTrigger==1 && runNumber >= 173212 && runNumber <= 176544");
+  //drawSimple(var,nbins,low,high,histfilename, "HT_ht300_met250cut_cleaned_HDP", "data");
+  ////
+  //selection_ =TCut("MET>250 && minDeltaPhiN >= 4 && passCleaning==1 && runNumber>=176545");
+  //drawSimple(var,nbins,low,high,histfilename, "HT_ht350_met250cut_cleaned_HDP_den", "data");
+  //selection_ =TCut("MET>250 && minDeltaPhiN >= 4 && passCleaning==1 && cutTrigger==1 && runNumber>=176545");
+  //drawSimple(var,nbins,low,high,histfilename, "HT_ht350_met250cut_cleaned_HDP", "data");
 
 
   //TH1D* NUMplot = (TH1D*)hinteractive->Clone("NUMplot");
