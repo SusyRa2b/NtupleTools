@@ -748,52 +748,49 @@ float EventCalculator::getHLTMHTeff(float offMET, float offHT, uint nElectrons, 
   //eff = gr->Eval(offMET);
 
   //for 2011 full result
-  if(offHT>400 && offMET>=150 && offMET<200){
+  //updated with pixelLumiCalc numbers
+  if(offHT>400 && offMET>=150 && offMET<250){
     if( is0L && mindphin > 4 ){
-      eff =  0.832;
+      eff =  0.850;
     }
     else if( isSingleE && mindphin > 4){
-      eff = 0.931;
+      eff = 0.955;
     }
     else if( isSingleMu && mindphin > 4){
-      eff = 0.983;
+      eff = 0.990;
     }
     else if ( is0L && mindphin <= 4){
-      eff = 0.910;
+      eff = 0.912;
     }
-
-
   }
-  if(offHT>400 && offMET>=200 && offMET<250){
-    //    eff = 0.94;
-    //eff = 0.859362; //after HT cut
-
-    //errors are wrong!
-
-    ////assign a 3% error in the SB region
-    //if ( theHLTEffType_ ==kHLTEffup){
-    //  eff = eff*1.03; assert(0);
-    //}
-    //else if ( theHLTEffType_ ==kHLTEffdown){
-    //  eff = eff*0.97; assert(0);
-    //}
-
-    //after HT>400, ==0b
-    if( is0L && mindphin > 4 ){
-      eff = 0.841;
-    }
-    else if( isSingleE && mindphin > 4){
-      eff = 0.991;
-    }
-    else if( isSingleMu && mindphin > 4){
-      eff = 1.0;
-    }
-    else if ( is0L && mindphin <= 4){
-      eff = 0.936;
-    }
-
-
-  }
+  //if(offHT>400 && offMET>=200 && offMET<250){
+  //  //    eff = 0.94;
+  //  //eff = 0.859362; //after HT cut
+  //
+  //  //errors are wrong!
+  //
+  //  ////assign a 3% error in the SB region
+  //  //if ( theHLTEffType_ ==kHLTEffup){
+  //  //  eff = eff*1.03; assert(0);
+  //  //}
+  //  //else if ( theHLTEffType_ ==kHLTEffdown){
+  //  //  eff = eff*0.97; assert(0);
+  //  //}
+  //
+  //  //after HT>400, ==0b
+  //  if( is0L && mindphin > 4 ){
+  //    eff = 0.841;
+  //  }
+  //  else if( isSingleE && mindphin > 4){
+  //    eff = 0.991;
+  //  }
+  //  else if( isSingleMu && mindphin > 4){
+  //    eff = 1.0;
+  //  }
+  //  else if ( is0L && mindphin <= 4){
+  //    eff = 0.936;
+  //  }
+  //}
   else if(offHT>400 && offMET>250){
     //    eff = 0.998;
     //eff = 0.975299; //after HT cut
@@ -807,18 +804,19 @@ float EventCalculator::getHLTMHTeff(float offMET, float offHT, uint nElectrons, 
     //}
 
     //after HT>400, ==0b
+    //updated with pixelLumiCalc numbers
     if( is0L && mindphin > 4 ){
-      eff = 0.982;
+      eff = 0.981;
     }
     else if( isSingleE && mindphin > 4){
       eff = 1.0;
     }
     else if( isSingleMu && mindphin > 4){
-      eff = 0.998;
+      eff = 0.999;
     }
 
     else if ( is0L && mindphin <= 4){
-      eff = 0.982; // same as nominal for now
+      eff = 0.981; // same as nominal for now
     }
 
 
@@ -900,7 +898,10 @@ float EventCalculator::getHLTHTeff(float offHT) {
   }
 
   //2011 dataset - weighted average of HT efficiencies
-  eff = 0.076*1.0 + 0.464*gr1->Eval(offHT) + 0.460*gr2->Eval(offHT);
+  double frac_HT2XX = 0.071;
+  double frac_HT300 = 0.462;
+  double frac_HT350 = 0.467;
+  eff = frac_HT2XX*1.0 + frac_HT300*gr1->Eval(offHT) + frac_HT350*gr2->Eval(offHT);
 
   return eff;
 }
@@ -3401,18 +3402,18 @@ double EventCalculator::getHLTMHTeffBNN(float offMET, float offHT, uint nElectro
   bool is0L = (nElectrons==0 && nMuons==0);
 
   std::vector<double> vlumi;
-  vlumi.push_back(0.0067);//ht260_mht60
-  vlumi.push_back(0.0409);//ht250_mht60_v2
-  vlumi.push_back(0.1686);//ht250_mht60_v3
-  vlumi.push_back(0.1391);//ht250_mht70
-  vlumi.push_back(0.0982+0.4225);//ht300_mht75_v7
-  vlumi.push_back(0.0043);//ht300_mht75_v8
-  vlumi.push_back(0.2657);//ht300_mht80_v1
-  vlumi.push_back(0.7804);//ht300_mht80_v2
-  vlumi.push_back(0.6044);//ht300_mht90
-  vlumi.push_back(1.3405);//ht350_mht95
-  vlumi.push_back(0.8125);//ht350_mht110  
-  double totallumi = 4.6838; //this is exactly the sum of the above lumi numbers
+  vlumi.push_back(0.0063);//ht260_mht60
+  vlumi.push_back(0.0407);//ht250_mht60_v2
+  vlumi.push_back(0.1687);//ht250_mht60_v3
+  vlumi.push_back(0.1364);//ht250_mht70
+  vlumi.push_back(0.1005+0.4366);//ht300_mht75_v7
+  vlumi.push_back(0.0044);//ht300_mht75_v8
+  vlumi.push_back(0.2773);//ht300_mht80_v1
+  vlumi.push_back(0.8313);//ht300_mht80_v2
+  vlumi.push_back(0.6522);//ht300_mht90
+  vlumi.push_back(1.4421);//ht350_mht95
+  vlumi.push_back(0.8855);//ht350_mht110  
+  double totallumi = 4.982; //this is exactly the sum of the above lumi numbers
 
   // BNNs:
   std::vector<double> pfmet;
@@ -3841,16 +3842,62 @@ double EventCalculator::getHLTMHTeffBNN(float offMET, float offHT, uint nElectro
   else if( offHT>400 && isSingleE && mindphin > 4){ 
 
     std::vector<double> vlumi_sl;
-    vlumi_sl.push_back(0.6044);//ht300_mht90
-    vlumi_sl.push_back(1.3405);//ht350_mht95
-    vlumi_sl.push_back(0.8125);//ht350_mht110  
-    double totallumi_sl = 2.7574; //this is exactly the sum of the above lumi numbers
+    vlumi_sl.push_back(0.0063);//ht260_mht60
+    vlumi_sl.push_back(0.0407+0.1687);//ht250_mht60
+    vlumi_sl.push_back(0.1364);//ht250_mht70 
+    vlumi_sl.push_back(0.1005+0.0044+0.4366);//ht300_mht75
+    vlumi_sl.push_back(0.2773+0.8313);//ht300_mht80
+    vlumi_sl.push_back(0.6522);//ht300_mht90
+    vlumi_sl.push_back(1.4421);//ht350_mht95
+    vlumi_sl.push_back(0.8855);//ht350_mht110  
+    double totallumi_sl = 4.982; //this is exactly the sum of the above lumi numbers
 
     std::vector<double> trigeffs;
     std::vector<double> trigeffserr;
     double stddeveff = 0, efferr = 0;
+
+    trigeffs.push_back(ElHad_300_75( pfmet ));
+    stddeveff = 0;
+    for(uint i = 0; i < 100; ++i){
+      effn[i] = ElHad_300_75(pfmet, i, i);
+      stddeveff += (effn[i] - trigeffs.back())*(effn[i] - trigeffs.back());
+    }      
+    stddeveff = sqrt(stddeveff / 99); trigeffserr.push_back(stddeveff);
+
+    trigeffs.push_back(ElHad_300_75( pfmet ));
+    stddeveff = 0;
+    for(uint i = 0; i < 100; ++i){
+      effn[i] = ElHad_300_75(pfmet, i, i);
+      stddeveff += (effn[i] - trigeffs.back())*(effn[i] - trigeffs.back());
+    }      
+    stddeveff = sqrt(stddeveff / 99); trigeffserr.push_back(stddeveff);
+
+    trigeffs.push_back(ElHad_300_75( pfmet ));
+    stddeveff = 0;
+    for(uint i = 0; i < 100; ++i){
+      effn[i] = ElHad_300_75(pfmet, i, i);
+      stddeveff += (effn[i] - trigeffs.back())*(effn[i] - trigeffs.back());
+    }      
+    stddeveff = sqrt(stddeveff / 99); trigeffserr.push_back(stddeveff);
+
+    trigeffs.push_back(ElHad_300_75( pfmet ));
+    stddeveff = 0;
+    for(uint i = 0; i < 100; ++i){
+      effn[i] = ElHad_300_75(pfmet, i, i);
+      stddeveff += (effn[i] - trigeffs.back())*(effn[i] - trigeffs.back());
+    }      
+    stddeveff = sqrt(stddeveff / 99); trigeffserr.push_back(stddeveff);
+
+    trigeffs.push_back(ElHad_300_80( pfmet ));
+    stddeveff = 0;
+    for(uint i = 0; i < 100; ++i){
+      effn[i] = ElHad_300_80(pfmet, i, i);
+      stddeveff += (effn[i] - trigeffs.back())*(effn[i] - trigeffs.back());
+    }      
+    stddeveff = sqrt(stddeveff / 99); trigeffserr.push_back(stddeveff);
   
     trigeffs.push_back(HT300MHT90elNew( pfmet ));
+    stddeveff = 0;
     for(uint i = 0; i < 100; ++i){
       effn[i] = HT300MHT90elNew(pfmet, i, i);
       stddeveff += (effn[i] - trigeffs.back())*(effn[i] - trigeffs.back());
@@ -3902,15 +3949,60 @@ double EventCalculator::getHLTMHTeffBNN(float offMET, float offHT, uint nElectro
   else if( offHT>400 && isSingleMu && mindphin > 4){ 
 
     std::vector<double> vlumi_sl;
-    vlumi_sl.push_back(0.6044);//ht300_mht90
-    vlumi_sl.push_back(1.3405);//ht350_mht95
-    vlumi_sl.push_back(0.8125);//ht350_mht110  
-    double totallumi_sl = 2.7574; //this is exactly the sum of the above lumi numbers
+    vlumi_sl.push_back(0.0063);//ht260_mht60
+    vlumi_sl.push_back(0.0407+0.1687);//ht250_mht60
+    vlumi_sl.push_back(0.1364);//ht250_mht70 
+    vlumi_sl.push_back(0.1005+0.0044+0.4366);//ht300_mht75
+    vlumi_sl.push_back(0.2773+0.8313);//ht300_mht80
+    vlumi_sl.push_back(0.6522);//ht300_mht90
+    vlumi_sl.push_back(1.4421);//ht350_mht95
+    vlumi_sl.push_back(0.8855);//ht350_mht110  
+    double totallumi_sl = 4.982; //this is exactly the sum of the above lumi numbers
 
     std::vector<double> trigeffs;
     std::vector<double> trigeffserr;
     double stddeveff = 0, efferr = 0;
   
+    trigeffs.push_back(MuHad_300_75( pfmet ));
+    stddeveff = 0;
+    for(uint i = 0; i < 100; ++i){
+      effn[i] = MuHad_300_75(pfmet, i, i);
+      stddeveff += (effn[i] - trigeffs.back())*(effn[i] - trigeffs.back());
+    }      
+    stddeveff = sqrt(stddeveff / 99); trigeffserr.push_back(stddeveff);
+
+    trigeffs.push_back(MuHad_300_75( pfmet ));
+    stddeveff = 0;
+    for(uint i = 0; i < 100; ++i){
+      effn[i] = MuHad_300_75(pfmet, i, i);
+      stddeveff += (effn[i] - trigeffs.back())*(effn[i] - trigeffs.back());
+    }      
+    stddeveff = sqrt(stddeveff / 99); trigeffserr.push_back(stddeveff);
+
+    trigeffs.push_back(MuHad_300_75( pfmet ));
+    stddeveff = 0;
+    for(uint i = 0; i < 100; ++i){
+      effn[i] = MuHad_300_75(pfmet, i, i);
+      stddeveff += (effn[i] - trigeffs.back())*(effn[i] - trigeffs.back());
+    }      
+    stddeveff = sqrt(stddeveff / 99); trigeffserr.push_back(stddeveff);
+
+    trigeffs.push_back(MuHad_300_75( pfmet ));
+    stddeveff = 0;
+    for(uint i = 0; i < 100; ++i){
+      effn[i] = MuHad_300_75(pfmet, i, i);
+      stddeveff += (effn[i] - trigeffs.back())*(effn[i] - trigeffs.back());
+    }      
+    stddeveff = sqrt(stddeveff / 99); trigeffserr.push_back(stddeveff);
+
+    trigeffs.push_back(MuHad_300_80( pfmet ));
+    stddeveff = 0;
+    for(uint i = 0; i < 100; ++i){
+      effn[i] = MuHad_300_80(pfmet, i, i);
+      stddeveff += (effn[i] - trigeffs.back())*(effn[i] - trigeffs.back());
+    }      
+    stddeveff = sqrt(stddeveff / 99); trigeffserr.push_back(stddeveff);
+
     trigeffs.push_back(HT300MHT90muNew( pfmet ));
     for(uint i = 0; i < 100; ++i){
       effn[i] = HT300MHT90muNew(pfmet, i, i);
