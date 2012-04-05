@@ -59,14 +59,14 @@ void setTrigEff(const TString which) {
 
   if (which=="WideSB") {
     cout<<"Using efficiencies for 150-250 GeV SB"<<endl;
-    //150-250 GeV SB (almost FINAL numbers from Don, still averaged using non-final lumi weighting) 
-    eff_SB_MHT_             = 0.852;
-    eff_SB_MHT_err_[0]      = 0.033;
-    eff_SB_MHT_err_[1]      = 0.044;
+    //150-250 GeV SB (with FINAL lumi weighting -April 5) 
+    eff_SB_MHT_             = 0.850;
+    eff_SB_MHT_err_[0]      = 0.034;
+    eff_SB_MHT_err_[1]      = 0.046;
     eff_SB_ldp_MHT_         = 0.912;   
-    eff_SB_ldp_MHT_err_[0]  = 0.023;
-    eff_SB_ldp_MHT_err_[1]  = 0.056;
-    eff_SIG_MHT_            = 0.982; 
+    eff_SB_ldp_MHT_err_[0]  = 0.024;
+    eff_SB_ldp_MHT_err_[1]  = 0.057;
+    eff_SIG_MHT_            = 0.981; 
     eff_SIG_MHT_err_[0]     = 0.012;
     eff_SIG_MHT_err_[1]     = 0.036;
     eff_SIG_ldp_MHT_        = eff_SIG_MHT_; 
@@ -74,7 +74,7 @@ void setTrigEff(const TString which) {
     eff_SIG_ldp_MHT_err_[1] = eff_SIG_MHT_err_[1];
     eff_SIG_SL_MHT_         = 0.999; 
     eff_SIG_SL_MHT_err_[0]  = 0.001;
-    eff_SIG_SL_MHT_err_[1]  = 0.001;
+    eff_SIG_SL_MHT_err_[1]  = 0.003;
     eff_SB_1m_MHT_          = 0.990;
     eff_SB_1m_MHT_err_[0]   = 0.002;
     eff_SB_1m_MHT_err_[1]   = 0.002;
@@ -2371,9 +2371,9 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   if (signalEffMode=="") {
     configDescriptions_.setDefault("CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff04_HLTEff0");
     configDescriptions_.setCorrected("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff04_HLTEff0");
-    
     //configDescriptions_.setDefault("CSVM_PFMETTypeI_PF2PATjets_JES0_JER0_PFMETTypeI_METunc0_PUunc0_BTagEff04_HLTEff0");
     //configDescriptions_.setCorrected("CSVM_PFMETTypeI_PF2PATjets_JES0_JERbias_PFMETTypeI_METunc0_PUunc0_BTagEff04_HLTEff0");
+
   }
   else if (signalEffMode=="scan" || signalEffMode=="complete") {  //Only for signal systematics
       
@@ -2685,6 +2685,7 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   //dname+=".ht_run2011a_SUM_promptrecov4only_uptojun24.root";
   //dname+=".data_promptrecoThroughJul1.root";
   dname+=".ht*.root";
+  //dname+=".singlemu*.root";
   //dname+="*.root";
   //dname+=".ht_run2011a_SUM_promptrecov4only_uptojul1.root";
   dname.Prepend(dataInputPath);
