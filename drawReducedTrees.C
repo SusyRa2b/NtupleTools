@@ -4429,13 +4429,13 @@ other.
     //ST
     //selection_ =TCut("MET>=200 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && minDeltaPhiN >= 4 &&cutEleVeto==1 && cutMuVeto==1 && nTaus==1 &&passCleaning==1")&&btagcut&&HTcut;;
     //SL
-    selection_ =TCut("MET>=200 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && minDeltaPhiN >= 4 && MT_Wlep>=0 && MT_Wlep<100 &&passCleaning==1")&&btagcut&&HTcut;;
+    selection_ =TCut("MET>=150 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && minDeltaPhiN >= 4 && MT_Wlep>=0 && MT_Wlep<100 &&passCleaning==1")&&btagcut&&HTcut;;
     //SE
     //selection_ =TCut("MET>=200 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && (nElectrons==1 && nMuons==0) && minDeltaPhiN >= 4 && MT_Wlep>=0 && MT_Wlep<100 &&passCleaning==1")&&btagcut&&HTcut;;
     //SMU
     //selection_ =TCut("MET>=200 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && (nElectrons==0 && nMuons==1) && minDeltaPhiN >= 4 && MT_Wlep>=0 && MT_Wlep<100 &&passCleaning==1")&&btagcut&&HTcut;;
     var="MET"; xtitle="E_{T}^{miss} [GeV]";
-    nbins = 1; low=200; high=250;
+    nbins = 1; low=150; high=250;
     //nbins = 15; low=200; high=500;
     drawPlots(var,nbins,low,high,xtitle,"Events", "test_"+btagselection);
 
@@ -4517,8 +4517,8 @@ other.
     //This part sets up the SIG/SB ratio computation
     ////////////////////////////////////////////////
 
-    //the lower boundary on the SB should be set to 200 GeV
-    int lowbin = hinteractive->FindBin(200);
+    //the lower boundary on the SB should be set to 150 GeV
+    int lowbin = hinteractive->FindBin(150);
     int boundarybin_sb = 0, boundarybin_sig=0;
     //the upper boundary on the SB should be set to 250 GeV
     boundarybin_sb = hinteractive->FindBin(250);
@@ -4537,7 +4537,7 @@ other.
     ////////////////////////////////////////
 
     double sl_sb_err=0, sl_sig_err=0;
-    double sl_sb = hinteractive->IntegralAndError(lowbin,boundarybin_sb-1,sl_sb_err);//integral from 200 to <250
+    double sl_sb = hinteractive->IntegralAndError(lowbin,boundarybin_sb-1,sl_sb_err);//integral from 150 to <250
     double sl_sig = hinteractive->IntegralAndError(boundarybin_sig,highbin,sl_sig_err);//integral from e.g. 300 to last bin
     double r_sl_sigoversb = sl_sig/sl_sb;
     double r_sl_sigoversb_err = jmt::errAoverB(sl_sig,sl_sig_err,sl_sb,sl_sb_err);
