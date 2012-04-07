@@ -2355,9 +2355,9 @@ modifications for SHAPE analysis: (bShape = true)
   double A_1e_temp = A_1e, Aerr_1e_temp = Aerr_1e;
   double A_1m_temp = A_1m, Aerr_1m_temp = Aerr_1m;
   double mu_SB_1e_1b_temp = mu_SB_1e_1b; //shape
-  double mu_SB_1e_1b_err_temp = mu_SB_1e_1b_err; //shape
+  //double mu_SB_1e_1b_err_temp = mu_SB_1e_1b_err; //shape
   double mu_SB_1m_1b_temp = mu_SB_1m_1b; //shape
-  double mu_SB_1m_1b_err_temp = mu_SB_1m_1b_err; //shape
+  //double mu_SB_1m_1b_err_temp = mu_SB_1m_1b_err; //shape
   double D_temp = D, Derr_temp = Derr;
 
   double A_1e_bnnPlus=A_1e,A_1e_bnnMinus=A_1e,A_1m_bnnPlus=A_1m,A_1m_bnnMinus=A_1m;
@@ -4249,8 +4249,8 @@ void AN2011_PUQCD( TString btagselection="ge1b",const int mode=1 ) {
   }
   
   
-  int nbins;
-  float low,high;
+  //int nbins;
+  //float low,high;
   TString var,xtitle;
   
   doOverflowAddition(true);
@@ -7608,8 +7608,8 @@ void studybtagLSB(TString btagselection="ge1b", const int mode=1){
   }
   */  
 
-  int nbins;
-  float low,high;
+  //int nbins;
+  //float low,high;
   TString var,xtitle;
   
   setStackMode(false); //regular stack
@@ -7620,7 +7620,7 @@ void studybtagLSB(TString btagselection="ge1b", const int mode=1){
   TCut util = "pass_utilityHLT==1 && weight<1000";
   TCut LSBmet = "MET>=50 && MET<100";
 
-  double holdLumiScale = lumiScale_;
+  //double holdLumiScale = lumiScale_;
   lumiScale_ = preLumiScale_;
   
   setPlotMaximum(0.5); setPlotMinimum(0);
@@ -7776,8 +7776,8 @@ void studyPrescale_r(int ibtag = 4) {
   //lowMET
   doOverflowAddition(false);
   selection_ =TCut("HT>=350 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1")&&util&&theBTaggingCut;
-  const int nvarbins=10;
-  const float varbins[]={0,10,20,30,40,50,60,70,80,90,100};
+  //const int nvarbins=10;
+  //const float varbins[]={0,10,20,30,40,50,60,70,80,90,100};
   //  drawR("minDeltaPhiN", 4, "MET", nvarbins, varbins, "MET_"+btagstring);
   //}//end btag loop
 
@@ -8154,7 +8154,7 @@ void studyMDPNscaling(const int mode = 3, TString htcutvalue = "400", TString ht
     int numx = myplots.size();
     if(i==0) myC->Divide(numx,nMETbins);
     
-    const int nh=numx;
+    //const int nh=numx;
     TH1D* h[numx];
     
     TString plotopt = "HIST E1";
@@ -8269,8 +8269,8 @@ void studyRtt_0lep() {
   //float rmin=0.5; float rmax=1.5; //ge2b
 
   int nbins = 5;
+  /* this did not prove to show any compelling
   double runs[]={160000,166000,169000,175000,177500,181000};
-/* this did not prove to show any compelling
   TH1D SL_SIG_vTime("SL_SIG_vTime","SL SIG versus run number",nbins,runs);
   TH1D SL_SB_vTime("SL_SB_vTime","SL SB versus run number",nbins,runs);
   TH1D SL_R_vTime("SL_R_vTime","R_SL versus run number",nbins,runs);
@@ -9095,6 +9095,360 @@ void drawTrigEff() {
   ////h_eff->Draw("AP");
   //h_eff->Draw();
   
+
+  return;
+}
+
+
+
+void getCutStringForMETCleaningCutflow(vector<TString> &vectorOfCuts, vector<TString> &stageCut, bool btagSF=false, bool isData=false, const TString & box="SIG") {
+
+
+  assert( box=="SIG" || box=="SB" || box=="SIG-SL" || box=="SB-SL" || box=="SIG-LDP" || box=="SB-LDP" || box=="LSB" || box=="LSB-LDP" );
+
+
+
+  vectorOfCuts.clear(); stageCut.clear();
+
+
+  TString cut;
+  TString thisSelection="HT>=400 && cutPV==1 && cut3Jets==1";
+  TString triggercut = " && cutTrigger==1";
+  TString triggercutLSB = " && pass_utilityHLT==1";
+
+  if(box=="SIG"){
+    thisSelection += triggercut;
+    thisSelection += " && MET>=250";
+    thisSelection += " && cutEleVeto==1 && cutMuVeto==1";
+    thisSelection += " && minDeltaPhiN>=4";
+  }
+  else if(box=="SB"){
+    thisSelection += triggercut;
+    thisSelection += " && MET>=150 && MET<250";
+    thisSelection += " && cutEleVeto==1 && cutMuVeto==1";
+    thisSelection += " && minDeltaPhiN>=4";
+  }
+  else if(box=="SIG-SL"){
+    thisSelection += triggercut;
+    thisSelection += " && MET>=250";
+    thisSelection += " && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && MT_Wlep>=0 && MT_Wlep<100";
+    thisSelection += " && minDeltaPhiN>=4";
+  }
+  else if(box=="SB-SL"){
+    thisSelection += triggercut;
+    thisSelection += " && MET>=150 && MET<250";
+    thisSelection += " && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && MT_Wlep>=0 && MT_Wlep<100";
+    thisSelection += " && minDeltaPhiN>=4";
+  }
+  else if(box=="SIG-LDP"){
+    thisSelection += triggercut;
+    thisSelection += " && MET>=250";
+    thisSelection += " && cutEleVeto==1 && cutMuVeto==1";
+    thisSelection += " && minDeltaPhiN<4";
+  }
+  else if(box=="SB-LDP"){
+    thisSelection += triggercut;
+    thisSelection += " && MET>=150 && MET<250";
+    thisSelection += " && cutEleVeto==1 && cutMuVeto==1";
+    thisSelection += " && minDeltaPhiN<4";
+  }
+  else if(box=="LSB"){
+    thisSelection += triggercutLSB;
+    thisSelection += " && MET>=50 && MET<100";
+    thisSelection += " && cutEleVeto==1 && cutMuVeto==1";
+    thisSelection += " && minDeltaPhiN>=4";
+  }
+  else if(box=="LSB-LDP"){
+    thisSelection += triggercutLSB;
+    thisSelection += " && MET>=50 && MET<100";
+    thisSelection += " && cutEleVeto==1 && cutMuVeto==1";
+    thisSelection += " && minDeltaPhiN<4";
+  }
+
+  TString selection1BL;
+
+  //1BL
+  selection1BL = thisSelection;
+
+  if (btagSF){
+    if(box=="LSB" || box=="LSB-LDP") btagSFweight_="prob0";
+    else btagSFweight_="probge1";
+  }
+  else{
+    if(box=="LSB" || box=="LSB-LDP") selection1BL += " && nbjetsCSVM==0";
+    else selection1BL += " && nbjetsCSVM>=1";
+  }
+
+
+  if(isData) cut=getCutString(kData,selection1BL);
+  else  cut=getCutString(kMC,selection1BL);
+  vectorOfCuts.push_back(cut);
+  stageCut.push_back("1BL");
+
+
+  //scraping veto filter
+  selection1BL += " && scrapingvetoFilter==1";
+  if(isData) cut=getCutString(kData,selection1BL);
+  else  cut=getCutString(kMC,selection1BL);
+  vectorOfCuts.push_back(cut);
+  stageCut.push_back("Scraping veto filter");
+
+  //HBHE noise filter
+  selection1BL += " && hbhenoiseFilter==1";
+  if(isData) cut=getCutString(kData,selection1BL);
+  else  cut=getCutString(kMC,selection1BL);
+  vectorOfCuts.push_back(cut);
+  stageCut.push_back("HBHE noise filter");
+
+  //CSC beam halo filter
+  selection1BL += " && csctighthaloFilter==1";
+  if(isData) cut=getCutString(kData,selection1BL);
+  else  cut=getCutString(kMC,selection1BL);
+  vectorOfCuts.push_back(cut);
+  stageCut.push_back("CSC beam halo filter");
+
+  //Tracking failure filter
+  selection1BL += " && trackingfailureFilterPFLOW==1";
+  if(isData) cut=getCutString(kData,selection1BL);
+  else  cut=getCutString(kMC,selection1BL);
+  vectorOfCuts.push_back(cut);
+  stageCut.push_back("Tracking failure filter");
+
+  //ECAL dead-cell TP filter
+  selection1BL += " && ra2ecaltpFilter==1";
+  if(isData) cut=getCutString(kData,selection1BL);
+  else  cut=getCutString(kMC,selection1BL);
+  vectorOfCuts.push_back(cut);
+  stageCut.push_back("ECAL dead-cell filter (TP)");
+
+  //EE noise filter
+  selection1BL += " && eenoiseFilter==1";
+  if(isData) cut=getCutString(kData,selection1BL);
+  else  cut=getCutString(kMC,selection1BL);
+  vectorOfCuts.push_back(cut);
+  stageCut.push_back("EE noise filter");
+
+  //Greedy muon filter
+  selection1BL += " && greedymuonFilter==1";
+  if(isData) cut=getCutString(kData,selection1BL);
+  else  cut=getCutString(kMC,selection1BL);
+  vectorOfCuts.push_back(cut);
+  stageCut.push_back("Greedy muon filter");
+
+  //Inconsistent muon filter
+  selection1BL += " && inconsistentmuonFilter==1";
+  if(isData) cut=getCutString(kData,selection1BL);
+  else  cut=getCutString(kMC,selection1BL);
+  vectorOfCuts.push_back(cut);
+  stageCut.push_back("Inconsistent muon filter");
+
+  //reset btagsfweight
+  btagSFweight_="1";
+
+}
+
+
+
+void METCleaningCutflow(){
+
+  loadSamples();
+  resetHistos();
+
+  clearSamples();
+  addSample("LM9");
+  doData(true);
+
+  usePUweight_=true; 
+  useHTeff_=true;   
+  useMHTeff_=true;
+  currentConfig_=configDescriptions_.getCorrected(); //use JERbias
+
+  vector<TString> vectorOfCuts; //each element is a successive cut string for the cutflow table
+  vector< vector<TString> > vectorOfCutsPerBox; 
+  vector<TString> stageCut; //name of cut at each stage
+
+
+  vector<TString> vectorOfCutsData; //each element is a successive cut string for the cutflow table
+  vector< vector<TString> > vectorOfCutsPerBoxData; 
+
+
+  //LM9---------------------------------------------------------
+  getCutStringForMETCleaningCutflow(vectorOfCuts, stageCut, true, false, "SIG"); //fills vectorOfCuts
+  vectorOfCutsPerBox.push_back(vectorOfCuts);
+
+  stageCut.clear(); vectorOfCuts.clear();
+  getCutStringForMETCleaningCutflow(vectorOfCuts, stageCut, true, false, "SB"); //fills vectorOfCuts
+  vectorOfCutsPerBox.push_back(vectorOfCuts);
+
+  stageCut.clear(); vectorOfCuts.clear();
+  getCutStringForMETCleaningCutflow(vectorOfCuts, stageCut, true, false, "SIG-SL"); //fills vectorOfCuts
+  vectorOfCutsPerBox.push_back(vectorOfCuts);
+  stageCut.clear(); vectorOfCuts.clear();
+  getCutStringForMETCleaningCutflow(vectorOfCuts, stageCut, true, false, "SB-SL"); //fills vectorOfCuts
+  vectorOfCutsPerBox.push_back(vectorOfCuts);
+
+  stageCut.clear(); vectorOfCuts.clear();
+  getCutStringForMETCleaningCutflow(vectorOfCuts, stageCut, true, false, "SIG-LDP"); //fills vectorOfCuts
+  vectorOfCutsPerBox.push_back(vectorOfCuts);
+  stageCut.clear(); vectorOfCuts.clear();
+  getCutStringForMETCleaningCutflow(vectorOfCuts, stageCut, true, false, "SB-LDP"); //fills vectorOfCuts
+  vectorOfCutsPerBox.push_back(vectorOfCuts);
+
+  stageCut.clear(); vectorOfCuts.clear();
+  getCutStringForMETCleaningCutflow(vectorOfCuts, stageCut, true, false, "LSB"); //fills vectorOfCuts
+  vectorOfCutsPerBox.push_back(vectorOfCuts);
+  stageCut.clear(); vectorOfCuts.clear();
+  getCutStringForMETCleaningCutflow(vectorOfCuts, stageCut, true, false, "LSB-LDP"); //fills vectorOfCuts
+  vectorOfCutsPerBox.push_back(vectorOfCuts);
+
+
+  //Data---------------------------------------------------------
+  stageCut.clear(); 
+  getCutStringForMETCleaningCutflow(vectorOfCutsData, stageCut, false, true, "SIG"); //fills vectorOfCuts
+  vectorOfCutsPerBoxData.push_back(vectorOfCutsData);
+
+  stageCut.clear(); vectorOfCutsData.clear();
+  getCutStringForMETCleaningCutflow(vectorOfCutsData, stageCut, false, true, "SB"); //fills vectorOfCuts
+  vectorOfCutsPerBoxData.push_back(vectorOfCutsData);
+
+  stageCut.clear(); vectorOfCutsData.clear();
+  getCutStringForMETCleaningCutflow(vectorOfCutsData, stageCut, false, true, "SIG-SL"); //fills vectorOfCuts
+  vectorOfCutsPerBoxData.push_back(vectorOfCutsData);
+  stageCut.clear(); vectorOfCutsData.clear();
+  getCutStringForMETCleaningCutflow(vectorOfCutsData, stageCut, false, true, "SB-SL"); //fills vectorOfCuts
+  vectorOfCutsPerBoxData.push_back(vectorOfCutsData);
+
+  stageCut.clear(); vectorOfCutsData.clear();
+  getCutStringForMETCleaningCutflow(vectorOfCutsData, stageCut, false, true, "SIG-LDP"); //fills vectorOfCuts
+  vectorOfCutsPerBoxData.push_back(vectorOfCutsData);
+  stageCut.clear(); vectorOfCutsData.clear();
+  getCutStringForMETCleaningCutflow(vectorOfCutsData, stageCut, false, true, "SB-LDP"); //fills vectorOfCuts
+  vectorOfCutsPerBoxData.push_back(vectorOfCutsData);
+
+  stageCut.clear(); vectorOfCutsData.clear();
+  getCutStringForMETCleaningCutflow(vectorOfCutsData, stageCut, false, true, "LSB"); //fills vectorOfCuts
+  vectorOfCutsPerBoxData.push_back(vectorOfCutsData);
+  stageCut.clear(); vectorOfCutsData.clear();
+  getCutStringForMETCleaningCutflow(vectorOfCutsData, stageCut, false, true, "LSB-LDP"); //fills vectorOfCuts
+  vectorOfCutsPerBoxData.push_back(vectorOfCutsData);
+
+
+  vector<float>  cutflowEntries; //stores events by stage and sample
+  vector<float>  cutflowEntriesE; //stores error
+
+  vector< vector<float> > cutflowEntriesPerBox; //stores events by stage and sample
+  vector< vector<float> > cutflowEntriesEPerBox; //stores events by stage and sample
+
+  vector<float> cutflowEntriesData; //stores events by stage
+  vector< vector<float> > cutflowEntriesDataPerBox; //stores events by stage
+
+  TString var = "HT";
+  const float* varbins=0;
+  const int nbins=1; const float low=0; const float high=100000000000;
+
+  //loop over boxes
+  for (unsigned int ibox=0; ibox<vectorOfCutsPerBox.size(); ibox++){
+    //loop over cuts
+    for (unsigned int istage=0; istage< (vectorOfCutsPerBox.at(0)).size(); istage++){
+      TString thisStageCut = (vectorOfCutsPerBox.at(ibox)).at(istage);
+      TString thisStageCutData = (vectorOfCutsPerBoxData.at(ibox)).at(istage);
+      resetHistos();
+
+      float nPass; //number of events passing current cut in each sample
+      float nPassE; //error on events passing cuts    
+
+      float nPassData; //number of events passing current cut in each sample
+
+
+      //there's only one sample (LM9)
+      //for (unsigned int isample=0; isample<samples_.size(); isample++) {
+      if (!quiet_)   cout <<samples_[0]<<endl;
+    
+      gROOT->cd();
+      TString hname = jmt::fortranize(var); hname += "_"; hname += samples_[0];
+      histos_[samples_[0]] = (varbins==0) ? new TH1D(hname,"",nbins,low,high) : new TH1D(hname,"",nbins,varbins);
+      histos_[samples_[0]]->Sumw2();
+
+      TTree* tree = (TTree*) files_[currentConfig_][samples_[0]]->Get("reducedTree");
+      gROOT->cd();
+      tree->Project(hname,var,thisStageCut);
+      //now the histo is filled
+
+      nPass = (histos_[samples_[0]]->GetBinContent(1)); //to get total entries with weighting applied
+      nPassE = (histos_[samples_[0]]->GetBinError(1)); //error
+
+      TString hname2 = jmt::fortranize(var); hname2 += "_"; hname2 += "data";
+      if (hdata != 0) delete hdata;
+      hdata = (varbins==0) ? new TH1D(hname2,"",nbins,low,high) : new TH1D(hname2,"",nbins,varbins);
+      dtree->Project(hname2,var,thisStageCutData);
+            
+      nPassData = hdata->GetBinContent(1);
+
+      //}//end loop over samples
+
+
+      cutflowEntries.push_back(nPass);
+      cutflowEntriesE.push_back(nPassE);
+
+      cutflowEntriesData.push_back(nPassData);
+
+    }//end current cut 
+
+
+    cutflowEntriesPerBox.push_back(cutflowEntries);
+    cutflowEntriesEPerBox.push_back(cutflowEntriesE);
+    cutflowEntries.clear();
+    cutflowEntriesE.clear();
+
+    cutflowEntriesDataPerBox.push_back(cutflowEntriesData);
+    cutflowEntriesData.clear();
+
+  }//end current box
+
+  TString col_start; TString col; TString col_end; TString hline; TString hhline;
+
+  if (latexMode_){
+    col_start=""; col=" & "; col_end=" \\\\ "; hline="\\hline"; hhline="\\hline \\hline";
+  }
+  else{
+    col_start=" | "; col=" | "; col_end=" | "; hline=""; hhline="";
+  }
+
+  cout << "Data";
+  for (unsigned int isample=0; isample<samples_.size(); isample++) {
+    cout<<col<<samples_[isample];
+  }
+  cout<<col_end<<endl;
+
+  //fill table
+
+  //loop over cuts
+  for (unsigned int istage=0; istage< (vectorOfCutsPerBox.at(0)).size(); istage++){
+
+      cout<<col_start<<stageCut[istage]<<col;
+
+    //loop over boxes
+    for (unsigned int ibox=0; ibox<vectorOfCutsPerBox.size(); ibox++){
+      
+
+      cout << cutflowEntriesDataPerBox.at(ibox).at(istage) << col;
+      
+      //for (unsigned int isample=0; isample<samples_.size(); isample++){
+      //cout<<jmt::format_nevents(cutflowEntries[istage][isample],cutflowEntriesE[istage][isample])<<col;
+      //	if ( !isSampleSM(samples_[isample]) ) 
+      cout << std::setprecision(4) << cutflowEntriesPerBox.at(ibox).at(istage);
+
+      if(ibox <vectorOfCutsPerBox.size()-1) cout << col;
+      //}//end loop over samples
+    
+    }//end loop over boxes
+    
+    cout  << col_end << endl;
+
+  }//end loop over cuts
+
+  cout<<hhline<<endl;
+
 
   return;
 }
