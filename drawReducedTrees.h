@@ -144,13 +144,13 @@ void setTrigEff(const TString which) {
   else if (which=="NominalSB") {
     cout<<"Using efficiencies for 200-250 GeV SB"<<endl;
     //nominal numbers used for frozen AN etc. SB corresponds to 200-250 GeV
-    eff_SB_MHT_             = 0.841;
-    eff_SB_MHT_err_[0]      = 0.059;
+    eff_SB_MHT_             = 0.838;
+    eff_SB_MHT_err_[0]      = 0.060;
     eff_SB_MHT_err_[1]      = 0.090;
-    eff_SB_ldp_MHT_         = 0.936;   
+    eff_SB_ldp_MHT_         = 0.937;   
     eff_SB_ldp_MHT_err_[0]  = 0.034;
-    eff_SB_ldp_MHT_err_[1]  = 0.118;
-    eff_SIG_MHT_            = 0.982; 
+    eff_SB_ldp_MHT_err_[1]  = 0.120;
+    eff_SIG_MHT_            = 0.981; 
     eff_SIG_MHT_err_[0]     = 0.012;
     eff_SIG_MHT_err_[1]     = 0.036;
     eff_SIG_ldp_MHT_        = eff_SIG_MHT_; 
@@ -158,13 +158,13 @@ void setTrigEff(const TString which) {
     eff_SIG_ldp_MHT_err_[1] = eff_SIG_MHT_err_[1]; //due to low stats in SIG-LDP, use the SIG numbers for now.
     eff_SIG_SL_MHT_         = 0.999; 
     eff_SIG_SL_MHT_err_[0]  = 0.001;
-    eff_SIG_SL_MHT_err_[1]  = 0.001;
-    eff_SB_1m_MHT_          = 0.996; 
-    eff_SB_1m_MHT_err_[0]   = 0.002;    
-    eff_SB_1m_MHT_err_[1]   = 0.003;
-    eff_SB_1e_MHT_          = 0.996; 
-    eff_SB_1e_MHT_err_[0]   = 0.002;
-    eff_SB_1e_MHT_err_[1]   = 0.003;
+    eff_SIG_SL_MHT_err_[1]  = 0.003;
+    eff_SB_1m_MHT_          = 1.000; 
+    eff_SB_1m_MHT_err_[0]   = 0.000;    
+    eff_SB_1m_MHT_err_[1]   = 0.004;
+    eff_SB_1e_MHT_          = 0.994; 
+    eff_SB_1e_MHT_err_[0]   = 0.003;
+    eff_SB_1e_MHT_err_[1]   = 0.006;
   }
   else if (which == "NominalSBTypeI") {
     //200-250 GeV type I MET
@@ -422,93 +422,93 @@ void setSearchRegions( TString  which="") {
 
   //27 Jan 2012 -- (preliminary) regions for testing shapes of background....
   if (which=="METbins3B") {
-    setTrigEff("NominalSB"); //set trigger efficiency
-    sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=200&&MET<250","METBin1",false));
+    setTrigEff("WideSB"); //set trigger efficiency
+    sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=150&&MET<250","METBin1",false));
     searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=250 &&MET<300","METBin1"));
     
-    sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=200&&MET<250","METBin2",false));
+    sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=150&&MET<250","METBin2",false));
     searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=300 &&MET<350","METBin2"));
     
-    sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=200&&MET<250","METBin3",false));
+    sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=150&&MET<250","METBin3",false));
     searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=350","METBin3"));
   }
-  else if (which=="METfinebins") {
-    setTrigEff("NominalSB"); //set trigger efficiency
-    sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=200&&MET<250","METFineBin1",false));
-    searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=250 &&MET<300","METFineBin1"));
-    
-    sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=200&&MET<250","METFineBin2",false));
-    searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=300 &&MET<350","METFineBin2"));
-    
-    sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=200&&MET<250","METFineBin3",false));
-    searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=350 &&MET<400","METFineBin3"));
-
-    sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=200&&MET<250","METFineBin4",false));
-    searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=400 &&MET<450","METFineBin4"));
-
-    sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=200&&MET<250","METFineBin5",false));
-    searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=450 &&MET<500","METFineBin5"));
-
-    sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=200&&MET<250","METFineBin6",false));
-    searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=500","METFineBin6"));
-  }
-  else if (which=="METfinebins2BL") {
-    setTrigEff("NominalSB"); //set trigger efficiency
-    sbRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=200&&MET<250","METFineBin1",false));
-    searchRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=250 &&MET<300","METFineBin1"));
-    
-    sbRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=200&&MET<250","METFineBin2",false));
-    searchRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=300 &&MET<350","METFineBin2"));
-    
-    sbRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=200&&MET<250","METFineBin3",false));
-    searchRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=350 &&MET<400","METFineBin3"));
-
-    sbRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=200&&MET<250","METFineBin4",false));
-    searchRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=400 &&MET<450","METFineBin4"));
-
-    sbRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=200&&MET<250","METFineBin5",false));
-    searchRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=450 &&MET<500","METFineBin5"));
-
-    sbRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=200&&MET<250","METFineBin6",false));
-    searchRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=500","METFineBin6"));
-  }
   else if (which=="METfinebins1BL") {
-    setTrigEff("NominalSB"); //set trigger efficiency
-    sbRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=200&&MET<250","METFineBin1",false));
+    setTrigEff("WideSB"); //set trigger efficiency
+    sbRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=150&&MET<250","METFineBin1",false));
     searchRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=250 &&MET<300","METFineBin1"));
     
-    sbRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=200&&MET<250","METFineBin2",false));
+    sbRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=150&&MET<250","METFineBin2",false));
     searchRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=300 &&MET<350","METFineBin2"));
     
-    sbRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=200&&MET<250","METFineBin3",false));
+    sbRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=150&&MET<250","METFineBin3",false));
     searchRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=350 &&MET<400","METFineBin3"));
 
-    sbRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=200&&MET<250","METFineBin4",false));
+    sbRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=150&&MET<250","METFineBin4",false));
     searchRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=400 &&MET<450","METFineBin4"));
 
-    sbRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=200&&MET<250","METFineBin5",false));
+    sbRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=150&&MET<250","METFineBin5",false));
     searchRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=450 &&MET<500","METFineBin5"));
 
-    sbRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=200&&MET<250","METFineBin6",false));
+    sbRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=150&&MET<250","METFineBin6",false));
     searchRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=500","METFineBin6"));
   }
+  else if (which=="METfinebins2BL") {
+    setTrigEff("WideSB"); //set trigger efficiency
+    sbRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=150&&MET<250","METFineBin1",false));
+    searchRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=250 &&MET<300","METFineBin1"));
+    
+    sbRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=150&&MET<250","METFineBin2",false));
+    searchRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=300 &&MET<350","METFineBin2"));
+    
+    sbRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=150&&MET<250","METFineBin3",false));
+    searchRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=350 &&MET<400","METFineBin3"));
+
+    sbRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=150&&MET<250","METFineBin4",false));
+    searchRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=400 &&MET<450","METFineBin4"));
+
+    sbRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=150&&MET<250","METFineBin5",false));
+    searchRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=450 &&MET<500","METFineBin5"));
+
+    sbRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=150&&MET<250","METFineBin6",false));
+    searchRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=500","METFineBin6"));
+  }
   else if (which=="METfinebins2BT") {
-    setTrigEff("NominalSB"); //set trigger efficiency
+    setTrigEff("WideSB"); //set trigger efficiency
     
-    sbRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=200&&MET<250","METFine2BTBin1",false));
-    searchRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=300 &&MET<350","METFine2BTBin1"));
+    sbRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=150&&MET<250","METFineBin1",false));
+    searchRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=300 &&MET<350","METFineBin1"));
     
-    sbRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=200&&MET<250","METFine2BTBin2",false));
-    searchRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=350 &&MET<400","METFine2BTBin2"));
+    sbRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=150&&MET<250","METFineBin2",false));
+    searchRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=350 &&MET<400","METFineBin2"));
 
-    sbRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=200&&MET<250","METFine2BTBin3",false));
-    searchRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=400 &&MET<450","METFine2BTBin3"));
+    sbRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=150&&MET<250","METFineBin3",false));
+    searchRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=400 &&MET<450","METFineBin3"));
 
-    sbRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=200&&MET<250","METFine2BTBin4",false));
-    searchRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=450 &&MET<500","METFine2BTBin4"));
+    sbRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=150&&MET<250","METFineBin4",false));
+    searchRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=450 &&MET<500","METFineBin4"));
 
-    sbRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=200&&MET<250","METFine2BTBin5",false));
-    searchRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=500","METFine2BTBin5"));
+    sbRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=150&&MET<250","METFineBin5",false));
+    searchRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=500","METFineBin5"));
+  }
+  else if (which=="METfinebins3B") {
+    setTrigEff("WideSB"); //set trigger efficiency
+    sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=150&&MET<250","METFineBin1",false));
+    searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=250 &&MET<300","METFineBin1"));
+    
+    sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=150&&MET<250","METFineBin2",false));
+    searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=300 &&MET<350","METFineBin2"));
+    
+    sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=150&&MET<250","METFineBin3",false));
+    searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=350 &&MET<400","METFineBin3"));
+
+    sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=150&&MET<250","METFineBin4",false));
+    searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=400 &&MET<450","METFineBin4"));
+
+    sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=150&&MET<250","METFineBin5",false));
+    searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=450 &&MET<500","METFineBin5"));
+
+    sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=150&&MET<250","METFineBin6",false));
+    searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=500","METFineBin6"));
   }
 //These are the nominal search regions for the "Moriond 2012" analysis
   else if (which=="Moriond") {

@@ -1979,10 +1979,10 @@ modifications for SHAPE analysis: (bShape = true)
     double ze[2];
     //sometimes need to average mu mu and ee estimates
     double zsbsyst=0.5;
-    double zinvscale = 4.68/4.65;
+    double zinvscale = 4.68/4.65; //This scale should still be valid for the final lumi?
     bool doMean = true;
 
-    if ((qcdsubregion.owenId == "Loose" || qcdsubregion.owenId.Contains( "METFineBin"))&& qcdsubregion.btagSelection=="ge1b") {
+    if (qcdsubregion.owenId == "Loose" && qcdsubregion.btagSelection=="ge1b") {
       doMean=false;//averaging already done
       zv[0] = 82; ze[0]=20; // *(70.3/67.4)
       zsbsyst = 0.0;//ze is stat+syst error combined
@@ -1992,17 +1992,17 @@ modifications for SHAPE analysis: (bShape = true)
       zv[0] = 44; ze[0]=13; // * (36.9/35.4)
       zsbsyst = 0.0;
     }
-    else if ((qcdsubregion.owenId == "Loose" || qcdsubregion.owenId.Contains( "METFineBin"))&& qcdsubregion.btagSelection=="ge2b") {
+    else if (qcdsubregion.owenId == "Loose" && qcdsubregion.btagSelection=="ge2b") {
       doMean=false;//averaging already done
       zv[0] = 14 ; ze[0]=9; //*(10.1/9.5)
       zsbsyst = 0.0;
     }
-    else if ((qcdsubregion.owenId == "Tight" && qcdsubregion.btagSelection=="ge2b") || qcdsubregion.owenId.Contains( "METFine2BTBin")) {
+    else if (qcdsubregion.owenId == "Tight" && qcdsubregion.btagSelection=="ge2b") {
       doMean=false;//averaging already done
       zv[0] = 3.8; ze[0]=2.7;// *(2.6/2.5)
       zsbsyst = 0.0;
     }
-    else if ( (qcdsubregion.owenId == "Loose" || qcdsubregion.owenId.Contains( "METBin")|| qcdsubregion.owenId.Contains( "METFineBin"))  && qcdsubregion.btagSelection=="ge3b") {
+    else if (qcdsubregion.owenId == "Loose"  && qcdsubregion.btagSelection=="ge3b") {
       doMean=false;//averaging already done
       zv[0] = 1.9; ze[0]=2.8; // *(0.7/0.6)
       zsbsyst = 0.0;   
@@ -2024,19 +2024,19 @@ modifications for SHAPE analysis: (bShape = true)
       doMean=false;   zv[0] = 2.7; ze[0]=3.9;    zsbsyst = 0.0;
     }
     //for 150-250 GeV SB (from Ale in msg to RA2b list of 22 March)
-    else if (qcdsubregion.owenId == "LooseWideSB" && qcdsubregion.btagSelection=="ge1b") {
+    else if ((qcdsubregion.owenId == "LooseWideSB" || qcdsubregion.owenId.Contains( "METFineBin")) && qcdsubregion.btagSelection=="ge1b") {
       doMean=false;   zv[0] = 200.2; ze[0]=42.4;    zsbsyst = 0.0;
     }
     else if (qcdsubregion.owenId == "TightWideSB" && qcdsubregion.btagSelection=="ge1b") {
       doMean=false;   zv[0] = 105.0; ze[0]=24.7;    zsbsyst = 0.0;
     }
-    else if (qcdsubregion.owenId == "LooseWideSB" && qcdsubregion.btagSelection=="ge2b") {
+    else if ((qcdsubregion.owenId == "LooseWideSB" || qcdsubregion.owenId.Contains( "METFineBin")) && qcdsubregion.btagSelection=="ge2b") {
       doMean=false;   zv[0] = 33.5; ze[0]=21.9;    zsbsyst = 0.0;
     }
-    else if (qcdsubregion.owenId == "TightWideSB" && qcdsubregion.btagSelection=="ge2b") {
+    else if ((qcdsubregion.owenId == "TightWideSB" || qcdsubregion.owenId.Contains( "METFineBin")) && qcdsubregion.btagSelection=="ge2b") {
       doMean=false;   zv[0] = 8.8; ze[0]=6.0;    zsbsyst = 0.0;
     }
-    else if (qcdsubregion.owenId == "LooseWideSB" && qcdsubregion.btagSelection=="ge3b") {
+    else if ((qcdsubregion.owenId == "LooseWideSB" || qcdsubregion.owenId.Contains( "METBin")|| qcdsubregion.owenId.Contains( "METFineBin")) && qcdsubregion.btagSelection=="ge3b") {
       doMean=false;   zv[0] = 4.6; ze[0]=6.7;    zsbsyst = 0.0;
     }
     else if (qcdsubregion.owenId == "Loose" && qcdsubregion.btagSelection=="eq1b") {
@@ -3843,17 +3843,17 @@ void drawDD()
   gROOT->SetStyle("CMS");
   loadSamples();
 
-    setSearchRegions("METbins3B");
-    ifstream file("DDresults_METbins3B.dat");
+  //setSearchRegions("METbins3B");
+  //ifstream file("DDresults_METbins3B.dat");
 
   // setSearchRegions("METfinebins2BT");
   // ifstream file("DDresults_METfinebins2BT.dat");
 
-  //  setSearchRegions("METfinebins2BL");
-  // ifstream file("DDresults_METfinebins2BL.dat");
+  //setSearchRegions("METfinebins2BL");
+  //ifstream file("DDresults_METfinebins2BL.dat");
 
-  //  setSearchRegions("METfinebins1BL");
-  //  ifstream file("DDresults_METfinebins1BL.dat");
+    setSearchRegions("METfinebins1BL");
+    ifstream file("DDresults_METfinebins1BL.dat");
 
   //  setSearchRegions("METfinebins");
   //  ifstream file("DDresults_METfinebins3B_1BLSL.dat");
@@ -3980,6 +3980,10 @@ void drawDD()
   if (findOverallMax(hdata) > mymax) mymax = findOverallMax(hdata);
   thestack->SetMaximum( maxScaleFactor_*mymax);
 
+  drawPlotHeader();
+
+  thecanvas->SaveAs("DDresults_METbins1BL.pdf");
+  //thecanvas->SaveAs("DDresults_METbins2BL.pdf");
 
 }
 
