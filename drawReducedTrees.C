@@ -1103,7 +1103,7 @@ std::pair<double,std::vector<double> > anotherABCD( const SearchRegion & region,
   double estimateerr = jmt::errAtimesB(myR, myRerr, D-Dsub, sqrt(Derr*Derr+Dsuberr*Dsuberr));
 
   double estimate_temp = estimate;
-  //double estimateerr_temp = estimateerr;
+  double estimateerr_temp = estimateerr;
   double estimateerrTrigPlus  = 0;
   double estimateerrTrigMinus = 0;
 
@@ -1112,6 +1112,7 @@ std::pair<double,std::vector<double> > anotherABCD( const SearchRegion & region,
     if( !(forTTbarEstimate) ){
       //double estimateerrMinus=0;
       estimate = eff_MHT*estimate_temp;
+      estimateerr = eff_MHT*estimateerr_temp;
       //estimateerr = jmt::errAtimesB(estimate_temp, estimateerr_temp, eff_MHT, eff_MHT_err[0]);
       //estimateerrMinus = jmt::errAtimesB(estimate_temp, estimateerr_temp, eff_MHT, eff_MHT_err[1]);
       //std::cout << "estimate: "<< estimate << "+" << estimateerr << "- " <<estimateerrMinus << std::endl;
