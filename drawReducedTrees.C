@@ -64,17 +64,13 @@ in order to get one file per sample.
 	
 //*** AFTER SUMMER
 //***************************
-
-//  TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35q/Fall11/"; //Type 1 MET
-//  TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35q/"; //Type 1 MET
+  // latest version
 TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35s/Fall11/"; //uncorrected MET
 TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35s/";//uncorrected MET
-
-//-- reducedTrees for Oct 25 SUSY meeting. 3464.581/pb. 
-//TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35a/";
-//TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35a/";
-
-
+/*
+TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35p/Fall11/"; //uncorrected MET
+TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35p/";//uncorrected MET
+  */
 //*** SUMMER RESULT
 //***************************
 //for rerunning the final background estimates...need standard MC and MET cleaning
@@ -3866,13 +3862,17 @@ void runFineBinsOfMET_1BL() {
 
 
 //read back the file generated above and make a plot
-void drawDD() 
+void drawDD(const TString signalToDraw="") 
 {
   gROOT->SetStyle("CMS");
   loadSamples();
+  addSample("T1bbbb");
+  currentConfig_=configDescriptions_.getCorrected(); //add JERbias
+  loadScanSMSngen("T1bbbb"); m0_=800; m12_=400;
 
-  //setSearchRegions("METbins3B");
-  //ifstream file("DDresults_METbins3B.dat");
+
+  setSearchRegions("METbins3B");
+  ifstream file("DDresults_METbins3B.dat");
 
   // setSearchRegions("METfinebins2BT");
   // ifstream file("DDresults_METfinebins2BT.dat");
@@ -3880,11 +3880,24 @@ void drawDD()
   //setSearchRegions("METfinebins2BL");
   //ifstream file("DDresults_METfinebins2BL.dat");
 
-    setSearchRegions("METfinebins1BL");
-    ifstream file("DDresults_METfinebins1BL.dat");
+  //  setSearchRegions("METfinebins1BL");
+  //  ifstream file("DDresults_METfinebins1BL.dat");
 
   //  setSearchRegions("METfinebins");
   //  ifstream file("DDresults_METfinebins3B_1BLSL.dat");
+  //to draw data we have to define all of the cuts....
+
+  TCut baseline = "cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && passCleaning==1 && minDeltaPhiN>=4";
+  TCut htcut = searchRegions_[0].htSelection.Data();
+  TCut btagging="";
+  if (searchRegions_[0].btagSelection == "ge1b") btagging="nbjets>=1";
+  else  if (searchRegions_[0].btagSelection == "ge2b") btagging="nbjets>=2";
+  else  if (searchRegions_[0].btagSelection == "ge3b") btagging="nbjets>=3";
+  else assert(0);
+  if (searchRegions_[0].btagSelection == "ge1b") btagSFweight_="probge1";
+  else  if (searchRegions_[0].btagSelection == "ge2b") btagSFweight_="probge2";
+  else  if (searchRegions_[0].btagSelection == "ge3b") btagSFweight_="probge3";
+  else assert(0);
 
   int nbins=(int) searchRegions_.size();
   float *metbins = new float[nbins+1];
@@ -3953,6 +3966,23 @@ void drawDD()
       totalsm ->Add(histos_[backgroundName]);
     }
   }
+
+  //optionally draw signal
+  TH1D* hsignal=0;
+  if (signalToDraw!="") {
+    bool sp=savePlots_;
+    savePlots_=false;
+    TCut thecut = baseline&&htcut;
+    selection_=thecut;
+    drawSimple("MET",nbins,metbins[0],metbins[nbins],"dummy","signal",signalToDraw,metbins);
+    hsignal = (TH1D*)hinteractive->Clone("hsignal");
+    hsignal->SetMarkerSize(0);
+    hsignal->SetFillColor(sampleColor_[signalToDraw]);
+    thestack->Add(hsignal);
+    leg->AddEntry(hsignal,sampleLabel_[signalToDraw]);
+    savePlots_=sp;
+  }
+
   //get the legend filled in the opposite order
   for (map<TString, TH1D*>::reverse_iterator ih=histos_.rbegin(); ih!=histos_.rend(); ++ih) {
     backgroundName= ih->first;
@@ -3984,15 +4014,7 @@ void drawDD()
   if (hdata!=0) delete hdata;
   hdata =  new TH1D("hdata","",nbins,metbins);
   hdata->Sumw2();
-  //to draw data we have to define all of the cuts....
-  
-  TCut baseline = "cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && passCleaning==1 && minDeltaPhiN>=4";
-  TCut htcut = searchRegions_[0].htSelection.Data();
-  TCut btagging="";
-  if (searchRegions_[0].btagSelection == "ge1b") btagging="nbjets>=1";
-  else  if (searchRegions_[0].btagSelection == "ge2b") btagging="nbjets>=2";
-  else  if (searchRegions_[0].btagSelection == "ge3b") btagging="nbjets>=3";
-  else assert(0);
+
   TCut thecut = baseline&&htcut&&btagging;
   gROOT->cd();
   dtree->Project("hdata","MET",thecut.GetTitle()); //oy...we should use getCutString
@@ -4010,7 +4032,7 @@ void drawDD()
 
   drawPlotHeader();
 
-  thecanvas->SaveAs("DDresults_METbins1BL.pdf");
+  //  thecanvas->SaveAs("DDresults_METbins1BL.pdf");
   //thecanvas->SaveAs("DDresults_METbins2BL.pdf");
 
 }
@@ -5581,7 +5603,7 @@ void drawT1bbbb() {
 void DSchecks_2jtau() {
 
   loadSamples();
-  setSearchRegions("Moriond");
+  setSearchRegions();
 
   usePUweight_=true;
 
@@ -5605,10 +5627,9 @@ void DSchecks_2jtau() {
   setLogY(true);
 
   var="MET"; xtitle="MET";
-  nbins = 30; low=150; high=450;
+  nbins = 20; low=150; high=450;
 
   btagSFweight_="probge2";
-  //use tighter HT selection to avoid the fact that the skim starts at 400 GeV
   TCut baseline = "MET>=150 && HT>=500 && cutPV==1 && cutTrigger==1 && minDeltaPhiN >= 4 &&passCleaning==1";
 
   selection_ =baseline && TCut("njets==3 && nTaus==1") && getLeptonVetoCut();
@@ -5623,7 +5644,8 @@ void DSchecks_2jtau() {
   drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "METspectrum_ttbar_SL_HT500_ge2b");
   TH1D* slsample2j=(TH1D*)  hinteractive->Clone("slsample2j");
 
-  TCut alt = "MET>=150 && ( (((HT+muonpt1)>=500)&&(nMuons==1)) || ((nElectrons==1)&& ((HT+eleet1)>=500))) && cutPV==1 && cutTrigger==1 && minDeltaPhiN >= 4 &&passCleaning==1";
+  //probably this convoluted syntax is not needed now that we have the real ST variable, but I will leave it anyway
+  TCut alt = "MET>=150 && ( (((ST)>=500)&&(nMuons==1)) || ((nElectrons==1)&& ((ST)>=500))) && cutPV==1 && cutTrigger==1 && minDeltaPhiN_withLepton >= 4 &&passCleaning==1";
   selection_=alt && TCut("njets==2") && getSingleLeptonCut();
   drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "METspectrum_ttbar_SL_ST500_ge2b");
   TH1D* slsample2jST=(TH1D*)  hinteractive->Clone("slsample2jST");
@@ -5924,6 +5946,7 @@ void DSchecks_3Btest() {
 
 
 //for the actual AN and paper, use mode 3, logy and doRatio false
+//  -- actually, i have now switched to using mode 4 (BNN)
 void AN2011( TString btagselection="ge1b",const int mode=1, bool logy=false, bool doRatio=false ) {
   doRatioPlot(doRatio);
   setLogY(logy);

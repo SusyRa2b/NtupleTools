@@ -416,7 +416,7 @@ void setSearchRegions( TString  which="") {
 
   // i honestly can't remember if the 'owenId' must match between SB and SIG regions
 
-  if (which=="") {cout<<"Setting default 'Moriond 2012' search regions"<<endl; which="Moriond";}
+  if (which=="") {cout<<"Setting default 'Moriond 2012' search regions"<<endl; which="MoriondWideSB";}
   else    cout<<"Setting search regions to set: "<<which<<endl;
 
 
@@ -565,6 +565,14 @@ void setSearchRegions( TString  which="") {
     
     sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=150&&MET<250","LooseWideSB",false));
     searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=250","LooseWideSB")); //3B
+  }
+  else if (which=="eq2BT") {
+    //work in progress
+    assert(0);
+    setTrigEff("WideSB"); //set trigger efficiency
+    sbRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=150&&MET<250","TightHT",false));
+    searchRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=300","TightWideSB")); //2BT
+    
   }
   else if (which=="SpecialTest1") {
     setTrigEff("LowSBSpecialTest1"); //set trigger efficiency
@@ -1413,7 +1421,7 @@ void loadScanSMSngen(const TString& sampleOfInterest) {
 void loadReferenceCrossSections() {
   if (referenceCrossSectionGluino==0) {
     cout<<"Loading reference cross section file"<<endl;
-    TFile fxs("dalfonso_T1bbbb_reference_xSec.root");
+    TFile fxs("referenceXSecs.root");
     if (fxs.IsZombie()) {cout<<"Problem with cross section file!"<<endl; assert(0);}
     TH1D* hxs = (TH1D*) fxs.Get("gluino");
     gROOT->cd();
@@ -2766,6 +2774,7 @@ float drawSimple(const TString var, const int nbins, const double low, const dou
   }
   if (tree==0) {cout<<"Something went wrong finding your sample (" << samplename <<")!"<<endl; return 0;}
   gROOT->cd();
+
   
   TH1D* hh=0;
   if (varbins==0) {
