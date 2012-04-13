@@ -1064,7 +1064,16 @@ std::pair<double,std::vector<double> > anotherABCD( const SearchRegion & region,
     }
     //end of special stuff for owen
   }
-  if (Dsub>D) {Dsub=D-0.00001; cout<<"Subtraction in D is as big as D!"<<endl;}
+  bool Dzero = false;
+  bool Dm40zero = false;
+  double Dsubfull = Dsub;
+  double Dzeroprint = D;
+  if (Dsub/subscale>D) Dm40zero = true;
+  if (Dsub>D) {
+    Dzero=true;
+    Dsub=D-0.00001; cout<<"Subtraction in D is as big as D!"<<endl;
+  }
+
   
   //SIG
   selection_ = baseline && cleaning && dpcut  && SRMET && passOther; //auto cast to TString seems to work
@@ -1165,6 +1174,24 @@ std::pair<double,std::vector<double> > anotherABCD( const SearchRegion & region,
     estimateerrTrigPlus  = sqrt(delta_up*delta_up + delta_up2*delta_up2);
     estimateerrTrigMinus = sqrt(delta_down*delta_down + delta_down2*delta_down2);
     //    std::cout << "TrigError: trig+ " << estimateerrTrigPlus << " trig- " << estimateerrTrigMinus << std::endl;
+
+
+    //output to manually deal with Dsub>D case
+    if(Dzero){
+      cout << "double myR =" << myR << ";" << endl;
+      cout << "double myRerr = " << myRerr << ";" << endl;
+      cout << "double D = " << Dzeroprint << ";" << endl;
+      cout << "double Derr = " << Derr << ";" << endl;
+      cout << "double Dsub = " << Dsubfull << ";" << endl;
+      cout << "double Dsubserr = " << Dsuberr << ";" << endl;
+      cout << "double eff_MHT = " << eff_MHT << ";" << endl;
+      cout << "double MHTLDPDeltaDown = " << delta_down << ";" << endl;
+      cout << "double MHTLDPDeltaUp = " << delta_up << ";" << endl;
+      cout << "double MHTDeltaDown = " << eff_MHT_down << ";" << endl; 
+      cout << "double MHTDeltaUp = " << eff_MHT_up << ";" << endl;
+    }
+    if(Dm40zero) cout << "unrounded estimate: " << estimate << endl;
+    
   }
 
   double closureStat2 = datamode? 0: jmt::errAoverB(SIG,SIGerr,estimate,estimateerr);
