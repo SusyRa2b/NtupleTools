@@ -416,7 +416,7 @@ void setSearchRegions( TString  which="") {
 
   // i honestly can't remember if the 'owenId' must match between SB and SIG regions
 
-  if (which=="") {cout<<"Setting default 'Moriond 2012' search regions"<<endl; which="MoriondWideSB";}
+  if (which=="") {cout<<"Setting default 'Moriond Wide SB 2012' search regions"<<endl; which="MoriondWideSB";}
   else    cout<<"Setting search regions to set: "<<which<<endl;
 
 
