@@ -1319,7 +1319,8 @@ TH1D* totalqcdttbar=0;
 TH1D* totalnonttbar=0;
 TH1D* totalnonqcd=0;
 TH1D* totalqcd=0; //ben - just for ease of doing event counts with drawPlots
-TH1D* ratio=0; float ratioMin=0; float ratioMax=2;
+TH1D* ratio=0; float ratioMin=0; float ratioMax=2.5;
+TLine* ratioLine=0;
 TGraphErrors* mcerrors=0;
 bool loaded_=false; //bookkeeping
 bool loadedSusyHistos_=false;//bookkeeping
@@ -1525,7 +1526,7 @@ void drawPlotHeader(double xoffset = 0) {
 
 
 int mainpadWidth; int mainpadHeight;
-int ratiopadHeight = 250;
+int ratiopadHeight = 150;
 // TPad* mainPad=0;
 // TPad* ratioPad=0;
 void renewCanvas(const TString opt="") {
@@ -1539,10 +1540,27 @@ void renewCanvas(const TString opt="") {
   thecanvas->cd()->SetTopMargin(0.07); //test
 
   if (opt.Contains("ratio")) {
-    thecanvas->Divide(1,2);
-    const float padding=0.01; const float ydivide=0.2;
+    //thecanvas->Divide(1,2);
+    //const float padding=0.01; const float ydivide=0.2;
+
+    gStyle->SetPadBorderMode(0);
+    gStyle->SetFrameBorderMode(0);
+
+    Float_t small = 1e-5;
+    thecanvas->Divide(1,2,small,small);
+    const float padding=1e-5; const float ydivide=0.3;
     thecanvas->GetPad(1)->SetPad( padding, ydivide + padding, 1-padding, 1-padding);
     thecanvas->GetPad(2)->SetPad( padding, padding, 1-padding, ydivide-padding);
+    thecanvas->GetPad(1)->SetTopMargin(0.06);
+    thecanvas->GetPad(1)->SetRightMargin(.05);
+    thecanvas->GetPad(2)->SetRightMargin(.05);
+    thecanvas->GetPad(2)->SetBottomMargin(.4);
+    thecanvas->GetPad(1)->Modified();
+    thecanvas->GetPad(2)->Modified();
+    thecanvas->cd(1);
+    gPad->SetBottomMargin(small);
+    gPad->Modified();
+
     if (!quiet_)  cout<< thecanvas->GetPad(1)->GetXlowNDC() <<"\t"
 		      << thecanvas->GetPad(1)->GetWNDC() <<"\t"
 		      << thecanvas->GetPad(1)->GetYlowNDC() <<"\t"
@@ -2954,6 +2972,9 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
       if (ratio!=0) delete ratio;
       ratio = (varbins==0) ? new TH1D("ratio","data/(SM MC)",nbins,low,high) : new TH1D("ratio","",nbins,varbins);
       ratio->Sumw2();
+
+      ratioLine = new TLine(low, 1, high, 1);
+
     }
   }
   if (totalsm!=0) delete totalsm;
@@ -3449,10 +3470,30 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
       ratio->Divide(hdata,totalsm);
       ratio->SetMinimum(ratioMin);
       ratio->SetMaximum(ratioMax);
+
       ratio->GetYaxis()->SetNdivisions(200 + int(ratioMax-ratioMin)+1);    //set ticks ; to be seen if this really works
-      ratio->GetYaxis()->SetLabelSize(0.2); //make y label bigger
+      //ratio->GetYaxis()->SetLabelSize(0.2); //make y label bigger
+
+      ratio->GetYaxis()->SetLabelSize(0.1); //make y label bigger
+      ratio->GetXaxis()->SetLabelSize(0.1); //make y label bigger
+      ratio->GetXaxis()->SetTitleOffset(1.1);
+      ratio->GetXaxis()->SetTitle(xtitle); //make y label bigger
+      ratio->GetXaxis()->SetLabelSize(0.12);
+      ratio->GetXaxis()->SetLabelOffset(0.04);
+      ratio->GetXaxis()->SetTitleSize(0.16);
+      ratio->GetYaxis()->SetTitle("Data/MC ");
+      ratio->GetYaxis()->SetTitleSize(0.16);
+      ratio->GetYaxis()->SetTitleOffset(.43);
+      gPad->SetTopMargin(1e-5);
+      gPad->SetTickx();
+      gPad->Modified();      
+
       ratio->Draw();
-      thecanvas->GetPad(2)->SetTopMargin(0.1);
+
+      //thecanvas->GetPad(2)->SetTopMargin(0.1);
+
+      ratioLine->Draw();
+
     }
   }
   
