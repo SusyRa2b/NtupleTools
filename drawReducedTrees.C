@@ -65,12 +65,14 @@ in order to get one file per sample.
 //*** AFTER SUMMER
 //***************************
   // latest version
+  
 TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35s/Fall11/"; //uncorrected MET
 TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35s/";//uncorrected MET
+  
 /*
 TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35p/Fall11/"; //uncorrected MET
 TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35p/";//uncorrected MET
-  */
+*/
 //*** SUMMER RESULT
 //***************************
 //for rerunning the final background estimates...need standard MC and MET cleaning
@@ -2104,7 +2106,11 @@ modifications for SHAPE analysis: (bShape = true)
       zv[0] =0.5; ze[0]=0.8;
       zsbsyst = 0.0; 
     }
-
+    else if (qcdsubregion.owenId == "TightHTWideSB" && qcdsubregion.btagSelection=="eq2b") {
+      doMean=false;//averaging already done
+      zv[0] =7.59; ze[0]=5.16;
+      zsbsyst = 0.0; 
+    }
     else {assert(0);}
 
     if(doMean){
@@ -3862,14 +3868,16 @@ void runFineBinsOfMET_1BL() {
 
 
 //read back the file generated above and make a plot
-void drawDD(const TString signalToDraw="") 
+void drawDD() 
 {
   gROOT->SetStyle("CMS");
   loadSamples();
+  const TString signalToDraw="T1bbbb";
   addSample("T1bbbb");
   currentConfig_=configDescriptions_.getCorrected(); //add JERbias
-  loadScanSMSngen("T1bbbb"); m0_=800; m12_=400;
+  loadScanSMSngen("T1bbbb"); m0_=925; m12_=100;
 
+  maxScaleFactor_=2;
 
   setSearchRegions("METbins3B");
   ifstream file("DDresults_METbins3B.dat");
@@ -3977,9 +3985,10 @@ void drawDD(const TString signalToDraw="")
     drawSimple("MET",nbins,metbins[0],metbins[nbins],"dummy","signal",signalToDraw,metbins);
     hsignal = (TH1D*)hinteractive->Clone("hsignal");
     hsignal->SetMarkerSize(0);
-    hsignal->SetFillColor(sampleColor_[signalToDraw]);
+    //    hsignal->SetFillColor(sampleColor_[signalToDraw]);
+    hsignal->SetLineWidth(2);
     thestack->Add(hsignal);
-    leg->AddEntry(hsignal,sampleLabel_[signalToDraw]);
+    leg->AddEntry(hsignal,getSampleLabel(signalToDraw));
     savePlots_=sp;
   }
 
@@ -3993,7 +4002,7 @@ void drawDD(const TString signalToDraw="")
 
   thecanvas->cd();
   thestack->Draw("hist");
-    thestack->GetHistogram()->GetXaxis()->SetTitle(xtitle);
+  thestack->GetHistogram()->GetXaxis()->SetTitle(xtitle);
 
   //draw errors on DD
   if (mcerrors!=0) delete mcerrors;

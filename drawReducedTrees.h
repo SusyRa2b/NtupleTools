@@ -553,7 +553,7 @@ void setSearchRegions( TString  which="") {
     //SB is 150-250
     sbRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=150&&MET<250","LooseWideSB",false));
     searchRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=250","LooseWideSB")); //1BL
-    
+        
     sbRegions_.push_back( SearchRegion( "ge1b","HT>=500","MET>=150&&MET<250","TightWideSB",false));
     searchRegions_.push_back( SearchRegion( "ge1b","HT>=500","MET>=500","TightWideSB")); //1BT
     
@@ -565,14 +565,13 @@ void setSearchRegions( TString  which="") {
     
     sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=150&&MET<250","LooseWideSB",false));
     searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=250","LooseWideSB")); //3B
+    
   }
   else if (which=="eq2BT") {
     //work in progress
-    assert(0);
     setTrigEff("WideSB"); //set trigger efficiency
-    sbRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=150&&MET<250","TightHT",false));
-    searchRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=300","TightWideSB")); //2BT
-    
+    sbRegions_.push_back( SearchRegion( "eq2b","HT>=600","MET>=150&&MET<250","TightHTWideSB",false));
+    searchRegions_.push_back( SearchRegion( "eq2b","HT>=600","MET>=300","TightHTWideSB")); //2BT
   }
   else if (which=="SpecialTest1") {
     setTrigEff("LowSBSpecialTest1"); //set trigger efficiency
@@ -1399,6 +1398,17 @@ void loadSusyCrossSections() {
     CrossSectionTable_mSUGRAtanb40_ = new  CrossSectionTable("NLOxsec_tanb40_10.txt");
   }
 
+}
+
+bool isSampleScan(const TString & name ) {
+  if (name.Contains("T1bbbb")) return true;
+  if (name.Contains("T2bb")) return true;
+  if (name.Contains("T1tttt")) return true;
+  if (name.Contains("T2tt")) return true;
+  if (name.Contains("SUGRA")) return true;
+
+
+  return false;
 }
 
 bool isSampleSM(const TString & name) {
@@ -2288,6 +2298,20 @@ void resetSamples(bool joinSingleTop=true) {
   samples_.push_back("Zinvisible");
   //samples_.push_back("HerwigQCDFlat");
   samples_.push_back("LM9");
+
+}
+
+TString getSampleLabel(const TString & sample) {
+  TString label="Not Found";
+  if (  isSampleScan(sample)) {
+    char ss[50];
+    sprintf(ss, "m_{g~} = %d, m_{LSP} = %d",m0_,m12_);
+    label=ss;
+  }
+  else {
+    label = sampleLabel_[sample]; //should replace this with find() instead
+  }
+  return label;
 
 }
 
