@@ -68,7 +68,8 @@ in order to get one file per sample.
   
 TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35s/Fall11/"; //uncorrected MET
 TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35s/";//uncorrected MET
-  
+//TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35t/Fall11/"; //uncorrected MET
+//TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35t/";//uncorrected MET
 /*
 TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35p/Fall11/"; //uncorrected MET
 TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35p/";//uncorrected MET
@@ -3239,10 +3240,10 @@ modifications for SHAPE analysis: (bShape = true)
 }
 
 void runSLClosureTest2011(const bool bShape=false) {
-
+  
   setSearchRegions();
   cout<<"Note that the following is the joint tt+W+t closure test only!"<<endl;
-
+  
   //i'm going to load the samples here because it's easier to
   //load the split samples once and for all before calling slABCD
   splitTTbarForClosureTest_ =true;   splitWJetsForClosureTest_ =true;  splitSingleTopForClosureTest_=true;
@@ -4437,18 +4438,17 @@ other.
     thebnnMHTeffMode_ = kOff;
     currentConfig_=configDescriptions_.getCorrected(); //add JERbias
 
-    ////The MET comparison plots for the AN have the b-tag SF stuff below commented out!
-    //btagcut="1";   
-    //if (btagselection=="ge2b") {
-    //  btagSFweight_="probge2";
-    //}
-    //else if (btagselection=="ge1b") {
-    //  btagSFweight_="probge1";
-    //}
-    //else if (btagselection=="ge3b") {
-    //  btagSFweight_="probge3";
-    //}
-    //else {assert(0);}
+    btagcut="1";   
+    if (btagselection=="ge2b") {
+      btagSFweight_="probge2";
+    }
+    else if (btagselection=="ge1b") {
+      btagSFweight_="probge1";
+    }
+    else if (btagselection=="ge3b") {
+      btagSFweight_="probge3";
+    }
+    else {assert(0);}
   }
 
 
@@ -4490,7 +4490,7 @@ other.
     doOverflowAddition(false);
 
     //ST
-    //selection_ =TCut("MET>=200 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && minDeltaPhiN >= 4 &&cutEleVeto==1 && cutMuVeto==1 && nTaus==1 &&passCleaning==1")&&btagcut&&HTcut;;
+    //selection_ =TCut("MET>=150 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && minDeltaPhiN >= 4 &&cutEleVeto==1 && cutMuVeto==1 && nTaus==1 &&passCleaning==1")&&btagcut&&HTcut;;
     //SL
     selection_ =TCut("MET>=150 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && minDeltaPhiN >= 4 && MT_Wlep>=0 && MT_Wlep<100 &&passCleaning==1")&&btagcut&&HTcut;;
     //SE
@@ -4560,6 +4560,7 @@ other.
     if(samplename=="TTbarJets") sample = "ttbar";
     else if(samplename=="WJets") sample = "wjets";
     else if(samplename=="SingleTop") sample = "singletop";
+    else if(samplename=="TTbarSingleTopWJetsCombined") sample = "ttbarsingletopwjetscombined";
 
     const bool PVhack=false;
 
@@ -4764,9 +4765,12 @@ other.
     myRatio->SetLineColor(kBlack);
     myRatio->SetMarkerColor(kBlack);
     myRatio->Divide(SIGplot,SLplot);
-    myRatio->SetMinimum(0);
-    myRatio->SetMaximum(2.5);
-    myRatio->GetYaxis()->SetNdivisions(200 + int(ratioMax-ratioMin)+1);    //set ticks ; to be seen if this really works
+    myRatio->SetMinimum(ratioMin);
+    myRatio->SetMaximum(ratioMax);
+    myRatio->GetYaxis()->SetNdivisions(200 + int(ratioMax-ratioMin)+1);    //float ratioMin=0; float ratioMax=2.5;
+    //myRatio->GetYaxis()->SetNdivisions(200 + 3);    //float ratioMin=0.7; float ratioMax=1.3;
+    //myRatio->GetYaxis()->SetNdivisions(300 + 4);    //float ratioMin=0.81; float ratioMax=1.19;
+    //myRatio->GetYaxis()->SetNdivisions(300 + 5);    //float ratioMin=0.5; float ratioMax=1.5;
     //myRatio->GetYaxis()->SetNdivisions(400);
     myRatio->GetYaxis()->SetLabelSize(0.1); //make y label bigger
     myRatio->GetXaxis()->SetLabelSize(0.1); //make y label bigger
@@ -4860,6 +4864,12 @@ other.
       myLegend->AddEntry(SIGplot,"single-top, 0 leptons", "lp");
       myLegend->AddEntry(SLplot, "single-top, 1 lepton", "lp");
     }
+    else if(sample=="ttbarsingletopwjetscombined"){
+      myLegend->AddEntry(SIGplot,"t#bar{t}+t+W, 0 leptons", "lp");
+      myLegend->AddEntry(SLplot, "t#bar{t}+t+W, 1 lepton", "lp");
+    }
+
+
     myLegend->Draw();
     if (PVhack)    myC->Print("METshape_logAndRatio_"+sample+"_0LinPVbins_"+btagselection+"_"+HTselection+".pdf");
     //else     myC->Print("METshape_logAndRatio_"+sample+"_SLandStandard_"+btagselection+"_"+HTselection+".pdf");
@@ -5046,6 +5056,7 @@ void makeTTbarWMETPlots(bool forttbarbreakdown=false, bool forwjetsbreakdown=fal
 
   }
   else{
+
     std::cout << "TTbarJets" << std::endl;
 
     AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Loose" , "TTbarJets");
@@ -5113,6 +5124,30 @@ void makeTTbarWMETPlots(bool forttbarbreakdown=false, bool forwjetsbreakdown=fal
     AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge3b", "Loose" , "SingleTop");
     selections.push_back("3B");
     ratios_sl.push_back(ratio_sl);  ratios_sl_err.push_back(ratio_sl_err);  ratios_nom.push_back(ratio_nom);  ratios_nom_err.push_back(ratio_nom_err);
+
+    
+    std::cout << "tt+t+W" << std::endl;
+
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Loose" , "TTbarSingleTopWJetsCombined");
+    selections.push_back("1BL");
+    ratios_sl.push_back(ratio_sl);  ratios_sl_err.push_back(ratio_sl_err);  ratios_nom.push_back(ratio_nom);  ratios_nom_err.push_back(ratio_nom_err);
+    
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Tight" , "TTbarSingleTopWJetsCombined");
+    selections.push_back("1BT");
+    ratios_sl.push_back(ratio_sl);  ratios_sl_err.push_back(ratio_sl_err);  ratios_nom.push_back(ratio_nom);  ratios_nom_err.push_back(ratio_nom_err);
+
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Loose" , "TTbarSingleTopWJetsCombined");
+    selections.push_back("2BL");
+    ratios_sl.push_back(ratio_sl);  ratios_sl_err.push_back(ratio_sl_err);  ratios_nom.push_back(ratio_nom);  ratios_nom_err.push_back(ratio_nom_err);
+
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Tight" , "TTbarSingleTopWJetsCombined");
+    selections.push_back("2BT");
+    ratios_sl.push_back(ratio_sl);  ratios_sl_err.push_back(ratio_sl_err);  ratios_nom.push_back(ratio_nom);  ratios_nom_err.push_back(ratio_nom_err);
+
+    AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge3b", "Loose" , "TTbarSingleTopWJetsCombined");
+    selections.push_back("3B");
+    ratios_sl.push_back(ratio_sl);  ratios_sl_err.push_back(ratio_sl_err);  ratios_nom.push_back(ratio_nom);  ratios_nom_err.push_back(ratio_nom_err);
+    
 
 
     for(uint i = 0; i<selections.size(); ++i){
@@ -5448,7 +5483,6 @@ void AN2011_excess() {
   setLogY(true); setPlotMinimum(0.7);
   drawPlots(var,nbins,low,high,xtitle,"Events", "HT_3B"+modestring,0,"GeV");
   setLogY(false); resetPlotMinimum();
-
   ratioMax=2.5;
   removeSample("LM9");
   var="minDeltaPhi30_eta5_noIdAll"; xtitle="minDeltaPhi30_eta5_noIdAll";
@@ -5472,9 +5506,9 @@ void AN2011_excess() {
   var="deltaPhiStar"; xtitle="#Delta#phi *";
   low=0; high = 2; nbins=20;
   drawPlots(var,nbins,low,high,xtitle,"Events", "deltaPhiStar_2BT"+modestring);
+  
 
-
-
+  
   float binsHT[]={400,600,800,1400};
   float binsMET[]={250,300,350,500};
   setColorScheme("nostack");
@@ -5510,7 +5544,8 @@ void AN2011_excess() {
   h2d_sigma->Draw("COLZ");
   h2d_sigma->Draw("text same");
 
-
+  thecanvas->SaveAs("3B_METvHT_varbins_nsigma-draw2d.pdf");
+  
   // Now take a look at the 3B SL sample //MET 200 and up
   btagSFweight_="probge3";
   selection_ =TCut("HT>=400 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0))&& MT_Wlep>=0 && MT_Wlep<100 && MET>=200 &&passCleaning==1 && minDeltaPhiN>=4");
@@ -5568,7 +5603,7 @@ void AN2011_excess() {
   //not much difference here
 
   //could try splitting by nPV?
-
+  
 
 }
 
@@ -6083,7 +6118,7 @@ void AN2011( TString btagselection="ge1b",const int mode=1, bool logy=false, boo
   //no delta phi cut
   selection_ =TCut("HT>=400 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=200 &&passCleaning==1")&&btagcut;
   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_minDeltaPhiN_"+btagselection+modestring);
-
+  
   // 2BT but with loose MET
   nbins = 10; low=0; high=40;
   selection_ =TCut("HT>=600 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=200 &&passCleaning==1")&&btagcut;
@@ -6132,15 +6167,17 @@ void AN2011( TString btagselection="ge1b",const int mode=1, bool logy=false, boo
   nbins = 20; low=400; high=1100;
   if (btagselection=="ge3b") nbins=10;
   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_HT_"+btagselection+modestring,0,"GeV");
-  
+
   //MET
   selection_ =TCut("HT>=400 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4 &&passCleaning==1")&&btagcut;
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
   nbins = 30; low=200; high=500;
+  //nbins = 20; low=150; high=550;
+  //nbins = 5; low=150; high=250;
   if (btagselection=="ge3b") nbins=10;
   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_"+btagselection+modestring,0,"GeV");
 
-    
+  
   //MET distribution with tighter HT cut
   selection_ =TCut("HT>500 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4 &&passCleaning==1")&&btagcut;
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
@@ -6354,6 +6391,7 @@ void AN2011( TString btagselection="ge1b",const int mode=1, bool logy=false, boo
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
   //nbins = 14; low=150; high=500;
   const int nvarbins=6;
+  //const int nvarbins=4;
   //const float varbins[]={150, 175, 200, 225, 250, 275, 300, 350, 500}; //AN and PAS 
   const float varbins[]={200, 225, 250, 275, 300, 350, 500}; //AN and PAS 
   //const float varbins[]={200, 250, 300, 350, 500}; //AN and PAS -for 2BL
@@ -8610,25 +8648,38 @@ void drawTrigEff() {
   //TString histfilename = "mhteff_dec8_eq0b.root";
   //TString histfilename = "hteff_mar27_eq0b.root";
   //TString histfilename = "hteff_mar27_eq0b_small.root";
-  TString histfilename = "hteff_badevents.root";
+  //TString histfilename = "hteff_badevents.root";
   //TString histfilename = "mhteff_dec8_eq0b_typeIMET.root";
   //TString histfilename = "mhteff_dec8_eq0b_HT500.root";
   //TString histfilename = "mhteff_dec8_eq0b_HT600.root";
   //TString histfilename = "mhteff_dec8_ge1b.root";
+  //TString histfilename = "mhteff_apr18_ge1b_with3jetcut.root";
+  //TString histfilename = "mhteff_apr18_eq0b_with3jetcut.root";
+  //TString histfilename = "mhteff_apr18_eq0b_mindphin6.root";
+  //TString histfilename = "mhteff_apr18_eq0b_mindphin6.root";
+  //TString histfilename = "mhteff_apr18_ge1b_mindphin8.root";
+  //TString histfilename = "mhteff_apr18_eq0b_mindphin8.root";
+  //TString histfilename = "mhteff_apr18_eq0b_mindphin10.root";
+  TString histfilename = "mhteff_apr18_ge1b_mindphin10.root";
+  //TString histfilename = "mhteff_apr18_ge1b.root";
+  //TString histfilename = "mhteff_apr18_ge2b.root";
   TFile fh(histfilename,"RECREATE");//will delete old root file if present 
   fh.Close(); //going to open only when needed 
 
   //TCut HTcut = "HT>=400";
   //TCut HTcut = "HT>=400";  TCut njetCut = "njets >=3";    TCut dpcut = "minDeltaPhiN>=4";
+  TCut HTcut = "HT>=400";  TCut njetCut = "nbjetsCSVM>=1";    TCut dpcut = "";
   //TCut HTcut = "HT>=400";  TCut njetCut = "nbjetsCSVM>=1";    TCut dpcut = "";
-  TCut HTcut = "HT>=400";  TCut njetCut = "nbjetsCSVM==0";    TCut dpcut = "";
+  //TCut HTcut = "HT>=400";  TCut njetCut = "njets>=3 && nbjetsCSVM>=1";    TCut dpcut = "";
+  //TCut HTcut = "HT>=400";  TCut njetCut = "nbjetsCSVM==0";    TCut dpcut = "";
+  //TCut HTcut = "HT>=400";  TCut njetCut = "njets>=3 && nbjetsCSVM==0";    TCut dpcut = "";
   //TCut dpcut = "";
 
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
   nbins = 100; low=0; high=1000;
   setLogY(false); resetPlotMinimum();
 
-  /*
+  
   /////////////////
   // HT260_MHT60_v2
   /////////////////
@@ -9031,10 +9082,10 @@ void drawTrigEff() {
   selection_ =TCut("cutTrigger==1 && pass_utilityHLT==1  && minDeltaPhiN < 4 && cutEleVeto==1 && cutMuVeto==1 && runNumber>=178411")&&njetCut&&dpcut&&HTcut;
   drawSimple(var,nbins,low,high,histfilename, "MET_ht350mht110v3_NoLepLDP", "data");
 
-  */
+  
  
 
-  var="HT"; xtitle="H_{T} [GeV]";
+  //var="HT"; xtitle="H_{T} [GeV]";
 
   //selection_ =TCut("pass_utilityPrescaleModuleHLT==1  && runNumber >= 173212 && runNumber <= 176544");
   //drawSimple(var,nbins,low,high,histfilename, "HT_ht300_den", "data");

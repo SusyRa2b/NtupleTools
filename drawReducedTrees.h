@@ -2028,6 +2028,7 @@ void setColorScheme(const TString & name) {
     sampleColor_["PythiaPUQCD"] = kYellow;
     sampleColor_["PythiaPUQCDFlat"] = kYellow;
     sampleColor_["TTbarJets"]=kRed+1;
+    sampleColor_["TTbarSingleTopWJetsCombined"]=kRed+1;
     sampleColor_["ttbar"]=kRed+1;
     sampleColor_["TTbarJets-semiMu"]=kViolet;
     sampleColor_["TTbarJets-semiMuGood"]=kViolet;
@@ -2114,6 +2115,7 @@ void setColorScheme(const TString & name) {
     sampleColor_["PythiaPUQCD"] =2;
     sampleColor_["PythiaPUQCDFlat"] =2;
     sampleColor_["TTbarJets"]=4;
+    sampleColor_["TTbarSingleTopWJetsCombined"]=4;
     sampleColor_["TTbarJets-semiMu"]=kGreen-3;
     sampleColor_["TTbarJets-semiMuGood"]=kGreen-3;
     sampleColor_["TTbarJets-semiMuFailEta"]=kGreen-3;
@@ -2333,6 +2335,7 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   samplesAll_.insert("PythiaPUQCD");
   //samplesAll_.insert("PythiaPUQCDFlat");
   samplesAll_.insert("TTbarJets");
+  samplesAll_.insert("TTbarSingleTopWJetsCombined");
   samplesAll_.insert("TTbarJets-semiMu");
   samplesAll_.insert("TTbarJets-semiMuGood");
   samplesAll_.insert("TTbarJets-semiMuFailEta");
@@ -2482,6 +2485,7 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   sampleLabel_["PythiaPUQCDFlat"] = "QCD"; 
   sampleLabel_["PythiaPUQCD"] = "QCD";
   sampleLabel_["TTbarJets"]="t#bar{t}";
+  sampleLabel_["TTbarSingleTopWJetsCombined"]="t#bar{t}+Single-Top+W#rightarrowl#nu";
   sampleLabel_["ttbar"]="t#bar{t}+W+t"; //for DD ttwt
   sampleLabel_["TTbarJets-semiMu"]="t#bar{t}:semi-#mu";
   sampleLabel_["TTbarJets-semiMuGood"]="t#bar{t}:semi-#mu - good";
@@ -2567,6 +2571,7 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   sampleMarkerStyle_["PythiaPUQCDFlat"] = kOpenCircle;  
   sampleMarkerStyle_["PythiaPUQCD"] = kOpenCircle;
   sampleMarkerStyle_["TTbarJets"]= kFullSquare;
+  sampleMarkerStyle_["TTbarSingleTopWJetsCombined"]= kFullSquare;
   sampleMarkerStyle_["ttbar"]= kFullSquare;
   sampleMarkerStyle_["TTbarJets-semiMu"]= kFullSquare;
   sampleMarkerStyle_["TTbarJets-semiMuGood"]= kFullSquare;
@@ -2652,6 +2657,7 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   sampleOwenName_["PythiaPUQCDFlat"] = "qcd"; 
   sampleOwenName_["PythiaPUQCD"] = "qcd";
   sampleOwenName_["TTbarJets"]="ttbar";
+  sampleOwenName_["TTbarSingleTopWJetsCombined"]="ttbartw";
   sampleOwenName_["ttbar"]="ttbar";
   sampleOwenName_["SingleTop"] = "singletop";
   sampleOwenName_["WJets"] = "wjets";
@@ -3496,8 +3502,8 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
       ratio->SetMaximum(ratioMax);
 
       ratio->GetYaxis()->SetNdivisions(200 + int(ratioMax-ratioMin)+1);    //set ticks ; to be seen if this really works
+      //ratio->GetYaxis()->SetNdivisions(300 + 5);    //float ratioMin=0.5; float ratioMax=1.5;
       //ratio->GetYaxis()->SetLabelSize(0.2); //make y label bigger
-
       ratio->GetYaxis()->SetLabelSize(0.1); //make y label bigger
       ratio->GetXaxis()->SetLabelSize(0.1); //make y label bigger
       ratio->GetXaxis()->SetTitleOffset(1.1);
