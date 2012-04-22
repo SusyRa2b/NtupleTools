@@ -3733,35 +3733,35 @@ void runFineBinsOfMET_2BT() {
 
   //now hard-code Ale's results
   //http://www.slac.stanford.edu/~gaz/RA2b/Znn_Binned.txt
-  resultsMap_["ge2bMETFine2BTBin1"]["Zinvisible"].value = 2.37;
-  resultsMap_["ge2bMETFine2BTBin1"]["Zinvisible"].statError = 1.59;
-  resultsMap_["ge2bMETFine2BTBin1"]["Zinvisible"].systError = 0;
-  resultsMap_["ge2bMETFine2BTBin1"]["Zinvisible"].trigErrorPlus = 0;
-  resultsMap_["ge2bMETFine2BTBin1"]["Zinvisible"].trigErrorMinus = 0;
+  resultsMap_["ge2bMETFineBin1"]["Zinvisible"].value = 2.37;
+  resultsMap_["ge2bMETFineBin1"]["Zinvisible"].statError = 1.59;
+  resultsMap_["ge2bMETFineBin1"]["Zinvisible"].systError = 0;
+  resultsMap_["ge2bMETFineBin1"]["Zinvisible"].trigErrorPlus = 0;
+  resultsMap_["ge2bMETFineBin1"]["Zinvisible"].trigErrorMinus = 0;
 
-  resultsMap_["ge2bMETFine2BTBin2"]["Zinvisible"].value = 0.93;
-  resultsMap_["ge2bMETFine2BTBin2"]["Zinvisible"].statError = 0.78;
-  resultsMap_["ge2bMETFine2BTBin2"]["Zinvisible"].systError = 0;
-  resultsMap_["ge2bMETFine2BTBin2"]["Zinvisible"].trigErrorPlus = 0;
-  resultsMap_["ge2bMETFine2BTBin2"]["Zinvisible"].trigErrorMinus = 0;
+  resultsMap_["ge2bMETFineBin2"]["Zinvisible"].value = 0.93;
+  resultsMap_["ge2bMETFineBin2"]["Zinvisible"].statError = 0.78;
+  resultsMap_["ge2bMETFineBin2"]["Zinvisible"].systError = 0;
+  resultsMap_["ge2bMETFineBin2"]["Zinvisible"].trigErrorPlus = 0;
+  resultsMap_["ge2bMETFineBin2"]["Zinvisible"].trigErrorMinus = 0;
 
-  resultsMap_["ge2bMETFine2BTBin3"]["Zinvisible"].value = 0.88 ;
-  resultsMap_["ge2bMETFine2BTBin3"]["Zinvisible"].statError = 0.74;
-  resultsMap_["ge2bMETFine2BTBin3"]["Zinvisible"].systError = 0 ;
-  resultsMap_["ge2bMETFine2BTBin3"]["Zinvisible"].trigErrorPlus = 0;
-  resultsMap_["ge2bMETFine2BTBin3"]["Zinvisible"].trigErrorMinus = 0;
+  resultsMap_["ge2bMETFineBin3"]["Zinvisible"].value = 0.88 ;
+  resultsMap_["ge2bMETFineBin3"]["Zinvisible"].statError = 0.74;
+  resultsMap_["ge2bMETFineBin3"]["Zinvisible"].systError = 0 ;
+  resultsMap_["ge2bMETFineBin3"]["Zinvisible"].trigErrorPlus = 0;
+  resultsMap_["ge2bMETFineBin3"]["Zinvisible"].trigErrorMinus = 0;
 
-  resultsMap_["ge2bMETFine2BTBin4"]["Zinvisible"].value = 0.35;
-  resultsMap_["ge2bMETFine2BTBin4"]["Zinvisible"].statError =  0.62;
-  resultsMap_["ge2bMETFine2BTBin4"]["Zinvisible"].systError = 0;
-  resultsMap_["ge2bMETFine2BTBin4"]["Zinvisible"].trigErrorPlus = 0;
-  resultsMap_["ge2bMETFine2BTBin4"]["Zinvisible"].trigErrorMinus = 0;
+  resultsMap_["ge2bMETFineBin4"]["Zinvisible"].value = 0.35;
+  resultsMap_["ge2bMETFineBin4"]["Zinvisible"].statError =  0.62;
+  resultsMap_["ge2bMETFineBin4"]["Zinvisible"].systError = 0;
+  resultsMap_["ge2bMETFineBin4"]["Zinvisible"].trigErrorPlus = 0;
+  resultsMap_["ge2bMETFineBin4"]["Zinvisible"].trigErrorMinus = 0;
 
-  resultsMap_["ge2bMETFine2BTBin5"]["Zinvisible"].value =  0;
-  resultsMap_["ge2bMETFine2BTBin5"]["Zinvisible"].statError = 0.62;
-  resultsMap_["ge2bMETFine2BTBin5"]["Zinvisible"].systError = 0; 
-  resultsMap_["ge2bMETFine2BTBin5"]["Zinvisible"].trigErrorPlus = 0;
-  resultsMap_["ge2bMETFine2BTBin5"]["Zinvisible"].trigErrorMinus = 0;
+  resultsMap_["ge2bMETFineBin5"]["Zinvisible"].value =  0;
+  resultsMap_["ge2bMETFineBin5"]["Zinvisible"].statError = 0.62;
+  resultsMap_["ge2bMETFineBin5"]["Zinvisible"].systError = 0; 
+  resultsMap_["ge2bMETFineBin5"]["Zinvisible"].trigErrorPlus = 0;
+  resultsMap_["ge2bMETFineBin5"]["Zinvisible"].trigErrorMinus = 0;
 
   writeResultsMapToText("DDresults_METfinebins2BT.dat");
 
