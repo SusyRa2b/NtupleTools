@@ -2307,7 +2307,7 @@ TString getSampleLabel(const TString & sample) {
   TString label="Not Found";
   if (  isSampleScan(sample)) {
     char ss[50];
-    sprintf(ss, "m_{g~} = %d, m_{LSP} = %d",m0_,m12_);
+    sprintf(ss, "#splitline{m_{gluino} = %d GeV}{m_{LSP} = %d GeV}",m0_,m12_);
     label=ss;
   }
   else {

@@ -66,41 +66,12 @@ in order to get one file per sample.
 //***************************
   // latest version
   
-TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35s/Fall11/"; //uncorrected MET
-TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35s/";//uncorrected MET
-//TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35t/Fall11/"; //uncorrected MET
-//TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35t/";//uncorrected MET
-/*
-TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35p/Fall11/"; //uncorrected MET
-TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35p/";//uncorrected MET
-*/
-//*** SUMMER RESULT
-//***************************
-//for rerunning the final background estimates...need standard MC and MET cleaning
-//V00-02-24_fullpf2pat was used for 13 Aug update of data results
-//stick with this version for now because 25 is missing one ZJets sample and that takes away one event from the LDP
-//TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-24_fullpf2pat/";//path for MC
-//TString dataInputPath = "/cu3/wteo/reducedTrees/V00-02-05_v3-pickevents/"; //includes MET cleaning but uses a tight skim (not good for plots)
-
-//for making the standard set of plots...need standard MC and all data.
-//TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-25_fullpf2pat/";//path for MC	     
-//TString dataInputPath = "/cu2/ra2b/reducedTrees/V00-02-25_fullpf2pat/";
-
-//for njet reweighting (needed because not all reducedTrees in nominal V00-02-25 have njets30)
-//TString inputPath = "/cu2/ra2b/reducedTrees/benV00-02-25_fullpf2pat/";
-//TString dataInputPath = "/cu2/ra2b/reducedTrees/benV00-02-25_fullpf2pat/";
-
-//for signal systematics
-  //   TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-25c_fullpf2pat/"; //LM9 with correct pdf weights
-//TString inputPath = "/cu2/joshmt/reducedTrees/V00-02-25c_fullpf2pat/"; //with correct pdf weights
-//TString inputPath = "/home/joshmt/";//path for MC
-//TString dataInputPath = "/cu2/ra2b/reducedTrees/V00-02-24_fullpf2pat/"; //sym links to V00-02-05_v3
-
-//the cutdesc string is now defined in loadSamples()
+TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-352/Fall11/"; //uncorrected MET
+TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-352/";//uncorrected MET
 
 //double lumiScale_ = 1143; //official summer conf lumi
 //double lumiScale_ = 3464.581;//oct25
-  //double lumiScale_ = 4683.719;//nov4
+ //double lumiScale_ = 4683.719;//nov4
 double lumiScale_ = 4982;//final pixel-based 2011 lumi
 double preLumiScale_ = 33.6413;//final pixel-based 2011 lumi for HT only triggers
 
@@ -3878,22 +3849,26 @@ void drawDD()
   currentConfig_=configDescriptions_.getCorrected(); //add JERbias
   loadScanSMSngen("T1bbbb"); m0_=925; m12_=100;
 
-  maxScaleFactor_=2;
 
-  setSearchRegions("METbins3B");
-  ifstream file("DDresults_METbins3B.dat");
+//   setSearchRegions("METbins3B");
+//   ifstream file("DDresults_METbins3B.dat");
+//   maxScaleFactor_=2.2; //nasty way to set the y max
 
-  // setSearchRegions("METfinebins2BT");
-  // ifstream file("DDresults_METfinebins2BT.dat");
+//     setSearchRegions("METfinebins2BT");
+//     ifstream file("/afs/cern.ch/user/w/wteo/public/RA2boutput/DDresults_METfinebins2BT_Apr22.dat");
+//  maxScaleFactor_=1.1; //nasty way to set the y max
 
-  //setSearchRegions("METfinebins2BL");
-  //ifstream file("DDresults_METfinebins2BL.dat");
+ //  setSearchRegions("METfinebins2BL");
+//   ifstream file("DDresults_METfinebins2BL.dat");
+//   maxScaleFactor_=1.15; //nasty way to set the y max
 
-  //  setSearchRegions("METfinebins1BL");
-  //  ifstream file("DDresults_METfinebins1BL.dat");
+    setSearchRegions("METfinebins1BL");
+    ifstream file("DDresults_METfinebins1BL.dat");
+   maxScaleFactor_=1.1; //nasty way to set the y max
 
   //  setSearchRegions("METfinebins");
   //  ifstream file("DDresults_METfinebins3B_1BLSL.dat");
+  //maxScaleFactor_=2.2; //nasty way to set the y max
   //to draw data we have to define all of the cuts....
 
   TCut baseline = "cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && passCleaning==1 && minDeltaPhiN>=4";
@@ -3928,6 +3903,7 @@ void drawDD()
   thestack = new THStack("thestack","--");
 
   //histos are now filled
+  leg_x1=0.55;
   renewCanvas();
   renewLegend();
 
@@ -3983,6 +3959,9 @@ void drawDD()
     savePlots_=false;
     TCut thecut = baseline&&htcut;
     selection_=thecut;
+    usePUweight_=true;
+    useMHTeff_=true;
+    useHTeff_=true;
     drawSimple("MET",nbins,metbins[0],metbins[nbins],"dummy","signal",signalToDraw,metbins);
     hsignal = (TH1D*)hinteractive->Clone("hsignal");
     hsignal->SetMarkerSize(0);
