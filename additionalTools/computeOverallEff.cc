@@ -7,6 +7,10 @@ the MET range of interest.
 One must specify the SB range with the sbType enum, and the kinematic
 region of interest with the regionType enum.
 
+WARNING: Owen discovered that TGraphAsymmErrors may give strange
+results for newer versions of ROOT (>V5.26/00e).  The efficiency
+numbers for the 2011 analysis were computed using V5.26/00e.
+
 */
 
 #include "TF2.h"
