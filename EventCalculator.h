@@ -301,7 +301,7 @@ public:
   unsigned int findSUSYMaternity( unsigned int k );
   unsigned int getSUSYnb(std::vector<unsigned int> &susyb_index);
   unsigned int getSUSYnb();
-  SUSYProcess getSUSYProcess();
+  SUSYProcess getSUSYProcess(float & pt1, float & phi1, float & pt2, float & phi2); //momenta of the SUSY mothers
   std::pair<int,int> getSMSmasses();
   double checkPdfWeightSanity( double a) ;
   //  void getPdfWeights(const TString & pdfset, Float_t * pdfWeights, TH1D * sumofweights) ;

@@ -3228,7 +3228,10 @@ http://svnweb.cern.ch/world/wsvn/icfsusy/trunk/AnalysisV2/SUSYSignalScan/include
 http://svnweb.cern.ch/world/wsvn/icfsusy/trunk/AnalysisV2/SUSYSignalScan/src/common/NLOTools.cc 
 [svnweb.cern.ch]
 */
-SUSYProcess EventCalculator::getSUSYProcess() {
+SUSYProcess EventCalculator::getSUSYProcess(float & pt1, float & phi1, float & pt2, float & phi2) {
+
+  int nfound=0;
+  float pt[2],phi[2];
 
   bool verbose = false;
 
@@ -3254,31 +3257,41 @@ SUSYProcess EventCalculator::getSUSYProcess() {
 
     if (motherId == 21 || motherId <=6  ) {
 
+      bool foundit=false;
+
       int myid = TMath::Nint(myGenParticles->at(k).pdgId );
       //select squarks
       if (( myid >= 1000001 && myid <= 1000004) ||
 	  (myid >= 2000001 && myid <= 2000004) ) {
-        squarks++;
+        squarks++; foundit=true;
       }
       //select antisquarks
       if( ( myid <= -1000001 && myid >= -1000004) ||
 	  ( myid <= -2000001 && myid >= -2000004) ){
-        antisquarks++;
+        antisquarks++; foundit=true;
       }
-      if ( abs( myid ) == 1000005 || abs( myid ) == 2000005) sbottoms++;
-      if ( myid == -1000005 || myid == -2000005) antisbottoms++; //jmt -- tacked on
-      if ( abs( myid ) == 1000006 || abs( myid ) == 2000006) stops++;
+      if ( abs( myid ) == 1000005 || abs( myid ) == 2000005) {sbottoms++; foundit=true;}
+      if ( myid == -1000005 || myid == -2000005) {antisbottoms++;  foundit=true;} //jmt -- tacked on
+      if ( abs( myid ) == 1000006 || abs( myid ) == 2000006) {stops++; foundit=true;}
 
       //select gluinos
-      if ( abs( myid) == 1000021 ) gluinos++;
+      if ( abs( myid) == 1000021 ) {gluinos++; foundit=true;}
 
       //select sleptons
       if ( (abs( myid) >= 1000011 && fabs(myid) <= 1000016) ||
-	   ( abs(myid) >= 2000011 && abs(myid) <= 2000016)) sleptons++;
+	   ( abs(myid) >= 2000011 && abs(myid) <= 2000016)) {sleptons++; foundit=true;}
       //select neutralinos
-      if ( abs( myid) == 1000022 || abs( myid) == 1000023 ||  abs(myid) == 1000025 || abs(myid) == 1000035 ||  abs(myid) == 1000045  ) neutralinos++;
+      if ( abs( myid) == 1000022 || abs( myid) == 1000023 ||  abs(myid) == 1000025 || abs(myid) == 1000035 ||  abs(myid) == 1000045  ) {neutralinos++; foundit=true;}
 
-      if ( abs(myid) == 1000024 || abs(myid) == 1000037  ) charginos++;
+      if ( abs(myid) == 1000024 || abs(myid) == 1000037  ) {charginos++; foundit=true;}
+
+      if (foundit) {
+	if (nfound<2) {
+	  pt[nfound]=myGenParticles->at(k).pt;
+	  phi[nfound]=myGenParticles->at(k).phi;
+	}
+	++nfound;
+      }
 
     }
   }
@@ -3294,7 +3307,7 @@ SUSYProcess EventCalculator::getSUSYProcess() {
   if(gluinos == 2) process = gg;
   if(squarks + antisquarks + sbottoms + stops == 1 && gluinos == 1) process = sg;
 
-  if (process == NotFound) verbose = true;
+  if (process == NotFound || nfound>2) verbose = true;
   //jmt -- We seem to have no cross section for neutralino+sbottom
   //also squark + sbotttom
 
@@ -3309,6 +3322,14 @@ SUSYProcess EventCalculator::getSUSYProcess() {
   if(verbose == true)cout << " neutralinos " << neutralinos << "\n charginos " << charginos << "\n gluinos " << gluinos << "\n squarks " << squarks << "\n antisquarks " << antisquarks << "\n sleptons " << sleptons << "\n stops " << stops << "\n sbottoms " << sbottoms 
 			  <<" = (b~ + bbar~) = "<<n_sbottoms <<" + "<<antisbottoms
 			  << endl;
+  if (verbose)  cout<<"\tnfound = "<<nfound<<" ; pt,phi = "<<pt[0] << " "<<phi[0] <<" ; "<<pt[1] << " "<<phi[1]<<endl;
+
+  pt1=pt[0];
+  phi1 = phi[0];
+
+  pt2=pt[1];
+  phi2 = phi[1];
+
   return process;
 }
 
@@ -4870,6 +4891,7 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
 
   int SUSY_nb;
   int SUSY_process;
+  float SUSY_recoilPt;
 
   //new variables from Luke
 /* jmt -- remove for now
@@ -5161,6 +5183,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
 
   reducedTree.Branch("SUSY_nb",&SUSY_nb,"SUSY_nb/I");
   reducedTree.Branch("SUSY_process",&SUSY_process,"SUSY_process/I");
+  reducedTree.Branch("SUSY_recoilPt",&SUSY_recoilPt,"SUSY_recoilPt/F");
 
   reducedTree.Branch("njets",&njets,"njets/I");
   reducedTree.Branch("njets30",&njets30,"njets30/I");
@@ -5518,10 +5541,19 @@ Also the pdfWeightSum* histograms that are used for LM9.
 
     // ~~~~ special stuff that must be done on all events (whether it passes the skim cuts or not)
     //all of it is for MC. if it was needed for data, we'd want to put the lumi mask cut out here
-    SUSYProcess prodprocess= (theScanType_==kmSugra ) ? getSUSYProcess() : NotFound; //don't do LM here, at least not for now
+    float susy_pt1=0,susy_phi1=0,susy_pt2=0,susy_phi2=0;
+    SUSYProcess prodprocess= (theScanType_==kmSugra ||theScanType_==kSMS) ? getSUSYProcess(susy_pt1,susy_phi1,susy_pt2,susy_phi2) : NotFound; //don't do LM here, at least not for now
     SUSY_process = int(prodprocess);
     m0 = thispoint.first;
     m12=thispoint.second;
+
+    float susy_px1 = susy_pt1 * cos(susy_phi1);
+    float susy_py1 = susy_pt1 * sin(susy_phi1);
+    float susy_px2 = susy_pt2 * cos(susy_phi2);
+    float susy_py2 = susy_pt2 * sin(susy_phi2);
+    float susy_px = susy_px1 + susy_px2;
+    float susy_py = susy_py1 + susy_py2;
+    SUSY_recoilPt = sqrt(susy_px*susy_px + susy_py*susy_py);
 
     if (theScanType_==kmSugra) {
       if ( scanProcessTotalsMapCTEQ.count(thispoint) ) {
