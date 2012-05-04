@@ -4808,6 +4808,7 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   float sumDeltaPhi, diffDeltaPhi;
   float minDeltaPhiN, deltaPhiN1, deltaPhiN2, deltaPhiN3;
   float minDeltaPhiN_deltaT, deltaT1, deltaT2, deltaT3; 
+  float minDeltaPhiNAll, minDeltaPhiNAll30;
   float minDeltaPhiN_otherEta5, minDeltaPhiN_otherEta5idNo, minDeltaPhiN_mainPt30_otherEta5idNo, minDeltaPhiN_mainPt30Eta5_otherEta5idNo, minDeltaPhiN_mainPt30Eta5idNo_otherEta5idNo;
   float minDeltaPhiK, minDeltaPhiK_otherEta5, minDeltaPhiK_otherEta5idNo, minDeltaPhiK_mainPt30_otherEta5idNo, minDeltaPhiK_mainPt30Eta5_otherEta5idNo, minDeltaPhiK_mainPt30Eta5idNo_otherEta5idNo;
   float minDeltaPhiN_DJR, minDeltaPhiN_DJR_otherEta5, minDeltaPhiK_DJR, minDeltaPhiK_DJR_otherEta5;
@@ -5275,6 +5276,8 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("deltaT2", &deltaT2, "deltaT2/F");
   reducedTree.Branch("deltaT3", &deltaT3, "deltaT3/F");
 
+  reducedTree.Branch("minDeltaPhiNAll", &minDeltaPhiNAll, "minDeltaPhiNAll/F");
+  reducedTree.Branch("minDeltaPhiNAll30", &minDeltaPhiNAll30, "minDeltaPhiNAll30/F");
   reducedTree.Branch("minDeltaPhiN_otherEta5", &minDeltaPhiN_otherEta5, "minDeltaPhiN_otherEta5/F");
   reducedTree.Branch("minDeltaPhiN_otherEta5idNo", &minDeltaPhiN_otherEta5idNo, "minDeltaPhiN_otherEta5idNo/F");
   reducedTree.Branch("minDeltaPhiN_mainPt30_otherEta5idNo", &minDeltaPhiN_mainPt30_otherEta5idNo, "minDeltaPhiN_mainPt30_otherEta5idNo/F");
@@ -5843,6 +5846,8 @@ Also the pdfWeightSum* histograms that are used for LM9.
       hltMHTeffBNNDown = effDown;
 
       //alternatives for testing
+      minDeltaPhiNAll                             = getMinDeltaPhiMETN(99,50,2.4,true, 30,2.4,true, false,false);
+      minDeltaPhiNAll30                           = getMinDeltaPhiMETN(99,30,2.4,true, 30,2.4,true, false,false);
       minDeltaPhiN_otherEta5                      = getMinDeltaPhiMETN(3,50,2.4,true, 30,5,true, false,false);
       minDeltaPhiN_otherEta5idNo                  = getMinDeltaPhiMETN(3,50,2.4,true, 30,5,false,false,false);
       minDeltaPhiN_mainPt30_otherEta5idNo         = getMinDeltaPhiMETN(3,30,2.4,true, 30,5,false,false,false);
