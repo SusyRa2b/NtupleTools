@@ -66,8 +66,8 @@ in order to get one file per sample.
 //***************************
   // latest version
   
-TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-352/Fall11/"; //uncorrected MET
-TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-352/";//uncorrected MET
+TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35s/Fall11/"; //uncorrected MET
+TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35s/";//uncorrected MET
 
 //double lumiScale_ = 1143; //official summer conf lumi
 //double lumiScale_ = 3464.581;//oct25
@@ -372,13 +372,13 @@ void runCountInBoxesMC() {
 
 
 
-std::pair<double,double> ABCD_njetRW(TString prescontrol, TString physcontrol, TString Acutjm, TString Bcutjm, TString Ccutjm, TString Dcutjm, TString lsbbtagsf=""){
+std::pair<double,double> ABCD_njetRW(TString name, TString prescontrol, TString physcontrol, TString Acutjm, TString Bcutjm, TString Ccutjm, TString Dcutjm, TString lsbbtagsf=""){
   cout << "Running closure with MC jet multiplicity reweighted to match data." << endl;
   
   //  bool quietornot = quiet_;
   //  setQuiet(false);
 
-  TString histfilename = "dummy.root";
+  TString histfilename = "njetRW_"+name+".root";
   TFile fh(histfilename,"RECREATE");//will delete old root file if present 
   fh.Close(); //going to open only when needed 
 
@@ -431,7 +431,7 @@ std::pair<double,double> ABCD_njetRW(TString prescontrol, TString physcontrol, T
     if (btaggedLSB_) prescontrol+= " && nbjetsCSVM==0"; 
     else    prescontrol+= " && nbjetsCSVM>=1"; 
   }
-
+  
   selection_= prescontrol;
   drawSimple("njets30",jmnbins,jmbins,"dummy.root", "","data");
   TH1D* hJMprescaleData = (TH1D*)hinteractive->Clone("hJMprescaleData");
@@ -486,12 +486,12 @@ std::pair<double,double> ABCD_njetRW(TString prescontrol, TString physcontrol, T
   hphysW->Divide(hJMphysicsQCD);
   TH1D* hpresW = (TH1D*)hJMprescaleData->Clone("hpresW"); //assume no contamination for LSB
   hpresW->Divide(hJMprescaleQCD);
-      
+  
   TFile fh1(histfilename, "UPDATE");
   hphysW->Write();
   hpresW->Write();
   fh1.Close();
-
+  
   //reweighted boxes
   TH1D* hJMAqcdRW = (TH1D*)hJMAqcd->Clone("hJMAqcdRW");
   TH1D* hJMBqcdRW = (TH1D*)hJMBqcd->Clone("hJMBqcdRW");
@@ -502,11 +502,21 @@ std::pair<double,double> ABCD_njetRW(TString prescontrol, TString physcontrol, T
   hJMCqcdRW->Multiply(hphysW);
   hJMDqcdRW->Multiply(hphysW);
 
+  //debug output
+  //jmt::printHist(hJMphysicsData);
+  //jmt::printHist(hJMphysicsQCD);
+
   double Arw, Brw, Crw, Drw;
   Arw = hJMAqcdRW->Integral();
   Brw = hJMBqcdRW->Integral();
   Crw = hJMCqcdRW->Integral();
   Drw = hJMDqcdRW->Integral();
+  
+  double Arw_errnocor, Brw_errnocor, Crw_errnocor, Drw_errnocor;
+  Arw_errnocor = jmt::errOnIntegral(hJMAqcdRW);
+  Brw_errnocor = jmt::errOnIntegral(hJMBqcdRW);
+  Crw_errnocor = jmt::errOnIntegral(hJMCqcdRW);
+  Drw_errnocor = jmt::errOnIntegral(hJMDqcdRW);
 
 
   ////////////////////////////////////////////////////////////stat//
@@ -586,6 +596,13 @@ std::pair<double,double> ABCD_njetRW(TString prescontrol, TString physcontrol, T
   double closurestat = sqrt(rwErr2);
   cout << "njetrw: closure (rw): " << 100.*closure << " +- " << 100.*closurestat << endl;
   cout << "njetrw: Table: $" << Brw << "$ & $" << Arw << "$ & $" << Drw << "$ & $" << Brw*Drw/Arw << "$ & $" << Crw << "$ & $" <<  100.*closure << " \\pm " << 100.*closurestat << "$ \\\\" << endl;
+  
+  char output[500];
+  sprintf(output,"njetrw: TableWithError: %s & %s & %s & %s & %f & %s & $%f \\pm %f$ \\\\",name.Data(),
+	  jmt::format_nevents(Brw,Brw_errnocor).Data(),jmt::format_nevents(Arw,Arw_errnocor).Data(),
+	  jmt::format_nevents(Drw,Drw_errnocor).Data(),Brw*Drw/Arw,
+	  jmt::format_nevents(Crw,Crw_errnocor).Data(),100.*closure,100.*closurestat);    
+  cout<<output<<endl;
   
   return make_pair( 100*sqrt(pow(closure,2) + pow(closurestat,2)), 0); //estimate in denominator
 }
@@ -1057,8 +1074,10 @@ std::pair<double,std::vector<double> > anotherABCD( const SearchRegion & region,
     else        myOwen->Nsb  = SIG;
   }
 
-  
-  if(doNjetRW){ return ABCD_njetRW(prescontrolstring, physcontrolstring, Acutjm, Bcutjm, SIGcutjm, Dcutjm,LSBbtagSFweight);}
+  TString name_jmrw = region.btagSelection;
+  name_jmrw += region.owenId;
+  name_jmrw += isSIG ? "_SIG":"_SB";
+  if(doNjetRW){ return ABCD_njetRW(name_jmrw, prescontrolstring, physcontrolstring, Acutjm, Bcutjm, SIGcutjm, Dcutjm,LSBbtagSFweight);}
   
   //now calculate (B/A)*D=R*D
   double RLSB_UW = B/A; //unweighted
@@ -1171,6 +1190,7 @@ std::pair<double,std::vector<double> > anotherABCD( const SearchRegion & region,
   TString name = region.btagSelection;
   name += region.owenId;
   name += isSIG ? ", SIG":", SB";
+  
   char output[500];
 
   //for the purpose of the print-out only, revert D back to the observed data counts
