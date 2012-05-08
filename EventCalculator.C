@@ -4808,6 +4808,9 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   float sumDeltaPhi, diffDeltaPhi;
   float minDeltaPhiN, deltaPhiN1, deltaPhiN2, deltaPhiN3;
   float minDeltaPhiN_deltaT, deltaT1, deltaT2, deltaT3; 
+  float deltaT1_otherPt40, deltaT1_otherPt50, deltaT1_otherPt70;
+  float deltaT2_otherPt40, deltaT2_otherPt50, deltaT2_otherPt70;
+  float deltaT3_otherPt40, deltaT3_otherPt50, deltaT3_otherPt70;
   float minDeltaPhiNAll, minDeltaPhiNAll30;
   float minDeltaPhiN_otherEta5, minDeltaPhiN_otherEta5idNo, minDeltaPhiN_mainPt30_otherEta5idNo, minDeltaPhiN_mainPt30Eta5_otherEta5idNo, minDeltaPhiN_mainPt30Eta5idNo_otherEta5idNo;
   float minDeltaPhiK, minDeltaPhiKw, minDeltaPhiK_otherEta5, minDeltaPhiK_otherEta5idNo, minDeltaPhiK_mainPt30_otherEta5idNo, minDeltaPhiK_mainPt30Eta5_otherEta5idNo, minDeltaPhiK_mainPt30Eta5idNo_otherEta5idNo;
@@ -5275,6 +5278,16 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("deltaT1", &deltaT1, "deltaT1/F");
   reducedTree.Branch("deltaT2", &deltaT2, "deltaT2/F");
   reducedTree.Branch("deltaT3", &deltaT3, "deltaT3/F");
+
+  reducedTree.Branch("deltaT1_otherPt40", &deltaT1_otherPt40, "deltaT1_otherPt40/F");
+  reducedTree.Branch("deltaT1_otherPt50", &deltaT1_otherPt50, "deltaT1_otherPt50/F");
+  reducedTree.Branch("deltaT1_otherPt70", &deltaT1_otherPt70, "deltaT1_otherPt70/F");
+  reducedTree.Branch("deltaT2_otherPt40", &deltaT2_otherPt40, "deltaT2_otherPt40/F");
+  reducedTree.Branch("deltaT2_otherPt50", &deltaT2_otherPt50, "deltaT2_otherPt50/F");
+  reducedTree.Branch("deltaT2_otherPt70", &deltaT2_otherPt70, "deltaT2_otherPt70/F");
+  reducedTree.Branch("deltaT3_otherPt40", &deltaT3_otherPt40, "deltaT3_otherPt40/F");
+  reducedTree.Branch("deltaT3_otherPt50", &deltaT3_otherPt50, "deltaT3_otherPt50/F");
+  reducedTree.Branch("deltaT3_otherPt70", &deltaT3_otherPt70, "deltaT3_otherPt70/F");
 
   reducedTree.Branch("minDeltaPhiNAll", &minDeltaPhiNAll, "minDeltaPhiNAll/F");
   reducedTree.Branch("minDeltaPhiNAll30", &minDeltaPhiNAll30, "minDeltaPhiNAll30/F");
@@ -5839,6 +5852,16 @@ Also the pdfWeightSum* histograms that are used for LM9.
       deltaT2 = getDeltaPhiMETN_deltaT( getNthGoodJet(1,50,2.4,true) );
       deltaT3 = getDeltaPhiMETN_deltaT( getNthGoodJet(2,50,2.4,true) );
       minDeltaPhiN_deltaT = getDeltaPhiMETN_deltaT( getNthGoodJet((unsigned int)(minDeltaPhiN_chosenJet-1),50,2.4,true) );//
+
+      deltaT1_otherPt40 = getDeltaPhiMETN_deltaT(getNthGoodJet(0,50,2.4,true),40,2.4,true,false,false);
+      deltaT1_otherPt50 = getDeltaPhiMETN_deltaT(getNthGoodJet(0,50,2.4,true),50,2.4,true,false,false);
+      deltaT1_otherPt70 = getDeltaPhiMETN_deltaT(getNthGoodJet(0,50,2.4,true),70,2.4,true,false,false);
+      deltaT2_otherPt40 = getDeltaPhiMETN_deltaT(getNthGoodJet(1,50,2.4,true),40,2.4,true,false,false);
+      deltaT2_otherPt50 = getDeltaPhiMETN_deltaT(getNthGoodJet(1,50,2.4,true),50,2.4,true,false,false);
+      deltaT2_otherPt70 = getDeltaPhiMETN_deltaT(getNthGoodJet(1,50,2.4,true),70,2.4,true,false,false);
+      deltaT3_otherPt40 = getDeltaPhiMETN_deltaT(getNthGoodJet(2,50,2.4,true),40,2.4,true,false,false);
+      deltaT3_otherPt50 = getDeltaPhiMETN_deltaT(getNthGoodJet(2,50,2.4,true),50,2.4,true,false,false);
+      deltaT3_otherPt70 = getDeltaPhiMETN_deltaT(getNthGoodJet(2,50,2.4,true),70,2.4,true,false,false);
 
       hltMHTeff = getHLTMHTeff(MET, HT, nElectrons, nMuons, minDeltaPhiN);
       double effUp, effDown;
