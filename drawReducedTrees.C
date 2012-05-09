@@ -6074,28 +6074,28 @@ void AN2011( TString btagselection="ge1b",const int mode=1, bool logy=false, boo
   
   doOverflowAddition(true);
   
+  /*
+  //shown in introduction to event selection section
   setStackMode(false,true); //normalized
   setColorScheme("nostack");
   clearSamples();
   addSample("PythiaPUQCD");
   addSample("TTbarJets");
-  addSample("WJets");
-  addSample("ZJets");
-
+  //addSample("WJets");
+  //addSample("ZJets");
   addSample("LM9");
-
   doData(false);
+  
+  var="minDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}";
+  nbins = 40; low=0; high=40;
+  //no delta phi cut, loose MET window (only good for MC)
+  selection_ =TCut("cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=100 && passCleaning==1")&&btagcut;
+  drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "minDeltaPhiN_looseMET_MConly_"+btagselection+modestring);
+  drawPlots("minDeltaPhi",nbins,low,3.1416,"#Delta #phi^{min} [rad.]","Arbitrary units", "minDeltaPhi_looseMET_MConly_"+btagselection+modestring);
+  return;
+  */
 
-  
-//   var="minDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}";
-//   nbins = 40; low=0; high=40;
-//   //no delta phi cut, loose MET window (only good for MC)
-//   selection_ =TCut("cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=100")&&btagcut;
-//   drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "minDeltaPhiN_looseMET_MConly_"+btagselection+modestring);
-  
-  
-//     return;
-  
+
   // ========= regular N-1 plots
 
   resetSamples(); //use all samples
