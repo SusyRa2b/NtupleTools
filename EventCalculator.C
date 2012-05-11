@@ -519,6 +519,113 @@ unsigned int EventCalculator::countMu(const float ptthreshold) {
   return ngoodmu;
 }
 
+bool EventCalculator::isZmumuCandidateEvent(const float ptthreshold) {
+
+
+  //give me a list of all the indices of the good, high pt muons
+  std::vector<uint> goodmuons;
+  unsigned int nmu = myMuonsPF->size();
+  for ( unsigned int i = 0; i< nmu; i++) {
+    if (isCleanMuon(i,ptthreshold)) {
+      goodmuons.push_back( i );
+    }
+  }
+
+  //if there are at least two high pt leptons
+  if( goodmuons.size() >=2 ){
+
+    //loop through the lepton pairs, and check if they are
+    //opposite-signed and form an invariant mass within the Z-mass
+    for ( unsigned int i = 0; i< goodmuons.size(); i++) {
+
+      for ( unsigned int j = i+1; j< goodmuons.size(); j++) {
+	
+	//check opposite charge
+	if(TMath::Nint(myMuonsPF->at( goodmuons.at(i) ).charge) != TMath::Nint(myMuonsPF->at( goodmuons.at(j) ).charge) ){
+
+	  //check invariant mass
+	  double m_ll;
+	 
+	  double z_en = myMuonsPF->at(goodmuons.at(i)).energy + myMuonsPF->at(goodmuons.at(j)).energy;
+	  double z_px = myMuonsPF->at(goodmuons.at(i)).pt*cos( myMuonsPF->at(goodmuons.at(i)).phi) + myMuonsPF->at(goodmuons.at(j)).pt*cos( myMuonsPF->at(goodmuons.at(j)).phi);
+	  double z_py = myMuonsPF->at(goodmuons.at(i)).pt*sin( myMuonsPF->at(goodmuons.at(i)).phi) + myMuonsPF->at(goodmuons.at(j)).pt*sin( myMuonsPF->at(goodmuons.at(j)).phi);
+	  double z_pz = myMuonsPF->at(goodmuons.at(i)).pt*sinh(myMuonsPF->at(goodmuons.at(i)).eta) + myMuonsPF->at(goodmuons.at(j)).pt*sinh(myMuonsPF->at(goodmuons.at(j)).eta);
+	  m_ll = sqrt(z_en*z_en - z_px*z_px - z_py*z_py - z_pz*z_pz);
+
+	  if( fabs(m_ll - mZ_) < 15 ){	    
+	    //save these two candidates
+	    ZmumuCand1_ = goodmuons.at(i);  ZmumuCand2_ = goodmuons.at(j);
+
+	    //std::cout << "found Zmumu candidate event, m_ll = " << m_ll << std::endl;
+
+	    return true;
+
+	  }		 
+	}
+
+      }// j loop
+
+    }//i loop
+
+  } //two high pt leptons
+
+  return false;
+}
+
+bool EventCalculator::isZeeCandidateEvent(const float ptthreshold) {
+
+
+  //give me a list of all the good high pt muons
+  std::vector<uint> goodelectrons;
+  unsigned int nele = myElectronsPF->size();
+  for ( unsigned int i = 0; i< nele; i++) {
+    if (isGoodElectron(i,false,ptthreshold)) {
+      goodelectrons.push_back( i );
+    }
+  }
+
+  //if there are at least two high pt leptons
+  if( goodelectrons.size() >=2 ){
+
+    //loop through the lepton pairs, and check if they are
+    //opposite-signed and form an invariant mass within the Z-mass
+    for ( unsigned int i = 0; i< goodelectrons.size(); i++) {
+
+      for ( unsigned int j = i+1; j< goodelectrons.size(); j++) {
+	
+	//check opposite charge
+	if(TMath::Nint(myElectronsPF->at(goodelectrons.at(i)).charge) != TMath::Nint(myElectronsPF->at(goodelectrons.at(j)).charge) ){
+
+	  //check invariant mass
+	  double m_ll;
+	 
+	  double z_en = myElectronsPF->at(goodelectrons.at(i)).energy + myElectronsPF->at(goodelectrons.at(j)).energy;
+	  double z_px = myElectronsPF->at(goodelectrons.at(i)).pt*cos( myElectronsPF->at(goodelectrons.at(i)).phi) + myElectronsPF->at(goodelectrons.at(j)).pt*cos( myElectronsPF->at(goodelectrons.at(j)).phi);
+	  double z_py = myElectronsPF->at(goodelectrons.at(i)).pt*sin( myElectronsPF->at(goodelectrons.at(i)).phi) + myElectronsPF->at(goodelectrons.at(j)).pt*sin( myElectronsPF->at(goodelectrons.at(j)).phi);
+	  double z_pz = myElectronsPF->at(goodelectrons.at(i)).pt*sinh(myElectronsPF->at(goodelectrons.at(i)).eta) + myElectronsPF->at(goodelectrons.at(j)).pt*sinh(myElectronsPF->at(goodelectrons.at(j)).eta);
+	  m_ll = sqrt(z_en*z_en - z_px*z_px - z_py*z_py - z_pz*z_pz);
+
+	  if( fabs(m_ll - mZ_) < 15 ){	    
+	    //save these two candidates
+	    ZeeCand1_ = goodelectrons.at(i);  ZeeCand2_ = goodelectrons.at(j);
+
+	    //std::cout << "found Zee candidate event, m_ll = " << m_ll << std::endl;
+
+	    return true;
+
+	  }		 
+	}
+
+      }// j loop
+
+    }//i loop
+
+  } //two high pt leptons
+
+  return false;
+}
+
+
 
 bool EventCalculator::isGoodTau(const unsigned int itau, const float pTthreshold, const float etaMax) {
 
@@ -688,6 +795,60 @@ bool EventCalculator::passUtilityPrescaleModuleHLT() {
 
   return passTrig;
 }
+
+bool EventCalculator::passZmumuHLT() { 
+
+
+  bool passTrig = false;
+
+  if ( isSampleRealData() ) {
+    ULong64_t runnumber = getRunNumber();
+    if      (runnumber >= 160431 && runnumber <= 163268)  passTrig = (triggerresultshelper_HLT_DoubleMu7_v1 > 0);
+    else if (runnumber >= 163269 && runnumber <= 164923)  passTrig = (triggerresultshelper_HLT_DoubleMu7_v2 > 0);   
+    else if (runnumber >= 164924 && runnumber <= 166300)  passTrig = (triggerresultshelper_HLT_Mu13_Mu8_v2 > 0);
+    else if (runnumber >= 166301 && runnumber <= 166373)  passTrig = (triggerresultshelper_HLT_Mu13_Mu8_v3 > 0);
+    else if (runnumber >= 166374 && runnumber <= 167077)  passTrig = (triggerresultshelper_HLT_Mu13_Mu8_v2 > 0);
+    else if (runnumber >= 167078 && runnumber <= 170064)  passTrig = (triggerresultshelper_HLT_Mu13_Mu8_v4 > 0);
+    //end of summer 11 result data
+    else if (runnumber >= 170065 && runnumber <= 173211)  passTrig = (triggerresultshelper_HLT_Mu13_Mu8_v6 > 0);
+    else if (runnumber >= 173212 && runnumber <= 178410)  passTrig = (triggerresultshelper_HLT_Mu13_Mu8_v7 > 0);
+    else if (runnumber >= 178411 && runnumber <= 179941)  passTrig = (triggerresultshelper_HLT_Mu17_Mu8_v10 > 0);
+    else if (runnumber >= 179942) passTrig = (triggerresultshelper_HLT_Mu17_Mu8_v11 > 0);
+    
+    else {cout<<"No trigger assigned for run = "<<runnumber<<endl; assert(0);}
+  }
+  else passTrig = true;   //use no trigger for MC   
+  
+  return passTrig;
+}
+
+bool EventCalculator::passZeeHLT() { 
+  //STILL NEEDS TO BE VERIFIED!
+
+  bool passTrig = false;
+
+  if ( isSampleRealData() ) {
+    ULong64_t runnumber = getRunNumber();
+    if      (runnumber >= 160431 && runnumber <= 161204)  passTrig = (triggerresultshelper_HLT_Ele17_CaloIdL_CaloIsoVL_Ele8_CaloIdL_CaloIsoVL_v1 > 0);
+    else if (runnumber >= 161205 && runnumber <= 163268)  passTrig = (triggerresultshelper_HLT_Ele17_CaloIdL_CaloIsoVL_Ele8_CaloIdL_CaloIsoVL_v2 > 0);
+    else if (runnumber >= 163269 && runnumber <= 164923)  passTrig = (triggerresultshelper_HLT_Ele17_CaloIdT_TrkIdVL_CaloIsoVL_TrkIsoVL_Ele8_CaloIdT_TrkIdVL_CaloIsoVL_TrkIsoVL_v3 > 0);   
+    else if (runnumber >= 164924 && runnumber <= 165921)  passTrig = (triggerresultshelper_HLT_Ele17_CaloIdT_TrkIdVL_CaloIsoVL_TrkIsoVL_Ele8_CaloIdT_TrkIdVL_CaloIsoVL_TrkIsoVL_v4 > 0);
+    else if (runnumber >= 165922 && runnumber <= 166978)  passTrig = (triggerresultshelper_HLT_Ele17_CaloIdT_TrkIdVL_CaloIsoVL_TrkIsoVL_Ele8_CaloIdT_TrkIdVL_CaloIsoVL_TrkIsoVL_v5 > 0);
+    else if (runnumber >= 166979 && runnumber <= 170064)  passTrig = (triggerresultshelper_HLT_Ele17_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL_Ele8_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL_v5 > 0);
+    //end of summer 11 result data
+    else if (runnumber >= 170065 && runnumber <= 170825)  passTrig = (triggerresultshelper_HLT_Ele17_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL_Ele8_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL_v6 > 0);
+    else if (runnumber >= 170826 && runnumber <= 173211)  passTrig = (triggerresultshelper_HLT_Ele17_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL_Ele8_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL_v7 > 0);
+    else if (runnumber >= 173212 && runnumber <= 178410)  passTrig = (triggerresultshelper_HLT_Ele17_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL_Ele8_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL_v8 > 0);
+    else if (runnumber >= 178411 && runnumber <= 179941)  passTrig = (triggerresultshelper_HLT_Ele17_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL_Ele8_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL_v9 > 0);
+    else if (runnumber >= 179942) passTrig = (triggerresultshelper_HLT_Ele17_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL_Ele8_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL_v10 > 0);
+    
+    else {cout<<"No trigger assigned for run = "<<runnumber<<endl; assert(0);}
+  }
+  else passTrig = true;   //use no trigger for MC   
+
+  return passTrig;
+}
+
 
 unsigned int EventCalculator::utilityHLT_HT300_CentralJet30_BTagIP(){
   if( !isSampleRealData()) return 999; //return a *large* dummy value for MC, so that we can use cuts like >=1
@@ -1004,7 +1165,6 @@ float EventCalculator::getMET() {
   else if(theMETType_ == kPFMETTypeI){
     getCorrectedMET(myMET,myMETphi);
   }
-
   //JER and JES are automatically handled inside getCorrectedMET()
   if (theMETuncType_!=kMETunc0) {
     assert( theMETType_ != kPFMETTypeI); //not implemented (or at least not checked)
@@ -1051,6 +1211,44 @@ float EventCalculator::getMHTphi(int ignoredJet) {
   return atan2(mht.second,mht.first);
 }
 
+
+
+float EventCalculator::getZllMET(bool isMuMu, float& ZllMETphi) {
+  float myMET= getMET();
+  ZllMETphi = getMETphi();
+
+  double METx = myMET * cos(ZllMETphi);
+  double METy = myMET * sin(ZllMETphi);
+
+  double l1_px,l2_px,l1_py,l2_py;
+
+  if(isMuMu){
+    l1_px = myMuonsPF->at( ZmumuCand1_ ).pt * cos( myMuonsPF->at( ZmumuCand1_ ).phi );
+    l2_px = myMuonsPF->at( ZmumuCand2_ ).pt * cos( myMuonsPF->at( ZmumuCand2_ ).phi );
+    l1_py = myMuonsPF->at( ZmumuCand1_ ).pt * sin( myMuonsPF->at( ZmumuCand1_ ).phi );
+    l2_py = myMuonsPF->at( ZmumuCand2_ ).pt * sin( myMuonsPF->at( ZmumuCand2_ ).phi );
+  }
+  else{
+    l1_px = myElectronsPF->at( ZeeCand1_ ).pt * cos( myElectronsPF->at( ZeeCand1_ ).phi );
+    l2_px = myElectronsPF->at( ZeeCand2_ ).pt * cos( myElectronsPF->at( ZeeCand2_ ).phi );
+    l1_py = myElectronsPF->at( ZeeCand1_ ).pt * sin( myElectronsPF->at( ZeeCand1_ ).phi );
+    l2_py = myElectronsPF->at( ZeeCand2_ ).pt * sin( myElectronsPF->at( ZeeCand2_ ).phi );
+  }
+
+  //assume we didn't see the leptons from Z  
+  METx += l1_px;
+  METx += l2_px;
+  METy += l1_py;
+  METy += l2_py;
+
+  myMET = sqrt(METx*METx + METy*METy);
+  ZllMETphi = atan2(METy,METx);
+
+  return myMET;
+}
+
+
+
 //This is a function which is temporarily hard-coded to remove data that has become uncertified
 bool EventCalculator::passLumiMask(){
   if( !isSampleRealData()) return true;
@@ -1070,8 +1268,6 @@ bool EventCalculator::passLumiMask(){
   return true;
 
 }
-
-
 
 bool EventCalculator::passCut(const TString cutTag) {
 
@@ -1559,6 +1755,77 @@ double EventCalculator::getMinDeltaPhiMETN(unsigned int maxjets, float mainpt, f
 
   return mdpN;
 }
+
+
+double EventCalculator::getDeltaPhiZllMETN_deltaT(unsigned int ijet, float otherpt, float othereta, bool otherid, bool dataJetRes, bool keith, bool ismumu) {
+
+  if(ijet==999999) return -99;
+
+  float theMETphi;
+  float theMET = getZllMET(ismumu, theMETphi);
+
+  double METx = theMET * cos(theMETphi);
+  double METy = theMET * sin(theMETphi);
+  
+  //get sum for deltaT
+  double sum = 0;
+  for (unsigned int i=0; i< myJetsPF->size(); i++) {
+    if(i==ijet) continue;
+    if(isGoodJet(i, otherpt, othereta, otherid)){
+      double jetres = dataJetRes ? getDataJetRes(getJetPt(i), myJetsPF->at(i).eta) : 0.1;
+      if(keith)  sum += pow( jetres*(METx*getJetPy(i) - METy*getJetPx(i)), 2);
+      else sum += pow( jetres*(getJetPx(ijet)*getJetPy(i) - getJetPy(ijet)*getJetPx(i)), 2);
+    }//is good jet
+  }//i
+  
+  double deltaT = keith ? sqrt(sum)/theMET : sqrt(sum)/getJetPt(ijet);
+  return deltaT;
+}
+
+
+double EventCalculator::getDeltaPhiZllMETN( unsigned int goodJetN, float mainpt, float maineta, bool mainid,
+					    float otherpt, float othereta, bool otherid, bool dataJetRes, bool keith, bool ismumu) {
+  
+  //find the goodJetN-th good jet -- this is the jet deltaPhiN will be calculated for
+  unsigned int ijet = 999999;
+  unsigned int goodJetI=0;
+  for (unsigned int i=0; i< myJetsPF->size(); i++) {
+    if (isGoodJet(i, mainpt, maineta, mainid)) {
+      if(goodJetI == goodJetN){
+	ijet = i;
+	break;
+      }
+      goodJetI++;
+    }
+  }
+  if(ijet == 999999) return -99;
+
+  double deltaT = getDeltaPhiZllMETN_deltaT(ijet, otherpt, othereta, otherid, dataJetRes, keith, ismumu);
+
+  //calculate deltaPhiMETN
+  float theMETphi;
+  double theMET = getZllMET(ismumu, theMETphi);
+  double dp =  getDeltaPhi(myJetsPF->at(ijet).phi, theMETphi);
+  double dpN = dp / atan2(deltaT, theMET);
+  
+  return dpN;
+}
+
+
+double EventCalculator::getMinDeltaPhiZllMETN(unsigned int maxjets, float mainpt, float maineta, bool mainid, 
+					   float otherpt, float othereta, bool otherid, bool dataJetRes, bool keith, bool ismumu) {//Ben
+  
+  double mdpN=1E12;
+  
+  for (unsigned int i=0; i<maxjets; i++) {
+    if(i>=nGoodJets()) break;
+    double dpN =  getDeltaPhiZllMETN(i, mainpt, maineta, mainid, otherpt, othereta, otherid, dataJetRes, keith, ismumu);//i is for i'th *good* jet, starting at i=0. returns -99 if bad jet.
+    if (dpN>=0 && dpN<mdpN) mdpN=dpN;//checking that dpN>=0 shouldn't be necessary after break statement above, but add it anyway 
+  }
+
+  return mdpN;
+}
+
 
 double EventCalculator::getMinDeltaPhiNMET(unsigned int maxjets) {//Luke
   
@@ -4861,6 +5128,7 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   UInt_t pass_utilityHLT_HT300_CentralJet30_BTagIP;
   UInt_t prescale_utilityHLT_HT300_CentralJet30_BTagIP;
   //bool pass_utilityPrescaleModuleHLT;
+  //bool pass_ZmumuHLT,pass_ZeeHLT;
 
   int njets, njets30, nbjets, ntruebjets, nElectrons, nMuons, nTaus;
   int nbjetsSSVM,nbjetsTCHET,nbjetsSSVHPT,nbjetsTCHPT,nbjetsTCHPM,nbjetsCSVM,nbjetsCSVL;
@@ -4946,6 +5214,10 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   float prob0_HFminus,probge1_HFminus,prob1_HFminus,probge2_HFminus,probge3_HFminus,prob2_HFminus;
   float prob0_LFplus,probge1_LFplus,prob1_LFplus,probge2_LFplus,probge3_LFplus,prob2_LFplus;
   float prob0_LFminus,probge1_LFminus,prob1_LFminus,probge2_LFminus,probge3_LFminus,prob2_LFminus;
+
+  //bool passZmumuCand, passZeeCand;
+  //float zmumuMET, zeeMET, zmumuMETphi, zmumuMinDeltaPhiN, zeeMETphi, zeeMinDeltaPhiN;
+
 
   std::vector<int> vrun,vlumi,vevent;
   loadEventList(vrun, vlumi, vevent);
@@ -5218,6 +5490,9 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("prescale_utilityHLT_HT300_CentralJet30_BTagIP", &prescale_utilityHLT_HT300_CentralJet30_BTagIP, "prescale_utilityHLT_HT300_CentralJet30_BTagIP/i");  
 
   //reducedTree.Branch("pass_utilityPrescaleModuleHLT",&pass_utilityPrescaleModuleHLT,"pass_utilityPrescaleModuleHLT/O");
+  
+  //reducedTree.Branch("pass_ZmumuHLT",&pass_ZmumuHLT,"pass_ZmumuHLT/O");
+  //reducedTree.Branch("pass_ZeeHLT",&pass_ZeeHLT,"pass_ZeeHLT/O");
 
   reducedTree.Branch("HT",&HT,"HT/F");
   reducedTree.Branch("ST",&ST,"ST/F"); //includes HT + leptons
@@ -5519,6 +5794,16 @@ Also the pdfWeightSum* histograms that are used for LM9.
 
   reducedTree.Branch("nLostJet", &nLostJet, "nLostJet/F");
 
+  //reducedTree.Branch("passZmumuCand", &passZmumuCand, "passZmumuCand/O");
+  //reducedTree.Branch("passZeeCand", &passZeeCand, "passZeeCand/O");
+  //reducedTree.Branch("zmumuMET",&zmumuMET,"zmumuMET/F");
+  //reducedTree.Branch("zeeMET",&zeeMET,"zeeMET/F");
+  //reducedTree.Branch("zmumuMETphi",&zmumuMETphi,"zmumuMETphi/F");
+  //reducedTree.Branch("zeeMETphi",&zeeMETphi,"zeeMETphi/F");
+  //reducedTree.Branch("zmumuMinDeltaPhiN",&zmumuMinDeltaPhiN,"zmumuMinDeltaPhiN/F");
+  //reducedTree.Branch("zeeMinDeltaPhiN",&zeeMinDeltaPhiN,"zeeMinDeltaPhiN/F");
+
+
   //jmt -- note that .size() returns an int. Will we ever hit the 32-bit limit with this datatype?
   int nevents = stream.size();
 
@@ -5727,6 +6012,8 @@ Also the pdfWeightSum* histograms that are used for LM9.
       prescale_utilityHLT_HT300_CentralJet30_BTagIP = 0;
 
       //pass_utilityPrescaleModuleHLT = passUtilityPrescaleModuleHLT();
+      //pass_ZmumuHLT = passZmumuHLT();
+      //pass_ZeeHLT = passZeeHLT();
 
       nGoodPV = countGoodPV();
 
@@ -6033,6 +6320,26 @@ Also the pdfWeightSum* histograms that are used for LM9.
       recomuonmindphijet2 = recoMuonMinDeltaPhiJetOfN(2,5);
 
 
+
+      //if (sampleName_.Contains("DYJetsToLL") || isRealData ){//maybe should also include ttbar for purity studies
+      //	passZmumuCand = isZmumuCandidateEvent(17);
+      //	zmumuMET = -99; zmumuMETphi = -99; zmumuMinDeltaPhiN = -99;
+      //	zeeMET = -99; zeeMETphi = -99; zeeMinDeltaPhiN = -99;
+      //	if(passZmumuCand){
+      //	  float zllmetphi;
+      //	  zmumuMET = getZllMET(true, zllmetphi);
+      //	  zmumuMETphi = zllmetphi;
+      //	  zmumuMinDeltaPhiN = getMinDeltaPhiZllMETN(3,true);
+      //	}
+      //	passZeeCand = isZeeCandidateEvent(17);
+      //	if(passZeeCand){
+      //	  float zllmetphi;
+      //	  zeeMET = getZllMET(false, zllmetphi);
+      //	  zeeMETphi = zllmetphi;
+      //	  zeeMinDeltaPhiN = getMinDeltaPhiZllMETN(3,false);
+      //	}
+      //}
+
       csctighthaloFilter = jmt::doubleToBool(triggerresultshelper1_csctighthaloFilter);
       eenoiseFilter = jmt::doubleToBool(triggerresultshelper1_eenoiseFilter) ;
       greedymuonFilter = jmt::doubleToBool(triggerresultshelper1_greedymuonFilter) ;
@@ -6092,7 +6399,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
       reducedTree.Fill();
       
 
-    } //end of reduced tree skim
+      } //end of reduced tree skim
   } //end of loop over events
   stopTimer(nevents);
 

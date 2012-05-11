@@ -30,6 +30,7 @@ class TRandom3;
 const double mW_ = 80.399;
 const double mtop_ = 172.0;
 const double lumi_ = 1.; //fix to 1/pb and scale MC later (e.g. in drawReducedTrees)
+const double mZ_ = 91.188;
 
 //define the BNN functions
 double HT260_MHT60_v2_HT260_v2_160431_161204_sel1(std::vector<double>& inputvars, int first=0, int last=100-1);
@@ -129,6 +130,10 @@ public:
   bool isCleanMuon(const unsigned int imuon, const float ptthreshold=10);
   unsigned int countMu(const float ptthreshold=10);
 
+  bool isZmumuCandidateEvent(const float ptthreshold);
+  bool isZeeCandidateEvent(const float ptthreshold);
+
+
   bool isGoodTau(const unsigned int itau, const float pTthreshold=20, const float etaMax=2.4);
   float getTauPt( unsigned int itau );
   unsigned int countTau();
@@ -137,6 +142,8 @@ public:
   bool passHLT();
   bool passUtilityHLT(int &version, int &prescale);
   bool passUtilityPrescaleModuleHLT();
+  bool passZmumuHLT();
+  bool passZeeHLT();
   unsigned int utilityHLT_HT300_CentralJet30_BTagIP();
   float getHLTHTeff(float offHT);
   float getHLTMHTeff(float offMET, float offHT, uint nElectrons, uint nMuons, double mindphin);
@@ -156,6 +163,8 @@ public:
   float getMHT();
   float getMHTphi();
   float getMHTphi(int ignoredJet);
+
+  float getZllMET(bool isMuMu, float& ZllMETphi);
 
   void getTransverseThrustVariables(float & thrust, float & thrustPhi, bool addMET);
   void getSphericityJetMET(float & lambda1, float & lambda2, float & det,const int jetmax, bool addMET);
@@ -184,6 +193,14 @@ public:
   double getDeltaPhiMETN( unsigned int goodJetN ) {return getDeltaPhiMETN(goodJetN,50,2.4,true,30,2.4,true,false,false); }; //Ben, overloaded
   double getMinDeltaPhiMETN(unsigned int maxjets, float mainmt, float maineta, bool mainid, float otherpt, float othereta, bool otherid, bool dataJetRes, bool keith, bool includeLeptons=false, bool includeMismeasuredJet=false ); //Ben
   double getMinDeltaPhiMETN(unsigned int maxjets) {return getMinDeltaPhiMETN(maxjets,50,2.4,true,30,2.4,true,false,false); }; //Ben, overloaded
+
+  //for Zll-modified MET 
+  double getDeltaPhiZllMETN_deltaT(unsigned int ijet, float otherpt, float othereta, bool otherid, bool dataJetRes, bool keith, bool ismumu);
+  double getDeltaPhiZllMETN_deltaT(unsigned int ijet, bool ismumu) { return getDeltaPhiZllMETN_deltaT(ijet,30,2.4,true,false,false,ismumu);  } 
+  double getDeltaPhiZllMETN( unsigned int goodJetN, float mainpt, float maineta, bool mainid, float otherpt, float othereta, bool otherid, bool dataJetRes, bool keith, bool ismumu ); 
+  double getDeltaPhiZllMETN( unsigned int goodJetN, bool ismumu ) {return getDeltaPhiZllMETN(goodJetN,50,2.4,true,30,2.4,true,false,false,ismumu); }; 
+  double getMinDeltaPhiZllMETN(unsigned int maxjets, float mainmt, float maineta, bool mainid, float otherpt, float othereta, bool otherid, bool dataJetRes, bool keith, bool ismumu ); //Ben
+  double getMinDeltaPhiZllMETN(unsigned int maxjets, bool ismumu) {return getMinDeltaPhiZllMETN(maxjets,50,2.4,true,30,2.4,true,false,false,ismumu); }; 
 
   double getMaxDeltaPhiNMET(unsigned int maxjets);
   double getTransverseMETSignificance(unsigned int thisJet);
@@ -483,6 +500,9 @@ private:
   std::vector<TString> ignoredCut_; //allow more than 1 ignored cut!
   std::vector<TString> requiredCut_; //new feature to *turn on* a cut that is usually not required by a given cut scheme
 
+
+  uint ZmumuCand1_, ZmumuCand2_;
+  uint ZeeCand1_, ZeeCand2_;
 
 };
 
