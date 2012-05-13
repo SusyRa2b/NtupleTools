@@ -1792,6 +1792,70 @@ double EventCalculator::getMinDeltaPhiMETN(unsigned int maxjets, float mainpt, f
 }
 
 
+double EventCalculator::getDeltaT_MC(unsigned int ijet) {
+  if( isSampleRealData() ) return -1;
+  if(ijet==999999) return -99;
+  
+  //get sum for deltaT
+  double sum = 0;
+  for (unsigned int i=0; i< myJetsPF->size(); i++) {
+    if(i==ijet) continue;
+    if(isGoodJet(i, 30, 2.4, true)){
+      
+      
+      double loopjetpt = getJetPt(i);;
+      double loopjetgenpt = myJetsPF->at(i).genJet_pt;
+      double loopjetphi = myJetsPF->at(i).phi;
+      double ijetphi =  myJetsPF->at(ijet).phi;
+      
+      sum+= (loopjetpt - loopjetgenpt)*sin(loopjetphi - ijetphi);
+      
+    }
+  }
+  
+  return sum;//vector sum, so no adding in quadrature
+}
+
+double EventCalculator::getDeltaPhiMETN_MC(unsigned int goodJetN) {
+  if( isSampleRealData() ) return -1;
+  //find the goodJetN-th good jet -- this is the jet deltaPhiN will be calculated for
+  unsigned int ijet = 999999;
+  unsigned int goodJetI=0;
+  for (unsigned int i=0; i< myJetsPF->size(); i++) {
+    if (isGoodJet(i, 50, 2.4, true)) {
+      if(goodJetI == goodJetN){
+	ijet = i;
+	break;
+      }
+      goodJetI++;
+    }
+  }
+  if(ijet == 999999) return -99;
+  
+  double deltaT = getDeltaT_MC(ijet);
+
+  //calculate deltaPhiMETN
+  double dp =  getDeltaPhi(myJetsPF->at(ijet).phi, getMETphi());
+  double dpN = dp / atan2(deltaT, getMET());
+  
+  return dpN;
+
+}
+
+double EventCalculator::getMinDeltaPhiMETN_MC() {
+  if( isSampleRealData() ) return -1;
+  double mdpN=1E12;
+  
+  for (unsigned int i=0; i<3; i++) {
+    if(i>=nGoodJets()) break;
+    double dpN =  getDeltaPhiMETN_MC(i);
+    if (dpN>=0 && dpN<mdpN) mdpN=dpN;//checking that dpN>=0 shouldn't be necessary after break statement above, but add it anyway 
+  }
+  return mdpN;
+
+}
+
+
 double EventCalculator::getDeltaPhiZllMETN_deltaT(unsigned int ijet, float otherpt, float othereta, bool otherid, bool dataJetRes, bool keith, bool ismumu) {
 
   if(ijet==999999) return -99;
@@ -5123,6 +5187,11 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   UInt_t maxJetMis_chosenJet, maxJetFracMis_chosenJet;
   float minDeltaPhiN_withLepton;
 
+  //mc truth tests
+  float minDeltaPhiN_MC;
+  float deltaT_MC1, deltaT_MC2, deltaT_MC3;
+  float deltaPhiN_MC1, deltaPhiN_MC2, deltaPhiN_MC3;
+
   float maxJetMis, max2JetMis, maxJetMisAll30, max2JetMisAll30;
   float maxJetMis_signed, maxJetMis30_signed;
   float maxJetFracMis, max2JetFracMis, maxJetFracMisAll30, max2JetFracMisAll30;
@@ -5590,6 +5659,14 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("deltaT1", &deltaT1, "deltaT1/F");
   reducedTree.Branch("deltaT2", &deltaT2, "deltaT2/F");
   reducedTree.Branch("deltaT3", &deltaT3, "deltaT3/F");
+
+  reducedTree.Branch("minDeltaPhiN_MC", &minDeltaPhiN_MC, "minDeltaPhiN_MC/F");
+  reducedTree.Branch("deltaPhiN_MC1", &deltaPhiN_MC1, "deltaPhiN_MC1/F");
+  reducedTree.Branch("deltaPhiN_MC2", &deltaPhiN_MC2, "deltaPhiN_MC2/F");
+  reducedTree.Branch("deltaPhiN_MC3", &deltaPhiN_MC3, "deltaPhiN_MC3/F");
+  reducedTree.Branch("deltaT_MC1", &deltaT_MC1, "deltaT_MC1/F");
+  reducedTree.Branch("deltaT_MC2", &deltaT_MC2, "deltaT_MC2/F");
+  reducedTree.Branch("deltaT_MC3", &deltaT_MC3, "deltaT_MC3/F");
 
   reducedTree.Branch("deltaT1_otherPt40", &deltaT1_otherPt40, "deltaT1_otherPt40/F");
   reducedTree.Branch("deltaT1_otherPt50", &deltaT1_otherPt50, "deltaT1_otherPt50/F");
@@ -6126,6 +6203,17 @@ Also the pdfWeightSum* histograms that are used for LM9.
       minDeltaPhiN_DJR_otherPt50                  = getMinDeltaPhiMETN(3,50,2.4,true, 50,2.4,true,true,false);
             
       minDeltaPhiN_withLepton = getMinDeltaPhiMETN(3,50,2.4,true,30,2.4,true,false,false,true);
+
+      //mc truth test
+      minDeltaPhiN_MC = getMinDeltaPhiMETN_MC();
+      deltaPhiN_MC1 = getDeltaPhiMETN_MC(1);
+      deltaPhiN_MC2 = getDeltaPhiMETN_MC(2);
+      deltaPhiN_MC3 = getDeltaPhiMETN_MC(3);
+      deltaT_MC1 = getDeltaT_MC( getNthGoodJet(0,50,2.4,true) );
+      deltaT_MC2 = getDeltaT_MC( getNthGoodJet(1,50,2.4,true) );
+      deltaT_MC3 = getDeltaT_MC( getNthGoodJet(2,50,2.4,true) );
+      
+
 
       int badjet;
       deltaPhiStar = getDeltaPhiStar(badjet);

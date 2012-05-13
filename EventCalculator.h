@@ -194,6 +194,11 @@ public:
   double getMinDeltaPhiMETN(unsigned int maxjets, float mainmt, float maineta, bool mainid, float otherpt, float othereta, bool otherid, bool dataJetRes, bool keith, bool includeLeptons=false, bool includeMismeasuredJet=false ); //Ben
   double getMinDeltaPhiMETN(unsigned int maxjets) {return getMinDeltaPhiMETN(maxjets,50,2.4,true,30,2.4,true,false,false); }; //Ben, overloaded
 
+  //mc truth mdpn
+  double getDeltaT_MC(unsigned int ijet);
+  double getDeltaPhiMETN_MC(unsigned int goodJetN);
+  double getMinDeltaPhiMETN_MC();
+
   //for Zll-modified MET 
   double getDeltaPhiZllMETN_deltaT(unsigned int ijet, float otherpt, float othereta, bool otherid, bool dataJetRes, bool keith, bool ismumu);
   double getDeltaPhiZllMETN_deltaT(unsigned int ijet, bool ismumu) { return getDeltaPhiZllMETN_deltaT(ijet,30,2.4,true,false,false,ismumu);  } 
