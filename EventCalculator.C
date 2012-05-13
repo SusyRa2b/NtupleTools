@@ -1482,12 +1482,12 @@ float EventCalculator::getDeltaPhiMETJetMaxMis(float jetpt = 50){
   return dp;
 }
 
-
-float EventCalculator::getMaxJetMis(unsigned int rank=1, unsigned int maxjets=3, float jetpt=50){
-  if( isSampleRealData() ) return -1;
+unsigned int EventCalculator::getRankJetMaxMis(unsigned int maxjets=3, float jetpt = 50){
+  if( isSampleRealData() ) return 999999;
   
-  float mymax = 0;  //highest
-  float mymax2 = 0; //2nd highest
+  unsigned int myjet = 999999;
+  float mymax = 0;  
+  
   unsigned int ngood=0;
   for (unsigned int i=0; i< myJetsPF->size(); i++) {
     if (isGoodJet(i,jetpt)) {
@@ -1496,19 +1496,54 @@ float EventCalculator::getMaxJetMis(unsigned int rank=1, unsigned int maxjets=3,
       float pt = getJetPt(i);
       float mis = fabs(genpt - pt);
       if(mis>=mymax){
-	mymax2 = mymax;
 	mymax = mis;
+	myjet = i;
+      }
+      if (ngood >= maxjets) break;
+    }    
+  }
+  return myjet;
+}
+
+
+float EventCalculator::getMaxJetMis(unsigned int rank=1, unsigned int maxjets=3, float jetpt=50, bool abs=true){
+  if( isSampleRealData() ) return -1;
+  
+  float mymax = 0, mymax_signed = 0;  //highest
+  float mymax2 = 0, mymax2_signed = 0; //2nd highest
+  unsigned int ngood=0;
+  for (unsigned int i=0; i< myJetsPF->size(); i++) {
+    if (isGoodJet(i,jetpt)) {
+      ++ngood;
+      float genpt = myJetsPF->at(i).genJet_pt;
+      float pt = getJetPt(i);
+      float mis = fabs(genpt - pt);
+      float mis_signed = pt - genpt;//negative if undermeasured
+      if(mis>=mymax){
+	mymax2 = mymax;
+	mymax2_signed = mymax_signed;
+	mymax = mis;
+	mymax_signed = mis_signed;
       }
       else if(mis>mymax2){
 	mymax2 = mis;
+	mymax2_signed = mis_signed;
       }
       if (ngood >= maxjets) break;
     }
   }
-  if(rank==1) return mymax;
-  else if(rank==2) return mymax2;
-  else { assert(0); }
+  if(abs) { 
+    if(rank==1) return mymax;
+    else if(rank==2) return mymax2;
+    else { assert(0); }
+  }
+  else {
+    if(rank==1) return mymax_signed;
+    else if(rank==2) return mymax2_signed;
+    else { assert(0); }
+  }
 }
+
 
 
 float EventCalculator::getMaxJetFracMis(unsigned int rank=1, unsigned int maxjets=3, float jetpt=50){
@@ -5089,11 +5124,13 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   float minDeltaPhiN_withLepton;
 
   float maxJetMis, max2JetMis, maxJetMisAll30, max2JetMisAll30;
+  float maxJetMis_signed, maxJetMis30_signed;
   float maxJetFracMis, max2JetFracMis, maxJetFracMisAll30, max2JetFracMisAll30;
   float deltaPhiMETJetMaxMis, deltaPhiMETJetMaxMis30;
 
   float deltaPhiStar, deltaPhiStar_badjet_pt, deltaPhiStar_badjet_eta, deltaPhiStar_badjet_phi;
-
+  UInt_t rankMaxJetMis, rankMaxJetMis30;
+  
   float minDeltaPhiMetTau;
 
   //items to investigate possible heavy flavor understimate in SIG -- looking at semi leptonic decays, bs, etc
@@ -5600,13 +5637,20 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("max2JetMis",&max2JetMis,"max2JetMis/F");
   reducedTree.Branch("maxJetMisAll30",&maxJetMisAll30,"maxJetMisAll30/F");
   reducedTree.Branch("max2JetMisAll30",&max2JetMisAll30,"max2JetMisAll30/F");
+
+  reducedTree.Branch("maxJetMis_signed",&maxJetMis_signed,"maxJetMis_signed/F");
+  reducedTree.Branch("maxJetMis30_signed",&maxJetMis30_signed,"maxJetMis30_signed/F");
+
   reducedTree.Branch("maxJetFracMis",&maxJetFracMis,"maxJetFracMis/F");
   reducedTree.Branch("max2JetFracMis",&max2JetFracMis,"max2JetFracMis/F");
   reducedTree.Branch("maxJetFracMisAll30",&maxJetFracMisAll30,"maxJetFracMisAll30/F");
   reducedTree.Branch("max2JetFracMisAll30",&max2JetFracMisAll30,"max2JetFracMisAll30/F");
   reducedTree.Branch("deltaPhiMETJetMaxMis",&deltaPhiMETJetMaxMis,"deltaPhiMETJetMaxMis/F");
   reducedTree.Branch("deltaPhiMETJetMaxMis30",&deltaPhiMETJetMaxMis30,"deltaPhiMETJetMaxMis30/F");
+  reducedTree.Branch("rankMaxJetMis",&rankMaxJetMis,"rankMaxJetMis/i");
+  reducedTree.Branch("rankMaxJetMis30",&rankMaxJetMis30,"rankMaxJetMis30/i");
   
+
   reducedTree.Branch("CSVout1",&CSVout1,"CSVout1/F");
   reducedTree.Branch("CSVout2",&CSVout2,"CSVout2/F");
   reducedTree.Branch("CSVout3",&CSVout3,"CSVout3/F");
@@ -6093,12 +6137,19 @@ Also the pdfWeightSum* histograms that are used for LM9.
       max2JetMis=getMaxJetMis(2,3,50);
       maxJetMisAll30=getMaxJetMis(1,99,30);
       max2JetMisAll30=getMaxJetMis(2,99,30);
+
+      maxJetMis_signed=getMaxJetMis(1,3,50,false);
+      maxJetMis30_signed=getMaxJetMis(1,99,30,false);
+
       maxJetFracMis=getMaxJetFracMis(1,3,50);
       max2JetFracMis=getMaxJetFracMis(2,3,50);
       maxJetFracMisAll30=getMaxJetFracMis(1,99,30);
       max2JetFracMisAll30=getMaxJetFracMis(2,99,30);
+
       deltaPhiMETJetMaxMis = getDeltaPhiMETJetMaxMis(50);
       deltaPhiMETJetMaxMis30 = getDeltaPhiMETJetMaxMis(30);
+      rankMaxJetMis = getRankJetMaxMis(3,50);
+      rankMaxJetMis30 = getRankJetMaxMis(99,30);
 
       maxJetMis_chosenJet=1;
       float maxJetMis2_tmp =getMaxJetMis(1,2,50); 

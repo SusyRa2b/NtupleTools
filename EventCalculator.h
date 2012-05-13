@@ -219,9 +219,10 @@ public:
   double getDeltaPhiMETN_electron( const unsigned int ielectron, float otherpt, float othereta, bool otherid, bool dataJetRes, bool keith) ;
   double getDeltaPhiMETN_muon( const unsigned int imuon, float otherpt, float othereta, bool otherid, bool dataJetRes, bool keith) ;
 
-  float getMaxJetMis(unsigned int rank, unsigned int maxjets, float jetpt);
+  float getMaxJetMis(unsigned int rank, unsigned int maxjets, float jetpt, bool abs);
   float getMaxJetFracMis(unsigned int rank, unsigned int maxjets, float jetpt);
   float getDeltaPhiMETJetMaxMis(float jetpt);
+  unsigned int getRankJetMaxMis(unsigned int maxjets, float jetpt);
 
   float getDeltaPhiStar(int & badjet);
 
