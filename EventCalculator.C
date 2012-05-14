@@ -6235,9 +6235,9 @@ Also the pdfWeightSum* histograms that are used for LM9.
 
       //mc truth test
       minDeltaPhiN_MC = getMinDeltaPhiMETN_MC();
-      deltaPhiN_MC1 = getDeltaPhiMETN_MC(1);
-      deltaPhiN_MC2 = getDeltaPhiMETN_MC(2);
-      deltaPhiN_MC3 = getDeltaPhiMETN_MC(3);
+      deltaPhiN_MC1 = getDeltaPhiMETN_MC(0);
+      deltaPhiN_MC2 = getDeltaPhiMETN_MC(1);
+      deltaPhiN_MC3 = getDeltaPhiMETN_MC(2);
       deltaT_MC1 = getDeltaT_MC( getNthGoodJet(0,50,2.4,true) );
       deltaT_MC2 = getDeltaT_MC( getNthGoodJet(1,50,2.4,true) );
       deltaT_MC3 = getDeltaT_MC( getNthGoodJet(2,50,2.4,true) );
