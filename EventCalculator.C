@@ -1812,7 +1812,7 @@ double EventCalculator::getDeltaT_MC(unsigned int ijet) {
       
     }
   }
-  
+  sum=fabs(sum);
   return sum;//vector sum, so no adding in quadrature
 }
 
@@ -1836,7 +1836,7 @@ double EventCalculator::getDeltaPhiMETN_MC(unsigned int goodJetN) {
 
   //calculate deltaPhiMETN
   double dp =  getDeltaPhi(myJetsPF->at(ijet).phi, getMETphi());
-  double dpN = dp / atan2(deltaT, getMET());
+  double dpN = dp / asin(deltaT/getMET());
   
   return dpN;
 
