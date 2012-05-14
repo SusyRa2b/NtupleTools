@@ -295,6 +295,7 @@ public:
   float elePtOfN(unsigned int n, const float ptthreshold=10);
   float eleEtaOfN(unsigned int n, const float ptthreshold=10);
   float elePhiOfN(unsigned int n, const float ptthreshold=10);
+  int eleChargeOfN(unsigned int n, const float ptthreshold=10);
 
   float muonPtOfN(unsigned int n, const float ptthreshold=10);
   float muonEtaOfN(unsigned int n, const float ptthreshold=10);
@@ -303,6 +304,7 @@ public:
   float muonChHadIsoOfN(unsigned int n, const float ptthreshold=10);
   float muonPhotonIsoOfN(unsigned int n, const float ptthreshold=10);
   float muonNeutralHadIsoOfN(unsigned int n, const float ptthreshold=10);
+  int muonChargeOfN(unsigned int n, const float ptthreshold=10);
 
   float tauPtOfN(unsigned int n);
   float tauEtaOfN(unsigned int n);

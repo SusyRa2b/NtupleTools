@@ -2812,6 +2812,18 @@ float EventCalculator::elePhiOfN(unsigned int n, const float ptthreshold) {
   return 0;
 }
 
+int EventCalculator::eleChargeOfN(unsigned int n, const float ptthreshold) {
+
+  unsigned int ngood=0;
+  for (unsigned int i=0; i < myElectronsPF->size(); i++) {
+    if(isGoodElectron(i,false,ptthreshold)){
+      ngood++;
+      if (ngood==n) return TMath::Nint(myElectronsPF->at(i).charge);
+    }
+  }
+  return 0;
+}
+
 float EventCalculator::muonPtOfN(unsigned int n, const float ptthreshold) {
 
   unsigned int ngood=0;
@@ -2823,6 +2835,20 @@ float EventCalculator::muonPtOfN(unsigned int n, const float ptthreshold) {
   }
   return 0;
 }
+
+
+int EventCalculator::muonChargeOfN(unsigned int n, const float ptthreshold) {
+
+  unsigned int ngood=0;
+  for (unsigned int i=0; i < myMuonsPF->size(); i++) {
+    if (isCleanMuon(i,ptthreshold)) {
+      ngood++;
+      if (ngood==n) return TMath::Nint(myMuonsPF->at(i).charge);
+    }
+  }
+  return 0;
+}
+
 
 float EventCalculator::muonEtaOfN(unsigned int n, const float ptthreshold) {
 
@@ -5250,6 +5276,7 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   int jetchargedhadronmult1, jetchargedhadronmult2, jetchargedhadronmult3, bjetchargedhadronmult1, bjetchargedhadronmult2, bjetchargedhadronmult3;
 
   float eleet1, elephi1, eleeta1, muonpt1, muonphi1, muoneta1;
+  int elecharge1, muoncharge1;
   float eleet2, elephi2, eleeta2, muonpt2, muonphi2, muoneta2;
   float muoniso1,muonchhadiso1,muonphotoniso1,muonneutralhadiso1;
   float taupt1, taueta1;
@@ -5828,9 +5855,11 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("bjetchargedhadronmult3",&bjetchargedhadronmult3,"bjetchargedhadronmult3/I");
 
   reducedTree.Branch("eleet1",&eleet1,"eleet1/F");
+  reducedTree.Branch("elecharge1",&elecharge1,"elecharge1/I");
   reducedTree.Branch("elephi1",&elephi1,"elephi1/F");
   reducedTree.Branch("eleeta1",&eleeta1,"eleeta1/F");
   reducedTree.Branch("muonpt1",&muonpt1,"muonpt1/F");
+  reducedTree.Branch("muoncharge1",&muoncharge1,"muoncharge1/I");
   reducedTree.Branch("muonphi1",&muonphi1,"muonphi1/F");
   reducedTree.Branch("muoneta1",&muoneta1,"muoneta1/F");
   reducedTree.Branch("muoniso1",&muoniso1,"muoniso1/F");
@@ -6430,6 +6459,9 @@ Also the pdfWeightSum* histograms that are used for LM9.
       muonchhadiso1 = muonChHadIsoOfN(1,5);
       muonphotoniso1 = muonPhotonIsoOfN(1,5);
       muonneutralhadiso1 = muonNeutralHadIsoOfN(1,5);
+
+      elecharge1 = eleChargeOfN(1,5);
+      muoncharge1 = muonChargeOfN(1,5);
 
       eleet2 = elePtOfN(2,5);
       elephi2 = elePhiOfN(2,5);
