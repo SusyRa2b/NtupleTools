@@ -1508,6 +1508,14 @@ FOR NOW WE ARE IGNORING SL TRIG EFF (<1% effect)
     setSampleScaleFactor("WJets",1-0.38);
     setSampleScaleFactor("SingleTop",0);
   }
+  else if (!datamode && (closureMode=="wtplusplus" )) {
+    setSampleScaleFactor("WJets",2);
+    setSampleScaleFactor("SingleTop",2);
+  }
+  else if (!datamode && (closureMode=="wtminusminus" )) {
+    setSampleScaleFactor("WJets",0);
+    setSampleScaleFactor("SingleTop",0);
+  }
   else if (!datamode && (closureMode=="nominal")) {
     resetSampleScaleFactors();
   }
@@ -1842,6 +1850,7 @@ modifications for SHAPE analysis: (bShape = true)
 
   assert( closureMode=="nominal" || closureMode=="justttbar" 
 	  || closureMode=="wtplus" || closureMode=="wtminus" 
+	  || closureMode=="wtplusplus" || closureMode=="wtminusminus" 
 	  || closureMode=="slonlywtplus" || closureMode=="slonlywtminus" 
 	  || closureMode=="0lonlywtplus" || closureMode=="0lonlywtminus" 
 	  || closureMode=="justw" || closureMode=="justsingletop"
@@ -2295,6 +2304,14 @@ modifications for SHAPE analysis: (bShape = true)
   }
   else if (!datamode && (closureMode=="wtminus" )) {
     setSampleScaleFactor("WJets",1-0.38);
+    setSampleScaleFactor("SingleTop",0);
+  }
+  else if (!datamode && (closureMode=="wtplusplus" )) {
+    setSampleScaleFactor("WJets",2);
+    setSampleScaleFactor("SingleTop",2);
+  }
+  else if (!datamode && (closureMode=="wtminusminus" )) {
+    setSampleScaleFactor("WJets",0);
     setSampleScaleFactor("SingleTop",0);
   }
   else if (!datamode && ( closureMode=="slonlywtplus")) {
@@ -3244,6 +3261,7 @@ void runSLClosureTest2011(const bool bShape=false) {
   for (unsigned int j=0; j<searchRegions_.size();j++){
 
     slABCD(j,false,"","nominal",false,bShape);
+
     //slABCD(j,false,"","justttbar",false,bShape);
     //slABCD(j,false,"","justw",false,bShape);
 
@@ -3303,12 +3321,13 @@ void runSLClosureTest2011(const bool bShape=false) {
     */
   }
 
+/*
   for (unsigned int j=0; j<searchRegions_.size();j++)    slABCD(j,false,"","HFplus",false,bShape);
   for (unsigned int j=0; j<searchRegions_.size();j++)    slABCD(j,false,"","HFminus",false,bShape);
   
   for (unsigned int j=0; j<searchRegions_.size();j++)    slABCD(j,false,"","LFplus",false,bShape);
   for (unsigned int j=0; j<searchRegions_.size();j++)    slABCD(j,false,"","LFminus",false,bShape);
-
+*/
 
 /*
   cout<<"Note that the following is the tt closure test only!"<<endl;
@@ -3316,10 +3335,14 @@ void runSLClosureTest2011(const bool bShape=false) {
   for (unsigned int j=0; j<searchRegions_.size();j++) slABCD(j,false,"","justw");
   for (unsigned int j=0; j<searchRegions_.size();j++) slABCD(j,false,"","justsingletop");
 */
-  /*
+  
   for (unsigned int j=0; j<searchRegions_.size();j++) slABCD(j,false,"","wtplus");
+  for (unsigned int j=0; j<searchRegions_.size();j++) slABCD(j,false,"","wtplusplus");
   for (unsigned int j=0; j<searchRegions_.size();j++) slABCD(j,false,"","wtminus");
+  for (unsigned int j=0; j<searchRegions_.size();j++) slABCD(j,false,"","wtminusminus");
 
+  //special closure tests
+/*
   for (unsigned int j=0; j<searchRegions_.size();j++) slABCD(j,false,"","slonlywtplus");
   for (unsigned int j=0; j<searchRegions_.size();j++) slABCD(j,false,"","slonlywtminus");
 
@@ -5642,6 +5665,43 @@ void drawT1bbbb() {
 
 }
 
+void JOcheck_lowHT() {
+
+  //will need special reducedTrees with no HT cut
+
+  loadSamples();
+  setSearchRegions();
+
+  usePUweight_=true;
+
+  currentConfig_=configDescriptions_.getCorrected(); //JER bias
+  
+  int nbins;
+  float low,high;
+  TString var,xtitle;
+  
+  doOverflowAddition(true);
+  doRatioPlot(true);
+  drawMCErrors_=true;
+
+  removeSample("LM9");
+ 
+  useHTeff_=true;
+  //try BNN instead
+  thebnnMHTeffMode_ =kPlot;
+
+
+  //1BL with no ht cut
+  btagSFweight_="probge1";
+  selection_ = "cutTrigger==1 && cutPV==1 &&  MET>=250 && minDeltaPhiN>=4 && nElectrons==0 && nMuons==0 && passCleaning==1 && njets>=3";
+  nbins=20; low=0; high=1000;
+  var="HT"; xtitle=var;
+
+  drawPlots(var,nbins,low,high,xtitle,"Events", "JOchecks_lowHT");
+ 
+
+}
+
 
 void DSchecks_2jtau() {
 
@@ -5984,6 +6044,146 @@ void DSchecks_3Btest() {
   drawPlots(var,nbins,low,high,xtitle,"Events", "3B_SBandSIG_SL_deltaPhiJetMET_worstB");
 
 
+
+}
+
+void PAPER2011() {
+
+  TString modestring="";
+  const int mode=3; bool logy=false; bool doRatio=false;
+  doRatioPlot(doRatio);
+  setLogY(logy);
+  if(logy)  setPlotMinimum(0.5);
+  loadSamples();
+  usePUweight_=true;
+  useHTeff_=true;
+  useMHTeff_=true;    
+  thebnnMHTeffMode_ = kOff;
+  currentConfig_=configDescriptions_.getCorrected(); //JER bias
+
+  if(mode==3) modestring="-JER-PU-HLT-bSF";
+
+  TString btagselection;
+  int nbins;
+  float low,high;
+  TString var,xtitle;
+  
+  doOverflowAddition(true);
+ 
+  resetSamples(); //use all samples
+  setStackMode(true); //regular stack
+  setColorScheme("stack");
+  doData(true);
+  drawMCErrors_=true;
+  
+  removeSample("LM9");
+  addSample("T1bbbb"); //loadScanSMSngen("T1bbbb");
+
+  m0_=925; m12_=100;
+
+  // == all cuts except MET ==
+
+  //1BL
+  btagselection="ge1b";
+  btagSFweight_="probge1";
+  selection_ ="HT>=400 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4 &&passCleaning==1";
+  var="MET"; xtitle="E_{T}^{miss} [GeV]";
+  nbins = 30; low=200; high=500;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_"+btagselection+modestring,0,"GeV");
+
+  //2BT
+  btagselection="ge2b";
+  btagSFweight_="probge2";
+  selection_ ="HT>=600 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4 &&passCleaning==1";
+  var="MET"; xtitle="E_{T}^{miss} [GeV]";
+  nbins = 6; low=200; high=500;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_"+btagselection+modestring,0,"GeV");
+
+  //3B
+  addSample("T1tttt"); useMassInLegend_=false;
+  btagselection="ge3b";
+  btagSFweight_="probge3";
+  selection_ ="HT>=400 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4 &&passCleaning==1";
+  var="MET"; xtitle="E_{T}^{miss} [GeV]";
+  nbins = 10; low=200; high=500;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_"+btagselection+modestring,0,"GeV");
+
+  //leg->Draw();
+  // == now the MET distributions for SL ==
+
+  //1BL
+  btagselection="ge1b";
+  btagSFweight_="probge1";
+  selection_ =TCut("HT>=400 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && minDeltaPhiN >= 4 &&passCleaning==1")&&getSingleLeptonCut();
+  var="MET"; xtitle="E_{T}^{miss} [GeV]";
+  nbins = 30; low=200; high=500;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_SL_"+btagselection+modestring,0,"GeV");
+
+  //2BT
+  btagselection="ge2b";
+  btagSFweight_="probge2";
+  selection_ =TCut("HT>=600 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && minDeltaPhiN >= 4 &&passCleaning==1")&&getSingleLeptonCut();
+  var="MET"; xtitle="E_{T}^{miss} [GeV]";
+  nbins = 6; low=200; high=500;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_SL_"+btagselection+modestring,0,"GeV");
+
+  //3B
+  btagselection="ge3b";
+  btagSFweight_="probge3";
+  selection_ =TCut("HT>=400 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && minDeltaPhiN >= 4 &&passCleaning==1")&&getSingleLeptonCut();
+  var="MET"; xtitle="E_{T}^{miss} [GeV]";
+  nbins = 10; low=200; high=500;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_SL_"+btagselection+modestring,0,"GeV");
+
+  // == all cuts except minDeltaPhiN
+  //1BL, SIG only
+  btagselection="ge1b";
+  btagSFweight_="probge1";
+  selection_ ="HT>=400 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET >= 250 &&passCleaning==1";
+  var="minDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}";
+  nbins = 20; low=0; high=40;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "SIG_minDeltaPhiN_1BL_"+btagselection+modestring,0);
+
+  //2BT, SIG only
+  btagselection="ge2b";
+  btagSFweight_="probge2";
+  selection_ ="HT>=600 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET >= 300 &&passCleaning==1";
+  var="minDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}";
+  nbins = 10; low=0; high=40;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "SIG_minDeltaPhiN_2BT_"+btagselection+modestring,0);
+
+  //3B, SIG only
+  btagselection="ge3b";
+  btagSFweight_="probge3";
+  selection_ ="HT>=400 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET >= 250 &&passCleaning==1";
+  var="minDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}";
+  nbins = 10; low=0; high=40;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "SIG_minDeltaPhiN_3B_"+btagselection+modestring,0);
+
+  // == same thing but use the SB+SIG region
+  //1BL, SIG only
+  btagselection="ge1b";
+  btagSFweight_="probge1";
+  selection_ ="HT>=400 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET >= 150 &&passCleaning==1";
+  var="minDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}";
+  nbins = 20; low=0; high=40;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_minDeltaPhiN_1BL_"+btagselection+modestring,0);
+
+  //2BT, SIG only
+  btagselection="ge2b";
+  btagSFweight_="probge2";
+  selection_ ="HT>=600 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET >= 150 &&passCleaning==1";
+  var="minDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}";
+  nbins = 10; low=0; high=40;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_minDeltaPhiN_2BT_"+btagselection+modestring,0);
+
+  //3B, SIG only
+  btagselection="ge3b";
+  btagSFweight_="probge3";
+  selection_ ="HT>=400 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET >= 150 &&passCleaning==1";
+  var="minDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}";
+  nbins = 10; low=0; high=40;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_minDeltaPhiN_3B_"+btagselection+modestring,0);
 
 }
 

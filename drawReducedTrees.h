@@ -26,6 +26,7 @@ std::map<TString, UInt_t> sampleColor_;
 std::map<TString, TString> sampleOwenName_;
 std::map<TString, TString> sampleLabel_;
 std::map<TString, UInt_t> sampleMarkerStyle_;
+std::map<TString, UInt_t> sampleLineStyle_;
 std::map<TString, float> sampleScaleFactor_; //1 by default //implemented only for drawPlots!
 TChain* dtree=0;
 TH1D* hdata=0;
@@ -1285,6 +1286,8 @@ bool drawTotalSMSusy_=false;//no setter function
 bool drawSusyOnly_=false;//no setter function
 bool drawMarkers_=true;//no setter function
 
+bool useMassInLegend_=true;
+
 bool doVerticalLine_=false;
 double verticalLinePosition_=0;
 
@@ -1400,11 +1403,19 @@ void loadSusyCrossSections() {
 
 }
 
-bool isSampleScan(const TString & name ) {
+bool isSampleSMS(const TString & name ) {
   if (name.Contains("T1bbbb")) return true;
   if (name.Contains("T2bb")) return true;
   if (name.Contains("T1tttt")) return true;
   if (name.Contains("T2tt")) return true;
+
+  return false;
+}
+
+bool isSampleScan(const TString & name ) {
+
+  if (isSampleSMS(name)) return true;
+
   if (name.Contains("SUGRA")) return true;
 
 
@@ -1416,17 +1427,17 @@ bool isSampleSM(const TString & name) {
   if (name.Contains("LM")) return false;
 
   if (name.Contains("SUGRA")) return false;
-
-  if (name.Contains("T1bbbb")) return false;
-  if (name.Contains("T2bb")) return false;
-  if (name.Contains("T1tttt")) return false;
-  if (name.Contains("T2tt")) return false;
+  if (isSampleSMS(name)) return false;
 
   return true;
 }
 
 void loadScanSMSngen(const TString& sampleOfInterest) {
   if (scanSMSngen==0) scanSMSngen = (TH2D*) files_[currentConfig_][sampleOfInterest]->Get("scanSMSngen");
+  else {
+    cout<<"Replacing scanSMSngen"<<endl;
+    scanSMSngen = (TH2D*) files_[currentConfig_][sampleOfInterest]->Get("scanSMSngen");
+  }
 }
 
 void loadReferenceCrossSections() {
@@ -2019,8 +2030,8 @@ void setColorScheme(const TString & name) {
     sampleColor_["LM13"] = kGray;
     sampleColor_["LM9"] =kGray;
     sampleColor_["mSUGRAtanb40"] =kGray;
-    sampleColor_["T1bbbb"] =kGray;
-    sampleColor_["T1tttt"] =kGray;
+    sampleColor_["T1bbbb"] =kBlack;
+    sampleColor_["T1tttt"] =kBlack;
     sampleColor_["T2bb"] =kGray;
     sampleColor_["T2tt"] =kGray;
     sampleColor_["QCD"] = kYellow;
@@ -2305,7 +2316,7 @@ void resetSamples(bool joinSingleTop=true) {
 
 TString getSampleLabel(const TString & sample) {
   TString label="Not Found";
-  if (  isSampleScan(sample)) {
+  if (  isSampleScan(sample) && useMassInLegend_) {
     char ss[50];
     sprintf(ss, "#splitline{m_{gluino} = %d GeV}{m_{LSP} = %d GeV}",m0_,m12_);
     label=ss;
@@ -2558,6 +2569,12 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   sampleLabel_["HerwigQCDFlat"] = "Herwig QCD";
   sampleLabel_["TotalSM"] = "SM";
   sampleLabel_["Total"] = "SM + LM13"; //again, this is a hack
+
+  sampleLineStyle_["T1bbbb"] = 1;
+  sampleLineStyle_["T1tttt"] = 7;
+  sampleLineStyle_["T2tt"] = 1;
+  sampleLineStyle_["T2bb"] = 1;
+  sampleLineStyle_["LM9"] = 1;
 
   sampleMarkerStyle_["mSUGRAtanb40"] = kFullStar;
   sampleMarkerStyle_["T1bbbb"] = kFullStar;
@@ -3048,6 +3065,7 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
   resetHistos(); //delete existing histograms
   TString opt="hist e";
   double histMax=-1e9;
+  vector<TString> signals;
   for (unsigned int isample=0; isample<samples_.size(); isample++) {
     if (!quiet_)   cout <<samples_[isample]<<endl;
 
@@ -3060,6 +3078,10 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
     TTree* tree = (TTree*) files_[currentConfig_][samples_[isample]]->Get("reducedTree");
     gROOT->cd();
     TString weightopt= useFlavorHistoryWeights_ && samples_[isample].Contains("WJets") ? "flavorHistoryWeight" : "";
+
+    //replace the scanSMSngen with the appropriate one for this sample
+    if ( isSampleSMS(samples_[isample])) loadScanSMSngen(samples_[isample]);
+    if (isSampleScan(samples_[isample])) assert( m0_>0 || m12_>0); //seems safe enough
 
     //treat ttbar in a special way 
     if(samples_[isample].Contains("TTbarJets-")){
@@ -3330,7 +3352,7 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
     }
 
     else
-      tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,"",0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+      tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,"",0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());
 
     //now the histo is filled
     
@@ -3365,8 +3387,11 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
        totalqcd->Add(histos_[samples_[isample]]);
        //      if (!quiet_) cout << "totalqcd: " << samples_[isample] << endl;
     }
-    totalsmsusy->Add(histos_[samples_[isample]]); //add everything!
-
+    if (!isSampleSM(samples_[isample]))    signals.push_back(samples_[isample]);
+    //add everything! (but only the 1st signal)
+    if (signals.size()<=1)  {
+      totalsmsusy->Add(histos_[samples_[isample]]);
+    }
     //now just do a bunch of histogram formatting
     if (!dostack_) {
       //set line color instead of fill color for this type of plot
@@ -3379,12 +3404,18 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
       histos_[samples_[isample]]->SetLineWidth(2);
     }
     else {
-      histos_[samples_[isample]]->SetFillColor(sampleColor_[samples_[isample]]);
+      if ( isSampleSM(samples_[isample]))   histos_[samples_[isample]]->SetFillColor(sampleColor_[samples_[isample]]);
+      if ( !isSampleSM(samples_[isample]))  {
+	histos_[samples_[isample]]->SetLineWidth(2);
+	histos_[samples_[isample]]->SetLineColor(sampleColor_[samples_[isample]]);
+	histos_[samples_[isample]]->SetLineStyle(sampleLineStyle_[samples_[isample]]);
+      }
       histos_[samples_[isample]]->SetMarkerSize(0);
     }
 
     if (dostack_) { //add histo to stack
-      thestack->Add(histos_[samples_[isample]] );
+      //but *don't* add more than one signal to the stack
+      if (isSampleSM(samples_[isample]) || signals.size()<=1) thestack->Add(histos_[samples_[isample]] );
     }
     else { //draw non-stacked histo
       //normalize
@@ -3404,7 +3435,7 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
   if (drawTotalSM_) leg->AddEntry(totalsm, sampleLabel_["TotalSM"]);
   for (int isample=int(samples_.size())-1; isample>=0; isample--) {
     if (dostack_ || (!drawSusyOnly_ || samples_[isample].Contains("LM")|| samples_[isample].Contains("SUGRA"))) { //drawSusyOnly_ means don't draw SM
-      leg->AddEntry(histos_[samples_[isample]], sampleLabel_[samples_[isample]]);
+      leg->AddEntry(histos_[samples_[isample]], getSampleLabel(samples_[isample]));
     }
   }
 
@@ -3448,6 +3479,25 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
       mcerrors->Draw("2 same");
     }
 
+    //ok, if we've got "extra" signals we need to draw them here (so skip the first one)
+    for (unsigned int isig=1; isig<signals.size(); isig++) {
+      //first we need a name
+      TString extrasignalname="totalsmPlus";
+      extrasignalname+= signals.at(isig);
+      //now clone the totalsm and add the signal to it
+      TH1D* newtotal = (TH1D*) totalsm->Clone(extrasignalname);
+      newtotal->Add( histos_[signals.at(isig)]);
+      //now plop the newtotal into histos_
+      histos_[signals.at(isig)] = newtotal;
+      //FIXME need to adjust the plot max in case this is higher than the stack
+
+      //now draw
+      cout<<"drawing "<<signals.at(isig)<<endl;
+      newtotal->SetLineColor(sampleColor_[signals.at(isig)]);
+      newtotal->SetLineStyle(sampleLineStyle_[signals.at(isig)]);
+      newtotal->Draw("SAME HIST");
+    }
+
     if (doCustomPlotMax_) thestack->SetMaximum(customPlotMax_);
     if (doCustomPlotMin_) thestack->SetMinimum(customPlotMin_);
   } //if doStack_
@@ -3473,7 +3523,7 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
     leg->AddEntry(hdata,"Data");
 
     if (!quiet_)    cout<<"Data underflow: " <<hdata->GetBinContent(0)<<endl;//BEN
-    hdata->Draw("SAME E");
+    hdata->Draw("SAME E0");
     if (!doCustomPlotMax_) {
       double mymax=-1e9;
       if (dostack_) mymax = thestack->GetMaximum();
