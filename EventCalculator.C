@@ -6082,7 +6082,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
 
     //very loose skim for reducedTrees (HT, trigger, throw out bad data)
     ST = getST(); //ST is always bigger than HT
-    if ( passCut("cutLumiMask") && (passCut("cutTrigger") || passCut("cutUtilityTrigger")) && (ST>=400) ) {
+    if ( passCut("cutLumiMask") && (passCut("cutTrigger") || passCut("cutUtilityTrigger")) && (ST>=300) ) {
       cutHT = passCut("cutHT"); //should always be true
 
       weight = getWeight(nevents);
