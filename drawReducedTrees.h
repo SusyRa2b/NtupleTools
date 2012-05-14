@@ -1314,6 +1314,8 @@ TCanvas* thecanvas=0;
 //TCanvas* cratio=0;
 TLegend* leg=0;
 THStack* thestack=0;
+TLatex* extraText=0;
+TString extratext_="";
 TH1D* totalsm=0;
 TH1D* totalsmsusy=0;
 TH1D* totalewk=0;
@@ -1616,6 +1618,17 @@ void renewLegend() {
   leg->SetTextFont(42);
   leg->SetFillStyle(0);
 
+}
+
+void renewExtraText() {
+  if (extraText!=0) delete extraText;
+  extraText = new TLatex();
+  extraText->SetNDC();
+  extraText->SetTextAlign(13);
+  extraText->SetX(0.5);
+  extraText->SetY(.85);
+  extraText->SetTextFont(42);
+  extraText->SetTextSizePixels(24);
 }
 
 void resetHistos() {
@@ -3704,6 +3717,7 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
 
   resetLegendPositionR();
   renewLegend();
+  renewExtraText();
 
   if(dodata_){
     if (hdata != 0) delete hdata;
@@ -3753,6 +3767,10 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
     hdata->Draw();
     drawPlotHeader(-.1);
     if (doleg_)  leg->Draw();
+    if (extratext_!="") {
+      extraText->DrawLatex(.5,.5,extratext_);
+      extraText->Draw();
+    }
     thecanvas->SaveAs("mindpPassOverFail-"+savename+".eps");
     thecanvas->SaveAs("mindpPassOverFail-"+savename+".pdf");
     thecanvas->SaveAs("mindpPassOverFail-"+savename+".png");
@@ -3921,6 +3939,10 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
   
   if (doRatio_)  thecanvas->cd(1);
   if (doleg_)  leg->Draw();
+  if (extratext_!="") {
+      extraText->DrawLatex(.5,.85,extratext_);
+      extraText->Draw();
+  }
   
   thecanvas->SaveAs("mindpPassOverFail-"+savename+".eps");
   thecanvas->SaveAs("mindpPassOverFail-"+savename+".pdf");

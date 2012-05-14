@@ -5274,18 +5274,24 @@ void AN2011_r(TString btagselection="ge1b", const int mode=1) { //for paper, dat
   
   TCut util = "pass_utilityHLT==1 && weight<2"; //don't use weight<1 when plotting data!
 
+  //NOTE -- add 0.05 to xoffset in drawPlotHeader 
+
+  extratext_="HT>400 GeV";
   setPlotMinimum(0); setPlotMaximum(.7);
   selection_ =TCut("HT>=400 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && passCleaning==1")&&util&&btagcut;
   drawR("minDeltaPhiN",4,15,0,150,"Data_HT400_"+btagselection+modestring);
 
-  setPlotMinimum(0); setPlotMaximum(.5);
+  extratext_="HT>500 GeV";
+  setPlotMinimum(0); setPlotMaximum(.7);//best=.5
   selection_ =TCut("HT>=500 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && passCleaning==1")&&util&&btagcut;
   drawR("minDeltaPhiN",4,15,0,150,"Data_HT500_"+btagselection+modestring); 
 
-  setPlotMinimum(0); setPlotMaximum(.3);
+  extratext_="HT>600 GeV";
+  setPlotMinimum(0); setPlotMaximum(.7);//best=.3
   selection_ =TCut("HT>=600 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && passCleaning==1")&&util&&btagcut;
   drawR("minDeltaPhiN",4,14,0,140,"Data_HT600_"+btagselection+modestring); //only go up to 140 to ensure >10 events in pass and fail 
 
+  extratext_="";
   return;
 }
 
