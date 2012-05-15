@@ -703,7 +703,7 @@ std::pair<double,std::vector<double> > anotherABCD( const SearchRegion & region,
     thebnnMHTeffMode_ = kOff;//dealt with later
     currentConfig_=configDescriptions_.getCorrected(); //add JERbias
 
-    if(metselection=="MET>=200&&MET<250" || metselection=="MET>=150&&MET<200") {
+    if(metselection=="MET>=200&&MET<250" || metselection=="MET>=150&&MET<200" || metselection=="MET>=150&&MET<250") {
       //      cout<<"Using SB efficiency corrections for QCD"<<endl;
       eff_MHT     = eff_SB_MHT_;      eff_MHT_err[0] = eff_SB_MHT_err_[0];         eff_MHT_err[1] = eff_SB_MHT_err_[1];
       eff_ldp_MHT = eff_SB_ldp_MHT_ ; eff_ldp_MHT_err[0] = eff_SB_ldp_MHT_err_[0]; eff_ldp_MHT_err[1] = eff_SB_ldp_MHT_err_[1];

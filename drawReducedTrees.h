@@ -62,26 +62,26 @@ void setTrigEff(const TString which) {
     cout<<"Using efficiencies for 150-250 GeV SB"<<endl;
     //150-250 GeV SB (with FINAL lumi weighting -April 5) 
     eff_SB_MHT_             = 0.850;
-    eff_SB_MHT_err_[0]      = 0.034;
-    eff_SB_MHT_err_[1]      = 0.046;
+    eff_SB_MHT_err_[0]      = jmt::addInQuad( 0.034, eff_SB_MHT_*0.056); //ADD THE SYSTEMATIC ERROR DUE TO SAMPLE COMPOSITION
+    eff_SB_MHT_err_[1]      = jmt::addInQuad( 0.046, eff_SB_MHT_*0.056); //ADD THE SYSTEMATIC ERROR DUE TO SAMPLE COMPOSITION
     eff_SB_ldp_MHT_         = 0.912;   
-    eff_SB_ldp_MHT_err_[0]  = 0.024;
-    eff_SB_ldp_MHT_err_[1]  = 0.057;
+    eff_SB_ldp_MHT_err_[0]  = jmt::addInQuad( 0.024, eff_SB_ldp_MHT_*0.015); //ADD THE SYSTEMATIC ERROR DUE TO SAMPLE COMPOSITION
+    eff_SB_ldp_MHT_err_[1]  = jmt::addInQuad( 0.057, eff_SB_ldp_MHT_*0.015); //ADD THE SYSTEMATIC ERROR DUE TO SAMPLE COMPOSITION
     eff_SIG_MHT_            = 0.981; 
     eff_SIG_MHT_err_[0]     = 0.012;
     eff_SIG_MHT_err_[1]     = 0.036;
     eff_SIG_ldp_MHT_        = eff_SIG_MHT_; 
     eff_SIG_ldp_MHT_err_[0] = eff_SIG_MHT_err_[0]; //due to low stats in SIG-LDP, use the SIG numbers
     eff_SIG_ldp_MHT_err_[1] = eff_SIG_MHT_err_[1];
-    eff_SIG_SL_MHT_         = 0.999; 
-    eff_SIG_SL_MHT_err_[0]  = 0.001;
-    eff_SIG_SL_MHT_err_[1]  = 0.003;
-    eff_SB_1m_MHT_          = 0.990;
-    eff_SB_1m_MHT_err_[0]   = 0.002;
-    eff_SB_1m_MHT_err_[1]   = 0.002;
-    eff_SB_1e_MHT_          = 0.955; 
-    eff_SB_1e_MHT_err_[0]   = 0.004;
-    eff_SB_1e_MHT_err_[1]   = 0.004;
+    eff_SIG_SL_MHT_         = 1.000;//SL,1m,1e numbers updated May15 - Keith added all offline 1BL cuts (except SL req. and ==0b) 
+    eff_SIG_SL_MHT_err_[0]  = 0.000;
+    eff_SIG_SL_MHT_err_[1]  = 0.02;
+    eff_SB_1m_MHT_          = 0.991;
+    eff_SB_1m_MHT_err_[0]   = 0.003;
+    eff_SB_1m_MHT_err_[1]   = 0.005;
+    eff_SB_1e_MHT_          = 0.954; 
+    eff_SB_1e_MHT_err_[0]   = 0.007;
+    eff_SB_1e_MHT_err_[1]   = 0.009;
   }
   else if (which=="LowSB") {
     //150-200 GeV SB
