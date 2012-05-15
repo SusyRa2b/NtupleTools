@@ -4179,7 +4179,6 @@ void AN2011_prescale( TString btagselection="ge1b",const int mode=1 ) {
   setLogY(true);  setPlotMinimum(1e-1);
   drawPlots(var,nbins,low,high,xtitle,"Events", "prescaled_MET_"+btagselection+modestring,0,"GeV");
   
-
   
   //njets in 50 < MET < 100 region
   selection_ =TCut("cutHT==1 && cutPV==1 && MET>=50 && MET<100 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4 && passCleaning==1")&&util&&btagcut;
@@ -4197,14 +4196,16 @@ void AN2011_prescale( TString btagselection="ge1b",const int mode=1 ) {
   setLogY(true);  setPlotMinimum(1e-1);
   drawPlots(var,nbins,low,high,xtitle,"Events", "prescaled_minDeltaPhiN_LSB_"+btagselection+modestring);
   return;
-
+  
+  
+  /*
   //look again at MET
   selection_ =TCut("MET>=50 && MET<100 && cutHT==1 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4 && passCleaning==1")&&util&&btagcut;
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
   nbins = 10; low=50; high=100;
   setLogY(false); resetPlotMinimum();
   drawPlots(var,nbins,low,high,xtitle,"Events", "prescaled_METlimited_"+btagselection+modestring,0,"GeV");
-
+  */
 
   //sanity check
 /*
@@ -5295,6 +5296,25 @@ void AN2011_r(TString btagselection="ge1b", const int mode=1) { //for paper, dat
   return;
 }
 
+double getpf(TString selectionTemp) {
+  //TString selectionTemp = selection_;
+  TCut pass = "minDeltaPhiN>=4";
+  TCut fail = "minDeltaPhiN<4";
+  TCut lsb = "MET>=50 && MET<100";
+  selection_ = TCut(selectionTemp) && pass && lsb; 
+  drawSimple("njets30",1,0,100,"dummy.root", "","PythiaPUQCD");
+  TH1D* hp = (TH1D*)hinteractive->Clone("hp");
+  double passN = hp->GetBinContent(1);
+  selection_ = TCut(selectionTemp) && fail && lsb; 
+  drawSimple("njets30",1,0,100,"dummy.root", "","PythiaPUQCD");
+  TH1D* hf = (TH1D*)hinteractive->Clone("hf");
+  double failN = hf->GetBinContent(1);
+  cout << "p: " << passN << ", f: " << failN << endl;
+  double pfN = passN/failN;
+
+  selection_ = selectionTemp;
+  return pfN;
+}
 
 void AN2011_r_SLreq(int mode = 3) { //for paper, MC only plots all the way to high MET
   
@@ -5341,20 +5361,28 @@ void AN2011_r_SLreq(int mode = 3) { //for paper, MC only plots all the way to hi
   const int nvarbins=13;
   const float varbins[]={0,20,40,60,80,100,120,140,160,180,200,250,300,600}; //13 bins
 
-  selection_ ="cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 &&passCleaning==1 && weight<2";
+  //selection_ ="cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 &&passCleaning==1 && weight<2";
+  selection_ ="cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 &&passCleaning==1 && weight<1000";
 
+  
   setPlotMaximum(0.7); setPlotMinimum(0);
   btagSFweight_="prob0";
+  rLine = getpf(selection_);
   drawR("minDeltaPhiN",4, "MET", nvarbins, varbins,"eq0b");
   
   btagSFweight_="probge1";
+  rLine = getpf(selection_);
   drawR("minDeltaPhiN",4, "MET", nvarbins, varbins,"ge1b");
 
   btagSFweight_="probge2";
+  rLine = getpf(selection_);
   drawR("minDeltaPhiN",4, "MET", nvarbins, varbins,"ge2b");
 
   btagSFweight_="probge3";
+  rLine = getpf(selection_);
   drawR("minDeltaPhiN",4, "MET", nvarbins, varbins,"ge3b");
+
+  rLine=-1;
 
   setPlotMaximum(3); setPlotMinimum(0);
   btagSFweight_="probge1";

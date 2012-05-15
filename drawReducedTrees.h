@@ -1316,6 +1316,7 @@ TLegend* leg=0;
 THStack* thestack=0;
 TLatex* extraText=0;
 TString extratext_="";
+double rLine = -1;
 TH1D* totalsm=0;
 TH1D* totalsmsusy=0;
 TH1D* totalewk=0;
@@ -3975,6 +3976,13 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
   if (extratext_!="") {
       extraText->DrawLatex(.5,.85,extratext_);
       extraText->Draw();
+  }
+  TLine* myRline = 0;
+  if (rLine>0) { //this should actually be allowed to go negative
+    myRline = new TLine( histos_[firsthist]->GetXaxis()->GetBinLowEdge(1), rLine, histos_[firsthist]->GetXaxis()->GetBinUpEdge(histos_[firsthist]->GetXaxis()->GetLast() ), rLine);
+    myRline->SetLineWidth(2);
+    myRline->SetLineStyle(7);
+    myRline->Draw();
   }
   
   thecanvas->SaveAs("mindpPassOverFail-"+savename+".eps");
