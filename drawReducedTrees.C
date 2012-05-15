@@ -6083,9 +6083,16 @@ void PAPER2011() {
   drawMCErrors_=true;
   
   removeSample("LM9");
-  addSample("T1bbbb"); //loadScanSMSngen("T1bbbb");
+ 
+ addSample("T1bbbb$925$100");
+ addSample("T1bbbb$825$500");
 
-  m0_=925; m12_=100;
+ setSampleColor("T1bbbb$925$100",1);
+ setSampleColor("T1bbbb$825$500",1);
+
+ setSampleLineStyle("T1bbbb$925$100",1);
+ setSampleLineStyle("T1bbbb$825$500",7);
+
 
   // == all cuts except MET ==
 
@@ -6106,7 +6113,7 @@ void PAPER2011() {
   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_"+btagselection+modestring,0,"GeV");
 
   //3B
-  addSample("T1tttt"); useMassInLegend_=false;
+  //addSample("T1tttt"); useMassInLegend_=false;
   btagselection="ge3b";
   btagSFweight_="probge3";
   selection_ ="HT>=400 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4 &&passCleaning==1";

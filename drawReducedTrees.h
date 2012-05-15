@@ -1434,6 +1434,23 @@ bool isSampleSM(const TString & name) {
   return true;
 }
 
+TString stripSamplename(TString fullname) {
+  TString name = fullname.Tokenize("$")->At(0)->GetName();
+  return name;
+}
+
+void setScanPoint(const TString & name) {
+
+  // format is e.g. T1bbbb$m0$m12
+
+  if ((name.Tokenize("$")->At(1) == 0) || (name.Tokenize("$")->At(2)==0) ) assert(0);
+
+  TString m0=name.Tokenize("$")->At(1)->GetName();
+  TString m12=name.Tokenize("$")->At(2)->GetName();
+  m0_=m0.Atoi();
+  m12_=m12.Atoi();
+}
+
 void loadScanSMSngen(const TString& sampleOfInterest) {
   if (scanSMSngen==0) scanSMSngen = (TH2D*) files_[currentConfig_][sampleOfInterest]->Get("scanSMSngen");
   else {
@@ -1986,6 +2003,9 @@ void drawVerticalLine() {
 
 }
 
+void setSampleColor(const TString & sample, UInt_t color)  {  sampleColor_[sample]=color;}
+void setSampleLineStyle(const TString & sample, UInt_t style)  {  sampleLineStyle_[sample]=style;}
+
 //add a sample to be plotted to the *end* of the list
 void addSample(const TString & newsample) {
 
@@ -1998,7 +2018,7 @@ void addSample(const TString & newsample) {
   }
   //if it isn't there, go ahead and add it
 
-  if ( samplesAll_.find(newsample) != samplesAll_.end() ) {
+  if ( samplesAll_.find(stripSamplename(newsample)) != samplesAll_.end() ) {
     samples_.push_back(newsample);
   }
   else {
@@ -2330,8 +2350,12 @@ void resetSamples(bool joinSingleTop=true) {
 TString getSampleLabel(const TString & sample) {
   TString label="Not Found";
   if (  isSampleScan(sample) && useMassInLegend_) {
+    setScanPoint(sample); //set m0 and m12
     char ss[50];
-    sprintf(ss, "#splitline{m_{gluino} = %d GeV}{m_{LSP} = %d GeV}",m0_,m12_);
+    //    sprintf(ss, "#splitline{m_{gluino} = %d GeV}{m_{LSP} = %d GeV}",m0_,m12_);
+    //more compact format?
+    TString shortname = stripSamplename(sample);
+    sprintf(ss, "%s (%d GeV, %d GeV)",shortname.Data(),m0_,m12_);
     label=ss;
   }
   else {
@@ -3080,6 +3104,10 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
   double histMax=-1e9;
   vector<TString> signals;
   for (unsigned int isample=0; isample<samples_.size(); isample++) {
+
+    //new complication for scans -- we have both the complete samplename that includes the mass point and a shortened version that doesn't
+    const    TString samplename= stripSamplename(samples_[isample]);
+
     if (!quiet_)   cout <<samples_[isample]<<endl;
 
     gROOT->cd();
@@ -3088,13 +3116,13 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
     histos_[samples_[isample]] = (varbins==0) ? new TH1D(hname,"",nbins,low,high) : new TH1D(hname,"",nbins,varbins);
     histos_[samples_[isample]]->Sumw2();
 
-    TTree* tree = (TTree*) files_[currentConfig_][samples_[isample]]->Get("reducedTree");
+    TTree* tree = (TTree*) files_[currentConfig_][samplename]->Get("reducedTree");
     gROOT->cd();
     TString weightopt= useFlavorHistoryWeights_ && samples_[isample].Contains("WJets") ? "flavorHistoryWeight" : "";
 
     //replace the scanSMSngen with the appropriate one for this sample
-    if ( isSampleSMS(samples_[isample])) loadScanSMSngen(samples_[isample]);
-    if (isSampleScan(samples_[isample])) assert( m0_>0 || m12_>0); //seems safe enough
+    if ( isSampleSMS(samplename)) loadScanSMSngen(samplename);
+    if (isSampleScan(samplename)) setScanPoint(samples_[isample]);
 
     //treat ttbar in a special way 
     if(samples_[isample].Contains("TTbarJets-")){
@@ -3102,270 +3130,270 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
 	//tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,"",0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
 	if(samples_[isample].Contains("TTbarJets-semiMuGood")){
 	  TString semiMuMode = "(((W1decayType==13 && W2decayType==112) || (W1decayType==112 && W2decayType==13) || (W1decayType==1513 && W2decayType==112) || (W1decayType==112 && W2decayType==1513) || (W1decayType==13 && W2decayType==134) || (W1decayType==134 && W2decayType==13) || (W1decayType==1513 && W2decayType==134) || (W1decayType==134 && W2decayType==1513))&&(decayType==101300))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiMuMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiMuMode,0,"",-1,sampleScaleFactor_[samplename]).Data());    
 	}
 	if(samples_[isample].Contains("TTbarJets-semiMuFailEta")){
 	  TString semiMuMode = "(((W1decayType==13 && W2decayType==112) || (W1decayType==112 && W2decayType==13) || (W1decayType==1513 && W2decayType==112) || (W1decayType==112 && W2decayType==1513) || (W1decayType==13 && W2decayType==134) || (W1decayType==134 && W2decayType==13) || (W1decayType==1513 && W2decayType==134) || (W1decayType==134 && W2decayType==1513))&&(decayType==101301 || decayType==201301))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiMuMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiMuMode,0,"",-1,sampleScaleFactor_[samplename]).Data());    
 	}
 	if(samples_[isample].Contains("TTbarJets-semiMuFailPt")){
 	  TString semiMuMode = "(((W1decayType==13 && W2decayType==112) || (W1decayType==112 && W2decayType==13) || (W1decayType==1513 && W2decayType==112) || (W1decayType==112 && W2decayType==1513) || (W1decayType==13 && W2decayType==134) || (W1decayType==134 && W2decayType==13) || (W1decayType==1513 && W2decayType==134) || (W1decayType==134 && W2decayType==1513))&&(decayType==101302 || decayType==201302))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiMuMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiMuMode,0,"",-1,sampleScaleFactor_[samplename]).Data());    
 	}
 	if(samples_[isample].Contains("TTbarJets-semiMuFailRecoIso")){
 	  TString semiMuMode = "(((W1decayType==13 && W2decayType==112) || (W1decayType==112 && W2decayType==13) || (W1decayType==1513 && W2decayType==112) || (W1decayType==112 && W2decayType==1513) || (W1decayType==13 && W2decayType==134) || (W1decayType==134 && W2decayType==13) || (W1decayType==1513 && W2decayType==134) || (W1decayType==134 && W2decayType==1513))&&(decayType==201303))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiMuMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiMuMode,0,"",-1,sampleScaleFactor_[samplename]).Data());    
 	}
 	if(samples_[isample].Contains("TTbarJets-semiMuFailOther")){
 	  TString semiMuMode = "(((W1decayType==13 && W2decayType==112) || (W1decayType==112 && W2decayType==13) || (W1decayType==1513 && W2decayType==112) || (W1decayType==112 && W2decayType==1513) || (W1decayType==13 && W2decayType==134) || (W1decayType==134 && W2decayType==13) || (W1decayType==1513 && W2decayType==134) || (W1decayType==134 && W2decayType==1513))&&(decayType==101304))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiMuMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiMuMode,0,"",-1,sampleScaleFactor_[samplename]).Data());    
 	}
 	if(samples_[isample].Contains("TTbarJets-semiEleGood")){
 	  TString semiEleMode = "(((W1decayType==11 && W2decayType==112) || (W1decayType==112 && W2decayType==11) || (W1decayType==1511 && W2decayType==112) || (W1decayType==112 && W2decayType==1511) || (W1decayType==11 && W2decayType==134) || (W1decayType==134 && W2decayType==11) || (W1decayType==1511 && W2decayType==134) || (W1decayType==134 && W2decayType==1511))&&(decayType==101100))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiEleMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiEleMode,0,"",-1,sampleScaleFactor_[samplename]).Data());    
 	}
 	if(samples_[isample].Contains("TTbarJets-semiEleFailEta")){
 	  TString semiEleMode = "(((W1decayType==11 && W2decayType==112) || (W1decayType==112 && W2decayType==11) || (W1decayType==1511 && W2decayType==112) || (W1decayType==112 && W2decayType==1511) || (W1decayType==11 && W2decayType==134) || (W1decayType==134 && W2decayType==11) || (W1decayType==1511 && W2decayType==134) || (W1decayType==134 && W2decayType==1511))&&(decayType==101101 || decayType==201101))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiEleMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiEleMode,0,"",-1,sampleScaleFactor_[samplename]).Data());    
 	}
 	if(samples_[isample].Contains("TTbarJets-semiEleFailPt")){
 	  TString semiEleMode = "(((W1decayType==11 && W2decayType==112) || (W1decayType==112 && W2decayType==11) || (W1decayType==1511 && W2decayType==112) || (W1decayType==112 && W2decayType==1511) || (W1decayType==11 && W2decayType==134) || (W1decayType==134 && W2decayType==11) || (W1decayType==1511 && W2decayType==134) || (W1decayType==134 && W2decayType==1511))&&(decayType==101102 || decayType==201102))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiEleMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiEleMode,0,"",-1,sampleScaleFactor_[samplename]).Data());    
 	}
 	if(samples_[isample].Contains("TTbarJets-semiEleFailRecoIso")){
 	  TString semiEleMode = "(((W1decayType==11 && W2decayType==112) || (W1decayType==112 && W2decayType==11) || (W1decayType==1511 && W2decayType==112) || (W1decayType==112 && W2decayType==1511) || (W1decayType==11 && W2decayType==134) || (W1decayType==134 && W2decayType==11) || (W1decayType==1511 && W2decayType==134) || (W1decayType==134 && W2decayType==1511))&&(decayType==201103))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiEleMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiEleMode,0,"",-1,sampleScaleFactor_[samplename]).Data());    
 	}
 	if(samples_[isample].Contains("TTbarJets-semiEleFailOther")){
 	  TString semiEleMode = "(((W1decayType==11 && W2decayType==112) || (W1decayType==112 && W2decayType==11) || (W1decayType==1511 && W2decayType==112) || (W1decayType==112 && W2decayType==1511) || (W1decayType==11 && W2decayType==134) || (W1decayType==134 && W2decayType==11) || (W1decayType==1511 && W2decayType==134) || (W1decayType==134 && W2decayType==1511))&&(decayType==101104))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiEleMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiEleMode,0,"",-1,sampleScaleFactor_[samplename]).Data());    
 	}
 	if(samples_[isample].Contains("TTbarJets-semiTauHad")){
 	  TString semiTauHadMode = "((W1decayType==15 && W2decayType==112) || (W1decayType==112 && W2decayType==15) || (W1decayType==15 && W2decayType==134) || (W1decayType==134 && W2decayType==15))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiTauHadMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiTauHadMode,0,"",-1,sampleScaleFactor_[samplename]).Data());    
 	}
 	if(samples_[isample].Contains("TTbarJets-dilep")){
 	  TString dilepMode = "((W1decayType==11 || W1decayType==13 || W1decayType==1511 || W1decayType==1513) && (W2decayType==11 || W2decayType==13 || W2decayType==1511 || W2decayType==1513))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,dilepMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,dilepMode,0,"",-1,sampleScaleFactor_[samplename]).Data());    
 	}
 	if(samples_[isample].Contains("TTbarJets-had")){
 	  TString hadMode = "(W1decayType==112 || W1decayType==134) && (W2decayType==112 || W2decayType==134)";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,hadMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,hadMode,0,"",-1,sampleScaleFactor_[samplename]).Data());    
 	}
 	if(samples_[isample].Contains("TTbarJets-other")){
 	  //includes tautau(both had), etau(had), mutau(had), 
 	  TString otherMode = "((W1decayType==15 && W2decayType==15)||(W1decayType==11 && W2decayType==15)||(W1decayType==15 && W2decayType==11)||(W1decayType==1511 && W2decayType==15)||(W1decayType==15 && W2decayType==1511)||(W1decayType==13 && W2decayType==15)||(W1decayType==15 && W2decayType==13)||(W1decayType==15 && W2decayType==1513)||(W1decayType==1513 && W2decayType==15))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,otherMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,otherMode,0,"",-1,sampleScaleFactor_[samplename]).Data());    
 	}
       }
       else if(splitTTbar_){
 	if(samples_[isample].Contains("TTbarJets-semiMu")){
 	  TString semiMuMode = "((W1decayType==13 && W2decayType==112) || (W1decayType==112 && W2decayType==13) || (W1decayType==1513 && W2decayType==112) || (W1decayType==112 && W2decayType==1513) || (W1decayType==13 && W2decayType==134) || (W1decayType==134 && W2decayType==13) || (W1decayType==1513 && W2decayType==134) || (W1decayType==134 && W2decayType==1513))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiMuMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiMuMode,0,"",-1,sampleScaleFactor_[samplename]).Data());    
 	}
 	if(samples_[isample].Contains("TTbarJets-semiEle")){
 	  TString semiEleMode = "((W1decayType==11 && W2decayType==112) || (W1decayType==112 && W2decayType==11) || (W1decayType==1511 && W2decayType==112) || (W1decayType==112 && W2decayType==1511) || (W1decayType==11 && W2decayType==134) || (W1decayType==134 && W2decayType==11) || (W1decayType==1511 && W2decayType==134) || (W1decayType==134 && W2decayType==1511))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiEleMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiEleMode,0,"",-1,sampleScaleFactor_[samplename]).Data());    
 	}
 	if(samples_[isample].Contains("TTbarJets-semiTauHad")){
 	  TString semiTauHadMode = "((W1decayType==15 && W2decayType==112) || (W1decayType==112 && W2decayType==15) || (W1decayType==15 && W2decayType==134) || (W1decayType==134 && W2decayType==15))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiTauHadMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiTauHadMode,0,"",-1,sampleScaleFactor_[samplename]).Data());    
 	}
 	if(samples_[isample].Contains("TTbarJets-dilep")){
 	  TString dilepMode = "((W1decayType==11 || W1decayType==13 || W1decayType==1511 || W1decayType==1513) && (W2decayType==11 || W2decayType==13 || W2decayType==1511 || W2decayType==1513))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,dilepMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,dilepMode,0,"",-1,sampleScaleFactor_[samplename]).Data());    
 	}
 	if(samples_[isample].Contains("TTbarJets-had")){
 	  TString hadMode = "((W1decayType==112 || W1decayType==134) && (W2decayType==112 || W2decayType==134))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,hadMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,hadMode,0,"",-1,sampleScaleFactor_[samplename]).Data());    
 	}
 	if(samples_[isample].Contains("TTbarJets-other")){
 	  //includes tautau(both had), etau(had), mutau(had), 
 	  TString otherMode = "((W1decayType==15 && W2decayType==15)||(W1decayType==11 && W2decayType==15)||(W1decayType==15 && W2decayType==11)||(W1decayType==1511 && W2decayType==15)||(W1decayType==15 && W2decayType==1511)||(W1decayType==13 && W2decayType==15)||(W1decayType==15 && W2decayType==13)||(W1decayType==15 && W2decayType==1513)||(W1decayType==1513 && W2decayType==15))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,otherMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,otherMode,0,"",-1,sampleScaleFactor_[samplename]).Data());    
 	}
 
       }
-      else tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,"",0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+      else tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,"",0,"",-1,sampleScaleFactor_[samplename]).Data());    
     }
     else if(samples_[isample].Contains("WJets-")){
       if(splitWJetsForClosureTest_){
 	if(samples_[isample].Contains("WJets-muGood")){
 	  TString MuMode = "((W1decayType==13 || W1decayType==1513) && (decayType==101300))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,MuMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,MuMode,0,"",-1,sampleScaleFactor_[samplename]).Data());    
 	}
 	if(samples_[isample].Contains("WJets-muFailEta")){
 	  TString MuMode = "((W1decayType==13 || W1decayType==1513) &&(decayType==101301 || decayType==201301))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,MuMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,MuMode,0,"",-1,sampleScaleFactor_[samplename]).Data());    
 	}
 	if(samples_[isample].Contains("WJets-muFailPt")){
 	  TString MuMode = "((W1decayType==13 || W1decayType==1513) &&(decayType==101302 || decayType==201302))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,MuMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,MuMode,0,"",-1,sampleScaleFactor_[samplename]).Data());    
 	}
 	if(samples_[isample].Contains("WJets-muFailRecoIso")){
 	  TString MuMode = "((W1decayType==13 || W1decayType==1513) &&(decayType==201303))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,MuMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,MuMode,0,"",-1,sampleScaleFactor_[samplename]).Data());    
 	}
 	if(samples_[isample].Contains("WJets-muFailOther")){
 	  TString MuMode = "((W1decayType==13 || W1decayType==1513) && (decayType==101304))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,MuMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,MuMode,0,"",-1,sampleScaleFactor_[samplename]).Data());    
 	}
 	if(samples_[isample].Contains("WJets-eleGood")){
 	  TString EleMode = "((W1decayType==11 || W1decayType==1511)&& (decayType==101100))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,EleMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,EleMode,0,"",-1,sampleScaleFactor_[samplename]).Data());    
 	}
 	if(samples_[isample].Contains("WJets-eleFailEta")){
 	  TString EleMode = "((W1decayType==11 || W1decayType==1511)&&(decayType==101101 || decayType==201101))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,EleMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,EleMode,0,"",-1,sampleScaleFactor_[samplename]).Data());    
 	}
 	if(samples_[isample].Contains("WJets-eleFailPt")){
 	  TString EleMode = "((W1decayType==11 || W1decayType==1511)&&(decayType==101102 || decayType==201102))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,EleMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,EleMode,0,"",-1,sampleScaleFactor_[samplename]).Data());    
 	}
 	if(samples_[isample].Contains("WJets-eleFailRecoIso")){
 	  TString EleMode = "((W1decayType==11 || W1decayType==1511) &&(decayType==201103))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,EleMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,EleMode,0,"",-1,sampleScaleFactor_[samplename]).Data());    
 	}
 	if(samples_[isample].Contains("WJets-eleFailOther")){
 	  TString EleMode = "((W1decayType==11 || W1decayType==1511) && (decayType==101104))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,EleMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,EleMode,0,"",-1,sampleScaleFactor_[samplename]).Data());    
 	}
 	if(samples_[isample].Contains("WJets-tauHad")){
 	  TString TauHadMode = "(W1decayType==15)";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,TauHadMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,TauHadMode,0,"",-1,sampleScaleFactor_[samplename]).Data());    
 	}
       }
       else if(splitWJets_){
 	if(samples_[isample].Contains("WJets-mu")){
 	  TString MuMode = "(W1decayType==13 || W1decayType==1513)";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,MuMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,MuMode,0,"",-1,sampleScaleFactor_[samplename]).Data());    
 	}
 	if(samples_[isample].Contains("WJets-ele")){
 	  TString EleMode = "(W1decayType==11 || W1decayType==1511)";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,EleMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,EleMode,0,"",-1,sampleScaleFactor_[samplename]).Data());    
 	}
 	if(samples_[isample].Contains("WJets-tauHad")){
 	  TString TauHadMode = "(W1decayType==15)";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,TauHadMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,TauHadMode,0,"",-1,sampleScaleFactor_[samplename]).Data());    
 	}
       }
-      else tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,"",0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+      else tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,"",0,"",-1,sampleScaleFactor_[samplename]).Data());    
     }
     else if(samples_[isample].Contains("SingleTop-sandtCombined")){
       if(splitSingleTopForClosureTest_){
 	if(samples_[isample].Contains("SingleTop-sandtCombined-muGood")){
 	  TString MuMode = "((W1decayType==13 || W1decayType==1513) && (decayType==101300))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,MuMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,MuMode,0,"",-1,sampleScaleFactor_[samplename]).Data());    
 	}
 	if(samples_[isample].Contains("SingleTop-sandtCombined-muFailEta")){
 	  TString MuMode = "((W1decayType==13 || W1decayType==1513) &&(decayType==101301 || decayType==201301))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,MuMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,MuMode,0,"",-1,sampleScaleFactor_[samplename]).Data());    
 	}
 	if(samples_[isample].Contains("SingleTop-sandtCombined-muFailPt")){
 	  TString MuMode = "((W1decayType==13 || W1decayType==1513) &&(decayType==101302 || decayType==201302))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,MuMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,MuMode,0,"",-1,sampleScaleFactor_[samplename]).Data());    
 	}
 	if(samples_[isample].Contains("SingleTop-sandtCombined-muFailRecoIso")){
 	  TString MuMode = "((W1decayType==13 || W1decayType==1513) &&(decayType==201303))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,MuMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,MuMode,0,"",-1,sampleScaleFactor_[samplename]).Data());    
 	}
 	if(samples_[isample].Contains("SingleTop-sandtCombined-muFailOther")){
 	  TString MuMode = "((W1decayType==13 || W1decayType==1513) && (decayType==101304))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,MuMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,MuMode,0,"",-1,sampleScaleFactor_[samplename]).Data());    
 	}
 	if(samples_[isample].Contains("SingleTop-sandtCombined-eleGood")){
 	  TString EleMode = "((W1decayType==11 || W1decayType==1511)&& (decayType==101100))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,EleMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,EleMode,0,"",-1,sampleScaleFactor_[samplename]).Data());    
 	}
 	if(samples_[isample].Contains("SingleTop-sandtCombined-eleFailEta")){
 	  TString EleMode = "((W1decayType==11 || W1decayType==1511)&&(decayType==101101 || decayType==201101))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,EleMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,EleMode,0,"",-1,sampleScaleFactor_[samplename]).Data());    
 	}
 	if(samples_[isample].Contains("SingleTop-sandtCombined-eleFailPt")){
 	  TString EleMode = "((W1decayType==11 || W1decayType==1511)&&(decayType==101102 || decayType==201102))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,EleMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,EleMode,0,"",-1,sampleScaleFactor_[samplename]).Data());    
 	}
 	if(samples_[isample].Contains("SingleTop-sandtCombined-eleFailRecoIso")){
 	  TString EleMode = "((W1decayType==11 || W1decayType==1511) &&(decayType==201103))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,EleMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,EleMode,0,"",-1,sampleScaleFactor_[samplename]).Data());    
 	}
 	if(samples_[isample].Contains("SingleTop-sandtCombined-eleFailOther")){
 	  TString EleMode = "((W1decayType==11 || W1decayType==1511) && (decayType==101104))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,EleMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,EleMode,0,"",-1,sampleScaleFactor_[samplename]).Data());    
 	}
 	if(samples_[isample].Contains("SingleTop-sandtCombined-tauHad")){
 	  TString TauHadMode = "(W1decayType==15)";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,TauHadMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,TauHadMode,0,"",-1,sampleScaleFactor_[samplename]).Data());    
 	}
       }
-      else tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,"",0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+      else tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,"",0,"",-1,sampleScaleFactor_[samplename]).Data());    
     }
 
     else if(samples_[isample].Contains("SingleTop-tWCombined")){
       if(splitSingleTopForClosureTest_){
 	if(samples_[isample].Contains("SingleTop-tWCombined-semiMuGood")){
 	  TString semiMuMode = "(((W1decayType==13 && W2decayType==112) || (W1decayType==112 && W2decayType==13) || (W1decayType==1513 && W2decayType==112) || (W1decayType==112 && W2decayType==1513) || (W1decayType==13 && W2decayType==134) || (W1decayType==134 && W2decayType==13) || (W1decayType==1513 && W2decayType==134) || (W1decayType==134 && W2decayType==1513))&&(decayType==101300))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiMuMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiMuMode,0,"",-1,sampleScaleFactor_[samplename]).Data());    
 	}
 	if(samples_[isample].Contains("SingleTop-tWCombined-semiMuFailEta")){
 	  TString semiMuMode = "(((W1decayType==13 && W2decayType==112) || (W1decayType==112 && W2decayType==13) || (W1decayType==1513 && W2decayType==112) || (W1decayType==112 && W2decayType==1513) || (W1decayType==13 && W2decayType==134) || (W1decayType==134 && W2decayType==13) || (W1decayType==1513 && W2decayType==134) || (W1decayType==134 && W2decayType==1513))&&(decayType==101301 || decayType==201301))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiMuMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiMuMode,0,"",-1,sampleScaleFactor_[samplename]).Data());    
 	}
 	if(samples_[isample].Contains("SingleTop-tWCombined-semiMuFailPt")){
 	  TString semiMuMode = "(((W1decayType==13 && W2decayType==112) || (W1decayType==112 && W2decayType==13) || (W1decayType==1513 && W2decayType==112) || (W1decayType==112 && W2decayType==1513) || (W1decayType==13 && W2decayType==134) || (W1decayType==134 && W2decayType==13) || (W1decayType==1513 && W2decayType==134) || (W1decayType==134 && W2decayType==1513))&&(decayType==101302 || decayType==201302))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiMuMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiMuMode,0,"",-1,sampleScaleFactor_[samplename]).Data());    
 	}
 	if(samples_[isample].Contains("SingleTop-tWCombined-semiMuFailRecoIso")){
 	  TString semiMuMode = "(((W1decayType==13 && W2decayType==112) || (W1decayType==112 && W2decayType==13) || (W1decayType==1513 && W2decayType==112) || (W1decayType==112 && W2decayType==1513) || (W1decayType==13 && W2decayType==134) || (W1decayType==134 && W2decayType==13) || (W1decayType==1513 && W2decayType==134) || (W1decayType==134 && W2decayType==1513))&&(decayType==201303))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiMuMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiMuMode,0,"",-1,sampleScaleFactor_[samplename]).Data());    
 	}
 	if(samples_[isample].Contains("SingleTop-tWCombined-semiMuFailOther")){
 	  TString semiMuMode = "(((W1decayType==13 && W2decayType==112) || (W1decayType==112 && W2decayType==13) || (W1decayType==1513 && W2decayType==112) || (W1decayType==112 && W2decayType==1513) || (W1decayType==13 && W2decayType==134) || (W1decayType==134 && W2decayType==13) || (W1decayType==1513 && W2decayType==134) || (W1decayType==134 && W2decayType==1513))&&(decayType==101304))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiMuMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiMuMode,0,"",-1,sampleScaleFactor_[samplename]).Data());    
 	}
 	if(samples_[isample].Contains("SingleTop-tWCombined-semiEleGood")){
 	  TString semiEleMode = "(((W1decayType==11 && W2decayType==112) || (W1decayType==112 && W2decayType==11) || (W1decayType==1511 && W2decayType==112) || (W1decayType==112 && W2decayType==1511) || (W1decayType==11 && W2decayType==134) || (W1decayType==134 && W2decayType==11) || (W1decayType==1511 && W2decayType==134) || (W1decayType==134 && W2decayType==1511))&&(decayType==101100))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiEleMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiEleMode,0,"",-1,sampleScaleFactor_[samplename]).Data());    
 	}
 	if(samples_[isample].Contains("SingleTop-tWCombined-semiEleFailEta")){
 	  TString semiEleMode = "(((W1decayType==11 && W2decayType==112) || (W1decayType==112 && W2decayType==11) || (W1decayType==1511 && W2decayType==112) || (W1decayType==112 && W2decayType==1511) || (W1decayType==11 && W2decayType==134) || (W1decayType==134 && W2decayType==11) || (W1decayType==1511 && W2decayType==134) || (W1decayType==134 && W2decayType==1511))&&(decayType==101101 || decayType==201101))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiEleMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiEleMode,0,"",-1,sampleScaleFactor_[samplename]).Data());    
 	}
 	if(samples_[isample].Contains("SingleTop-tWCombined-semiEleFailPt")){
 	  TString semiEleMode = "(((W1decayType==11 && W2decayType==112) || (W1decayType==112 && W2decayType==11) || (W1decayType==1511 && W2decayType==112) || (W1decayType==112 && W2decayType==1511) || (W1decayType==11 && W2decayType==134) || (W1decayType==134 && W2decayType==11) || (W1decayType==1511 && W2decayType==134) || (W1decayType==134 && W2decayType==1511))&&(decayType==101102 || decayType==201102))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiEleMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiEleMode,0,"",-1,sampleScaleFactor_[samplename]).Data());    
 	}
 	if(samples_[isample].Contains("SingleTop-tWCombined-semiEleFailRecoIso")){
 	  TString semiEleMode = "(((W1decayType==11 && W2decayType==112) || (W1decayType==112 && W2decayType==11) || (W1decayType==1511 && W2decayType==112) || (W1decayType==112 && W2decayType==1511) || (W1decayType==11 && W2decayType==134) || (W1decayType==134 && W2decayType==11) || (W1decayType==1511 && W2decayType==134) || (W1decayType==134 && W2decayType==1511))&&(decayType==201103))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiEleMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiEleMode,0,"",-1,sampleScaleFactor_[samplename]).Data());    
 	}
 	if(samples_[isample].Contains("SingleTop-tWCombined-semiEleFailOther")){
 	  TString semiEleMode = "(((W1decayType==11 && W2decayType==112) || (W1decayType==112 && W2decayType==11) || (W1decayType==1511 && W2decayType==112) || (W1decayType==112 && W2decayType==1511) || (W1decayType==11 && W2decayType==134) || (W1decayType==134 && W2decayType==11) || (W1decayType==1511 && W2decayType==134) || (W1decayType==134 && W2decayType==1511))&&(decayType==101104))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiEleMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiEleMode,0,"",-1,sampleScaleFactor_[samplename]).Data());    
 	}
 	if(samples_[isample].Contains("SingleTop-tWCombined-semiTauHad")){
 	  TString semiTauHadMode = "((W1decayType==15 && W2decayType==112) || (W1decayType==112 && W2decayType==15) || (W1decayType==15 && W2decayType==134) || (W1decayType==134 && W2decayType==15))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiTauHadMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiTauHadMode,0,"",-1,sampleScaleFactor_[samplename]).Data());    
 	}
 	if(samples_[isample].Contains("SingleTop-tWCombined-dilep")){
 	  TString dilepMode = "((W1decayType==11 || W1decayType==13 || W1decayType==1511 || W1decayType==1513) && (W2decayType==11 || W2decayType==13 || W2decayType==1511 || W2decayType==1513))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,dilepMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,dilepMode,0,"",-1,sampleScaleFactor_[samplename]).Data());    
 	}
 	if(samples_[isample].Contains("SingleTop-tWCombined-had")){
 	  TString hadMode = "(W1decayType==112 || W1decayType==134) && (W2decayType==112 || W2decayType==134)";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,hadMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,hadMode,0,"",-1,sampleScaleFactor_[samplename]).Data());    
 	}
 	if(samples_[isample].Contains("SingleTop-tWCombined-other")){
 	  //includes tautau(both had), etau(had), mutau(had), 
 	  TString otherMode = "((W1decayType==15 && W2decayType==15)||(W1decayType==11 && W2decayType==15)||(W1decayType==15 && W2decayType==11)||(W1decayType==1511 && W2decayType==15)||(W1decayType==15 && W2decayType==1511)||(W1decayType==13 && W2decayType==15)||(W1decayType==15 && W2decayType==13)||(W1decayType==15 && W2decayType==1513)||(W1decayType==1513 && W2decayType==15))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,otherMode,0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,otherMode,0,"",-1,sampleScaleFactor_[samplename]).Data());    
 	}
       }
-      else tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,"",0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
+      else tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,"",0,"",-1,sampleScaleFactor_[samplename]).Data());    
     }
 
     else
-      tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,"",0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());
+      tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,"",0,"",-1,sampleScaleFactor_[samplename]).Data());
 
     //now the histo is filled
     
@@ -3620,8 +3648,13 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
 
   //dump some event counts to the screen
   if (!quiet_) {
+    int ns=0;
     for (unsigned int isample=0; isample<samples_.size(); isample++) {
-      cout<<samples_[isample]<<" =\t "<<histos_[samples_[isample]]->Integral()<<" +/- "<<jmt::errOnIntegral(histos_[samples_[isample]])<<endl;
+      if (!isSampleSM( samples_[isample])) ns++;
+      if ( isSampleSM( samples_[isample]) || ns<=1 ) 
+	cout<<samples_[isample]<<" =\t "<<histos_[samples_[isample]]->Integral()<<" +/- "<<jmt::errOnIntegral(histos_[samples_[isample]])<<endl;
+      else  //starting with the 2nd signal, the total sm will be included, so we need to get rid of it
+	cout<<samples_[isample]<<" =\t "<<histos_[samples_[isample]]->Integral()-totalsm->Integral()<<endl;
     }
     cout<<"total SM =\t "<<totalsm->Integral()<<" +/- "<<jmt::errOnIntegral(totalsm)<<endl;
   }
