@@ -1521,8 +1521,8 @@ void drawPlotHeaderInside() {
   text1 = new TLatex(3.570061,23.08044,"CMS Simulation");
   text1->SetNDC();
   text1->SetTextAlign(13);
-  text1->SetX(0.5);
-  text1->SetY(.85);
+  text1->SetX(0.6);
+  text1->SetY(.9);
   text1->SetTextFont(42);
   text1->SetTextSizePixels(24);
   text1->Draw();
@@ -3894,9 +3894,6 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
     gPad->SetRightMargin(0.1);
     gPad->Modified();
     
-    if(dodata_) drawPlotHeader(-.1);
-    else  drawPlotHeaderInside(); //for qcd only plots, this works.
-    
     if (hnameR.Contains("QCD")) { //HACK draw only qcd
       histos_[hnameR]->Draw(drawopt);
       if (!drawopt.Contains("same")) drawopt+=" same";
@@ -3905,7 +3902,12 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
       if (histos_[hnameR]->GetMaximum() > max) max = histos_[hnameR]->GetMaximum();
       leg->AddEntry(histos_[hnameR], sampleLabel_[samples_[isample]]);
     }
-    
+     
+    if(dodata_) drawPlotHeader(-.1);
+    else{
+      drawPlotHeaderInside(); //for qcd only plots, this works.
+    }
+
   }
   
   histos_[firsthist]->SetMaximum( max*maxScaleFactor_);
