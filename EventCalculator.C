@@ -1792,7 +1792,7 @@ double EventCalculator::getMinDeltaPhiMETN(unsigned int maxjets, float mainpt, f
 }
 
 
-double EventCalculator::getDeltaT_MC(unsigned int ijet) {
+double EventCalculator::getDeltaT_MC(unsigned int ijet, bool addquad=false, bool keith=false) {
   if( isSampleRealData() ) return -1;
   if(ijet==999999) return -99;
   
@@ -1807,16 +1807,29 @@ double EventCalculator::getDeltaT_MC(unsigned int ijet) {
       double loopjetgenpt = myJetsPF->at(i).genJet_pt;
       double loopjetphi = myJetsPF->at(i).phi;
       double ijetphi =  myJetsPF->at(ijet).phi;
+      if(keith) ijetphi = getMETphi();
       
-      sum+= (loopjetpt - loopjetgenpt)*sin(loopjetphi - ijetphi);
+      if (addquad) {
+	sum+= (loopjetpt - loopjetgenpt)*sin(loopjetphi - ijetphi)*(loopjetpt - loopjetgenpt)*sin(loopjetphi - ijetphi);
+      }
+      else {
+	sum+= (loopjetpt - loopjetgenpt)*sin(loopjetphi - ijetphi);
+      }
+      
       
     }
   }
-  sum=fabs(sum);
+  if(addquad) {
+    sum=sqrt(sum);
+  }
+  else {
+    sum=fabs(sum);
+  }
+  
   return sum;//vector sum, so no adding in quadrature
 }
 
-double EventCalculator::getDeltaPhiMETN_MC(unsigned int goodJetN) {
+double EventCalculator::getDeltaPhiMETN_MC(unsigned int goodJetN, bool addquad=false, bool keith=false) {
   if( isSampleRealData() ) return -1;
   //find the goodJetN-th good jet -- this is the jet deltaPhiN will be calculated for
   unsigned int ijet = 999999;
@@ -1832,23 +1845,23 @@ double EventCalculator::getDeltaPhiMETN_MC(unsigned int goodJetN) {
   }
   if(ijet == 999999) return -99;
   
-  double deltaT = getDeltaT_MC(ijet);
+  double deltaT = getDeltaT_MC(ijet, addquad, keith);
 
   //calculate deltaPhiMETN
   double dp =  getDeltaPhi(myJetsPF->at(ijet).phi, getMETphi());
-  double dpN = dp / asin(deltaT/getMET());
+  double dpN = keith ? dp / atan2(deltaT,getMET()) : dp / asin(deltaT/getMET());;
   
   return dpN;
 
 }
 
-double EventCalculator::getMinDeltaPhiMETN_MC() {
+double EventCalculator::getMinDeltaPhiMETN_MC(bool addquad=false, bool keith=false) {
   if( isSampleRealData() ) return -1;
   double mdpN=1E12;
   
   for (unsigned int i=0; i<3; i++) {
     if(i>=nGoodJets()) break;
-    double dpN =  getDeltaPhiMETN_MC(i);
+    double dpN =  getDeltaPhiMETN_MC(i, addquad, keith);
     if (dpN>=0 && dpN<mdpN) mdpN=dpN;//checking that dpN>=0 shouldn't be necessary after break statement above, but add it anyway 
   }
   return mdpN;
@@ -5217,6 +5230,12 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   float minDeltaPhiN_MC;
   float deltaT_MC1, deltaT_MC2, deltaT_MC3;
   float deltaPhiN_MC1, deltaPhiN_MC2, deltaPhiN_MC3;
+  float minDeltaPhiN_MCq;
+  float deltaT_MCq1, deltaT_MCq2, deltaT_MCq3;
+  float deltaPhiN_MCq1, deltaPhiN_MCq2, deltaPhiN_MCq3;
+  float minDeltaPhiN_MCk;
+  float deltaT_MCk1, deltaT_MCk2, deltaT_MCk3;
+  float deltaPhiN_MCk1, deltaPhiN_MCk2, deltaPhiN_MCk3;
 
   float maxJetMis, max2JetMis, maxJetMisAll30, max2JetMisAll30;
   float maxJetMis_signed, maxJetMis30_signed;
@@ -5694,6 +5713,20 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("deltaT_MC1", &deltaT_MC1, "deltaT_MC1/F");
   reducedTree.Branch("deltaT_MC2", &deltaT_MC2, "deltaT_MC2/F");
   reducedTree.Branch("deltaT_MC3", &deltaT_MC3, "deltaT_MC3/F");
+  reducedTree.Branch("minDeltaPhiN_MCq", &minDeltaPhiN_MCq, "minDeltaPhiN_MCq/F");
+  reducedTree.Branch("deltaPhiN_MCq1", &deltaPhiN_MCq1, "deltaPhiN_MCq1/F");
+  reducedTree.Branch("deltaPhiN_MCq2", &deltaPhiN_MCq2, "deltaPhiN_MCq2/F");
+  reducedTree.Branch("deltaPhiN_MCq3", &deltaPhiN_MCq3, "deltaPhiN_MCq3/F");
+  reducedTree.Branch("deltaT_MCq1", &deltaT_MCq1, "deltaT_MCq1/F");
+  reducedTree.Branch("deltaT_MCq2", &deltaT_MCq2, "deltaT_MCq2/F");
+  reducedTree.Branch("deltaT_MCq3", &deltaT_MCq3, "deltaT_MCq3/F");
+  reducedTree.Branch("minDeltaPhiN_MCk", &minDeltaPhiN_MCk, "minDeltaPhiN_MCk/F");
+  reducedTree.Branch("deltaPhiN_MCk1", &deltaPhiN_MCk1, "deltaPhiN_MCk1/F");
+  reducedTree.Branch("deltaPhiN_MCk2", &deltaPhiN_MCk2, "deltaPhiN_MCk2/F");
+  reducedTree.Branch("deltaPhiN_MCk3", &deltaPhiN_MCk3, "deltaPhiN_MCk3/F");
+  reducedTree.Branch("deltaT_MCk1", &deltaT_MCk1, "deltaT_MCk1/F");
+  reducedTree.Branch("deltaT_MCk2", &deltaT_MCk2, "deltaT_MCk2/F");
+  reducedTree.Branch("deltaT_MCk3", &deltaT_MCk3, "deltaT_MCk3/F");
 
   reducedTree.Branch("deltaT1_otherPt40", &deltaT1_otherPt40, "deltaT1_otherPt40/F");
   reducedTree.Branch("deltaT1_otherPt50", &deltaT1_otherPt50, "deltaT1_otherPt50/F");
@@ -6241,6 +6274,22 @@ Also the pdfWeightSum* histograms that are used for LM9.
       deltaT_MC1 = getDeltaT_MC( getNthGoodJet(0,50,2.4,true) );
       deltaT_MC2 = getDeltaT_MC( getNthGoodJet(1,50,2.4,true) );
       deltaT_MC3 = getDeltaT_MC( getNthGoodJet(2,50,2.4,true) );
+      //addquad
+      minDeltaPhiN_MCq = getMinDeltaPhiMETN_MC(true,false);
+      deltaPhiN_MCq1 = getDeltaPhiMETN_MC(0,true,false);
+      deltaPhiN_MCq2 = getDeltaPhiMETN_MC(1,true,false);
+      deltaPhiN_MCq3 = getDeltaPhiMETN_MC(2,true,false);
+      deltaT_MCq1 = getDeltaT_MC( getNthGoodJet(0,50,2.4,true),true,false );
+      deltaT_MCq2 = getDeltaT_MC( getNthGoodJet(1,50,2.4,true),true,false );
+      deltaT_MCq3 = getDeltaT_MC( getNthGoodJet(2,50,2.4,true),true,false );
+      //keith
+      minDeltaPhiN_MCk = getMinDeltaPhiMETN_MC(false,true);
+      deltaPhiN_MCk1 = getDeltaPhiMETN_MC(0,false,true);
+      deltaPhiN_MCk2 = getDeltaPhiMETN_MC(1,false,true);
+      deltaPhiN_MCk3 = getDeltaPhiMETN_MC(2,false,true);
+      deltaT_MCk1 = getDeltaT_MC( getNthGoodJet(0,50,2.4,true),false,true );
+      deltaT_MCk2 = getDeltaT_MC( getNthGoodJet(1,50,2.4,true),false,true );
+      deltaT_MCk3 = getDeltaT_MC( getNthGoodJet(2,50,2.4,true),false,true );
       
 
 
