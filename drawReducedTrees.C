@@ -4546,9 +4546,20 @@ other.
     double MCRatioSL = MCSIG/MCSB;
     double MCRatioSL_err = jmt::errAoverB(MCSIG, MCSIGErr ,MCSB, MCSBErr);
 
-    std::cout << btagselection << "," << HTselection << ":" << "R_SL(data) = " << dataRatioSL << " +/- " << dataRatioSL_err 
+    std::cout << std::setprecision(4) << btagselection << "," << HTselection << ":" << "R_SL(data) = " << dataRatioSL << " +/- " << dataRatioSL_err
 	      << ", R_SL(MC) = " << MCRatioSL << " +/- " << MCRatioSL_err << std::endl;
+	
+    //now this is to make the fractional composition table for MET>150
+    nbins = 1; low=150; high=600;
+    drawPlots(var,nbins,low,high,xtitle,"Events", "test_"+btagselection);
+    double ttfrac = 100*histos_["TTbarJets"]->Integral() / MCIntegral_;
+    double stfrac = 100*histos_["SingleTop"]->Integral() / MCIntegral_;
+    double wfrac = 100*histos_["WJets"]->Integral() / MCIntegral_;
+    double otherfrac = 100 - ttfrac - stfrac - wfrac;
 
+    std::cout << std::setprecision(4) << "Fractional composition, " << btagselection << "," << HTselection
+	      << " & " << ttfrac << "\\% & " << wfrac << "\\% & " <<  stfrac << "\\% & " << otherfrac
+	      << "\\% \\\\" << std::endl;
   }
   else{
     //ge1b, Loose
