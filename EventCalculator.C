@@ -5179,7 +5179,8 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   outfilename+=".root";
   if (outputpath[outputpath.Length()-1] != '/') outputpath += "/";
   outfilename.Prepend(outputpath);
-  TFile fout(outfilename,"RECREATE");
+  //TFile fout(outfilename,"RECREATE");
+  TFile* fout = new TFile(outfilename,"RECREATE");
 
   // define the TTree
   TTree reducedTree("reducedTree","tree with minimal cuts");
@@ -6626,7 +6627,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
   if (watch_!=0) watch_->Print();
 
   //now we need to store this the root output
-  fout.cd();
+  fout->cd();
   //typically i do this with a TH2(m0, m12), but i don't like this because i need to get the histogram grid correct
   //instead do:
   // TH1 storing m0
@@ -6648,9 +6649,12 @@ Also the pdfWeightSum* histograms that are used for LM9.
   }
   */
 
+  fout = reducedTree.GetCurrentFile();
 
-  fout.Write();
-  fout.Close();  
+  fout->Write();
+  fout->Close();  
+
+  delete fout;
 }
 
 
