@@ -2006,9 +2006,11 @@ modifications for SHAPE analysis: (bShape = true)
     double ze[2];
     //sometimes need to average mu mu and ee estimates
     double zsbsyst=0.5;
-    double zinvscale = 4.68/4.65; //This scale should still be valid for the final lumi?
+    //double zinvscale = 4.68/4.65; //the difference in lumi is taken into account in the dilepton trig efficiency
+    double zinvscale = 1; 
     bool doMean = true;
 
+    //for 200-250 GeV SB (OLD NUMBERS)
     if (qcdsubregion.owenId == "Loose" && qcdsubregion.btagSelection=="ge1b") {
       doMean=false;//averaging already done
       zv[0] = 82; ze[0]=20; // *(70.3/67.4)
@@ -2034,7 +2036,7 @@ modifications for SHAPE analysis: (bShape = true)
       zv[0] = 1.9; ze[0]=2.8; // *(0.7/0.6)
       zsbsyst = 0.0;   
     }
-    //for 150-200 GeV SB
+    //for 150-200 GeV SB (OLD NUMBERS)
     else if (qcdsubregion.owenId == "LooseLowSB" && qcdsubregion.btagSelection=="ge1b") {
       doMean=false;   zv[0] = 116.7; ze[0]=26.9;    zsbsyst = 0.0;
     }
@@ -2050,21 +2052,21 @@ modifications for SHAPE analysis: (bShape = true)
     else if (qcdsubregion.owenId == "LooseLowSB" && qcdsubregion.btagSelection=="ge3b") {
       doMean=false;   zv[0] = 2.7; ze[0]=3.9;    zsbsyst = 0.0;
     }
-    //for 150-250 GeV SB (from Ale in msg to RA2b list of 22 March)
+    //for 150-250 GeV SB (Updated from Ale on May 22)
     else if ((qcdsubregion.owenId == "LooseWideSB" || qcdsubregion.owenId.Contains( "METFineBin")) && qcdsubregion.btagSelection=="ge1b") {
-      doMean=false;   zv[0] = 200.2; ze[0]=42.4;    zsbsyst = 0.0;
+      doMean=false;   zv[0] = 246.021; ze[0]= 52.1476;    zsbsyst = 0.0;
     }
     else if (qcdsubregion.owenId == "TightWideSB" && qcdsubregion.btagSelection=="ge1b") {
-      doMean=false;   zv[0] = 105.0; ze[0]=24.7;    zsbsyst = 0.0;
+      doMean=false;   zv[0] = 130.686; ze[0]= 30.6828;    zsbsyst = 0.0;
     }
     else if ((qcdsubregion.owenId == "LooseWideSB" || qcdsubregion.owenId.Contains( "METFineBin")) && qcdsubregion.btagSelection=="ge2b") {
-      doMean=false;   zv[0] = 33.5; ze[0]=21.9;    zsbsyst = 0.0;
+      doMean=false;   zv[0] = 50.4704; ze[0]= 33.0571;    zsbsyst = 0.0;
     }
     else if ((qcdsubregion.owenId == "TightWideSB" || qcdsubregion.owenId.Contains( "METFineBin")) && qcdsubregion.btagSelection=="ge2b") {
-      doMean=false;   zv[0] = 8.8; ze[0]=6.0;    zsbsyst = 0.0;
+      doMean=false;   zv[0] = 13.2494; ze[0]= 8.99994;    zsbsyst = 0.0;
     }
     else if ((qcdsubregion.owenId == "LooseWideSB" || qcdsubregion.owenId.Contains( "METBin")|| qcdsubregion.owenId.Contains( "METFineBin")) && qcdsubregion.btagSelection=="ge3b") {
-      doMean=false;   zv[0] = 4.6; ze[0]=6.7;    zsbsyst = 0.0;
+      doMean=false;   zv[0] = 7.70626; ze[0]= 11.2734;    zsbsyst = 0.0;
     }
     else if (qcdsubregion.owenId == "Loose" && qcdsubregion.btagSelection=="eq1b") {
       doMean=false;//averaging already done
@@ -3575,35 +3577,36 @@ void printOwenSyst(TString regions) {
     resultsMap_["ge3bLooseWideSB"]["ttbarCC"].statError = 6.1;
     resultsMap_["ge3bLooseWideSB"]["ttbarCC"].systError = 3.1;
     resultsMap_["ge3bLooseWideSB"]["ttbarCC"].trigErrorPlus = 0;
-    resultsMap_["ge3bLooseWideSB"]["ttbarCC"].trigErrorMinus = 0;
-    
-    resultsMap_["ge1bLooseWideSB"]["Znn"].value = 132;
-    resultsMap_["ge1bLooseWideSB"]["Znn"].statError = 17;
-    resultsMap_["ge1bLooseWideSB"]["Znn"].systError = 23;
+    resultsMap_["ge3bLooseWideSB"]["ttbarCC"].trigErrorMinus = 0;    
+
+    //from AN - May 22
+    resultsMap_["ge1bLooseWideSB"]["Znn"].value = 154;
+    resultsMap_["ge1bLooseWideSB"]["Znn"].statError = 20;
+    resultsMap_["ge1bLooseWideSB"]["Znn"].systError = 32;
     resultsMap_["ge1bLooseWideSB"]["Znn"].trigErrorPlus = 0;
     resultsMap_["ge1bLooseWideSB"]["Znn"].trigErrorMinus = 0;
     
-    resultsMap_["ge1bTightWideSB"]["Znn"].value = 2.5;
+    resultsMap_["ge1bTightWideSB"]["Znn"].value = 2.4;
     resultsMap_["ge1bTightWideSB"]["Znn"].statError = 1.9;
     resultsMap_["ge1bTightWideSB"]["Znn"].systError = 0.5;
     resultsMap_["ge1bTightWideSB"]["Znn"].trigErrorPlus = 0;
     resultsMap_["ge1bTightWideSB"]["Znn"].trigErrorMinus = 0;
     
-    resultsMap_["ge2bLooseWideSB"]["Znn"].value = 23;
-    resultsMap_["ge2bLooseWideSB"]["Znn"].statError = 3.5;
-    resultsMap_["ge2bLooseWideSB"]["Znn"].systError = 11.5;
+    resultsMap_["ge2bLooseWideSB"]["Znn"].value = 32;
+    resultsMap_["ge2bLooseWideSB"]["Znn"].statError = 5;
+    resultsMap_["ge2bLooseWideSB"]["Znn"].systError = 20;
     resultsMap_["ge2bLooseWideSB"]["Znn"].trigErrorPlus = 0;
     resultsMap_["ge2bLooseWideSB"]["Znn"].trigErrorMinus = 0;
     
-    resultsMap_["ge2bTightWideSB"]["Znn"].value = 4.6;
-    resultsMap_["ge2bTightWideSB"]["Znn"].statError = 1.4;
-    resultsMap_["ge2bTightWideSB"]["Znn"].systError = 2.4;
+    resultsMap_["ge2bTightWideSB"]["Znn"].value = 6.2;
+    resultsMap_["ge2bTightWideSB"]["Znn"].statError = 2.0;
+    resultsMap_["ge2bTightWideSB"]["Znn"].systError = 3.9;
     resultsMap_["ge2bTightWideSB"]["Znn"].trigErrorPlus = 0;
     resultsMap_["ge2bTightWideSB"]["Znn"].trigErrorMinus = 0;
     
-    resultsMap_["ge3bLooseWideSB"]["Znn"].value = 3;
-    resultsMap_["ge3bLooseWideSB"]["Znn"].statError = 0.9;
-    resultsMap_["ge3bLooseWideSB"]["Znn"].systError = 3.3;
+    resultsMap_["ge3bLooseWideSB"]["Znn"].value = 4.7;
+    resultsMap_["ge3bLooseWideSB"]["Znn"].statError = 1.3;
+    resultsMap_["ge3bLooseWideSB"]["Znn"].systError = 6.5;
     resultsMap_["ge3bLooseWideSB"]["Znn"].trigErrorPlus = 0;
     resultsMap_["ge3bLooseWideSB"]["Znn"].trigErrorMinus = 0;
     
@@ -3662,21 +3665,22 @@ void runBinsOfMET_3B() {
   runDataQCD2011();
   runTtbarEstimate2011(); 
 
-  //updated with Ale's numbers http://www.slac.stanford.edu/~gaz/RA2b/Znn_Binned.txt
-  resultsMap_["ge3bMETBin1"]["Zinvisible"].value = 1.42;
-  resultsMap_["ge3bMETBin1"]["Zinvisible"].statError = 1.67;
+  //updated with Ale's numbers http://www.slac.stanford.edu/~gaz/RA2b/Znn_Binned_new.txt
+  //May 22
+  resultsMap_["ge3bMETBin1"]["Zinvisible"].value = 2.16;
+  resultsMap_["ge3bMETBin1"]["Zinvisible"].statError = 2.53;
   resultsMap_["ge3bMETBin1"]["Zinvisible"].systError = 0;
   resultsMap_["ge3bMETBin1"]["Zinvisible"].trigErrorPlus = 0;
   resultsMap_["ge3bMETBin1"]["Zinvisible"].trigErrorMinus = 0;
 
-  resultsMap_["ge3bMETBin2"]["Zinvisible"].value = 0.74;
-  resultsMap_["ge3bMETBin2"]["Zinvisible"].statError = 0.88;
+  resultsMap_["ge3bMETBin2"]["Zinvisible"].value = 1.13;
+  resultsMap_["ge3bMETBin2"]["Zinvisible"].statError = 1.34;
   resultsMap_["ge3bMETBin2"]["Zinvisible"].systError = 0;
   resultsMap_["ge3bMETBin2"]["Zinvisible"].trigErrorPlus = 0;
   resultsMap_["ge3bMETBin2"]["Zinvisible"].trigErrorMinus = 0;
 
-  resultsMap_["ge3bMETBin3"]["Zinvisible"].value = 0.78;
-  resultsMap_["ge3bMETBin3"]["Zinvisible"].statError = 0.93;
+  resultsMap_["ge3bMETBin3"]["Zinvisible"].value = 1.19;
+  resultsMap_["ge3bMETBin3"]["Zinvisible"].statError = 1.42;
   resultsMap_["ge3bMETBin3"]["Zinvisible"].systError = 0;
   resultsMap_["ge3bMETBin3"]["Zinvisible"].trigErrorPlus = 0;
   resultsMap_["ge3bMETBin3"]["Zinvisible"].trigErrorMinus = 0;
@@ -3686,8 +3690,8 @@ void runBinsOfMET_3B() {
 }
 
 
-void runFineBinsOfMET() {
-  setSearchRegions("METfinebins");
+void runFineBinsOfMET_3B() {
+  setSearchRegions("METfinebins3B");
 
   assert(use1B_SL_==true);
 
@@ -3695,44 +3699,43 @@ void runFineBinsOfMET() {
   runDataQCD2011();
   runTtbarEstimate2011(); 
 
-  //now hard-code Keith's results
-  //https://indico.cern.ch/getFile.py/access?contribId=1&resId=0&materialId=slides&confId=175106
-  //page 2
-  resultsMap_["ge3bMETFineBin1"]["Znn"].value = 1.4;
-  resultsMap_["ge3bMETFineBin1"]["Znn"].statError = 0.6;
-  resultsMap_["ge3bMETFineBin1"]["Znn"].systError = 1.5;
-  resultsMap_["ge3bMETFineBin1"]["Znn"].trigErrorPlus = 0;
-  resultsMap_["ge3bMETFineBin1"]["Znn"].trigErrorMinus = 0;
+  //updated with Ale's numbers http://www.slac.stanford.edu/~gaz/RA2b/Znn_Binned_new.txt
+  //May 22
+  resultsMap_["ge3bMETFineBin1"]["Zinvisible"].value = 2.16;
+  resultsMap_["ge3bMETFineBin1"]["Zinvisible"].statError = 2.53;
+  resultsMap_["ge3bMETFineBin1"]["Zinvisible"].systError = 0;
+  resultsMap_["ge3bMETFineBin1"]["Zinvisible"].trigErrorPlus = 0;
+  resultsMap_["ge3bMETFineBin1"]["Zinvisible"].trigErrorMinus = 0;
 
-  resultsMap_["ge3bMETFineBin2"]["Znn"].value = 0.9;
-  resultsMap_["ge3bMETFineBin2"]["Znn"].statError = 0.4;
-  resultsMap_["ge3bMETFineBin2"]["Znn"].systError = 1.0;
-  resultsMap_["ge3bMETFineBin2"]["Znn"].trigErrorPlus = 0;
-  resultsMap_["ge3bMETFineBin2"]["Znn"].trigErrorMinus = 0;
+  resultsMap_["ge3bMETFineBin2"]["Zinvisible"].value = 1.13;
+  resultsMap_["ge3bMETFineBin2"]["Zinvisible"].statError = 1.34;
+  resultsMap_["ge3bMETFineBin2"]["Zinvisible"].systError = 0;
+  resultsMap_["ge3bMETFineBin2"]["Zinvisible"].trigErrorPlus = 0;
+  resultsMap_["ge3bMETFineBin2"]["Zinvisible"].trigErrorMinus = 0;
 
-  resultsMap_["ge3bMETFineBin3"]["Znn"].value = 0.4 ;
-  resultsMap_["ge3bMETFineBin3"]["Znn"].statError = 0.2;
-  resultsMap_["ge3bMETFineBin3"]["Znn"].systError = 0.4 ;
-  resultsMap_["ge3bMETFineBin3"]["Znn"].trigErrorPlus = 0;
-  resultsMap_["ge3bMETFineBin3"]["Znn"].trigErrorMinus = 0;
+  resultsMap_["ge3bMETFineBin3"]["Zinvisible"].value = 0.54;
+  resultsMap_["ge3bMETFineBin3"]["Zinvisible"].statError = 0.66;
+  resultsMap_["ge3bMETFineBin3"]["Zinvisible"].systError = 0;
+  resultsMap_["ge3bMETFineBin3"]["Zinvisible"].trigErrorPlus = 0;
+  resultsMap_["ge3bMETFineBin3"]["Zinvisible"].trigErrorMinus = 0;
 
-  resultsMap_["ge3bMETFineBin4"]["Znn"].value = 0.2;
-  resultsMap_["ge3bMETFineBin4"]["Znn"].statError =  0.2;
-  resultsMap_["ge3bMETFineBin4"]["Znn"].systError = 0.2;
-  resultsMap_["ge3bMETFineBin4"]["Znn"].trigErrorPlus = 0;
-  resultsMap_["ge3bMETFineBin4"]["Znn"].trigErrorMinus = 0;
+  resultsMap_["ge3bMETFineBin4"]["Zinvisible"].value = 0.32;
+  resultsMap_["ge3bMETFineBin4"]["Zinvisible"].statError =  0.41;
+  resultsMap_["ge3bMETFineBin4"]["Zinvisible"].systError = 0;
+  resultsMap_["ge3bMETFineBin4"]["Zinvisible"].trigErrorPlus = 0;
+  resultsMap_["ge3bMETFineBin4"]["Zinvisible"].trigErrorMinus = 0;
 
-  resultsMap_["ge3bMETFineBin5"]["Znn"].value =  0.1;
-  resultsMap_["ge3bMETFineBin5"]["Znn"].statError = 0.1;
-  resultsMap_["ge3bMETFineBin5"]["Znn"].systError = 0.1; 
-  resultsMap_["ge3bMETFineBin5"]["Znn"].trigErrorPlus = 0;
-  resultsMap_["ge3bMETFineBin5"]["Znn"].trigErrorMinus = 0;
+  resultsMap_["ge3bMETFineBin5"]["Zinvisible"].value =  0.16;
+  resultsMap_["ge3bMETFineBin5"]["Zinvisible"].statError = 0.23;
+  resultsMap_["ge3bMETFineBin5"]["Zinvisible"].systError = 0; 
+  resultsMap_["ge3bMETFineBin5"]["Zinvisible"].trigErrorPlus = 0;
+  resultsMap_["ge3bMETFineBin5"]["Zinvisible"].trigErrorMinus = 0;
 
-  resultsMap_["ge3bMETFineBin6"]["Znn"].value = 0.1;
-  resultsMap_["ge3bMETFineBin6"]["Znn"].statError = 0.1;
-  resultsMap_["ge3bMETFineBin6"]["Znn"].systError = 0.1; 
-  resultsMap_["ge3bMETFineBin6"]["Znn"].trigErrorPlus = 0;
-  resultsMap_["ge3bMETFineBin6"]["Znn"].trigErrorMinus = 0;
+  resultsMap_["ge3bMETFineBin6"]["Zinvisible"].value = 0.15;
+  resultsMap_["ge3bMETFineBin6"]["Zinvisible"].statError = 0.20;
+  resultsMap_["ge3bMETFineBin6"]["Zinvisible"].systError = 0; 
+  resultsMap_["ge3bMETFineBin6"]["Zinvisible"].trigErrorPlus = 0;
+  resultsMap_["ge3bMETFineBin6"]["Zinvisible"].trigErrorMinus = 0;
 
   writeResultsMapToText("DDresults_METfinebins3B_1BLSL.dat");
 
@@ -3745,34 +3748,34 @@ void runFineBinsOfMET_2BT() {
   runDataQCD2011();
   runTtbarEstimate2011(); 
 
-  //now hard-code Ale's results
-  //http://www.slac.stanford.edu/~gaz/RA2b/Znn_Binned.txt
-  resultsMap_["ge2bMETFineBin1"]["Zinvisible"].value = 2.37;
-  resultsMap_["ge2bMETFineBin1"]["Zinvisible"].statError = 1.59;
+  //updated with Ale's numbers http://www.slac.stanford.edu/~gaz/RA2b/Znn_Binned_new.txt
+  //May 22
+  resultsMap_["ge2bMETFineBin1"]["Zinvisible"].value = 3.23;
+  resultsMap_["ge2bMETFineBin1"]["Zinvisible"].statError = 2.16;
   resultsMap_["ge2bMETFineBin1"]["Zinvisible"].systError = 0;
   resultsMap_["ge2bMETFineBin1"]["Zinvisible"].trigErrorPlus = 0;
   resultsMap_["ge2bMETFineBin1"]["Zinvisible"].trigErrorMinus = 0;
 
-  resultsMap_["ge2bMETFineBin2"]["Zinvisible"].value = 0.93;
-  resultsMap_["ge2bMETFineBin2"]["Zinvisible"].statError = 0.78;
+  resultsMap_["ge2bMETFineBin2"]["Zinvisible"].value = 1.26;
+  resultsMap_["ge2bMETFineBin2"]["Zinvisible"].statError = 1.05;
   resultsMap_["ge2bMETFineBin2"]["Zinvisible"].systError = 0;
   resultsMap_["ge2bMETFineBin2"]["Zinvisible"].trigErrorPlus = 0;
   resultsMap_["ge2bMETFineBin2"]["Zinvisible"].trigErrorMinus = 0;
 
-  resultsMap_["ge2bMETFineBin3"]["Zinvisible"].value = 0.88 ;
-  resultsMap_["ge2bMETFineBin3"]["Zinvisible"].statError = 0.74;
+  resultsMap_["ge2bMETFineBin3"]["Zinvisible"].value = 1.20;
+  resultsMap_["ge2bMETFineBin3"]["Zinvisible"].statError = 1.00;
   resultsMap_["ge2bMETFineBin3"]["Zinvisible"].systError = 0 ;
   resultsMap_["ge2bMETFineBin3"]["Zinvisible"].trigErrorPlus = 0;
   resultsMap_["ge2bMETFineBin3"]["Zinvisible"].trigErrorMinus = 0;
 
-  resultsMap_["ge2bMETFineBin4"]["Zinvisible"].value = 0.35;
-  resultsMap_["ge2bMETFineBin4"]["Zinvisible"].statError =  0.62;
+  resultsMap_["ge2bMETFineBin4"]["Zinvisible"].value = 0.47;
+  resultsMap_["ge2bMETFineBin4"]["Zinvisible"].statError = 0.84;
   resultsMap_["ge2bMETFineBin4"]["Zinvisible"].systError = 0;
   resultsMap_["ge2bMETFineBin4"]["Zinvisible"].trigErrorPlus = 0;
   resultsMap_["ge2bMETFineBin4"]["Zinvisible"].trigErrorMinus = 0;
 
   resultsMap_["ge2bMETFineBin5"]["Zinvisible"].value =  0;
-  resultsMap_["ge2bMETFineBin5"]["Zinvisible"].statError = 0.62;
+  resultsMap_["ge2bMETFineBin5"]["Zinvisible"].statError = 0.84;
   resultsMap_["ge2bMETFineBin5"]["Zinvisible"].systError = 0; 
   resultsMap_["ge2bMETFineBin5"]["Zinvisible"].trigErrorPlus = 0;
   resultsMap_["ge2bMETFineBin5"]["Zinvisible"].trigErrorMinus = 0;
@@ -3788,40 +3791,40 @@ void runFineBinsOfMET_2BL() {
   runDataQCD2011();
   runTtbarEstimate2011(); 
 
-  //now hard-code Ale's results
-  //http://www.slac.stanford.edu/~gaz/RA2b/Znn_Binned.txt
-  resultsMap_["ge2bMETFineBin1"]["Zinvisible"].value = 9.76;
-  resultsMap_["ge2bMETFineBin1"]["Zinvisible"].statError = 5.46;
+  //updated with Ale's numbers http://www.slac.stanford.edu/~gaz/RA2b/Znn_Binned_new.txt
+  //May 22
+  resultsMap_["ge2bMETFineBin1"]["Zinvisible"].value = 13.4;
+  resultsMap_["ge2bMETFineBin1"]["Zinvisible"].statError = 7.49;
   resultsMap_["ge2bMETFineBin1"]["Zinvisible"].systError = 0;
   resultsMap_["ge2bMETFineBin1"]["Zinvisible"].trigErrorPlus = 0;
   resultsMap_["ge2bMETFineBin1"]["Zinvisible"].trigErrorMinus = 0;
 
-  resultsMap_["ge2bMETFineBin2"]["Zinvisible"].value = 5.45;
-  resultsMap_["ge2bMETFineBin2"]["Zinvisible"].statError = 3.21;
+  resultsMap_["ge2bMETFineBin2"]["Zinvisible"].value = 7.48;
+  resultsMap_["ge2bMETFineBin2"]["Zinvisible"].statError = 4.40;
   resultsMap_["ge2bMETFineBin2"]["Zinvisible"].systError = 0;
   resultsMap_["ge2bMETFineBin2"]["Zinvisible"].trigErrorPlus = 0;
   resultsMap_["ge2bMETFineBin2"]["Zinvisible"].trigErrorMinus = 0;
 
-  resultsMap_["ge2bMETFineBin3"]["Zinvisible"].value = 2.48 ;
-  resultsMap_["ge2bMETFineBin3"]["Zinvisible"].statError = 1.64;
+  resultsMap_["ge2bMETFineBin3"]["Zinvisible"].value = 3.41;
+  resultsMap_["ge2bMETFineBin3"]["Zinvisible"].statError = 2.24;
   resultsMap_["ge2bMETFineBin3"]["Zinvisible"].systError = 0 ;
   resultsMap_["ge2bMETFineBin3"]["Zinvisible"].trigErrorPlus = 0;
   resultsMap_["ge2bMETFineBin3"]["Zinvisible"].trigErrorMinus = 0;
 
-  resultsMap_["ge2bMETFineBin4"]["Zinvisible"].value = 1.89;
-  resultsMap_["ge2bMETFineBin4"]["Zinvisible"].statError =  1.30;
+  resultsMap_["ge2bMETFineBin4"]["Zinvisible"].value = 2.61;
+  resultsMap_["ge2bMETFineBin4"]["Zinvisible"].statError =  1.79;
   resultsMap_["ge2bMETFineBin4"]["Zinvisible"].systError = 0;
   resultsMap_["ge2bMETFineBin4"]["Zinvisible"].trigErrorPlus = 0;
   resultsMap_["ge2bMETFineBin4"]["Zinvisible"].trigErrorMinus = 0;
 
-  resultsMap_["ge2bMETFineBin5"]["Zinvisible"].value =  0.93;
-  resultsMap_["ge2bMETFineBin5"]["Zinvisible"].statError = 0.76;
+  resultsMap_["ge2bMETFineBin5"]["Zinvisible"].value =  1.28;
+  resultsMap_["ge2bMETFineBin5"]["Zinvisible"].statError = 1.05;
   resultsMap_["ge2bMETFineBin5"]["Zinvisible"].systError = 0; 
   resultsMap_["ge2bMETFineBin5"]["Zinvisible"].trigErrorPlus = 0;
   resultsMap_["ge2bMETFineBin5"]["Zinvisible"].trigErrorMinus = 0;
 
-  resultsMap_["ge2bMETFineBin6"]["Zinvisible"].value = 0.72;
-  resultsMap_["ge2bMETFineBin6"]["Zinvisible"].statError = 0.64;
+  resultsMap_["ge2bMETFineBin6"]["Zinvisible"].value = 0.99;
+  resultsMap_["ge2bMETFineBin6"]["Zinvisible"].statError = 0.88;
   resultsMap_["ge2bMETFineBin6"]["Zinvisible"].systError = 0;
   resultsMap_["ge2bMETFineBin6"]["Zinvisible"].trigErrorPlus = 0;
   resultsMap_["ge2bMETFineBin6"]["Zinvisible"].trigErrorMinus = 0;
@@ -3838,40 +3841,40 @@ void runFineBinsOfMET_1BL() {
   runDataQCD2011();
   runTtbarEstimate2011(); 
 
-  //now hard-code Ale's results
-  //http://www.slac.stanford.edu/~gaz/RA2b/Znn_Binned.txt
-  resultsMap_["ge1bMETFineBin1"]["Zinvisible"].value = 60.3;
-  resultsMap_["ge1bMETFineBin1"]["Zinvisible"].statError = 15.9;
+  //updated with Ale's numbers http://www.slac.stanford.edu/~gaz/RA2b/Znn_Binned_new.txt
+  //May 22
+  resultsMap_["ge1bMETFineBin1"]["Zinvisible"].value = 67.3;
+  resultsMap_["ge1bMETFineBin1"]["Zinvisible"].statError = 17.7;
   resultsMap_["ge1bMETFineBin1"]["Zinvisible"].systError = 0;
   resultsMap_["ge1bMETFineBin1"]["Zinvisible"].trigErrorPlus = 0;
   resultsMap_["ge1bMETFineBin1"]["Zinvisible"].trigErrorMinus = 0;
 
-  resultsMap_["ge1bMETFineBin2"]["Zinvisible"].value = 32.5;
-  resultsMap_["ge1bMETFineBin2"]["Zinvisible"].statError = 10.3;
+  resultsMap_["ge1bMETFineBin2"]["Zinvisible"].value = 36.3;
+  resultsMap_["ge1bMETFineBin2"]["Zinvisible"].statError = 11.5;
   resultsMap_["ge1bMETFineBin2"]["Zinvisible"].systError = 0;
   resultsMap_["ge1bMETFineBin2"]["Zinvisible"].trigErrorPlus = 0;
   resultsMap_["ge1bMETFineBin2"]["Zinvisible"].trigErrorMinus = 0;
 
-  resultsMap_["ge1bMETFineBin3"]["Zinvisible"].value = 15.1 ;
-  resultsMap_["ge1bMETFineBin3"]["Zinvisible"].statError = 6.34;
+  resultsMap_["ge1bMETFineBin3"]["Zinvisible"].value = 16.8;
+  resultsMap_["ge1bMETFineBin3"]["Zinvisible"].statError = 7.08;
   resultsMap_["ge1bMETFineBin3"]["Zinvisible"].systError = 0 ;
   resultsMap_["ge1bMETFineBin3"]["Zinvisible"].trigErrorPlus = 0;
   resultsMap_["ge1bMETFineBin3"]["Zinvisible"].trigErrorMinus = 0;
 
-  resultsMap_["ge1bMETFineBin4"]["Zinvisible"].value = 10.8;
-  resultsMap_["ge1bMETFineBin4"]["Zinvisible"].statError =  5.24;
+  resultsMap_["ge1bMETFineBin4"]["Zinvisible"].value = 12.0;
+  resultsMap_["ge1bMETFineBin4"]["Zinvisible"].statError =  5.86;
   resultsMap_["ge1bMETFineBin4"]["Zinvisible"].systError = 0;
   resultsMap_["ge1bMETFineBin4"]["Zinvisible"].trigErrorPlus = 0;
   resultsMap_["ge1bMETFineBin4"]["Zinvisible"].trigErrorMinus = 0;
 
-  resultsMap_["ge1bMETFineBin5"]["Zinvisible"].value =  5.42;
-  resultsMap_["ge1bMETFineBin5"]["Zinvisible"].statError = 3.57;
+  resultsMap_["ge1bMETFineBin5"]["Zinvisible"].value =  6.05;
+  resultsMap_["ge1bMETFineBin5"]["Zinvisible"].statError = 3.99;
   resultsMap_["ge1bMETFineBin5"]["Zinvisible"].systError = 0; 
   resultsMap_["ge1bMETFineBin5"]["Zinvisible"].trigErrorPlus = 0;
   resultsMap_["ge1bMETFineBin5"]["Zinvisible"].trigErrorMinus = 0;
 
-  resultsMap_["ge1bMETFineBin6"]["Zinvisible"].value = 4.30;
-  resultsMap_["ge1bMETFineBin6"]["Zinvisible"].statError = 3.15;
+  resultsMap_["ge1bMETFineBin6"]["Zinvisible"].value = 4.81;
+  resultsMap_["ge1bMETFineBin6"]["Zinvisible"].statError = 3.52;
   resultsMap_["ge1bMETFineBin6"]["Zinvisible"].systError = 0;
   resultsMap_["ge1bMETFineBin6"]["Zinvisible"].trigErrorPlus = 0;
   resultsMap_["ge1bMETFineBin6"]["Zinvisible"].trigErrorMinus = 0;
