@@ -1501,11 +1501,11 @@ FOR NOW WE ARE IGNORING SL TRIG EFF (<1% effect)
   }
 
   if (!datamode && (closureMode=="wtplus" )) {
-    setSampleScaleFactor("WJets",1.38);
+    setSampleScaleFactor("WJets",1.50);
     setSampleScaleFactor("SingleTop",2);
   }
   else if (!datamode && (closureMode=="wtminus" )) {
-    setSampleScaleFactor("WJets",1-0.38);
+    setSampleScaleFactor("WJets",1-0.50);
     setSampleScaleFactor("SingleTop",0);
   }
   else if (!datamode && (closureMode=="wtplusplus" )) {
@@ -1514,6 +1514,18 @@ FOR NOW WE ARE IGNORING SL TRIG EFF (<1% effect)
   }
   else if (!datamode && (closureMode=="wtminusminus" )) {
     setSampleScaleFactor("WJets",0);
+    setSampleScaleFactor("SingleTop",0);
+  }
+  if (!datamode && (closureMode=="wplus" )) {
+    setSampleScaleFactor("WJets",1.50);
+  }
+  else if (!datamode && (closureMode=="wminus" )) {
+    setSampleScaleFactor("WJets",1-0.50);
+  }
+  if (!datamode && (closureMode=="tplus" )) {
+    setSampleScaleFactor("SingleTop",2);
+  }
+  else if (!datamode && (closureMode=="tminus" )) {
     setSampleScaleFactor("SingleTop",0);
   }
   else if (!datamode && (closureMode=="nominal")) {
@@ -1851,6 +1863,8 @@ modifications for SHAPE analysis: (bShape = true)
   assert( closureMode=="nominal" || closureMode=="justttbar" 
 	  || closureMode=="wtplus" || closureMode=="wtminus" 
 	  || closureMode=="wtplusplus" || closureMode=="wtminusminus" 
+	  || closureMode=="wplus" || closureMode=="wminus" 
+	  || closureMode=="tplus" || closureMode=="tminus" 
 	  || closureMode=="slonlywtplus" || closureMode=="slonlywtminus" 
 	  || closureMode=="0lonlywtplus" || closureMode=="0lonlywtminus" 
 	  || closureMode=="justw" || closureMode=="justsingletop"
@@ -2301,11 +2315,11 @@ modifications for SHAPE analysis: (bShape = true)
   //double AerrMinus,BerrMinus,DerrMinus;
   //A = SB, SL
   if (!datamode && (closureMode=="wtplus" )) {
-    setSampleScaleFactor("WJets",1.38);
+    setSampleScaleFactor("WJets",1.50);
     setSampleScaleFactor("SingleTop",2);
   }
   else if (!datamode && (closureMode=="wtminus" )) {
-    setSampleScaleFactor("WJets",1-0.38);
+    setSampleScaleFactor("WJets",1-0.50);
     setSampleScaleFactor("SingleTop",0);
   }
   else if (!datamode && (closureMode=="wtplusplus" )) {
@@ -2314,6 +2328,18 @@ modifications for SHAPE analysis: (bShape = true)
   }
   else if (!datamode && (closureMode=="wtminusminus" )) {
     setSampleScaleFactor("WJets",0);
+    setSampleScaleFactor("SingleTop",0);
+  }
+  if (!datamode && (closureMode=="wplus" )) {
+    setSampleScaleFactor("WJets",1.50);
+  }
+  else if (!datamode && (closureMode=="wminus" )) {
+    setSampleScaleFactor("WJets",1-0.50);
+  }
+  if (!datamode && (closureMode=="tplus" )) {
+    setSampleScaleFactor("SingleTop",2);
+  }
+  else if (!datamode && (closureMode=="tminus" )) {
     setSampleScaleFactor("SingleTop",0);
   }
   else if (!datamode && ( closureMode=="slonlywtplus")) {
@@ -3437,11 +3463,25 @@ void runTtbarEstimate2011(const bool forOwen=false, const bool bShape=false) {
   for (unsigned int j=0; j<searchRegions_.size();j++) {
     double allsamples=fabs(slABCD(j,false,"","nominal",false,bShape)); //mix of samples
     //    double ttbaronly=fabs(slABCD(j,false,"","justttbar")); //just ttbar
+
+    //vary W and t at the same time
     double wtup=fabs(slABCD(j,false,"","wtplus",false,bShape)); //vary W+t
     double wtdown=fabs(slABCD(j,false,"","wtminus",false,bShape)); //vary W+t
     //find the largest of the 3 and store it in allsamples
     if (wtup > wtdown) wtdown = wtup;
     if (wtdown > allsamples) allsamples=wtdown;
+
+    //vary W and t independently
+    //double wup=fabs(slABCD(j,false,"","wplus",false,bShape)); //vary W only
+    //double wdown=fabs(slABCD(j,false,"","wminus",false,bShape)); //vary W only
+    //double tup=fabs(slABCD(j,false,"","tplus",false,bShape)); //vary t only
+    //double tdown=fabs(slABCD(j,false,"","tminus",false,bShape)); //vary t only
+    //find the largest of the 5 and store it in allsamples
+    //if (wup>wdown) wdown = wup;
+    //if (wdown>tup) tup = wdown;
+    //if (tup>tdown) tdown = tup;
+    //if (tdown> allsamples) allsamples=tdown;
+
     closure.push_back(allsamples);
   }
 
