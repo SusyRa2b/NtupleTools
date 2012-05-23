@@ -1518,7 +1518,7 @@ void loadSusyScanHistograms() {
 void drawPlotHeaderInside() {
   if (text1 != 0 ) delete text1;
   //text1 = new TLatex(3.570061,23.08044,"CMS Preliminary");
-  text1 = new TLatex(3.570061,23.08044,"CMS Simulation");
+  text1 = new TLatex(5,23.08044,"CMS Simulation");
   text1->SetNDC();
   text1->SetTextAlign(13);
   text1->SetX(0.6);
@@ -1534,11 +1534,11 @@ void drawPlotHeader(double xoffset = 0) {
   if(doRatio_) ypos=ypos+0.012;
   // i'm gonna leave this out for now
   if (text1 != 0 ) delete text1;
-  //text1 = new TLatex(3.570061,23.08044,"CMS"); //no more preliminary!
-  text1 = new TLatex(3.570061,23.08044,"CMS Preliminary"); 
+  text1 = new TLatex(3.570061,23.08044,"CMS"); //no more preliminary!
+  //text1 = new TLatex(3.570061,23.08044,"CMS Preliminary"); 
   text1->SetNDC();
   text1->SetTextAlign(13);
-  text1->SetX(0.68 + xoffset); //add 0.2 if you get rid of the "Preliminary"
+  text1->SetX(0.68 + xoffset +0.2); //add 0.2 if you get rid of the "Preliminary"
   text1->SetY(ypos+0.007);
   text1->SetTextFont(42);
   text1->SetTextSizePixels(24);
