@@ -64,7 +64,7 @@ in order to get one file per sample.
 	
 //*** AFTER SUMMER
 //***************************
-  // latest version
+// latest version
   
 TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35u/Fall11/"; //uncorrected MET
 TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35u/";//uncorrected MET
@@ -5327,9 +5327,9 @@ void AN2011_r(TString btagselection="ge1b", const int mode=1) { //for paper, dat
   leg_x1 = 0.2380496; leg_x2=0.481167; leg_y1=0.5029892; leg_y2=0.9231433;
   
   TCut util = "pass_utilityHLT==1 && weight<2"; //don't use weight<1 when plotting data!
-
+  
   //NOTE -- add 0.05 to xoffset in drawPlotHeader 
-
+  
   extratext_="HT>400 GeV";
   setPlotMinimum(0); setPlotMaximum(.7);
   selection_ =TCut("HT>=400 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && passCleaning==1")&&util&&btagcut;
@@ -5414,9 +5414,7 @@ void AN2011_r_SLreq(int mode = 3) { //for paper, MC only plots all the way to hi
   const int nvarbins=13;
   const float varbins[]={0,20,40,60,80,100,120,140,160,180,200,250,300,600}; //13 bins
 
-  //selection_ ="cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 &&passCleaning==1 && weight<2";
-  selection_ ="cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 &&passCleaning==1 && weight<1000";
-
+  selection_ ="cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 &&passCleaning==1 && weight<2";
   
   setPlotMaximum(0.7); setPlotMinimum(0);
   btagSFweight_="prob0";
