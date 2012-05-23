@@ -3944,21 +3944,21 @@ void drawDD()
 
 
 
-//    setSearchRegions("METbins3B");
-//    ifstream file("/afs/cern.ch/user/w/wteo/public/RA2boutput/May22/DDresults_METbins3B.dat");
-//    maxScaleFactor_=2.4; //nasty way to set the y max
+  setSearchRegions("METbins3B");
+  ifstream file("/afs/cern.ch/user/w/wteo/public/RA2boutput/May22/DDresults_METbins3B.dat");
+  maxScaleFactor_=2.4; //nasty way to set the y max
 
-//      setSearchRegions("METfinebins2BT");
-//      ifstream file("/afs/cern.ch/user/w/wteo/public/RA2boutput/May22/DDresults_METfinebins2BT.dat");
-//   maxScaleFactor_=1.5; //nasty way to set the y max
+//  setSearchRegions("METfinebins2BT");
+//  ifstream file("/afs/cern.ch/user/w/wteo/public/RA2boutput/May22/DDresults_METfinebins2BT.dat");
+//  maxScaleFactor_=1.5; //nasty way to set the y max
 
-    setSearchRegions("METfinebins1BL");
-    ifstream file("/afs/cern.ch/user/w/wteo/public/RA2boutput/May22/DDresults_METfinebins1BL.dat");
-   maxScaleFactor_=1.1; //nasty way to set the y max
+//  setSearchRegions("METfinebins1BL");
+//  ifstream file("/afs/cern.ch/user/w/wteo/public/RA2boutput/May22/DDresults_METfinebins1BL.dat");
+//   maxScaleFactor_=1.1; //nasty way to set the y max
 
- //  setSearchRegions("METfinebins2BL");
-//   ifstream file("DDresults_METfinebins2BL.dat");
-//   maxScaleFactor_=1.15; //nasty way to set the y max
+//  setSearchRegions("METfinebins2BL");
+//  ifstream file("/afs/cern.ch/user/w/wteo/public/RA2boutput/May22/DDresults_METfinebins2BL.dat");
+//  maxScaleFactor_=1.15; //nasty way to set the y max
 
   //  setSearchRegions("METfinebins");
   //  ifstream file("DDresults_METfinebins3B_1BLSL.dat");
@@ -3984,7 +3984,7 @@ void drawDD()
   }
   metbins[nbins] = 550; //hard-coded because there is no upper bound on MET
 
-  TString xtitle = "E_{T}^{miss}";
+  TString xtitle = "E_{T}^{miss} [GeV]";
 
   resetHistos();
   setColorScheme("stack");
@@ -4130,8 +4130,10 @@ void drawDD()
 
   drawPlotHeader();
 
-  //  thecanvas->SaveAs("DDresults_METbins1BL.pdf");
+  //thecanvas->SaveAs("DDresults_METbins1BL.pdf");
   //thecanvas->SaveAs("DDresults_METbins2BL.pdf");
+  //thecanvas->SaveAs("DDresults_METbins2BT.pdf");
+  thecanvas->SaveAs("DDresults_METbins3B.pdf");
 
 }
 
