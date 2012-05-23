@@ -3649,35 +3649,35 @@ void printOwenSyst(TString regions) {
     resultsMap_["ge3bLooseWideSB"]["Znn"].trigErrorPlus = 0;
     resultsMap_["ge3bLooseWideSB"]["Znn"].trigErrorMinus = 0;
     
-    cout<<"    & 1BL & 1BT & 2BL & 2BT & 3B \\"<<endl;
+    cout<<"    & 1BL & 1BT & 2BL & 2BT & 3B \\\\"<<endl;
     //we'll do this in a C way instead of a C++ way
     cout<<"QCD & "
 	<<formatLatex( resultsMap_["ge1bLooseWideSB"]["QCD"])<<" & "
 	<<formatLatex( resultsMap_["ge1bTightWideSB"]["QCD"])<<" & "
 	<<formatLatex( resultsMap_["ge2bLooseWideSB"]["QCD"])<<" & "
 	<<formatLatex( resultsMap_["ge2bTightWideSB"]["QCD"])<<" & "
-	<<formatLatex( resultsMap_["ge3bLooseWideSB"]["QCD"])<<" \\ "<<endl;
+	<<formatLatex( resultsMap_["ge3bLooseWideSB"]["QCD"])<<" \\\\ "<<endl;
     
     cout<<"\\ttbar/W+jets & "
 	<<formatLatex( resultsMap_["ge1bLooseWideSB"]["ttbar"])<<" & "
 	<<formatLatex( resultsMap_["ge1bTightWideSB"]["ttbar"])<<" & "
 	<<formatLatex( resultsMap_["ge2bLooseWideSB"]["ttbar"])<<" & "
 	<<formatLatex( resultsMap_["ge2bTightWideSB"]["ttbar"])<<" & "
-	<<formatLatex( resultsMap_["ge3bLooseWideSB"]["ttbar"])<<" \\ "<<endl;
+	<<formatLatex( resultsMap_["ge3bLooseWideSB"]["ttbar"])<<" \\\\ "<<endl;
     
-    cout<<"\\ttbar/W+jets CC & "
+    cout<<"\\ttbar/W+jets MR & "
 	<<formatLatex( resultsMap_["ge1bLooseWideSB"]["ttbarCC"])<<" & "
 	<<formatLatex( resultsMap_["ge1bTightWideSB"]["ttbarCC"])<<" & "
 	<<formatLatex( resultsMap_["ge2bLooseWideSB"]["ttbarCC"])<<" & "
 	<<formatLatex( resultsMap_["ge2bTightWideSB"]["ttbarCC"])<<" & "
-	<<formatLatex( resultsMap_["ge3bLooseWideSB"]["ttbarCC"])<<" \\ "<<endl;
+	<<formatLatex( resultsMap_["ge3bLooseWideSB"]["ttbarCC"])<<" \\\\ "<<endl;
     
     cout<<"\\Zinvisible & "
 	<<formatLatex( resultsMap_["ge1bLooseWideSB"]["Znn"])<<" & "
 	<<formatLatex( resultsMap_["ge1bTightWideSB"]["Znn"])<<" & "
 	<<formatLatex( resultsMap_["ge2bLooseWideSB"]["Znn"])<<" & "
 	<<formatLatex( resultsMap_["ge2bTightWideSB"]["Znn"])<<" & "
-	<<formatLatex( resultsMap_["ge3bLooseWideSB"]["Znn"])<<" \\ "<<endl;
+	<<formatLatex( resultsMap_["ge3bLooseWideSB"]["Znn"])<<" \\\\ "<<endl;
     
     cout<<" \\hline"<<endl;
     
@@ -3692,7 +3692,7 @@ void printOwenSyst(TString regions) {
 	<<formatLatex( resultsMap_["ge1bTightWideSB"]["total"])<<" & "
 	<<formatLatex( resultsMap_["ge2bLooseWideSB"]["total"])<<" & "
 	<<formatLatex( resultsMap_["ge2bTightWideSB"]["total"])<<" & "
-	<<formatLatex( resultsMap_["ge3bLooseWideSB"]["total"])<<" \\ "<<endl;
+	<<formatLatex( resultsMap_["ge3bLooseWideSB"]["total"])<<" \\\\ "<<endl;
   }
 
 }
