@@ -2072,9 +2072,9 @@ void setColorScheme(const TString & name) {
     sampleColor_["PythiaQCD"] = kYellow;
     sampleColor_["PythiaPUQCD"] = kYellow;
     sampleColor_["PythiaPUQCDFlat"] = kYellow;
-    sampleColor_["TTbarJets"]=kRed+1;
-    sampleColor_["TTbarSingleTopWJetsCombined"]=kRed+1;
-    sampleColor_["ttbar"]=kRed+1;
+    sampleColor_["TTbarJets"]=kAzure-3;
+    sampleColor_["TTbarSingleTopWJetsCombined"]=kAzure-3;
+    sampleColor_["ttbar"]=kAzure-3;
     sampleColor_["TTbarJets-semiMu"]=kViolet;
     sampleColor_["TTbarJets-semiMuGood"]=kViolet;
     sampleColor_["TTbarJets-semiMuFailEta"]=kViolet;
@@ -2107,7 +2107,7 @@ void setColorScheme(const TString & name) {
     sampleColor_["WJets-eleFailOther"]=kCyan;
     sampleColor_["WJets-tauHad"]=kGreen-10;
     sampleColor_["WJetsZ2"] = kGreen-3;
-    sampleColor_["ZJets"] = kAzure-2;
+    sampleColor_["ZJets"] = kViolet-3;
     sampleColor_["Zinvisible"] = kOrange-3;
     sampleColor_["SingleTop-sChannel"] = kMagenta+1; //for special cases
     sampleColor_["SingleTop-tChannel"] = kMagenta+2; //for special cases
@@ -2871,7 +2871,7 @@ float drawSimple(const TString var, const int nbins, const double low, const dou
     for (unsigned int isample=0; isample<samples_.size(); isample++) {
       if ( samples_[isample] == samplename) {
 	if (!quiet_) cout <<samples_[isample]<<endl;
-	tree = (TTree*) files_[currentConfig_][samples_[isample]]->Get("reducedTree");
+	tree = (TTree*) files_[currentConfig_][stripSamplename(samples_[isample])]->Get("reducedTree");
       }
     }
   }

@@ -66,8 +66,8 @@ in order to get one file per sample.
 //***************************
 // latest version
   
-TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35u/Fall11/"; //uncorrected MET
-TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35u/";//uncorrected MET
+TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35s/Fall11/"; //uncorrected MET
+TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35s/";//uncorrected MET
 
 //double lumiScale_ = 1143; //official summer conf lumi
 //double lumiScale_ = 3464.581;//oct25
@@ -3929,27 +3929,36 @@ void drawDD()
 {
   gROOT->SetStyle("CMS");
   loadSamples();
-  const TString signalToDraw="T1bbbb";
-  addSample("T1bbbb");
+  removeSample("LM9");
+   addSample("T1bbbb$925$100");
+   addSample("T1tttt$925$100");
+
+   setSampleColor("T1bbbb$925$100",kRed+1);
+   setSampleColor("T1tttt$925$100",kRed+1);
+  
+   setSampleLineStyle("T1bbbb$925$100",1);
+   setSampleLineStyle("T1tttt$925$100",7);
+  
+  
   currentConfig_=configDescriptions_.getCorrected(); //add JERbias
-  loadScanSMSngen("T1bbbb"); m0_=925; m12_=100;
 
 
-//   setSearchRegions("METbins3B");
-//   ifstream file("DDresults_METbins3B.dat");
-//   maxScaleFactor_=2.2; //nasty way to set the y max
 
-//     setSearchRegions("METfinebins2BT");
-//     ifstream file("/afs/cern.ch/user/w/wteo/public/RA2boutput/DDresults_METfinebins2BT_Apr22.dat");
-//  maxScaleFactor_=1.1; //nasty way to set the y max
+//    setSearchRegions("METbins3B");
+//    ifstream file("/afs/cern.ch/user/w/wteo/public/RA2boutput/May22/DDresults_METbins3B.dat");
+//    maxScaleFactor_=2.4; //nasty way to set the y max
+
+//      setSearchRegions("METfinebins2BT");
+//      ifstream file("/afs/cern.ch/user/w/wteo/public/RA2boutput/May22/DDresults_METfinebins2BT.dat");
+//   maxScaleFactor_=1.5; //nasty way to set the y max
+
+    setSearchRegions("METfinebins1BL");
+    ifstream file("/afs/cern.ch/user/w/wteo/public/RA2boutput/May22/DDresults_METfinebins1BL.dat");
+   maxScaleFactor_=1.1; //nasty way to set the y max
 
  //  setSearchRegions("METfinebins2BL");
 //   ifstream file("DDresults_METfinebins2BL.dat");
 //   maxScaleFactor_=1.15; //nasty way to set the y max
-
-    setSearchRegions("METfinebins1BL");
-    ifstream file("DDresults_METfinebins1BL.dat");
-   maxScaleFactor_=1.1; //nasty way to set the y max
 
   //  setSearchRegions("METfinebins");
   //  ifstream file("DDresults_METfinebins3B_1BLSL.dat");
@@ -3988,7 +3997,7 @@ void drawDD()
   thestack = new THStack("thestack","--");
 
   //histos are now filled
-  leg_x1=0.55;
+  leg_x1=0.5;
   renewCanvas();
   renewLegend();
 
@@ -4038,29 +4047,34 @@ void drawDD()
   }
 
   //optionally draw signal
-  TH1D* hsignal=0;
-  if (signalToDraw!="") {
-    bool sp=savePlots_;
-    savePlots_=false;
-    TCut thecut = baseline&&htcut;
-    selection_=thecut;
-    usePUweight_=true;
-    useMHTeff_=true;
-    useHTeff_=true;
-    drawSimple("MET",nbins,metbins[0],metbins[nbins],"dummy","signal",signalToDraw,metbins);
-    hsignal = (TH1D*)hinteractive->Clone("hsignal");
-    hsignal->SetMarkerSize(0);
-    //    hsignal->SetFillColor(sampleColor_[signalToDraw]);
-    hsignal->SetLineWidth(2);
-    thestack->Add(hsignal);
-    leg->AddEntry(hsignal,getSampleLabel(signalToDraw));
-    savePlots_=sp;
+  for (unsigned int isample=0; isample<samples_.size(); isample++) {
+    if (!isSampleSM(samples_[isample])) {
+      cout<<" at "<<samples_[isample]<<endl;
+      if ( isSampleSMS(samples_[isample])) loadScanSMSngen(stripSamplename(samples_[isample]));
+      if (isSampleScan(samples_[isample])) setScanPoint(samples_[isample]);
+
+      bool sp=savePlots_;
+      savePlots_=false;
+      TCut thecut = baseline&&htcut;
+      selection_=thecut;
+      usePUweight_=true;
+      useMHTeff_=true;
+      useHTeff_=true;
+      drawSimple("MET",nbins,metbins[0],metbins[nbins],"dummy","signal",samples_[isample],metbins);
+      TH1D* hSMPlusSignal = (TH1D*)hinteractive->Clone("hsignal");
+      hSMPlusSignal->SetMarkerSize(0);
+      hSMPlusSignal->Add(totalsm);
+      histos_[samples_[isample]] = hSMPlusSignal;
+      //leg->AddEntry(hSMPlusSignal,getSampleLabel(samples_[isample]));
+      savePlots_=sp;
+      leg->AddEntry(histos_[samples_[isample]],getSampleLabel(samples_[isample]));
+    }
   }
 
   //get the legend filled in the opposite order
   for (map<TString, TH1D*>::reverse_iterator ih=histos_.rbegin(); ih!=histos_.rend(); ++ih) {
     backgroundName= ih->first;
-    if (backgroundName != "ttbarQCD") leg->AddEntry(histos_[backgroundName], sampleLabel_[backgroundName]);
+    if (backgroundName != "ttbarQCD" && isSampleSM(backgroundName) ) leg->AddEntry(histos_[backgroundName], getSampleLabel(backgroundName));
   }
 
   totalsm->SetMarkerStyle(sampleMarkerStyle_["totalsm"]);
@@ -4068,6 +4082,16 @@ void drawDD()
   thecanvas->cd();
   thestack->Draw("hist");
   thestack->GetHistogram()->GetXaxis()->SetTitle(xtitle);
+
+  //draw signals
+  for (unsigned int isample=0; isample<samples_.size(); isample++) {
+    if (!isSampleSM(samples_[isample])) {
+      histos_[samples_[isample]]->SetLineColor(sampleColor_[samples_[isample]]);
+      histos_[samples_[isample]]->SetLineStyle(sampleLineStyle_[samples_[isample]]);
+      histos_[samples_[isample]]->SetLineWidth(2);
+      histos_[samples_[isample]]->Draw("same hist");
+    }
+  }
 
   //draw errors on DD
   if (mcerrors!=0) delete mcerrors;
@@ -6392,8 +6416,9 @@ void PAPER2011() {
   
   removeSample("LM9");
  
- addSample("T1bbbb$925$100");
+
  addSample("T1tttt$925$100");
+ addSample("T1bbbb$925$100");
 
  setSampleColor("T1bbbb$925$100",kRed+1);
  setSampleColor("T1tttt$925$100",kRed+1);
@@ -6405,7 +6430,7 @@ void PAPER2011() {
  setSampleColor("ZJets",kViolet-3);
   // == all cuts except MET ==
 
- leg_x1=0.58; leg_y1=0.46;
+ leg_x1=0.5; leg_y1=0.4;
 
   //1BL
   btagselection="ge1b";
@@ -6421,7 +6446,7 @@ void PAPER2011() {
   selection_ ="HT>=600 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4 &&passCleaning==1";
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
   nbins = 6; low=200; high=500;
-  drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_"+btagselection+modestring,0,"GeV");
+  drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_HT600_"+btagselection+modestring,0,"GeV");
 
   //3B
   //addSample("T1tttt"); useMassInLegend_=false;
@@ -6449,7 +6474,7 @@ void PAPER2011() {
   selection_ =TCut("HT>=600 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && minDeltaPhiN >= 4 &&passCleaning==1")&&getSingleLeptonCut();
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
   nbins = 6; low=200; high=500;
-  drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_SL_"+btagselection+modestring,0,"GeV");
+  drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_SL_HT600_"+btagselection+modestring,0,"GeV");
 
   //3B
   btagselection="ge3b";
@@ -6485,29 +6510,30 @@ void PAPER2011() {
   drawPlots(var,nbins,low,high,xtitle,"Events", "SIG_minDeltaPhiN_3B_"+btagselection+modestring,0);
 
   // == same thing but use the SB+SIG region
-  //1BL, SIG only
-  btagselection="ge1b";
-  btagSFweight_="probge1";
-  selection_ ="HT>=400 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET >= 150 &&passCleaning==1";
-  var="minDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}";
-  nbins = 20; low=0; high=40;
-  drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_minDeltaPhiN_1BL_"+btagselection+modestring,0);
 
-  //2BT, SIG only
-  btagselection="ge2b";
-  btagSFweight_="probge2";
-  selection_ ="HT>=600 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET >= 150 &&passCleaning==1";
-  var="minDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}";
-  nbins = 10; low=0; high=40;
-  drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_minDeltaPhiN_2BT_"+btagselection+modestring,0);
+//   //1BL, SIG only
+//   btagselection="ge1b";
+//   btagSFweight_="probge1";
+//   selection_ ="HT>=400 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET >= 150 &&passCleaning==1";
+//   var="minDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}";
+//   nbins = 20; low=0; high=40;
+//   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_minDeltaPhiN_1BL_"+btagselection+modestring,0);
 
-  //3B, SIG only
-  btagselection="ge3b";
-  btagSFweight_="probge3";
-  selection_ ="HT>=400 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET >= 150 &&passCleaning==1";
-  var="minDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}";
-  nbins = 10; low=0; high=40;
-  drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_minDeltaPhiN_3B_"+btagselection+modestring,0);
+//   //2BT, SIG only
+//   btagselection="ge2b";
+//   btagSFweight_="probge2";
+//   selection_ ="HT>=600 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET >= 150 &&passCleaning==1";
+//   var="minDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}";
+//   nbins = 10; low=0; high=40;
+//   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_minDeltaPhiN_2BT_"+btagselection+modestring,0);
+
+//   //3B, SIG only
+//   btagselection="ge3b";
+//   btagSFweight_="probge3";
+//   selection_ ="HT>=400 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET >= 150 &&passCleaning==1";
+//   var="minDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}";
+//   nbins = 10; low=0; high=40;
+//   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_minDeltaPhiN_3B_"+btagselection+modestring,0);
 
 }
 
