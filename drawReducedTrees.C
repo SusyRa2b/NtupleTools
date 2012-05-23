@@ -1171,7 +1171,7 @@ std::pair<double,std::vector<double> > anotherABCD( const SearchRegion & region,
       cout << "double D = " << Dzeroprint << ";" << endl;
       cout << "double Derr = " << Derr << ";" << endl;
       cout << "double Dsub = " << Dsubfull << ";" << endl;
-      cout << "double Dsubserr = " << Dsuberr << ";" << endl;
+      cout << "double Dsuberr = " << Dsuberr << ";" << endl;
       cout << "double eff_MHT = " << eff_MHT << ";" << endl;
       cout << "double MHTLDPDeltaDown = " << delta_down << ";" << endl;
       cout << "double MHTLDPDeltaUp = " << delta_up << ";" << endl;
