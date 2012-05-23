@@ -84,7 +84,6 @@ const bool btaggedLSB_=false;
 const bool use1B_SL_=false; // use ge1b selection for SL sample in ttbar method
 const bool doNJetRWClosure_ = true; //should usually be true; set it to false only to save time
 
-
 void RSL(double SIG, double SB) {
 
   double rsl = SIG/SB;
@@ -6128,6 +6127,242 @@ void DSchecks_3Btest() {
 
 }
 
+double errOnAsym(double np, double np_err, double nm, double nm_err) {
+  double tot = np + nm;
+  double diff =  np - nm;
+
+  double A_MC_err = pow( 1.0/tot - diff/pow(tot,2) ,2)*np_err*np_err 
+    + pow( -1.0*diff/pow(tot,2) - 1.0/tot,2)*nm_err*nm_err;
+  A_MC_err = sqrt(A_MC_err);
+
+  return A_MC_err;
+}
+
+void chargePlots() {
+
+  TString modestring="";
+  const int mode=3; bool logy=false; bool doRatio=false;
+  doRatioPlot(doRatio);
+  setLogY(logy);
+  if(logy)  setPlotMinimum(0.5);
+  loadSamples();
+  usePUweight_=true;
+  useHTeff_=true;
+  useMHTeff_=true;    
+  thebnnMHTeffMode_ = kOff;
+  currentConfig_=configDescriptions_.getCorrected(); //JER bias
+
+  if(mode==3) modestring="-JER-PU-HLT-bSF";
+  //savePlots_=false;
+  TString btagselection;
+  int nbins;
+  float low,high;
+  TString var,xtitle;
+  
+  doOverflowAddition(true);
+ 
+  resetSamples(); //use all samples
+  setStackMode(true); //regular stack
+  setColorScheme("stack");
+  doData(true);
+  drawMCErrors_=true;
+  
+  removeSample("LM9");
+  //remove extrememly small backgrounds (saves time)
+  removeSample("PythiaPUQCD");
+  removeSample("VV");
+
+  leg_x1=0.2;
+  leg_x2=0.5;
+
+  btagselection="eq0b";
+  btagSFweight_="prob0";
+  selection_ =TCut("HT>=400 && MET>=250 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && minDeltaPhiN >= 4 &&passCleaning==1")&&getSingleElectronCut();
+  var="elecharge1"; xtitle="electron charge";
+  nbins = 2; low=-1; high=1;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "charge_1e_"+btagselection+modestring,0);
+
+  btagselection="eq0b";
+  btagSFweight_="prob0";
+  selection_ =TCut("HT>=400 && MET>=250 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && minDeltaPhiN >= 4 &&passCleaning==1")&&getSingleMuonCut();
+  var="muoncharge1"; xtitle="muon charge";
+  nbins = 2; low=-1; high=1;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "charge_1m_"+btagselection+modestring,0);
+
+  btagselection="ge1b";
+  btagSFweight_="probge1";
+  selection_ =TCut("HT>=400 && MET>=250 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && minDeltaPhiN >= 4 &&passCleaning==1")&&getSingleElectronCut();
+  var="elecharge1"; xtitle="electron charge";
+  nbins = 2; low=-1; high=1;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "charge_1e_"+btagselection+modestring,0);
+
+  btagselection="ge1b";
+  btagSFweight_="probge1";
+  selection_ =TCut("HT>=400 && MET>=250 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && minDeltaPhiN >= 4 &&passCleaning==1")&&getSingleMuonCut();
+  var="muoncharge1"; xtitle="muon charge";
+  nbins = 2; low=-1; high=1;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "charge_1m_"+btagselection+modestring,0);
+
+  //2BL
+
+  btagselection="ge2b";
+  btagSFweight_="probge2";
+  selection_ =TCut("HT>=400 && MET>=250 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && minDeltaPhiN >= 4 &&passCleaning==1")&&getSingleElectronCut();
+  var="elecharge1"; xtitle="electron charge";
+  nbins = 2; low=-1; high=1;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "charge_1e_"+btagselection+modestring,0);
+
+  btagselection="ge2b";
+  btagSFweight_="probge2";
+  selection_ =TCut("HT>=400 && MET>=250 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && minDeltaPhiN >= 4 &&passCleaning==1")&&getSingleMuonCut();
+  var="muoncharge1"; xtitle="muon charge";
+  nbins = 2; low=-1; high=1;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "charge_1m_"+btagselection+modestring,0);
+
+  // == sanity check ==
+  removeSample("SingleTop");
+  removeSample("ZJets");
+  removeSample("Zinvisible");
+  setSampleScaleFactor("TTbarJets",66.2/(52.7+53.2));
+  setSampleScaleFactor("WJets",35.8/(26+5.2));
+
+  btagselection="ge1b";
+  btagSFweight_="probge1";
+  selection_ =TCut("HT>=400 && MET>=250 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && minDeltaPhiN >= 4 &&passCleaning==1")&&getSingleMuonCut();
+  var="muoncharge1"; xtitle="muon charge";
+  nbins = 2; low=-1; high=1;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "charge_1m_rescaled_"+btagselection+modestring,0);
+
+  //almost perfect but not quite...
+
+}
+
+void chargeAsym(TString which) {
+
+  TString modestring="";
+  const int mode=3; bool logy=false; bool doRatio=false;
+  doRatioPlot(doRatio);
+  setLogY(logy);
+  if(logy)  setPlotMinimum(0.5);
+  loadSamples();
+  usePUweight_=true;
+  useHTeff_=true;
+  useMHTeff_=true;    
+  thebnnMHTeffMode_ = kOff;
+  currentConfig_=configDescriptions_.getCorrected(); //JER bias
+
+  if(mode==3) modestring="-JER-PU-HLT-bSF";
+  savePlots_=false;
+  TString btagselection;
+  int nbins;
+  float low,high;
+  TString var,xtitle;
+  
+  doOverflowAddition(true);
+ 
+  resetSamples(); //use all samples
+  setStackMode(true); //regular stack
+  setColorScheme("stack");
+  doData(true);
+  drawMCErrors_=true;
+  
+  removeSample("LM9");
+  //remove extrememly small backgrounds (saves time)
+  removeSample("PythiaPUQCD");
+  removeSample("VV");
+
+  float ndata_plus,ndata_minus,nmc_wplus,nmc_wminus,nmc_t;
+  float nmc_wplus_err,nmc_wminus_err,nmc_t_err;
+
+  // = + sample =
+  btagselection="ge2b";
+  btagSFweight_="probge2";
+
+  TCut htcut = "HT>=400";
+  TCut metcut = "MET>=200";
+
+  if (which=="ele") {
+    selection_ =TCut("cutPV==1 && cutTrigger==1  && njets>=2 && minDeltaPhiN >= 4 &&passCleaning==1 && elecharge1>0")&&getSingleElectronCut()&&htcut&&metcut;
+    var="elecharge1"; xtitle="charge";
+  }
+  else if (which=="muon") {
+    selection_ =TCut("cutPV==1 && cutTrigger==1  && njets>=2 && minDeltaPhiN >= 4 &&passCleaning==1 && muoncharge1>0")&&getSingleMuonCut()&&htcut&&metcut;
+    var="muoncharge1"; xtitle="charge";
+  }
+  nbins = 2; low=-1; high=1;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "charge_SL_"+btagselection+modestring,0);
+
+  ndata_plus = getIntegral("data");
+  nmc_wplus = getIntegral("WJets");
+  nmc_wplus_err = getIntegralErr("WJets");
+  nmc_t = getIntegral("TTbarJets") + getIntegral("SingleTop") +getIntegral("ZJets");
+  nmc_t_err = jmt::addInQuad( getIntegralErr("TTbarJets") , getIntegralErr("SingleTop") , getIntegralErr("ZJets"));
+
+  //now -
+  if (which=="ele") {
+    selection_ =TCut("cutPV==1 && cutTrigger==1  && njets>=2 && minDeltaPhiN >= 4 &&passCleaning==1 && elecharge1<0")&&getSingleElectronCut()&&htcut&&metcut;
+  }
+  else if (which=="muon") {
+    selection_ =TCut("cutPV==1 && cutTrigger==1  && njets>=2 && minDeltaPhiN >= 4 &&passCleaning==1 && muoncharge1<0")&&getSingleMuonCut()&&htcut&&metcut;
+  }
+  drawPlots(var,nbins,low,high,xtitle,"Events", "charge_SL_"+btagselection+modestring,0);
+
+  ndata_minus = getIntegral("data");
+  nmc_wminus = getIntegral("WJets");
+  nmc_wminus_err = getIntegralErr("WJets");
+  nmc_t += getIntegral("TTbarJets") + getIntegral("SingleTop") +getIntegral("ZJets");
+  double merr = jmt::addInQuad( getIntegralErr("TTbarJets") , getIntegralErr("SingleTop") , getIntegralErr("ZJets"));
+  nmc_t_err = sqrt(nmc_t_err*nmc_t_err + merr*merr);
+
+  //now calculate A_MC
+  double tot = nmc_wplus + nmc_wminus;
+  double diff =  nmc_wplus - nmc_wminus;
+  double A_MC = diff/tot;
+  double A_MC_err = errOnAsym(nmc_wplus,nmc_wplus_err, nmc_wminus,nmc_wminus_err);
+
+  cout<<which<<endl;
+  cout<<" A_MC = "<<A_MC<< " +/- "<<A_MC_err<<endl;
+
+  //got A, so get Nt in data
+  double ndata_t = ndata_plus + ndata_minus - (ndata_plus - ndata_minus)/A_MC;
+  //the error on this is more nasty than i would like
+  double ndata_t_err = 
+    ndata_plus * pow(1-1/A_MC ,2) +
+    ndata_minus* pow(1+1/A_MC ,2) +
+    A_MC_err*A_MC_err*pow(ndata_plus/(A_MC*A_MC) - ndata_minus/(A_MC*A_MC) ,2);
+  ndata_t_err = sqrt(ndata_t_err);
+
+  //finally nW in data
+  double ndata_w = (ndata_plus - ndata_minus) / A_MC;
+  double ndata_w_err = jmt::errAoverB( ndata_plus - ndata_minus,jmt::addInQuad(sqrt(ndata_plus),sqrt(ndata_minus)),A_MC,A_MC_err);
+
+  double Wfrac_err = 
+    ndata_plus * pow(  ( 1/A_MC)*(1/(ndata_plus + ndata_minus)) - (ndata_plus-ndata_minus)*(1/A_MC)*pow(ndata_plus+ndata_minus,-2) ,2) +
+    ndata_minus * pow( (-1/A_MC)*(1/(ndata_plus + ndata_minus)) - (ndata_plus-ndata_minus)*(1/A_MC)*pow(ndata_plus+ndata_minus,-2) ,2) +
+    A_MC_err*A_MC_err * pow( -(ndata_plus-ndata_minus)*(1/(ndata_plus-ndata_minus))*pow(A_MC,-2) ,2);
+  Wfrac_err = sqrt(Wfrac_err);
+
+  double ss = ndata_plus+ndata_minus;
+  double dd = ndata_plus-ndata_minus;
+  double aa = A_MC*ss - dd;
+  double Wt_err = 
+    ndata_plus * pow( 1/aa - dd*pow(aa,-2)*(A_MC-1)  ,2) +
+    ndata_minus* pow(-1/aa - dd*pow(aa,-2)*(A_MC+1)  ,2) +
+    A_MC_err*A_MC_err * pow( -dd*pow(aa,-2)*ss ,2)  ;
+  Wt_err = sqrt(Wt_err);
+
+  cout<<"W / t (data)     = "<<ndata_w/ndata_t<< " +/- "<<Wt_err<<endl;
+  cout<<"W / t (MC)       = "<<(nmc_wplus+nmc_wminus) / (nmc_t) <<endl;
+  cout<<"W / total (data) = "<<ndata_w / ( ndata_plus + ndata_minus)<<" +/- "<<Wfrac_err<<endl;
+  cout<<"W / total (MC)   = "<<(nmc_wplus+nmc_wminus) / (nmc_t+nmc_wplus+nmc_wminus) <<endl;
+  /*
+  selection_ =TCut("HT>=400 && MET>=250 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && minDeltaPhiN >= 4 &&passCleaning==1")&&getSingleMuonCut();
+  var="muoncharge1"; xtitle="muon charge";
+  nbins = 2; low=-1; high=1;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "muon_charge_SL_"+btagselection+modestring,0);
+  */
+}
+
 void PAPER2011() {
 
   TString modestring="";
@@ -6160,16 +6395,19 @@ void PAPER2011() {
   removeSample("LM9");
  
  addSample("T1bbbb$925$100");
- addSample("T1bbbb$825$500");
+ addSample("T1tttt$925$100");
 
- setSampleColor("T1bbbb$925$100",1);
- setSampleColor("T1bbbb$825$500",1);
+ setSampleColor("T1bbbb$925$100",kRed+1);
+ setSampleColor("T1tttt$925$100",kRed+1);
 
  setSampleLineStyle("T1bbbb$925$100",1);
- setSampleLineStyle("T1bbbb$825$500",7);
+ setSampleLineStyle("T1tttt$925$100",7);
 
-
+ setSampleColor("TTbarJets",kAzure-3);
+ setSampleColor("ZJets",kViolet-3);
   // == all cuts except MET ==
+
+ leg_x1=0.58; leg_y1=0.46;
 
   //1BL
   btagselection="ge1b";
