@@ -1573,6 +1573,87 @@ float EventCalculator::getMaxJetFracMis(unsigned int rank=1, unsigned int maxjet
   else { assert(0); }
 }
 
+
+int EventCalculator::getJetMisCategoryType1(bool skipMETfraction=false) {
+  if( isSampleRealData() ) return -1;
+  
+  int category=0;
+
+  int nBadLoose=0;
+  int nOverTight=0;
+  int nUnderTight=0;
+  
+  for (unsigned int i=0; i< myJetsPF->size(); i++) {
+    if (!isGoodJet(i, 30, 5, true)) continue;
+    
+    float genpt = myJetsPF->at(i).genJet_pt;
+    float recopt = getJetPt(i);
+    double f = (recopt-genpt)/genpt; //fractional mismeasurement
+    double m = fabs( (recopt-genpt)/getMET() ); // MET fraction
+
+    if( fabs(f)>0.2 && (m>0.3 || skipMETfraction) ) nBadLoose++;
+    if(      f >0.2 && (m>0.6 || skipMETfraction) ) nOverTight++;
+    if(     f <-0.2 && (m>0.6 || skipMETfraction) ) nUnderTight++;
+    
+  }//end loop over jets
+
+  if(nBadLoose>=2)        category=1;//>=2 jets badly measured
+  else if(nOverTight==1)  category=2;//1 jet badly over-measured
+  else if(nUnderTight==1) category=3;//1 jet badly under-measured
+  return category;
+}
+
+
+int EventCalculator::getJetMisCategoryType2(unsigned int targetJet, bool skipMETfraction=false) {
+  if( isSampleRealData() ) return -1;
+  if(!(targetJet==1 || targetJet==2 || targetJet==3)) return -1; //can expand later
+
+  int category=0;
+
+  int tOverLoose=0, tOverTight=0, tUnderLoose=0, tUnderTight=0;
+  int nBadLoose=0, nOverTight=0, nUnderTight=0;
+  
+  unsigned int targetCounter=0;
+  bool passedTarget = false;
+  for (unsigned int i=0; i< myJetsPF->size(); i++) {
+    if(isGoodJet(i, 50, 2.4, true)) targetCounter++;
+    bool thisIsTargetJet = (targetCounter==targetJet) && (passedTarget==false);
+    if (!isGoodJet(i, 30, 5, true)) continue;//must go after first if.
+    
+    float genpt = myJetsPF->at(i).genJet_pt;
+    float recopt = getJetPt(i);
+    
+    double f = (recopt-genpt)/genpt; //fractional mismeasurement
+    double m = fabs( (recopt-genpt)/getMET() ); // MET fraction
+
+    if(thisIsTargetJet) {
+      if(  f>0.2 && (m>0.3 || skipMETfraction) ) tOverLoose++;
+      if(  f>0.2 && (m>0.6 || skipMETfraction) ) tOverTight++;
+      if( f<-0.2 && (m>0.3 || skipMETfraction) ) tUnderLoose++;
+      if( f<-0.2 && (m>0.6 || skipMETfraction) ) tUnderTight++;
+    } else {
+      if( fabs(f)>0.2 && (m>0.3 || skipMETfraction) ) nBadLoose++;
+      if(       f>0.2 && (m>0.6 || skipMETfraction) ) nOverTight++;
+      if(      f<-0.2 && (m>0.6 || skipMETfraction) ) nUnderTight++;
+    }
+    
+    if(targetCounter==targetJet && passedTarget==false) passedTarget=true;    
+  }//end loop over jets
+  
+  if(tOverLoose==1 && nBadLoose>=1)       category=1;//target jet over-measured and >=1 other badly measured
+  else if(tUnderLoose==1 && nBadLoose>=1) category=2;//target jet under-measured and >=1 other badly measured
+  else if(nBadLoose>=2)                   category=3;//target jet well-measured and >=2 other badly measured
+  else if(tOverTight==1)                  category=4;//target jet over-measured only
+  else if(tUnderTight==1)                 category=5;//target jet under-measured only
+  else if(nOverTight==1)                  category=6;//other jet over-measured only
+  else if(nUnderTight==1)                 category=7;//other jet under-measured only
+  
+  return category;
+}
+
+
+
+
 double EventCalculator::getMinDeltaPhiMET(unsigned int maxjets) {
 
   double mindp=99;
@@ -5226,6 +5307,9 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   UInt_t minDeltaPhi_chosenJet, minDeltaPhiN_chosenJet;
   UInt_t maxJetMis_chosenJet, maxJetFracMis_chosenJet;
   float minDeltaPhiN_withLepton;
+  int jetMisCategoryT1, jetMisCategoryT1_noMETfraction;
+  int jetMisCategoryT2, jetMisCategoryT2_noMETfraction;
+
 
   //mc truth tests
   float minDeltaPhiN_MC;
@@ -5702,6 +5786,11 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("maxJetMis_chosenJet", &maxJetMis_chosenJet, "maxJetMis_chosenJet/i");
   reducedTree.Branch("maxJetFracMis_chosenJet", &maxJetFracMis_chosenJet, "maxJetFracMis_chosenJet/i");
 
+  reducedTree.Branch("jetMisCategoryT1", &jetMisCategoryT1, "jetMisCategoryT1/I");
+  reducedTree.Branch("jetMisCategoryT1_noMETfraction", &jetMisCategoryT1_noMETfraction, "jetMisCategoryT1_noMETfraction/I");
+  reducedTree.Branch("jetMisCategoryT2", &jetMisCategoryT2, "jetMisCategoryT2/I");
+  reducedTree.Branch("jetMisCategoryT2_noMETfraction", &jetMisCategoryT2_noMETfraction, "jetMisCategoryT2_noMETfraction/I");
+  
   reducedTree.Branch("minDeltaPhiN_deltaT", &minDeltaPhiN_deltaT, "minDeltaPhiN_deltaT/F");
   reducedTree.Branch("deltaT1", &deltaT1, "deltaT1/F");
   reducedTree.Branch("deltaT2", &deltaT2, "deltaT2/F");
@@ -6368,6 +6457,13 @@ Also the pdfWeightSum* histograms that are used for LM9.
       deltaT3_otherPt50 = getDeltaPhiMETN_deltaT(getNthGoodJet(2,50,2.4,true),50,2.4,true,false,false);
       deltaT3_otherPt70 = getDeltaPhiMETN_deltaT(getNthGoodJet(2,50,2.4,true),70,2.4,true,false,false);
 
+      jetMisCategoryT1 = getJetMisCategoryType1(false);
+      jetMisCategoryT1_noMETfraction = getJetMisCategoryType1(true);
+      jetMisCategoryT2 = getJetMisCategoryType2(minDeltaPhiN_chosenJet,false);
+      jetMisCategoryT2_noMETfraction = getJetMisCategoryType2(minDeltaPhiN_chosenJet,true);
+
+
+
       hltMHTeff = getHLTMHTeff(MET, HT, nElectrons, nMuons, minDeltaPhiN);
       double effUp, effDown;
       hltMHTeffBNN = getHLTMHTeffBNN(MET, HT, nElectrons, nMuons, minDeltaPhiN, effUp, effDown);
@@ -6452,6 +6548,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
       jetflavor1 = jetFlavorOfN(1);
       jetchargedhadronfrac1 = jetChargedHadronFracOfN(1);
       jetchargedhadronmult1 = jetChargedHadronMultOfN(1);
+
 
       jetpt2 = jetPtOfN(2);
       jetgenpt2 = jetGenPtOfN(2); 

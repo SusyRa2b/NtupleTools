@@ -228,6 +228,8 @@ public:
   float getMaxJetFracMis(unsigned int rank, unsigned int maxjets, float jetpt);
   float getDeltaPhiMETJetMaxMis(float jetpt);
   unsigned int getRankJetMaxMis(unsigned int maxjets, float jetpt);
+  int getJetMisCategoryType1(bool skipMETfraction);
+  int getJetMisCategoryType2(unsigned int targetJet, bool skipMETfraction);
 
   float getDeltaPhiStar(int & badjet);
 
