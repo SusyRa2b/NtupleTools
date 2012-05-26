@@ -5127,7 +5127,7 @@ float EventCalculator::bJetFastsimSF(const TString & what, int flavor,float pt) 
     else if (what=="value")   returnVal = get_AN_12_175_Table2_Value(pt);
     else assert(0);
   }
-  cout<<what<<" "<<flavor<<" "<<pt<<"\t"<<returnVal<<endl;
+  //cout<<what<<" "<<flavor<<" "<<pt<<"\t"<<returnVal<<endl;
   return returnVal;
 }
 
