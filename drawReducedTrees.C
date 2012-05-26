@@ -3922,11 +3922,39 @@ void runFineBinsOfMET_1BL() {
 
 }
 
+double getKristenValue(const TString & what, const TString & region, const double lowedge, const double width) {
+  TString file="KristenDD/May22/";
+
+  if (region=="3B") file+="MR_PLOT_3BL.root";
+  else assert(0);
+
+  TFile fk(file);
+  TH1F* kh = (TH1F*) fk.Get("h_new");
+
+  double value=0;
+  cout<<"== Kristen"<<endl;
+  //loop over kristen's bins and see if they fall in the range of interest
+  for (int ibin = 1; ibin<= kh->GetNbinsX(); ibin++) {
+    double bincenter = kh->GetBinCenter(ibin);
+    //is this bin of interest?
+    if (bincenter>lowedge && (bincenter< lowedge+width)) {
+      cout<<lowedge<<" "<<lowedge+width<<" "<<kh->GetBinContent(ibin)<<endl; //debug
+      if (what=="value") value += kh->GetBinContent(ibin);
+      else if (what=="error") value += pow(kh->GetBinError(ibin),2);
+      else assert(0);
+    }
+  }
+
+  if (what=="error") value=sqrt(value);
+
+  return value;
+}
 
 
 //read back the file generated above and make a plot
-void drawDD() 
+void drawDD(const bool kristen=false) 
 {
+
   gROOT->SetStyle("CMS");
   loadSamples();
   removeSample("LM9");
@@ -3941,8 +3969,6 @@ void drawDD()
   
   
   currentConfig_=configDescriptions_.getCorrected(); //add JERbias
-
-
 
   setSearchRegions("METbins3B");
   ifstream file("/afs/cern.ch/user/w/wteo/public/RA2boutput/May22/DDresults_METbins3B.dat");
@@ -3977,12 +4003,14 @@ void drawDD()
   else  if (searchRegions_[0].btagSelection == "ge3b") btagSFweight_="probge3";
   else assert(0);
 
+
   int nbins=(int) searchRegions_.size();
   float *metbins = new float[nbins+1];
   for (int ibin=0; ibin<nbins; ibin++) {
     metbins[ibin]=  searchRegions_.at(ibin).getLowEdgeMET();
   }
-  metbins[nbins] = 550; //hard-coded because there is no upper bound on MET
+  const int maxmet=550;
+  metbins[nbins] = maxmet; //hard-coded because there is no upper bound on MET
 
   TString xtitle = "E_{T}^{miss} [GeV]";
 
@@ -4012,6 +4040,8 @@ void drawDD()
     file>>vals.trigErrorPlus;
     file>>vals.trigErrorMinus;
 
+    if (kristen && backgroundName=="ttbarQCD") continue; //no need for special ttbarQCD category in the kristen case
+
     if (!histos_.count(backgroundName)) {
       histos_[backgroundName] = new TH1D(backgroundName,backgroundName,nbins,metbins);
       histos_[backgroundName]->Sumw2();
@@ -4021,10 +4051,21 @@ void drawDD()
     for ( ; index<searchRegions_.size(); index++) {
       if  (binName==searchRegions_[index].id()) break;
     }
-    histos_[backgroundName]->SetBinContent(index+1, vals.value);
-    double avtrigerr = 0.5*(fabs(vals.trigErrorPlus) + fabs(vals.trigErrorMinus));
-    double totalerr = sqrt( vals.systError*vals.systError + vals.statError*vals.statError + avtrigerr*avtrigerr);
-    histos_[backgroundName]->SetBinError(index+1, totalerr);
+
+    if (kristen && backgroundName=="ttbar") {
+      //forget about the file value. use kristen's value
+      double width = histos_[backgroundName]->GetBinWidth(index+1);
+      double binedge = histos_[backgroundName]->GetBinLowEdge(index+1);
+      if (TMath::Nint(binedge+width) ==maxmet) width=10000; //last bin is "infinite" width
+      histos_[backgroundName]->SetBinContent(index+1, getKristenValue("value","3B",binedge, width ) );
+      histos_[backgroundName]->SetBinError(index+1, getKristenValue("error","3B",binedge,width ));
+    }
+    else {
+      histos_[backgroundName]->SetBinContent(index+1, vals.value);
+      double avtrigerr = 0.5*(fabs(vals.trigErrorPlus) + fabs(vals.trigErrorMinus));
+      double totalerr = sqrt( vals.systError*vals.systError + vals.statError*vals.statError + avtrigerr*avtrigerr);
+      histos_[backgroundName]->SetBinError(index+1, totalerr);
+    }
 
     histos_[backgroundName]->SetFillColor(sampleColor_[backgroundName]);
     histos_[backgroundName]->SetMarkerSize(0);
@@ -4040,8 +4081,10 @@ void drawDD()
     if (backgroundName != "ttbarQCD") {
       thestack->Add(histos_[backgroundName]);
     }
-      
-    if (backgroundName=="ttbarQCD" || backgroundName=="Zinvisible") {
+
+    //we only need the funny business of ttbarQCD in the case of not-kristen
+    if (kristen) totalsm ->Add(histos_[backgroundName]);
+    else if (backgroundName=="ttbarQCD" || backgroundName=="Zinvisible") {
       totalsm ->Add(histos_[backgroundName]);
     }
   }
@@ -4133,7 +4176,7 @@ void drawDD()
   //thecanvas->SaveAs("DDresults_METbins1BL.pdf");
   //thecanvas->SaveAs("DDresults_METbins2BL.pdf");
   //thecanvas->SaveAs("DDresults_METbins2BT.pdf");
-  thecanvas->SaveAs("DDresults_METbins3B.pdf");
+  //thecanvas->SaveAs("DDresults_METbins3B.pdf");
 
 }
 
