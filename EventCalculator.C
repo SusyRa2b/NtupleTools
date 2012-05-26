@@ -5020,27 +5020,117 @@ float EventCalculator::getBTagIPWeight() {//this function should be called *afte
   return w_event;
 }
 
-/*
-void EventCalculator::averageBeff(double & bjetEffSum) {// , Long64_t & bjetSum) {
+int EventCalculator::getPtBinIndex(const float pt) {
+  //binning in AN-12-175
 
-  char btageffname[200];
-  std::string sbtageff = "h_btageff";
-  sprintf(btageffname,"%s",sbtageff.c_str());   
-  TH1F * h_btageff  = (TH1F *)f_tageff_->Get(btageffname);
+  const int n=15;
+  float bins[]={30,40,50,60,70,80,100,120,160,210,260,320,400,500,1e9}; //15 values
+ //real max is 670, but use last bin value for jets about 670
 
-  for (unsigned int ijet=0; ijet<myJetsPF->size(); ++ijet) {
-    if ( abs( myJetsPF->at(ijet).partonFlavour)==5) {
-      if (isGoodJet30(ijet)) {
-	float effi = jetTagEff(ijet, h_btageff, 0, 0, 1,1,1);
-	//this effi is SF * eff_MC for this b jet
-	bjetEffSum += effi;
-      }
-      //      bjetSum++;
-    }
-  } 
+  if (pt<bins[0] || pt>bins[n-1]) return -1;
+
+  int jj=0; //highest value of jj in loop is 13
+  for ( ; jj<n-1; ++jj)     if (pt >= bins[jj] && pt<bins[jj+1]) break;
+
+  return jj;  
+}
+
+float EventCalculator::get_AN_12_175_Table2_Value(const float pt) {
+
+  int bin = getPtBinIndex(pt);
+
+  if (bin<0) return 1;
+
+  float values[]={0.982,0.981,0.992,0.994,0.997,0.9998,1.001,1.000,0.992,0.979,0.947,0.928,0.87,0.84};
+
+  return values[bin];
+}
+
+float EventCalculator::get_AN_12_175_Table2_Error(const float pt) {
+
+  int bin = getPtBinIndex(pt);
+  if (bin<0) return 1;
+
+  float values[]={0.002,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.002,0.004,0.006,0.009,0.01,0.02};
+  return values[bin];
+}
+
+float EventCalculator::get_AN_12_175_Table3_Value(const float pt) {
+
+  int bin = getPtBinIndex(pt);
+  if (bin<0) return 1;
+
+  float values[]={0.980,0.984,0.992,0.995,0.999,1.002,0.999,0.999,0.994,0.978,0.943,0.92,0.88,0.86};
+  return values[bin];
+}
+
+float EventCalculator::get_AN_12_175_Table4_Value(const float pt) {
+  int bin = getPtBinIndex(pt);
+  if (bin<0) return 1;
+
+  //T1bbbb only!
+  //(tempted to put in an assert, but i guess that is paranoia)
+
+  float values[]={0.984,0.997,1.002,1.006,1.012,1.0115,1.0159,1.0171,1.0051,0.974,0.943,0.900,0.853,0.78};
+  return values[bin];
 
 }
-*/
+
+float EventCalculator::get_AN_12_175_Table5_Value(const float pt) {
+  int bin = getPtBinIndex(pt);
+  if (bin<0) return 1;
+
+  //T1tttt only!
+  //(tempted to put in an assert, but i guess that is paranoia)
+
+  float values[]={1.0046,1.0064,1.0136,1.0157,1.0173,1.0189,1.0224,1.0239,1.0087,0.981,0.945,0.899,0.858,0.800};
+  return values[bin];
+
+}
+
+
+float EventCalculator::bJetFastsimSF(const TString & what, int flavor,float pt) {
+  assert( what == "value" || what=="stat" || what=="syst");
+  //stat will be an absolute error
+  //syst will be a fractional error
+
+  float returnVal = 0;
+  if (what == "value") returnVal=1;
+
+  //first check if we're in a FASTSIM model
+  if (theScanType_ != kNotScan ) {
+    if ( abs(flavor) != 5) return returnVal; //no correction (for now) for non-b
+    
+    if (what == "syst") {//syst errors (fractional)
+      const float table2_value = get_AN_12_175_Table2_Value(pt);
+
+      //table 2 versus table 3 // note that this is a FRACTIONAL uncertainty
+      float systerr2 = (table2_value - get_AN_12_175_Table3_Value(pt)) / table2_value ;
+
+      //now the model-dependent part
+      float model_value = 1;
+      if (sampleName_.Contains("T1bbbb")) 	model_value = get_AN_12_175_Table4_Value(pt);
+      else if (sampleName_.Contains("T1tttt")) 	model_value = get_AN_12_175_Table5_Value(pt);
+      else assert(0);
+      //Table 2 versus Table 4
+      //Tom says syst_sample = (SF_avg - SF_ttbar)/SF_ttbar 
+      //syst_sample = ( (SF_T1bbbb + SF_ttbar)/2 - SF_ttbar)/SF_ttbar 
+      //note that this is a FRACTIONAL uncertainty
+
+      float systerr1 = ( ( model_value+table2_value)/2 - table2_value) / table2_value ;
+
+      //no need for fabs() on these errors because we're adding in quadrature
+      returnVal = sqrt(systerr1*systerr1 + systerr2*systerr2);
+    }
+    //table 2 applies to any FASTSIM sample
+    else if (what=="stat")    returnVal = get_AN_12_175_Table2_Error(pt);
+    else if (what=="value")   returnVal = get_AN_12_175_Table2_Value(pt);
+    else assert(0);
+  }
+  cout<<what<<" "<<flavor<<" "<<pt<<"\t"<<returnVal<<endl;
+  return returnVal;
+}
+
 
 //get MC btag efficiency
 float EventCalculator::jetTagEff(unsigned int ijet, TH1F* h_btageff, TH1F* h_ctageff, TH1F* h_ltageff,
@@ -5070,6 +5160,9 @@ float EventCalculator::jetTagEff(unsigned int ijet, TH1F* h_btageff, TH1F* h_cta
 
 	float  SFb = 0.6981*((1.+(0.414063*x))/(1.+(0.300155*x)));
 
+	//apply FASTSTIM correction where needed
+	SFb *= bJetFastsimSF("value",flavor,pt);
+
 	if (theBTagEffType_ == kBTagEffup4 || theBTagEffType_ == kBTagEffdown4 || modifier==kHFup || modifier == kHFdown) {
 	  const int nbins=14;
 	  float ptmin[] = {30, 40, 50, 60, 70, 80, 100, 120, 160, 210, 260, 320, 400, 500};
@@ -5097,6 +5190,11 @@ float EventCalculator::jetTagEff(unsigned int ijet, TH1F* h_btageff, TH1F* h_cta
 	      break;
 	    }
 	  }
+
+	  float fastsimerr_stat = bJetFastsimSF("stat",flavor,pt);
+	  //syst is a fractional err, so multiply by SFb to get absolute err
+	  float fastsimerr_syst = bJetFastsimSF("syst",flavor,pt) * SFb;
+	  myErr = sqrt( myErr*myErr + fastsimerr_stat*fastsimerr_stat + fastsimerr_syst*fastsimerr_syst);
 	  myErr *= errFactor; //high pT and charm get scaled up
 
 	  if ((theBTagEffType_ == kBTagEffup4) || (modifier==kHFup)) SFb += myErr;
