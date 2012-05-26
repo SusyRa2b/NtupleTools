@@ -44,11 +44,12 @@ gSystem->Load("CrossSectionTable_cxx.so");
 
 //*** AFTER SUMMER
 //***************************
-TString inputPath = "/cu3/joshmt/reducedTrees/V00-02-35m/"; 
+TString inputPath = "/cu3/joshmt/reducedTrees/V00-02-35q/"; 
 TString dataInputPath =  "dummy"; //no data needed!
 TString inputPathTTbar = "dummy";
 
-double lumiScale_ = 4683.719;//nov4
+//double lumiScale_ = 4683.719;//nov4
+double lumiScale_ = 4982;//final pixel-based 2011 lumi
 
 
 #include "drawReducedTrees.h"
@@ -57,7 +58,7 @@ double lumiScale_ = 4683.719;//nov4
 
 //this is the original implementation, using the traditional method of drawing a 1 bin histo to count events
 //works fine for small samples, completely unusable for mSugra
-SignalEffData signalSystematics2011(const SearchRegion & region, bool isSL=false, bool isLDP=false, TString sampleOfInterest="LM9", int m0=0,int m12=0) {
+SignalEffData signalSystematics2011(const SearchRegion & region, bool is1m, bool is1e, bool isLDP, TString sampleOfInterest, int m0=0,int m12=0) {
   useFlavorHistoryWeights_=false;
   loadSamples(true,"complete"); //needs to come first! this is why this should be turned into a class, with this guy in the ctor
   assert(configDescriptions_.size() == 10); //to avoid stupid mistakes on LM9 (no more HLT eff, and no more btag eff)
@@ -69,18 +70,22 @@ SignalEffData signalSystematics2011(const SearchRegion & region, bool isSL=false
   SignalEffData results;
 
   region.Print();
-  assert ( !( isSL&&isLDP));
+  assert ( !( is1m&&isLDP));
+  assert ( !( is1e&&isLDP));
+  assert ( !( is1e&&is1m));
   if (isLDP) cout<<"   == LDP "<<endl;
-  if (isSL) cout<<"   == SL "<<endl;
+  if (is1m) cout<<"   == 1m "<<endl;
+  if (is1e) cout<<"   == 1e "<<endl;
 
   //take care of trigger efficiency systematics, which differs between SB and SIG, SL, LDP, etc
-  if (region.isSIG && !isSL &&!isLDP) results.set("trigger",eff_SIG_MHT_err_[0],eff_SIG_MHT_err_[1]);
-  else if (!region.isSIG && !isSL && !isLDP) results.set("trigger",eff_SB_MHT_err_[0],eff_SB_MHT_err_[1]);
-  else if (region.isSIG && isSL) results.set("trigger",eff_SIG_SL_MHT_err_[0],eff_SIG_SL_MHT_err_[1]);
-  else if (!region.isSIG && isSL) results.set("trigger",eff_SB_1m_MHT_err_[0],eff_SB_1m_MHT_err_[1]);
-  else if (region.isSIG && isLDP) results.set("trigger",eff_SIG_ldp_MHT_err_[0],eff_SIG_ldp_MHT_err_[1]);
-  else if (!region.isSIG && isLDP) results.set("trigger",eff_SB_ldp_MHT_err_[0],eff_SB_ldp_MHT_err_[1]);
-  else assert(0);
+  results.set("trigger",0,0); //trigger eff err is now handled in the likelihood
+//   if (region.isSIG && !isSL &&!isLDP) results.set("trigger",eff_SIG_MHT_err_[0],eff_SIG_MHT_err_[1]);
+//   else if (!region.isSIG && !isSL && !isLDP) results.set("trigger",eff_SB_MHT_err_[0],eff_SB_MHT_err_[1]);
+//   else if (region.isSIG && isSL) results.set("trigger",eff_SIG_SL_MHT_err_[0],eff_SIG_SL_MHT_err_[1]);
+//   else if (!region.isSIG && isSL) results.set("trigger",eff_SB_1m_MHT_err_[0],eff_SB_1m_MHT_err_[1]);
+//   else if (region.isSIG && isLDP) results.set("trigger",eff_SIG_ldp_MHT_err_[0],eff_SIG_ldp_MHT_err_[1]);
+//   else if (!region.isSIG && isLDP) results.set("trigger",eff_SB_ldp_MHT_err_[0],eff_SB_ldp_MHT_err_[1]);
+//   else assert(0);
 
   //for susy scan; harmless for non-susy scan
   m0_=m0;
@@ -114,8 +119,8 @@ SignalEffData signalSystematics2011(const SearchRegion & region, bool isSL=false
   else {assert(0);}
 
   TCut baseline = "cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && passCleaning==1";
-  if (isSL) baseline = "cutPV==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && MT_Wlep>=0 && MT_Wlep<100 && passCleaning==1";
-
+  if (is1e) baseline = "cutPV==1 && cut3Jets==1 && nElectrons==1 && nMuons==0 && MT_Wlep>=0 && MT_Wlep<100 && passCleaning==1";
+  if (is1m) baseline = "cutPV==1 && cut3Jets==1 && nElectrons==0 && nMuons==1 && MT_Wlep>=0 && MT_Wlep<100 && passCleaning==1";
 
   TCut passOther = "minDeltaPhiN>=4";
   if (isLDP) passOther="minDeltaPhiN<4";
@@ -177,7 +182,7 @@ each of the systematics variations was done with JERbias turned on.
   cout<<"add PU weight yield = "<<getIntegral(sampleOfInterest)<<" +/- "<<getIntegralErr(sampleOfInterest) <<endl;
   results.yield_JER_PU = getIntegral(sampleOfInterest);
 
-  useMHTeff_=true;
+  useMHTeff_=false; //MHT eff is handled in the likelihood
   useHTeff_=true;
   drawPlots(var,nbins,low,high,xtitle,"events","dummyH");
   cout<<"add HLT eff = "<<getIntegral(sampleOfInterest)<<" +/- "<<getIntegralErr(sampleOfInterest) <<endl;
@@ -485,7 +490,7 @@ each of the systematics variations was done with JERbias turned on.
 
 //not only for LM9; can also be used for other samples e.g. ttbar. Just change sampleOfInterest
 void runSystematics2011_LM9(  TString sampleOfInterest="LM9" ) {
-  setSearchRegions("Moriond");
+  setSearchRegions("MoriondWideSB");
   loadSamples(true,"complete"); // "complete" 
 
   //  signalSystematics2011(sbRegions_[0],false,false,"T1bbbb",1175,75);
@@ -506,18 +511,20 @@ void runSystematics2011_LM9(  TString sampleOfInterest="LM9" ) {
 
   for (unsigned int i=0; i< searchRegions_.size(); i++) {
     (*textfiles[i])<<m0_<<" "<<m12_<<" "<<0<<" ";
-    SignalEffData SB =  signalSystematics2011(sbRegions_[i],false,false,sampleOfInterest);
-    SignalEffData SIG=  signalSystematics2011(searchRegions_[i],false,false,sampleOfInterest);
+    SignalEffData SB =  signalSystematics2011(sbRegions_[i],false,false,false,sampleOfInterest);
+    SignalEffData SIG=  signalSystematics2011(searchRegions_[i],false,false,false,sampleOfInterest);
 
-    SignalEffData SBSL= signalSystematics2011(sbRegions_[i],true,false,sampleOfInterest);
-    SignalEffData SIGSL=signalSystematics2011(searchRegions_[i],true,false,sampleOfInterest);
+    SignalEffData SB1m= signalSystematics2011(sbRegions_[i],true,false,false,sampleOfInterest);
+    SignalEffData SIG1m=signalSystematics2011(searchRegions_[i],true,false,false,sampleOfInterest);
+    SignalEffData SB1e= signalSystematics2011(sbRegions_[i],false,true,false,sampleOfInterest);
+    SignalEffData SIG1e=signalSystematics2011(searchRegions_[i],false,true,false,sampleOfInterest);
 
-    SignalEffData SBLDP= signalSystematics2011(sbRegions_[i],false,true,sampleOfInterest);
-    SignalEffData SIGLDP=signalSystematics2011(searchRegions_[i],false,true,sampleOfInterest);
+    SignalEffData SBLDP= signalSystematics2011(sbRegions_[i],false,false,true,sampleOfInterest);
+    SignalEffData SIGLDP=signalSystematics2011(searchRegions_[i],false,false,true,sampleOfInterest);
 
-    (*textfiles[i])<<SIG.rawYield<<" "<<SB.rawYield<<" "<<SIGSL.rawYield<<" "<<SBSL.rawYield<<" "<<SIGLDP.rawYield<<" "<<SBLDP.rawYield<<" "
-		   <<SIG.effCorr<<" "<<SB.effCorr<<" "<<SIGSL.effCorr<<" "<<SBSL.effCorr<<" "<<SIGLDP.effCorr<<" "<<SBLDP.effCorr<<" "
-		   <<SIG.totalSystematic()<<" "<<SB.totalSystematic()<<" "<<SIGSL.totalSystematic()<<" "<<SBSL.totalSystematic()<<" "<<SIGLDP.totalSystematic()<<" "<<SBLDP.totalSystematic()<<endl;
+    (*textfiles[i])<<SIG.rawYield<<" "<<SB.rawYield<<" "<<SIG1m.rawYield<<" "<<SB1m.rawYield<<" "<<SIG1e.rawYield<<" "<<SB1e.rawYield<<" "<<SIGLDP.rawYield<<" "<<SBLDP.rawYield<<" "
+		   <<SIG.effCorr<<" "<<SB.effCorr<<" "<<SIG1m.effCorr<<" "<<SB1m.effCorr<<" "<<SIG1e.effCorr<<" "<<SB1e.effCorr<<" "<<SIGLDP.effCorr<<" "<<SBLDP.effCorr<<" "
+		   <<SIG.totalSystematic()<<" "<<SB.totalSystematic()<<" "<<SIG1m.totalSystematic()<<" "<<SB1m.totalSystematic()<<" "<<SIG1e.totalSystematic()<<" "<<SB1e.totalSystematic()<<" "<<SIGLDP.totalSystematic()<<" "<<SBLDP.totalSystematic()<<endl;
 
 //     cout<<" == Signed JES systematic in SB and SIG "<<endl;
 //     cout<<"["<<100*SB.systematics["JES"].minus<<" "<<100*SB.systematics["JES"].plus<<"]"
@@ -597,6 +604,8 @@ void runSystematics2011_LM9(  TString sampleOfInterest="LM9" ) {
 
 }
 
+//WOULD NEED AN UPDATE TO SUPPORT WIDE SB
+/*
 void runSystematicsSlow_shape(  TString sampleOfInterest="LM9" ) {
   loadSamples(true,"complete"); // "complete" 
 
@@ -665,11 +674,11 @@ void runSystematicsSlow_shape(  TString sampleOfInterest="LM9" ) {
   cout<<endl;
 
 }
-
+*/
 
 //much more efficienct signal efficiency systematics calculation for mSugra and SMS
-map<pair<int,int>, SignalEffData>  runTH2Syst2011_mSugra(const SearchRegion & region, 
-                 const bool isSL=false, const bool isLDP=false, const TString & sampleOfInterest="mSUGRAtanb40") {
+map<pair<int,int>, SignalEffData>  runTH2Syst2011_mSugra(const SearchRegion & region, const bool is1m, const bool is1e,
+							 const bool isLDP, const TString & sampleOfInterest="mSUGRAtanb40") {
 
   //some of this is prob not needed, but to be safe
   useFlavorHistoryWeights_=false;
@@ -685,9 +694,12 @@ map<pair<int,int>, SignalEffData>  runTH2Syst2011_mSugra(const SearchRegion & re
 
 
   region.Print();
-  assert ( !( isSL&&isLDP));
+  assert ( !( is1m&&isLDP));
+  assert ( !( is1e&&isLDP));
+  assert ( !( is1e&&is1m));
   if (isLDP) cout<<"   == LDP "<<endl;
-  if (isSL) cout<<"   == SL "<<endl;
+  if (is1m) cout<<"   == 1m "<<endl;
+  if (is1e) cout<<"   == 1e "<<endl;
 
 
   TString btagselection = region.btagSelection;
@@ -706,7 +718,8 @@ map<pair<int,int>, SignalEffData>  runTH2Syst2011_mSugra(const SearchRegion & re
   }
   else {assert(0);}
   TCut baseline = "cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && passCleaning==1";
-  if (isSL) baseline = "cutPV==1 && cut3Jets==1 && ((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && MT_Wlep>=0 && MT_Wlep<100 && passCleaning==1";
+  if (is1e) baseline = "cutPV==1 && cut3Jets==1 && nElectrons==1 && nMuons==0 && MT_Wlep>=0 && MT_Wlep<100 && passCleaning==1";
+  if (is1m) baseline = "cutPV==1 && cut3Jets==1 && nElectrons==0 && nMuons==1 && MT_Wlep>=0 && MT_Wlep<100 && passCleaning==1";
   TCut passOther = "minDeltaPhiN>=4";
   if (isLDP) passOther="minDeltaPhiN<4";
   selection_ = baseline && HTcut && passOther && SRMET && bcut;
@@ -729,7 +742,7 @@ map<pair<int,int>, SignalEffData>  runTH2Syst2011_mSugra(const SearchRegion & re
 	  && currentConfig_.Contains("PUunc0")&& currentConfig_.Contains("BTagEff0")&& currentConfig_.Contains("HLTEff0") );
 
   usePUweight_=true;
-  useMHTeff_=true;
+  useMHTeff_=false; //treated in the likelihood
   useHTeff_=true;
   selection_ = baseline && HTcut && passOther && SRMET; //remove b tag
   btagSFweight_=bweightstring; // add b tag back in the form of the SF
@@ -747,6 +760,25 @@ map<pair<int,int>, SignalEffData>  runTH2Syst2011_mSugra(const SearchRegion & re
   susyScanYields kFactorMinusYields=ismSugra && do_kfactor_variation ? getSusyScanYields(sampleOfInterest): nominalYields;
 
   susyCrossSectionVariation_=""; //reset to default k factors
+
+  //now HF b-tag
+  TString btagprobbase=btagSFweight_;
+  //b/c +
+  btagSFweight_ = btagprobbase + "_HFplus";
+  susyScanYields hfPlusYields=getSusyScanYields(sampleOfInterest);
+  //b/c -
+  btagSFweight_ = btagprobbase + "_HFminus";
+  susyScanYields hfMinusYields=getSusyScanYields(sampleOfInterest);
+
+  //now LF b-tag
+  btagSFweight_ = btagprobbase + "_LFplus";
+  susyScanYields lfPlusYields=getSusyScanYields(sampleOfInterest);
+  btagSFweight_ = btagprobbase + "_LFminus";
+  susyScanYields lfMinusYields=getSusyScanYields(sampleOfInterest);
+
+  //reset the sf weight string
+  btagSFweight_ = bweightstring;
+
 
   // == do PDF uncertainties ==
   pair<susyScanYields,susyScanYields> cteqXplusminus;
@@ -794,17 +826,7 @@ map<pair<int,int>, SignalEffData>  runTH2Syst2011_mSugra(const SearchRegion & re
   for (  susyScanYields::iterator imsugra=rawYields.begin(); imsugra!=rawYields.end(); ++imsugra) {
     SignalEffData theseResults;
 
-    assert( eff_SB_1e_MHT_err_[0] == eff_SB_1m_MHT_err_[0]); //until i update this code to work with the split e/mu
-    assert( eff_SB_1e_MHT_err_[1] == eff_SB_1m_MHT_err_[1]);
-
-    //take care of trigger efficiency systematics, which differs between SB and SIG, SL, LDP, etc
-    if (region.isSIG && !isSL &&!isLDP) theseResults.set("trigger",eff_SIG_MHT_err_[0],eff_SIG_MHT_err_[1]);
-    else if (!region.isSIG && !isSL && !isLDP) theseResults.set("trigger",eff_SB_MHT_err_[0],eff_SB_MHT_err_[1]);
-    else if (region.isSIG && isSL) theseResults.set("trigger",eff_SIG_SL_MHT_err_[0],eff_SIG_SL_MHT_err_[1]);
-    else if (!region.isSIG && isSL) theseResults.set("trigger",eff_SB_1m_MHT_err_[0],eff_SB_1m_MHT_err_[1]);
-    else if (region.isSIG && isLDP) theseResults.set("trigger",eff_SIG_ldp_MHT_err_[0],eff_SIG_ldp_MHT_err_[1]);
-    else if (!region.isSIG && isLDP) theseResults.set("trigger",eff_SB_ldp_MHT_err_[0],eff_SB_ldp_MHT_err_[1]);
-    else assert(0);
+    theseResults.set("trigger",0,0); //this is now treated in the likelihood directly
 
     if (rawYields[imsugra->first] >0) {
       cout<<imsugra->first.first<<" "<<imsugra->first.second<<" " //m0 and m12
@@ -821,6 +843,14 @@ map<pair<int,int>, SignalEffData>  runTH2Syst2011_mSugra(const SearchRegion & re
       double kfactorP = ((kFactorPlusYields[imsugra->first] - nominalYield) / nominalYield);
       double kfactorM = ((kFactorMinusYields[imsugra->first] - nominalYield) / nominalYield);
       theseResults.set("kFactor",kfactorM,kfactorP);
+
+      double hfP = ((hfPlusYields[imsugra->first] - nominalYield) / nominalYield);
+      double hfM = ((hfMinusYields[imsugra->first] - nominalYield) / nominalYield);
+      theseResults.set("btag",hfM,hfP);
+
+      double lfP = ((lfPlusYields[imsugra->first] - nominalYield) / nominalYield);
+      double lfM = ((lfMinusYields[imsugra->first] - nominalYield) / nominalYield);
+      theseResults.set("lftag",lfM,lfP);
 
       //pdf uncertainties
       //      if (fullPdfUncertainties) {
@@ -893,14 +923,26 @@ void runSystematics2011_scanBoxByBox(TString sampleOfInterest, const unsigned in
   
   if (iregion>=searchRegions_.size() ) { cout<<"There are only "<<searchRegions_.size()<<" search regions!"<<endl; return;}
  
-  if (ibox >= 6) { cout<<"There are only 6 boxes!"<<endl; return;}
+  /* the boxes:
+sb
+sig
+sb 1m
+sig 1m
+sb 1e
+sig 1e
+sb ldp
+sig ldp
+  */
+
+  if (ibox >= 8) { cout<<"There are only 8 boxes!"<<endl; return;}
 
   SearchRegion region = ( ibox%2 == 0) ? sbRegions_[iregion] : searchRegions_[iregion];
 
-  bool isSL  = (ibox == 2 || ibox==3) ? true : false;
-  bool isLDP = (ibox == 4 || ibox==5) ? true : false;
+  bool is1m  = (ibox == 2 || ibox==3) ? true : false;
+  bool is1e  = (ibox == 4 || ibox==5) ? true : false;
+  bool isLDP = (ibox == 6 || ibox==7) ? true : false;
 
-  map<pair<int,int>, SignalEffData> sedmap = runTH2Syst2011_mSugra(region,isSL,isLDP,sampleOfInterest);
+  map<pair<int,int>, SignalEffData> sedmap = runTH2Syst2011_mSugra(region,is1m,is1e,isLDP,sampleOfInterest);
 
   TString id;
   id.Form("%s_%d_%d",sampleOfInterest.Data(),iregion,ibox);
@@ -952,10 +994,15 @@ void loadSystematics2011_scanBoxByBox(TString sampleOfInterest, const unsigned i
   map<pair<int,int>, SignalEffData> SIG = loadSignalEffDataMapFromFiles(id);
   
   id.Form("%s_%d_%d",sampleOfInterest.Data(),iregion,ibox++);
-  map<pair<int,int>, SignalEffData> SBSL = loadSignalEffDataMapFromFiles(id);
+  map<pair<int,int>, SignalEffData> SB1m = loadSignalEffDataMapFromFiles(id);
   id.Form("%s_%d_%d",sampleOfInterest.Data(),iregion,ibox++);
-  map<pair<int,int>, SignalEffData> SIGSL =loadSignalEffDataMapFromFiles(id);
+  map<pair<int,int>, SignalEffData> SIG1m =loadSignalEffDataMapFromFiles(id);
   
+  id.Form("%s_%d_%d",sampleOfInterest.Data(),iregion,ibox++);
+  map<pair<int,int>, SignalEffData> SB1e = loadSignalEffDataMapFromFiles(id);
+  id.Form("%s_%d_%d",sampleOfInterest.Data(),iregion,ibox++);
+  map<pair<int,int>, SignalEffData> SIG1e =loadSignalEffDataMapFromFiles(id);
+ 
   id.Form("%s_%d_%d",sampleOfInterest.Data(),iregion,ibox++);
   map<pair<int,int>, SignalEffData> SBLDP =loadSignalEffDataMapFromFiles(id);
   id.Form("%s_%d_%d",sampleOfInterest.Data(),iregion,ibox++);
@@ -969,9 +1016,18 @@ void loadSystematics2011_scanBoxByBox(TString sampleOfInterest, const unsigned i
       TMath::Nint(scanSMSngen->GetBinContent(scanSMSngen->FindBin(iscanpoint->first.first,iscanpoint->first.second ))); 
     
     (*textfiles)<<iscanpoint->first.first <<" "<<iscanpoint->first.second <<" "<<nentries<<" "
-		     <<SIG[iscanpoint->first].rawYield<<" "<<SB[iscanpoint->first].rawYield<<" "<<SIGSL[iscanpoint->first].rawYield<<" "<<SBSL[iscanpoint->first].rawYield<<" "<<SIGLDP[iscanpoint->first].rawYield<<" "<<SBLDP[iscanpoint->first].rawYield<<" "
-		<<SIG[iscanpoint->first].effCorr<<" "<<SB[iscanpoint->first].effCorr<<" "<<SIGSL[iscanpoint->first].effCorr<<" "<<SBSL[iscanpoint->first].effCorr<<" "<<SIGLDP[iscanpoint->first].effCorr<<" "<<SBLDP[iscanpoint->first].effCorr<<" "
-		<<SIG[iscanpoint->first].totalSystematic()<<" "<<SB[iscanpoint->first].totalSystematic()<<" "<<SIGSL[iscanpoint->first].totalSystematic()<<" "<<SBSL[iscanpoint->first].totalSystematic()<<" "<<SIGLDP[iscanpoint->first].totalSystematic()<<" "<<SBLDP[iscanpoint->first].totalSystematic()<<endl;
+		<<SIG[iscanpoint->first].rawYield<<" "<<SB[iscanpoint->first].rawYield<<" "
+		<<SIG1m[iscanpoint->first].rawYield<<" "<<SB1m[iscanpoint->first].rawYield<<" "
+		<<SIG1e[iscanpoint->first].rawYield<<" "<<SB1e[iscanpoint->first].rawYield<<" "
+		<<SIGLDP[iscanpoint->first].rawYield<<" "<<SBLDP[iscanpoint->first].rawYield<<" "
+		<<SIG[iscanpoint->first].effCorr<<" "<<SB[iscanpoint->first].effCorr<<" "
+		<<SIG1m[iscanpoint->first].effCorr<<" "<<SB1m[iscanpoint->first].effCorr<<" "
+		<<SIG1e[iscanpoint->first].effCorr<<" "<<SB1e[iscanpoint->first].effCorr<<" "
+		<<SIGLDP[iscanpoint->first].effCorr<<" "<<SBLDP[iscanpoint->first].effCorr<<" "
+		<<SIG[iscanpoint->first].totalSystematic()<<" "<<SB[iscanpoint->first].totalSystematic()<<" "
+		<<SIG1m[iscanpoint->first].totalSystematic()<<" "<<SB1m[iscanpoint->first].totalSystematic()<<" "
+		<<SIG1e[iscanpoint->first].totalSystematic()<<" "<<SB1e[iscanpoint->first].totalSystematic()<<" "
+		<<SIGLDP[iscanpoint->first].totalSystematic()<<" "<<SBLDP[iscanpoint->first].totalSystematic()<<endl;
   }
   
   //now output to root. need to convert back to TH2D
