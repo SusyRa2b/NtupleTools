@@ -4,7 +4,7 @@
 
 #include "TRegexp.h"
 
-TString sedfPath = "/home/joshmt/09Feb_mSUGRA_output/"; //for signal systematics
+TString sedfPath = "/home/joshmt/30May_T1tttt_output/"; //for signal systematics
 
 //useful for playing around with plots in interactive ROOT
 TH1D* hinteractive=0;
@@ -510,6 +510,20 @@ void setSearchRegions( TString  which="") {
 
     sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=150&&MET<250","METFineBin6",false));
     searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=500","METFineBin6"));
+  }
+  else if (which=="testHTbins") {
+    setTrigEff("WideSB"); //set trigger efficiency
+
+    sbRegions_.push_back( SearchRegion( "ge1b","HT>=400 && HT<500","MET>=200&&MET<250","HTBin1",false));
+    searchRegions_.push_back( SearchRegion( "ge1b","HT>=400 && HT<500","MET>=250","HTBin1"));
+
+    sbRegions_.push_back( SearchRegion( "ge1b","HT>=500 && HT<600","MET>=200&&MET<250","HTBin2",false));
+    searchRegions_.push_back( SearchRegion( "ge1b","HT>=500 && HT<600","MET>=250","HTBin2"));
+
+    sbRegions_.push_back( SearchRegion( "ge1b","HT>=600","MET>=200&&MET<250","HTBin3",false));
+    searchRegions_.push_back( SearchRegion( "ge1b","HT>=600","MET>=250","HTBin3"));
+
+    
   }
 //These are the nominal search regions for the "Moriond 2012" analysis
   else if (which=="Moriond") {
@@ -1451,6 +1465,16 @@ void setScanPoint(const TString & name) {
   m0_=m0.Atoi();
   m12_=m12.Atoi();
 }
+
+
+int getSMSProdProcess(const TString & sample) {
+
+  if (sample.Contains("T1")) return 8; //gluino-gluino production
+  assert(0); //T2 needs implementation
+
+  return 10;
+}
+
 
 void loadScanSMSngen(const TString& sampleOfInterest) {
   if (scanSMSngen==0) scanSMSngen = (TH2D*) files_[currentConfig_][sampleOfInterest]->Get("scanSMSngen");
@@ -4253,10 +4277,10 @@ vector<susyScanYields> getSusyScanYields(const TString & sampleOfInterest,const 
 	    //need to multiply by N_gen_nominal / N_gen_ipdf
 	    //N_gen_nominal should match between scanSMSngen and scanProcessTotals!
 	    TH2D* thishist = scanProcessTotalsMap[make_pair(mgl,mlsp)][pdfset];
-	    assert( thishist->GetBinContent(10,0) == TMath::Nint(scanSMSngen->GetBinContent(scanSMSngen->FindBin(mgl,mlsp))) );
+	    assert( thishist->GetBinContent( getSMSProdProcess(sampleOfInterest),0) == TMath::Nint(scanSMSngen->GetBinContent(scanSMSngen->FindBin(mgl,mlsp))) );
 	    //this cout was a useful check, but it's a *lot* of output
 	    //	    cout<<"   -- Rescaling PDF weights by "<< thishist->GetBinContent(10,0)<<" / "<< thishist->GetBinContent(10,ipdf)<<endl;
-	    nevents *= thishist->GetBinContent(10,0) / thishist->GetBinContent(10,ipdf);
+	    nevents *= thishist->GetBinContent(getSMSProdProcess(sampleOfInterest),0) / thishist->GetBinContent(getSMSProdProcess(sampleOfInterest),ipdf);
 
 	    oneSetOfYields[make_pair(mgl,mlsp)] = nevents;//make_pair(nevents,0); //skip errors for now
 	  }
