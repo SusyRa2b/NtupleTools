@@ -564,7 +564,6 @@ bool EventCalculator::isZmumuCandidateEvent(const float ptthreshold) {
 	}
 
       }// j loop
-
     }//i loop
 
   } //two high pt leptons
@@ -617,7 +616,6 @@ bool EventCalculator::isZeeCandidateEvent(const float ptthreshold) {
 	}
 
       }// j loop
-
     }//i loop
 
   } //two high pt leptons
@@ -1213,7 +1211,7 @@ float EventCalculator::getMHTphi(int ignoredJet) {
 
 
 
-float EventCalculator::getZllMET(bool isMuMu, float& ZllMETphi) {
+float EventCalculator::getZllMET(bool isMuMu, bool isHybridMC, float& ZllMETphi) {
   float myMET= getMET();
   ZllMETphi = getMETphi();
 
@@ -1222,17 +1220,25 @@ float EventCalculator::getZllMET(bool isMuMu, float& ZllMETphi) {
 
   double l1_px,l2_px,l1_py,l2_py;
 
-  if(isMuMu){
-    l1_px = myMuonsPF->at( ZmumuCand1_ ).pt * cos( myMuonsPF->at( ZmumuCand1_ ).phi );
-    l2_px = myMuonsPF->at( ZmumuCand2_ ).pt * cos( myMuonsPF->at( ZmumuCand2_ ).phi );
-    l1_py = myMuonsPF->at( ZmumuCand1_ ).pt * sin( myMuonsPF->at( ZmumuCand1_ ).phi );
-    l2_py = myMuonsPF->at( ZmumuCand2_ ).pt * sin( myMuonsPF->at( ZmumuCand2_ ).phi );
+  if(isHybridMC){
+    l1_px = myGenParticles->at( ZllMCCand1_ ).pt * cos( myGenParticles->at( ZllMCCand1_ ).phi );
+    l2_px = myGenParticles->at( ZllMCCand2_ ).pt * cos( myGenParticles->at( ZllMCCand2_ ).phi );
+    l1_py = myGenParticles->at( ZllMCCand1_ ).pt * sin( myGenParticles->at( ZllMCCand1_ ).phi );
+    l2_py = myGenParticles->at( ZllMCCand2_ ).pt * sin( myGenParticles->at( ZllMCCand2_ ).phi );
   }
   else{
-    l1_px = myElectronsPF->at( ZeeCand1_ ).pt * cos( myElectronsPF->at( ZeeCand1_ ).phi );
-    l2_px = myElectronsPF->at( ZeeCand2_ ).pt * cos( myElectronsPF->at( ZeeCand2_ ).phi );
-    l1_py = myElectronsPF->at( ZeeCand1_ ).pt * sin( myElectronsPF->at( ZeeCand1_ ).phi );
-    l2_py = myElectronsPF->at( ZeeCand2_ ).pt * sin( myElectronsPF->at( ZeeCand2_ ).phi );
+    if(isMuMu){
+      l1_px = myMuonsPF->at( ZmumuCand1_ ).pt * cos( myMuonsPF->at( ZmumuCand1_ ).phi );
+      l2_px = myMuonsPF->at( ZmumuCand2_ ).pt * cos( myMuonsPF->at( ZmumuCand2_ ).phi );
+      l1_py = myMuonsPF->at( ZmumuCand1_ ).pt * sin( myMuonsPF->at( ZmumuCand1_ ).phi );
+      l2_py = myMuonsPF->at( ZmumuCand2_ ).pt * sin( myMuonsPF->at( ZmumuCand2_ ).phi );
+    }
+    else{
+      l1_px = myElectronsPF->at( ZeeCand1_ ).pt * cos( myElectronsPF->at( ZeeCand1_ ).phi );
+      l2_px = myElectronsPF->at( ZeeCand2_ ).pt * cos( myElectronsPF->at( ZeeCand2_ ).phi );
+      l1_py = myElectronsPF->at( ZeeCand1_ ).pt * sin( myElectronsPF->at( ZeeCand1_ ).phi );
+      l2_py = myElectronsPF->at( ZeeCand2_ ).pt * sin( myElectronsPF->at( ZeeCand2_ ).phi );
+    }
   }
 
   //assume we didn't see the leptons from Z  
@@ -1950,12 +1956,12 @@ double EventCalculator::getMinDeltaPhiMETN_MC(bool addquad=false, bool keith=fal
 }
 
 
-double EventCalculator::getDeltaPhiZllMETN_deltaT(unsigned int ijet, float otherpt, float othereta, bool otherid, bool dataJetRes, bool keith, bool ismumu) {
+double EventCalculator::getDeltaPhiZllMETN_deltaT(unsigned int ijet, float otherpt, float othereta, bool otherid, bool dataJetRes, bool keith, bool ismumu, bool isHybridMC) {
 
   if(ijet==999999) return -99;
 
   float theMETphi;
-  float theMET = getZllMET(ismumu, theMETphi);
+  float theMET = getZllMET(ismumu, isHybridMC, theMETphi);
 
   double METx = theMET * cos(theMETphi);
   double METy = theMET * sin(theMETphi);
@@ -1977,7 +1983,7 @@ double EventCalculator::getDeltaPhiZllMETN_deltaT(unsigned int ijet, float other
 
 
 double EventCalculator::getDeltaPhiZllMETN( unsigned int goodJetN, float mainpt, float maineta, bool mainid,
-					    float otherpt, float othereta, bool otherid, bool dataJetRes, bool keith, bool ismumu) {
+					    float otherpt, float othereta, bool otherid, bool dataJetRes, bool keith, bool ismumu, bool isHybridMC) {
   
   //find the goodJetN-th good jet -- this is the jet deltaPhiN will be calculated for
   unsigned int ijet = 999999;
@@ -1993,11 +1999,11 @@ double EventCalculator::getDeltaPhiZllMETN( unsigned int goodJetN, float mainpt,
   }
   if(ijet == 999999) return -99;
 
-  double deltaT = getDeltaPhiZllMETN_deltaT(ijet, otherpt, othereta, otherid, dataJetRes, keith, ismumu);
+  double deltaT = getDeltaPhiZllMETN_deltaT(ijet, otherpt, othereta, otherid, dataJetRes, keith, ismumu, isHybridMC);
 
   //calculate deltaPhiMETN
   float theMETphi;
-  double theMET = getZllMET(ismumu, theMETphi);
+  double theMET = getZllMET(ismumu, isHybridMC, theMETphi);
   double dp =  getDeltaPhi(myJetsPF->at(ijet).phi, theMETphi);
   double dpN = dp / atan2(deltaT, theMET);
   
@@ -2006,13 +2012,14 @@ double EventCalculator::getDeltaPhiZllMETN( unsigned int goodJetN, float mainpt,
 
 
 double EventCalculator::getMinDeltaPhiZllMETN(unsigned int maxjets, float mainpt, float maineta, bool mainid, 
-					   float otherpt, float othereta, bool otherid, bool dataJetRes, bool keith, bool ismumu) {//Ben
+					      float otherpt, float othereta, bool otherid, bool dataJetRes, bool keith, bool ismumu, bool isHybridMC) {//Ben
   
   double mdpN=1E12;
   
   for (unsigned int i=0; i<maxjets; i++) {
     if(i>=nGoodJets()) break;
-    double dpN =  getDeltaPhiZllMETN(i, mainpt, maineta, mainid, otherpt, othereta, otherid, dataJetRes, keith, ismumu);//i is for i'th *good* jet, starting at i=0. returns -99 if bad jet.
+    double dpN =  getDeltaPhiZllMETN(i, mainpt, maineta, mainid, otherpt, othereta, otherid, dataJetRes, keith, ismumu, isHybridMC);
+    //i is for i'th *good* jet, starting at i=0. returns -99 if bad jet.
     if (dpN>=0 && dpN<mdpN) mdpN=dpN;//checking that dpN>=0 shouldn't be necessary after break statement above, but add it anyway 
   }
 
@@ -5480,6 +5487,7 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   float eleet1, elephi1, eleeta1, muonpt1, muonphi1, muoneta1;
   int elecharge1, muoncharge1;
   float eleet2, elephi2, eleeta2, muonpt2, muonphi2, muoneta2;
+  int elecharge2, muoncharge2;
   float muoniso1,muonchhadiso1,muonphotoniso1,muonneutralhadiso1;
   float taupt1, taueta1;
   float eleRelIso,muonRelIso;
@@ -5552,7 +5560,9 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
 
   //bool passZmumuCand, passZeeCand;
   //float zmumuMET, zeeMET, zmumuMETphi, zmumuMinDeltaPhiN, zeeMETphi, zeeMinDeltaPhiN;
-
+  //int zDecayMode, zllNLeptonsRecoMatched;
+  //bool passGenZllInAcc;
+  //float zllMCMass, zllMCHybridMET, zllMCHybridMinDeltaPhiN;
 
   std::vector<int> vrun,vlumi,vevent;
   loadEventList(vrun, vlumi, vevent);
@@ -6089,9 +6099,11 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("muonneutralhadiso1",&muonneutralhadiso1,"muonneutralhadiso1/F");
 
   reducedTree.Branch("eleet2",&eleet2,"eleet2/F");
+  reducedTree.Branch("elecharge2",&elecharge2,"elecharge2/I");
   reducedTree.Branch("elephi2",&elephi2,"elephi2/F");
   reducedTree.Branch("eleeta2",&eleeta2,"eleeta2/F");
   reducedTree.Branch("muonpt2",&muonpt2,"muonpt2/F");
+  reducedTree.Branch("muoncharge2",&muoncharge2,"muoncharge2/I");
   reducedTree.Branch("muonphi2",&muonphi2,"muonphi2/F");
   reducedTree.Branch("muoneta2",&muoneta2,"muoneta2/F");
 
@@ -6173,7 +6185,13 @@ Also the pdfWeightSum* histograms that are used for LM9.
   //reducedTree.Branch("zeeMETphi",&zeeMETphi,"zeeMETphi/F");
   //reducedTree.Branch("zmumuMinDeltaPhiN",&zmumuMinDeltaPhiN,"zmumuMinDeltaPhiN/F");
   //reducedTree.Branch("zeeMinDeltaPhiN",&zeeMinDeltaPhiN,"zeeMinDeltaPhiN/F");
-
+  //reducedTree.Branch("zDecayMode",&zDecayMode,"zDecayMode/I");
+  //reducedTree.Branch("passGenZllInAcc", &passGenZllInAcc, "passGenZllInAcc/O");
+  //reducedTree.Branch("zllNLeptonsRecoMatched",&zllNLeptonsRecoMatched,"zllNLeptonsRecoMatched/I");
+  //
+  //reducedTree.Branch("zllMCMass",&zllMCMass,"zllMCMass/F");
+  //reducedTree.Branch("zllMCHybridMET",&zllMCHybridMET,"zllMCHybridMET/F");
+  //reducedTree.Branch("zllMCHybridMinDeltaPhiN",&zllMCHybridMinDeltaPhiN,"zllMCHybridMinDeltaPhiN/F");
 
   //jmt -- note that .size() returns an int. Will we ever hit the 32-bit limit with this datatype?
   int nevents = stream.size();
@@ -6714,6 +6732,8 @@ Also the pdfWeightSum* histograms that are used for LM9.
       muonpt2 = muonPtOfN(2,5);
       muonphi2 = muonPhiOfN(2,5);
       muoneta2 = muonEtaOfN(2,5);
+      elecharge2 = eleChargeOfN(2,5);
+      muoncharge2 = muonChargeOfN(2,5);
 
       taupt1 = tauPtOfN(1);     
       taueta1 = tauEtaOfN(1);     
@@ -6736,25 +6756,73 @@ Also the pdfWeightSum* histograms that are used for LM9.
       recomuonmindphijet2 = recoMuonMinDeltaPhiJetOfN(2,5);
 
 
+      /*
+      if (sampleName_.Contains("DYJetsToLL") || isRealData ){//maybe should also include ttbar for purity studies
+      	passZmumuCand = isZmumuCandidateEvent(17);
+      	zmumuMET = -99; zmumuMETphi = -99; zmumuMinDeltaPhiN = -99;
+      	zeeMET = -99; zeeMETphi = -99; zeeMinDeltaPhiN = -99;
+      	if(passZmumuCand){
+      	  float zllmetphi;
+      	  zmumuMET = getZllMET(true, false, zllmetphi);
+      	  zmumuMETphi = zllmetphi;
+      	  zmumuMinDeltaPhiN = getMinDeltaPhiZllMETN(3,true);
+      	}
+      	passZeeCand = isZeeCandidateEvent(17);
+      	if(passZeeCand){
+      	  float zllmetphi;
+      	  zeeMET = getZllMET(false, false,  zllmetphi);
+      	  zeeMETphi = zllmetphi;
+      	  zeeMinDeltaPhiN = getMinDeltaPhiZllMETN(3,false);
+      	}
 
-      //if (sampleName_.Contains("DYJetsToLL") || isRealData ){//maybe should also include ttbar for purity studies
-      //	passZmumuCand = isZmumuCandidateEvent(17);
-      //	zmumuMET = -99; zmumuMETphi = -99; zmumuMinDeltaPhiN = -99;
-      //	zeeMET = -99; zeeMETphi = -99; zeeMinDeltaPhiN = -99;
-      //	if(passZmumuCand){
-      //	  float zllmetphi;
-      //	  zmumuMET = getZllMET(true, zllmetphi);
-      //	  zmumuMETphi = zllmetphi;
-      //	  zmumuMinDeltaPhiN = getMinDeltaPhiZllMETN(3,true);
-      //	}
-      //	passZeeCand = isZeeCandidateEvent(17);
-      //	if(passZeeCand){
-      //	  float zllmetphi;
-      //	  zeeMET = getZllMET(false, zllmetphi);
-      //	  zeeMETphi = zllmetphi;
-      //	  zeeMinDeltaPhiN = getMinDeltaPhiZllMETN(3,false);
-      //	}
-      //}
+	//grab gen-level info
+	if(!isRealData){
+	  zDecayMode = -99, zllMCMass = -99;
+	  passGenZllInAcc = false;
+
+	  if(findZ(zDecayMode, ZllMCCand1_, ZllMCCand2_) && (zDecayMode==11 || zDecayMode==13)){	    
+	    passGenZllInAcc = genZllInAcceptance(ZllMCCand1_, ZllMCCand2_, zllMCMass);
+
+	    //compute the zmumuMET,zeeMET using the gen-level lepton pT
+	    //(this is needed to compute the acceptance *after* applying modifiedMET cut)
+	    float zllMCHybridmetphi;
+	    zllMCHybridMET = getZllMET(false, true, zllMCHybridmetphi);
+	    zllMCHybridMinDeltaPhiN = getMinDeltaPhiZllMETN(3,false,true);
+
+	    //if(zDecayMode==11){
+	    //  std::cout << "zeeMET = " << zeeMET << ", zllMCHybridMET = " << zllMCHybridMET << std::endl;
+	    //  std::cout << "zeemdp = " << zeeMinDeltaPhiN << ", zllhybridmdp = " << zllMCHybridMinDeltaPhiN << std::endl;
+	    //}
+	    //else if(zDecayMode==13){
+	    //  std::cout << "zmumuMET = " << zmumuMET << ", zllMCHybridMET = " << zllMCHybridMET << std::endl;
+	    //  std::cout << "zeemdp = " << zeeMinDeltaPhiN << ", zllhybridmdp = " << zllMCHybridMinDeltaPhiN << std::endl;
+	    //}
+
+	    //while we're at it, see if these leptons in acceptance are matched to good reco-leptons
+	    //(i.e. let's compute the MC lepton efficiency)
+	    if(passGenZllInAcc){
+	      bool isRecoMatched_l1 = false, isRecoMatched_l2 = false;
+	      if(zDecayMode==11){
+		if(electronMatch(ZllMCCand1_,17,true)>=0) isRecoMatched_l1 = true;
+		if(electronMatch(ZllMCCand2_,17,true)>=0) isRecoMatched_l2 = true;
+	      }
+	      else if(zDecayMode==13){
+		if(muonMatch(ZllMCCand1_,17,true)>=0) isRecoMatched_l1 = true;
+		if(muonMatch(ZllMCCand2_,17,true)>=0) isRecoMatched_l2 = true;
+	      }
+
+	      if(isRecoMatched_l1 && isRecoMatched_l2) zllNLeptonsRecoMatched = 2;
+	      else if( !isRecoMatched_l1 && !isRecoMatched_l2) zllNLeptonsRecoMatched = 0;
+	      else zllNLeptonsRecoMatched = 1;
+
+	    }
+
+	  }
+	}
+	//std::cout << "zDecayMode = " << zDecayMode << ", zllGenInvMassWRTmZ = " << zllGenInvMassWRTmZ << std::endl;
+
+      }
+      */
 
       csctighthaloFilter = jmt::doubleToBool(triggerresultshelper1_csctighthaloFilter);
       eenoiseFilter = jmt::doubleToBool(triggerresultshelper1_eenoiseFilter) ;
@@ -6815,7 +6883,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
       reducedTree.Fill();
       
 
-      } //end of reduced tree skim
+    } //end of reduced tree skim
   } //end of loop over events
   stopTimer(nevents);
 
@@ -7593,7 +7661,7 @@ int EventCalculator::findW(int& W, int& Wdaughter,int parent=0, bool fromtop=tru
    return -1;
 }
 
-int EventCalculator::muonMatch(const int trueMuon)
+int EventCalculator::muonMatch(const int trueMuon, const float ptthreshold, bool mustMatchToGood)
 {
   //cout << "muon match" << endl;
   unsigned int maxMuons = myMuonsPF->size(); 
@@ -7602,11 +7670,13 @@ int EventCalculator::muonMatch(const int trueMuon)
       //cout << "deltaR " << deltaR(myMuonsPF->at(thisMuon).eta,myMuonsPF->at(thisMuon).phi,myGenParticles->at(trueMuon).eta,myGenParticles->at(trueMuon).phi) << endl;
       //if(isGoodMuon(thisMuon)) cout << "is good" << endl;
       //else cout << "is bad" << endl;
-      if( isGoodMuon(thisMuon) && jmt::deltaR(myMuonsPF->at(thisMuon).eta,myMuonsPF->at(thisMuon).phi,myGenParticles->at(trueMuon).eta,myGenParticles->at(trueMuon).phi) < 0.3 )
+      if( isGoodMuon(thisMuon,false,ptthreshold) && jmt::deltaR(myMuonsPF->at(thisMuon).eta,myMuonsPF->at(thisMuon).phi,myGenParticles->at(trueMuon).eta,myGenParticles->at(trueMuon).phi) < 0.3 )
 	{ 
 	  return thisMuon;
 	}
     }
+  if(mustMatchToGood) return -1;
+
   for(unsigned int thisMuon = 0;thisMuon < maxMuons ; thisMuon++)
     {
       //check proximity to any reconstructed muon at deltaR<0.3
@@ -7618,17 +7688,19 @@ int EventCalculator::muonMatch(const int trueMuon)
   return -1;
 }
 
-int EventCalculator::electronMatch(const int trueElectron)
+int EventCalculator::electronMatch(const int trueElectron, const float ptthreshold, bool mustMatchToGood)
 {
   unsigned int maxElectrons = myElectronsPF->size(); 
   for(unsigned int thisElectron = 0;thisElectron < maxElectrons ; thisElectron++)
     {
       //check proximity to any reconstructed muon at deltaR<0.3
-      if( isGoodElectron(thisElectron) && jmt::deltaR(myElectronsPF->at(thisElectron).eta,myElectronsPF->at(thisElectron).phi,myGenParticles->at(trueElectron).eta,myGenParticles->at(trueElectron).phi) < 0.3 )
+      if( isGoodElectron(thisElectron,false,ptthreshold) && jmt::deltaR(myElectronsPF->at(thisElectron).eta,myElectronsPF->at(thisElectron).phi,myGenParticles->at(trueElectron).eta,myGenParticles->at(trueElectron).phi) < 0.3 )
 	{ 
 	  return thisElectron;
 	}
     }
+  if(mustMatchToGood) return -1;
+
   for(unsigned int thisElectron = 0;thisElectron < maxElectrons ; thisElectron++)
     {
       //check proximity to any reconstructed muon at deltaR<0.3
@@ -7913,6 +7985,205 @@ int EventCalculator::getWDecayType(int& WdecayType, int& W, int& Wdaughter, bool
   
   return 0;
 }
+
+
+
+//return the decay mode of the Z
+//and the final state MC daughters
+bool EventCalculator::findZ(int& decaymode, int& lepton1_index, int& lepton2_index)
+{
+  bool foundZ = false;
+  unsigned int maxParticles = myGenParticles->size();
+
+  //std::cout << "maxParticles = " << maxParticles << std::endl;
+
+  for(unsigned int iParticle = 0; iParticle<maxParticles; iParticle++)
+    {
+      if(abs(TMath::Nint(myGenParticles->at(iParticle).pdgId)) == 23 && TMath::Nint(myGenParticles->at(iParticle).status) == 3){
+	//std::cout << "found Z" << std::endl;
+	foundZ = true;
+
+	int firstdaughter = TMath::Nint(myGenParticles->at(iParticle).firstDaughter); 
+	int lastdaughter = TMath::Nint(myGenParticles->at(iParticle).firstDaughter)+1;//look at first two daughters only
+	//int lastdaughter = TMath::Nint(myGenParticles->at(iParticle).lastDaughter);
+
+	int firstdaughter_id = TMath::Nint(myGenParticles->at(firstdaughter).pdgId);
+	int lastdaughter_id = TMath::Nint(myGenParticles->at(lastdaughter).pdgId);
+
+	//int daughter1_status = TMath::Nint(myGenParticles->at(firstdaughter).status);
+	//int daughter2_status = TMath::Nint(myGenParticles->at(lastdaughter).status);
+	
+	//for(int i = firstdaughter; i <= lastdaughter; i++){
+	//  std::cout << "\t " << i << ", id = " << TMath::Nint(myGenParticles->at(i).pdgId) 
+	//	    << ", status = " << TMath::Nint(myGenParticles->at(i).status) 
+	//	    << ", pT = "  << myGenParticles->at(i).pt
+	//	    << ", eta = " << myGenParticles->at(i).eta
+	//	    << ", phi = " << myGenParticles->at(i).phi
+	//	    << std::endl;	 	  
+	//}
+	
+
+	if( abs(firstdaughter_id)== 11 && abs(lastdaughter_id)==11 ){
+	  decaymode = 11;
+	}
+	else if( abs(firstdaughter_id)== 13 && abs(lastdaughter_id)==13 ){
+	  decaymode = 13;
+	}
+	else if( abs(firstdaughter_id)== 15 && abs(lastdaughter_id)==15 ){
+	  decaymode = 15;
+	}
+	else{std::cout << "ERROR: unrecognized decay mode" << std::endl; assert(0);}
+
+
+	if(decaymode == 11 || decaymode == 13){
+
+
+	  //Get information on daughters of the first lepton-from-Z
+	  int daughter1_firstd = TMath::Nint(myGenParticles->at(firstdaughter).firstDaughter);
+	  //int daughter1_lastd = TMath::Nint(myGenParticles->at(firstdaughter).lastDaughter);
+	  
+	  //for(int i = daughter1_firstd; i<=daughter1_lastd; i++){
+	  //  std::cout << "\t\t " << i << ", id = " << TMath::Nint(myGenParticles->at(i).pdgId) 
+	  //	      << ", status = " << TMath::Nint(myGenParticles->at(i).status) 
+	  //	      << ", pT = "  << myGenParticles->at(i).pt 
+	  //	      << ", eta = " << myGenParticles->at(i).eta 
+	  //	      << ", phi = " << myGenParticles->at(i).phi
+	  //	      << std::endl;	 	  
+	  //}
+	  
+	  //what is the status of the first lepton
+	  int daughter1_firstdstatus = TMath::Nint(myGenParticles->at(daughter1_firstd).status);
+
+	  while(daughter1_firstdstatus != 1){
+	    
+	    daughter1_firstd = TMath::Nint(myGenParticles->at(daughter1_firstd).firstDaughter);
+	    daughter1_firstdstatus = TMath::Nint(myGenParticles->at(daughter1_firstd).status);
+
+	    //for(int i = daughter1_firstd; i<=daughter1_firstd; i++){
+	    //  std::cout << "\t\t " << i << ", id = " << TMath::Nint(myGenParticles->at(i).pdgId) 
+	    //		<< ", status = " << TMath::Nint(myGenParticles->at(i).status) 
+	    //		<< ", pT = "  << myGenParticles->at(i).pt 
+	    //		<< ", eta = " << myGenParticles->at(i).eta 
+	    //		<< ", phi = " << myGenParticles->at(i).phi
+	    //		<< std::endl;	 	  
+	    //}
+
+	  }
+
+	  //now we found the final state lepton, save it
+	  lepton1_index = daughter1_firstd;
+
+
+	  //Get information on daughters of the second lepton-from-Z
+	  int daughter2_firstd = TMath::Nint(myGenParticles->at(lastdaughter).firstDaughter);
+	  //int daughter2_lastd = TMath::Nint(myGenParticles->at(lastdaughter).lastDaughter);
+
+	  //for(int i = daughter2_firstd; i<=daughter2_lastd; i++){
+	  //  std::cout << "\t\t " << i << ", id = " << TMath::Nint(myGenParticles->at(i).pdgId) 
+	  //	      << ", status = " << TMath::Nint(myGenParticles->at(i).status) 
+	  //	      << ", pT = "  << myGenParticles->at(i).pt 
+	  //	      << ", eta = " << myGenParticles->at(i).eta 
+	  //	      << ", phi = " << myGenParticles->at(i).phi
+	  //	      << std::endl;	 	  
+	  //}
+
+	  //what is the status of the second lepton
+	  int daughter2_firstdstatus = TMath::Nint(myGenParticles->at(daughter2_firstd).status);
+
+	  while(daughter2_firstdstatus != 1){
+	    
+	    daughter2_firstd = TMath::Nint(myGenParticles->at(daughter2_firstd).firstDaughter);
+	    daughter2_firstdstatus = TMath::Nint(myGenParticles->at(daughter2_firstd).status);
+
+	    //for(int i = daughter2_firstd; i<=daughter2_firstd; i++){
+	    //  std::cout << "\t\t " << i << ", id = " << TMath::Nint(myGenParticles->at(i).pdgId) 
+	    //		<< ", status = " << TMath::Nint(myGenParticles->at(i).status) 
+	    //		<< ", pT = "  << myGenParticles->at(i).pt 
+	    //		<< ", eta = " << myGenParticles->at(i).eta 
+	    //		<< ", phi = " << myGenParticles->at(i).phi 
+	    //		<< std::endl;	 	  
+	    //}
+
+	  }
+
+	  //now we found the final state lepton, save it
+	  lepton2_index = daughter2_firstd;
+
+	  //std::cout << "lepton1_index = " << lepton1_index << ", lepton2_index = " << lepton2_index << std::endl;
+
+	}
+
+
+      }
+    }
+
+  return foundZ;
+}
+
+
+bool EventCalculator::genZllInAcceptance(int lepton1_index, int lepton2_index, float& zllMass){
+
+  bool inAcceptance = false;
+
+  float m_ll;
+	 
+  //std::cout << "mass = " << myGenParticles->at(lepton1_index).mass << std::endl;
+
+  int l1_pdgid = abs(TMath::Nint(myGenParticles->at(lepton1_index).pdgId));
+  float l1_pt = myGenParticles->at(lepton1_index).pt;
+  float l1_phi = myGenParticles->at(lepton1_index).phi;
+  float l1_eta = myGenParticles->at(lepton1_index).eta;
+  float l1_px = l1_pt*cos( l1_phi );
+  float l1_py = l1_pt*sin( l1_phi );
+  float l1_pz = l1_pt*sinh( l1_eta );
+
+  float l1_mass = myGenParticles->at(lepton1_index).mass;
+  float l1_en = sqrt(l1_px*l1_px + l1_py*l1_py + l1_pz*l1_pz + l1_mass*l1_mass);
+
+  int l2_pdgid = abs(TMath::Nint(myGenParticles->at(lepton2_index).pdgId));
+  float l2_pt = myGenParticles->at(lepton2_index).pt;
+  float l2_phi = myGenParticles->at(lepton2_index).phi;
+  float l2_eta = myGenParticles->at(lepton2_index).eta;
+  float l2_px = l2_pt*cos( l2_phi );
+  float l2_py = l2_pt*sin( l2_phi );
+  float l2_pz = l2_pt*sinh( l2_eta );
+
+  float l2_mass = myGenParticles->at(lepton2_index).mass;
+  float l2_en = sqrt(l2_px*l2_px + l2_py*l2_py + l2_pz*l2_pz + l2_mass*l2_mass);
+
+  float z_en = l1_en + l2_en;
+
+  float z_px = l1_px + l2_px;
+  float z_py = l1_py + l2_py;
+  float z_pz = l1_pz + l2_pz;
+
+
+  //check if leptons are in kinematic acceptance (hard-coded)
+  if(l1_pdgid == 11 && l2_pdgid == 11){
+    if(l1_pt>=17 && l2_pt>=17 
+       && fabs(l1_eta) < 2.5 
+       && !(fabs(l1_eta) > 1.4442 && fabs(l1_eta) < 1.566)
+       && fabs(l2_eta) < 2.5 
+       && !(fabs(l2_eta) > 1.4442 && fabs(l2_eta) < 1.566)) inAcceptance = true;
+  }
+  else if(l1_pdgid == 13 && l2_pdgid == 13){
+    if(l1_pt>=17 && l2_pt>=17 && fabs(l1_eta)<2.4 && fabs(l2_eta)<2.4) inAcceptance = true;
+  }
+  else{
+    std::cout << "Leptons are neither electrons nor muons, exiting" << std::endl;
+    assert(0);
+  }
+
+
+  //compute invariant mass
+  m_ll = sqrt(z_en*z_en - z_px*z_px - z_py*z_py - z_pz*z_pz);
+  zllMass = m_ll;
+  //std::cout << "m_ll = " << m_ll << std::endl;
+  if( fabs(m_ll - mZ_) < 15 && inAcceptance) return true;
+
+  return false;
+}
+
 
 void EventCalculator::sampleAnalyzer(itreestream& stream){
 

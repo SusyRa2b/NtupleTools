@@ -164,7 +164,7 @@ public:
   float getMHTphi();
   float getMHTphi(int ignoredJet);
 
-  float getZllMET(bool isMuMu, float& ZllMETphi);
+  float getZllMET(bool isMuMu, bool isHybridMC, float& ZllMETphi);
 
   void getTransverseThrustVariables(float & thrust, float & thrustPhi, bool addMET);
   void getSphericityJetMET(float & lambda1, float & lambda2, float & det,const int jetmax, bool addMET);
@@ -200,12 +200,12 @@ public:
   double getMinDeltaPhiMETN_MC(bool addquad, bool keith);
 
   //for Zll-modified MET 
-  double getDeltaPhiZllMETN_deltaT(unsigned int ijet, float otherpt, float othereta, bool otherid, bool dataJetRes, bool keith, bool ismumu);
-  double getDeltaPhiZllMETN_deltaT(unsigned int ijet, bool ismumu) { return getDeltaPhiZllMETN_deltaT(ijet,30,2.4,true,false,false,ismumu);  } 
-  double getDeltaPhiZllMETN( unsigned int goodJetN, float mainpt, float maineta, bool mainid, float otherpt, float othereta, bool otherid, bool dataJetRes, bool keith, bool ismumu ); 
-  double getDeltaPhiZllMETN( unsigned int goodJetN, bool ismumu ) {return getDeltaPhiZllMETN(goodJetN,50,2.4,true,30,2.4,true,false,false,ismumu); }; 
-  double getMinDeltaPhiZllMETN(unsigned int maxjets, float mainmt, float maineta, bool mainid, float otherpt, float othereta, bool otherid, bool dataJetRes, bool keith, bool ismumu ); //Ben
-  double getMinDeltaPhiZllMETN(unsigned int maxjets, bool ismumu) {return getMinDeltaPhiZllMETN(maxjets,50,2.4,true,30,2.4,true,false,false,ismumu); }; 
+  double getDeltaPhiZllMETN_deltaT(unsigned int ijet, float otherpt, float othereta, bool otherid, bool dataJetRes, bool keith, bool ismumu, bool isHybridMC);
+  double getDeltaPhiZllMETN_deltaT(unsigned int ijet, bool ismumu, bool isHybridMC) { return getDeltaPhiZllMETN_deltaT(ijet,30,2.4,true,false,false,ismumu, isHybridMC);  } 
+  double getDeltaPhiZllMETN( unsigned int goodJetN, float mainpt, float maineta, bool mainid, float otherpt, float othereta, bool otherid, bool dataJetRes, bool keith, bool ismumu, bool isHybridMC ); 
+  double getDeltaPhiZllMETN( unsigned int goodJetN, bool ismumu, bool isHybridMC) {return getDeltaPhiZllMETN(goodJetN,50,2.4,true,30,2.4,true,false,false,ismumu, isHybridMC); }; 
+  double getMinDeltaPhiZllMETN(unsigned int maxjets, float mainmt, float maineta, bool mainid, float otherpt, float othereta, bool otherid, bool dataJetRes, bool keith, bool ismumu, bool isHybridMC);
+  double getMinDeltaPhiZllMETN(unsigned int maxjets, bool ismumu, bool isHybridMC = false) {return getMinDeltaPhiZllMETN(maxjets,50,2.4,true,30,2.4,true,false,false,ismumu, isHybridMC); }; 
 
   double getMaxDeltaPhiNMET(unsigned int maxjets);
   double getTransverseMETSignificance(unsigned int thisJet);
@@ -338,12 +338,15 @@ public:
   
   int WDecayType(const int Wparent,int& Wdaughter);
   int findW(int& W, int& Wdaughter, int parent, bool fromtop);
-  int muonMatch(const int trueMuon);
-  int electronMatch(const int trueElectron);
+  int muonMatch(const int trueMuon, const float ptthreshold=10, bool mustMatchToGood=false);
+  int electronMatch(const int trueElectron, const float ptthreshold=10, bool mustMatchToGood=false);
   int tauMatch(const int trueTau);
   int daughterMatch(const int Wdaughter, const int WdecayType);
   int getTTbarDecayType(int& W1decayType, int& W2decayType, int& W1, int& W1daughter, int& W2, int& W2daughter, bool passW2info);
   int getWDecayType(int& WdecayType, int& W, int& Wdaughter, bool fromtop);
+
+  bool findZ(int& decaymode, int& lepton1_index, int& lepton2_index);
+  bool genZllInAcceptance(int lepton1_index, int lepton2_index, float& zllMass);
 
   double getCrossSection();
 
@@ -521,8 +524,9 @@ private:
   std::vector<TString> requiredCut_; //new feature to *turn on* a cut that is usually not required by a given cut scheme
 
 
-  uint ZmumuCand1_, ZmumuCand2_;
-  uint ZeeCand1_, ZeeCand2_;
+  int ZmumuCand1_, ZmumuCand2_;
+  int ZeeCand1_, ZeeCand2_;
+  int ZllMCCand1_, ZllMCCand2_;
 
 };
 
