@@ -130,8 +130,8 @@ public:
   bool isCleanMuon(const unsigned int imuon, const float ptthreshold=10);
   unsigned int countMu(const float ptthreshold=10);
 
-  bool isZmumuCandidateEvent(const float ptthreshold);
-  bool isZeeCandidateEvent(const float ptthreshold);
+  bool isZmumuCandidateEvent(const float ptthreshold, float& m_ll);
+  bool isZeeCandidateEvent(const float ptthreshold, float& m_ll);
 
 
   bool isGoodTau(const unsigned int itau, const float pTthreshold=20, const float etaMax=2.4);
@@ -252,12 +252,14 @@ public:
   bool isGoodJet30(unsigned int ijet) {return isGoodJet(ijet,30,2.4,true);}
   bool isGoodJetMHT(unsigned int ijet);
   bool passBTagger(int ijet, BTaggerType btagger=Nbtaggers );
+  bool passVLBTagger(int ijet);
 
   unsigned int nGoodJets();
   //  unsigned int nGoodJets(TH2D* count,TH2D* unc,TH2D* l2l3); //for a test
   unsigned int nGoodJets30();
   unsigned int nGoodBJets( BTaggerType btagger=Nbtaggers);
   unsigned int nTrueBJets();
+  unsigned int nGoodVLBJets();
 
   void getSmearedUnclusteredMET(float & myMET, float & myMETphi);
 
@@ -273,6 +275,7 @@ public:
   float getJetEnergy( unsigned int ijet ) ;
   bool jetPassLooseID( unsigned int ijet );
   float getJetCSV( unsigned int ijet );
+  float getJetTCHE( unsigned int ijet );
 
   float jetPtOfN(unsigned int n);
   float jetGenPtOfN(unsigned int n);
@@ -285,14 +288,17 @@ public:
   float jetChargedHadronFracOfN(unsigned int n);
   int jetChargedHadronMultOfN(unsigned int n);
 
-  float bjetPtOfN(unsigned int n);
-  float bjetPhiOfN(unsigned int n);
-  float bjetEtaOfN(unsigned int n);
-  float bjetEnergyOfN(unsigned int n);
-  float bjetCSVOfN(unsigned int n);
-  int bjetFlavorOfN(unsigned int n);
-  float bjetChargedHadronFracOfN(unsigned int n);
-  int bjetChargedHadronMultOfN(unsigned int n);
+  float bjetPtOfN(unsigned int n, BTaggerType thebtaggertype=Nbtaggers);
+  float bjetPhiOfN(unsigned int n, BTaggerType thebtaggertype=Nbtaggers);
+  float bjetEtaOfN(unsigned int n, BTaggerType thebtaggertype=Nbtaggers);
+  float bjetEnergyOfN(unsigned int n, BTaggerType thebtaggertype=Nbtaggers);
+  float bjetCSVOfN(unsigned int n, BTaggerType thebtaggertype=Nbtaggers);
+  int bjetFlavorOfN(unsigned int n, BTaggerType thebtaggertype=Nbtaggers);
+  float bjetChargedHadronFracOfN(unsigned int n, BTaggerType thebtaggertype=Nbtaggers);
+  int bjetChargedHadronMultOfN(unsigned int n, BTaggerType thebtaggertype=Nbtaggers);
+
+  float vlBjetCSVOfN(unsigned int n);
+  float vlBjetTCHEOfN(unsigned int n);
 
   float elePtOfN(unsigned int n, const float ptthreshold=10);
   float eleEtaOfN(unsigned int n, const float ptthreshold=10);
