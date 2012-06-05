@@ -1,1 +1,1 @@
-/cu2/ra2b/Ftuples/V00-02-35_example/QCD_Pt-470to600_TuneZ2_7TeV_pythia6_ntuple_48_1_bD9.root
+/cu3/kreis/Ftuples/V00-01-03/QCD_Pt_1000to1400_TuneZ2_7TeV_pythia6/ntuple_100_5_ZlL.root
