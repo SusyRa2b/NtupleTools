@@ -1588,7 +1588,7 @@ int EventCalculator::getJetMisCategoryType1(bool skipMETfraction=false) {
   int nUnderTight=0;
   
   for (unsigned int i=0; i< myJetsPF->size(); i++) {
-    if (!isGoodJet(i, 30, 5, false)) continue;
+    if (!isGoodJet(i, 30, 5, true)) continue;
     
     float genpt = myJetsPF->at(i).genJet_pt;
     float recopt = getJetPt(i);
@@ -1622,7 +1622,7 @@ int EventCalculator::getJetMisCategoryType2(unsigned int targetJet, bool skipMET
   for (unsigned int i=0; i< myJetsPF->size(); i++) {
     if(isGoodJet(i, 50, 2.4, true)) targetCounter++;
     bool thisIsTargetJet = (targetCounter==targetJet) && (passedTarget==false);
-    if (!isGoodJet(i, 30, 5, false)) continue;//must go after first if.
+    if (!isGoodJet(i, 30, 5, true)) continue;//must go after first if.
     
     float genpt = myJetsPF->at(i).genJet_pt;
     float recopt = getJetPt(i);
