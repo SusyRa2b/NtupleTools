@@ -1588,7 +1588,7 @@ int EventCalculator::getJetMisCategoryType1(bool skipMETfraction=false) {
   int nUnderTight=0;
   
   for (unsigned int i=0; i< myJetsPF->size(); i++) {
-    if (!isGoodJet(i, 30, 5, true)) continue;
+    if (!isGoodJet(i, 30, 5, false)) continue;
     
     float genpt = myJetsPF->at(i).genJet_pt;
     float recopt = getJetPt(i);
@@ -1622,7 +1622,7 @@ int EventCalculator::getJetMisCategoryType2(unsigned int targetJet, bool skipMET
   for (unsigned int i=0; i< myJetsPF->size(); i++) {
     if(isGoodJet(i, 50, 2.4, true)) targetCounter++;
     bool thisIsTargetJet = (targetCounter==targetJet) && (passedTarget==false);
-    if (!isGoodJet(i, 30, 5, true)) continue;//must go after first if.
+    if (!isGoodJet(i, 30, 5, false)) continue;//must go after first if.
     
     float genpt = myJetsPF->at(i).genJet_pt;
     float recopt = getJetPt(i);
@@ -1813,7 +1813,7 @@ double EventCalculator::getDeltaPhiMETN_muon( const unsigned int imuon,
 }
 
 double EventCalculator::getDeltaPhiMETN( unsigned int goodJetN, float mainpt, float maineta, bool mainid,
-					 float otherpt, float othereta, bool otherid, bool dataJetRes, bool keith, bool includeMismeasuredJet) {//Ben
+					 float otherpt, float othereta, bool otherid, bool dataJetRes, bool keith, bool includeMismeasuredJet, bool addPi) {//Ben
   
   //find the goodJetN-th good jet -- this is the jet deltaPhiN will be calculated for
   unsigned int ijet = 999999;
@@ -1832,7 +1832,9 @@ double EventCalculator::getDeltaPhiMETN( unsigned int goodJetN, float mainpt, fl
   double deltaT = getDeltaPhiMETN_deltaT(ijet, otherpt, othereta, otherid, dataJetRes, keith, includeMismeasuredJet);
 
   //calculate deltaPhiMETN
-  double dp =  getDeltaPhi(myJetsPF->at(ijet).phi, getMETphi());
+  double dp = 0;
+  if(addPi) dp = getDeltaPhi(TMath::Pi()-myJetsPF->at(ijet).phi, getMETphi());
+  else dp = getDeltaPhi(myJetsPF->at(ijet).phi, getMETphi());
   double dpN = dp / atan2(deltaT, getMET());
   
   return dpN;
@@ -1840,14 +1842,20 @@ double EventCalculator::getDeltaPhiMETN( unsigned int goodJetN, float mainpt, fl
 
 
 double EventCalculator::getMinDeltaPhiMETN(unsigned int maxjets, float mainpt, float maineta, bool mainid, 
-					   float otherpt, float othereta, bool otherid, bool dataJetRes, bool keith, bool includeLeptons, bool includeMismeasuredJet) {//Ben
+					   float otherpt, float othereta, bool otherid, bool dataJetRes, bool keith, bool includeLeptons, bool includeMismeasuredJet, bool addPi) {//Ben
   
   double mdpN=1E12;
   
   for (unsigned int i=0; i<maxjets; i++) {
     if(i>=nGoodJets()) break;
-    double dpN =  getDeltaPhiMETN(i, mainpt, maineta, mainid, otherpt, othereta, otherid, dataJetRes, keith, includeMismeasuredJet);//i is for i'th *good* jet, starting at i=0. returns -99 if bad jet.
+    double dpN =  getDeltaPhiMETN(i, mainpt, maineta, mainid, otherpt, othereta, otherid, dataJetRes, keith, includeMismeasuredJet, false);//i is for i'th *good* jet, starting at i=0. returns -99 if bad jet.
     if (dpN>=0 && dpN<mdpN) mdpN=dpN;//checking that dpN>=0 shouldn't be necessary after break statement above, but add it anyway 
+    
+    if(addPi){
+      double dpNpi =  getDeltaPhiMETN(i, mainpt, maineta, mainid, otherpt, othereta, otherid, dataJetRes, keith, includeMismeasuredJet, true);
+      if (dpNpi>=0 && dpNpi<mdpN) mdpN=dpNpi;
+    }
+    
   }
 
   //this option causes leptons to be treated like jets in calculating DeltaPhi(lepton, MET). the resolution term remains jets only
@@ -5462,7 +5470,7 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   float minDeltaPhiN_withLepton;
   int jetMisCategoryT1, jetMisCategoryT1_noMETfraction;
   int jetMisCategoryT2, jetMisCategoryT2_noMETfraction;
-
+  float minDeltaPhiNpi;
 
   //mc truth tests
   float minDeltaPhiN_MC;
@@ -5948,6 +5956,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("minDeltaPhiN_chosenJet", &minDeltaPhiN_chosenJet, "minDeltaPhiN_chosenJet/i");
   reducedTree.Branch("maxJetMis_chosenJet", &maxJetMis_chosenJet, "maxJetMis_chosenJet/i");
   reducedTree.Branch("maxJetFracMis_chosenJet", &maxJetFracMis_chosenJet, "maxJetFracMis_chosenJet/i");
+  reducedTree.Branch("minDeltaPhiNpi", &minDeltaPhiNpi, "minDeltaPhiNpi/F");
 
   reducedTree.Branch("jetMisCategoryT1", &jetMisCategoryT1, "jetMisCategoryT1/I");
   reducedTree.Branch("jetMisCategoryT1_noMETfraction", &jetMisCategoryT1_noMETfraction, "jetMisCategoryT1_noMETfraction/I");
@@ -6532,7 +6541,9 @@ Also the pdfWeightSum* histograms that are used for LM9.
       maxDeltaPhiAll = getMaxDeltaPhiMET(99);
       maxDeltaPhiAll30 = getMaxDeltaPhiMET30(99);
       maxDeltaPhi30_eta5_noIdAll = getMaxDeltaPhiMET30_eta5_noId(99);
-      
+
+      minDeltaPhiNpi                      = getMinDeltaPhiMETN(3,50,2.4,true, 30,2.4,true, false,false,false,false,true);      
+
       minDeltaPhiN_otherPt10                      = getMinDeltaPhiMETN(3,50,2.4,true, 10,2.4,true, false,false);
       minDeltaPhiN_otherPt20                      = getMinDeltaPhiMETN(3,50,2.4,true, 20,2.4,true, false,false);
       minDeltaPhiN_otherPt30                      = getMinDeltaPhiMETN(3,50,2.4,true, 30,2.4,true, false,false);
