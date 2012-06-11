@@ -1833,7 +1833,7 @@ double EventCalculator::getDeltaPhiMETN( unsigned int goodJetN, float mainpt, fl
 
   //calculate deltaPhiMETN
   double dp = 0;
-  if(addPi) dp = getDeltaPhi(TMath::Pi()-myJetsPF->at(ijet).phi, getMETphi());
+  if(addPi) dp = TMath::Pi() - getDeltaPhi(myJetsPF->at(ijet).phi, getMETphi());
   else dp = getDeltaPhi(myJetsPF->at(ijet).phi, getMETphi());
   double dpN = dp / atan2(deltaT, getMET());
   
