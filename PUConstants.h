@@ -191,6 +191,148 @@ namespace pu {
   };
 
 
+// Distribution used for Summer2012 MC.
+//from https://twiki.cern.ch/twiki/bin/viewauth/CMS/PileupMCReweightingUtilities
+  float Summer2012[60] = {
+    2.344E-05,
+    2.344E-05,
+    2.344E-05,
+    2.344E-05,
+    4.687E-04,
+    4.687E-04,
+    7.032E-04,
+    9.414E-04,
+    1.234E-03,
+    1.603E-03,
+    2.464E-03,
+    3.250E-03,
+    5.021E-03,
+    6.644E-03,
+    8.502E-03,
+    1.121E-02,
+    1.518E-02,
+    2.033E-02,
+    2.608E-02,
+    3.171E-02,
+    3.667E-02,
+    4.060E-02,
+    4.338E-02,
+    4.520E-02,
+    4.641E-02,
+    4.735E-02,
+    4.816E-02,
+    4.881E-02,
+    4.917E-02,
+    4.909E-02,
+    4.842E-02,
+    4.707E-02,
+    4.501E-02,
+    4.228E-02,
+    3.896E-02,
+    3.521E-02,
+    3.118E-02,
+    2.702E-02,
+    2.287E-02,
+    1.885E-02,
+    1.508E-02,
+    1.166E-02,
+    8.673E-03,
+    6.190E-03,
+    4.222E-03,
+    2.746E-03,
+    1.698E-03,
+    9.971E-04,
+    5.549E-04,
+    2.924E-04,
+    1.457E-04,
+    6.864E-05,
+    3.054E-05,
+    1.282E-05,
+    5.081E-06,
+    1.898E-06,
+    6.688E-07,
+    2.221E-07,
+    6.947E-08,
+    2.047E-08
+   };  
+
+  //https://twiki.cern.ch/twiki/bin/view/CMS/PileupJSONFileforData
+  //very crude first attempt...just trying to get something
+  //at command line:
+/*
+pileupCalc.py -i Cert_190456-194479_8TeV_PromptReco_Collisions12_JSON.txt --inputLumiJSON /afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/PileUp/pileup_JSON_DCSONLY_190389-194533.txt --calcMode true --minBiasXsec 69400 --maxPileupBin 60 --numPileupBins 60 MyDataPileupHistogram.root
+
+note that the json files don't exactly correspond
+Then in ROOT:
+ for (int i=1; i<=60; i++) cout<<pileup->GetBinContent(i)<<","<<endl;
+Then copy/paste here
+
+Why the bump at low PU?
+Why the large number of overflows in bin 60?
+*/
+
+  float FirstData2012[60] = {
+    568.943,
+    1358.19,
+    9475.99,
+    2.79881e+06,
+    7.33073e+06,
+    133124,
+    318824,
+    3.61796e+06,
+    1.48302e+07,
+    3.16554e+07,
+    5.15906e+07,
+    7.65019e+07,
+    1.05187e+08,
+    1.30138e+08,
+    1.51041e+08,
+    1.68285e+08,
+    1.70619e+08,
+    1.52533e+08,
+    1.23968e+08,
+    9.62378e+07,
+    7.39321e+07,
+    5.72667e+07,
+    4.48809e+07,
+    3.5617e+07,
+    2.84809e+07,
+    2.27126e+07,
+    1.79169e+07,
+    1.39221e+07,
+    1.0631e+07,
+    7.96323e+06,
+    5.84208e+06,
+    4.19264e+06,
+    2.94107e+06,
+    2.01569e+06,
+    1.34937e+06,
+    882181,
+    563154,
+    350949,
+    213448,
+    126660,
+    73306.8,
+    41369.1,
+    22757.1,
+    12200.3,
+    6373.27,
+    3243.71,
+    1608.35,
+    776.896,
+    365.588,
+    167.601,
+    74.8564,
+    32.5737,
+    13.8103,
+    5.70494,
+    2.29621,
+    0.900496,
+    0.344075,
+    0.128088,
+    0.0464534,
+    414736};
+
   ///////////////////////////////////////////////////
   //The below PU distributions were used for the Summer 2011 result
   ///////////////////////////////////////////////////
