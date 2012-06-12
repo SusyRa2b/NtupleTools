@@ -1,0 +1,41 @@
+ROOTCFLAGS    = $(shell $(ROOTSYS)/bin/root-config --cflags)
+ROOTLIBS      = $(shell $(ROOTSYS)/bin/root-config --libs)
+ROOTGLIBS     = $(shell $(ROOTSYS)/bin/root-config --glibs)
+
+#######################################
+# -- DEFINE ARCH to something sensible!
+#######################################
+#commented out this line from the run_Analysis block
+#didn't seem to do anything other than generate an error...
+#$(CXX) $(CXXFLAGS) -c $< 
+#
+CXX           = g++
+CXXFLAGS      = -O3 -Wall -fPIC
+LD            = g++
+LDFLAGS       = -O3
+SOFLAGS       = -shared
+
+
+CXXFLAGS      += $(ROOTCFLAGS)
+LIBS           = $(ROOTLIBS) 
+
+NGLIBS         = $(ROOTGLIBS) 
+NGLIBS        += -lMinuit
+GLIBS          = $(filter-out -lNew -lz, $(NGLIBS))
+
+all: run_Analysis
+
+CrossSectionTable.o: CrossSectionTable.cxx CrossSectionTable.h
+	$(CXX) $(CXXFLAGS) -c CrossSectionTable.cxx
+
+EventCalculator_cfA.o: EventCalculator_cfA.C EventCalculator_cfA.h
+	$(CXX) $(CXXFLAGS) -c EventCalculator_cfA.C
+
+run_Analysis.o: run_Analysis.C
+	$(CXX) $(CXXFLAGS) -c run_Analysis.C
+
+run_Analysis: CrossSectionTable.o EventCalculator_cfA.o run_Analysis.o 
+	$(LD) $(LDFLAGS) -o run_Analysis CrossSectionTable.o EventCalculator_cfA.o run_Analysis.o $(GLIBS)
+
+clean:
+	rm -f *.o
