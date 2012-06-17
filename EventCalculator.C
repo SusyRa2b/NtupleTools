@@ -519,7 +519,7 @@ unsigned int EventCalculator::countMu(const float ptthreshold) {
   return ngoodmu;
 }
 
-bool EventCalculator::isZmumuCandidateEvent(const float ptthreshold, float& m_ll) {
+bool EventCalculator::isZmumuCandidateEvent(const float ptthreshold, const float mllthreshold, float& m_ll) {
 
   m_ll = -99;
 
@@ -551,7 +551,7 @@ bool EventCalculator::isZmumuCandidateEvent(const float ptthreshold, float& m_ll
 	  double z_pz = myMuonsPF->at(goodmuons.at(i)).pt*sinh(myMuonsPF->at(goodmuons.at(i)).eta) + myMuonsPF->at(goodmuons.at(j)).pt*sinh(myMuonsPF->at(goodmuons.at(j)).eta);
 	  m_ll = sqrt(z_en*z_en - z_px*z_px - z_py*z_py - z_pz*z_pz);
 
-	  if( fabs(m_ll - mZ_) < 15 ){	    
+	  if( fabs(m_ll - mZ_) < mllthreshold ){	    
 	    //save these two candidates
 	    ZmumuCand1_ = goodmuons.at(i);  ZmumuCand2_ = goodmuons.at(j);
 
@@ -570,7 +570,7 @@ bool EventCalculator::isZmumuCandidateEvent(const float ptthreshold, float& m_ll
   return false;
 }
 
-bool EventCalculator::isZeeCandidateEvent(const float ptthreshold, float& m_ll) {
+bool EventCalculator::isZeeCandidateEvent(const float ptthreshold, const float mllthreshold, float& m_ll) {
 
   m_ll = -99;
 
@@ -602,7 +602,7 @@ bool EventCalculator::isZeeCandidateEvent(const float ptthreshold, float& m_ll) 
 	  double z_pz = myElectronsPF->at(goodelectrons.at(i)).pt*sinh(myElectronsPF->at(goodelectrons.at(i)).eta) + myElectronsPF->at(goodelectrons.at(j)).pt*sinh(myElectronsPF->at(goodelectrons.at(j)).eta);
 	  m_ll = sqrt(z_en*z_en - z_px*z_px - z_py*z_py - z_pz*z_pz);
 
-	  if( fabs(m_ll - mZ_) < 15 ){	    
+	  if( fabs(m_ll - mZ_) < mllthreshold ){	    
 	    //save these two candidates
 	    ZeeCand1_ = goodelectrons.at(i);  ZeeCand2_ = goodelectrons.at(j);
 
@@ -819,7 +819,7 @@ bool EventCalculator::passZmumuHLT() {
 }
 
 bool EventCalculator::passZeeHLT() { 
-  //STILL NEEDS TO BE VERIFIED!
+
 
   bool passTrig = false;
 
@@ -4677,6 +4677,8 @@ double EventCalculator::getCrossSection(){
   if (sampleName_.Contains("TT_TuneZ2_7TeV-pythia6-tauola") )                                      return 158;
   //if (sampleName_.Contains("DY") )                                                   return 3048;
   if (sampleName_.Contains("DYJetsToLL_TuneZ2_M-50_7TeV-madgraph-tauola") )          return 3048;
+  if (sampleName_.Contains("ZJetsToLL_200_HT_inf_7TeV-madgraph") )                   return 20.94;
+
   
   if (sampleName_.Contains("LM9_SUSY_sftsht_7TeV-pythia6_v2") )                         return 7.134 * 1.48; //from ProductionSpring2011 twiki
   
@@ -4765,6 +4767,7 @@ TString EventCalculator::getSampleNameOutputString(){
   if (sampleName_.Contains("WJetsToLNu_250_HT_300_TuneZ2_7TeV-madgraph-tauola") )    return "WJetsHT250";
   if (sampleName_.Contains("WJetsToLNu_300_HT_inf_TuneZ2_7TeV-madgraph-tauola") )    return "WJetsHT300";
   if (sampleName_.Contains("DYJetsToLL_TuneZ2_M-50_7TeV-madgraph-tauola") )          return "ZJets";
+  if (sampleName_.Contains("ZJetsToLL_200_HT_inf_7TeV-madgraph") )                   return "ZJetsHT200";
   if (sampleName_.Contains("ww") )                                                   return "WW";
   if (sampleName_.Contains("wz") )                                                   return "WZ";
   if (sampleName_.Contains("zz") )                                                   return "ZZ";
@@ -4936,7 +4939,8 @@ void EventCalculator::loadJetTagEffMaps() {
     f_tageff_ = new TFile("histos_btageff_csvm_wz.root","READ");
   else if (sampleName_.Contains("zz") )  
     f_tageff_ = new TFile("histos_btageff_csvm_zz.root","READ");
-  else if (sampleName_.Contains("DYJetsToLL_TuneZ2_M-50_7TeV-madgraph-tauola") )
+  else if (sampleName_.Contains("DYJetsToLL_TuneZ2_M-50_7TeV-madgraph-tauola") 
+	   || sampleName_.Contains("ZJetsToLL_200_HT_inf_7TeV-madgraph") )
     f_tageff_ = new TFile("histos_btageff_csvm_dyjets.root","READ");
   else if(sampleName_.Contains("LM9")	
 	  ||sampleName_.Contains("SUGRA")
@@ -5615,6 +5619,7 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   float prob0_LFminus,probge1_LFminus,prob1_LFminus,probge2_LFminus,probge3_LFminus,prob2_LFminus;
 
   //bool passZmumuCand, passZeeCand;
+  //bool passZmumuCandLoose, passZeeCandLoose;
   //float zmumuMass, zeeMass,zmumuMET, zeeMET, zmumuMETphi, zmumuMinDeltaPhiN, zeeMETphi, zeeMinDeltaPhiN;
   //int zDecayMode, zllNLeptonsRecoMatched;
   //bool passGenZllInAcc;
@@ -6245,6 +6250,8 @@ Also the pdfWeightSum* histograms that are used for LM9.
   //reducedTree.Branch("zeeMass",&zeeMass,"zeeMass/F");
   //reducedTree.Branch("passZmumuCand", &passZmumuCand, "passZmumuCand/O");
   //reducedTree.Branch("passZeeCand", &passZeeCand, "passZeeCand/O");
+  //reducedTree.Branch("passZmumuCandLoose", &passZmumuCandLoose, "passZmumuCandLoose/O");
+  //reducedTree.Branch("passZeeCandLoose", &passZeeCandLoose, "passZeeCandLoose/O");
   //reducedTree.Branch("zmumuMET",&zmumuMET,"zmumuMET/F");
   //reducedTree.Branch("zeeMET",&zeeMET,"zeeMET/F");
   //reducedTree.Branch("zmumuMETphi",&zmumuMETphi,"zmumuMETphi/F");
@@ -6842,17 +6849,19 @@ Also the pdfWeightSum* histograms that are used for LM9.
 
       /*
       //Z->vv background estimate stuff
-      passZmumuCand = isZmumuCandidateEvent(17, zmumuMass);
+      passZmumuCand = isZmumuCandidateEvent(17, 15, zmumuMass);
+      passZmumuCandLoose = isZmumuCandidateEvent(17, 50, zmumuMass);
       zmumuMET = -99; zmumuMETphi = -99; zmumuMinDeltaPhiN = -99;
       zeeMET = -99; zeeMETphi = -99; zeeMinDeltaPhiN = -99;
-      if(passZmumuCand){
+      if(passZmumuCandLoose){
 	float zllmetphi;
 	zmumuMET = getZllMET(true, false, zllmetphi);
 	zmumuMETphi = zllmetphi;
 	zmumuMinDeltaPhiN = getMinDeltaPhiZllMETN(3,true);
       }
-      passZeeCand = isZeeCandidateEvent(17, zeeMass);
-      if(passZeeCand){
+      passZeeCand = isZeeCandidateEvent(17, 15, zeeMass);
+      passZeeCandLoose = isZeeCandidateEvent(17, 50, zeeMass);
+      if(passZeeCandLoose){
 	float zllmetphi;
 	zeeMET = getZllMET(false, false,  zllmetphi);
 	zeeMETphi = zllmetphi;
@@ -6860,7 +6869,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
       }
 
       //grab gen-level info
-      if(sampleName_.Contains("DYJetsToLL")){
+      if(sampleName_.Contains("DYJetsToLL") || sampleName_.Contains("ZJetsToLL") ){
 	zDecayMode = -99, zllMCMass = -99; 
 	passGenZllInAcc = false;
 
@@ -7055,6 +7064,7 @@ unsigned int EventCalculator::getSeed(){
   if (sampleName_.Contains("WJetsToLNu_300_HT_inf_TuneZ2_7TeV-madgraph-tauola") )    return 4402;
   //if (sampleName_.Contains("DY") )                                                   return 4393;
   if (sampleName_.Contains("DYJetsToLL_TuneZ2_M-50_7TeV-madgraph-tauola") )          return 4393;
+  if (sampleName_.Contains("ZJetsToLL_200_HT_inf_7TeV-madgraph") )                   return 4394;
     
   if (sampleName_.Contains("QCD_Pt-0to5_TuneZ2_7TeV_pythia6") )                    return 4361;
   if (sampleName_.Contains("QCD_Pt-1000to1400_TuneZ2_7TeV_pythia6") )                return 4362;

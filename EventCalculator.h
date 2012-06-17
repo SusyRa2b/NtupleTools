@@ -130,8 +130,8 @@ public:
   bool isCleanMuon(const unsigned int imuon, const float ptthreshold=10);
   unsigned int countMu(const float ptthreshold=10);
 
-  bool isZmumuCandidateEvent(const float ptthreshold, float& m_ll);
-  bool isZeeCandidateEvent(const float ptthreshold, float& m_ll);
+  bool isZmumuCandidateEvent(const float ptthreshold, const float mllthreshold, float& m_ll);
+  bool isZeeCandidateEvent(const float ptthreshold, const float mllthreshold, float& m_ll);
 
 
   bool isGoodTau(const unsigned int itau, const float pTthreshold=20, const float etaMax=2.4);
