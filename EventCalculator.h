@@ -199,6 +199,9 @@ public:
   double getDeltaPhiMETN_MC(unsigned int goodJetN, bool addquad, bool keith);
   double getMinDeltaPhiMETN_MC(bool addquad, bool keith);
 
+  void minDeltaPhiMETN_diySmear(TString smearingType, float &MET_g, float &MET_s, float &HT_s, float &mdpN_s, int &chosenJet);
+
+
   //for Zll-modified MET 
   double getDeltaPhiZllMETN_deltaT(unsigned int ijet, float otherpt, float othereta, bool otherid, bool dataJetRes, bool keith, bool ismumu, bool isHybridMC);
   double getDeltaPhiZllMETN_deltaT(unsigned int ijet, bool ismumu, bool isHybridMC) { return getDeltaPhiZllMETN_deltaT(ijet,30,2.4,true,false,false,ismumu, isHybridMC);  } 
@@ -475,6 +478,10 @@ private:
   TH1D *hEta2p5_3_;
   TH1D *hEta3_5_;
 
+  void loadDiySmear();
+  TF1 *hDiyGaus_;
+  TF1 *hDiy3Gaus_;
+
   //ecal dead cell
   std::vector<cellECAL> badECAL_;
   void loadECALStatus();
@@ -533,7 +540,13 @@ private:
   int ZmumuCand1_, ZmumuCand2_;
   int ZeeCand1_, ZeeCand2_;
   int ZllMCCand1_, ZllMCCand2_;
-
+  
+  struct sort_pairF {
+    bool operator()(const std::pair<double,double> &left, const std::pair<double,double> &right) {
+      return left.first < right.first;
+    }
+  };
+  
 };
 
 #endif

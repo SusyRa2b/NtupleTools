@@ -3,6 +3,7 @@
 #include "PUConstants.h"
 
 #include "TH1.h"
+#include "TF1.h"
 #include "TLorentzVector.h"
 #include "TRandom3.h"
 #include "TTree.h"
@@ -73,6 +74,16 @@ EventCalculator::EventCalculator(const TString & sampleName, jetType theJetType,
   mhtgraph_(0),
   mhtgraphPlus_(0),
   mhtgraphMinus_(0),
+  fDataJetRes_(0),
+  hEta0_0p5_(0),
+  hEta0p5_1_(0),
+  hEta1_1p5_(0), 
+  hEta1p5_2_(0), 
+  hEta2_2p5_(0), 
+  hEta2p5_3_(0), 
+  hEta3_5_(0), 
+  hDiyGaus_(0), 
+  hDiy3Gaus_(0), 
   ResJetPar_(new JetCorrectorParameters("START42_V13_AK5PFchs_L2L3Residual.txt") ),
   L3JetPar_( new JetCorrectorParameters("START42_V13_AK5PFchs_L3Absolute.txt") ),
   L2JetPar_(new JetCorrectorParameters("START42_V13_AK5PFchs_L2Relative.txt") ),
@@ -109,6 +120,8 @@ EventCalculator::EventCalculator(const TString & sampleName, jetType theJetType,
   //loadHLTMHTeff();
   loadHLTHTeff();
   loadDataJetRes();
+
+  loadDiySmear();
 
   loadECALStatus();//could also be in reducedTree
 
@@ -1088,6 +1101,15 @@ float EventCalculator::getDataJetRes(float pt, float eta){
   else {assert(0);}
 }
 
+void EventCalculator::loadDiySmear(){
+
+  hDiyGaus_ = new TF1("g1", "gaus(0)", 0, 2);
+  hDiyGaus_->SetParameters(1,1,.1);
+  hDiy3Gaus_ = new TF1("g3", "gaus(0)+gaus(3)+gaus(6)", 0, 2);
+  hDiy3Gaus_->SetParameters(300,1,.1,1,.7,.15,.1,1.4,.08);
+
+}
+
 int EventCalculator::countGoodPV() {
   
   int ngood=0;
@@ -1655,6 +1677,100 @@ int EventCalculator::getJetMisCategoryType2(unsigned int targetJet, bool skipMET
   return category;
 }
 
+
+void EventCalculator::minDeltaPhiMETN_diySmear(TString smearingType, float &MET_g, float &MET_s, float &HT_s, float &mdpN_s, int &chosenJet){
+  bool verbose = false;
+  if(verbose) cout << "** NEW EVENT **" << endl;
+  MET_g=0;
+  MET_s=0;
+  HT_s=0;
+  mdpN_s=0;
+  chosenJet=0;
+  double METx_g=0, METy_g=0;
+  double METx_s=0, METy_s=0;
+  vector< pair<double,double> > vjets;
+  for (unsigned int i=0; i< myJetsPF->size(); i++) {
+    if (! isGoodJet(i, 0, 2.4, true)) continue;
+    
+    double pt_g = myJetsPF->at(i).genJet_pt;
+    double phi_g = myJetsPF->at(i).genJet_phi;
+    if(verbose) cout << "gen: " << i << " " << pt_g << " " << phi_g << endl;
+
+    METx_g -= pt_g*cos(phi_g);
+    METy_g -= pt_g*sin(phi_g);
+
+    double pt_s = 0;
+    if(smearingType=="g") pt_s = pt_g*hDiyGaus_->GetRandom();
+    else if(smearingType=="3g") pt_s = pt_g*hDiy3Gaus_->GetRandom();
+    else assert(0);
+    double phi_s = phi_g;
+    
+    METx_s -= pt_s*cos(phi_s);
+    METy_s -= pt_s*sin(phi_s);
+    HT_s += pt_s;
+    
+    vjets.push_back( make_pair(pt_s, phi_s) );
+  }
+  MET_g = sqrt(METx_g*METx_g + METy_g*METy_g);
+  MET_s = sqrt(METx_s*METx_s + METy_s*METy_s);
+  double METphi_s = atan2(METy_s,METx_s);
+  if(verbose) cout << "MET_g: " << MET_g << ", MET_s: " << MET_s << endl;
+  if(verbose) cout << "vjets size: " << vjets.size() << endl;
+  
+  //sort
+  sort(vjets.begin(), vjets.end(), sort_pairF());
+  reverse(vjets.begin(), vjets.end());//so largest pt first
+
+  if(verbose) cout << "* find mdpN *" << endl;
+  //loop
+  //apply jet pt cut!!
+  vector< pair<double,int> > vmdpN;
+  int leadjet = 0;
+  for (unsigned int i=0; i< vjets.size(); i++) {
+  //for (unsigned int i=vjets.size()-1; i>=0; i--) {
+    double targetpt = vjets.at(i).first;
+    double targetphi = vjets.at(i).second;
+    double targetptx = targetpt*cos(targetphi);
+    double targetpty = targetpt*sin(targetphi);
+
+    if(verbose) cout << "sort: " << i << " " << targetpt << " " << targetphi << endl;
+
+    if(targetpt>50.0) leadjet++;
+    else break;
+    if(leadjet>=4) break;
+    //now you have one of the lead three jets. calculate mdpN
+
+    //loop over other jets
+    double sum = 0;
+    for (unsigned int j=0; j< vjets.size(); j++) {
+      double otherpt = vjets.at(j).first;
+      double otherphi = vjets.at(j).second;
+      double otherptx = otherpt*cos(otherphi);
+      double otherpty = otherpt*sin(otherphi);
+
+      if(otherpt<30.0) break;//can just break since vjets is sorted;
+      
+      sum += pow(.1*(targetptx*otherpty - targetpty*otherptx), 2);
+    }
+
+    double deltaT = sqrt(sum)/targetpt;
+    double mdpN = getDeltaPhi(targetphi, METphi_s)/atan2(deltaT, MET_s);
+    
+    if(verbose) cout << "mdpN: " << leadjet << " " << mdpN << endl;
+    
+    vmdpN.push_back( make_pair(mdpN, leadjet) );
+  }
+
+  sort(vmdpN.begin(), vmdpN.end(), sort_pairF());//smallest first
+  
+  if(verbose) cout << "SIZE: " << leadjet << " " << vmdpN.size() << endl;
+  if(vmdpN.size()>=1){
+    mdpN_s = vmdpN.at(0).first;
+    chosenJet = vmdpN.at(0).second;
+    if(verbose) cout << "result: " << chosenJet << " " << mdpN_s << endl;
+  }
+  return;
+}
 
 
 
@@ -5610,6 +5726,11 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   bool passBadECAL_METphi52_crackF;
   float worstMisA_badECAL_METphi52_crackF, worstMisF_badECAL_METphi52_crackF;
 
+  float diySmear3g_MET_g=0, diySmear3g_MET_s=0, diySmear3g_HT_s=0, diySmear3g_mdpN_s=0;
+  int diySmear3g_chosenJet=0;  
+  float diySmear1g_MET_g=0, diySmear1g_MET_s=0, diySmear1g_HT_s=0, diySmear1g_mdpN_s=0;
+  int diySmear1g_chosenJet=0;
+
 
   float prob0,probge1,prob1,probge2,probge3,prob2;
   
@@ -6053,7 +6174,18 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("deltaPhiMETJetMaxMis30",&deltaPhiMETJetMaxMis30,"deltaPhiMETJetMaxMis30/F");
   reducedTree.Branch("rankMaxJetMis",&rankMaxJetMis,"rankMaxJetMis/i");
   reducedTree.Branch("rankMaxJetMis30",&rankMaxJetMis30,"rankMaxJetMis30/i");
-  
+
+
+  reducedTree.Branch("diySmear3g_MET_g",&diySmear3g_MET_g,"diySmear3g_MET_g/F");
+  reducedTree.Branch("diySmear3g_MET_s",&diySmear3g_MET_s,"diySmear3g_MET_s/F");
+  reducedTree.Branch("diySmear3g_HT_s",&diySmear3g_HT_s,"diySmear3g_HT_s/F");
+  reducedTree.Branch("diySmear3g_mdpN_s",&diySmear3g_mdpN_s,"diySmear3g_mdpN_s/F");
+  reducedTree.Branch("diySmear3g_chosenJet",&diySmear3g_chosenJet,"diySmear3g_chosenJet/I");
+  reducedTree.Branch("diySmear1g_MET_g",&diySmear1g_MET_g,"diySmear1g_MET_g/F");
+  reducedTree.Branch("diySmear1g_MET_s",&diySmear1g_MET_s,"diySmear1g_MET_s/F");
+  reducedTree.Branch("diySmear1g_HT_s",&diySmear1g_HT_s,"diySmear1g_HT_s/F");
+  reducedTree.Branch("diySmear1g_mdpN_s",&diySmear1g_mdpN_s,"diySmear1g_mdpN_s/F");
+  reducedTree.Branch("diySmear1g_chosenJet",&diySmear1g_chosenJet,"diySmear1g_chosenJet/I");
 
   reducedTree.Branch("CSVout1",&CSVout1,"CSVout1/F");
   reducedTree.Branch("CSVout2",&CSVout2,"CSVout2/F");
@@ -6408,10 +6540,17 @@ Also the pdfWeightSum* histograms that are used for LM9.
       }
     }
 
-
+    
+    bool skipDiySmear = true;//usually set to true because I'm sure it adds a lot of time to processing
+    if(skipDiySmear==0) {
+      minDeltaPhiMETN_diySmear("3g", diySmear3g_MET_g, diySmear3g_MET_s, diySmear3g_HT_s, diySmear3g_mdpN_s, diySmear3g_chosenJet);
+      minDeltaPhiMETN_diySmear("g", diySmear1g_MET_g, diySmear1g_MET_s, diySmear1g_HT_s, diySmear1g_mdpN_s, diySmear1g_chosenJet);
+    }
+    bool passSkimDiySmear = (skipDiySmear==0) && (diySmear1g_HT_s>400 || diySmear3g_HT_s>400);
+    
     //very loose skim for reducedTrees (HT, trigger, throw out bad data)
     ST = getST(); //ST is always bigger than HT
-    if ( passCut("cutLumiMask") && (passCut("cutTrigger") || passCut("cutUtilityTrigger")) && (ST>=300) ) {
+    if ( passCut("cutLumiMask") && (passCut("cutTrigger") || passCut("cutUtilityTrigger")) && ((ST>=300) || passSkimDiySmear)) {
       cutHT = passCut("cutHT"); //should always be true
 
       weight = getWeight(nevents);
@@ -6548,6 +6687,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
       maxDeltaPhiAll = getMaxDeltaPhiMET(99);
       maxDeltaPhiAll30 = getMaxDeltaPhiMET30(99);
       maxDeltaPhi30_eta5_noIdAll = getMaxDeltaPhiMET30_eta5_noId(99);
+
 
       minDeltaPhiNpi                      = getMinDeltaPhiMETN(3,50,2.4,true, 30,2.4,true, false,false,false,false,true);      
 
