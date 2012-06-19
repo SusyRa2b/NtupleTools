@@ -28,6 +28,7 @@ class TRandom3;
 
 //global constants
 const double mW_ = 80.399;
+const double mZ_ = 91.2;
 const double mtop_ = 172.0;
 const double lumi_ = 1.; //fix to 1/pb and scale MC later (e.g. in drawReducedTrees)
 
@@ -142,8 +143,8 @@ public:
   int countGoodPV();
   bool passPV() ;
 
-  float getHT();
-  float getST();
+  float getHT(float ptthreshold=50);
+  float getST(float jetthreshold=50,float leptonthreshold=10);
 
   float getMET();
   float getMETphi();
@@ -155,6 +156,7 @@ public:
   //  void getTransverseThrustVariables(float & thrust, float & thrustPhi, bool addMET);
   void getSphericityJetMET(float & lambda1, float & lambda2, float & det,const int jetmax, bool addMET);
 
+  void jjResonanceFinder(float & mjj1, float & mjj2);//simple first try
 
   bool passCut(const TString cutTag);
   bool setCutScheme();
@@ -273,6 +275,10 @@ public:
   float muonChHadIsoOfN(unsigned int n, const float ptthreshold=10);
   float muonPhotonIsoOfN(unsigned int n, const float ptthreshold=10);
   float muonNeutralHadIsoOfN(unsigned int n, const float ptthreshold=10);
+
+  float getBestZCandidate(const float pt_threshold1,const float pt_threshold2);
+  float getBestZeeCandidate(const float pt_threshold1,const float pt_threshold2);
+  float getBestZmmCandidate(const float pt_threshold1,const float pt_threshold2);
 
   float tauPtOfN(unsigned int n);
   float tauEtaOfN(unsigned int n);

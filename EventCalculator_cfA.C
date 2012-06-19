@@ -553,6 +553,109 @@ unsigned int EventCalculator::countMu(const float ptthreshold) {
   return ngoodmu;
 }
 
+//eventually we might want to get more info, but for now this is good enough
+float EventCalculator::getBestZCandidate(const float pt_threshold1,const float pt_threshold2) {
+
+  float mee = getBestZeeCandidate(pt_threshold1,pt_threshold2);
+  float mmm = getBestZmmCandidate(pt_threshold1,pt_threshold2);
+
+  float best = ( fabs(mee-mZ_) < fabs(mmm-mZ_)) ? mee : mmm;
+
+  return best;
+
+}
+
+float EventCalculator::getBestZeeCandidate(const float pt_threshold1,const float pt_threshold2) {
+  //code copied from Zmm code below (ugly solution)
+  //cout<<"Zee"<<endl;
+  assert(pt_threshold1>=pt_threshold2);
+
+  //my comment -- it pains me that the structure of this code needs to be duplicated for ee and mm, but i don't feel like being more clever
+  float best_mll = -99;
+  //give me lists of all the indices of the good, high pt muons
+  std::vector<uint> goodeles1;
+  std::vector<uint> goodeles2;
+  unsigned int nmu = pf_els_pt->size();
+  for ( unsigned int i = 0; i< nmu; i++) {
+    if (isGoodElectron(i,pt_threshold1)) goodeles1.push_back( i );
+    if (isGoodElectron(i,pt_threshold2)) goodeles2.push_back( i );
+  }
+
+  //need to have at least 2 leptons, and 1 of them must be above the higher pt threshold
+  if( goodeles1.size() >=1 && goodeles2.size()>=2 ) {
+    //loop through the lepton pairs, and check if they are
+    //opposite-signed and form an invariant mass within the Z-mass
+    for ( unsigned int i = 0; i< goodeles1.size(); i++) {
+      for ( unsigned int j = 0; j< goodeles2.size(); j++) {
+	
+	//check opposite charge
+	if (TMath::Nint(pf_els_charge->at( goodeles1.at(i) )) != TMath::Nint(pf_els_charge->at( goodeles2.at(j) )) ) {
+	  
+	  //check invariant mass
+	  double z_en = pf_els_energy->at(goodeles1.at(i)) + pf_els_energy->at(goodeles2.at(j));
+	  double z_px = pf_els_pt->at(goodeles1.at(i))*cos( pf_els_phi->at(goodeles1.at(i))) + pf_els_pt->at(goodeles2.at(j))*cos( pf_els_phi->at(goodeles2.at(j)));
+	  double z_py = pf_els_pt->at(goodeles1.at(i))*sin( pf_els_phi->at(goodeles1.at(i))) + pf_els_pt->at(goodeles2.at(j))*sin( pf_els_phi->at(goodeles2.at(j)));
+	  double z_pz = pf_els_pt->at(goodeles1.at(i))*sinh(pf_els_eta->at(goodeles1.at(i))) + pf_els_pt->at(goodeles2.at(j))*sinh(pf_els_eta->at(goodeles2.at(j)));
+	  float thismll = sqrt(z_en*z_en - z_px*z_px - z_py*z_py - z_pz*z_pz);
+	  
+	  if ( fabs(thismll - mZ_) < fabs(best_mll-mZ_)) best_mll=thismll;
+	}
+
+      }// j loop
+    }//i loop
+
+  } //two high pt leptons
+  //cout<<"done"<<endl;
+  return best_mll;
+}
+
+float EventCalculator::getBestZmmCandidate(const float pt_threshold1,const float pt_threshold2) {
+  //code lifted from Don and converted for cfA
+  //also adapted to work with two different pt thresholds (i hope)
+
+  //cout<<"Zmm"<<endl;
+
+  assert(pt_threshold1>=pt_threshold2);
+
+  //my comment -- it pains me that the structure of this code needs to be duplicated for ee and mm, but i don't feel like being more clever
+  float best_mll = -99;
+  //give me lists of all the indices of the good, high pt muons
+  std::vector<uint> goodmuons1;
+  std::vector<uint> goodmuons2;
+  unsigned int nmu = pf_mus_pt->size();
+  for ( unsigned int i = 0; i< nmu; i++) {
+    if (isCleanMuon(i,pt_threshold1)) goodmuons1.push_back( i );
+    if (isCleanMuon(i,pt_threshold2)) goodmuons2.push_back( i );
+  }
+
+  //need to have at least 2 leptons, and 1 of them must be above the higher pt threshold
+  if( goodmuons1.size() >=1 && goodmuons2.size()>=2 ) {
+    //loop through the lepton pairs, and check if they are
+    //opposite-signed and form an invariant mass within the Z-mass
+    for ( unsigned int i = 0; i< goodmuons1.size(); i++) {
+      for ( unsigned int j = 0; j< goodmuons2.size(); j++) {
+	
+	//check opposite charge
+	if (TMath::Nint(pf_mus_charge->at( goodmuons1.at(i) )) != TMath::Nint(pf_mus_charge->at( goodmuons2.at(j) )) ) {
+	  
+	  //check invariant mass
+	  double z_en = pf_mus_energy->at(goodmuons1.at(i)) + pf_mus_energy->at(goodmuons2.at(j));
+	  double z_px = pf_mus_pt->at(goodmuons1.at(i))*cos( pf_mus_phi->at(goodmuons1.at(i))) + pf_mus_pt->at(goodmuons2.at(j))*cos( pf_mus_phi->at(goodmuons2.at(j)));
+	  double z_py = pf_mus_pt->at(goodmuons1.at(i))*sin( pf_mus_phi->at(goodmuons1.at(i))) + pf_mus_pt->at(goodmuons2.at(j))*sin( pf_mus_phi->at(goodmuons2.at(j)));
+	  double z_pz = pf_mus_pt->at(goodmuons1.at(i))*sinh(pf_mus_eta->at(goodmuons1.at(i))) + pf_mus_pt->at(goodmuons2.at(j))*sinh(pf_mus_eta->at(goodmuons2.at(j)));
+	  float thismll = sqrt(z_en*z_en - z_px*z_px - z_py*z_py - z_pz*z_pz);
+	  
+	  if ( fabs(thismll - mZ_) < fabs(best_mll-mZ_)) best_mll=thismll;
+	}
+
+      }// j loop
+    }//i loop
+
+  } //two high pt leptons
+  //cout<<"done"<<endl;
+  return best_mll;
+}
+
 
 bool EventCalculator::isGoodTau(const unsigned int itau, const float pTthreshold, const float etaMax) {
   return false; //FIXME CFA
@@ -917,25 +1020,23 @@ bool EventCalculator::passPV() {
 
 }
 
-float EventCalculator::getHT() {
+float EventCalculator::getHT(float ptthreshold) {
   float ht=0;
   for (unsigned int i=0; i<jets_AK5PF_pt->size(); i++) {
-    if (isGoodJet( i ) ) ht+= getJetPt(i);
+    if (isGoodJet( i,ptthreshold ) ) ht+= getJetPt(i);
   }
   return ht;
 }
 
-float EventCalculator::getST() {
-  float st=getHT();
-
-  const float ptthreshold=5;
+float EventCalculator::getST(float jetthreshold,float leptonthreshold) {
+  float st=getHT(jetthreshold);
 
   for (unsigned int i=0; i <pf_els_pt->size() ; i++) {
-    if (isGoodElectron(i,false,ptthreshold)) st += pf_els_pt->at(i);
+    if (isGoodElectron(i,false,leptonthreshold)) st += pf_els_pt->at(i);
   }
 
   for ( unsigned int i = 0; i< pf_mus_pt->size(); i++) {
-    if (isCleanMuon(i,ptthreshold)) st += pf_mus_pt->at(i);
+    if (isCleanMuon(i,leptonthreshold)) st += pf_mus_pt->at(i);
   }
   
   return st;
@@ -4175,11 +4276,58 @@ double EventCalculator::getScanCrossSection( SUSYProcess p, const TString & vari
   return 0;
 }
 
+void EventCalculator::jjResonanceFinder(float & mjj1, float & mjj2) {//simple first try
+  mjj1=0;
+  mjj2=0;
+
+  //find the good jets
+  vector<unsigned int> gjets;
+  for (unsigned int i=0; i < jets_AK5PF_pt->size(); ++i) {
+    if (isGoodJet30(i) )  gjets.push_back(i);
+  }
+
+  if ( gjets.size() <4 ) return;
+
+  //0,1  2,3
+  //0,2  1,3
+  //0,3  1,2
+
+  float mindiff=1e9;
+
+  //we only want to look at the lead 4 jets
+  const unsigned int maxjets=4;
+  unsigned int ii=0; //i took out the loop over this. it seems like it is not needed for the strict lead 4 jet case
+  for (unsigned int jj=ii+1; jj<maxjets; jj++) {
+    
+    int otherjet1=-1; int otherjet2=-1;
+    for (unsigned int kk=0; kk<maxjets; kk++) {
+      if (kk!=ii && kk!=jj) {
+	if (otherjet1 == -1) otherjet1=kk;
+	else if (otherjet2==-1) otherjet2=kk;
+      }
+    }
+    //    cout<<ii<<" "<<jj<<"\tOther jets "<<otherjet1<<" "<<otherjet2<<endl;      
+    
+    //get invariant mass of ii,jj and the otherjet pair 
+    float this_mjj1 = calc_mNj(gjets.at(ii),gjets.at(jj));
+    float this_mjj2 = calc_mNj(gjets.at(otherjet1),gjets.at(otherjet2));
+
+    if ( fabs(this_mjj1-this_mjj2) < mindiff) {
+      mindiff = fabs(this_mjj1-this_mjj2);
+      mjj1=this_mjj1;
+      mjj2=this_mjj2;
+    }
+
+  }
+  
+  
+}
+
 double EventCalculator::getSMSScanCrossSection( const double mgluino) {
   //the SMS scan cross sections are not very important, so I have not bothered to fully implement this
 
   return 1; //FIXME need to implement T2bb etc
-  //I don't plan to even fix this...load these in drawReducedTrees now
+  //I don't plan to ever fix this...load these in drawReducedTrees now
 }
 
 
@@ -4551,7 +4699,7 @@ void EventCalculator::reducedTree(TString outputpath) {
 
   ULong64_t lumiSection, eventNumber, runNumber;
   //  float METsig;
-  float ST, HT, MHT, MET, METphi, minDeltaPhi, minDeltaPhiAll, minDeltaPhiAll30,minDeltaPhi30_eta5_noIdAll;
+  float ST, STeff, HT, MHT, MET, METphi, minDeltaPhi, minDeltaPhiAll, minDeltaPhiAll30,minDeltaPhi30_eta5_noIdAll;
   //  float correctedMET, correctedMETphi
   float caloMET;
   float METPFType1,METPFType1phi;
@@ -4611,8 +4759,11 @@ void EventCalculator::reducedTree(TString outputpath) {
 
   int njets, njets30, nbjets, ntruebjets, nElectrons, nMuons, nTaus;
   int nbjetsSSVM,nbjetsTCHET,nbjetsSSVHPT,nbjetsTCHPT,nbjetsTCHPM,nbjetsCSVM,nbjetsCSVL;
-  int nElectrons5, nElectrons15;
-  int nMuons5, nMuons15;
+  int nElectrons5, nElectrons15,nElectrons20;
+  int nMuons5, nMuons15,nMuons20;
+
+  float bestZmass;
+  float mjj1,mjj2,mjjdiff;
 
   float jetpt1, jetgenpt1, jetphi1, jetgenphi1, jeteta1, jetgeneta1, jetenergy1, bjetpt1, bjetphi1, bjeteta1, bjetenergy1;
   float jetpt2, jetgenpt2, jetphi2, jetgenphi2, jeteta2, jetgeneta2, jetenergy2, bjetpt2, bjetphi2, bjeteta2, bjetenergy2;
@@ -4633,6 +4784,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   float recomuoniso1, recomuoniso2;
   float recomuonmindphijet1, recomuonmindphijet2;
 
+  float rl,rMET;
 
   float MT_Wlep;
   float MT_Wlep5,MT_Wlep15;
@@ -4929,6 +5081,13 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("nElectrons15",&nElectrons15,"nElectrons15/I");
   reducedTree.Branch("nMuons15",&nMuons15,"nMuons15/I");
 
+  reducedTree.Branch("nElectrons20",&nElectrons20,"nElectrons20/I"); //jmt
+  reducedTree.Branch("nMuons20",&nMuons20,"nMuons20/I");
+
+  reducedTree.Branch("bestZmass",&bestZmass,"bestZmass/F");
+  reducedTree.Branch("mjj1",&mjj1,"mjj1/F");
+  reducedTree.Branch("mjj2",&mjj2,"mjj2/F");
+  reducedTree.Branch("mjjdiff",&mjjdiff,"mjjdiff/F");
 
   reducedTree.Branch("nbjetsSSVM",&nbjetsSSVM,"nbjetsSSVM/I");
   reducedTree.Branch("nbjetsSSVHPT",&nbjetsSSVHPT,"nbjetsSSVHPT/I");
@@ -4947,6 +5106,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
 
   reducedTree.Branch("HT",&HT,"HT/F");
   reducedTree.Branch("ST",&ST,"ST/F"); //includes HT + leptons
+  reducedTree.Branch("STeff",&STeff,"STeff/F"); //includes HT + leptons + MET
   reducedTree.Branch("MET",&MET,"MET/F");
   //  reducedTree.Branch("METsig",&METsig,"METsig/F");
   reducedTree.Branch("METphi",&METphi,"METphi/F");
@@ -5181,6 +5341,8 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("recomuoniso2",&recomuoniso2,"recomuoniso2/F");
   reducedTree.Branch("recomuonmindphijet2",&recomuonmindphijet1,"recomuonmindphijet2/F");
 
+  reducedTree.Branch("rl",&rl,"rl/F");
+  reducedTree.Branch("rMET",&rMET,"rMET/F");
 
 /*
   reducedTree.Branch("lambda1_allJets",&lambda1_allJets,"lambda1_allJets/F");
@@ -5358,8 +5520,8 @@ Also the pdfWeightSum* histograms that are used for LM9.
     }
 
 
-    //very loose skim for reducedTrees (HT, trigger, throw out bad data)
-    ST = getST(); //ST is always bigger than HT
+    //very loose skim for reducedTrees (HT, trigger)
+    ST = getST(30,10); //ST is always bigger than HT; reducing the jet cut to 30 will only make it larger
     if ( (passCut("cutTrigger") || passCut("cutUtilityTrigger")) && (ST>=400) ) {
       cutHT = passCut("cutHT"); //should always be true
 
@@ -5453,6 +5615,9 @@ Also the pdfWeightSum* histograms that are used for LM9.
       njets = nGoodJets();
       njets30 = nGoodJets30();
 
+      jjResonanceFinder(mjj1,mjj2);
+      mjjdiff=fabs(mjj1-mjj2);
+
       ntruebjets = nTrueBJets();
       nbjets = nGoodBJets();
       nbjetsSSVM = nGoodBJets( kSSVM);
@@ -5478,8 +5643,14 @@ Also the pdfWeightSum* histograms that are used for LM9.
       nMuons5 = countMu(5);
       nElectrons15 = countEle(15);
       nMuons15 = countMu(15);
+      nElectrons20 = countEle(20);
+      nMuons20 = countMu(20);
+
+      bestZmass=getBestZCandidate(20,10);
+
       nTaus = countTau();
       MET=getMET();
+      STeff = ST + MET;
       //      METsig = myMETPF->at(0).mEtSig; //FIXME hard coded for PF
       MHT=getMHT();
       METphi = getMETphi();
@@ -5734,6 +5905,11 @@ Also the pdfWeightSum* histograms that are used for LM9.
       recomuoneta2 = recoMuonEtaOfN(2,5);
       recomuoniso2 = recoMuonIsoOfN(2,5);
       recomuonmindphijet2 = recoMuonMinDeltaPhiJetOfN(2,5);
+
+      rl=0;
+      if (eleet1>muonpt1) rl= eleet1/STeff;
+      else                rl= muonpt1/STeff;
+      rMET = MET/STeff;
 
 
       csctighthaloFilter = cschalofilter_decision==1 ? true : false;
