@@ -1678,7 +1678,7 @@ int EventCalculator::getJetMisCategoryType2(unsigned int targetJet, bool skipMET
 }
 
 
-void EventCalculator::minDeltaPhiMETN_diySmear(TString smearingType, float &MET_g, float &MET_s, float &HT_s, float &mdpN_s, int &chosenJet){
+void EventCalculator::minDeltaPhiMETN_diySmear(TString smearingType, float &MET_g, float &MET_s, float &HT_s, float &mdpN_s, int &chosenJet, int &njets){
   bool verbose = false;
   if(verbose) cout << "** NEW EVENT **" << endl;
   MET_g=0;
@@ -1686,6 +1686,7 @@ void EventCalculator::minDeltaPhiMETN_diySmear(TString smearingType, float &MET_
   HT_s=0;
   mdpN_s=0;
   chosenJet=0;
+  njets=0;
   double METx_g=0, METy_g=0;
   double METx_s=0, METy_s=0;
   vector< pair<double,double> > vjets;
@@ -1704,11 +1705,13 @@ void EventCalculator::minDeltaPhiMETN_diySmear(TString smearingType, float &MET_
     else if(smearingType=="3g") pt_s = pt_g*hDiy3Gaus_->GetRandom();
     else assert(0);
     double phi_s = phi_g;
-    
+
     METx_s -= pt_s*cos(phi_s);
     METy_s -= pt_s*sin(phi_s);
-    HT_s += pt_s;
-    
+    if(pt_s>=50.0) {
+      HT_s += pt_s;
+      njets++;
+    }
     vjets.push_back( make_pair(pt_s, phi_s) );
   }
   MET_g = sqrt(METx_g*METx_g + METy_g*METy_g);
@@ -5730,9 +5733,9 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   float worstMisA_badECAL_METphi52_crackF, worstMisF_badECAL_METphi52_crackF;
 
   float diySmear3g_MET_g=0, diySmear3g_MET_s=0, diySmear3g_HT_s=0, diySmear3g_mdpN_s=0;
-  int diySmear3g_chosenJet=0;  
+  int diySmear3g_chosenJet=0, diySmear3g_njets=0;  
   float diySmear1g_MET_g=0, diySmear1g_MET_s=0, diySmear1g_HT_s=0, diySmear1g_mdpN_s=0;
-  int diySmear1g_chosenJet=0;
+  int diySmear1g_chosenJet=0, diySmear1g_njets=0;
 
 
   float prob0,probge1,prob1,probge2,probge3,prob2;
@@ -6184,11 +6187,13 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("diySmear3g_HT_s",&diySmear3g_HT_s,"diySmear3g_HT_s/F");
   reducedTree.Branch("diySmear3g_mdpN_s",&diySmear3g_mdpN_s,"diySmear3g_mdpN_s/F");
   reducedTree.Branch("diySmear3g_chosenJet",&diySmear3g_chosenJet,"diySmear3g_chosenJet/I");
+  reducedTree.Branch("diySmear3g_njets",&diySmear3g_njets,"diySmear3g_njets/I");
   reducedTree.Branch("diySmear1g_MET_g",&diySmear1g_MET_g,"diySmear1g_MET_g/F");
   reducedTree.Branch("diySmear1g_MET_s",&diySmear1g_MET_s,"diySmear1g_MET_s/F");
   reducedTree.Branch("diySmear1g_HT_s",&diySmear1g_HT_s,"diySmear1g_HT_s/F");
   reducedTree.Branch("diySmear1g_mdpN_s",&diySmear1g_mdpN_s,"diySmear1g_mdpN_s/F");
   reducedTree.Branch("diySmear1g_chosenJet",&diySmear1g_chosenJet,"diySmear1g_chosenJet/I");
+  reducedTree.Branch("diySmear1g_njets",&diySmear1g_njets,"diySmear1g_njets/I");
 
   reducedTree.Branch("CSVout1",&CSVout1,"CSVout1/F");
   reducedTree.Branch("CSVout2",&CSVout2,"CSVout2/F");
@@ -6546,8 +6551,8 @@ Also the pdfWeightSum* histograms that are used for LM9.
     
     bool skipDiySmear = true;//usually set to true because I'm sure it adds a lot of time to processing
     if(skipDiySmear==0) {
-      minDeltaPhiMETN_diySmear("3g", diySmear3g_MET_g, diySmear3g_MET_s, diySmear3g_HT_s, diySmear3g_mdpN_s, diySmear3g_chosenJet);
-      minDeltaPhiMETN_diySmear("g", diySmear1g_MET_g, diySmear1g_MET_s, diySmear1g_HT_s, diySmear1g_mdpN_s, diySmear1g_chosenJet);
+      minDeltaPhiMETN_diySmear("3g", diySmear3g_MET_g, diySmear3g_MET_s, diySmear3g_HT_s, diySmear3g_mdpN_s, diySmear3g_chosenJet, diySmear3g_njets);
+      minDeltaPhiMETN_diySmear("g",  diySmear1g_MET_g, diySmear1g_MET_s, diySmear1g_HT_s, diySmear1g_mdpN_s, diySmear1g_chosenJet, diySmear1g_njets);
     }
     bool passSkimDiySmear = (skipDiySmear==0) && (diySmear1g_HT_s>400 || diySmear3g_HT_s>400);
     

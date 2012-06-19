@@ -199,7 +199,7 @@ public:
   double getDeltaPhiMETN_MC(unsigned int goodJetN, bool addquad, bool keith);
   double getMinDeltaPhiMETN_MC(bool addquad, bool keith);
 
-  void minDeltaPhiMETN_diySmear(TString smearingType, float &MET_g, float &MET_s, float &HT_s, float &mdpN_s, int &chosenJet);
+  void minDeltaPhiMETN_diySmear(TString smearingType, float &MET_g, float &MET_s, float &HT_s, float &mdpN_s, int &chosenJet, int &njets);
 
 
   //for Zll-modified MET 
