@@ -393,6 +393,8 @@ protected:
   float get_AN_12_175_Table3_Value(const float pt);
   float get_AN_12_175_Table4_Value(const float pt);
   float get_AN_12_175_Table5_Value(const float pt);
+  float get_AN_12_175_Table6_Value(const float pt);
+  float get_AN_12_175_Table8_Value(const float pt);
   float get_AN_12_175_Table2_Error(const float pt);
   int getPtBinIndex(const float pt) ;
 

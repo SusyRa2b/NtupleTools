@@ -4999,25 +4999,8 @@ double EventCalculator::getScanCrossSection( SUSYProcess p, const TString & vari
 }
 
 double EventCalculator::getSMSScanCrossSection( const double mgluino) {
-  //the SMS scan cross sections are not very important, so I have not bothered to fully implement this
-
-  return 1; //FIXME need to implement T2bb etc
-
-  double sigma=0;
-
-  if (theScanType_==kSMS) {
-    if (smsCrossSectionFile_==0) {
-      smsCrossSectionFile_ = new TFile("/afs/cern.ch/user/j/joshmt/public/RA2b/dalfonso_T1bbbb_reference_xSec.root");
-      if (smsCrossSectionFile_->IsZombie() ) {cout<<"problem loading SMS cross sections!"<<endl; assert(0);}
-    }
-    //this is all hard-coded for T1bbbb for now
-    TH1D* crosssectionhist = (TH1D*) smsCrossSectionFile_->Get("gluino");
-    int bin = crosssectionhist->FindBin(mgluino);
-    sigma = crosssectionhist->GetBinContent(bin);
-    
-  }
-
-  return sigma;
+  //cross-sections are in drawReducedTrees
+  return 1;
 }
 
 
@@ -5271,6 +5254,24 @@ float EventCalculator::get_AN_12_175_Table5_Value(const float pt) {
 
 }
 
+float EventCalculator::get_AN_12_175_Table6_Value(const float pt) {
+  int bin = getPtBinIndex(pt);
+  if (bin<0) return 1;
+
+  float values[]={1.007,1.005,1.012,1.016,1.016,1.015,1.017,1.0191,1.0068,0.982,0.952,0.910,0.878,0.839};
+  return values[bin];
+
+}
+
+float EventCalculator::get_AN_12_175_Table8_Value(const float pt) {
+  int bin = getPtBinIndex(pt);
+  if (bin<0) return 1;
+
+  float values[]={0.9937,0.9945,1.0022,1.002,1.0031,1.0011,1.0006,1.0001,0.9861,0.967,0.946,0.914,0.884,0.840};
+  return values[bin];
+
+}
+
 
 float EventCalculator::bJetFastsimSF(const TString & what, int flavor,float pt) {
   assert( what == "value" || what=="stat" || what=="syst");
@@ -5294,6 +5295,8 @@ float EventCalculator::bJetFastsimSF(const TString & what, int flavor,float pt) 
       float model_value = 1;
       if (sampleName_.Contains("T1bbbb")) 	model_value = get_AN_12_175_Table4_Value(pt);
       else if (sampleName_.Contains("T1tttt")) 	model_value = get_AN_12_175_Table5_Value(pt);
+      else if (sampleName_.Contains("T2bb")) 	model_value = get_AN_12_175_Table6_Value(pt);
+      else if (sampleName_.Contains("T2tt")) 	model_value = get_AN_12_175_Table8_Value(pt);
       else assert(0);
       //Table 2 versus Table 4
       //Tom says syst_sample = (SF_avg - SF_ttbar)/SF_ttbar 
