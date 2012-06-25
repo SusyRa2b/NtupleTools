@@ -38,32 +38,6 @@ EventCalculator::EventCalculator(const TString & sampleName, const vector<string
   theBTagEffType_(kBTagEff04),
   theHLTEffType_(kHLTEff0),
   theBTaggerType_(kCSVM),
-  //default settings for the collection pointers
-  //this is what used to be in 'InitializeStuff()'
-/* cfA changes
-  myJetsPF( &jet2),    //selectedPatJetsPF
-  myJetsPFhelper( &jethelper2),
-  myElectronsPF( &electron1),
-  myElectronsPFhelper( &electronhelper1),
-  myMuonsPF(&muon1),
-  myMuonsRECO(&muon),
-  myMuonsPFhelper(&muonhelper1),
-  myMuonsRECOhelper(&muonhelper),
-  myTausPF(&tau),
-  myMETPF(&met1),
-  myMETPFType1(&met4),
-  myMETcalo(&met),
-  myVertex(&vertex),
-  myGenParticles(&genparticlehelperra2),
-  myGenWeight(&geneventinfoproduct_weight),
-  myJetsPF_temp(0),
-  myMETPF_temp(0),
-  myEDM_bunchCrossing ( &eventhelper_bunchCrossing),
-  myEDM_event ( &eventhelper_event),
-  myEDM_isRealData ( &eventhelper_isRealData),
-  myEDM_luminosityBlock ( &eventhelper_luminosityBlock),
-  myEDM_run ( &eventhelper_run),
-*/
   crossSectionTanb40_10_(0),
   crossSectionTanb40_05_(0),
   crossSectionTanb40_20_(0),
@@ -264,7 +238,7 @@ void EventCalculator::stopTimer(const Long64_t ntotal) {
 }
 
 bool EventCalculator::isSampleRealData() {
-
+  //CAREFUL HERE!
   if (sampleName_.BeginsWith("HT_Run2012A-PromptReco")) return true;
   return false;
 }
@@ -4319,8 +4293,85 @@ void EventCalculator::jjResonanceFinder(float & mjj1, float & mjj2) {//simple fi
     }
 
   }
-  
-  
+   
+}
+
+std::vector<unsigned int> EventCalculator::jetsetToVector(const vector<unsigned int> & goodjets, const set<unsigned int> & myset) {
+
+  vector<unsigned int> outvec;
+
+  for (  set<unsigned int>::iterator it=myset.begin() ; it != myset.end(); ++it ) {
+    outvec.push_back( goodjets.at(*it));
+  }
+
+  return outvec;
+}
+
+void EventCalculator::jjResonanceFinder5(float & mjj1, float & mjj2) {
+  //  cout<<"=="<<endl;
+  mjj1=0;
+  mjj2=0;
+
+ //find the good jets                                                                                                                                                                               
+  vector<unsigned int> gjets;
+  for (unsigned int i=0; i < jets_AK5PF_pt->size(); ++i) {
+    //for the moment don't bother with the 30 versus 25 GeV cuts. Just use 30
+    if (isGoodJet30(i) )  gjets.push_back(i);
+  }
+  if (gjets.size() < 5) return;
+
+  float mindiff=1e9;
+  // " try all possible pairings of 2 and 3 jets"
+
+  //map is overkill here; could just make this a set. but map works so let's stick with it
+  map<  pair<set<unsigned int>, set<unsigned int> > , pair<float,float> > combos;
+
+  for (unsigned int i1=0; i1<gjets.size(); i1++) {
+    for (unsigned int i2=0; i2<gjets.size(); i2++) {
+      for (unsigned int i3=0; i3<gjets.size(); i3++) {
+	for (unsigned int i4=0; i4<gjets.size(); i4++) {
+	  for (unsigned int i5=0; i5<gjets.size(); i5++) {
+	    
+	    //can only use a jet once
+	    if ( i1==i2  || i1==i3 || i1==i4 || i1==i5) continue;
+	    if (  i2==i3 || i2==i4 || i2==i5) continue;
+	    if ( i3==i4 || i3==i5) continue;
+	    if ( i4==i5) continue;
+
+	    //use of set ensures that the indices are sorted, so that 1,3,5 and 5,3,1 are the same
+	    //2-jet combo
+	    set<unsigned int> r2;
+	    r2.insert(i1);
+	    r2.insert(i2);
+
+	    //3-jet combo
+	    set<unsigned int> r3;
+	    r3.insert(i3);
+	    r3.insert(i4);
+	    r3.insert(i5);
+
+	    pair<set<unsigned int>, set<unsigned int> > rpair = make_pair(r2,r3);
+	    if (combos.count(rpair) == 0) { //have we already calculated this?
+	      //get invariant masses
+	      float this_mjj1= calc_mNj(jetsetToVector( gjets, r2));//gjets.at(i1),gjets.at(i2));
+	      float this_mjj2= calc_mNj(jetsetToVector(gjets, r3));
+	      //store inv masses
+	      combos[rpair]=make_pair(mjj1,mjj2);
+	      //is this the best one?
+	      if ( fabs(this_mjj1-this_mjj2) < mindiff) {
+		mindiff = fabs(this_mjj1-this_mjj2);
+		mjj1=this_mjj1;
+		mjj2=this_mjj2;
+	      }
+	      //	      cout<<"("<<i1<<" "<<i2<<") ("<<i3<<" "<<i4<<" "<<i5<<")\t"<<mjj1<<" "<<mjj2<<endl;
+	    }
+
+	  }
+	}
+      }
+    }
+  }
+
 }
 
 double EventCalculator::getSMSScanCrossSection( const double mgluino) {
@@ -4764,6 +4815,7 @@ void EventCalculator::reducedTree(TString outputpath) {
 
   float bestZmass;
   float mjj1,mjj2,mjjdiff;
+  float mjj1_5,mjj2_5,mjjdiff_5;
 
   float jetpt1, jetgenpt1, jetphi1, jetgenphi1, jeteta1, jetgeneta1, jetenergy1, bjetpt1, bjetphi1, bjeteta1, bjetenergy1;
   float jetpt2, jetgenpt2, jetphi2, jetgenphi2, jeteta2, jetgeneta2, jetenergy2, bjetpt2, bjetphi2, bjeteta2, bjetenergy2;
@@ -5088,6 +5140,9 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("mjj1",&mjj1,"mjj1/F");
   reducedTree.Branch("mjj2",&mjj2,"mjj2/F");
   reducedTree.Branch("mjjdiff",&mjjdiff,"mjjdiff/F");
+  reducedTree.Branch("mjj1_5",&mjj1_5,"mjj1_5/F");
+  reducedTree.Branch("mjj2_5",&mjj2_5,"mjj2_5/F");
+  reducedTree.Branch("mjjdiff_5",&mjjdiff_5,"mjjdiff_5/F");
 
   reducedTree.Branch("nbjetsSSVM",&nbjetsSSVM,"nbjetsSSVM/I");
   reducedTree.Branch("nbjetsSSVHPT",&nbjetsSSVHPT,"nbjetsSSVHPT/I");
@@ -5617,6 +5672,8 @@ Also the pdfWeightSum* histograms that are used for LM9.
 
       jjResonanceFinder(mjj1,mjj2);
       mjjdiff=fabs(mjj1-mjj2);
+      jjResonanceFinder5(mjj1_5,mjj2_5);
+      mjjdiff_5=fabs(mjj1_5-mjj2_5);
 
       ntruebjets = nTrueBJets();
       nbjets = nGoodBJets();
