@@ -33,43 +33,6 @@ const double mZ_ = 91.2;
 const double mtop_ = 172.0;
 const double lumi_ = 1.; //fix to 1/pb and scale MC later (e.g. in drawReducedTrees)
 
-//define the BNN functions
-/*
-double HT260_MHT60_v2_HT260_v2_160431_161204_sel1(std::vector<double>& inputvars, int first=0, int last=100-1);
-double HT250_MHT60_v2_HT250_v2_161205_163268_sel1(std::vector<double>& inputvars, int first=0, int last=100-1);
-double HT250_MHT60_v3_HT250_v3_163269_164923_sel1(std::vector<double>& inputvars, int first=0, int last=100-1);
-double HT250_MHT70_v1_HT250_v4_164924_165921_sel1(std::vector<double>& inputvars, int first=0, int last=100-1);
-double HT300_MHT75_v7_HT300_v6_165922_166300_166374_166978_sel1(std::vector<double>& inputvars, int first=0, int last=100-1);
-double HT300_MHT75_v8_HT300_v7_166301_166373_sel1(std::vector<double>& inputvars, int first=0, int last=100-1);
-double HT300_MHT80_v1_HT300_v6_166979_170064_sel1(std::vector<double>& inputvars, int first=0, int last=100-1);
-double HT300_MHT80_v2_HT300_v9_170065_173211_sel1(std::vector<double>& inputvars, int first=0, int last=100-1);
-double HT300_MHT90_v2_HT300_v9_173212_176544_sel1(std::vector<double>& inputvars, int first=0, int last=100-1);
-double HT350_MHT90_v1_HT350_v8_176545_178410_sel1(std::vector<double>& inputvars, int first=0, int last=100-1);
-double HT350_MHT110_v3_HT350_v11_178411_180252_sel1(std::vector<double>& inputvars, int first=0, int last=100-1);
-
-double HT260_MHT60_v2_HT260_v2_160431_161204_sel2(std::vector<double>& inputvars, int first=0, int last=100-1);
-double HT250_MHT60_v2_HT250_v2_161205_163268_sel2(std::vector<double>& inputvars, int first=0, int last=100-1);
-double HT250_MHT60_v3_HT250_v3_163269_164923_sel2(std::vector<double>& inputvars, int first=0, int last=100-1);
-double HT250_MHT70_v1_HT250_v4_164924_165921_sel2(std::vector<double>& inputvars, int first=0, int last=100-1);
-double HT300_MHT75_v7_HT300_v6_165922_166300_166374_166978_sel2(std::vector<double>& inputvars, int first=0, int last=100-1);
-double HT300_MHT75_v8_HT300_v7_166301_166373_sel2(std::vector<double>& inputvars, int first=0, int last=100-1);
-double HT300_MHT80_v1_HT300_v6_166979_170064_sel2(std::vector<double>& inputvars, int first=0, int last=100-1);
-double HT300_MHT80_v2_HT300_v9_170065_173211_sel2(std::vector<double>& inputvars, int first=0, int last=100-1);
-double HT300_MHT90_v2_HT300_v9_173212_176544_sel2(std::vector<double>& inputvars, int first=0, int last=100-1);
-double HT350_MHT90_v1_HT350_v8_176545_178410_sel2(std::vector<double>& inputvars, int first=0, int last=100-1);
-double HT350_MHT110_v3_HT350_v11_178411_180252_sel2(std::vector<double>& inputvars, int first=0, int last=100-1);
-
-double ElHad_300_75(std::vector<double>& inputvars, int first=0, int last=100-1);
-double MuHad_300_75(std::vector<double>& inputvars, int first=0, int last=100-1);
-double ElHad_300_80(std::vector<double>& inputvars, int first=0, int last=100-1);
-double MuHad_300_80(std::vector<double>& inputvars, int first=0, int last=100-1);
-double HT300MHT90elNew(std::vector<double>& inputvars, int first=0, int last=100-1);
-double HT300MHT90muNew(std::vector<double>& inputvars, int first=0, int last=100-1);
-double HT350MHT90elNew(std::vector<double>& inputvars, int first=0, int last=100-1);
-double HT350MHT90muNew(std::vector<double>& inputvars, int first=0, int last=100-1);
-double HT350MHT110elNew(std::vector<double>& inputvars, int first=0, int last=100-1);
-double HT350MHT110muNew(std::vector<double>& inputvars, int first=0, int last=100-1);
-*/
 
 class cellECAL {
 public:
@@ -117,6 +80,7 @@ public:
 
   // functions that calculate stuff
   double getWeight(Long64_t nentries);
+  Long64_t getNEventsGenerated();
   float getPUWeight(reweight::LumiReWeighting lumiWeights);
   //  float getPUWeight(/* Lumi3DReWeighting lumiWeights*/); //FIXME CFA
 
@@ -131,9 +95,10 @@ public:
   float getTauPt( unsigned int itau );
   unsigned int countTau();
 
-  //  bool passBEFilter(); //TODO migrate this code
-  bool passHLT();
-  bool passUtilityHLT(int &version, int &prescale);
+
+  TString stripTriggerVersion(const TString & fullname, int & version);
+  bool passHLT(const TString & triggername, int & prescalevalue, int & version);
+  //  bool passUtilityHLT(int &version, int &prescale); //deprecated
   bool passUtilityPrescaleModuleHLT();
   float getHLTHTeff(float offHT);
   float getHLTMHTeff(float offMET, float offHT, uint nElectrons, uint nMuons, double mindphin);
@@ -160,15 +125,6 @@ public:
   std::vector<unsigned int> jetsetToVector(const std::vector<unsigned int> & goodjets, const std::set<unsigned int> & myset) ;
   void jjResonanceFinder(float & mjj1, float & mjj2);//simple first try
   void jjResonanceFinder5(float & mjj1, float & mjj2);
-
-  bool passCut(const TString cutTag);
-  bool setCutScheme();
-  void setIgnoredCut(const TString cutTag);
-  void setRequiredCut(const TString cutTag);
-  void resetIgnoredCut();
-  void resetRequiredCut();
-  bool cutRequired(const TString cutTag);
-  int Cut();
 
   unsigned int getNthGoodJet(unsigned int goodJetN, float mainpt, float maineta, bool mainid);
   double getMinDeltaPhiMET(unsigned int maxjets);
@@ -446,19 +402,14 @@ private:
 
   unsigned int getSeed();
   //void changeVariables(TRandom3* random, double jetLossProbability, int& nLostJets); //FIXME CFA
-  void changeVariablesGenSmearing(TRandom3* random);
   //void resetVariables(); //FIXME CFA
   bool  recalculatedVariables_;
 
   TStopwatch* watch_; //not used for everyday running; just for testing
 
-  std::vector<TString> cutTags_;
-  std::map<TString, TString> cutNames_; //key is a cutTag. these should be "human readable" but should not have any spaces
-  std::vector<TString> ignoredCut_; //allow more than 1 ignored cut!
-  std::vector<TString> requiredCut_; //new feature to *turn on* a cut that is usually not required by a given cut scheme
-
 
   // ==== BEGIN giant copy/paste of cfA variables =============================================================
+  // generated from slimmed v60 --
   //source: http://cms2.physics.ucsb.edu/cfA/WJetsToLNu_HT-400ToInf_8TeV-madgraph_Summer12-PU_S7_START52_V9-v1_AODSIM_UCSB1229_v60s/WJetsToLNu_HT-400ToInf_8TeV-madgraph_Summer12-PU_S7_START52_V9-v1_AODSIM_UCSB1229_v60s.h
 
    // Declaration of leaf types

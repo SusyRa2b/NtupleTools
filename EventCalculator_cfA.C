@@ -11,6 +11,7 @@
 #include "TMatrixT.h"
 #include "TMatrixDEigen.h"
 #include "TStopwatch.h"
+#include "TRegexp.h"
 
 #include "inJSON2012.h"
 
@@ -185,48 +186,6 @@ void EventCalculator::initEnumNames() {
 }
 
 
-// Don wrote this...i hope it is not needed anymore [cfA conversion]
-/*
-void EventCalculator::checkConsistency() {
-
- //this is probably bad coding, but the only thing I can think of for this already horribly-constructed code
-  std::string jettype = typeid( *myJetsPF ).name();
-  std::string recopfjet = "jet_s";
-  //std::string pf2patjet = "jet1_s";
-  std::string pf2patjet = "jet2_s";
-  if( theJetType_==kPF2PAT && std::string::npos != jettype.find(recopfjet)) { 
-    //std::cout << "myJetsPF is pointing to recopfjet" << std::endl;
-    std::cout << "ERROR: theJetType_ is set to kPF2PAT jets, while myJetsPF is pointing to something else. "
-	      << "This will screw up (at least) the cleaning selection.  Aborting." << std::endl;
-    assert(0);
-  }
-  if( theJetType_==kRECOPF &&  std::string::npos != jettype.find(pf2patjet)){
-    //std::cout << "myJetsPF is pointing to pf2patjet" << std::endl;
-    std::cout << "ERROR: theJetType_ is set to kRECOPF jets, while myJetsPF is pointing to something else. "
-	      << "This will screw up (at least) the cleaning selection.  Aborting." << std::endl;
-    assert(0);
-  }
-
-  std::string mettype = typeid( *myMETPF ).name();
-  std::string rawpfmet = "met1_s";
-  //std::string type1pfmet = "met2_s";
-  std::string type1pfmet = "met4_s";
-  if( theMETType_ == kPFMETTypeI &&  std::string::npos != jettype.find(type1pfmet)){ //FIXME why a reference to jettype here?
-    std::cout << "ERROR: theMETType_ is set to PFMETTypeI, while myMETsPF is also pointing to type1pfmet.  "
-	      << "This will double-correct the MET!  Aborting." << std::endl;
-    assert(0);
-  }
-
-  //theScanType_ is set automatically now, so this is basically redundant
-  if (theScanType_!=kNotScan && sampleName_.Contains("LM")) {cout<<"LM point is not a scan! Check theScanType_!"<<endl; assert(0);}
-  if (theScanType_!=kmSugra && sampleName_.Contains("SUGRA")) {cout<<"mSugra is a scan! Check theScanType_!"<<endl; assert(0);}
-  if (theScanType_!=kSMS && sampleName_.Contains("T1bbbb")) {cout<<"T1bbbb is a scan! Check theScanType_!"<<endl; assert(0);}
-  if (theScanType_!=kSMS && sampleName_.Contains("T2bb")) {cout<<"T2bb is a scan! Check theScanType_!"<<endl; assert(0);}
-  if (theScanType_!=kSMS && sampleName_.Contains("T2tt")) {cout<<"T2tt is a scan! Check theScanType_!"<<endl; assert(0);}
-
-
-}
-*/
 
 void EventCalculator::stopTimer(const Long64_t ntotal) {
   TDatime stoptime; //default ctor is for current time
@@ -239,7 +198,13 @@ void EventCalculator::stopTimer(const Long64_t ntotal) {
 
 bool EventCalculator::isSampleRealData() {
   //CAREFUL HERE!
-  if (sampleName_.BeginsWith("HT_Run2012A-PromptReco")) return true;
+  if (sampleName_.BeginsWith("HT_Run2012A")) return true;
+  if (sampleName_.BeginsWith("DoubleElectron_Run2012B")) return true;
+  if (sampleName_.BeginsWith("HTMHT_Run2012B")) return true;
+  if (sampleName_.BeginsWith("JetHT_Run2012B")) return true;
+  if (sampleName_.BeginsWith("MuHad_Run2012")) return true;
+  if (sampleName_.BeginsWith("SingleMu_Run2012")) return true;
+
   return false;
 }
 
@@ -324,8 +289,7 @@ double EventCalculator::getWeight(Long64_t nentries) {
   double sigma = getCrossSection();
   double w = lumi_ * sigma / double(nentries);
 
-  if (sampleName_.Contains("QCD_Pt_15to3000_TuneZ2_Flat_7TeV_pythia6")) assert(0); //FIXME CFA
-//w *= (*myGenWeight);
+  if (sampleName_.Contains("QCD_Pt_15to3000_TuneZ2_Flat_7TeV_pythia6")) w *= weight;
 
   return  w;
 }
@@ -664,45 +628,48 @@ unsigned int EventCalculator::countTau() {
 */
 }
 
+TString EventCalculator::stripTriggerVersion(const TString & fullname, int & version) {
 
-bool EventCalculator::passHLT() {
+  //example input: HLT_HT400_AlphaT0p52_v10
+  TRegexp rv("_v[0-9]*$"); //i suppose we could save CPU by making this static or something.....
 
-  //for MC just return true
-  if ( !isSampleRealData() ) return true;
-
-  bool passtrigger=false;
-  for (unsigned int itrig=0; itrig<trigger_name->size(); itrig++) {
-
-    if ( TString(trigger_name->at(itrig).c_str()).BeginsWith("HLT_PFHT350_PFMET100_v")) {
-      if ( TMath::Nint(trigger_prescalevalue->at(itrig)) == 1) {
-	if ( TMath::Nint(trigger_decision->at(itrig))==1 ) passtrigger=true;
-      }
-    }
-  }
-  return passtrigger;
-  
+  Ssiz_t cutoff=  fullname.Index(rv);
+  TString stripped=fullname(0,cutoff);
+  version =  TString(fullname(cutoff+2,fullname.Length())).Atoi();
+  //output: HLT_HT400_AlphaT0p52 , version = 10
+  return stripped;
 }
 
-bool EventCalculator::passUtilityHLT(int &version, int &prescale) {
+
+bool EventCalculator::passHLT(const TString & triggername, int & prescalevalue, int & version) {
+
+  //triggername should NOT have the _vXX
+
+  prescalevalue=1;
+  version=0;
 
   //for MC just return true
   if ( !isSampleRealData() ) return true;
 
   bool passtrigger=false;
+  bool foundit=false;
   for (unsigned int itrig=0; itrig<trigger_name->size(); itrig++) {
-    //the flaw in this code is that it will return the results of only the *last* matching trigger
-    if ( TString(trigger_name->at(itrig).c_str()).BeginsWith("HLT_PFHT350_v")) {
-      TString vnumber=   TString(trigger_name->at(itrig).c_str()).Tokenize("_v")->At(2)->GetName();
-      version=vnumber.Atoi();
-      prescale =  TMath::Nint(trigger_prescalevalue->at(itrig));
+    TString thistrigger = TString(trigger_name->at(itrig).c_str());
+    TString strippedname=stripTriggerVersion(thistrigger,version);
+    if ( strippedname == triggername) {
+      foundit=true;
+      prescalevalue = TMath::Nint(trigger_prescalevalue->at(itrig));
       if ( TMath::Nint(trigger_decision->at(itrig))==1 ) passtrigger=true;
-      //      cout<<version<<" "<<prescale<<" "<<passtrigger<<endl;
     }
   }
 
+  if (!foundit) {
+    cout<<"I failed to find "<<triggername<<endl;
+  }
+
   return passtrigger;
- 
 }
+
 
 
 bool EventCalculator::passUtilityPrescaleModuleHLT() {
@@ -1076,182 +1043,6 @@ float EventCalculator::getMHTphi(int ignoredJet) {
 }
 
 
-// JMT -- do we need this anymore????
-bool EventCalculator::passCut(const TString cutTag) {
-
-  if (cutTag=="cutInclusive") return true;
-  if (cutTag=="cutTrigger" ) return passHLT();
-  int dummyver = 0, dummyprs;
-  if (cutTag=="cutUtilityTrigger" ) return ( passUtilityHLT(dummyver,dummyprs)>0  );
-
-  if (cutTag=="cutPV") return passPV();
-  
-  if (cutTag=="cutHT") return getHT()>=400;
-  
-  if (cutTag=="cut3Jets") return (nGoodJets() >= 3);
-  
-  if (cutTag=="cutMuVeto") return (countMu()==0);
-  if (cutTag=="cutEleVeto") return (countEle()==0);
-
-  if (cutTag == "cutMET") {
-    float mymet = getMET();
-    return mymet >= 250;
-  }
-
-  if (cutTag == "cutDeltaPhi") {
-    return ( getMinDeltaPhiMET(3) >= 0.3 );
-  }
-  if (cutTag== "cutDeltaPhiN"){
-    return ( getMinDeltaPhiMETN(3) >= 4.0 );
-  }
-  if (cutTag=="cutDeltaPhiTaus"){
-    return ( getMinDeltaPhiMETTaus() > 0.3 );
-  }
-
-  int nbtags = nGoodBJets();
-  if (cutTag == "cut1b") return nbtags >=1;
-  if (cutTag == "cut2b") return nbtags >=2;
-  if (cutTag == "cut3b") return nbtags >=3;
-  if (cutTag == "cutEq1b") return nbtags == 1;
-  
-  //jmt -- if we get here then i think something is wrong!
-  assert(0);
-
-  return true;
-}
-
-// JMT -- do we need this anymore?
-bool EventCalculator::setCutScheme() {
-
-  //if (cutscheme == nCutSchemes) return false;
-  //theCutScheme_ = cutscheme;
-
-  cutNames_.clear();
-  cutTags_.clear();
-
-  cutTags_.push_back("cutInclusive");cutNames_[ cutTags_.back()] = "Inclusive";
-  
-  //cutTags_.push_back("cut2SUSYb"); cutNames_[ cutTags_.back()] = "==2SUSYb";
-  //cutTags_.push_back("cut4SUSYb"); cutNames_[ cutTags_.back()] = "==4SUSYb";
-  
-  cutTags_.push_back("cutTrigger"); cutNames_[cutTags_.back()]="Trigger";
-  cutTags_.push_back("cutPV"); cutNames_[cutTags_.back()]="PV";
-  cutTags_.push_back("cutHT"); cutNames_[cutTags_.back()]="HT";
-  cutTags_.push_back("cut3Jets"); cutNames_[cutTags_.back()]=">=3Jets";
-  //cutTags_.push_back("cutJetPt1");  cutNames_[cutTags_.back()]="JetPt1";
-  //cutTags_.push_back("cutJetPt2");  cutNames_[cutTags_.back()]="JetPt2";
-  //cutTags_.push_back("cutJetPt3");  cutNames_[cutTags_.back()]="JetPt3";
-  
-  cutTags_.push_back("cutEleVeto");  cutNames_[cutTags_.back()]="EleVeto";
-  cutTags_.push_back("cutMuVeto");  cutNames_[cutTags_.back()]="MuVeto";
-  //cutTags_.push_back("cutTauVeto");  cutNames_[cutTags_.back()]="TauVeto";
-  
-  cutTags_.push_back("cutMET");  cutNames_[cutTags_.back()]="MET";
-  
-  //cutTags_.push_back("cutDeltaPhi"); cutNames_[cutTags_.back()]="DeltaPhi";
-  cutTags_.push_back("cutDeltaPhiN"); cutNames_[cutTags_.back()]="DeltaPhiN";
-  //cutTags_.push_back("cutCleaning"); cutNames_[cutTags_.back()]="TailCleaning";
-  
-  cutTags_.push_back("cut1b"); cutNames_[cutTags_.back()]=">=1b";
-  cutTags_.push_back("cut2b"); cutNames_[cutTags_.back()]=">=2b";
-  cutTags_.push_back("cut3b"); cutNames_[cutTags_.back()]=">=3b";
-
-  //cutTags_.push_back("cutCleaning"); cutNames_[cutTags_.back()]="TailCleaning";
-
-  return true;
-}
-
-//JMT -- do we need this anymore?
-void EventCalculator::setIgnoredCut(const TString cutTag) {
-
-  bool ok=false;
-  for (unsigned int i=0; i<cutTags_.size() ; i++) {
-    if (cutTags_[i] == cutTag) {ok=true; break;}
-  }
-  if (!ok) {cout<<"Invalid cutIndex"<<endl; return;}
-
-  ignoredCut_.push_back(cutTag);
-
-}
-
-//JMT -- do we need this anymore?
-void EventCalculator::setRequiredCut(const TString cutTag) {
-
-  bool ok=false;
-  for (unsigned int i=0; i<cutTags_.size() ; i++) {
-    if (cutTags_[i] == cutTag) {ok=true; break;}
-  }
-  if (!ok) {cout<<"Invalid cutIndex"<<endl; return;}
-
-  requiredCut_.push_back(cutTag);
-
-}
-
-//JMT -- do we need this anymore?
-bool EventCalculator::cutRequired(const TString cutTag) { //should put an & in here to improve performance
-
-  //check if we are *ignoring* this cut (for N-1 studies, etc)
-  for (unsigned int i = 0; i< ignoredCut_.size() ; i++) {
-    if ( cutTag == ignoredCut_.at(i) ) return false;
-  }
-
-  //check if we are *requiring* this cut (special from the normal scheme)
-  for (unsigned int i = 0; i< requiredCut_.size() ; i++) {
-    if ( cutTag == requiredCut_.at(i) ) return true;
-  }
-
-  bool cutIsRequired=false;
-
-
-  if      (cutTag == "cutInclusive")  cutIsRequired =  true;
-
-  //else if (cutTag == "cut2SUSYb")  cutIsRequired = false;
-  //else if (cutTag == "cut4SUSYb")  cutIsRequired = false;
-
-  else if (cutTag == "cutTrigger")  cutIsRequired = true;
-  else if (cutTag == "cutPV")  cutIsRequired =  true;
-  else if (cutTag == "cutHT")  cutIsRequired =  true;
-  else if (cutTag == "cut3Jets")  cutIsRequired =  true;
-  //else if (cutTag == "cutJetPt1")  cutIsRequired =  false;
-  //else if (cutTag == "cutJetPt2")  cutIsRequired =  false;
-  //else if (cutTag == "cutJetPt3")  cutIsRequired =  false;
-  else if (cutTag == "cutMET")  cutIsRequired =  true; 
-  else if (cutTag == "cutMuVeto") cutIsRequired =  true;
-  else if (cutTag == "cutEleVeto") cutIsRequired =  true;
-  //else if (cutTag == "cutTauVeto") cutIsRequired =  false; //not required for now
-  //else if (cutTag == "cutDeltaPhi") cutIsRequired =  true;
-  else if (cutTag == "cutDeltaPhiN") cutIsRequired =  true;
-  //else if (cutTag == "cutDeltaPhiTaus") cutIsRequired =  false;
-  else if (cutTag == "cut1b") cutIsRequired =  true;
-  else if (cutTag == "cut2b") cutIsRequired =  true;
-  else if (cutTag == "cut3b") cutIsRequired =  true;
-  //else if (cutTag == "cutCleaning") cutIsRequired = true;
-  //else assert(0);
-
-  return cutIsRequired;
-}
-
-//JMT -- do we need this anymore?
-int EventCalculator::Cut()
-{
-  //be careful...not every function that makes cuts uses this! e.g. ::cutflow()
-
-  for (unsigned int i=0; i< cutTags_.size(); i++) {
-    if (cutRequired( cutTags_[i] ) && !passCut( cutTags_[i]) ) return -1;
-  }
-  
-  return 1;
-}
-
-//JMT -- do we need this anymore?
-void EventCalculator::resetIgnoredCut() {
-  ignoredCut_.clear();
-}
-
-//JMT -- do we need this anymore?
-void EventCalculator::resetRequiredCut() {
-  requiredCut_.clear();
-}
 
 float EventCalculator::getDeltaPhiStar(int & badjet) {
 
@@ -4089,47 +3880,100 @@ double EventCalculator::getHLTMHTeffBNN(float offMET, float offHT, uint nElectro
 */
 }
 
+Long64_t EventCalculator::getNEventsGenerated() {
+  
+  if (isSampleRealData()) return 1;
+  
+  /*
+    in the past we have auto-calculated event weights based on the number of events in the parent TChain
+    
+    This scheme is very convenient but has two problems.
+    
+    (1) we cannot split the reducedTree production into multiple jobs. This is problematic for very large samples (Fall11 ttbar)
+    (2) if a skim has already been applied to the parent ntuples, there is no way to know the total number of events before the skim.
+    
+    Problem 1 could be dealt with by counting events in TChains and storing in a histogram. These could then be combined at the drawReducedTrees
+    stage (similar to the machinery already used for signal scans). However, this does not work for problem 2.
+    
+    The only solution I see for problem 2 is to hard-code the number of generated events for each sample.
+    I don't like this solution, but I do not see an alternative.
+    This solution then also covers problem 1, and has the advantage that no new machinery is needed in drawReducedTrees.
+    
+    This function is intended to fulfill this solution by returning the number of events in each sample's original (unskimmed) ntuples.
+    This may vary from one round of cfA production to another due to failed jobs, so the =entire= directoy string is needed.
+    
+    The cfA page that catelogs the samples has this information automatically filled in -- just MAKE SURE TO TAKE THE
+    NUMBER FROM THE UNSKIMMED SAMPLE!
+  */
+  
+  if (sampleName_=="DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph-tarball_Summer12-PU_S7_START52_V9-v2_AODSIM_UCSB1234_v60s") return 30461028;
+
+  if (sampleName_=="DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph-tarball_Summer12-PU_S7_START52_V9-v2_AODSIM_UCSB1261_v62s") return 14820000;
+    
+  if (sampleName_=="QCD_Pt-1000to1400_TuneZ2star_8TeV_pythia6_Summer12-PU_S7_START52_V9-v1_AODSIM_UCSB1245_v60s") return 1954088;
+  if (sampleName_=="QCD_Pt-1400to1800_TuneZ2star_8TeV_pythia6_Summer12-PU_S7_START52_V9-v1_AODSIM_UCSB1209_v60s") return 2000062;
+  if (sampleName_=="QCD_Pt-15to3000_TuneZ2star_Flat_8TeV_pythia6_Summer12-PU_S7_START52_V9-v5_AODSIM_UCSB1189_v60s") return 1025622;
+  if (sampleName_=="QCD_Pt-170to300_TuneZ2star_8TeV_pythia6_Summer12-PU_S7_START52_V9-v1_AODSIM_UCSB1241_v60s") return 5804398;
+  if (sampleName_=="QCD_Pt-1800_TuneZ2star_8TeV_pythia6_Summer12-PU_S7_START52_V9-v1_AODSIM_UCSB1226_v60s") return 977586;
+  if (sampleName_=="QCD_Pt-300to470_TuneZ2star_8TeV_pythia6_Summer12-PU_S7_START52_V9-v1_AODSIM+_UCSB1250_v60s") return 1;//PROBLEM
+  if (sampleName_=="QCD_Pt-30to50_TuneZ2star_8TeV_pythia6_Summer12-PU_S7_START52_V9-v1_AODSIM_UCSB1193_v60s") return 6000000;
+  if (sampleName_=="QCD_Pt-470to600_TuneZ2star_8TeV_pythia6_Summer12-PU_S7_START52_V9-v1_AODSIM_UCSB1238_v60s") return 3844848;
+  if (sampleName_=="QCD_Pt-600to800_TuneZ2star_8TeV_pythia6_Summer12-PU_S7_START52_V9-v1_AODSIM_UCSB1185_v60s") return 3992760;
+  if (sampleName_=="QCD_Pt-800to1000_TuneZ2star_8TeV_pythia6_Summer12-PU_S7_START52_V9-v1_AODSIM_UCSB1212_v60s") return 3954563;
+  if (sampleName_=="QCD_Pt-80to120_TuneZ2star_8TeV_pythia6_Summer12-PU_S7_START52_V9-v1_AODSIM_UCSB1237_v60s") return 5981328;
+  if (sampleName_=="SUSY_LM9_sftsht_8TeV-pythia6_Summer12-PU_S7_START52_V9-v1_AODSIM_UCSB1198_v60s") return 1000080;
+
+  if (sampleName_=="TTJets_TuneZ2star_8TeV-madgraph-tauola_Summer12-PU_S7_START52_V9-v1_AODSIM_UCSB1176_v60s") return 6736135;
+  if (sampleName_=="T_t-channel_TuneZ2star_8TeV-powheg-tauola_Summer12-PU_S7_START52_V9-v1_AODSIM_UCSB1201_v60s") return 23777;
+  if (sampleName_=="T_tW-channel-DR_TuneZ2star_8TeV-powheg-tauola_Summer12-PU_S7_START52_V9-v1_AODSIM_UCSB1233_v60s") return 497658;
+  if (sampleName_=="Tbar_t-channel_TuneZ2star_8TeV-powheg-tauola_Summer12-PU_S7_START52_V9-v1_AODSIM_UCSB1220_v60s") return 1935072;
+  if (sampleName_=="Tbar_tW-channel-DR_TuneZ2star_8TeV-powheg-tauola_Summer12-PU_S7_START52_V9-v1_AODSIM+_UCSB1240_v60s") return 1; //PROBLEM
+  if (sampleName_=="WJetsToLNu_HT-400ToInf_8TeV-madgraph_Summer12-PU_S7_START52_V9-v1_AODSIM_UCSB1229_v60s") return 1647807;
+  if (sampleName_=="WJetsToLNu_TuneZ2Star_8TeV-madgraph-tarball_Summer12-PU_S7_START52_V9-v1_AODSIM_UCSB1177_v60s") return 18393090;
+  if (sampleName_=="WZ_TuneZ2star_8TeV_pythia6_tauola_Summer12-PU_S7_START52_V9-v1_AODSIM_UCSB1196_v60s") return 9996622;
+  if (sampleName_=="ZJetsToNuNu_400_HT_inf_TuneZ2Star_8TeV_madgraph_Summer12-PU_S7_START52_V9-v1_AODSIM_UCSB1242_v60s") return 1006928;
+  if (sampleName_=="ZZ_TuneZ2star_8TeV_pythia6_tauola_Summer12-PU_S7_START52_V9-v1_AODSIM_UCSB1218_v60s") return 9599908;
+
+  cout<<"[getNEventsGenerated] unknown sample "<<sampleName_<<endl;
+  assert(0);
+  return 1;
+
+}
+
 double EventCalculator::getCrossSection(){
   //https://twiki.cern.ch/twiki/bin/viewauth/CMS/StandardModelCrossSectionsat8TeV
 
   //const double bf = 0.32442;
 
-  //7 TeV to be updated
-  if (sampleName_.Contains("QCD_Pt-0to5_TuneZ2_7TeV_pythia6") )                    return 4.844e10;
-  if (sampleName_.Contains("QCD_Pt-1000to1400_TuneZ2_7TeV_pythia6") )                return .3321;
-  if (sampleName_.Contains("QCD_Pt-120to170_TuneZ2_7TeV_pythia6") )                  return 1.151e5;
-  if (sampleName_.Contains("QCD_Pt-1400to1800_TuneZ2_7TeV_pythia6") )              return .01087;
-  if (sampleName_.Contains("QCD_Pt-15to3000_TuneZ2_Flat_7TeV_pythia6") )             return 2.213e10;
-  if (sampleName_.Contains("QCD_Pt-15to30_TuneZ2_7TeV_pythia6") )                    return 8.159e8;
-  if (sampleName_.Contains("QCD_Pt-170to300_TuneZ2_7TeV_pythia6") )                  return 2.426e4;
-  if (sampleName_.Contains("QCD_Pt-1800_TuneZ2_7TeV_pythia6") )                      return .0003575;
-  if (sampleName_.Contains("QCD_Pt-300to470_TuneZ2_7TeV_pythia6") )                  return 1.168e3;
-  if (sampleName_.Contains("QCD_Pt-30to50_TuneZ2_7TeV_pythia6") )                    return 5.312e7;
-  if (sampleName_.Contains("QCD_Pt-470to600_TuneZ2_7TeV_pythia6") )                  return 7.022e1;
-  if (sampleName_.Contains("QCD_Pt-50to80_TuneZ2_7TeV_pythia6") )                    return 6.359e6;
-  if (sampleName_.Contains("QCD_Pt-5to15_TuneZ2_7TeV_pythia6") )                     return 3.675e10;
-  if (sampleName_.Contains("QCD_Pt-600to800_TuneZ2_7TeV_pythia6") )                  return 1.555e1;
-  if (sampleName_.Contains("QCD_Pt-800to1000_TuneZ2_7TeV_pythia6") )                 return 1.844;
-  if (sampleName_.Contains("QCD_Pt-80to120_TuneZ2_7TeV_pythia6") )                   return 7.843e5;
-  if (sampleName_.Contains("ww") )                                                   return 27.83;//from PREP
-  if (sampleName_.Contains("wz") )                                                   return 10.47;//from PREP
-  if (sampleName_.Contains("zz") )                                                   return 4.287;//from PREP
-  //7TeV
-  if (sampleName_.Contains("T_TuneZ2_s-channel_7TeV-powheg-tauola") )                return 3.19; 
-  if (sampleName_.Contains("Tbar_TuneZ2_s-channel_7TeV-powheg-tauola") )             return 1.44; 
-  if (sampleName_.Contains("T_TuneZ2_t-channel_7TeV-powheg-tauola") )                return 41.92;
-  if (sampleName_.Contains("Tbar_TuneZ2_t-channel_7TeV-powheg-tauola") )             return 22.65;
-  if (sampleName_.Contains("T_TuneZ2_tW-channel-DR_7TeV-powheg-tauola") )            return 7.87; 
-  if (sampleName_.Contains("Tbar_TuneZ2_tW-channel-DR_7TeV-powheg-tauola") )         return 7.87; 
+  //NNLO
+  if (sampleName_.Contains("DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph")) return 3503.71;
 
-  if (sampleName_.Contains("WJetsToLNu_TuneZ2Star_8TeV-madgraph") )               return 36257.2; //NNLO 8 TeV
+  //LO PREP
+  if (sampleName_.Contains("QCD_Pt-1000to1400_TuneZ2star_8TeV_pythia6")) return 0.737844;
+  if (sampleName_.Contains("QCD_Pt-1400to1800_TuneZ2star_8TeV_pythia6")) return 0.03352235;
+  if (sampleName_.Contains("QCD_Pt-15to3000_TuneZ2star_Flat_8TeV_pythia6")) return 2.99815997E10; //correct thing to return?
+  if (sampleName_.Contains("QCD_Pt-170to300_TuneZ2star_8TeV_pythia6")) return 34138.15;
+  if (sampleName_.Contains("QCD_Pt-1800_TuneZ2star_8TeV_pythia6")) return 0.001829005;
+  if (sampleName_.Contains("QCD_Pt-300to470_TuneZ2star_8TeV_pythia6")) return 1759.549;
+  if (sampleName_.Contains("QCD_Pt-30to50_TuneZ2star_8TeV_pythia6")) return 6.6285328E7;
+  if (sampleName_.Contains("QCD_Pt-470to600_TuneZ2star_8TeV_pythia6")) return 113.8791;
+  if (sampleName_.Contains("QCD_Pt-600to800_TuneZ2star_8TeV_pythia6")) return 26.9921;
+  if (sampleName_.Contains("QCD_Pt-800to1000_TuneZ2star_8TeV_pythia6")) return 3.550036;
+  if (sampleName_.Contains("QCD_Pt-80to120_TuneZ2star_8TeV_pythia6")) return 1033680.0;
 
-  //7TeV
-  if (sampleName_.Contains("WJetsToLNu_250_HT_300_TuneZ2_7TeV-madgraph-tauola") )    return 34.8;
-  if (sampleName_.Contains("WJetsToLNu_300_HT_inf_TuneZ2_7TeV-madgraph-tauola") )    return 48.49;
-  if (sampleName_.Contains("DYJetsToLL_TuneZ2_M-50_7TeV-madgraph-tauola") )          return 3048;
-  if (sampleName_.Contains("LM9_SUSY_sftsht_7TeV-pythia6") )                         return 7.134 * 1.48; //from ProductionSpring2011 twiki
+  //LO PREP
+  if (sampleName_.Contains("Tbar_t-channel_TuneZ2star_8TeV-powheg")) return 25;
+  if (sampleName_.Contains("Tbar_tW-channel-DR_TuneZ2star_8TeV-powheg")) return 10.7;
+  if (sampleName_.Contains("T_t-channel_TuneZ2star_8TeV-powheg")) return 47.0;
+  if (sampleName_.Contains("T_tW-channel-DR_TuneZ2star_8TeV-powheg")) return 10.7;
 
+  if (sampleName_.Contains("WJetsToLNu_HT-400ToInf_8TeV-madgraph")) return 25.22; //LO PREP
+  if (sampleName_.Contains("WJetsToLNu_TuneZ2Star_8TeV-madgraph")) return 36257.2; //NNLO
+  if (sampleName_.Contains("WZ_TuneZ2star_8TeV_pythia6_tauola")) return 12.63; //LO PREP
+  if (sampleName_.Contains("ZZ_TuneZ2star_8TeV_pythia6_tauola")) return 5.196; //LO PREP
+  
+  if (sampleName_.Contains("ZJetsToNuNu_400_HT_inf_TuneZ2Star_8TeV_madgraph")) return 5.274; //from cfA page. needs verification
+  
   //8 TeV  
   if (sampleName_.Contains("SUSY_LM9_sftsht_8TeV"))          return 9.287; //LO 8TeV from PREP
   if (sampleName_.Contains("TTJets_TuneZ2star_8TeV-madgraph-tauola") )         return 234;  //approx NNLO
@@ -4712,8 +4556,9 @@ TString EventCalculator::getOptPiece(const TString &key, const TString & opt) {
 
 void EventCalculator::reducedTree(TString outputpath) {
 
-  //JSON file reading. For now the JSON file name must be hard-coded here
-  vector< vector<int> > VRunLumi = MakeVRunLumi("Cert_190456-194479_8TeV_PromptReco_Collisions12_JSON.txt");
+  //JSON file reading. For now the JSON file must be called GoldenJSON.txt
+  //not clear to me if a sym link will be good enough w.r.t. the tarball, etc process
+  vector< vector<int> > VRunLumi = MakeVRunLumi("GoldenJSON.txt");
 
   //open output file
   TString outfilename="reducedTree";
@@ -4729,13 +4574,17 @@ void EventCalculator::reducedTree(TString outputpath) {
 
   // define the TTree
   TTree reducedTree("reducedTree","tree with minimal cuts");
-  reducedTree.SetMaxTreeSize(9900000000LL); //increase maximum tree size to 9.9GB
+  reducedTree.SetMaxTreeSize(30000000000LL); //increase maximum tree size to 30GB
 
   TRandom3 random(getSeed());
 
   // ~~~~~~~~~ declare reducedTree variables ~~~~~~~~~~
   //we're making an ntuple, so size matters -- use float not double		     
-  double weight; //one exception to the float rule				     
+
+  //for cfA I am changing this name from 'weight' to 'eventweight' because weight is already a variable in the cfA ntuple.
+  //oddly the compiler did not complain about this double-declaration.
+  double eventweight; //one exception to the float rule
+  double eventweight2; //one exception to the float rule
   //  float btagIPweight;//, pfmhtweight; //
   float PUweight;
   float hltHTeff;
@@ -4781,8 +4630,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   float minDeltaPhiAllb30, deltaPhib1, deltaPhib2, deltaPhib3;
   float minDeltaPhiMETMuonsAll;
 
-  bool cutHT,cutPV,cutTrigger;
-  bool cut3Jets,cutEleVeto,cutMuVeto,cutMET,cutDeltaPhi;
+  bool cutPV;
 
   bool	csctighthaloFilter;
   bool	eenoiseFilter;
@@ -4802,11 +4650,28 @@ void EventCalculator::reducedTree(TString outputpath) {
   bool buggyEvent;
 
   bool isRealData;
+
+  //triggers
+  bool cutTrigger;
   bool pass_utilityHLT;
   UInt_t prescaleUtilityHLT;
   UInt_t versionUtilityHLT;
   bool pass_utilityPrescaleModuleHLT;
-
+  //new
+  bool pass_PFHT350_PFMET100;
+  bool pass_HT250_AlphaT0p55;
+  bool pass_HT300_AlphaT0p53;
+  bool pass_HT200;
+  bool pass_HT250;
+  bool pass_HT300;
+  bool pass_PFHT350;
+  bool pass_DiCentralPFJet50_PFMET80;
+  bool pass_DiCentralPFJet30_PFMET80_BTagCSV07;
+  bool pass_PFMET150;
+  bool pass_PFHT350_Mu15_PFMET45;
+  bool pass_CleanPFHT300_Ele15_CaloIdT_CaloIsoVL_TrkIdT_TrkIsoVL_PFMET45;
+  bool pass_IsoMu24_eta2p1;
+  bool pass_IsoMu24;
 
   int njets, njets30, nbjets, ntruebjets, nElectrons, nMuons, nTaus;
   int nbjetsSSVM,nbjetsTCHET,nbjetsSSVHPT,nbjetsTCHPT,nbjetsTCHPM,nbjetsCSVM,nbjetsCSVL;
@@ -5023,7 +4888,8 @@ Also the pdfWeightSum* histograms that are used for LM9.
 //   }
 
   // ~~~~~~~ define tree branches ~~~~~~~
-  reducedTree.Branch("weight",&weight,"weight/D");
+  reducedTree.Branch("weight",&eventweight,"weight/D"); //special case; 'weight' is already taken here but I want the reducedTree to use it
+  reducedTree.Branch("weight2",&eventweight2,"weight2/D");
   reducedTree.Branch("scanCrossSection",&scanCrossSection,"scanCrossSection/D");
   reducedTree.Branch("scanCrossSectionPlus",&scanCrossSectionPlus,"scanCrossSectionPlus/D");
   reducedTree.Branch("scanCrossSectionMinus",&scanCrossSectionMinus,"scanCrossSectionMinus/D");
@@ -5088,16 +4954,8 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("prob2_LFminus",&prob2_LFminus,"prob2_LFminus/F");
   reducedTree.Branch("probge3_LFminus",&probge3_LFminus,"probge3_LFminus/F");
 
-
-  //should consider whether some of these should be killed off
-  reducedTree.Branch("cutHT",&cutHT,"cutHT/O");
   reducedTree.Branch("cutPV",&cutPV,"cutPV/O");
   reducedTree.Branch("cutTrigger",&cutTrigger,"cutTrigger/O");
-  reducedTree.Branch("cut3Jets",&cut3Jets,"cut3Jets/O");
-  reducedTree.Branch("cutEleVeto",&cutEleVeto,"cutEleVeto/O");
-  reducedTree.Branch("cutMuVeto",&cutMuVeto,"cutMuVeto/O");
-  reducedTree.Branch("cutMET",&cutMET,"cutMET/O");
-  reducedTree.Branch("cutDeltaPhi",&cutDeltaPhi,"cutDeltaPhi/O");
   
   reducedTree.Branch("csctighthaloFilter",&csctighthaloFilter,"csctighthaloFilter/O");
   reducedTree.Branch("eenoiseFilter",&eenoiseFilter,"eenoiseFilter/O");
@@ -5156,8 +5014,22 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("pass_utilityHLT",&pass_utilityHLT,"pass_utilityHLT/O");
   reducedTree.Branch("prescaleUtilityHLT", &prescaleUtilityHLT, "prescaleUtilityHLT/i");
   reducedTree.Branch("versionUtilityHLT", &versionUtilityHLT, "versionUtilityHLT/i");
-
   reducedTree.Branch("pass_utilityPrescaleModuleHLT",&pass_utilityPrescaleModuleHLT,"pass_utilityPrescaleModuleHLT/O");
+
+  reducedTree.Branch("pass_PFHT350_PFMET100",&pass_PFHT350_PFMET100,"pass_PFHT350_PFMET100/O");
+  reducedTree.Branch("pass_HT250_AlphaT0p55",&pass_HT250_AlphaT0p55,"pass_HT250_AlphaT0p55/O");
+  reducedTree.Branch("pass_HT300_AlphaT0p53",&pass_HT300_AlphaT0p53,"pass_HT300_AlphaT0p53/O");
+  reducedTree.Branch("pass_HT200",&pass_HT200,"pass_HT200/O");
+  reducedTree.Branch("pass_HT250",&pass_HT250,"pass_HT250/O");
+  reducedTree.Branch("pass_HT300",&pass_HT300,"pass_HT300/O");
+  reducedTree.Branch("pass_PFHT350",&pass_PFHT350,"pass_PFHT350/O");
+  reducedTree.Branch("pass_DiCentralPFJet50_PFMET80",&pass_DiCentralPFJet50_PFMET80,"pass_DiCentralPFJet50_PFMET80/O");
+  reducedTree.Branch("pass_DiCentralPFJet30_PFMET80_BTagCSV07",&pass_DiCentralPFJet30_PFMET80_BTagCSV07,"pass_DiCentralPFJet30_PFMET80_BTagCSV07/O");
+  reducedTree.Branch("pass_PFMET150",&pass_PFMET150,"pass_PFMET150/O");
+  reducedTree.Branch("pass_PFHT350_Mu15_PFMET45",&pass_PFHT350_Mu15_PFMET45,"pass_PFHT350_Mu15_PFMET45/O");
+  reducedTree.Branch("pass_CleanPFHT300_Ele15_CaloIdT_CaloIsoVL_TrkIdT_TrkIsoVL_PFMET45",&pass_CleanPFHT300_Ele15_CaloIdT_CaloIsoVL_TrkIdT_TrkIsoVL_PFMET45,"pass_CleanPFHT300_Ele15_CaloIdT_CaloIsoVL_TrkIdT_TrkIsoVL_PFMET45/O");
+  reducedTree.Branch("pass_IsoMu24_eta2p1",&pass_IsoMu24_eta2p1,"pass_IsoMu24_eta2p1/O");
+  reducedTree.Branch("pass_IsoMu24",&pass_IsoMu24,"pass_IsoMu24/O");
 
   reducedTree.Branch("HT",&HT,"HT/F");
   reducedTree.Branch("ST",&ST,"ST/F"); //includes HT + leptons
@@ -5453,6 +5325,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
   const Long64_t neventsB = chainB->GetEntries();
   assert(nevents==neventsB);
 
+
   startTimer();
   // ~~~~ now start the real event loop
   for(Long64_t entry=0; entry < nevents; ++entry) {
@@ -5575,13 +5448,61 @@ Also the pdfWeightSum* histograms that are used for LM9.
     }
 
 
-    //very loose skim for reducedTrees (HT, trigger)
+    //very loose skim for reducedTrees (STeff, trigger)
     ST = getST(30,10); //ST is always bigger than HT; reducing the jet cut to 30 will only make it larger
-    if ( (passCut("cutTrigger") || passCut("cutUtilityTrigger")) && (ST>=400) ) {
-      cutHT = passCut("cutHT"); //should always be true
+    MET=getMET();
+    STeff = ST + MET; //obviously STeff is always bigger than ST
 
-      weight = getWeight(nevents);
+    //evaluate the triggers of interest
+    int prescale;int version; 
+    bool pass_PFHT350_PFMET100 =  passHLT("HLT_PFHT350_PFMET100",prescale,version); assert(prescale==1);
+    bool pass_HT250_AlphaT0p55=  passHLT("HT250_AlphaT0p55",prescale,version); assert(prescale==1);
+    bool pass_HT300_AlphaT0p53=  passHLT("HT300_AlphaT0p53",prescale,version); assert(prescale==1);
+    bool pass_HT200=  passHLT("HT200",prescale,version);
+    bool pass_HT250=  passHLT("HT250",prescale,version);
+    bool pass_HT300=  passHLT("HT300",prescale,version);
+    bool pass_PFHT350=  passHLT("PFHT350",prescale,version); prescaleUtilityHLT=abs(prescale); versionUtilityHLT=abs(version);
+    bool pass_DiCentralPFJet50_PFMET80=  passHLT("DiCentralPFJet50_PFMET80",prescale,version); assert(prescale==1);
+    bool pass_DiCentralPFJet30_PFMET80_BTagCSV07=  passHLT("DiCentralPFJet30_PFMET80_BTagCSV07",prescale,version); assert(prescale==1);
+    bool pass_PFMET150=  passHLT("PFMET150",prescale,version); assert(prescale==1);
+    bool pass_PFHT350_Mu15_PFMET45=  passHLT("PFHT350_Mu15_PFMET45",prescale,version);
+    bool pass_CleanPFHT300_Ele15_CaloIdT_CaloIsoVL_TrkIdT_TrkIsoVL_PFMET45=  passHLT("CleanPFHT300_Ele15_CaloIdT_CaloIsoVL_TrkIdT_TrkIsoVL_PFMET45",prescale,version);
+    bool pass_IsoMu24_eta2p1=  passHLT("IsoMu24_eta2p1",prescale,version);
+    bool pass_IsoMu24=  passHLT("IsoMu24",prescale,version);
 
+    cutTrigger= pass_PFHT350_PFMET100; //shortcut name for the physics trigger
+    pass_utilityHLT = pass_PFHT350; //shortcut name for HT-only trigger
+
+    bool passAnyTrigger = pass_PFHT350_PFMET100 
+      || pass_HT250_AlphaT0p55 
+      || pass_HT300_AlphaT0p53 
+      || pass_HT200 
+      || pass_HT250 
+      || pass_HT300
+      || pass_PFHT350
+      || pass_DiCentralPFJet50_PFMET80
+      || pass_DiCentralPFJet30_PFMET80_BTagCSV07
+      || pass_PFMET150
+      || pass_PFHT350_Mu15_PFMET45
+      || pass_CleanPFHT300_Ele15_CaloIdT_CaloIsoVL_TrkIdT_TrkIsoVL_PFMET45
+      || pass_IsoMu24_eta2p1
+      || pass_IsoMu24;
+
+
+    isRealData = isSampleRealData();
+    runNumber = getRunNumber();
+    lumiSection = getLumiSection();
+    eventNumber = getEventNumber();
+    //stuff that we only do on data....
+    bool      passJSON=true;
+    //check the JSON file for data
+    if (isRealData)   passJSON=  inJSON(VRunLumi,runNumber,lumiSection);
+
+    if ( passJSON && passAnyTrigger && (STeff>=300) ) { //very loose skim cut
+      //begin main block of filling reducedTree variables
+
+      eventweight = getWeight(nevents);
+      eventweight2 = getWeight( getNEventsGenerated());
       
       if (theScanType_!=kSMS) {
 	scanCrossSection = getScanCrossSection(prodprocess,"");
@@ -5594,18 +5515,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
 	scanCrossSectionMinus = scanCrossSection; //there are no cross section errors for SMS
       }
 
-      runNumber = getRunNumber();
-      lumiSection = getLumiSection();
-      eventNumber = getEventNumber();
-
-      //stuff that we only do on data....
-      bool      passJSON=true;
-      if (isSampleRealData()) {
-	//check the JSON file
-	passJSON=  inJSON(VRunLumi,runNumber,lumiSection);
-      }
-      if (!passJSON) continue; //don't put in event that aren't in the json
-
+ 
       //if we are running over ttbar, fill info on decay mode
 /* FIXME CFA
       if (sampleName_.Contains("ttjets_madgraph") || sampleName_.Contains("TTJets_TuneZ2_7TeV-madgraph-tauola_Fall11_v2")){
@@ -5634,13 +5544,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
       //      btagIPweight = getBTagIPWeight();
       //      pfmhtweight = getPFMHTWeight();
 
-      cutTrigger = passCut("cutTrigger");
-      cutPV = passCut("cutPV");
-      cut3Jets = passCut("cut3Jets");
-      cutEleVeto = passCut("cutEleVeto");
-      cutMuVeto = passCut("cutMuVeto");
-      cutMET = passCut("cutMET");
-      cutDeltaPhi = passCut("cutDeltaPhi");
+      cutPV = passPV();
 
       //FIXME CFA
 /*
@@ -5653,12 +5557,6 @@ Also the pdfWeightSum* histograms that are used for LM9.
       calculateTagProb(prob0_LFminus,probge1_LFminus,prob1_LFminus,probge2_LFminus,prob2_LFminus,probge3_LFminus,1,1,1,kLFdown);
 */
 
-      isRealData = isSampleRealData();
-      int version = 0, prescale = 0;
-      pass_utilityHLT = passUtilityHLT(version, prescale);
-      prescaleUtilityHLT = prescale;
-      versionUtilityHLT = version;
-
       pass_utilityPrescaleModuleHLT = passUtilityPrescaleModuleHLT();
 
       nGoodPV = countGoodPV();
@@ -5667,14 +5565,17 @@ Also the pdfWeightSum* histograms that are used for LM9.
       //      bjetSumSUSY[thispoint] += SUSY_nb;
       //if(SUSY_process==NotFound) cout<<"SUSY_nb = "<<SUSY_nb<<endl;
 
+      //count jets
       njets = nGoodJets();
       njets30 = nGoodJets30();
 
+      //look for jj resonances
       jjResonanceFinder(mjj1,mjj2);
       mjjdiff=fabs(mjj1-mjj2);
       jjResonanceFinder5(mjj1_5,mjj2_5);
       mjjdiff_5=fabs(mjj1_5-mjj2_5);
 
+      //count b jets
       ntruebjets = nTrueBJets();
       nbjets = nGoodBJets();
       nbjetsSSVM = nGoodBJets( kSSVM);
@@ -5694,6 +5595,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
       deltaPhib3=getDeltaPhiMET(3,30,true);
       minDeltaPhiMETMuonsAll=getMinDeltaPhiMETMuons(99);
 
+      //count leptons
       nElectrons = countEle();
       nMuons = countMu();
       nElectrons5 = countEle(5);
@@ -5706,9 +5608,6 @@ Also the pdfWeightSum* histograms that are used for LM9.
       bestZmass=getBestZCandidate(20,10);
 
       nTaus = countTau();
-      MET=getMET();
-      STeff = ST + MET;
-      //      METsig = myMETPF->at(0).mEtSig; //FIXME hard coded for PF
       MHT=getMHT();
       METphi = getMETphi();
 
@@ -5968,7 +5867,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
       else                rl= muonpt1/STeff;
       rMET = MET/STeff;
 
-
+      //from 2011
       csctighthaloFilter = cschalofilter_decision==1 ? true : false;
       eenoiseFilter = eenoisefilter_decision==1 ? true : false;
       greedymuonFilter = greedymuonfilter_decision==1 ? true : false;
@@ -6256,92 +6155,6 @@ double EventCalculator::calc_mNj( unsigned int j1i, unsigned int j2i, unsigned i
 }
 
 
-void EventCalculator::changeVariablesGenSmearing(TRandom3* random) {
-  //this code is very much a work in progress
-  //the goal is still far away...
-
-  //goal: starting with gen jets, fill jet list from scratch with smeared gen jets
-  //two ways to proceed:
-  // (1) start with gen particle list, looking for (status 3?) quarks and gluons
-  // (2) start with genPartons associated with reco'd jets
-  //version (2) is where i will start
-  /*
-Let me explain it with a pseudo-algorithm.
-1) take truly balanced QCD events (gen-level partons, or even better
-rebalanced events like in R+S)
-
-2) smear exactly 1 jet in a way that can give a large mismeasurement
-[maybe a double or triple Gaussian smearing, with the tail functions having
-a very large width]
-
-3) smear the other jets with a 0.10*pT Gaussian
-[simple Gaussian smearing, so that virtually no jets get a large
-mismeasurement]
-
-4) compute MET, DeltaPhiN and study the r(MET) plot
-
-  */
-
- //  if(recalculatedVariables_) return;
-//   recalculatedVariables_=true;
-//   myJetsPF_temp                   = myJetsPF;		  
-//   myMETPF_temp		          = myMETPF;		  
-
-//   myJetsPF                = new std::vector<jet2_s>;	   //jmt -- switch to PF2PAT
-//   myMETPF		  = new std::vector<met1_s>(*myMETPF_temp);	  
-
-
-/*
-  //as a cross-check, let's calculate a jet-only gen-level MET
-//this didn't work very well....
-  double genMETx=0;
-  double genMETy=0;
-  for (unsigned int i=0; i<myJetsPF_temp->size(); i++) {
-    double genpt =  jet2_genParton_pt .at( i);
-    double geneta=  jet2_genParton_eta.at( i);
-    double genphi=  jet2_genParton_phi.at( i);
-
-    if (fabs(geneta)<5) {
-      genMETx -= genpt * cos(genphi);
-      genMETy -= genpt * sin(genphi);
-
-      myJetsPF->push_back( myJetsPF_temp->at(i)); //temp
-    }
-  }
-  cout<<"genMET = "<<sqrt(genMETx*genMETx + genMETy*genMETy)<<" "<<met1_genMET_et.at(0)<<endl;
-*/
-
-  cout<<"=="<<endl;
-/*
-//start with MET
-  double METx = myMETPF_temp->at(0).pt * cos(myMETPF_temp->at(0).phi);
-  double METy = myMETPF_temp->at(0).pt * sin(myMETPF_temp->at(0).phi);
-//remove the jets from the MET  
-  for (unsigned int i=0; i<myJetsPF_temp->size(); i++) {
-    METx += myJetsPF_temp->at(i).uncor_pt * cos(myJetsPF_temp->at(i).uncor_phi);
-    METy += myJetsPF_temp->at(i).uncor_pt * sin(myJetsPF_temp->at(i).uncor_phi);
-  }
-  cout<<myMETPF_temp->at(0).pt<<" "<<sqrt(METx*METx + METy*METy)<<flush;
-  for (unsigned int i=0; i<myElectronsPF->size(); i++) {
-    METx += myElectronsPF->at(i).pt * cos(myElectronsPF->at(i).phi);
-    METy += myElectronsPF->at(i).pt * sin(myElectronsPF->at(i).phi);
-  }
-  for (unsigned int i=0; i<myMuonsPF->size(); i++) {
-    METx += myMuonsPF->at(i).pt * cos(myMuonsPF->at(i).phi);
-    METy += myMuonsPF->at(i).pt * sin(myMuonsPF->at(i).phi);
-  }
-
-  cout<<" "<<sqrt(METx*METx + METy*METy)<<endl;
-  
-  //now try the hail mary approach
-
-  for (unsigned int i=0 ; i<myGenParticles->size(); i++) {
-    if (TMath::Nint(   myGenParticles->at(i).status)==3) cout<<i<<"  "<<myGenParticles->at(i).firstMother<<"\t"<<myGenParticles->at(i).pdgId
-							     <<"\t"<<myGenParticles->at(i).firstDaughter<<endl;
-  }
-*/
-
-}
 
 // void EventCalculator::changeVariables(TRandom3* random, double jetLossProbability, int& nLostJets)
 // {
@@ -7230,10 +7043,6 @@ void EventCalculator::sampleAnalyzer() {
   //float prob0,probge1,prob1,probge2,probge3;
 
   //float n0b = 0, nge1b = 0, neq1b = 0, nge2b = 0, nge3b = 0;
-  setCutScheme();
-  setIgnoredCut("cut1b");
-  setIgnoredCut("cut2b");
-  setIgnoredCut("cut3b");
 
   ////initialize PU things
   //std::vector< float > DataDist2011;
@@ -7878,10 +7687,11 @@ void EventCalculator::plotBTagEffMC( ) {
   const Long64_t neventsB = chainB->GetEntries();
   assert(nevents==neventsB);
 
-  setCutScheme();
-  setIgnoredCut("cut1b");
-  setIgnoredCut("cut2b");
-  setIgnoredCut("cut3b");
+
+//   setCutScheme();
+//   setIgnoredCut("cut1b");
+//   setIgnoredCut("cut2b");
+//   setIgnoredCut("cut3b");
 
   cout<<"Running..."<<endl;  
   int npass = 0;
