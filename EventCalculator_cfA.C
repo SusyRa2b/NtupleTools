@@ -660,6 +660,7 @@ bool EventCalculator::passHLT(const TString & triggername, int & prescalevalue, 
       foundit=true;
       prescalevalue = TMath::Nint(trigger_prescalevalue->at(itrig));
       if ( TMath::Nint(trigger_decision->at(itrig))==1 ) passtrigger=true;
+      //cout<<triggername<<" "<<thistrigger <<" " <<  TMath::Nint(trigger_decision->at(itrig))<<endl;
     }
   }
 
@@ -5455,21 +5456,21 @@ Also the pdfWeightSum* histograms that are used for LM9.
 
     //evaluate the triggers of interest
     int prescale;int version; 
-    bool pass_PFHT350_PFMET100 =  passHLT("HLT_PFHT350_PFMET100",prescale,version); assert(prescale==1);
-    bool pass_HT250_AlphaT0p55=  passHLT("HT250_AlphaT0p55",prescale,version); assert(prescale==1);
-    bool pass_HT300_AlphaT0p53=  passHLT("HT300_AlphaT0p53",prescale,version); assert(prescale==1);
-    bool pass_HT200=  passHLT("HT200",prescale,version);
-    bool pass_HT250=  passHLT("HT250",prescale,version);
-    bool pass_HT300=  passHLT("HT300",prescale,version);
-    bool pass_PFHT350=  passHLT("PFHT350",prescale,version); prescaleUtilityHLT=abs(prescale); versionUtilityHLT=abs(version);
-    bool pass_DiCentralPFJet50_PFMET80=  passHLT("DiCentralPFJet50_PFMET80",prescale,version); assert(prescale==1);
-    bool pass_DiCentralPFJet30_PFMET80_BTagCSV07=  passHLT("DiCentralPFJet30_PFMET80_BTagCSV07",prescale,version); assert(prescale==1);
-    bool pass_PFMET150=  passHLT("PFMET150",prescale,version); assert(prescale==1);
-    bool pass_PFHT350_Mu15_PFMET45=  passHLT("PFHT350_Mu15_PFMET45",prescale,version);
-    bool pass_CleanPFHT300_Ele15_CaloIdT_CaloIsoVL_TrkIdT_TrkIsoVL_PFMET45=  passHLT("CleanPFHT300_Ele15_CaloIdT_CaloIsoVL_TrkIdT_TrkIsoVL_PFMET45",prescale,version);
-    bool pass_IsoMu24_eta2p1=  passHLT("IsoMu24_eta2p1",prescale,version);
-    bool pass_IsoMu24=  passHLT("IsoMu24",prescale,version);
-
+    pass_PFHT350_PFMET100 =  passHLT("HLT_PFHT350_PFMET100",prescale,version); assert(prescale==1);
+    pass_HT250_AlphaT0p55=  passHLT("HLT_HT250_AlphaT0p55",prescale,version); assert(prescale==1);
+    pass_HT300_AlphaT0p53=  passHLT("HLT_HT300_AlphaT0p53",prescale,version); assert(prescale==1);
+    pass_HT200=  passHLT("HLT_HT200",prescale,version);
+    pass_HT250=  passHLT("HLT_HT250",prescale,version);
+    pass_HT300=  passHLT("HLT_HT300",prescale,version);
+    pass_PFHT350=  passHLT("HLT_PFHT350",prescale,version); prescaleUtilityHLT=abs(prescale); versionUtilityHLT=abs(version);
+    pass_DiCentralPFJet50_PFMET80=  passHLT("HLT_DiCentralPFJet50_PFMET80",prescale,version); assert(prescale==1);
+    pass_DiCentralPFJet30_PFMET80_BTagCSV07=  passHLT("HLT_DiCentralPFJet30_PFMET80_BTagCSV07",prescale,version); assert(prescale==1);
+    pass_PFMET150=  passHLT("HLT_PFMET150",prescale,version); assert(prescale==1);
+    pass_PFHT350_Mu15_PFMET45=  passHLT("HLT_PFHT350_Mu15_PFMET45",prescale,version);
+    pass_CleanPFHT300_Ele15_CaloIdT_CaloIsoVL_TrkIdT_TrkIsoVL_PFMET45=  passHLT("HLT_CleanPFHT300_Ele15_CaloIdT_CaloIsoVL_TrkIdT_TrkIsoVL_PFMET45",prescale,version);
+    pass_IsoMu24_eta2p1=  passHLT("HLT_IsoMu24_eta2p1",prescale,version);
+    pass_IsoMu24=  passHLT("HLT_IsoMu24",prescale,version);
+    
     cutTrigger= pass_PFHT350_PFMET100; //shortcut name for the physics trigger
     pass_utilityHLT = pass_PFHT350; //shortcut name for HT-only trigger
 
