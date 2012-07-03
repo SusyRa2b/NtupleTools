@@ -32,6 +32,11 @@ TChain* dtree=0;
 TH1D* hdata=0;
 TH2D* hdata2d=0;
 
+enum dataPDMode {kHT, kSingleMu, kDoubleMu, kDoubleElectron};
+dataPDMode theDataPDMode_ = kHT;
+//dataPDMode theDataPDMode_ = kDoubleMu;
+//dataPDMode theDataPDMode_ = kDoubleElectron;
+
 TString currentConfig_;
 TH2D* scanSMSngen=0;
 TH1D* referenceCrossSectionGluino=0;
@@ -1338,7 +1343,7 @@ TH1D* totalqcdttbar=0;
 TH1D* totalnonttbar=0;
 TH1D* totalnonqcd=0;
 TH1D* totalqcd=0; //ben - just for ease of doing event counts with drawPlots
-TH1D* ratio=0; float ratioMin=0; float ratioMax=2.5;
+TH1D* ratio=0; float ratioMin=0.0; float ratioMax=2.5;
 TLine* ratioLine=0;
 TGraphErrors* mcerrors=0;
 bool loaded_=false; //bookkeeping
@@ -2132,7 +2137,9 @@ void setColorScheme(const TString & name) {
     sampleColor_["WJets-tauHad"]=kGreen-10;
     sampleColor_["WJetsZ2"] = kGreen-3;
     sampleColor_["ZJets"] = kViolet-3;
+    //sampleColor_["ZJets"] = kOrange-3;
     sampleColor_["Zinvisible"] = kOrange-3;
+    //sampleColor_["Zinvisible"] = kRed-5;
     sampleColor_["SingleTop-sChannel"] = kMagenta+1; //for special cases
     sampleColor_["SingleTop-tChannel"] = kMagenta+2; //for special cases
     sampleColor_["SingleTop-tWChannel"] = kMagenta+3; //for special cases
@@ -2817,10 +2824,11 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   TString dname="reducedTree.";
   dname+=currentConfig_;
   //dname+=".data.root";
-  //dname+=".ht_run2011a_SUM_promptrecov4only_uptojun24.root";
-  //dname+=".data_promptrecoThroughJul1.root";
-  dname+=".ht*.root";
-  //dname+=".singlemu*.root";
+  if(theDataPDMode_ == kHT) dname+=".ht*.root";
+  else if (theDataPDMode_ == kSingleMu) dname+=".singlemu*.root";
+  else if (theDataPDMode_ == kDoubleMu) dname+=".doublemu*.root";
+  else if (theDataPDMode_ == kDoubleElectron) dname+=".doubleelectron*.root";
+  else{cout << "data PD mode not specified, aborting" << endl; assert(0);}
   //dname+="*.root";
   //dname+=".ht_run2011a_SUM_promptrecov4only_uptojul1.root";
   dname.Prepend(dataInputPath);
@@ -3140,7 +3148,6 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
     TString hname = jmt::fortranize(var); hname += "_"; hname += samples_[isample];
     histos_[samples_[isample]] = (varbins==0) ? new TH1D(hname,"",nbins,low,high) : new TH1D(hname,"",nbins,varbins);
     histos_[samples_[isample]]->Sumw2();
-
     TTree* tree = (TTree*) files_[currentConfig_][samplename]->Get("reducedTree");
     gROOT->cd();
     TString weightopt= useFlavorHistoryWeights_ && samples_[isample].Contains("WJets") ? "flavorHistoryWeight" : "";
@@ -3421,7 +3428,7 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
       tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,"",0,"",-1,sampleScaleFactor_[samplename]).Data());
 
     //now the histo is filled
-    
+
     if (renormalizeBins_) ytitle=renormBins(histos_[samples_[isample]],2 ); //manipulates the TH1D //FIXME hard-coded "2"
     if (addOverflow_)  addOverflowBin( histos_[samples_[isample]] ); //manipulates the TH1D
     histos_[samples_[isample]]->SetXTitle(xtitle);
