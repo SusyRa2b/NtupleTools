@@ -664,9 +664,10 @@ bool EventCalculator::passHLT(const TString & triggername, int & prescalevalue, 
     }
   }
 
-  if (!foundit) {
-    cout<<"I failed to find "<<triggername<<endl;
-  }
+  //this can be too verbose
+  //  if (!foundit) {
+  //    cout<<"I failed to find "<<triggername<<endl;
+  //  }
 
   return passtrigger;
 }
@@ -3935,6 +3936,8 @@ Long64_t EventCalculator::getNEventsGenerated() {
   if (sampleName_=="ZJetsToNuNu_400_HT_inf_TuneZ2Star_8TeV_madgraph_Summer12-PU_S7_START52_V9-v1_AODSIM_UCSB1242_v60s") return 1006928;
   if (sampleName_=="ZZ_TuneZ2star_8TeV_pythia6_tauola_Summer12-PU_S7_START52_V9-v1_AODSIM_UCSB1218_v60s") return 9599908;
 
+  if (sampleName_=="sbottom8lnotaus-189-270") return 50000;
+
   cout<<"[getNEventsGenerated] unknown sample "<<sampleName_<<endl;
   assert(0);
   return 1;
@@ -3979,6 +3982,9 @@ double EventCalculator::getCrossSection(){
   if (sampleName_.Contains("SUSY_LM9_sftsht_8TeV"))          return 9.287; //LO 8TeV from PREP
   if (sampleName_.Contains("TTJets_TuneZ2star_8TeV-madgraph-tauola") )         return 234;  //approx NNLO
  
+
+  //RPV 8 TeV
+  if (sampleName_.Contains("sbottom8lnotaus-189-270")) return 3.7;
 
   if (sampleName_.Contains("mSUGRA")) return 1; //NLO cross sections will be specially stored per point
   if (sampleName_.Contains("T1bbbb")) return 1;
@@ -4658,21 +4664,34 @@ void EventCalculator::reducedTree(TString outputpath) {
   UInt_t prescaleUtilityHLT;
   UInt_t versionUtilityHLT;
   bool pass_utilityPrescaleModuleHLT;
-  //new
-  bool pass_PFHT350_PFMET100;
-  bool pass_HT250_AlphaT0p55;
-  bool pass_HT300_AlphaT0p53;
-  bool pass_HT200;
-  bool pass_HT250;
-  bool pass_HT300;
-  bool pass_PFHT350;
-  bool pass_DiCentralPFJet50_PFMET80;
-  bool pass_DiCentralPFJet30_PFMET80_BTagCSV07;
-  bool pass_PFMET150;
-  bool pass_PFHT350_Mu15_PFMET45;
-  bool pass_CleanPFHT300_Ele15_CaloIdT_CaloIsoVL_TrkIdT_TrkIsoVL_PFMET45;
-  bool pass_IsoMu24_eta2p1;
-  bool pass_IsoMu24;
+
+  //defines the list of triggers to store info about
+  map<TString, bool> triggerlist;
+  triggerlist["PFHT350_PFMET100"]=false;
+  triggerlist["HT250_AlphaT0p55"]=false;
+  triggerlist["HT300_AlphaT0p53"]=false;
+  triggerlist["HT200"]=false;
+  triggerlist["HT250"]=false;
+  triggerlist["HT300"]=false;
+  triggerlist["PFHT350"]=false;
+  triggerlist["PFHT650"]=false;
+  triggerlist["DiCentralPFJet50_PFMET80"]=false;
+  triggerlist["DiCentralPFJet30_PFMET80"]=false;
+  triggerlist["DiCentralPFJet30_PFMET80_BTagCSV07"]=false;
+  triggerlist["PFMET150"]=false;
+  triggerlist["PFHT350_Mu15_PFMET45"]=false;
+  triggerlist["CleanPFHT300_Ele15_CaloIdT_CaloIsoVL_TrkIdT_TrkIsoVL_PFMET45"]=false;
+  triggerlist["IsoMu24_eta2p1"]=false;
+  triggerlist["IsoMu24"]=false;
+  triggerlist["Photon135"]=false;
+  triggerlist["Photon150"]=false;
+  //some extra stuff
+  triggerlist["Mu17_Mu8"]=false;
+  triggerlist["Ele17_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL_Ele8_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL"]=false;
+  triggerlist["Mu17_Ele8_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL"]=false;
+  triggerlist["Mu8_Ele17_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL"]=false;
+  triggerlist["SixJet45"]=false;
+  triggerlist["QuadJet80"]=false;
 
   int njets, njets30, nbjets, ntruebjets, nElectrons, nMuons, nTaus;
   int nbjetsSSVM,nbjetsTCHET,nbjetsSSVHPT,nbjetsTCHPT,nbjetsTCHPM,nbjetsCSVM,nbjetsCSVL;
@@ -5017,20 +5036,12 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("versionUtilityHLT", &versionUtilityHLT, "versionUtilityHLT/i");
   reducedTree.Branch("pass_utilityPrescaleModuleHLT",&pass_utilityPrescaleModuleHLT,"pass_utilityPrescaleModuleHLT/O");
 
-  reducedTree.Branch("pass_PFHT350_PFMET100",&pass_PFHT350_PFMET100,"pass_PFHT350_PFMET100/O");
-  reducedTree.Branch("pass_HT250_AlphaT0p55",&pass_HT250_AlphaT0p55,"pass_HT250_AlphaT0p55/O");
-  reducedTree.Branch("pass_HT300_AlphaT0p53",&pass_HT300_AlphaT0p53,"pass_HT300_AlphaT0p53/O");
-  reducedTree.Branch("pass_HT200",&pass_HT200,"pass_HT200/O");
-  reducedTree.Branch("pass_HT250",&pass_HT250,"pass_HT250/O");
-  reducedTree.Branch("pass_HT300",&pass_HT300,"pass_HT300/O");
-  reducedTree.Branch("pass_PFHT350",&pass_PFHT350,"pass_PFHT350/O");
-  reducedTree.Branch("pass_DiCentralPFJet50_PFMET80",&pass_DiCentralPFJet50_PFMET80,"pass_DiCentralPFJet50_PFMET80/O");
-  reducedTree.Branch("pass_DiCentralPFJet30_PFMET80_BTagCSV07",&pass_DiCentralPFJet30_PFMET80_BTagCSV07,"pass_DiCentralPFJet30_PFMET80_BTagCSV07/O");
-  reducedTree.Branch("pass_PFMET150",&pass_PFMET150,"pass_PFMET150/O");
-  reducedTree.Branch("pass_PFHT350_Mu15_PFMET45",&pass_PFHT350_Mu15_PFMET45,"pass_PFHT350_Mu15_PFMET45/O");
-  reducedTree.Branch("pass_CleanPFHT300_Ele15_CaloIdT_CaloIsoVL_TrkIdT_TrkIsoVL_PFMET45",&pass_CleanPFHT300_Ele15_CaloIdT_CaloIsoVL_TrkIdT_TrkIsoVL_PFMET45,"pass_CleanPFHT300_Ele15_CaloIdT_CaloIsoVL_TrkIdT_TrkIsoVL_PFMET45/O");
-  reducedTree.Branch("pass_IsoMu24_eta2p1",&pass_IsoMu24_eta2p1,"pass_IsoMu24_eta2p1/O");
-  reducedTree.Branch("pass_IsoMu24",&pass_IsoMu24,"pass_IsoMu24/O");
+  for ( map<TString,bool>::iterator itrigger = triggerlist.begin() ; itrigger!=triggerlist.end() ; ++itrigger) {
+    TString treename = "pass_";
+    treename+=itrigger->first;
+    TString withcode = treename+"/O";
+    reducedTree.Branch(treename,&(itrigger->second),withcode);
+  }
 
   reducedTree.Branch("HT",&HT,"HT/F");
   reducedTree.Branch("ST",&ST,"ST/F"); //includes HT + leptons
@@ -5322,16 +5333,24 @@ Also the pdfWeightSum* histograms that are used for LM9.
 
   reducedTree.Branch("nLostJet", &nLostJet, "nLostJet/F");
 
+  const int nskimCounter=8;
+  TH1D skimCounter("skimCounter","[nevents] ntotal nselected npasstrig nfailtrig npassjson nfailjson npassST nfailST [ntotalgen]",nskimCounter,0,nskimCounter);
+
   const Long64_t nevents = chainA->GetEntries();
   const Long64_t neventsB = chainB->GetEntries();
   assert(nevents==neventsB);
 
+  //store some extra info just in case....
+  skimCounter.SetBinContent(0,nevents);
+  skimCounter.SetBinContent(nskimCounter+1,getNEventsGenerated());
 
   startTimer();
   // ~~~~ now start the real event loop
   for(Long64_t entry=0; entry < nevents; ++entry) {
     chainB->GetEntry(entry);
     chainA->GetEntry(entry);
+
+    skimCounter.Fill(0); //ntotal
 
     //some output to watch while it's running
     if (entry==0) {
@@ -5456,39 +5475,25 @@ Also the pdfWeightSum* histograms that are used for LM9.
 
     //evaluate the triggers of interest
     int prescale;int version; 
-    pass_PFHT350_PFMET100 =  passHLT("HLT_PFHT350_PFMET100",prescale,version); assert(prescale==1);
-    pass_HT250_AlphaT0p55=  passHLT("HLT_HT250_AlphaT0p55",prescale,version); assert(prescale==1);
-    pass_HT300_AlphaT0p53=  passHLT("HLT_HT300_AlphaT0p53",prescale,version); assert(prescale==1);
-    pass_HT200=  passHLT("HLT_HT200",prescale,version);
-    pass_HT250=  passHLT("HLT_HT250",prescale,version);
-    pass_HT300=  passHLT("HLT_HT300",prescale,version);
-    pass_PFHT350=  passHLT("HLT_PFHT350",prescale,version); prescaleUtilityHLT=abs(prescale); versionUtilityHLT=abs(version);
-    pass_DiCentralPFJet50_PFMET80=  passHLT("HLT_DiCentralPFJet50_PFMET80",prescale,version); assert(prescale==1);
-    pass_DiCentralPFJet30_PFMET80_BTagCSV07=  passHLT("HLT_DiCentralPFJet30_PFMET80_BTagCSV07",prescale,version); assert(prescale==1);
-    pass_PFMET150=  passHLT("HLT_PFMET150",prescale,version); assert(prescale==1);
-    pass_PFHT350_Mu15_PFMET45=  passHLT("HLT_PFHT350_Mu15_PFMET45",prescale,version);
-    pass_CleanPFHT300_Ele15_CaloIdT_CaloIsoVL_TrkIdT_TrkIsoVL_PFMET45=  passHLT("HLT_CleanPFHT300_Ele15_CaloIdT_CaloIsoVL_TrkIdT_TrkIsoVL_PFMET45",prescale,version);
-    pass_IsoMu24_eta2p1=  passHLT("HLT_IsoMu24_eta2p1",prescale,version);
-    pass_IsoMu24=  passHLT("HLT_IsoMu24",prescale,version);
-    
-    cutTrigger= pass_PFHT350_PFMET100; //shortcut name for the physics trigger
-    pass_utilityHLT = pass_PFHT350; //shortcut name for HT-only trigger
 
-    bool passAnyTrigger = pass_PFHT350_PFMET100 
-      || pass_HT250_AlphaT0p55 
-      || pass_HT300_AlphaT0p53 
-      || pass_HT200 
-      || pass_HT250 
-      || pass_HT300
-      || pass_PFHT350
-      || pass_DiCentralPFJet50_PFMET80
-      || pass_DiCentralPFJet30_PFMET80_BTagCSV07
-      || pass_PFMET150
-      || pass_PFHT350_Mu15_PFMET45
-      || pass_CleanPFHT300_Ele15_CaloIdT_CaloIsoVL_TrkIdT_TrkIsoVL_PFMET45
-      || pass_IsoMu24_eta2p1
-      || pass_IsoMu24;
+    bool passAnyTrigger=false;
+    for ( map<TString,bool>::iterator itrigger = triggerlist.begin() ; itrigger!=triggerlist.end() ; ++itrigger) {
+      TString thisname = itrigger->first;
+      itrigger->second = passHLT("HLT_"+thisname, prescale,version);
 
+      //handle some special cases
+      if ( itrigger->first == "PFHT350_PFMET100") assert(prescale==1);
+      if ( itrigger->first == "PFMET150") assert(prescale==1);
+      //i could assert 1 also for some other triggers....I can't decide if this is useful or not
+      if (itrigger->first == "PFHT350") {
+	prescaleUtilityHLT=abs(prescale); 
+	versionUtilityHLT=abs(version);
+      }
+      passAnyTrigger = passAnyTrigger || (itrigger->second);
+    }
+
+    cutTrigger= triggerlist["PFHT350_PFMET100"]; //shortcut name for the physics trigger
+    pass_utilityHLT = triggerlist["PFHT350"]; //shortcut name for HT-only trigger
 
     isRealData = isSampleRealData();
     runNumber = getRunNumber();
@@ -5499,8 +5504,14 @@ Also the pdfWeightSum* histograms that are used for LM9.
     //check the JSON file for data
     if (isRealData)   passJSON=  inJSON(VRunLumi,runNumber,lumiSection);
 
-    if ( passJSON && passAnyTrigger && (STeff>=300) ) { //very loose skim cut
+    //keep some tallies of why we failed the skim
+    if (passAnyTrigger)  skimCounter.Fill(2); else skimCounter.Fill(3);
+    if (passJSON)  skimCounter.Fill(4); else skimCounter.Fill(5);
+    if ( STeff>=300 ) skimCounter.Fill(6); else skimCounter.Fill(7);
+
+    if (passJSON && passAnyTrigger && (STeff>=300)  ) { //very loose skim cut
       //begin main block of filling reducedTree variables
+      skimCounter.Fill(1); //nselected
 
       eventweight = getWeight(nevents);
       eventweight2 = getWeight( getNEventsGenerated());
