@@ -9,7 +9,9 @@ region of interest with the regionType enum.
 
 WARNING: Owen discovered that TGraphAsymmErrors may give strange
 results for newer versions of ROOT (>V5.26/00e).  The efficiency
-numbers for the 2011 analysis were computed using V5.26/00e.
+numbers for the 2011 analysis were computed using V5.26/00e.  
+UPDATE: The problem was understood and my code is fixed.  There is now no
+problem with any version of ROOT.
 
 */
 
