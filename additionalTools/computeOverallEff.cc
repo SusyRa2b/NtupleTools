@@ -75,6 +75,7 @@ void computeOverallEff() {
   //regionType theRegionType_ = kZeroLepLowMDP;
   //regionType theRegionType_ = kSingleLeppHighMDP; //not used -> use Keith's numbers
   //regionType theRegionType_ = kSingleMu;
+  //regionType theRegionType_ = kSingleEle;
 
 
 
@@ -86,12 +87,16 @@ void computeOverallEff() {
 
   //TFile* f_trig1, f_trig2;
   TFile * f_trig1 = new TFile(     "mhteff_dec8_eq0b.root","READ");
-  TFile * f_trig2 = new TFile(     "mhteff_dec8_eq0b.root","READ");
+  //TFile * f_trig2 = new TFile(     "mhteff_dec8_eq0b.root","READ");
   if( theRegionType_ == kZeroLepHighMDP || theRegionType_ == kZeroLepLowMDP || theRegionType_ == kSingleLepHighMDP){
     f_trig1 = new TFile("mhteff_dec8_eq0b.root");
-    f_trig2 = new TFile("mhteff_dec8_eq0b.root");
+    //f_trig2 = new TFile("mhteff_dec8_eq0b.root");
+    //f_trig1 = new TFile("mhteff_may1_eq0b.root");
+    //f_trig2 = new TFile("mhteff_may1_eq0b.root");
     //f_trig1 = new TFile("mhteff_apr18_ge1b.root");
     //f_trig2 = new TFile("mhteff_apr18_ge1b.root");
+    //f_trig1 = new TFile("mhteff_apr18_ge2b.root");
+    //f_trig2 = new TFile("mhteff_apr18_ge2b.root");
     // f_trig1 = new TFile("mhteff_apr18_eq0b_mindphin8.root");
     //f_trig2 = new TFile("mhteff_apr18_eq0b_mindphin8.root");
     //f_trig1 = new TFile("mhteff_apr18_ge1b_mindphin10.root");
@@ -108,8 +113,9 @@ void computeOverallEff() {
     //f_trig2 = new TFile("mhteff_apr18_eq0b_mindphin14.root");
   }
   else if( theRegionType_ == kSingleMu || theRegionType_ == kSingleEle){
-    f_trig1 = new TFile("1LTrig_v2.root");
-    f_trig2 = new TFile("1LTrig_earlier.root");
+    //f_trig1 = new TFile("1LTrig_v2.root");
+    //f_trig2 = new TFile("1LTrig_earlier.root");
+    f_trig1 = new TFile("1LTrig_allCuts_0b.root");
   }
 
   //TFile * f_trig1 = new TFile(     "mhteff_nov29.root","READ");
@@ -280,40 +286,78 @@ void computeOverallEff() {
   }
   //SL sample: HT>400, 1L, MuHad and EleHad datasets
   else if( theRegionType_ == kSingleMu){
-    vhname_denom.push_back("histoHLT_HT300_MHT75_muTot");//Assume MHT75 efficiency for first 0.3 /fb (MHT60 & MHT70) as well
-    vhname_denom.push_back("histoHLT_HT300_MHT75_muTot");//Assume MHT75 efficiency for first 0.3 /fb (MHT60 & MHT70) as well
-    vhname_denom.push_back("histoHLT_HT300_MHT75_muTot");//Assume MHT75 efficiency for first 0.3 /fb (MHT60 & MHT70) as well
-    vhname_denom.push_back("histoHLT_HT300_MHT75_muTot");
-    vhname_denom.push_back("histoHLT_HT300_MHT80_muTot");
+    //vhname_denom.push_back("histoHLT_HT300_MHT75_muTot");//Assume MHT75 efficiency for first 0.3 /fb (MHT60 & MHT70) as well
+    //vhname_denom.push_back("histoHLT_HT300_MHT75_muTot");//Assume MHT75 efficiency for first 0.3 /fb (MHT60 & MHT70) as well
+    //vhname_denom.push_back("histoHLT_HT300_MHT75_muTot");//Assume MHT75 efficiency for first 0.3 /fb (MHT60 & MHT70) as well
+    //vhname_denom.push_back("histoHLT_HT300_MHT75_muTot");
+    //vhname_denom.push_back("histoHLT_HT300_MHT80_muTot");
+    //vhname_denom.push_back("forbayesHLT_HT300_Mu15_PFMHT40_v1HT");
+    //vhname_denom.push_back("forbayesHLT_HT350_Mu5_PFMHT45_v8HT");
+    //vhname_denom.push_back("forbayesHLT_HT350_Mu5_PFMHT45_v12HT");
+    //vhname_num.push_back("histoHLT_HT300_MHT75_muPass");//Assume MHT75 efficiency for first 0.3 /fb (MHT60 & MHT70) as well
+    //vhname_num.push_back("histoHLT_HT300_MHT75_muPass");//Assume MHT75 efficiency for first 0.3 /fb (MHT60 & MHT70) as well
+    //vhname_num.push_back("histoHLT_HT300_MHT75_muPass");//Assume MHT75 efficiency for first 0.3 /fb (MHT60 & MHT70) as well
+    //vhname_num.push_back("histoHLT_HT300_MHT75_muPass");
+    //vhname_num.push_back("histoHLT_HT300_MHT80_muPass");
+    //vhname_num.push_back("forbayesHLT_HT300_MHT90_v2muHT");
+    //vhname_num.push_back("forbayesHLT_HT350_MHT90_v1muHT");
+    //vhname_num.push_back("forbayesHLT_HT350_MHT110_v3muHT");
+
+    vhname_denom.push_back("forbayesHLT_HT300_MHT75_muTot");//Assume MHT75 efficiency for first 0.3 /fb (MHT60 & MHT70) as well
+    vhname_denom.push_back("forbayesHLT_HT300_MHT75_muTot");//Assume MHT75 efficiency for first 0.3 /fb (MHT60 & MHT70) as well
+    vhname_denom.push_back("forbayesHLT_HT300_MHT75_muTot");//Assume MHT75 efficiency for first 0.3 /fb (MHT60 & MHT70) as well
+    vhname_denom.push_back("forbayesHLT_HT300_MHT75_muTot");
+    vhname_denom.push_back("forbayesHLT_HT300_MHT80_muTot");
     vhname_denom.push_back("forbayesHLT_HT300_Mu15_PFMHT40_v1HT");
     vhname_denom.push_back("forbayesHLT_HT350_Mu5_PFMHT45_v8HT");
     vhname_denom.push_back("forbayesHLT_HT350_Mu5_PFMHT45_v12HT");
-    vhname_num.push_back("histoHLT_HT300_MHT75_muPass");//Assume MHT75 efficiency for first 0.3 /fb (MHT60 & MHT70) as well
-    vhname_num.push_back("histoHLT_HT300_MHT75_muPass");//Assume MHT75 efficiency for first 0.3 /fb (MHT60 & MHT70) as well
-    vhname_num.push_back("histoHLT_HT300_MHT75_muPass");//Assume MHT75 efficiency for first 0.3 /fb (MHT60 & MHT70) as well
-    vhname_num.push_back("histoHLT_HT300_MHT75_muPass");
-    vhname_num.push_back("histoHLT_HT300_MHT80_muPass");
+    vhname_num.push_back("forbayesHLT_HT300_MHT75_muPass");//Assume MHT75 efficiency for first 0.3 /fb (MHT60 & MHT70) as well
+    vhname_num.push_back("forbayesHLT_HT300_MHT75_muPass");//Assume MHT75 efficiency for first 0.3 /fb (MHT60 & MHT70) as well
+    vhname_num.push_back("forbayesHLT_HT300_MHT75_muPass");//Assume MHT75 efficiency for first 0.3 /fb (MHT60 & MHT70) as well
+    vhname_num.push_back("forbayesHLT_HT300_MHT75_muPass");
+    vhname_num.push_back("forbayesHLT_HT300_MHT80_muPass");
     vhname_num.push_back("forbayesHLT_HT300_MHT90_v2muHT");
     vhname_num.push_back("forbayesHLT_HT350_MHT90_v1muHT");
     vhname_num.push_back("forbayesHLT_HT350_MHT110_v3muHT");
+
+
   }
   else if( theRegionType_ == kSingleEle){
-    vhname_denom.push_back("histoHLT_HT300_MHT75_elTot");//Assume MHT75 efficiency for first 0.3 /fb (MHT60 & MHT70) as well
-    vhname_denom.push_back("histoHLT_HT300_MHT75_elTot");//Assume MHT75 efficiency for first 0.3 /fb (MHT60 & MHT70) as well
-    vhname_denom.push_back("histoHLT_HT300_MHT75_elTot");//Assume MHT75 efficiency for first 0.3 /fb (MHT60 & MHT70) as well
-    vhname_denom.push_back("histoHLT_HT300_MHT75_elTot");
-    vhname_denom.push_back("histoHLT_HT300_MHT80_elTot"); 
+    //vhname_denom.push_back("histoHLT_HT300_MHT75_elTot");//Assume MHT75 efficiency for first 0.3 /fb (MHT60 & MHT70) as well
+    //vhname_denom.push_back("histoHLT_HT300_MHT75_elTot");//Assume MHT75 efficiency for first 0.3 /fb (MHT60 & MHT70) as well
+    //vhname_denom.push_back("histoHLT_HT300_MHT75_elTot");//Assume MHT75 efficiency for first 0.3 /fb (MHT60 & MHT70) as well
+    //vhname_denom.push_back("histoHLT_HT300_MHT75_elTot");
+    //vhname_denom.push_back("histoHLT_HT300_MHT80_elTot"); 
+    //vhname_denom.push_back("forbayesHLT_HT300_Ele5_PFMHT40_v6HT");
+    //vhname_denom.push_back("forbayesHLT_HT350_Ele5_PFMHT45_v6HT");
+    //vhname_denom.push_back("forbayesHLT_HT350_Ele5_PFMHT45_v10HT");
+    //vhname_num.push_back("histoHLT_HT300_MHT75_elPass");//Assume MHT75 efficiency for first 0.3 /fb (MHT60 & MHT70) as well
+    //vhname_num.push_back("histoHLT_HT300_MHT75_elPass");//Assume MHT75 efficiency for first 0.3 /fb (MHT60 & MHT70) as well
+    //vhname_num.push_back("histoHLT_HT300_MHT75_elPass");//Assume MHT75 efficiency for first 0.3 /fb (MHT60 & MHT70) as well
+    //vhname_num.push_back("histoHLT_HT300_MHT75_elPass"); 
+    //vhname_num.push_back("histoHLT_HT300_MHT80_elPass");
+    //vhname_num.push_back("forbayesHLT_HT300_MHT90_v2elHT");
+    //vhname_num.push_back("forbayesHLT_HT350_MHT90_v1elHT");
+    //vhname_num.push_back("forbayesHLT_HT350_MHT110_v3elHT");
+
+
+    vhname_denom.push_back("forbayesHLT_HT300_MHT75_elTot");//Assume MHT75 efficiency for first 0.3 /fb (MHT60 & MHT70) as well
+    vhname_denom.push_back("forbayesHLT_HT300_MHT75_elTot");//Assume MHT75 efficiency for first 0.3 /fb (MHT60 & MHT70) as well
+    vhname_denom.push_back("forbayesHLT_HT300_MHT75_elTot");//Assume MHT75 efficiency for first 0.3 /fb (MHT60 & MHT70) as well
+    vhname_denom.push_back("forbayesHLT_HT300_MHT75_elTot");
+    vhname_denom.push_back("forbayesHLT_HT300_MHT80_elTot"); 
     vhname_denom.push_back("forbayesHLT_HT300_Ele5_PFMHT40_v6HT");
     vhname_denom.push_back("forbayesHLT_HT350_Ele5_PFMHT45_v6HT");
     vhname_denom.push_back("forbayesHLT_HT350_Ele5_PFMHT45_v10HT");
-    vhname_num.push_back("histoHLT_HT300_MHT75_elPass");//Assume MHT75 efficiency for first 0.3 /fb (MHT60 & MHT70) as well
-    vhname_num.push_back("histoHLT_HT300_MHT75_elPass");//Assume MHT75 efficiency for first 0.3 /fb (MHT60 & MHT70) as well
-    vhname_num.push_back("histoHLT_HT300_MHT75_elPass");//Assume MHT75 efficiency for first 0.3 /fb (MHT60 & MHT70) as well
-    vhname_num.push_back("histoHLT_HT300_MHT75_elPass"); 
-    vhname_num.push_back("histoHLT_HT300_MHT80_elPass");
+    vhname_num.push_back("forbayesHLT_HT300_MHT75_elPass");//Assume MHT75 efficiency for first 0.3 /fb (MHT60 & MHT70) as well
+    vhname_num.push_back("forbayesHLT_HT300_MHT75_elPass");//Assume MHT75 efficiency for first 0.3 /fb (MHT60 & MHT70) as well
+    vhname_num.push_back("forbayesHLT_HT300_MHT75_elPass");//Assume MHT75 efficiency for first 0.3 /fb (MHT60 & MHT70) as well
+    vhname_num.push_back("forbayesHLT_HT300_MHT75_elPass"); 
+    vhname_num.push_back("forbayesHLT_HT300_MHT80_elPass");
     vhname_num.push_back("forbayesHLT_HT300_MHT90_v2elHT");
     vhname_num.push_back("forbayesHLT_HT350_MHT90_v1elHT");
     vhname_num.push_back("forbayesHLT_HT350_MHT110_v3elHT");
+
   }
   else{std::cout << "didn't specify kinematic region of interest" << std::endl; assert(0);}
 
@@ -328,14 +372,14 @@ void computeOverallEff() {
     sprintf(fhname_num,"%s",vhname_num.at(i).c_str());
     sprintf(fhname_denom,"%s",vhname_denom.at(i).c_str());
   
-    if( (theRegionType_==kSingleMu || theRegionType_==kSingleEle) && i<5){//kludge for SL case, first two triggers are in different file
-      vh_denom.push_back( (TH1F *)f_trig2->Get(fhname_denom) );
-      vh_num.push_back( (TH1F *)f_trig2->Get(fhname_num) );
-    }
-    else{
-      vh_denom.push_back( (TH1F *)f_trig1->Get(fhname_denom) );
-      vh_num.push_back( (TH1F *)f_trig1->Get(fhname_num) );
-    }
+    //if( (theRegionType_==kSingleMu || theRegionType_==kSingleEle) && i<5){//kludge for SL case, first two triggers are in different file
+    //  vh_denom.push_back( (TH1F *)f_trig1->Get(fhname_denom) );
+    //  vh_num.push_back( (TH1F *)f_trig1->Get(fhname_num) );
+    //}
+    //else{
+    vh_denom.push_back( (TH1F *)f_trig1->Get(fhname_denom) );
+    vh_num.push_back( (TH1F *)f_trig1->Get(fhname_num) );
+      //}
 
     //vh_denom.at(i)->Sumw2();
     //vh_num.at(i)->Sumw2();
@@ -358,7 +402,9 @@ void computeOverallEff() {
       totallumi_SB += vlumi.at(i);
       h_num_temp->Sumw2(); h_den_temp->Sumw2();
       h_num_temp->SetBinContent(1,SB_num);
+      h_num_temp->SetBinError(1,TMath::Sqrt(SB_num));
       h_den_temp->SetBinContent(1,SB_den);
+      h_den_temp->SetBinError(1,TMath::Sqrt(SB_den));
       TGraphAsymmErrors * h_effSB = new TGraphAsymmErrors(h_num_temp,h_den_temp,"cl=0.683 b(1,1) mode");
       //h_eff->Print();
       h_effSB->GetPoint(0,x,y);
@@ -407,7 +453,9 @@ void computeOverallEff() {
       vlumi_ignore_SIG.push_back(0);
       totallumi_SIG += vlumi.at(i);
       h_num_temp->SetBinContent(1,SIG_num);
+      h_num_temp->SetBinError(1,TMath::Sqrt(SIG_num));
       h_den_temp->SetBinContent(1,SIG_den);
+      h_den_temp->SetBinError(1,TMath::Sqrt(SIG_den));
       TGraphAsymmErrors * h_effSIG = new TGraphAsymmErrors(h_num_temp,h_den_temp,"cl=0.683 b(1,1) mode");
       h_effSIG->GetPoint(0,x,y);
       std::cout << vhname_num.at(i)<< ": Efficiency (SIG) = "<< y 
