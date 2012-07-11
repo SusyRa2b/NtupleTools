@@ -640,37 +640,35 @@ TString EventCalculator::stripTriggerVersion(const TString & fullname, int & ver
   return stripped;
 }
 
+bool EventCalculator::passHLT(map<TString,triggerData> & triggerlist) {
 
-bool EventCalculator::passHLT(const TString & triggername, int & prescalevalue, int & version) {
-
-  //triggername should NOT have the _vXX
-
-  prescalevalue=1;
-  version=0;
-
-  //for MC just return true
-  if ( !isSampleRealData() ) return true;
-
-  bool passtrigger=false;
-  bool foundit=false;
-  for (unsigned int itrig=0; itrig<trigger_name->size(); itrig++) {
-    TString thistrigger = TString(trigger_name->at(itrig).c_str());
-    TString strippedname=stripTriggerVersion(thistrigger,version);
-    if ( strippedname == triggername) {
-      foundit=true;
-      prescalevalue = TMath::Nint(trigger_prescalevalue->at(itrig));
-      if ( TMath::Nint(trigger_decision->at(itrig))==1 ) passtrigger=true;
-      //cout<<triggername<<" "<<thistrigger <<" " <<  TMath::Nint(trigger_decision->at(itrig))<<endl;
-    }
+  if ( !isSampleRealData() ) {
+    for ( map<TString,triggerData>::iterator ii=triggerlist.begin(); ii!=triggerlist.end(); ++ii) ii->second.pass = true;
+    return true;
   }
 
-  //this can be too verbose
-  //  if (!foundit) {
-  //    cout<<"I failed to find "<<triggername<<endl;
-  //  }
+  bool passanything = false;
+  int version;
+  //cout<<" --- "<<endl;
+  //loop over triggers in ntuple
+  for (unsigned int itrig=0; itrig<trigger_name->size(); itrig++) {
+    TString thistrigger = TString(trigger_name->at(itrig).c_str());
+    if (thistrigger(0,4) != "HLT_") continue; //some triggers don't start with HLT_ !!!
+    TString strippedname=stripTriggerVersion(thistrigger,version); //removes the _vXX on the end
+    strippedname= strippedname(4,strippedname.Length()); //get rid of HLT_ on the front
+    map<TString,triggerData>::iterator ittrig = triggerlist.find(strippedname);
+    if ( ittrig != triggerlist.end() ) {//found it
+      ittrig->second.pass = ( TMath::Nint(trigger_decision->at(itrig))==1 );
+      ittrig->second.prescale =  TMath::Nint(trigger_prescalevalue->at(itrig));
+      ittrig->second.version = version;
+      passanything = passanything || ittrig->second.pass;
+      // cout<<"\t"<<thistrigger<<" "<<ittrig->second.pass<<"("<<ittrig->second.prescale<<" "<<ittrig->second.version <<")"<<" "<<passanything<<endl;
+    }
 
-  return passtrigger;
+  }
+  return passanything;
 }
+
 
 
 
@@ -4666,32 +4664,34 @@ void EventCalculator::reducedTree(TString outputpath) {
   bool pass_utilityPrescaleModuleHLT;
 
   //defines the list of triggers to store info about
-  map<TString, bool> triggerlist;
-  triggerlist["PFHT350_PFMET100"]=false;
-  triggerlist["HT250_AlphaT0p55"]=false;
-  triggerlist["HT300_AlphaT0p53"]=false;
-  triggerlist["HT200"]=false;
-  triggerlist["HT250"]=false;
-  triggerlist["HT300"]=false;
-  triggerlist["PFHT350"]=false;
-  triggerlist["PFHT650"]=false;
-  triggerlist["DiCentralPFJet50_PFMET80"]=false;
-  triggerlist["DiCentralPFJet30_PFMET80"]=false;
-  triggerlist["DiCentralPFJet30_PFMET80_BTagCSV07"]=false;
-  triggerlist["PFMET150"]=false;
-  triggerlist["PFHT350_Mu15_PFMET45"]=false;
-  triggerlist["CleanPFHT300_Ele15_CaloIdT_CaloIsoVL_TrkIdT_TrkIsoVL_PFMET45"]=false;
-  triggerlist["IsoMu24_eta2p1"]=false;
-  triggerlist["IsoMu24"]=false;
-  triggerlist["Photon135"]=false;
-  triggerlist["Photon150"]=false;
+  map<TString, triggerData > triggerlist;
+  triggerlist["PFHT350_PFMET100"]=triggerData();
+  triggerlist["HT250_AlphaT0p55"]=triggerData();
+  triggerlist["HT300_AlphaT0p53"]=triggerData();
+  triggerlist["HT200"]=triggerData();
+  triggerlist["HT250"]=triggerData();
+  triggerlist["HT300"]=triggerData();
+  triggerlist["PFHT350"]=triggerData();
+  triggerlist["PFHT650"]=triggerData();
+  triggerlist["DiCentralPFJet50_PFMET80"]=triggerData();
+  triggerlist["DiCentralPFJet30_PFMET80"]=triggerData();
+  triggerlist["DiCentralPFJet30_PFMET80_BTagCSV07"]=triggerData();
+  triggerlist["PFMET150"]=triggerData();
+  triggerlist["PFHT350_Mu15_PFMET45"]=triggerData();
+  triggerlist["CleanPFHT300_Ele15_CaloIdT_CaloIsoVL_TrkIdT_TrkIsoVL_PFMET45"]=triggerData();
+  triggerlist["IsoMu24_eta2p1"]=triggerData();
+  triggerlist["IsoMu24"]=triggerData();
+  triggerlist["Photon135"]=triggerData();
+  triggerlist["Photon150"]=triggerData();
   //some extra stuff
-  triggerlist["Mu17_Mu8"]=false;
-  triggerlist["Ele17_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL_Ele8_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL"]=false;
-  triggerlist["Mu17_Ele8_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL"]=false;
-  triggerlist["Mu8_Ele17_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL"]=false;
-  triggerlist["SixJet45"]=false;
-  triggerlist["QuadJet80"]=false;
+  triggerlist["Mu17_Mu8"]=triggerData();
+  triggerlist["Ele17_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL_Ele8_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL"]=triggerData();
+  triggerlist["Mu17_Ele8_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL"]=triggerData();
+  triggerlist["Mu8_Ele17_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL"]=triggerData();
+  triggerlist["SixJet45"]=triggerData();
+  triggerlist["QuadJet80"]=triggerData();
+  //test new triggers
+  triggerlist["PFNoPUHT350_PFMET100"]=triggerData();
 
   int njets, njets30, nbjets, ntruebjets, nElectrons, nMuons, nTaus;
   int nbjetsSSVM,nbjetsTCHET,nbjetsSSVHPT,nbjetsTCHPT,nbjetsTCHPM,nbjetsCSVM,nbjetsCSVL;
@@ -5036,11 +5036,11 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("versionUtilityHLT", &versionUtilityHLT, "versionUtilityHLT/i");
   reducedTree.Branch("pass_utilityPrescaleModuleHLT",&pass_utilityPrescaleModuleHLT,"pass_utilityPrescaleModuleHLT/O");
 
-  for ( map<TString,bool>::iterator itrigger = triggerlist.begin() ; itrigger!=triggerlist.end() ; ++itrigger) {
+  for ( map<TString,triggerData>::iterator itrigger = triggerlist.begin() ; itrigger!=triggerlist.end() ; ++itrigger) {
     TString treename = "pass_";
     treename+=itrigger->first;
     TString withcode = treename+"/O";
-    reducedTree.Branch(treename,&(itrigger->second),withcode);
+    reducedTree.Branch(treename,&(itrigger->second.pass),withcode);
   }
 
   reducedTree.Branch("HT",&HT,"HT/F");
@@ -5473,27 +5473,14 @@ Also the pdfWeightSum* histograms that are used for LM9.
     MET=getMET();
     STeff = ST + MET; //obviously STeff is always bigger than ST
 
-    //evaluate the triggers of interest
-    int prescale;int version; 
+    bool passAnyTrigger=passHLT(triggerlist); //new test call
 
-    bool passAnyTrigger=false;
-    for ( map<TString,bool>::iterator itrigger = triggerlist.begin() ; itrigger!=triggerlist.end() ; ++itrigger) {
-      TString thisname = itrigger->first;
-      itrigger->second = passHLT("HLT_"+thisname, prescale,version);
+ 
 
-      //handle some special cases
-      if ( itrigger->first == "PFHT350_PFMET100") assert(prescale==1);
-      if ( itrigger->first == "PFMET150") assert(prescale==1);
-      //i could assert 1 also for some other triggers....I can't decide if this is useful or not
-      if (itrigger->first == "PFHT350") {
-	prescaleUtilityHLT=abs(prescale); 
-	versionUtilityHLT=abs(version);
-      }
-      passAnyTrigger = passAnyTrigger || (itrigger->second);
-    }
-
-    cutTrigger= triggerlist["PFHT350_PFMET100"]; //shortcut name for the physics trigger
-    pass_utilityHLT = triggerlist["PFHT350"]; //shortcut name for HT-only trigger
+    cutTrigger= triggerlist["PFHT350_PFMET100"].pass; //shortcut name for the physics trigger
+    pass_utilityHLT = triggerlist["PFHT350"].pass; //shortcut name for HT-only trigger
+    prescaleUtilityHLT = triggerlist["PFHT350"].prescale;
+    versionUtilityHLT = triggerlist["PFHT350"].version;
 
     isRealData = isSampleRealData();
     runNumber = getRunNumber();
@@ -8702,4 +8689,8 @@ cellECAL::cellECAL(double a, double b, int c) {
   eta=a;
   phi=b;
   status=c;
+}
+
+triggerData::triggerData() : pass(false), prescale(0), version(0) 
+{
 }

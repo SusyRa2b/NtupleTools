@@ -42,7 +42,13 @@ public:
   int status;
 };
 
-  
+class triggerData {
+public:
+  triggerData() ;
+  bool pass;
+  int prescale;
+  int version;
+};
 
 class EventCalculator {
 public:
@@ -97,7 +103,7 @@ public:
 
 
   TString stripTriggerVersion(const TString & fullname, int & version);
-  bool passHLT(const TString & triggername, int & prescalevalue, int & version);
+  bool passHLT(std::map<TString,triggerData> & triggerlist);
   //  bool passUtilityHLT(int &version, int &prescale); //deprecated
   bool passUtilityPrescaleModuleHLT();
   float getHLTHTeff(float offHT);
