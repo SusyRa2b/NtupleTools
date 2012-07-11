@@ -4665,33 +4665,51 @@ void EventCalculator::reducedTree(TString outputpath) {
 
   //defines the list of triggers to store info about
   map<TString, triggerData > triggerlist;
+  //HTMHT
   triggerlist["PFHT350_PFMET100"]=triggerData();
+  triggerlist["PFNoPUHT350_PFMET100"]=triggerData();
   triggerlist["HT250_AlphaT0p55"]=triggerData();
   triggerlist["HT300_AlphaT0p53"]=triggerData();
+  //JetHT
   triggerlist["HT200"]=triggerData();
   triggerlist["HT250"]=triggerData();
   triggerlist["HT300"]=triggerData();
   triggerlist["PFHT350"]=triggerData();
   triggerlist["PFHT650"]=triggerData();
+  triggerlist["PFNoPUHT350"]=triggerData();
+  triggerlist["PFNoPUHT650"]=triggerData();
+  //MET
   triggerlist["DiCentralPFJet50_PFMET80"]=triggerData();
   triggerlist["DiCentralPFJet30_PFMET80"]=triggerData();
   triggerlist["DiCentralPFJet30_PFMET80_BTagCSV07"]=triggerData();
+  triggerlist["DiCentralPFNoPUJet50_PFMETORPFMETNoMu80"]=triggerData();
   triggerlist["PFMET150"]=triggerData();
+  triggerlist["MET200"]=triggerData(); //calo MET
+  triggerlist["MET120_HBHENoiseCleaned"]=triggerData(); //cal oMET
+  triggerlist["L1ETM40"]; //prescaled L1 pass through
+  //MuHad
   triggerlist["PFHT350_Mu15_PFMET45"]=triggerData();
+  triggerlist["PFNoPUHT350_Mu15_PFMET45"]=triggerData();
+  //ElectronHad
   triggerlist["CleanPFHT300_Ele15_CaloIdT_CaloIsoVL_TrkIdT_TrkIsoVL_PFMET45"]=triggerData();
+  triggerlist["CleanPFNoPUHT300_Ele15_CaloIdT_CaloIsoVL_TrkIdT_TrkIsoVL_PFMET45"]=triggerData();
+  //SingleMuon
   triggerlist["IsoMu24_eta2p1"]=triggerData();
   triggerlist["IsoMu24"]=triggerData();
+  //SinglePhoton
   triggerlist["Photon135"]=triggerData();
   triggerlist["Photon150"]=triggerData();
-  //some extra stuff
+  //DoubleMu
   triggerlist["Mu17_Mu8"]=triggerData();
+  //DoubleElectron
   triggerlist["Ele17_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL_Ele8_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL"]=triggerData();
+  //MuEG
   triggerlist["Mu17_Ele8_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL"]=triggerData();
   triggerlist["Mu8_Ele17_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL"]=triggerData();
+  //MultiJet
   triggerlist["SixJet45"]=triggerData();
   triggerlist["QuadJet80"]=triggerData();
-  //test new triggers
-  triggerlist["PFNoPUHT350_PFMET100"]=triggerData();
+
 
   int njets, njets30, nbjets, ntruebjets, nElectrons, nMuons, nTaus;
   int nbjetsSSVM,nbjetsTCHET,nbjetsSSVHPT,nbjetsTCHPT,nbjetsTCHPM,nbjetsCSVM,nbjetsCSVL;
