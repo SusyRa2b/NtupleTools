@@ -11,6 +11,7 @@
 #include "TMatrixT.h"
 #include "TMatrixDEigen.h"
 #include "TStopwatch.h"
+#include "TVector3.h"
 
 #include <RooRealVar.h>
 #include <RooMinuit.h>
@@ -18,6 +19,7 @@
 
 #include <cassert>
 #include <fstream>
+#include <algorithm>
 
 using namespace std;
 
@@ -3625,6 +3627,144 @@ float EventCalculator::vlBjetTCHEOfN(unsigned int n) {
   return 0;
 }
 
+void EventCalculator::hadronicTopFinder_DeltaR(float & mjjb1, float & mjjb2 , float & topPT1, float & topPT2) {
+  mjjb1=-1;
+  mjjb2=-1;
+
+  topPT1 = -1;
+  topPT2 = -1;
+
+  if (nGoodJets30() < 6) return; 
+
+  // === back ported from cfA code ==
+
+  //this algorithm forms 2 bjj bjj pairs using the top two bdisc jets as the b's.
+  //in principle it might act weird for an event without 2 jets with any CSV value but that doesn't happen much in 6 jet events
+  // (there is a commented-out line to "bail out" in case there are not two jets with a CSV value, but I think it is not needed)
+  //it is mandatory that the event have 6 jets, hence the cut above.
+
+  //the "light" jets are any jets that are not the ones used as b's
+
+  //the jets are grouped into bqq using a rather crude "Minimum DeltaR" algorithm (that I invented myself)
+
+  //also the pT of each 'top candidate' is returned
+
+  // ===== find the best 2 b jets =====
+  set<pair< float, int> > jets_sorted_by_bdisc;
+  for (unsigned int kk=0; kk<myJetsPF->size(); kk++) {
+    if (isGoodJet30(kk) ) { 
+      float bdiscval = myJetsPF->at(kk).combinedSecondaryVertexBJetTags;
+      jets_sorted_by_bdisc.insert(make_pair(bdiscval,kk));
+    }
+  }
+
+  //copy the best 2 guys to a simpler variable
+  int bindices[2];
+  int iii=0;
+  //  cout<<" ~~~ b jets disc values"<<endl;
+  for (set<pair< float, int> >::reverse_iterator ib=jets_sorted_by_bdisc.rbegin(); ib!=jets_sorted_by_bdisc.rend(); ++ib) {
+    //    cout<<ib->first<<"\t"<<ib->second<<endl;
+    if (iii<2) bindices[iii] = ib->second;
+    //should check this choice of 0
+    //    if (iii==1 && ib->first < 0) return; //key -- bail out completely if there are not 2 b-like jets!
+    ++iii;
+  }
+
+  float mindrlight[2]={1e9,1e9};
+
+  int mindrlight_ii[2]={-1,-1};
+  int mindrlight_jj[2]={-1,-1};
+
+  int nlightjets=0;
+
+  for ( unsigned int iteration = 0; iteration<2; iteration++) {
+    //we need to do the loop twice
+
+    //loop over light jets
+    for (unsigned int ii=0; ii<myJetsPF->size(); ii++) {
+      //on the 2nd iteration, skip jets that are already used
+      if (iteration==1 && ( (ii == mindrlight_ii[0]) || (ii == mindrlight_jj[0]) )) continue;
+
+      //don't require that these "light" jets fail the btagger, but don't use the 2 best b-jets
+      if (isGoodJet30(ii) && ii!=bindices[0] && ii!=bindices[1]) {
+	if(iteration==0) nlightjets++;
+	
+	//loop over other light jets in the event
+	for (unsigned int jj=0; jj<myJetsPF->size(); jj++) {
+	  if ( ii==jj) continue;
+	  //on the 2nd iteration, skip jets that are already used
+	  if (iteration==1 && ( (jj == mindrlight_ii[0]) || (jj == mindrlight_jj[0]) )) continue;
+	  
+	  if (isGoodJet30(jj) &&  jj!=bindices[0] && jj!=bindices[1]) { //same consideration as above
+	    
+	    float thisDeltaR = jmt::deltaR( myJetsPF->at(ii).eta,myJetsPF->at(ii).phi,myJetsPF->at(jj).eta,myJetsPF->at(jj).phi);
+	    if (thisDeltaR < mindrlight[iteration]) {
+	      mindrlight[iteration] = thisDeltaR;
+	      mindrlight_ii[iteration]=ii;
+	      mindrlight_jj[iteration]=jj;
+	    }
+	  }
+	}
+      }
+    }
+  }
+
+  //should never happen
+  if (mindrlight_ii[0]== -1 || mindrlight_jj[0]==-1 || mindrlight_ii[1]==-1 ||  mindrlight_jj[1]==-1) {
+    cout<<"nlight = "<<nlightjets<<endl;
+    return;
+  }
+
+  //now we have light jet pairs (mindrlight_ii[0],mindrlight_jj[0])
+  // and                        (mindrlight_ii[1],mindrlight_jj[1])
+
+  //make 3-vectors of these jets
+  TVector3 jet_ii0(getJetPx(mindrlight_ii[0]),getJetPy(mindrlight_ii[0]),getJetPz(mindrlight_ii[0]));
+  TVector3 jet_jj0(getJetPx(mindrlight_jj[0]),getJetPy(mindrlight_jj[0]),getJetPz(mindrlight_jj[0]));
+  TVector3 jet_ii1(getJetPx(mindrlight_ii[1]),getJetPy(mindrlight_ii[1]),getJetPz(mindrlight_ii[1]));
+  TVector3 jet_jj1(getJetPx(mindrlight_jj[1]),getJetPy(mindrlight_jj[1]),getJetPz(mindrlight_jj[1]));
+
+  //need to add the 3-vectors of these pairs together to form Ws (no mass constraint...just 4 vector addition)
+  TVector3 W1 = jet_ii0 + jet_jj0;
+  TVector3 W2 = jet_ii1 + jet_jj1;
+
+  //crude (and wrong?) way to see the pairs that are nearest each other
+  float drSum1 = jmt::deltaR( myJetsPF->at(bindices[0] ).eta , myJetsPF->at(bindices[0] ).phi, W1.Eta(), W1.Phi()) 
+    + jmt::deltaR(  myJetsPF->at(bindices[1] ).eta , myJetsPF->at(bindices[1] ).phi, W2.Eta(), W2.Phi()) ;
+
+  float drSum2 = jmt::deltaR( myJetsPF->at(bindices[1] ).eta , myJetsPF->at(bindices[1] ).phi, W1.Eta(), W1.Phi()) 
+    + jmt::deltaR(  myJetsPF->at(bindices[0] ).eta , myJetsPF->at(bindices[0] ).phi, W2.Eta(), W2.Phi()) ;
+
+  TVector3 bjet1(getJetPx(bindices[0]),getJetPy(bindices[0]),getJetPz(bindices[0]));
+  TVector3 bjet2(getJetPx(bindices[1]),getJetPy(bindices[1]),getJetPz(bindices[1]));
+  if (drSum1<drSum2 ) {
+    mjjb1=    calc_mNj(bindices[0], mindrlight_ii[0],mindrlight_jj[0] );
+    mjjb2=    calc_mNj(bindices[1], mindrlight_ii[1],mindrlight_jj[1] );
+    //assemble top candidates
+    TVector3 top1 = bjet1+W1;
+    TVector3 top2 = bjet2+W2;
+    topPT1 = top1.Perp();
+    topPT2 = top2.Perp();
+  }
+  else {
+    mjjb1=    calc_mNj(bindices[1], mindrlight_ii[0],mindrlight_jj[0] );
+    mjjb2=    calc_mNj(bindices[0], mindrlight_ii[1],mindrlight_jj[1] );
+    TVector3 top1 = bjet2+W1;
+    TVector3 top2 = bjet1+W2;
+    topPT1 = top1.Perp();
+    topPT2 = top2.Perp();
+  }
+
+  //could also return the W mass
+
+  //sort by mjjb, keeping the association with topPT
+  if (mjjb2>mjjb1) {
+    swap(mjjb1,mjjb2);
+    swap(topPT1,topPT2);
+  }
+  return;
+}
+
 //-- first two jets are from W.  third is b jet
 void EventCalculator::calcCosHel( unsigned int j1i, unsigned int j2i, unsigned int j3i, float & wcoshel,float &tcoshel) {
 
@@ -5598,6 +5738,8 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   int jetMisCategoryT2, jetMisCategoryT2_noMETfraction;
   float minDeltaPhiNpi;
 
+  float mjjb1,mjjb2,topPT1,topPT2;
+
   //mc truth tests
   float minDeltaPhiN_MC;
   float deltaT_MC1, deltaT_MC2, deltaT_MC3;
@@ -6055,6 +6197,11 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("MT_Wlep",&MT_Wlep, "MT_Wlep/F");
   reducedTree.Branch("MT_Wlep5",&MT_Wlep5, "MT_Wlep5/F");
   reducedTree.Branch("MT_Wlep15",&MT_Wlep15, "MT_Wlep15/F");
+
+  reducedTree.Branch("mjjb1",&mjjb1,"mjjb1/F");
+  reducedTree.Branch("mjjb2",&mjjb2,"mjjb2/F");
+  reducedTree.Branch("topPT1",&topPT1,"topPT1/F");
+  reducedTree.Branch("topPT2",&topPT2,"topPT2/F");
 
   reducedTree.Branch("minDeltaPhi",&minDeltaPhi,"minDeltaPhi/F");
   reducedTree.Branch("minDeltaPhiAll",&minDeltaPhiAll,"minDeltaPhiAll/F");
@@ -6556,9 +6703,10 @@ Also the pdfWeightSum* histograms that are used for LM9.
     }
     bool passSkimDiySmear = (skipDiySmear==0) && (diySmear1g_HT_s>400 || diySmear3g_HT_s>400);
     
-    //very loose skim for reducedTrees (HT, trigger, throw out bad data)
+    //very loose skim for reducedTrees (MET, ST, trigger, throw out bad data)
     ST = getST(); //ST is always bigger than HT
-    if ( passCut("cutLumiMask") && (passCut("cutTrigger") || passCut("cutUtilityTrigger")) && ((ST>=300) || passSkimDiySmear)) {
+    MET=getMET();
+    if ( passCut("cutLumiMask") && (passCut("cutTrigger") || passCut("cutUtilityTrigger")) && ((ST>=150 && MET>=40) || passSkimDiySmear)) {
       cutHT = passCut("cutHT"); //should always be true
 
       weight = getWeight(nevents);
@@ -6650,6 +6798,8 @@ Also the pdfWeightSum* histograms that are used for LM9.
       njets = nGoodJets();
       njets30 = nGoodJets30();
 
+      hadronicTopFinder_DeltaR(mjjb1,mjjb2,topPT1,topPT2);
+
       ntruebjets = nTrueBJets();
       nbjets = nGoodBJets();
       nbjetsSSVM = nGoodBJets( kSSVM);
@@ -6676,7 +6826,6 @@ Also the pdfWeightSum* histograms that are used for LM9.
       nElectrons15 = countEle(15);
       nMuons15 = countMu(15);
       nTaus = countTau();
-      MET=getMET();
       //      METsig = myMETPF->at(0).mEtSig; //FIXME hard coded for PF
       MHT=getMHT();
       METphi = getMETphi();

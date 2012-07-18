@@ -249,6 +249,8 @@ public:
   ULong64_t getLumiSection() {return TMath::Nint( *myEDM_luminosityBlock );}
   ULong64_t getEventNumber() {return TMath::Nint( *myEDM_event );}
 
+  void hadronicTopFinder_DeltaR(float & mjjb1, float & mjjb2 , float & topPT1, float & topPT2);
+
   bool isCleanJet(const unsigned int ijet);
   bool isGoodJet(const unsigned int ijet, const float pTthreshold=50, const float etaMax=2.4, const bool jetid=true); //subset of isCleanJet
   bool isGoodJet10(unsigned int ijet) {return isGoodJet(ijet,10,2.4,true);}
