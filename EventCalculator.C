@@ -3677,11 +3677,11 @@ void EventCalculator::hadronicTopFinder_DeltaR(float & mjjb1, float & mjjb2 , fl
 
   int nlightjets=0;
 
-  for ( unsigned int iteration = 0; iteration<2; iteration++) {
+  for ( int iteration = 0; iteration<2; iteration++) {
     //we need to do the loop twice
 
     //loop over light jets
-    for (unsigned int ii=0; ii<myJetsPF->size(); ii++) {
+    for ( int ii=0; ii< int(myJetsPF->size()); ii++) {
       //on the 2nd iteration, skip jets that are already used
       if (iteration==1 && ( (ii == mindrlight_ii[0]) || (ii == mindrlight_jj[0]) )) continue;
 
@@ -3690,7 +3690,7 @@ void EventCalculator::hadronicTopFinder_DeltaR(float & mjjb1, float & mjjb2 , fl
 	if(iteration==0) nlightjets++;
 	
 	//loop over other light jets in the event
-	for (unsigned int jj=0; jj<myJetsPF->size(); jj++) {
+	for (int jj=0; jj< int(myJetsPF->size()); jj++) {
 	  if ( ii==jj) continue;
 	  //on the 2nd iteration, skip jets that are already used
 	  if (iteration==1 && ( (jj == mindrlight_ii[0]) || (jj == mindrlight_jj[0]) )) continue;
