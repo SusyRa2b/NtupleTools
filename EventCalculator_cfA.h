@@ -132,6 +132,9 @@ public:
   void jjResonanceFinder(float & mjj1, float & mjj2);//simple first try
   void jjResonanceFinder5(float & mjj1, float & mjj2);
 
+  void hadronicTopFinder_DeltaR(float & mjjb1, float & mjjb2, float & topPT1, float & topPT2);
+
+
   unsigned int getNthGoodJet(unsigned int goodJetN, float mainpt, float maineta, bool mainid);
   double getMinDeltaPhiMET(unsigned int maxjets);
   double getTransverseMETError(unsigned int thisJet);
@@ -285,13 +288,11 @@ public:
   double getCrossSection();
 
   double getScanCrossSection( SUSYProcess p, const TString & variation );
-  double getSMSScanCrossSection( const double mgluino);
   void calculateTagProb(float &Prob0, float &ProbGEQ1, float &Prob1, float &ProbGEQ2, float & Prob2, float &ProbGEQ3, 
 			float extraSFb=1, float extraSFc=1, float extraSFl=1, BTagEffModifier modifier=kBTagModifier0);
   //  void averageBeff(double & bjetEffSum);// , Long64_t & bjetSum);
 
   //btag stuff
-  //  float getBTagIPWeight(); //this function should be called *after* offline tagging 
   float jetTagEff(unsigned int ijet, TH1F* h_btageff, TH1F* h_ctageff, TH1F* h_ltageff,
 		  const float extraSFb, const float extraSFc, const float extraSFl,const BTagEffModifier modifier=kBTagModifier0);
 
@@ -349,6 +350,7 @@ private:
 
   //stuff for the btag probability 
   TFile *f_tageff_;
+  TString assembleBTagEffFilename();
   void loadJetTagEffMaps();
 
   void loadHLTHTeff();

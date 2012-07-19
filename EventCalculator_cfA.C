@@ -13,6 +13,8 @@
 #include "TStopwatch.h"
 #include "TRegexp.h"
 
+#include "TVector3.h"
+
 #include "inJSON2012.h"
 
 #include "MiscUtil.cxx"
@@ -23,6 +25,7 @@
 
 #include <cassert>
 #include <fstream>
+#include <algorithm>
 
 using namespace std;
 
@@ -55,6 +58,7 @@ EventCalculator::EventCalculator(const TString & sampleName, const vector<string
   mhtgraph_(0),
   mhtgraphPlus_(0),
   mhtgraphMinus_(0),
+  f_tageff_(0),
   fDataJetRes_(0),
   //FIXME CFA
   ResJetPar_(0), //new JetCorrectorParameters("START42_V13_AK5PFchs_L2L3Residual.txt") ),
@@ -3028,6 +3032,142 @@ std::pair<float,float> EventCalculator::getJERAdjustedMHTxy(int ignoredJet) {
   return make_pair(mhtx,mhty);
 }
 
+
+void EventCalculator::hadronicTopFinder_DeltaR(float & mjjb1, float & mjjb2 , float & topPT1, float & topPT2) {
+  mjjb1=-1;
+  mjjb2=-1;
+
+  topPT1 = -1;
+  topPT2 = -1;
+
+  if (nGoodJets30() < 6) return; 
+  //this algorithm forms 2 bjj bjj pairs using the top two bdisc jets as the b's.
+  //in principle it might act weird for an event without 2 jets with any CSV value but that doesn't happen much in 6 jet events
+  // (there is a commented-out line to "bail out" in case there are not two jets with a CSV value, but I think it is not needed)
+  //it is mandatory that the event have 6 jets, hence the cut above.
+
+  //the "light" jets are any jets that are not the ones used as b's
+
+  //the jets are grouped into bqq using a rather crude "Minimum DeltaR" algorithm (that I invented myself)
+
+  //also the pT of each 'top candidate' is returned
+
+  // ===== find the best 2 b jets =====
+  set<pair< float, int> > jets_sorted_by_bdisc;
+  for (unsigned int kk=0; kk<jets_AK5PF_pt->size(); kk++) {
+    if (isGoodJet30(kk) ) { 
+      float bdiscval = jets_AK5PF_btag_secVertexCombined->at(kk);
+      jets_sorted_by_bdisc.insert(make_pair(bdiscval,kk));
+    }
+  }
+
+  //copy the best 2 guys to a simpler variable
+  int bindices[2];
+  int iii=0;
+  //  cout<<" ~~~ b jets disc values"<<endl;
+  for (set<pair< float, int> >::reverse_iterator ib=jets_sorted_by_bdisc.rbegin(); ib!=jets_sorted_by_bdisc.rend(); ++ib) {
+    //    cout<<ib->first<<"\t"<<ib->second<<endl;
+    if (iii<2) bindices[iii] = ib->second;
+    //should check this choice of 0
+    //    if (iii==1 && ib->first < 0) return; //key -- bail out completely if there are not 2 b-like jets!
+    ++iii;
+  }
+
+  float mindrlight[2]={1e9,1e9};
+
+  int mindrlight_ii[2]={-1,-1};
+  int mindrlight_jj[2]={-1,-1};
+
+  int nlightjets=0;
+
+  for ( unsigned int iteration = 0; iteration<2; iteration++) {
+    //we need to do the loop twice
+
+    //loop over light jets
+    for (unsigned int ii=0; ii<jets_AK5PF_pt->size(); ii++) {
+      //on the 2nd iteration, skip jets that are already used
+      if (iteration==1 && ( (ii == mindrlight_ii[0]) || (ii == mindrlight_jj[0]) )) continue;
+
+      //don't require that these "light" jets fail the btagger, but don't use the 2 best b-jets
+      if (isGoodJet30(ii) && ii!=bindices[0] && ii!=bindices[1]) {
+	if(iteration==0) nlightjets++;
+	
+	//loop over other light jets in the event
+	for (unsigned int jj=0; jj<jets_AK5PF_pt->size(); jj++) {
+	  if ( ii==jj) continue;
+	  //on the 2nd iteration, skip jets that are already used
+	  if (iteration==1 && ( (jj == mindrlight_ii[0]) || (jj == mindrlight_jj[0]) )) continue;
+	  
+	  if (isGoodJet30(jj) &&  jj!=bindices[0] && jj!=bindices[1]) { //same consideration as above
+	    
+	    float thisDeltaR = jmt::deltaR( jets_AK5PF_eta->at(ii), jets_AK5PF_phi->at(ii), jets_AK5PF_eta->at(jj), jets_AK5PF_phi->at(jj));
+	    if (thisDeltaR < mindrlight[iteration]) {
+	      mindrlight[iteration] = thisDeltaR;
+	      mindrlight_ii[iteration]=ii;
+	      mindrlight_jj[iteration]=jj;
+	    }
+	  }
+	}
+      }
+    }
+  }
+
+  //should never happen
+  if (mindrlight_ii[0]== -1 || mindrlight_jj[0]==-1 || mindrlight_ii[1]==-1 ||  mindrlight_jj[1]==-1) {
+    cout<<"nlight = "<<nlightjets<<endl;
+    return;
+  }
+
+  //now we have light jet pairs (mindrlight_ii[0],mindrlight_jj[0])
+  // and                        (mindrlight_ii[1],mindrlight_jj[1])
+
+  //make 3-vectors of these jets
+  TVector3 jet_ii0(getJetPx(mindrlight_ii[0]),getJetPy(mindrlight_ii[0]),getJetPz(mindrlight_ii[0]));
+  TVector3 jet_jj0(getJetPx(mindrlight_jj[0]),getJetPy(mindrlight_jj[0]),getJetPz(mindrlight_jj[0]));
+  TVector3 jet_ii1(getJetPx(mindrlight_ii[1]),getJetPy(mindrlight_ii[1]),getJetPz(mindrlight_ii[1]));
+  TVector3 jet_jj1(getJetPx(mindrlight_jj[1]),getJetPy(mindrlight_jj[1]),getJetPz(mindrlight_jj[1]));
+
+  //need to add the 3-vectors of these pairs together to form Ws (no mass constraint...just 4 vector addition)
+  TVector3 W1 = jet_ii0 + jet_jj0;
+  TVector3 W2 = jet_ii1 + jet_jj1;
+
+  //crude (and wrong?) way to see the pairs that are nearest each other
+  float drSum1 = jmt::deltaR( jets_AK5PF_eta->at( bindices[0]), jets_AK5PF_phi->at(bindices[0]), W1.Eta(), W1.Phi()) 
+    + jmt::deltaR( jets_AK5PF_eta->at( bindices[1]), jets_AK5PF_phi->at(bindices[1]), W2.Eta(), W2.Phi()) ;
+
+  float drSum2 = jmt::deltaR( jets_AK5PF_eta->at( bindices[1]), jets_AK5PF_phi->at(bindices[1]), W1.Eta(), W1.Phi()) 
+    + jmt::deltaR( jets_AK5PF_eta->at( bindices[0]), jets_AK5PF_phi->at(bindices[0]), W2.Eta(), W2.Phi()) ;
+
+  TVector3 bjet1(getJetPx(bindices[0]),getJetPy(bindices[0]),getJetPz(bindices[0]));
+  TVector3 bjet2(getJetPx(bindices[1]),getJetPy(bindices[1]),getJetPz(bindices[1]));
+  if (drSum1<drSum2 ) {
+    mjjb1=    calc_mNj(bindices[0], mindrlight_ii[0],mindrlight_jj[0] );
+    mjjb2=    calc_mNj(bindices[1], mindrlight_ii[1],mindrlight_jj[1] );
+    //assemble top candidates
+    TVector3 top1 = bjet1+W1;
+    TVector3 top2 = bjet2+W2;
+    topPT1 = top1.Perp();
+    topPT2 = top2.Perp();
+  }
+  else {
+    mjjb1=    calc_mNj(bindices[1], mindrlight_ii[0],mindrlight_jj[0] );
+    mjjb2=    calc_mNj(bindices[0], mindrlight_ii[1],mindrlight_jj[1] );
+    TVector3 top1 = bjet2+W1;
+    TVector3 top2 = bjet1+W2;
+    topPT1 = top1.Perp();
+    topPT2 = top2.Perp();
+  }
+
+  //could also return the W mass
+
+  //sort by mjjb, keeping the association with topPT
+  if (mjjb2>mjjb1) {
+    swap(mjjb1,mjjb2);
+    swap(topPT1,topPT2);
+  }
+  return;
+}
+
 //FIXME CFA
 unsigned int EventCalculator::findSUSYMaternity( unsigned int k ) {
 
@@ -4223,65 +4363,19 @@ void EventCalculator::jjResonanceFinder5(float & mjj1, float & mjj2) {
 
 }
 
-double EventCalculator::getSMSScanCrossSection( const double mgluino) {
-  //the SMS scan cross sections are not very important, so I have not bothered to fully implement this
-
-  return 1; //FIXME need to implement T2bb etc
-  //I don't plan to ever fix this...load these in drawReducedTrees now
-}
-
 
 void EventCalculator::loadJetTagEffMaps() {
-  //load the sample's efficiency maps
-  if (sampleName_.Contains("QCD"))
-    f_tageff_ = new TFile("histos_btageff_csvm_qcd.root","READ");
-  //else if(sampleName_.Contains("t_s-channel"))
-  else if (sampleName_.Contains("T_TuneZ2_s-channel_7TeV-powheg-tauola") )
-    f_tageff_ = new TFile("histos_btageff_csvm_singletop_s.root","READ");
-  //else if(sampleName_.Contains("tbar_s-channel"))
-  else if (sampleName_.Contains("Tbar_TuneZ2_s-channel_7TeV-powheg-tauola") )
-    f_tageff_ = new TFile("histos_btageff_csvm_singletopbar_s.root","READ");
-  //else if(sampleName_.Contains("t_t-channel"))
-  else if (sampleName_.Contains("T_TuneZ2_t-channel_7TeV-powheg-tauola") )   
-    f_tageff_ = new TFile("histos_btageff_csvm_singletop_t.root","READ");
-  //else if(sampleName_.Contains("tbar_t-channel"))
-  else if (sampleName_.Contains("Tbar_TuneZ2_t-channel_7TeV-powheg-tauola") )
-    f_tageff_ = new TFile("histos_btageff_csvm_singletopbar_t.root","READ");
-  //else if(sampleName_.Contains("t_tW-channel"))
-  else if (sampleName_.Contains("T_TuneZ2_tW-channel-DR_7TeV-powheg-tauola") )
-    f_tageff_ = new TFile("histos_btageff_csvm_singletop_tW.root","READ");
-  //else if(sampleName_.Contains("tbar_tW-channel"))
-  else if (sampleName_.Contains("Tbar_TuneZ2_tW-channel-DR_7TeV-powheg-tauola") )
-    f_tageff_ = new TFile("histos_btageff_csvm_singletopbar_tW.root","READ");
-  else if (sampleName_.Contains("zjets"))   
-    f_tageff_ = new TFile("histos_btageff_csvm_zinvisible.root","READ");
-  else if (sampleName_.Contains("WJetsToLNu_250_HT_300_TuneZ2_7TeV-madgraph-tauola") )
-    f_tageff_ = new TFile("histos_btageff_csvm_wjetsHT250.root","READ");
-  else if (sampleName_.Contains("WJetsToLNu_300_HT_inf_TuneZ2_7TeV-madgraph-tauola") )    
-    f_tageff_ = new TFile("histos_btageff_csvm_wjetsHT300.root","READ");
-  else if (sampleName_.Contains("ww") )  
-    f_tageff_ = new TFile("histos_btageff_csvm_ww.root","READ");
-  else if (sampleName_.Contains("wz") )  
-    f_tageff_ = new TFile("histos_btageff_csvm_wz.root","READ");
-  else if (sampleName_.Contains("zz") )  
-    f_tageff_ = new TFile("histos_btageff_csvm_zz.root","READ");
-  else if (sampleName_.Contains("DYJetsToLL_TuneZ2_M-50_7TeV-madgraph-tauola") )
-    f_tageff_ = new TFile("histos_btageff_csvm_dyjets.root","READ");
-  else if(sampleName_.Contains("LM9")	
-	  ||sampleName_.Contains("SUGRA")
-	  ||sampleName_.Contains("T1bbbb") 
-	  ||sampleName_.Contains("T2bb") 
-	  ||sampleName_.Contains("T2tt") 
-	  ||sampleName_.Contains("T1tttt") 
-	  )   
-    f_tageff_ = new TFile("histos_btageff_csvm_lm9.root","READ");
-  else if (sampleName_.Contains("TTJets_TuneZ2_7TeV-madgraph-tauola_Fall11_v2") )
-    f_tageff_ = new TFile("histos_btageff_csvm_ttbarjets_fall11.root","READ");
-  else{ //if all else fails, use fall11 ttbar
-    std::cout << "loadJetTagEffMaps: could not find sample - using Fall11 ttbar efficiencies." << std::endl;
-    //f_tageff_ = new TFile("histos_btageff_csvm.root","READ");
-    f_tageff_ = new TFile("histos_btageff_csvm_ttbarjets_fall11.root","READ");
+
+  assert(f_tageff_ ==0);
+
+  TString filename = assembleBTagEffFilename();
+  filename.Prepend("btagEffMaps/");
+  f_tageff_ = new TFile(filename,"READ");
+  if (f_tageff_->IsZombie()) {
+    cout<<"Failed to load the b-tag eff map for sample "<<sampleName_<<endl;
+    assert(0); //let's not make mistakes caused by choosing a default and running anyway
   }
+
 }
 
 void EventCalculator::calculateTagProb(float &Prob0, float &ProbGEQ1, float &Prob1, float &ProbGEQ2, float &Prob2, float &ProbGEQ3,
@@ -4366,7 +4460,7 @@ float EventCalculator::jetTagEff(unsigned int ijet, TH1F* h_btageff, TH1F* h_cta
 
   if(isGoodJet30(ijet)) {
 
-    if (theBTagEffType_ == kBTagEff04 || theBTagEffType_ == kBTagEffup4 || theBTagEffType_ == kBTagEffdown4) { //new 2012 BTV prescription 
+    if (theBTagEffType_ == kBTagEff04 || theBTagEffType_ == kBTagEffup4 || theBTagEffType_ == kBTagEffdown4) { //new  BTV-11-004 prescription 
 
       if (abs(flavor) ==4 || abs(flavor)==5) { //heavy flavor
 	float errFactor = 1;
@@ -4690,6 +4784,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   //MuHad
   triggerlist["PFHT350_Mu15_PFMET45"]=triggerData();
   triggerlist["PFNoPUHT350_Mu15_PFMET45"]=triggerData();
+  triggerlist["Mu8_DiJet30"]=triggerData(); //potentially useful for trigger studies
   //ElectronHad
   triggerlist["CleanPFHT300_Ele15_CaloIdT_CaloIsoVL_TrkIdT_TrkIsoVL_PFMET45"]=triggerData();
   triggerlist["CleanPFNoPUHT300_Ele15_CaloIdT_CaloIsoVL_TrkIdT_TrkIsoVL_PFMET45"]=triggerData();
@@ -4727,6 +4822,8 @@ void EventCalculator::reducedTree(TString outputpath) {
 
   float jetchargedhadronfrac1, jetchargedhadronfrac2, jetchargedhadronfrac3, bjetchargedhadronfrac1, bjetchargedhadronfrac2, bjetchargedhadronfrac3;
   int jetchargedhadronmult1, jetchargedhadronmult2, jetchargedhadronmult3, bjetchargedhadronmult1, bjetchargedhadronmult2, bjetchargedhadronmult3;
+
+  float mjjb1,mjjb2,topPT1,topPT2;
 
   float eleet1, elephi1, eleeta1, muonpt1, muonphi1, muoneta1;
   float eleet2, elephi2, eleeta2, muonpt2, muonphi2, muoneta2;
@@ -5039,6 +5136,11 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("mjj1_5",&mjj1_5,"mjj1_5/F");
   reducedTree.Branch("mjj2_5",&mjj2_5,"mjj2_5/F");
   reducedTree.Branch("mjjdiff_5",&mjjdiff_5,"mjjdiff_5/F");
+
+  reducedTree.Branch("mjjb1",&mjjb1,"mjjb1/F");
+  reducedTree.Branch("mjjb2",&mjjb2,"mjjb2/F");
+  reducedTree.Branch("topPT1",&topPT1,"topPT1/F");
+  reducedTree.Branch("topPT2",&topPT2,"topPT2/F");
 
   reducedTree.Branch("nbjetsSSVM",&nbjetsSSVM,"nbjetsSSVM/I");
   reducedTree.Branch("nbjetsSSVHPT",&nbjetsSSVHPT,"nbjetsSSVHPT/I");
@@ -5527,7 +5629,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
 	scanCrossSectionMinus = getScanCrossSection(prodprocess,"Minus");
       }
       else {
-	scanCrossSection = getSMSScanCrossSection(m0); //gluino mass
+	scanCrossSection = 1;
 	scanCrossSectionPlus = scanCrossSection;
 	scanCrossSectionMinus = scanCrossSection; //there are no cross section errors for SMS
       }
@@ -5558,13 +5660,10 @@ Also the pdfWeightSum* histograms that are used for LM9.
       HT=getHT();
       hltHTeff = getHLTHTeff(HT);
       PUweight =  puReweightIs1D ? getPUWeight(*LumiWeights) : 1;// FIXME CFA getPUWeight(*LumiWeights3D);
-      //      btagIPweight = getBTagIPWeight();
       //      pfmhtweight = getPFMHTWeight();
 
       cutPV = passPV();
 
-      //FIXME CFA
-/*
       calculateTagProb(prob0,probge1,prob1,probge2,prob2,probge3);
 
       calculateTagProb(prob0_HFplus,probge1_HFplus,prob1_HFplus,probge2_HFplus,prob2_HFplus,probge3_HFplus,1,1,1,kHFup);
@@ -5572,7 +5671,6 @@ Also the pdfWeightSum* histograms that are used for LM9.
 
       calculateTagProb(prob0_LFplus,probge1_LFplus,prob1_LFplus,probge2_LFplus,prob2_LFplus,probge3_LFplus,1,1,1,kLFup);
       calculateTagProb(prob0_LFminus,probge1_LFminus,prob1_LFminus,probge2_LFminus,prob2_LFminus,probge3_LFminus,1,1,1,kLFdown);
-*/
 
       pass_utilityPrescaleModuleHLT = passUtilityPrescaleModuleHLT();
 
@@ -5602,6 +5700,8 @@ Also the pdfWeightSum* histograms that are used for LM9.
       nbjetsTCHPM = nGoodBJets( kTCHPM);
       nbjetsCSVM = nGoodBJets( kCSVM);
       nbjetsCSVL = nGoodBJets( kCSVL);
+
+      hadronicTopFinder_DeltaR(mjjb1,mjjb2,topPT1,topPT2);
 
       CSVout1=bjetCSVOfN(1);
       CSVout2=bjetCSVOfN(2);
@@ -7676,15 +7776,21 @@ void EventCalculator::sampleAnalyzer() {
   return;
 }
 
+TString EventCalculator::assembleBTagEffFilename() {
+
+  TString outfile = "histos_btageff_csvm_";
+  outfile+=sampleName_;
+  outfile+=".root";
+  return outfile;
+}
+
 //separate out the jettag efficiency code from sampleAnalyzer for ease of use
 void EventCalculator::plotBTagEffMC( ) {
 
+  TString outfile = assembleBTagEffFilename();
 
-  TFile fout("histos.root","RECREATE");
+  TFile fout(outfile,"RECREATE");
   
-  //check the MC efficiencies from Summer11 TTbar
-  //this histogram has bin edges {30,50,75,100,150,200,240,500,1000}
-  //double bins[10] = {30,50,75,100,150,200,240,350,500,1000};
   double bins[16] = {30, 40, 50, 60, 70, 80, 100, 120, 160, 210, 260, 320, 400, 500, 670, 2000};
   TH1F * h_bjet = new TH1F("h_bjet","bjet",15,bins);
   TH1F * h_cjet = new TH1F("h_cjet","cjet",15,bins);
