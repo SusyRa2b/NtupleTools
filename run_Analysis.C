@@ -23,6 +23,16 @@
 //#include "Analyzer.h"
 #include "EventCalculator_cfA.h"
 
+/*
+general syntax is
+
+./run_Analysis <file> [optionstring]
+
+For making b-tag eff histograms, do:
+./run_Analysis <file> btageff
+
+*/
+
 using namespace std;
 
 // === code borrowed from Harrison and Sezen ==
@@ -128,8 +138,13 @@ int main(int argc, char* argv[])
 //  Analyzer FullAnalyzer("/mnt/hadoop/UCSBntup/HT_Run2011B-PromptReco-v1_AOD_UCSB1095_v55s/cfA_HT_Run2011B-PromptReco-v1_AOD_UCSB1095_v55s_f1_1_cql.root",0,0.005,4900.,"output",100);
   EventCalculator ec(fileArg,filenames, EventCalculator::kPF2PAT, EventCalculator::kPFMET);
   ec.setBTaggerType(EventCalculator::kCSVM);
-  ec.setOptions(options);
-  ec.reducedTree(outputDir);
+  if (options=="btageff") {
+    ec.plotBTagEffMC();
+  }
+  else {
+    ec.setOptions(options);
+    ec.reducedTree(outputDir);
+  }
 
   cout<<"Back in main(). now really terminate"<<endl;  
   return 0;
