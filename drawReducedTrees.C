@@ -2,10 +2,15 @@
 to compile:
 
 must have symlink to MiscUtil.cxx in the working directory.
-TSelectorMultiDraw and CrossSectionTable need to be compiled only when they are changed.
+The supporting classes need to be compiled only when they are changed.
 
 gSystem->Load("TSelectorMultiDraw_C.so");
 gSystem->Load("CrossSectionTable_cxx.so");
+gSystem->Load("CrossSectionTable_cxx.so");
+gSystem->Load("ConfigurationDescriptions_cxx.so");
+gSystem->Load("SearchRegion_cxx.so");
+gSystem->Load("SystInfo_cxx.so");
+gSystem->Load("SignalEffData_cxx.so");
 .L drawReducedTrees.C++
 
 ====== this is the nominal code for drawing RA2b data/MC comparison plots =======

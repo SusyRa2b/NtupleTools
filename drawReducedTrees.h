@@ -4,7 +4,12 @@
 
 #include "TRegexp.h"
 
-TString sedfPath = "/home/joshmt/30May_T1tttt_output/"; //for signal systematics
+//classes now split into their own files
+#include "ConfigurationDescriptions.h"
+#include "SignalEffData.h"
+#include "SearchRegion.h"
+
+#include "TGraphAsymmErrors.h"
 
 //useful for playing around with plots in interactive ROOT
 TH1D* hinteractive=0;
@@ -12,6 +17,7 @@ TH2D* h2d=0;
 
 TLatex* text1=0;
 TLatex* text2=0;
+TLatex* text3=0;
 
 //holds a list of the *active* samples (to be plotted)
 std::vector<TString> samples_;
@@ -28,14 +34,11 @@ std::map<TString, TString> sampleLabel_;
 std::map<TString, UInt_t> sampleMarkerStyle_;
 std::map<TString, UInt_t> sampleLineStyle_;
 std::map<TString, float> sampleScaleFactor_; //1 by default //implemented only for drawPlots!
+std::map<TString, TChain*> primaryDatasets_;
 TChain* dtree=0;
 TH1D* hdata=0;
 TH2D* hdata2d=0;
 
-enum dataPDMode {kHT, kSingleMu, kDoubleMu, kDoubleElectron};
-dataPDMode theDataPDMode_ = kHT;
-//dataPDMode theDataPDMode_ = kDoubleMu;
-//dataPDMode theDataPDMode_ = kDoubleElectron;
 
 TString currentConfig_;
 TH2D* scanSMSngen=0;
@@ -254,154 +257,7 @@ void resetLegendPositionR() {
 }
 
 
-class ConfigurationDescriptions {
-public:
-  ConfigurationDescriptions();
-  ~ConfigurationDescriptions();
-
-  //setters
-  void setDefault(const TString & description) {default_ = description;}
-  void setCorrected(const TString & description) {corrected_=description;}
-  void addVariation(const TString & description1, const TString & description2);
-
-  //getters
-  TString getDefault() const {return default_;}
-  TString getCorrected() const {return corrected_;}
-  TString at(const unsigned int i);
-
-  //utilities
-  TString getVariedSubstring(const TString &currentVariation);
-
-  //kludge a way to iterate over the elements
-  //this fits nicely with the way we were already accessing the old data structure in drawReducedTrees.C
-  unsigned int size();
-
-private:
-  TString default_;
-  TString corrected_;
-  std::map< TString, std::pair<TString, TString> > variationPairs;
-};
-ConfigurationDescriptions::ConfigurationDescriptions() : 
-  default_(""),corrected_("") { }
-ConfigurationDescriptions::~ConfigurationDescriptions() {}
-
-TString ConfigurationDescriptions::at(const unsigned int i) {
-  if (i == 0) return getDefault();
-  else  if (i == 1) return getCorrected();
-  else {
-    const unsigned int j=i-2;
-    unsigned int k=0;
-    for (std::map<TString, std::pair<TString,TString> >::iterator iconfig=variationPairs.begin(); iconfig!=variationPairs.end(); ++iconfig) {
-      if (j == k) return iconfig->second.first;
-      else if (j == k+1) return iconfig->second.second;
-      k+=2;
-    }
-  }
-
-  cout<<"WARNING in ConfigurationDescriptions::at() -- asked for element "<<i<<" when there are only "<<this->size()<<" elements!"<<endl;
-  return "";
-}
-
-unsigned int ConfigurationDescriptions::size() {
-  unsigned int s=0;
-  if (default_ != "") ++s;
-  if (corrected_ != "") ++s;
-
-  s+= 2*variationPairs.size();
-
-  return s;
-}
-
-TString ConfigurationDescriptions::getVariedSubstring(const TString & currentVariation) {
-
-  TObjArray* baseline = corrected_.Tokenize("_");
-
-  TObjArray* mine = currentVariation.Tokenize("_");
-
-  TString output="";
-  for (int i=0; i<baseline->GetEntries(); i++) {
-    TString b=baseline->At(i)->GetName();
-    TString m=mine->At(i)->GetName();
-    if (b!=m) {
-      output+=b;
-    }
-  }
-  return output;
-}
-
-void ConfigurationDescriptions::addVariation(const TString & description1, const TString & description2) {
-
-  TString var1=getVariedSubstring(description1);
-  TString var2=getVariedSubstring(description2);
-
-  assert(var1 == var2);
-
-  variationPairs[var1] = make_pair(description1,description2);
-
-}
-
 ConfigurationDescriptions configDescriptions_;
-
-//special containers for holding the "search regions of interest"
-class SearchRegion {
-public:
-  SearchRegion(TString btagSel,TString htSel,TString metSel,TString oId,bool isSig=true);
-  ~SearchRegion();
-  void Print() const;
-
-  double getLowEdgeMET();
-
-  TString htSelection;
-  TString metSelection;
-  TString btagSelection;
-
-  TString owenId;
-  bool isSIG;
-
-  TString id() const;
-
-  bool operator==(const SearchRegion& other);
-  bool operator!=(const SearchRegion& other) {return !((*this)==other);}
-
-};
-SearchRegion::SearchRegion(TString btagSel,TString htSel,TString metSel,TString oId,bool isSig) : 
-  htSelection(htSel),metSelection(metSel),btagSelection(btagSel),owenId(oId),isSIG(isSig) {}
-SearchRegion::~SearchRegion() {}
-void SearchRegion::Print() const {
-  cout<<" == "<<btagSelection<<" "<<htSelection<<" "<<metSelection<<endl;
-
-}
-
-bool SearchRegion::operator==(const SearchRegion& other) {
-  //ht, met, btag cuts must match
-  if ( htSelection != other.htSelection ) return false;
-  if ( metSelection != other.metSelection ) return false;
-  if ( btagSelection != other.btagSelection ) return false;
-  //also must both be either SIG or SB
-  if (isSIG != other.isSIG) return false;
-
-  //don't care about owenId
-  return true;
-}
-
-double SearchRegion::getLowEdgeMET() {
-
-  //find MET>=xxx
-  TRegexp metge("MET>=[0-9]+");   //can't handle white space or > instead of >=
-  TRegexp numbersonly("[0-9]+");
-
-  TString metcut=  metSelection(metge);
-  TString metcutval=  metcut(numbersonly);
-
-  return metcutval.Atof();
-}
-
-TString SearchRegion::id() const {
-
-  TString theid= btagSelection;
-  theid += owenId;
-  return theid;
-}
 
 std::vector<SearchRegion > searchRegions_;
 std::vector<SearchRegion > sbRegions_;
@@ -658,332 +514,6 @@ void setSearchRegions( TString  which="") {
   searchRegionsSet_=true;
 }
 
-//very simple data container used by the SignalEffData class
-class SystInfo {
-public:
-  SystInfo(float p=0, float m=0, int s=0);
-  ~SystInfo();
-  SystInfo( ifstream* input);
-
-  float plus;
-  float minus;
-  //convention:
-  //use 0 for numbers that are completely unset
-  //use 1 for numbers that are fixed by SignalEffData
-  //use 2 for numbers that are set by some actual event counts
-  int status;
-
-  void write(ofstream* outfile) const;
-};
-
-void SystInfo::write(ofstream* outfile) const {
-
-  (*outfile)<<status<<" "<<minus<<" "<<plus<<endl;
-
-}
-
-SystInfo::SystInfo(ifstream* input) :
-  plus(0),minus(0),status(99)
-{
-
-  (*input)>>status>>minus>>plus;
-  cout<< "  Loaded status,minus,plus = "<<status<<" "<<minus<<" "<<plus<<endl; //DEBUG
-}
-
-SystInfo::SystInfo(float p, float m, int s) :
-  plus(p),  minus(m),  status(s) {}
-SystInfo::~SystInfo() {}
-
-class SignalEffData {
-  //keep all of the relevant numbers for signal efficiency for =one point=
-  // by one point i mean one sample and one selection
-public:
-  SignalEffData();
-  SignalEffData(TString idtoload);
-  ~SignalEffData();
-
-  //  TString id;
-
-  float rawYield; //yield in lumiScale_ invpb, or for SMS really the raw yield
-  float effCorr; //factor including all corrections to the efficiency
-
-  float yield_JER;         //NOT persisted when object is saved to file
-  float yield_JER_PU;      //NOT persisted when object is saved to file
-  float yield_JER_PU_HLT;  //NOT persisted when object is saved to file
-
-//   float eff_derivative_b;
-//   float eff_derivative_c;
-//   float eff_derivative_l;
-
-//  float sigma_btageff; //TODO persist this
-  //  float eff_derivative_b_1s; //NOT persisted (cross-check)
-
-  float totalSystematic(); 
-  float totalSystematicWithoutB(); 
-  float symmetrize(const TString & which);
-  float symmetrizeWithSign(const TString & which);
-
-  float value(const TString &which) {return symmetrize(which);}
-  float valuePlus(const TString &which);
-  float valueMinus(const TString &which);
-
-  void set(const TString & which, float valminus, float valplus);
-
-  void setFixedForScan();
-
-    //pair is for + / -
-  //important convention notes:
-  //  values must be fractional ( i.e. 2% is 0.02)
-  //  values should preserve sign (not after fabs())
-  map<TString, SystInfo > systematics;
-  //motivation for using a map:
-  //  want to be able to clear() it and *regain* the memory footprint, without getting rid of the class object itself
-  TString translateVariation(const TString & which) ;
-
-  void write(TString id) const; //write the SignalEffData contents to a file
-
-};
-
-const TString SignalEffDataSuffix_ = "sedf";
-void SignalEffData::write(TString id) const {
-  //goal: be able to write to an ascii file all of the important data members,
-  //such that I can destroy the object, and recreate it later using the content of the file
-
-  //filename constructed from id
-  TString filename = "SignalEffData.";
-  filename += id;
-  filename +=".";
-  filename += SignalEffDataSuffix_;
-
-  filename.Prepend(sedfPath);
-
-  ofstream output(filename.Data());
-  output<<rawYield<<endl<<effCorr<<endl;
-
-//   output<<eff_derivative_b<<endl;
-//   output<<eff_derivative_c<<endl;
-//   output<<eff_derivative_l<<endl;
-
-  for (map<TString, SystInfo >::const_iterator isyst=systematics.begin(); isyst!=systematics.end(); ++isyst) {
-    output << isyst->first<<" ";
-    isyst->second.write( &output );
-  }
-
-  output.close();
-  cout<<" == done writing output file: "<<filename<<endl;
-
-}
-
-SignalEffData::SignalEffData(TString idtoload) :
-  //  id(idtoload),
-  rawYield(0),
-  effCorr(1),
-  yield_JER(0), yield_JER_PU(0),yield_JER_PU_HLT(0)//,eff_derivative_b(0),eff_derivative_c(0),eff_derivative_l(0)
-{
-  //filename constructed from id
-  TString filename = "SignalEffData.";
-  filename += idtoload;
-
-  filename.Prepend(sedfPath);
-
-  ifstream input(filename.Data()); //should check that this is good
-  input>>rawYield;
-  input>>effCorr;
-
-//   input>>eff_derivative_b;
-//   input>>eff_derivative_c;
-//   input>>eff_derivative_l;
-
-  TString akey;
-  while (input>>akey) {
-    //load the SystInfo from the file using the special ctor
-    cout<<"==loading key "<<akey<<endl; //DEBUG
-    systematics[akey] = SystInfo(&input);
-  }
-
-  input.close();
-}
-
-SignalEffData::SignalEffData() : 
-  //  id("noname"),
-  rawYield(0),
-  effCorr(1),
-  yield_JER(0), yield_JER_PU(0),yield_JER_PU_HLT(0)//,eff_derivative_b(0),eff_derivative_c(0),eff_derivative_l(0)
-{ 
-
-  systematics["JES"] = SystInfo();             
-  systematics["btag"] = SystInfo();            
-  systematics["lftag"] = SystInfo();            
-  systematics["PDF"] = SystInfo();             
-  systematics["MET"] = SystInfo();             
-  systematics["PU"] = SystInfo();              
-  systematics["JER"] = SystInfo();             
-  systematics["kFactor"] = SystInfo();         
-  systematics["cleaning"] = SystInfo(1e-2,1e-2,1);
-  systematics["LepVeto"] = SystInfo(3e-2,3e-2,1); 
-  systematics["trigger"] = SystInfo(); //now going to be done directly in likelihood (at least for MHT leg)
-  systematics["lumi"] = SystInfo(2.2e-2 , 2.2e-2,1);   //final 2011 number is 2.2%
-
-  //list of signal systematics:
-  //  JES
-  // btag efficiency
-  // PDFs (acceptance)
-  // (RA2 says they don't do PDF uncertainties on the cross section. so i won't either)
-  //  unc energy (MET)
-
-  // PU
-  //  JER
-  //  trigger eff
-  //  MET cleaning
-  //  lepton veto eff
-  // lumi
-  // for mSugra, NLO cross section (k factor)
-
-}
-
-SignalEffData::~SignalEffData() 
-{
-  systematics.clear();
-}
-
-void SignalEffData::setFixedForScan() {
-  systematics["PU"].plus = 1e-2;
-  systematics["PU"].minus = -systematics["PU"].plus;
-  systematics["PU"].status = 1;
-
-  systematics["JER"].plus = 1e-2;
-  systematics["JER"].minus = -systematics["JER"].plus;
-  systematics["JER"].status = 1;
-
-}
-
-
-TString SignalEffData::translateVariation(const TString & which) {
-  //this is a nasty hack that i do not like
-  //the variations are known only by their differences in name
-  //these are easily human-readable but don't fit in well with the names I chose to use
-  //in this class SignalEffData
-
-  //for now I will just "translate" them here in a hard-coded way.
-  //maybe i should use .Contains() but that can be dangerous
-
-  // the b-tag ones are not needed anymore
-//   if (which == "BTagEff03") return "btag"; //hardcoding this 03 is a really bad idea...
-//   else if (which == "BTagEff04") return "btag"; //a bad idea indeed...
-  if (which=="JERbias") return "JER";
-  else if (which=="JES0") return "JES";
-  else if (which=="METunc0") return "MET";
-  else if (which =="PUunc0") return "PU";
-
-  return which;
-
-}
-
-void SignalEffData::set(const TString & which, float valminus, float valplus) {
-
-  TString translatedWhich=  translateVariation(which);
-  
-  map<TString, SystInfo >::iterator it=systematics.find(translatedWhich);
-  if (it==systematics.end() ) {
-    cout<<"ERROR -- cannot find in systematics list: "<<translatedWhich<<endl;
-    return;
-  }
-
-  it->second.minus = valminus;
-  it->second.plus = valplus;
-  it->second.status = 2;
-  
-}
-
-float SignalEffData::symmetrize(const TString & which) {
-
-  float s=-1;
-
- map<TString, SystInfo >::iterator it=systematics.find(which);
-  if (it==systematics.end() ) {
-    cout<<"ERROR -- cannot find in systematics list: "<<which<<endl;
-  }
-  //realizing now that i symmetrized different results differently!
-  //for now maintain strict consistency
-  else  if ( it->first=="kFactor" ) { //average the 2 parts of the pair
-    s = 0.5* (fabs(it->second.plus) + fabs(it->second.minus));
-  }
-  else { //return the larger deviation
-    //for PDF uncertainties for now just store the pre-processed results
-    float var1= fabs( it->second.plus);
-    float var2= fabs( it->second.minus);
-    s = var2>var1? var2:var1;
-  }
-  
-  return s;
-}
-
-float SignalEffData::symmetrizeWithSign(const TString & which) {
-
-  float s=-1;
-
-  map<TString, SystInfo >::iterator it=systematics.find(which);
-  if (it==systematics.end() ) {
-    cout<<"ERROR -- cannot find in systematics list: "<<which<<endl;
-  }
-  else {
-    s=    (it->second.plus - it->second.minus)*0.5;
-  }
-  
-  return s;
-}
-
-float SignalEffData::valuePlus(const TString & which) {
-
-  float s=-1;
-
-  map<TString, SystInfo >::iterator it=systematics.find(which);
-  if (it==systematics.end() ) {
-    cout<<"ERROR -- cannot find in systematics list: "<<which<<endl;
-  }
-  else { //return the larger deviation
-    s=it->second.plus;
-  }  
-  return s;
-}
-float SignalEffData::valueMinus(const TString & which) {
-
-  float s=-1;
-
-  map<TString, SystInfo >::iterator it=systematics.find(which);
-  if (it==systematics.end() ) {
-    cout<<"ERROR -- cannot find in systematics list: "<<which<<endl;
-  }
-  else { //return the larger deviation
-    s=it->second.minus;
-  }  
-  return s;
-}
-
-float SignalEffData::totalSystematic() {
-
-  float total2=0;
-  for (map<TString, SystInfo >::iterator isyst=systematics.begin(); isyst!=systematics.end(); ++isyst) {
-    if ( isyst->second.status == 0) { 
-      cout<<"WARNING -- systematic is unset! "<<isyst->first<<endl;
-    }
-    total2 += pow( symmetrize(isyst->first),2);
-  }
-
-  return 100*sqrt(total2);
-}
-float SignalEffData::totalSystematicWithoutB() {
-
-  float total2=0;
-  for (map<TString, SystInfo >::iterator isyst=systematics.begin(); isyst!=systematics.end(); ++isyst) {
-    if ( isyst->second.status == 0) { 
-      cout<<"WARNING -- systematic is unset! "<<isyst->first<<endl;
-    }
-    if ( isyst->first != "btag" && isyst->first != "lftag")  total2 += pow( symmetrize(isyst->first),2);
-  }
-
-  return 100*sqrt(total2);
-}
 
 
 struct OwenData {
@@ -1346,8 +876,14 @@ TH1D* totalqcd=0; //ben - just for ease of doing event counts with drawPlots
 TH1D* ratio=0; float ratioMin=0.0; float ratioMax=2.5;
 TLine* ratioLine=0;
 TGraphErrors* mcerrors=0;
+TGraphAsymmErrors* effgraph=0;
 bool loaded_=false; //bookkeeping
 bool loadedSusyHistos_=false;//bookkeeping
+
+TTree* getTree(const TString & samplename) {
+  TTree* t=(TTree*) files_[currentConfig_][samplename]->Get("reducedTree");
+  return t;
+}
 
 // == set configuration options ==
 void setQuiet(bool q) {
@@ -1448,14 +984,31 @@ bool isSampleSM(const TString & name) {
 
   if (name.Contains("LM")) return false;
 
+  if (name.Contains("sbottom")) return false;
+
   if (name.Contains("SUGRA")) return false;
   if (isSampleSMS(name)) return false;
 
   return true;
 }
 
+TString extractExtraCut(TString fullname) {
+  if ( !fullname.Contains(":") ) return "";
+
+  TString cuts = fullname.Tokenize(":")->At(1)->GetName();
+
+  return cuts;
+}
+
 TString stripSamplename(TString fullname) {
+
+  if ( fullname.Contains("$") && fullname.Contains(":") )   cout<<"Simultaneous use of $ and : syntax not currently allowed!"<<endl;
+
+  //eg for samplename T1tttt$900$100, return T1tttt
   TString name = fullname.Tokenize("$")->At(0)->GetName();
+  //also allow the TTbarJets:cutstring syntax
+  name = name.Tokenize(":")->At(0)->GetName();
+
   return name;
 }
 
@@ -1563,11 +1116,11 @@ void drawPlotHeader(double xoffset = 0) {
   if(doRatio_) ypos=ypos+0.012;
   // i'm gonna leave this out for now
   if (text1 != 0 ) delete text1;
-  text1 = new TLatex(3.570061,23.08044,"CMS"); //no more preliminary!
-  //text1 = new TLatex(3.570061,23.08044,"CMS Preliminary"); 
+  //text1 = new TLatex(3.570061,23.08044,"CMS"); //no more preliminary!
+  text1 = new TLatex(3.570061,23.08044,"CMS Preliminary"); 
   text1->SetNDC();
   text1->SetTextAlign(13);
-  text1->SetX(0.68 + xoffset +0.2); //add 0.2 if you get rid of the "Preliminary"
+  text1->SetX(0.68 + xoffset ); //add 0.2 if you get rid of the "Preliminary"
   text1->SetY(ypos+0.007);
   text1->SetTextFont(42);
   text1->SetTextSizePixels(24);
@@ -1578,7 +1131,7 @@ void drawPlotHeader(double xoffset = 0) {
     TString astring;
     //astring.Form("%.0f pb^{-1} at #sqrt{s} = 7 TeV",lumiScale_);
     //astring.Form("%.1f fb^{-1} at #sqrt{s} = 7 TeV",lumiScale_/1000.);
-    astring.Form("L_{int} = %.2f fb^{-1}, #sqrt{s} = 7 TeV",lumiScale_/1000.);
+    astring.Form("L_{int} = %.2f fb^{-1}, #sqrt{s} = 8 TeV",lumiScale_/1000.);
     if(lumiScale_>33. && lumiScale_<34.) astring.Form("L_{int} = %.2f fb^{-1}, #sqrt{s} = 7 TeV", 4982.91/1000.);//hardcoded, but don't know what else to do for this...
     if (text2 != 0 ) delete text2;
     text2 = new TLatex(3.570061,23.08044,astring);
@@ -1785,7 +1338,14 @@ for legacy purposes I am keeping all of the weight and selection TStrings, altho
   weightedcut+=")";
 
   //horrible kludge
-  //  if (type==kData) weightedcut+="*(runNumber>=178411)";
+  /*
+  if (type!=kData) {
+    if (thisSelection.Contains("pass_PFHT350_PFMET100")) thisSelection.ReplaceAll("pass_PFHT350_PFMET100","1");
+    else  if (thisSelection.Contains("pass_PFHT350_Mu15_PFMET45")) thisSelection.ReplaceAll("pass_PFHT350_Mu15_PFMET45","1");
+    else  if (thisSelection.Contains("pass_IsoMu24_eta2p1")) thisSelection.ReplaceAll("pass_IsoMu24_eta2p1","1");
+    else  if (thisSelection.Contains("pass_IsoMu24")) thisSelection.ReplaceAll("pass_IsoMu24","1");
+  }
+  */
 
   //this flavorHistoryWeight business is too kludgey...someday should fix it
   if (extraWeight=="flavorHistoryWeight" && type!=kData) {
@@ -2036,6 +1596,12 @@ void drawVerticalLine() {
 void setSampleColor(const TString & sample, UInt_t color)  {  sampleColor_[sample]=color;}
 void setSampleLineStyle(const TString & sample, UInt_t style)  {  sampleLineStyle_[sample]=style;}
 
+UInt_t getSampleColor(const TString & sample)  { 
+  if ( sampleColor_.count(sample) ) return sampleColor_[sample];
+  //if we don't find it, return the default
+  return 1;
+}
+
 //add a sample to be plotted to the *end* of the list
 void addSample(const TString & newsample) {
 
@@ -2092,6 +1658,7 @@ void setColorScheme(const TString & name) {
   if (name == "stack") {
     sampleColor_["LM13"] = kGray;
     sampleColor_["LM9"] =kGray;
+    sampleColor_["sbottom-189-270"]=kRed+2;
     sampleColor_["mSUGRAtanb40"] =kGray;
     sampleColor_["T1bbbb"] =kBlack;
     sampleColor_["T1tttt"] =kBlack;
@@ -2181,6 +1748,7 @@ void setColorScheme(const TString & name) {
   else if (name == "nostack" || name=="owen") {
     sampleColor_["LM13"] = kBlue+2;
     sampleColor_["LM9"] = kCyan+2;
+    sampleColor_["sbottom-189-270"]=kBlue+2;
     sampleColor_["mSUGRAtanb40"] =kCyan+2;
     sampleColor_["T1bbbb"] =kCyan+2;
     sampleColor_["T1tttt"] =kCyan+2;
@@ -2391,12 +1959,36 @@ TString getSampleLabel(const TString & sample) {
     label=ss;
   }
   else {
-    label = sampleLabel_[sample]; //should replace this with find() instead
+    if (sampleLabel_.count(sample))  label = sampleLabel_[sample];
+    else label = sample;
   }
   return label;
 
 }
 
+
+void addDataToChain(TChain* datachain, const TString & name) {
+
+  TString dname="reducedTree.";
+  dname+=currentConfig_;
+  dname += ".";
+  dname += name;
+  dname += "*.root";
+  dname.Prepend(dataInputPath);
+  dname.ReplaceAll("JERbias","JER0"); //JERbias not relevant for data
+  datachain->Add(dname);
+
+}
+
+void setDatasetToDraw(const TString & dataset) {
+
+  if (primaryDatasets_.count(dataset) == 0) {
+    cout<<"Dataset not found: "<<dataset<<endl;
+    return;
+  }
+  dtree = primaryDatasets_[dataset];
+
+}
 
 void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   if (loaded_) return;
@@ -2497,7 +2089,7 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   samplesAll_.insert("T2bb");
   samplesAll_.insert("T2tt");
 
- 
+  samplesAll_.insert("sbottom-189-270"); 
   
   //FOR PLOTS
   ////////////
@@ -2560,6 +2152,7 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   sampleLabel_["T2tt"] = "T2tt";
   sampleLabel_["LM13"] = "LM13";
   sampleLabel_["LM9"] = "LM9";
+  sampleLabel_["sbottom-189-270"]="sbottom189-270";
   sampleLabel_["QCD"] = "QCD";
   sampleLabel_["PythiaQCD"] = "QCD (no PU)";
   sampleLabel_["PythiaPUQCDFlat"] = "QCD"; 
@@ -2644,6 +2237,7 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   sampleLineStyle_["T2tt"] = 1;
   sampleLineStyle_["T2bb"] = 1;
   sampleLineStyle_["LM9"] = 1;
+  sampleLineStyle_["sbottom-189-270"]=1;
 
   sampleMarkerStyle_["mSUGRAtanb40"] = kFullStar;
   sampleMarkerStyle_["T1bbbb"] = kFullStar;
@@ -2651,6 +2245,7 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   sampleMarkerStyle_["T2bb"] = kFullStar;
   sampleMarkerStyle_["T2tt"] = kFullStar;
   sampleMarkerStyle_["LM13"] = kFullStar;
+  sampleMarkerStyle_["sbottom-189-270"]=kFullStar;
   sampleMarkerStyle_["LM9"] = kFullStar;
   sampleMarkerStyle_["QCD"] = kFullCircle;
   sampleMarkerStyle_["PythiaQCD"] = kOpenCircle;
@@ -2738,6 +2333,7 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   sampleOwenName_["T2tt"] = "t2tt";
   sampleOwenName_["LM13"] = "lm13";
   sampleOwenName_["LM9"] = "lm9";
+  sampleOwenName_["sbottom-189-270"]="sbottom189-270";
   sampleOwenName_["QCD"] = "qcd";
   sampleOwenName_["PythiaQCD"] = "qcd";
   sampleOwenName_["PythiaPUQCDFlat"] = "qcd"; 
@@ -2820,23 +2416,44 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
     }
   }
 
-  //load data file too
-  TString dname="reducedTree.";
-  dname+=currentConfig_;
-  //dname+=".data.root";
-  if(theDataPDMode_ == kHT) dname+=".ht*.root";
-  else if (theDataPDMode_ == kSingleMu) dname+=".singlemu*.root";
-  else if (theDataPDMode_ == kDoubleMu) dname+=".doublemu*.root";
-  else if (theDataPDMode_ == kDoubleElectron) dname+=".doubleelectron*.root";
-  else{cout << "data PD mode not specified, aborting" << endl; assert(0);}
-  //dname+="*.root";
-  //dname+=".ht_run2011a_SUM_promptrecov4only_uptojul1.root";
-  dname.Prepend(dataInputPath);
-  dname.ReplaceAll("JERbias","JER0"); //JERbias not relevant for data
-  if ( dodata_) {
-    dtree = new TChain("reducedTree");
-    dtree->Add(dname);
+  //load data files too
+  //use Run2012B names
+  primaryDatasets_["HTMHT"]=0;
+  primaryDatasets_["JetHT"]=0;
+  primaryDatasets_["SingleMu"]=0;
+  primaryDatasets_["MuHad"]=0;
+  //   primaryDatasets_["DoubleElectron"]=0;
+  //there are others, but this is what I have now
+  
+  for (map<TString, TChain*>::iterator idataset=primaryDatasets_.begin(); idataset!=primaryDatasets_.end(); ++idataset) {
+    if (idataset->first == "HTMHT") {
+      idataset->second = new TChain("reducedTree");
+      addDataToChain(idataset->second,"HT_Run2012A");
+      addDataToChain(idataset->second,"HTMHT_Run2012B");
+    }
+    else if (idataset->first == "JetHT") {
+      idataset->second = new TChain("reducedTree");
+      addDataToChain(idataset->second,"HT_Run2012A");
+      addDataToChain(idataset->second,"JetHT_Run2012B");
+    }
+    else if (idataset->first == "SingleMu") {
+      idataset->second = new TChain("reducedTree");
+      cout<<"WARNING -- don't have Run2012A for SingleMu for some reason"<<endl;
+      addDataToChain(idataset->second,"SingleMu_Run2012B");
+    }
+    else if (idataset->first == "MuHad") {
+      idataset->second = new TChain("reducedTree");
+      addDataToChain(idataset->second,"MuHad_Run2012A");
+      addDataToChain(idataset->second,"MuHad_Run2012B");
+    }
+//     else if (idataset->first == "DoubleElectron") {
+//       idataset->second = new TChain("reducedTree");
+//       addDataToChain(idataset->second,"DoubleElectron_Run2012B");
+//     }
+    else assert(0);
   }
+
+  dtree = primaryDatasets_["HTMHT"]; //set some default
 
 }
 
@@ -2990,7 +2607,7 @@ void draw2d(const TString var, const int nbins, const float low, const float hig
   }
   h2d->SetXTitle(xtitle);
   h2d->SetYTitle(ytitle);
-  h2d->SetLineColor(sampleColor_["TotalSM"]);
+  h2d->SetLineColor(getSampleColor("TotalSM"));
   double zmax = h2d->GetMaximum();
 
   if (dodata_) {
@@ -3116,14 +2733,14 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
   totalqcd = (varbins==0) ? new TH1D("totalqcd","",nbins,low,high) : new TH1D("totalqcd","",nbins,varbins);
   totalqcd->Sumw2();
 
-  totalsm->SetMarkerColor(sampleColor_["TotalSM"]);
-  totalsm->SetLineColor(sampleColor_["TotalSM"]);
+  totalsm->SetMarkerColor(getSampleColor("TotalSM"));
+  totalsm->SetLineColor(getSampleColor("TotalSM"));
   totalsm->SetLineWidth(2);
   totalsm->SetMarkerStyle(sampleMarkerStyle_["TotalSM"]);
   if (!drawMarkers_)  totalsm->SetMarkerSize(0); //no marker for this one
 
-  totalsmsusy->SetMarkerColor(sampleColor_["Total"]);
-  totalsmsusy->SetLineColor(sampleColor_["Total"]);
+  totalsmsusy->SetMarkerColor(getSampleColor("Total"));
+  totalsmsusy->SetLineColor(getSampleColor("Total"));
   totalsmsusy->SetLineWidth(2);
   totalsmsusy->SetMarkerStyle(sampleMarkerStyle_["Total"]);
   if (!drawMarkers_)  totalsmsusy->SetMarkerSize(0); //no marker for this one
@@ -3425,7 +3042,7 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
     }
 
     else
-      tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,"",0,"",-1,sampleScaleFactor_[samplename]).Data());
+      tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,extractExtraCut(samples_[isample]),0,"",-1,sampleScaleFactor_[samplename]).Data());
 
     //now the histo is filled
 
@@ -3468,19 +3085,19 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
     //now just do a bunch of histogram formatting
     if (!dostack_) {
       //set line color instead of fill color for this type of plot
-      histos_[samples_[isample]]->SetLineColor(sampleColor_[samples_[isample]]);
+      histos_[samples_[isample]]->SetLineColor(getSampleColor(samples_[isample]));
       histos_[samples_[isample]]->SetMarkerStyle(sampleMarkerStyle_[samples_[isample]]);
-      histos_[samples_[isample]]->SetMarkerColor(sampleColor_[samples_[isample]]);
+      histos_[samples_[isample]]->SetMarkerColor(getSampleColor(samples_[isample]));
       if (!drawMarkers_) histos_[samples_[isample]]->SetMarkerSize(0);
 
       //ad hoc additions
       histos_[samples_[isample]]->SetLineWidth(2);
     }
     else {
-      if ( isSampleSM(samples_[isample]))   histos_[samples_[isample]]->SetFillColor(sampleColor_[samples_[isample]]);
+      if ( isSampleSM(samples_[isample]))   histos_[samples_[isample]]->SetFillColor(getSampleColor(samples_[isample]));
       if ( !isSampleSM(samples_[isample]))  {
 	histos_[samples_[isample]]->SetLineWidth(2);
-	histos_[samples_[isample]]->SetLineColor(sampleColor_[samples_[isample]]);
+	histos_[samples_[isample]]->SetLineColor(getSampleColor(samples_[isample]));
 	histos_[samples_[isample]]->SetLineStyle(sampleLineStyle_[samples_[isample]]);
       }
       histos_[samples_[isample]]->SetMarkerSize(0);
@@ -3566,7 +3183,7 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
 
       //now draw
       cout<<"drawing "<<signals.at(isig)<<endl;
-      newtotal->SetLineColor(sampleColor_[signals.at(isig)]);
+      newtotal->SetLineColor(getSampleColor(signals.at(isig)));
       newtotal->SetLineStyle(sampleLineStyle_[signals.at(isig)]);
       newtotal->Draw("SAME HIST");
     }
@@ -3851,8 +3468,8 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
   totalsm =  (varbins==0) ? new TH1D("totalsm","",nbins,low,high) : new TH1D("totalsm","",nbins,varbins);
   totalsm->Sumw2();
 
-  totalsm->SetMarkerColor(sampleColor_["TotalSM"]);
-  totalsm->SetLineColor(sampleColor_["TotalSM"]);
+  totalsm->SetMarkerColor(getSampleColor("TotalSM"));
+  totalsm->SetLineColor(getSampleColor("TotalSM"));
   totalsm->SetLineWidth(2);
   totalsm->SetMarkerStyle(0);
   totalsm->SetYTitle(ytitle);
@@ -3908,10 +3525,10 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
     //   cout<<"content of bin 2: "<<histos_[hnameP]->GetBinContent(2)<<" / "<< histos_[hnameF]->GetBinContent(2)<<" = "<<histos_[hnameR]->GetBinContent(2)<<endl;
 
     //now format the histograms
-    if (!quiet_) cout<<"setting color to: "<<sampleColor_[samples_[isample]]<<endl;
-    histos_[hnameR]->SetLineColor(sampleColor_[samples_[isample]]);
+    if (!quiet_) cout<<"setting color to: "<<getSampleColor(samples_[isample])<<endl;
+    histos_[hnameR]->SetLineColor(getSampleColor(samples_[isample]));
     histos_[hnameR]->SetMarkerStyle(sampleMarkerStyle_[samples_[isample]]);
-    histos_[hnameR]->SetMarkerColor(sampleColor_[samples_[isample]]);
+    histos_[hnameR]->SetMarkerColor(getSampleColor(samples_[isample]));
     histos_[hnameR]->SetYTitle(ytitle);
     histos_[hnameR]->SetXTitle(xtitle);
     histos_[hnameR]->GetYaxis()->SetLabelSize(0.04); //make y label bigger
@@ -4836,4 +4453,79 @@ void cutflow(bool isTightSelection){
   }//end loop over cuts
   cout<<hhline<<endl;
   
+}
+
+void drawTrigEff(const TString & pd, const TCut & tag, const TCut & probe, const TString & var, int nbins, float low,float high) {
+  loadSamples();
+
+  //see ~/scratch0/analysis2/CMSSW_4_2_5/src/NtupleTools/BasicLoopCU/splitByTrigger.C
+  renewCanvas();
+
+  setDatasetToDraw(pd);
+
+  TCut thecuts = selection_.Data();
+
+  TH1D hnum("hnum","numerator",nbins,low,high);
+  TH1D hden("hden","denominator",nbins,low,high);
+  hnum.Sumw2();
+  hden.Sumw2();
+
+  dtree->Project("hnum",var,thecuts && probe && tag);
+  dtree->Project("hden",var,thecuts && tag);
+
+  if (effgraph != 0) delete effgraph;
+  effgraph = new TGraphAsymmErrors();
+  effgraph->BayesDivide(&hnum,&hden);
+
+  if (ratioLine!=0) delete ratioLine;
+  ratioLine = new TLine(low, 1, high, 1);
+  ratioLine->SetLineColor(2);
+
+  effgraph->Draw("AP");
+  effgraph->GetHistogram()->SetXTitle(var);
+  effgraph->GetHistogram()->SetMaximum(1.1);
+
+  if (doCustomPlotMax_)     effgraph->GetHistogram()->SetMaximum(customPlotMax_);
+  if (doCustomPlotMin_)     effgraph->GetHistogram()->SetMinimum(customPlotMin_);
+
+  ratioLine->Draw();
+  effgraph->Draw("p");
+
+  TString desc;
+  desc.Form("%s,%s",pd.Data(),tag.GetTitle());
+  if (text1!=0) delete text1;
+  if (text2!=0) delete text2;
+  if (text3!=0) delete text3;
+  text1 = new TLatex(5,23.08044,desc.Data());
+  text1->SetNDC();
+  text1->SetX(0.3);
+  text1->SetY(0.15);
+  text1->SetTextFont(42);
+  text1->SetTextSize(0.025);
+  text1->Draw();
+  text2 = new TLatex(5,23.08044,probe.GetTitle());
+  text2->SetNDC();
+  text2->SetX(0.3);
+  text2->SetY(0.2);
+  text2->SetTextFont(42);
+  text2->SetTextSize(0.025);
+  text2->Draw();
+
+  text3=new TLatex(5,23,selection_.Data());
+  text3->SetNDC();
+  text3->SetX(0.15);
+  text3->SetY(0.9);
+  text3->SetTextFont(42);
+  text3->SetTextSize(0.022);
+  text3->Draw();
+
+
+
+  TString filename;
+  filename.Form("trigEff_%s-%s_%s_%s",pd.Data(),jmt::fortranize(tag.GetTitle()).Data(),jmt::fortranize(probe.GetTitle()).Data(),var.Data());
+  if (savePlots_) {
+    thecanvas->SaveAs(filename+".eps");
+    thecanvas->SaveAs(filename+".png");
+    thecanvas->SaveAs(filename+".pdf");
+  }
 }
