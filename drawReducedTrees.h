@@ -42,7 +42,10 @@ TH2D* hdata2d=0;
 
 TString currentConfig_;
 TH2D* scanSMSngen=0;
-TH1D* referenceCrossSectionGluino=0;
+//TH1D* referenceCrossSectionGluino=0;
+CrossSectionTable * CrossSectionTable_gluino_=0;
+CrossSectionTable * CrossSectionTable_stop_=0;
+
 
 //default selection
 TString selection_ ="cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1";
@@ -1043,14 +1046,15 @@ void loadScanSMSngen(const TString& sampleOfInterest) {
 }
 
 void loadReferenceCrossSections() {
-  if (referenceCrossSectionGluino==0) {
-    cout<<"Loading reference cross section file"<<endl;
-    TFile fxs("referenceXSecs.root");
-    if (fxs.IsZombie()) {cout<<"Problem with cross section file!"<<endl; assert(0);}
-    TH1D* hxs = (TH1D*) fxs.Get("gluino");
-    gROOT->cd();
-    referenceCrossSectionGluino = (TH1D*) hxs->Clone("referenceCrossSectionGluino");
-    fxs.Close();
+
+  if ( CrossSectionTable_gluino_ == 0) {
+    cout<<"Loading reference cross section file (g~g~)"<<endl;
+    CrossSectionTable_gluino_ = new  CrossSectionTable("gluglu_decoupled7TeV.txt",true);
+  }
+
+  if (CrossSectionTable_stop_ == 0) {
+    cout<<"Loading reference cross section file (t~t~)"<<endl;
+    CrossSectionTable_stop_ = new  CrossSectionTable("stst_decoupled7TeV.txt",true);
   }
 
 }
@@ -1300,7 +1304,7 @@ void fillFlavorHistoryScaling() {
 }
 
 //try to bring some rationality to the options passed to getcutstring....
-enum sampleType {kData, kMC, kmSugraPoint, kmSugraPlane, kSMSPoint, kSMSPlane};
+enum sampleType {kData, kMC, kmSugraPoint, kmSugraPlane, kSMSPointGlGl, kSMSPointStopStop, kSMSPointSbottomSbottom, kSMSPlane};
 //for more rationality, should make a data struct (or class) to hold the options, so that fewer arguments need to be passed
 //TString getCutString(double lumiscale, TString extraWeight="", TString thisSelection="", TString extraSelection="", int pdfWeightIndex=0,TString pdfSet="CTEQ", bool isSusyScan=false, int susySubProcess=-1, const bool isData=false) {
 TString getCutString(sampleType type, TString extraWeight="", TString thisSelection="", TString extraSelection="", int pdfWeightIndex=0,TString pdfSet="CTEQ", int susySubProcess=-1,const float scalefactor=1) {
@@ -1322,7 +1326,7 @@ for legacy purposes I am keeping all of the weight and selection TStrings, altho
   //for now treat sms point just like smsplane
 
   if (type==kData)    lumiscale=1;
-  else if (type==kMC || type==kmSugraPoint || type==kmSugraPlane ||type==kSMSPoint) lumiscale=lumiScale_;
+  else if (type==kMC || type==kmSugraPoint || type==kmSugraPlane ||type==kSMSPointGlGl || type==kSMSPointStopStop) lumiscale=lumiScale_;
   else if (type==kSMSPlane) lumiscale=1;
   else {assert(0);}
 
@@ -1420,7 +1424,7 @@ for legacy purposes I am keeping all of the weight and selection TStrings, altho
       weightedcut += " && ";
       weightedcut +=extraSelection;
     }
-    if (type == kmSugraPoint || type==kSMSPoint) {
+    if (type == kmSugraPoint || type==kSMSPointGlGl|| type==kSMSPointStopStop) {
       weightedcut += " && m0==";
       weightedcut +=m0_;
       weightedcut += " && m12==";
@@ -1431,7 +1435,7 @@ for legacy purposes I am keeping all of the weight and selection TStrings, altho
   else if (extraSelection !="") {
     weightedcut += "*(";
     weightedcut +=extraSelection;
-    if (type == kmSugraPoint || type==kSMSPoint) {
+    if (type == kmSugraPoint || type==kSMSPointGlGl|| type==kSMSPointStopStop) {
       weightedcut += " && m0==";
       weightedcut +=m0_;
       weightedcut += " && m12==";
@@ -1469,14 +1473,16 @@ for legacy purposes I am keeping all of the weight and selection TStrings, altho
     sprintf(thisweight, "*((SUSY_process==%d)*scanCrossSection%s)",susySubProcess,susyCrossSectionVariation_.Data());
     weightedcut += thisweight;
   }
-  else if (type == kSMSPoint) {
+  else if (type == kSMSPointGlGl || type == kSMSPointStopStop ||type == kSMSPointSbottomSbottom ) {
     //need to weight with the standard sigma / N ; lumi factor is done above
     assert(scanSMSngen!=0);
     int bin=  scanSMSngen->FindBin(m0_,m12_);
     double ngen=scanSMSngen->GetBinContent(bin);
     loadReferenceCrossSections();
-    int xsbin=    referenceCrossSectionGluino->FindBin(m0_);
-    double xs = referenceCrossSectionGluino->GetBinContent(xsbin);
+    double xs =0;
+    if (type == kSMSPointGlGl) xs = CrossSectionTable_gluino_->getSMSCrossSection(m0_);
+    else if (type == kSMSPointStopStop) xs = CrossSectionTable_stop_->getSMSCrossSection(m0_);
+    else assert(0); //have not yet implemented sbottom
     char xsweight[100];
     sprintf(xsweight,"*(%f/%f)",xs,ngen);
     weightedcut += xsweight;
@@ -1603,7 +1609,7 @@ UInt_t getSampleColor(const TString & sample)  {
 }
 
 //add a sample to be plotted to the *end* of the list
-void addSample(const TString & newsample) {
+void addSample(const TString & newsample, const int color=-1) {
 
   //see if it is already there
   for (std::vector<TString>::iterator it = samples_.begin(); it!=samples_.end(); ++it) {
@@ -1616,6 +1622,7 @@ void addSample(const TString & newsample) {
 
   if ( samplesAll_.find(stripSamplename(newsample)) != samplesAll_.end() ) {
     samples_.push_back(newsample);
+    if (color>=0) sampleColor_[newsample]=color;
   }
   else {
     cout<<"Could not find sample with name "<<newsample<<endl;
@@ -2465,13 +2472,13 @@ sampleType getSampleType(const TString & sample , const TString & planeOrPoint="
   if (sample=="data") return kData;
   else if (sample.Contains("mSUGRA") && planeOrPoint=="point") return kmSugraPoint;
   else if (sample.Contains("mSUGRA") && planeOrPoint=="plane") return kmSugraPlane;
-  else if (sample.Contains("T1bbbb") && planeOrPoint=="point") return kSMSPoint;
+  else if (sample.Contains("T1bbbb") && planeOrPoint=="point") return kSMSPointGlGl;
   else if (sample.Contains("T1bbbb") && planeOrPoint=="plane") return kSMSPlane;
-  else if (sample.Contains("T1tttt") && planeOrPoint=="point") return kSMSPoint;
+  else if (sample.Contains("T1tttt") && planeOrPoint=="point") return kSMSPointGlGl;
   else if (sample.Contains("T1tttt") && planeOrPoint=="plane") return kSMSPlane;
-  else if (sample.Contains("T2bb") && planeOrPoint=="point") return kSMSPoint;
+  else if (sample.Contains("T2bb") && planeOrPoint=="point") return kSMSPointSbottomSbottom;
   else if (sample.Contains("T2bb") && planeOrPoint=="plane") return kSMSPlane;
-  else if (sample.Contains("T2tt") && planeOrPoint=="point") return kSMSPoint;
+  else if (sample.Contains("T2tt") && planeOrPoint=="point") return kSMSPointStopStop;
   else if (sample.Contains("T2tt") && planeOrPoint=="plane") return kSMSPlane;
 
   return kMC;
