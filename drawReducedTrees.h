@@ -858,6 +858,14 @@ bool splitTTbarForClosureTest_ = false;
 bool splitWJetsForClosureTest_ = false;
 bool splitSingleTopForClosureTest_ = false;
 
+//split the Zinvisible sample according to the neutrino acceptance categories
+bool splitZinvisible_ = false;
+bool vAccepMuon_ = false; //true(false) = muon(electron) definition of acceptance
+
+//this is only for plotting headers
+bool is2011Data_ = false;
+bool isPreliminary_ = (is2011Data_) ? false : true;
+
 //bool latexMode_=false;
 bool latexMode_=true;
 const TString pm = latexMode_ ? " \\pm " : " +/- ";
@@ -1120,11 +1128,16 @@ void drawPlotHeader(double xoffset = 0) {
   if(doRatio_) ypos=ypos+0.012;
   // i'm gonna leave this out for now
   if (text1 != 0 ) delete text1;
-  //text1 = new TLatex(3.570061,23.08044,"CMS"); //no more preliminary!
-  text1 = new TLatex(3.570061,23.08044,"CMS Preliminary"); 
+  if(isPreliminary_){
+    text1 = new TLatex(3.570061,23.08044,"CMS Preliminary"); 
+    text1->SetX(0.68 + xoffset ); //add 0.2 if you get rid of the "Preliminary"
+  }
+  else{ 
+    text1 = new TLatex(3.570061,23.08044,"CMS"); //no more preliminary!
+    text1->SetX(0.68 + xoffset +0.2); 
+  }
   text1->SetNDC();
   text1->SetTextAlign(13);
-  text1->SetX(0.68 + xoffset ); //add 0.2 if you get rid of the "Preliminary"
   text1->SetY(ypos+0.007);
   text1->SetTextFont(42);
   text1->SetTextSizePixels(24);
@@ -1133,9 +1146,12 @@ void drawPlotHeader(double xoffset = 0) {
 
   if (normalized_ == false) {
     TString astring;
-    //astring.Form("%.0f pb^{-1} at #sqrt{s} = 7 TeV",lumiScale_);
-    //astring.Form("%.1f fb^{-1} at #sqrt{s} = 7 TeV",lumiScale_/1000.);
-    astring.Form("L_{int} = %.2f fb^{-1}, #sqrt{s} = 8 TeV",lumiScale_/1000.);
+    if(is2011Data_){
+      //astring.Form("%.0f pb^{-1} at #sqrt{s} = 7 TeV",lumiScale_);
+      //astring.Form("%.1f fb^{-1} at #sqrt{s} = 7 TeV",lumiScale_/1000.);
+      astring.Form("L_{int} = %.2f fb^{-1}, #sqrt{s} = 7 TeV",lumiScale_/1000.);
+    }
+    else astring.Form("L_{int} = %.2f fb^{-1}, #sqrt{s} = 8 TeV",lumiScale_/1000.);
     if(lumiScale_>33. && lumiScale_<34.) astring.Form("L_{int} = %.2f fb^{-1}, #sqrt{s} = 7 TeV", 4982.91/1000.);//hardcoded, but don't know what else to do for this...
     if (text2 != 0 ) delete text2;
     text2 = new TLatex(3.570061,23.08044,astring);
@@ -1644,6 +1660,7 @@ void setSampleScaleFactor(const TString & sample, const float sf) {
 }
 
 void clearSamples() {
+  if (!quiet_) cout<<"cleared sample list!"<<endl;
   samples_.clear();
 }
 
@@ -1714,6 +1731,9 @@ void setColorScheme(const TString & name) {
     //sampleColor_["ZJets"] = kOrange-3;
     sampleColor_["Zinvisible"] = kOrange-3;
     //sampleColor_["Zinvisible"] = kRed-5;
+    sampleColor_["Zinvisible-2vAcc"] = kOrange-3;
+    sampleColor_["Zinvisible-1vAcc"] = kSpring+4;
+    sampleColor_["Zinvisible-0vAcc"] = kGray+3;
     sampleColor_["SingleTop-sChannel"] = kMagenta+1; //for special cases
     sampleColor_["SingleTop-tChannel"] = kMagenta+2; //for special cases
     sampleColor_["SingleTop-tWChannel"] = kMagenta+3; //for special cases
@@ -1801,6 +1821,9 @@ void setColorScheme(const TString & name) {
     sampleColor_["WJetsZ2"] = kOrange;
     sampleColor_["ZJets"] = 7;
     sampleColor_["Zinvisible"] = kOrange+7;
+    sampleColor_["Zinvisible-2vAcc"] = kOrange-3;
+    sampleColor_["Zinvisible-1vAcc"] = kSpring+4;
+    sampleColor_["Zinvisible-0vAcc"] = kGray+3;
     sampleColor_["SingleTop-sChannel"] = kMagenta+1; //for special cases
     sampleColor_["SingleTop-tChannel"] = kMagenta+2; //for special cases
     sampleColor_["SingleTop-tWChannel"] = kMagenta+3; //for special cases
@@ -1948,6 +1971,11 @@ void resetSamples(bool joinSingleTop=true) {
   }
   samples_.push_back("ZJets");
   samples_.push_back("VV");
+  if(splitZinvisible_){// "load" the decay modes separately
+    samples_.push_back("Zinvisible-2vAcc");
+    samples_.push_back("Zinvisible-1vAcc");
+    samples_.push_back("Zinvisible-0vAcc");
+  }
   samples_.push_back("Zinvisible");
   //samples_.push_back("HerwigQCDFlat");
   samples_.push_back("LM9");
@@ -2047,6 +2075,9 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   samplesAll_.insert("WJets-tauHad");
   samplesAll_.insert("ZJets");
   samplesAll_.insert("Zinvisible");
+  samplesAll_.insert("Zinvisible-2vAcc");
+  samplesAll_.insert("Zinvisible-1vAcc");
+  samplesAll_.insert("Zinvisible-0vAcc");    
   samplesAll_.insert("SingleTop");
   samplesAll_.insert("SingleTop-sChannel");
   samplesAll_.insert("SingleTop-tChannel");
@@ -2201,6 +2232,9 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   sampleLabel_["WJetsZ2"] = "W#rightarrowl#nu (Z2)";
   sampleLabel_["ZJets"] = "Z/#gamma*#rightarrowl^{+}l^{-}";
   sampleLabel_["Zinvisible"] = "Z#rightarrow#nu#nu";
+  sampleLabel_["Zinvisible-2vAcc"] = "Z#rightarrow#nu#nu - 2Acc";
+  sampleLabel_["Zinvisible-1vAcc"] = "Z#rightarrow#nu#nu - 1Acc";
+  sampleLabel_["Zinvisible-0vAcc"] = "Z#rightarrow#nu#nu - 0Acc";
   sampleLabel_["SingleTop-sChannel"] = "Single-Top (s)";
   sampleLabel_["SingleTop-tChannel"] = "Single-Top (t)";
   sampleLabel_["SingleTop-tWChannel"] = "Single-Top (tW)";
@@ -2295,6 +2329,9 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   sampleMarkerStyle_["WJetsZ2"] = kMultiply;
   sampleMarkerStyle_["ZJets"] = kFullTriangleUp;
   sampleMarkerStyle_["Zinvisible"] = kFullTriangleDown;
+  sampleMarkerStyle_["Zinvisible-2vAcc"] = kFullTriangleDown;
+  sampleMarkerStyle_["Zinvisible-1vAcc"] = kFullTriangleDown;
+  sampleMarkerStyle_["Zinvisible-0vAcc"] = kFullTriangleDown;
   sampleMarkerStyle_["HerwigQCDFlat"] = kFullCircle;
   sampleMarkerStyle_["VV"] = kOpenCross;
   sampleMarkerStyle_["SingleTop-sChannel"] = kOpenSquare;
@@ -2410,6 +2447,8 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
 	fname += "SingleTop-sandtCombined";
       else if((splitSingleTopForClosureTest_) && (*isample).Contains("SingleTop-tWCombined"))
 	fname += "SingleTop-tWCombined";
+      else if((splitZinvisible_) && (*isample).Contains("Zinvisible") )
+	fname += "Zinvisible";
       else
 	fname += *isample;
 
@@ -2431,7 +2470,15 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   primaryDatasets_["MuHad"]=0;
   //   primaryDatasets_["DoubleElectron"]=0;
   //there are others, but this is what I have now
-  
+  //2011 names  
+  primaryDatasets_["2011HT"]=0;
+  primaryDatasets_["2011SingleMu"]=0;
+  primaryDatasets_["2011SingleElectron"]=0;
+  primaryDatasets_["2011DoubleMu"]=0;
+  primaryDatasets_["2011DoubleElectron"]=0;
+
+
+
   for (map<TString, TChain*>::iterator idataset=primaryDatasets_.begin(); idataset!=primaryDatasets_.end(); ++idataset) {
     if (idataset->first == "HTMHT") {
       idataset->second = new TChain("reducedTree");
@@ -2457,6 +2504,27 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
 //       idataset->second = new TChain("reducedTree");
 //       addDataToChain(idataset->second,"DoubleElectron_Run2012B");
 //     }
+    else if (idataset->first == "2011HT") {
+      idataset->second = new TChain("reducedTree");
+      addDataToChain(idataset->second,"ht");
+    }
+    else if (idataset->first == "2011SingleMu") {
+      idataset->second = new TChain("reducedTree");
+      addDataToChain(idataset->second,"singlemu");
+    }
+    else if (idataset->first == "2011SingleElectron") {
+      idataset->second = new TChain("reducedTree");
+      addDataToChain(idataset->second,"singleelectron");
+    }
+    else if (idataset->first == "2011DoubleMu") {
+      idataset->second = new TChain("reducedTree");
+      addDataToChain(idataset->second,"doublemu");
+    }
+    else if (idataset->first == "2011DoubleElectron") {
+      idataset->second = new TChain("reducedTree");
+      addDataToChain(idataset->second,"doubleelectron");
+    }
+
     else assert(0);
   }
 
@@ -3047,12 +3115,40 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
       }
       else tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,"",0,"",-1,sampleScaleFactor_[samplename]).Data());    
     }
+    else if(samples_[isample].Contains("Zinvisible")){
+      if(splitZinvisible_){
+	if(samples_[isample].Contains("Zinvisible-2vAcc")){
+	  //both neutrinos are in pt,eta acceptance
+	  TString bothvAcc;
+	  if(vAccepMuon_) bothvAcc = "(zllMClepton1_pt>17 && TMath::Abs(zllMClepton1_eta)<2.4) && (zllMClepton2_pt>17 && TMath::Abs(zllMClepton2_eta)<2.4)";
+	  else bothvAcc = "(zllMClepton1_pt>17 && TMath::Abs(zllMClepton1_eta)<2.5 && !(TMath::Abs(zllMClepton1_eta) > 1.4442 && TMath::Abs(zllMClepton1_eta) < 1.566)) && (zllMClepton2_pt>17 && TMath::Abs(zllMClepton2_eta)<2.5 && !(TMath::Abs(zllMClepton2_eta) > 1.4442 && TMath::Abs(zllMClepton2_eta) < 1.566))";
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,bothvAcc,0,"",-1,sampleScaleFactor_[samplename]).Data());    
+	}
+	if(samples_[isample].Contains("Zinvisible-1vAcc")){
+	  //one neutrino is out of pt,eta acceptance
+	  TString onevAcc;
+	  if(vAccepMuon_) onevAcc = "!((zllMClepton1_pt>17 && TMath::Abs(zllMClepton1_eta)<2.4) && (zllMClepton2_pt>17 && TMath::Abs(zllMClepton1_eta)<2.4)) && !((zllMClepton1_pt<17 || TMath::Abs(zllMClepton1_eta)>2.4) && (zllMClepton2_pt<17 || TMath::Abs(zllMClepton1_eta)>2.4))";
+	  else onevAcc = "!((zllMClepton1_pt>17 && TMath::Abs(zllMClepton1_eta)<2.5 && !(TMath::Abs(zllMClepton1_eta) > 1.4442 && TMath::Abs(zllMClepton1_eta) < 1.566)) && (zllMClepton2_pt>17 && TMath::Abs(zllMClepton2_eta)<2.5 && !(TMath::Abs(zllMClepton2_eta) > 1.4442 && TMath::Abs(zllMClepton2_eta) < 1.566))) && !((zllMClepton1_pt<17 || !(TMath::Abs(zllMClepton1_eta)<2.5 && !(TMath::Abs(zllMClepton1_eta) > 1.4442 && TMath::Abs(zllMClepton1_eta) < 1.566))) && (zllMClepton2_pt<17 || !(TMath::Abs(zllMClepton2_eta)<2.5 && !(TMath::Abs(zllMClepton2_eta) > 1.4442 && TMath::Abs(zllMClepton2_eta) < 1.566))))";
+
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,onevAcc,0,"",-1,sampleScaleFactor_[samplename]).Data());    
+	}
+	if(samples_[isample].Contains("Zinvisible-0vAcc")){
+	  //both neutrinos are out of pt,eta acceptance
+	  TString novAcc;
+	  if(vAccepMuon_) novAcc = "(zllMClepton1_pt<17 || TMath::Abs(zllMClepton1_eta)>2.4) && (zllMClepton2_pt<17 || TMath::Abs(zllMClepton2_eta)>2.4)";
+	  else novAcc = "(zllMClepton1_pt<17 || !(TMath::Abs(zllMClepton1_eta)<2.5 && !(TMath::Abs(zllMClepton1_eta) > 1.4442 && TMath::Abs(zllMClepton1_eta) < 1.566))) && (zllMClepton2_pt<17 || !(TMath::Abs(zllMClepton2_eta)<2.5 && !(TMath::Abs(zllMClepton2_eta) > 1.4442 && TMath::Abs(zllMClepton2_eta) < 1.566)))";
+	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,novAcc,0,"",-1,sampleScaleFactor_[samplename]).Data());    
+	}
+      }
+      else tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,"",0,"",-1,sampleScaleFactor_[samplename]).Data());    
+    }
+
+
 
     else
       tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,extractExtraCut(samples_[isample]),0,"",-1,sampleScaleFactor_[samplename]).Data());
 
     //now the histo is filled
-
     if (renormalizeBins_) ytitle=renormBins(histos_[samples_[isample]],2 ); //manipulates the TH1D //FIXME hard-coded "2"
     if (addOverflow_)  addOverflowBin( histos_[samples_[isample]] ); //manipulates the TH1D
     histos_[samples_[isample]]->SetXTitle(xtitle);
@@ -3273,7 +3369,7 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
 
     }
   }
-  
+
   if (!quiet_ && dostack_ && dodata_ && nbins<11 && doRatio_) {//BEN - 11 is an arbitrary number that isn't too big so we don't print out too much stuff.
     for(int i=1; i<=nbins; i++){
       cout << "data: " << hdata->GetBinContent(i) << " +- " << hdata->GetBinError(i) << ", totalsm: " << totalsm->GetBinContent(i) << " +- " << totalsm->GetBinError(i) << ", ratio: " << ratio->GetBinContent(i) << " +- " << ratio->GetBinError(i) << endl;
