@@ -377,6 +377,8 @@ private:
   bool jetNearMET(unsigned int i, TString type, double nearmetphicut);
   bool jetNearBadECALCell(unsigned int i, TString type, double nearecalRcut, int nbadcellsthr, int badcellstatusthr);
 
+  bool passBadJetFilter();
+
   TString getOptPiece(const TString &key, const TString & opt);
 
   //JES on-the-fly stuff

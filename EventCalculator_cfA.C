@@ -1804,6 +1804,18 @@ bool EventCalculator::isGoodJet(const unsigned int ijet, const float pTthreshold
   return true;
 }
 
+bool EventCalculator::passBadJetFilter() {
+
+  //look for any jet with pT>30 and failing jet id
+
+  for (unsigned int i=0; i < jets_AK5PF_pt->size(); ++i) {
+    //bool argument turns jetID off. 99 is the eta max
+    if ( isGoodJet(i,30,99,false) && !isGoodJet(i,30,99,true) ) return false;
+  }
+
+  return true;
+}
+
 bool EventCalculator::isGoodJetMHT(unsigned int ijet) {
 
   if ( getJetPt(ijet) <30) return false;
@@ -6182,6 +6194,8 @@ Also the pdfWeightSum* histograms that are used for LM9.
       bool hcallaser = hcallaserfilter_decision == 1 ? true:false;
       bool eebadsc = eebadscfilter_decision == 1 ? true:false;
 
+      badjetFilter = passBadJetFilter();
+
       //Keith "RA2 claims eenoise overcleans in 2012; instead use jetID filter"
       //after looking at keith's code it is the new name for the old particle-based noise rejection
       PBNRcode = doPBNR();
@@ -6190,7 +6204,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
 	//	&& eenoiseFilter 
 	&& greedymuonFilter && hbhenoiseFilter && inconsistentmuonFilter 
 	&& ra2ecaltpFilter && scrapingvetoFilter && trackingfailureFilter
-	&& hcallaser && eebadsc && (PBNRcode>0); //last line are new for 2012
+	&& hcallaser && eebadsc && (PBNRcode>0) && badjetFilter; //last line are new for 2012
 
       buggyEvent = inEventList(vrun, vlumi, vevent);
       
