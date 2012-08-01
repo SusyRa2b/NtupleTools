@@ -136,7 +136,7 @@ int main(int argc, char* argv[])
   //Instantiate and run class
 //  Analyzer FullAnalyzer(filename,identifier,xsec,IntLum,outfilename,numentries);
 //  Analyzer FullAnalyzer("/mnt/hadoop/UCSBntup/HT_Run2011B-PromptReco-v1_AOD_UCSB1095_v55s/cfA_HT_Run2011B-PromptReco-v1_AOD_UCSB1095_v55s_f1_1_cql.root",0,0.005,4900.,"output",100);
-  EventCalculator ec(fileArg,filenames, EventCalculator::kPF2PAT, EventCalculator::kPFMET);
+  EventCalculator ec(fileArg,filenames, EventCalculator::kPF2PAT, EventCalculator::kPFMETTypeI);
   ec.setBTaggerType(EventCalculator::kCSVM);
   if (options=="btageff") {
     ec.plotBTagEffMC();
