@@ -5288,7 +5288,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
     //for 3dPU reweighting 
     //    else DataDist2011.push_back(pu::TrueDist2011_f[i]);
     if (sampleName_.Contains("PU_S7"))  MCDist.push_back(pu::Summer2012[i]);
-    else if (sampleName_.Contains("PU_S6")) MCDist.push_back(pu::Summer2012[i]); //this should really be something else
+    else if (sampleName_.Contains("PU_S6")) MCDist.push_back(pu::Fall2011[i]); //is this right? dubious
     else MCDist.push_back(pu::Summer2012[i]); //just a safety valve
   }
 
