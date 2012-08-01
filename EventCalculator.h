@@ -125,7 +125,11 @@ public:
 
   bool isGoodMuon(const unsigned int imuon, const bool disableRelIso=false, const float ptthreshold=10);
   bool isGoodRecoMuon(const unsigned int imuon, const bool disableRelIso=false, const float ptthreshold=10);
+  bool isInAccRecoMuon(const unsigned int imuon, const float ptthreshold);
   bool isGoodElectron(const unsigned int iele, const bool disableRelIso=false, const float ptthreshold=10);
+  bool isTightElectron(const unsigned int iele, const float isothreshold, const float ptthreshold=10);
+  bool isInAccRecoElectron(const unsigned int iele, const float ptthreshold);
+  bool isIDRecoElectron(const unsigned int iele, const float ptthreshold);
   unsigned int countEle(const float ptthreshold=10) ;
   bool isCleanMuon(const unsigned int imuon, const float ptthreshold=10);
   unsigned int countMu(const float ptthreshold=10);
@@ -309,6 +313,10 @@ public:
   float eleEtaOfN(unsigned int n, const float ptthreshold=10);
   float elePhiOfN(unsigned int n, const float ptthreshold=10);
   int eleChargeOfN(unsigned int n, const float ptthreshold=10);
+  float eleHOverEOfN(unsigned int n, const float ptthreshold=10);
+  float eleDphiOfN(unsigned int n, const float ptthreshold=10);
+  float eleDetaOfN(unsigned int n, const float ptthreshold=10);
+  float eleSigmaIetaIetaOfN(unsigned int n, const float ptthreshold=10);
 
   float muonPtOfN(unsigned int n, const float ptthreshold=10);
   float muonEtaOfN(unsigned int n, const float ptthreshold=10);
@@ -331,6 +339,9 @@ public:
   float getRelIsoForIsolationStudyEle();
   float getRelIsoForIsolationStudyMuon();
 
+  std::vector<bool> passTagAndProbeMuon(std::vector<double>& probes_mll);
+  std::vector<bool> passTagAndProbeElectron(std::vector<double>& probes_mll, TString tagMode="nominal", bool relIDmode=false);
+
   float getMT_Wlep(const float pttreshold=10);
   void calcTopDecayVariables(float & wmass, float & tmass, float & wcoshel, float & tcoshel);
   void calcCosHel(unsigned int j1i, unsigned int j2i, unsigned int j3i, float & wcoshel,float &tcoshel);
@@ -349,8 +360,8 @@ public:
   
   int WDecayType(const int Wparent,int& Wdaughter);
   int findW(int& W, int& Wdaughter, int parent, bool fromtop);
-  int muonMatch(const int trueMuon, const float ptthreshold=10, bool mustMatchToGood=false);
-  int electronMatch(const int trueElectron, const float ptthreshold=10, bool mustMatchToGood=false);
+  int muonMatch(const int trueMuon, const float ptthreshold=10, bool mustMatchToGood=false, bool matchtoRECO=false);
+  int electronMatch(const int trueElectron, const float ptthreshold=10, bool mustMatchToGood=false, bool matchtoRECO=false);
   int tauMatch(const int trueTau);
   int daughterMatch(const int Wdaughter, const int WdecayType);
   int getTTbarDecayType(int& W1decayType, int& W2decayType, int& W1, int& W1daughter, int& W2, int& W2daughter, bool passW2info);
@@ -422,7 +433,9 @@ private:
   std::vector<jethelper2_s> * myJetsPFhelper;
 
   std::vector<electron1_s> * myElectronsPF;
+  std::vector<electron_s> * myElectronsRECO;
   std::vector<electronhelper1_s> * myElectronsPFhelper;
+  std::vector<electronhelper_s> * myElectronsRECOhelper;
   std::vector<muon1_s> * myMuonsPF;
   std::vector<muon_s> * myMuonsRECO;
   std::vector<muonhelper1_s> * myMuonsPFhelper;

@@ -41,7 +41,9 @@ EventCalculator::EventCalculator(const TString & sampleName, jetType theJetType,
   myJetsPF( &jet2),    //selectedPatJetsPF
   myJetsPFhelper( &jethelper2),
   myElectronsPF( &electron1),
+  myElectronsRECO( &electron),
   myElectronsPFhelper( &electronhelper1),
+  myElectronsRECOhelper( &electronhelper),
   myMuonsPF(&muon1),
   myMuonsRECO(&muon),
   myMuonsPFhelper(&muonhelper1),
@@ -470,6 +472,13 @@ bool EventCalculator::isGoodRecoMuon(const unsigned int imuon, const bool disabl
   return false;
 }
 
+bool EventCalculator::isInAccRecoMuon(const unsigned int imuon, const float ptthreshold) {
+  if (myMuonsRECO->at(imuon).pt >= ptthreshold && fabs(myMuonsRECO->at(imuon).eta)<2.4) 
+    return true;
+  return false;
+}
+
+
 bool EventCalculator::isCleanMuon(const unsigned int imuon, const float ptthreshold) {
 
   if (!isGoodMuon(imuon,false,ptthreshold)) return false;
@@ -510,6 +519,73 @@ bool EventCalculator::isGoodElectron(const unsigned int iele, const bool disable
   return false;
 }
 
+//try a tighter tag electron definition to try to get rid of fakes?
+bool EventCalculator::isTightElectron(const unsigned int iele, const float isothreshold, const float ptthreshold) {
+  
+  if (myElectronsPF->at(iele).pt >= ptthreshold
+      && fabs(myElectronsPF->at(iele).superCluster_eta) < 2.5 
+      && !(fabs(myElectronsPF->at(iele).superCluster_eta) > 1.4442 
+	   && fabs(myElectronsPF->at(iele).superCluster_eta) < 1.566)
+      && myElectronsPF->at(iele).gsfTrack_trackerExpectedHitsInner_numberOfLostHits <= 1
+      //&& fabs(myElectronsPF->at(iele).dB) < 0.02
+      && fabs(myElectronsPFhelper->at(iele).dxywrtBeamSpot) < 0.02
+      && fabs(myElectronsPF->at(iele).vz - myVertex->at(0).z ) <1
+      
+      //add the other id stuff (based on medium point of: https://twiki.cern.ch/twiki/bin/view/CMS/EgammaCutBasedIdentification)
+      && ((fabs(myElectronsPF->at(iele).superCluster_eta) < 1.479 //barrel ID
+	   && fabs(myElectronsPF->at(iele).deltaEtaSuperClusterTrackAtVtx)<0.004
+	   && fabs(myElectronsPF->at(iele).deltaPhiSuperClusterTrackAtVtx)<0.06
+	   && myElectronsPF->at(iele).hadronicOverEm<0.12
+	   && myElectronsPF->at(iele).sigmaIetaIeta<0.01
+	   )
+	  ||
+	  (fabs(myElectronsPF->at(iele).superCluster_eta) > 1.479 //endcap ID
+	   && fabs(myElectronsPF->at(iele).deltaEtaSuperClusterTrackAtVtx)<0.007
+	   && fabs(myElectronsPF->at(iele).deltaPhiSuperClusterTrackAtVtx)<0.03
+	   && myElectronsPF->at(iele).hadronicOverEm<0.10
+	   && myElectronsPF->at(iele).sigmaIetaIeta<0.03
+	   )
+	  )
+      
+      && ((myElectronsPF->at(iele).chargedHadronIso 
+	   + myElectronsPF->at(iele).photonIso 
+	   + myElectronsPF->at(iele).neutralHadronIso)/myElectronsPF->at(iele).pt <isothreshold)
+      ) {
+    return true;
+  }
+  
+  return false;
+}
+
+
+bool EventCalculator::isInAccRecoElectron(const unsigned int iele, const float ptthreshold) {
+  
+  if (myElectronsRECO->at(iele).pt >= ptthreshold
+      && fabs(myElectronsRECO->at(iele).superCluster_eta) < 2.5 
+      && !(fabs(myElectronsRECO->at(iele).superCluster_eta) > 1.4442 
+	   && fabs(myElectronsRECO->at(iele).superCluster_eta) < 1.566)
+      ){
+    return true;
+  }
+  
+  return false;
+}
+
+
+bool EventCalculator::isIDRecoElectron(const unsigned int iele, const float ptthreshold) {
+  
+  if (isInAccRecoElectron(iele,ptthreshold)
+      && myElectronsRECO->at(iele).gsfTrack_trackerExpectedHitsInner_numberOfLostHits <= 1
+      //&& fabs(myElectronsRECO->at(iele).dB) < 0.02
+      && fabs(myElectronsRECOhelper->at(iele).dxywrtBeamSpot) < 0.02
+      && fabs(myElectronsRECO->at(iele).vz - myVertex->at(0).z ) <1
+      
+      ){
+    return true;
+  }
+  
+  return false;
+}
 
 unsigned int EventCalculator::countEle(const float ptthreshold) {
 
@@ -3070,6 +3146,55 @@ int EventCalculator::eleChargeOfN(unsigned int n, const float ptthreshold) {
   return 0;
 }
 
+float EventCalculator::eleHOverEOfN(unsigned int n, const float ptthreshold) {
+
+  unsigned int ngood=0;
+  for (unsigned int i=0; i < myElectronsPF->size(); i++) {
+    if(isGoodElectron(i,false,ptthreshold)){
+      ngood++;
+      if (ngood==n) return myElectronsPF->at(i).hadronicOverEm;
+
+    }
+  }
+  return 0;
+}
+float EventCalculator::eleDphiOfN(unsigned int n, const float ptthreshold) {
+
+  unsigned int ngood=0;
+  for (unsigned int i=0; i < myElectronsPF->size(); i++) {
+    if(isGoodElectron(i,false,ptthreshold)){
+      ngood++;
+      if (ngood==n) return myElectronsPF->at(i).deltaPhiSuperClusterTrackAtVtx;
+
+    }
+  }
+  return 0;
+}
+float EventCalculator::eleDetaOfN(unsigned int n, const float ptthreshold) {
+
+  unsigned int ngood=0;
+  for (unsigned int i=0; i < myElectronsPF->size(); i++) {
+    if(isGoodElectron(i,false,ptthreshold)){
+      ngood++;
+      if (ngood==n) return myElectronsPF->at(i).deltaEtaSuperClusterTrackAtVtx;
+
+    }
+  }
+  return 0;
+}
+float EventCalculator::eleSigmaIetaIetaOfN(unsigned int n, const float ptthreshold) {
+
+  unsigned int ngood=0;
+  for (unsigned int i=0; i < myElectronsPF->size(); i++) {
+    if(isGoodElectron(i,false,ptthreshold)){
+      ngood++;
+      if (ngood==n) return myElectronsPF->at(i).sigmaIetaIeta;
+
+    }
+  }
+  return 0;
+}
+
 float EventCalculator::muonPtOfN(unsigned int n, const float ptthreshold) {
 
   unsigned int ngood=0;
@@ -3272,6 +3397,168 @@ float EventCalculator::recoMuonMinDeltaPhiJetOfN(unsigned int n, const float ptt
   }
   
   return mindp;
+}
+
+
+//return the pass-fail result of all probes
+std::vector<bool> EventCalculator::passTagAndProbeMuon(std::vector<double>& probes_mll){
+
+  std::vector<bool> probes_result;
+  probes_result.clear();
+  probes_mll.clear();
+  double m_ll = -99;
+
+  //loop through all tags first
+  for (unsigned int i=0; i < myMuonsPF->size(); i++) {
+    if (isCleanMuon(i,20)) {
+	
+
+      //std::cout << "tag muon: pt = " << myMuonsPF->at(i).pt << ", eta = " << myMuonsPF->at(i).eta << ", phi = " << myMuonsPF->at(i).phi << std::endl;
+
+      //now find all probe candidates
+      for (unsigned int j=0; j < myMuonsRECO->size(); j++) {
+	  
+	//first make sure it satisfies the pT, eta conditions 
+	double recomuonpt = myMuonsRECO->at(j).pt;
+	double recomuoneta = myMuonsRECO->at(j).eta;
+	double recomuonphi = myMuonsRECO->at(j).phi;
+
+	if( isInAccRecoMuon(j,17) ){
+
+	  //now make sure it forms a tag-probe pair (charge and mass)
+	  //check opposite charge
+	  if(TMath::Nint(myMuonsPF->at(i).charge) != TMath::Nint(myMuonsRECO->at(j).charge) ){
+
+	    //check invariant mass
+	    double z_en = myMuonsPF->at(i).energy + myMuonsRECO->at(j).energy;
+	    double z_px = myMuonsPF->at(i).pt*cos( myMuonsPF->at(i).phi) + recomuonpt*cos( recomuonphi);
+	    double z_py = myMuonsPF->at(i).pt*sin( myMuonsPF->at(i).phi) + recomuonpt*sin( recomuonphi);
+	    double z_pz = myMuonsPF->at(i).pt*sinh(myMuonsPF->at(i).eta) + recomuonpt*sinh(recomuoneta);
+	    m_ll = sqrt(z_en*z_en - z_px*z_px - z_py*z_py - z_pz*z_pz);
+	  
+	    if( m_ll>60 && m_ll<120 ){//hardcode
+
+	      //std::cout << "probe muon: pt = " << recomuonpt << ", eta = " << recomuoneta << ", phi = " << recomuonphi << std::endl;
+	    
+	      probes_mll.push_back(m_ll);
+
+	      //ok now check if the probe passes the selection condition
+	      bool passSelection = false;
+	      for (unsigned int k=0; k < myMuonsPF->size(); k++) {
+		if(k==i) continue;
+
+		double dR = jmt::deltaR( recomuoneta, recomuonphi,myMuonsPF->at(k).eta, myMuonsPF->at(k).phi);
+
+		//std::cout << "\t match muon: pt = " << myMuonsPF->at(k).pt << ", eta = " << myMuonsPF->at(k).eta << ", phi = " << myMuonsPF->at(k).phi 
+		//	  << ", dR = " << dR << std::endl;		
+
+		if(dR<0.3 && isCleanMuon(k,17)){
+		  passSelection = true;
+		  break;
+		}	     
+	      }
+	      if(passSelection) {probes_result.push_back(true);
+		//cout << "TRUE" << endl;
+	      }
+	      else probes_result.push_back(false);	    
+
+	    }//mll cut	  
+	  }//charge cut
+	}//pt,eta cut
+	
+      }
+    }
+  }
+
+  //for(uint k = 0; k<probes_result.size();++k) cout << "infunction" << k << " " << probes_result.at(k) << endl;
+
+  return probes_result;  
+}
+
+//return the pass-fail result of all probes
+std::vector<bool> EventCalculator::passTagAndProbeElectron(std::vector<double>& probes_mll,TString tagMode, bool relIDmode){
+
+  assert(tagMode=="nominal" || tagMode=="tight" || tagMode=="verytight");
+
+  std::vector<bool> probes_result;
+  probes_result.clear();
+  probes_mll.clear();
+  double m_ll = -99;
+
+  //loop through all tags first
+  for (unsigned int i=0; i < myElectronsPF->size(); i++) {
+
+
+    bool passTag=false;
+    if(tagMode == "nominal") passTag = isGoodElectron(i,false,20);
+    else if(tagMode == "tight") passTag = isTightElectron(i,0.15,20);
+    else if(tagMode == "verytight") passTag = isTightElectron(i,0.10,20);
+
+
+    if (passTag) {
+	
+      //now find all probe candidates
+      for (unsigned int j=0; j < myElectronsRECO->size(); j++) {
+	  
+	//first make sure it satisfies the pT, eta conditions 
+	double recoelectronpt = myElectronsRECO->at(j).pt;
+	double recoelectroneta = myElectronsRECO->at(j).superCluster_eta;
+	double recoelectronphi = myElectronsRECO->at(j).phi;
+
+	//this is to enable the study the ISO efficiency relative to the ID'd electrons
+	bool passprobedenom;
+	if(relIDmode) passprobedenom = isIDRecoElectron(j,17);
+	else passprobedenom = isInAccRecoElectron(j,17);
+
+	if( passprobedenom ){
+	  
+	  //now make sure it forms a tag-probe pair (charge and mass)
+	  //check opposite charge
+	  if(TMath::Nint(myElectronsPF->at(i).charge) != TMath::Nint(myElectronsRECO->at(j).charge) ){
+	    
+	    //check invariant mass
+	    double z_en = myElectronsPF->at(i).energy + myElectronsRECO->at(j).energy;
+	    double z_px = myElectronsPF->at(i).pt*cos( myElectronsPF->at(i).phi) + recoelectronpt*cos( recoelectronphi);
+	    double z_py = myElectronsPF->at(i).pt*sin( myElectronsPF->at(i).phi) + recoelectronpt*sin( recoelectronphi);
+	    double z_pz = myElectronsPF->at(i).pt*sinh(myElectronsPF->at(i).eta) + recoelectronpt*sinh(recoelectroneta);
+	    m_ll = sqrt(z_en*z_en - z_px*z_px - z_py*z_py - z_pz*z_pz);
+	  
+	    //loosen it to 50-130 to study shape better
+	    //if( m_ll>60 && m_ll<120 ){//hardcode
+	    if( m_ll>50 && m_ll<130 ){//hardcode
+
+	      //std::cout << "probe electron: pt = " << recoelectronpt << ", eta = " << recoelectroneta << ", phi = " << recoelectronphi << ", mll = " << m_ll << std::endl;
+	    
+	      probes_mll.push_back(m_ll);
+
+	      //ok now check if the probe passes the selection condition
+	      bool passSelection = false;
+	      for (unsigned int k=0; k < myElectronsPF->size(); k++) {	    
+
+		if(k==i) continue;
+		//cout << "eta = " << myElectronsPF->at(k).eta << ", supercl eta = " << myElectronsPF->at(k).superCluster_eta << endl;
+		double dR = jmt::deltaR( recoelectroneta, recoelectronphi,myElectronsPF->at(k).eta, myElectronsPF->at(k).phi);
+
+		//std::cout << "\t match electron: pt = " << myElectronsPF->at(k).pt << ", eta = " << myElectronsPF->at(k).eta << ", phi = " << myElectronsPF->at(k).phi 
+		//		  << ", dR = " << dR << std::endl;		
+
+		if(dR <0.3 && isGoodElectron(k,false,17)){
+		  passSelection = true;
+		  break;
+		}	     
+	      }
+	      if(passSelection) probes_result.push_back(true);
+	      else probes_result.push_back(false);	    
+
+	    }//mll cut	  
+	  }//charge cut
+	}//pt,eta cut
+	
+      }
+    }
+  }
+
+  return probes_result;  
 }
 
 
@@ -5816,6 +6103,9 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   float taupt1, taueta1;
   float eleRelIso,muonRelIso;
 
+  //float elehovere1, eledphi1, eledeta1, elesigmaietaieta1;
+  //float elehovere2, eledphi2, eledeta2, elesigmaietaieta2;
+
   float recomuonpt1, recomuonphi1, recomuoneta1;
   float recomuonpt2, recomuonphi2, recomuoneta2;
   float recomuoniso1, recomuoniso2;
@@ -5890,7 +6180,7 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   //bool passZmumuCand, passZeeCand;
   //bool passZmumuCandLoose, passZeeCandLoose;
   //float zmumuMass, zeeMass,zmumuMET, zeeMET, zmumuMETphi, zmumuMinDeltaPhiN, zeeMETphi, zeeMinDeltaPhiN;
-  //int zDecayMode, zllNLeptonsRecoMatched;
+  //int zDecayMode, zllNLeptonsRecoMatched, zllNLeptonsRecoNoCutMatched;
   //bool passGenZllInAcc;
   //float zllMCMass, zllMCHybridMET, zllMCHybridMinDeltaPhiN;
   //float zllMClepton1_pt,zllMClepton2_pt;
@@ -5900,6 +6190,19 @@ void EventCalculator::reducedTree(TString outputpath,  itreestream& stream) {
   //float vlb_CSVout1, vlb_CSVout2, vlb_CSVout3; //CSV tagger output for the lead three vlb-tagged jets
   //float vlb_TCHEout1, vlb_TCHEout2, vlb_TCHEout3; //TCHE tagger output for the lead three vlb-tagged jets
   //float csvlb_CSVout1, csvlb_CSVout2, csvlb_CSVout3; //CSV tagger output for the lead three csvl-tagged jets
+  //float muprobe1_mass, muprobe2_mass, muprobe3_mass;
+  //bool muprobe1_result, muprobe2_result, muprobe3_result;
+  //float eleprobe1_mass, eleprobe2_mass, eleprobe3_mass;
+  //bool eleprobe1_result, eleprobe2_result, eleprobe3_result;
+  //
+  //float eleTightprobe1_mass, eleTightprobe2_mass, eleTightprobe3_mass;
+  //bool eleTightprobe1_result, eleTightprobe2_result, eleTightprobe3_result;
+  //
+  //float eleVeryTightprobe1_mass, eleVeryTightprobe2_mass, eleVeryTightprobe3_mass;
+  //bool eleVeryTightprobe1_result, eleVeryTightprobe2_result, eleVeryTightprobe3_result;
+  //
+  //float eleprobeID1_mass, eleprobeID2_mass, eleprobeID3_mass;
+  //bool eleprobeID1_result, eleprobeID2_result, eleprobeID3_result;
 
   std::vector<int> vrun,vlumi,vevent;
   loadEventList(vrun, vlumi, vevent);
@@ -6445,6 +6748,12 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("elecharge1",&elecharge1,"elecharge1/I");
   reducedTree.Branch("elephi1",&elephi1,"elephi1/F");
   reducedTree.Branch("eleeta1",&eleeta1,"eleeta1/F");
+
+  //reducedTree.Branch("elehovere1",&elehovere1,"elehovere1/F");
+  //reducedTree.Branch("eledphi1",&eledphi1,"eledphi1/F");
+  //reducedTree.Branch("eledeta1",&eledeta1,"eledeta1/F");
+  //reducedTree.Branch("elesigmaietaieta1",&elesigmaietaieta1,"elesigmaietaieta1/F");
+
   reducedTree.Branch("muonpt1",&muonpt1,"muonpt1/F");
   reducedTree.Branch("muoncharge1",&muoncharge1,"muoncharge1/I");
   reducedTree.Branch("muonphi1",&muonphi1,"muonphi1/F");
@@ -6462,6 +6771,11 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("muoncharge2",&muoncharge2,"muoncharge2/I");
   reducedTree.Branch("muonphi2",&muonphi2,"muonphi2/F");
   reducedTree.Branch("muoneta2",&muoneta2,"muoneta2/F");
+
+  //reducedTree.Branch("elehovere2",&elehovere2,"elehovere2/F");
+  //reducedTree.Branch("eledphi2",&eledphi2,"eledphi2/F");
+  //reducedTree.Branch("eledeta2",&eledeta2,"eledeta2/F");
+  //reducedTree.Branch("elesigmaietaieta2",&elesigmaietaieta2,"elesigmaietaieta2/F");
 
   reducedTree.Branch("taupt1",&taupt1,"taupt1/F");
   reducedTree.Branch("taueta1",&taueta1,"taueta1/F");
@@ -6548,6 +6862,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
   //reducedTree.Branch("zDecayMode",&zDecayMode,"zDecayMode/I");
   //reducedTree.Branch("passGenZllInAcc", &passGenZllInAcc, "passGenZllInAcc/O");
   //reducedTree.Branch("zllNLeptonsRecoMatched",&zllNLeptonsRecoMatched,"zllNLeptonsRecoMatched/I");
+  //reducedTree.Branch("zllNLeptonsRecoNoCutMatched",&zllNLeptonsRecoNoCutMatched,"zllNLeptonsRecoNoCutMatched/I");
   //
   //reducedTree.Branch("zllMClepton1_pt",&zllMClepton1_pt,"zllMClepton1_pt/F");
   //reducedTree.Branch("zllMClepton1_eta",&zllMClepton1_eta,"zllMClepton1_eta/F");
@@ -6569,6 +6884,39 @@ Also the pdfWeightSum* histograms that are used for LM9.
   //reducedTree.Branch("csvlb_CSVout1",&csvlb_CSVout1,"csvlb_CSVout1/F");
   //reducedTree.Branch("csvlb_CSVout2",&csvlb_CSVout2,"csvlb_CSVout2/F");
   //reducedTree.Branch("csvlb_CSVout3",&csvlb_CSVout3,"csvlb_CSVout3/F");
+  //reducedTree.Branch("muprobe1_mass",&muprobe1_mass,"muprobe1_mass/F");
+  //reducedTree.Branch("muprobe2_mass",&muprobe2_mass,"muprobe2_mass/F");
+  //reducedTree.Branch("muprobe3_mass",&muprobe3_mass,"muprobe3_mass/F");
+  //reducedTree.Branch("muprobe1_result", &muprobe1_result, "muprobe1_result/O");
+  //reducedTree.Branch("muprobe2_result", &muprobe2_result, "muprobe2_result/O");
+  //reducedTree.Branch("muprobe3_result", &muprobe3_result, "muprobe3_result/O");
+  //reducedTree.Branch("eleprobe1_mass",&eleprobe1_mass,"eleprobe1_mass/F");
+  //reducedTree.Branch("eleprobe2_mass",&eleprobe2_mass,"eleprobe2_mass/F");
+  //reducedTree.Branch("eleprobe3_mass",&eleprobe3_mass,"eleprobe3_mass/F");
+  //reducedTree.Branch("eleprobe1_result", &eleprobe1_result, "eleprobe1_result/O");
+  //reducedTree.Branch("eleprobe2_result", &eleprobe2_result, "eleprobe2_result/O");
+  //reducedTree.Branch("eleprobe3_result", &eleprobe3_result, "eleprobe3_result/O");
+  //
+  //reducedTree.Branch("eleTightprobe1_mass",&eleTightprobe1_mass,"eleTightprobe1_mass/F");
+  //reducedTree.Branch("eleTightprobe2_mass",&eleTightprobe2_mass,"eleTightprobe2_mass/F");
+  //reducedTree.Branch("eleTightprobe3_mass",&eleTightprobe3_mass,"eleTightprobe3_mass/F");
+  //reducedTree.Branch("eleTightprobe1_result", &eleTightprobe1_result, "eleTightprobe1_result/O");
+  //reducedTree.Branch("eleTightprobe2_result", &eleTightprobe2_result, "eleTightprobe2_result/O");
+  //reducedTree.Branch("eleTightprobe3_result", &eleTightprobe3_result, "eleTightprobe3_result/O");
+  //
+  //reducedTree.Branch("eleVeryTightprobe1_mass",&eleVeryTightprobe1_mass,"eleVeryTightprobe1_mass/F");
+  //reducedTree.Branch("eleVeryTightprobe2_mass",&eleVeryTightprobe2_mass,"eleVeryTightprobe2_mass/F");
+  //reducedTree.Branch("eleVeryTightprobe3_mass",&eleVeryTightprobe3_mass,"eleVeryTightprobe3_mass/F");
+  //reducedTree.Branch("eleVeryTightprobe1_result", &eleVeryTightprobe1_result, "eleVeryTightprobe1_result/O");
+  //reducedTree.Branch("eleVeryTightprobe2_result", &eleVeryTightprobe2_result, "eleVeryTightprobe2_result/O");
+  //reducedTree.Branch("eleVeryTightprobe3_result", &eleVeryTightprobe3_result, "eleVeryTightprobe3_result/O");
+  //
+  //reducedTree.Branch("eleprobeID1_mass",&eleprobeID1_mass,"eleprobeID1_mass/F");
+  //reducedTree.Branch("eleprobeID2_mass",&eleprobeID2_mass,"eleprobeID2_mass/F");
+  //reducedTree.Branch("eleprobeID3_mass",&eleprobeID3_mass,"eleprobeID3_mass/F");
+  //reducedTree.Branch("eleprobeID1_result", &eleprobeID1_result, "eleprobeID1_result/O");
+  //reducedTree.Branch("eleprobeID2_result", &eleprobeID2_result, "eleprobeID2_result/O");
+  //reducedTree.Branch("eleprobeID3_result", &eleprobeID3_result, "eleprobeID3_result/O");
 
   //jmt -- note that .size() returns an int. Will we ever hit the 32-bit limit with this datatype?
   int nevents = stream.size();
@@ -6707,6 +7055,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
     ST = getST(); //ST is always bigger than HT
     MET=getMET();
     if ( passCut("cutLumiMask") && (passCut("cutTrigger") || passCut("cutUtilityTrigger")) && ((ST>=150 && MET>=40) || passSkimDiySmear)) {
+    //if ( passCut("cutLumiMask") && (ST>=300) ) {//no explicit trigger requirement for HT dataset! (to get more stats in T&P study)
       cutHT = passCut("cutHT"); //should always be true
 
       weight = getWeight(nevents);
@@ -7112,6 +7461,11 @@ Also the pdfWeightSum* histograms that are used for LM9.
       muonphotoniso1 = muonPhotonIsoOfN(1,5);
       muonneutralhadiso1 = muonNeutralHadIsoOfN(1,5);
 
+      //elehovere1 = eleHOverEOfN(1,5);
+      //eledphi1 = eleDphiOfN(1,5);
+      //eledeta1 = eleDetaOfN(1,5);
+      //elesigmaietaieta1 = eleSigmaIetaIetaOfN(1,5);      
+
       elecharge1 = eleChargeOfN(1,5);
       muoncharge1 = muonChargeOfN(1,5);
 
@@ -7123,6 +7477,12 @@ Also the pdfWeightSum* histograms that are used for LM9.
       muoneta2 = muonEtaOfN(2,5);
       elecharge2 = eleChargeOfN(2,5);
       muoncharge2 = muonChargeOfN(2,5);
+
+      //elehovere2 = eleHOverEOfN(2,5);
+      //eledphi2 = eleDphiOfN(2,5);
+      //eledeta2 = eleDetaOfN(2,5);
+      //elesigmaietaieta2 = eleSigmaIetaIetaOfN(2,5);
+      
 
       taupt1 = tauPtOfN(1);     
       taueta1 = tauEtaOfN(1);     
@@ -7144,7 +7504,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
       recomuoniso2 = recoMuonIsoOfN(2,5);
       recomuonmindphijet2 = recoMuonMinDeltaPhiJetOfN(2,5);
 
-      /*
+      /*      
       //Z->vv background estimate stuff
       passZmumuCand = isZmumuCandidateEvent(17, 15, zmumuMass);
       passZmumuCandLoose = isZmumuCandidateEvent(17, 50, zmumuMass);
@@ -7164,6 +7524,98 @@ Also the pdfWeightSum* histograms that are used for LM9.
 	zeeMETphi = zllmetphi;
 	zeeMinDeltaPhiN = getMinDeltaPhiZllMETN(3,false);
       }
+
+      ////stuff for tag-and-probe
+      std::vector<double> muonprobes_mll;
+      std::vector<bool> muonprobes_result = passTagAndProbeMuon( muonprobes_mll );
+      //if(muonprobes_result.size()) cout << "musize = " << muonprobes_result.size() << std::endl;
+      muprobe1_mass=-99; muprobe2_mass=-99; muprobe3_mass=-99;
+      muprobe1_result=false; muprobe2_result=false; muprobe3_result=false;
+      //for(uint k = 0; k<muonprobes_result.size();++k) cout << k << " " << muonprobes_result.at(k) << endl;
+      if(muonprobes_result.size()){
+	muprobe1_mass = muonprobes_mll.at(0);
+	muprobe1_result = muonprobes_result.at(0);
+	//std::cout << muonprobes_result.at(0) << endl;
+	if(muonprobes_result.size()>1){
+	  muprobe2_mass = muonprobes_mll.at(1);
+	  muprobe2_result = muonprobes_result.at(1);
+	  if(muonprobes_result.size()>2){
+	    muprobe3_mass = muonprobes_mll.at(2);
+	    muprobe3_result = muonprobes_result.at(2);
+	  }
+	}
+      }
+      std::vector<double> electronprobes_mll;
+      std::vector<bool> electronprobes_result = passTagAndProbeElectron( electronprobes_mll );
+      //if(electronprobes_result.size()) cout << "elesize = " << electronprobes_result.size() << std::endl;
+      eleprobe1_mass=-99; eleprobe2_mass=-99; eleprobe3_mass=-99;
+      eleprobe1_result=false; eleprobe2_result=false; eleprobe3_result=false;
+      if(electronprobes_result.size()){
+	eleprobe1_mass = electronprobes_mll.at(0);
+	eleprobe1_result = electronprobes_result.at(0);
+	if(electronprobes_result.size()>1){
+	  eleprobe2_mass = electronprobes_mll.at(1);
+	  eleprobe2_result = electronprobes_result.at(1);
+	  if(electronprobes_result.size()>2){
+	    eleprobe3_mass = electronprobes_mll.at(2);
+	    eleprobe3_result = electronprobes_result.at(2);
+	  }
+	}
+      }     
+      std::vector<double> electronTightprobes_mll;
+      std::vector<bool> electronTightprobes_result = passTagAndProbeElectron( electronTightprobes_mll ,"tight");
+      //if(electronprobes_result.size()) cout << "elesize = " << electronprobes_result.size() << std::endl;
+      eleTightprobe1_mass=-99; eleTightprobe2_mass=-99; eleTightprobe3_mass=-99;
+      eleTightprobe1_result=false; eleTightprobe2_result=false; eleTightprobe3_result=false;
+      if(electronTightprobes_result.size()){
+	eleTightprobe1_mass = electronTightprobes_mll.at(0);
+	eleTightprobe1_result = electronTightprobes_result.at(0);
+	if(electronTightprobes_result.size()>1){
+	  eleTightprobe2_mass = electronTightprobes_mll.at(1);
+	  eleTightprobe2_result = electronTightprobes_result.at(1);
+	  if(electronTightprobes_result.size()>2){
+	    eleTightprobe3_mass = electronTightprobes_mll.at(2);
+	    eleTightprobe3_result = electronTightprobes_result.at(2);
+	  }
+	}
+      }     
+
+      std::vector<double> electronVeryTightprobes_mll;
+      std::vector<bool> electronVeryTightprobes_result = passTagAndProbeElectron( electronVeryTightprobes_mll ,"verytight");
+      //if(electronprobes_result.size()) cout << "elesize = " << electronprobes_result.size() << std::endl;
+      eleVeryTightprobe1_mass=-99; eleVeryTightprobe2_mass=-99; eleVeryTightprobe3_mass=-99;
+      eleVeryTightprobe1_result=false; eleVeryTightprobe2_result=false; eleVeryTightprobe3_result=false;
+      if(electronVeryTightprobes_result.size()){
+	eleVeryTightprobe1_mass = electronVeryTightprobes_mll.at(0);
+	eleVeryTightprobe1_result = electronVeryTightprobes_result.at(0);
+	if(electronVeryTightprobes_result.size()>1){
+	  eleVeryTightprobe2_mass = electronVeryTightprobes_mll.at(1);
+	  eleVeryTightprobe2_result = electronVeryTightprobes_result.at(1);
+	  if(electronVeryTightprobes_result.size()>2){
+	    eleVeryTightprobe3_mass = electronVeryTightprobes_mll.at(2);
+	    eleVeryTightprobe3_result = electronVeryTightprobes_result.at(2);
+	  }
+	}
+      }     
+
+
+      std::vector<double> electronprobesID_mll;
+      std::vector<bool> electronprobesID_result = passTagAndProbeElectron( electronprobesID_mll, "nominal", true);
+      eleprobeID1_mass=-99; eleprobeID2_mass=-99; eleprobeID3_mass=-99;
+      eleprobeID1_result=false; eleprobeID2_result=false; eleprobeID3_result=false;
+      if(electronprobesID_result.size()){
+	eleprobeID1_mass = electronprobesID_mll.at(0);
+	eleprobeID1_result = electronprobesID_result.at(0);
+	if(electronprobesID_result.size()>1){
+	  eleprobeID2_mass = electronprobesID_mll.at(1);
+	  eleprobeID2_result = electronprobesID_result.at(1);
+	  if(electronprobesID_result.size()>2){
+	    eleprobeID3_mass = electronprobesID_mll.at(2);
+	    eleprobeID3_result = electronprobesID_result.at(2);
+	  }
+	}
+      }     
+      
 
       //grab gen-level info
       if(sampleName_.Contains("DYJetsToLL") || sampleName_.Contains("ZJetsToLL") ){
@@ -7201,24 +7653,56 @@ Also the pdfWeightSum* histograms that are used for LM9.
 	  //(i.e. let's compute the MC lepton efficiency)
 	  if(passGenZllInAcc){
 	    bool isRecoMatched_l1 = false, isRecoMatched_l2 = false;
+	    //also include whether or not the lepton is matched to simply *any* RECO lepton
+	    //(this is to compute MC lepton "selection" efficiency
+	    bool isRecoNoCutMatched_l1 = false, isRecoNoCutMatched_l2 = false;
 	    if(zDecayMode==11){
 	      if(electronMatch(ZllMCCand1_,17,true)>=0) isRecoMatched_l1 = true;
 	      if(electronMatch(ZllMCCand2_,17,true)>=0) isRecoMatched_l2 = true;
+
+	      if(electronMatch(ZllMCCand1_,17,false,true)>=0) isRecoNoCutMatched_l1 = true;
+	      if(electronMatch(ZllMCCand2_,17,false,true)>=0) isRecoNoCutMatched_l2 = true;
 	    }
 	    else if(zDecayMode==13){
 	      if(muonMatch(ZllMCCand1_,17,true)>=0) isRecoMatched_l1 = true;
 	      if(muonMatch(ZllMCCand2_,17,true)>=0) isRecoMatched_l2 = true;
+
+	      if(muonMatch(ZllMCCand1_,17,false,true)>=0) isRecoNoCutMatched_l1 = true;
+	      if(muonMatch(ZllMCCand2_,17,false,true)>=0) isRecoNoCutMatched_l2 = true;
 	    }
 
 	    if(isRecoMatched_l1 && isRecoMatched_l2) zllNLeptonsRecoMatched = 2;
 	    else if( !isRecoMatched_l1 && !isRecoMatched_l2) zllNLeptonsRecoMatched = 0;
 	    else zllNLeptonsRecoMatched = 1;
 
+	    if(isRecoNoCutMatched_l1 && isRecoNoCutMatched_l2) zllNLeptonsRecoNoCutMatched = 2;
+	    else if( !isRecoNoCutMatched_l1 && !isRecoNoCutMatched_l2) zllNLeptonsRecoNoCutMatched = 0;
+	    else zllNLeptonsRecoNoCutMatched = 1;
+
 	  }
 
 	}
       }
       //std::cout << "zDecayMode = " << zDecayMode << ", zllGenInvMassWRTmZ = " << zllGenInvMassWRTmZ << std::endl;
+
+
+      //grab gen-level info for Z->vv
+      if(sampleName_.Contains("zjets") ){
+	zDecayMode = -99, zllMCMass = -99; 
+	if(findZ(zDecayMode, ZllMCCand1_, ZllMCCand2_) && (zDecayMode==12 || zDecayMode==14 || zDecayMode==16)){    
+
+	  zllMClepton1_pt = myGenParticles->at(ZllMCCand1_).pt;
+	  zllMClepton1_eta = myGenParticles->at(ZllMCCand1_).eta;
+	  zllMClepton1_phi = myGenParticles->at(ZllMCCand1_).phi;
+
+	  zllMClepton2_pt = myGenParticles->at(ZllMCCand2_).pt;
+	  zllMClepton2_eta = myGenParticles->at(ZllMCCand2_).eta;
+	  zllMClepton2_phi = myGenParticles->at(ZllMCCand2_).phi;
+
+	  passGenZllInAcc = genZllInAcceptance(ZllMCCand1_, ZllMCCand2_, zllMCMass);
+	}
+      }
+
       nVLbjets = nGoodVLBJets();
       vlb_CSVout1=vlBjetCSVOfN(1);
       vlb_CSVout2=vlBjetCSVOfN(2);
@@ -7230,7 +7714,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
       csvlb_CSVout2=bjetCSVOfN(2, kCSVL);
       csvlb_CSVout3=bjetCSVOfN(3, kCSVL);
       */
-
+      
 
       csctighthaloFilter = jmt::doubleToBool(triggerresultshelper1_csctighthaloFilter);
       eenoiseFilter = jmt::doubleToBool(triggerresultshelper1_eenoiseFilter) ;
@@ -8070,57 +8554,98 @@ int EventCalculator::findW(int& W, int& Wdaughter,int parent=0, bool fromtop=tru
    return -1;
 }
 
-int EventCalculator::muonMatch(const int trueMuon, const float ptthreshold, bool mustMatchToGood)
+int EventCalculator::muonMatch(const int trueMuon, const float ptthreshold, bool mustMatchToGood, bool matchtoRECO)
 {
-  //cout << "muon match" << endl;
-  unsigned int maxMuons = myMuonsPF->size(); 
-  for(unsigned int thisMuon = 0;thisMuon < maxMuons ; thisMuon++)
-    {
-      //cout << "deltaR " << deltaR(myMuonsPF->at(thisMuon).eta,myMuonsPF->at(thisMuon).phi,myGenParticles->at(trueMuon).eta,myGenParticles->at(trueMuon).phi) << endl;
-      //if(isGoodMuon(thisMuon)) cout << "is good" << endl;
-      //else cout << "is bad" << endl;
-      if( isGoodMuon(thisMuon,false,ptthreshold) && jmt::deltaR(myMuonsPF->at(thisMuon).eta,myMuonsPF->at(thisMuon).phi,myGenParticles->at(trueMuon).eta,myGenParticles->at(trueMuon).phi) < 0.3 )
-	{ 
-	  return thisMuon;
-	}
-    }
-  if(mustMatchToGood) return -1;
 
-  for(unsigned int thisMuon = 0;thisMuon < maxMuons ; thisMuon++)
-    {
-      //check proximity to any reconstructed muon at deltaR<0.3
-      if( jmt::deltaR(myMuonsPF->at(thisMuon).eta,myMuonsPF->at(thisMuon).phi,myGenParticles->at(trueMuon).eta,myGenParticles->at(trueMuon).phi) < 0.3 )
+  if(matchtoRECO){//for reco muons, no quality cuts are applied!
+    unsigned int maxMuons = myMuonsRECO->size(); 
+
+    for(unsigned int thisMuon = 0;thisMuon < maxMuons ; thisMuon++)
+      {
+	//check proximity to any reconstructed muon at deltaR<0.3
+	if( isInAccRecoMuon(thisMuon, ptthreshold) 
+	    && jmt::deltaR(myMuonsRECO->at(thisMuon).eta,myMuonsRECO->at(thisMuon).phi,
+			   myGenParticles->at(trueMuon).eta,myGenParticles->at(trueMuon).phi) < 0.3 )
 	{ 
 	  return thisMuon;
 	}
-    }
+      }
+    return -1;   
+  }
+
+  else{
+    //cout << "muon match" << endl;
+    unsigned int maxMuons = myMuonsPF->size(); 
+    for(unsigned int thisMuon = 0;thisMuon < maxMuons ; thisMuon++)
+      {
+	//cout << "deltaR " << deltaR(myMuonsPF->at(thisMuon).eta,myMuonsPF->at(thisMuon).phi,myGenParticles->at(trueMuon).eta,myGenParticles->at(trueMuon).phi) << endl;
+	//if(isGoodMuon(thisMuon)) cout << "is good" << endl;
+	//else cout << "is bad" << endl;
+	if( isGoodMuon(thisMuon,false,ptthreshold) && jmt::deltaR(myMuonsPF->at(thisMuon).eta,myMuonsPF->at(thisMuon).phi,myGenParticles->at(trueMuon).eta,myGenParticles->at(trueMuon).phi) < 0.3 )
+	  { 
+	    return thisMuon;
+	  }
+      }
+    if(mustMatchToGood) return -1;
+
+    for(unsigned int thisMuon = 0;thisMuon < maxMuons ; thisMuon++)
+      {
+	//check proximity to any reconstructed muon at deltaR<0.3
+	if( jmt::deltaR(myMuonsPF->at(thisMuon).eta,myMuonsPF->at(thisMuon).phi,myGenParticles->at(trueMuon).eta,myGenParticles->at(trueMuon).phi) < 0.3 )
+	  { 
+	    return thisMuon;
+	  }
+      }
+    return -1;
+  }
   return -1;
 }
 
-int EventCalculator::electronMatch(const int trueElectron, const float ptthreshold, bool mustMatchToGood)
+int EventCalculator::electronMatch(const int trueElectron, const float ptthreshold, bool mustMatchToGood, bool matchtoRECO)
 {
-  unsigned int maxElectrons = myElectronsPF->size(); 
-  for(unsigned int thisElectron = 0;thisElectron < maxElectrons ; thisElectron++)
-    {
-      //check proximity to any reconstructed muon at deltaR<0.3
+
+  if(matchtoRECO){//for reco electrons, no quality cuts are applied!
+    unsigned int maxElectrons = myElectronsRECO->size(); 
+
+    for(unsigned int thisElectron = 0;thisElectron < maxElectrons ; thisElectron++)
+      {
+	//check proximity to any reconstructed muon at deltaR<0.3
+	if( isInAccRecoElectron(thisElectron, ptthreshold) 
+	    && jmt::deltaR(myElectronsRECO->at(thisElectron).eta,myElectronsRECO->at(thisElectron).phi,
+			   myGenParticles->at(trueElectron).eta,myGenParticles->at(trueElectron).phi) < 0.3 )
+	{ 
+	  return thisElectron;
+	}
+      }
+    return -1;   
+  }
+
+  else{
+    unsigned int maxElectrons = myElectronsPF->size(); 
+    for(unsigned int thisElectron = 0;thisElectron < maxElectrons ; thisElectron++)
+      {
+	//check proximity to any reconstructed muon at deltaR<0.3
       if( isGoodElectron(thisElectron,false,ptthreshold) && jmt::deltaR(myElectronsPF->at(thisElectron).eta,myElectronsPF->at(thisElectron).phi,myGenParticles->at(trueElectron).eta,myGenParticles->at(trueElectron).phi) < 0.3 )
 	{ 
 	  return thisElectron;
 	}
-    }
-  if(mustMatchToGood) return -1;
-
-  for(unsigned int thisElectron = 0;thisElectron < maxElectrons ; thisElectron++)
-    {
-      //check proximity to any reconstructed muon at deltaR<0.3
+      }
+    if(mustMatchToGood) return -1;
+    
+    for(unsigned int thisElectron = 0;thisElectron < maxElectrons ; thisElectron++)
+      {
+	//check proximity to any reconstructed muon at deltaR<0.3
       if( jmt::deltaR(myElectronsPF->at(thisElectron).eta,myElectronsPF->at(thisElectron).phi,myGenParticles->at(trueElectron).eta,myGenParticles->at(trueElectron).phi) < 0.3 )
 	{ 
 	  return thisElectron;
 	}
-    }
+      }
+    return -1;
+  }
+  
   return -1;
-}
 
+}
 int EventCalculator::tauMatch(const int trueTau)
 {
   unsigned int maxJets = myJetsPF->size(); 
@@ -8441,6 +8966,21 @@ bool EventCalculator::findZ(int& decaymode, int& lepton1_index, int& lepton2_ind
 	else if( abs(firstdaughter_id)== 15 && abs(lastdaughter_id)==15 ){
 	  decaymode = 15;
 	}
+
+	//for Z's, just return the ME neutrino
+	else if( abs(firstdaughter_id)== 12 && abs(lastdaughter_id)==12 ){
+	  decaymode = 12;
+	  lepton1_index = firstdaughter; lepton2_index = lastdaughter;
+	}
+	else if( abs(firstdaughter_id)== 14 && abs(lastdaughter_id)==14 ){
+	  decaymode = 14;
+	  lepton1_index = firstdaughter; lepton2_index = lastdaughter;
+	}
+	else if( abs(firstdaughter_id)== 16 && abs(lastdaughter_id)==16 ){
+	  decaymode = 16;
+	  lepton1_index = firstdaughter; lepton2_index = lastdaughter;
+	}
+
 	else{std::cout << "ERROR: unrecognized decay mode" << std::endl; assert(0);}
 
 
@@ -8578,8 +9118,15 @@ bool EventCalculator::genZllInAcceptance(int lepton1_index, int lepton2_index, f
   else if(l1_pdgid == 13 && l2_pdgid == 13){
     if(l1_pt>=17 && l2_pt>=17 && fabs(l1_eta)<2.4 && fabs(l2_eta)<2.4) inAcceptance = true;
   }
+
+  //for neutrinos, consider them relative to muon acceptance terms for the moment
+  else if((l1_pdgid == 12 && l2_pdgid == 12) || (l1_pdgid == 14 && l2_pdgid == 14) || (l1_pdgid == 16 && l2_pdgid == 16)){
+    if(l1_pt>=17 && l2_pt>=17 && fabs(l1_eta)<2.4 && fabs(l2_eta)<2.4) inAcceptance = true;
+  }
+
+
   else{
-    std::cout << "Leptons are neither electrons nor muons, exiting" << std::endl;
+    std::cout << "Leptons are neither electrons nor muons (nor neutrinos), exiting" << std::endl;
     assert(0);
   }
 
@@ -8733,6 +9280,8 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
     //if(event !=86684 ) continue;
     
     //std::cout << " HT = " << getHT() << std::endl;
+
+    //std::cout << "HT = " << 450 << ", eff = " << getHLTHTeff(450) << std::endl;
     //
     //for (unsigned int i = 0; i < myJetsPF->size(); ++i) {
     //  std::cout << "jet " << i << " pt = " << getJetPt(i)<< ", eta = " << myJetsPF->at(i).eta << ", passID = " << jetPassLooseID(i) <<std::endl;
@@ -9307,7 +9856,6 @@ void EventCalculator::sampleAnalyzer(itreestream& stream){
 //separate out the jettag efficiency code from sampleAnalyzer for ease of use
 void EventCalculator::plotBTagEffMC(itreestream& stream){
 
-
   TFile fout("histos.root","RECREATE");
   
   //check the MC efficiencies from Summer11 TTbar
@@ -9326,6 +9874,21 @@ void EventCalculator::plotBTagEffMC(itreestream& stream){
   h_btag->Sumw2();
   h_ctag->Sumw2();
   h_ltag->Sumw2();
+
+  //for scans
+  map<pair<int,int> , TH1F* >  h_point_bjet;
+  map<pair<int,int> , TH1F* >  h_point_btag;
+  map<pair<int,int> , TH1F* >  h_point_btageff;
+
+  map<pair<int,int> , TH1F* >  h_point_cjet;
+  map<pair<int,int> , TH1F* >  h_point_ctag;
+  map<pair<int,int> , TH1F* >  h_point_ctageff;
+
+  map<pair<int,int> , TH1F* >  h_point_ljet;
+  map<pair<int,int> , TH1F* >  h_point_ltag;
+  map<pair<int,int> , TH1F* >  h_point_ltageff;
+  pair<int,int> thispoint;
+  
 
 
   int nevents = stream.size();
@@ -9351,6 +9914,58 @@ void EventCalculator::plotBTagEffMC(itreestream& stream){
     stream.read(entry);
     fillObjects();
 
+    //pair<int,int> thispoint;
+    if(theScanType_ == kSMS) thispoint=getSMSmasses();
+    //if(theScanType_ == kSMS && !(thispoint.first == 925 && thispoint.second == 100) ) continue;
+    else thispoint=make_pair(0,0);
+    //std::cout << "mg = " << thispoint.first << ", mlsp = " << thispoint.second << std::endl;
+
+
+    ostringstream convert, convert2;
+    convert << thispoint.first;
+    convert2 << thispoint.second;
+    string mg = convert.str();
+    string mlsp = convert2.str();
+
+    string hname_bjet = "h_bjet_" + mg + "_" + mlsp;
+    string hname_btag = "h_btag_" + mg + "_" + mlsp;
+    string hname_btageff = "h_btageff_" + mg + "_" + mlsp;
+
+    string hname_cjet = "h_cjet_" + mg + "_" + mlsp;
+    string hname_ctag = "h_ctag_" + mg + "_" + mlsp;
+    string hname_ctageff = "h_ctageff_" + mg + "_" + mlsp;
+
+    string hname_ljet = "h_ljet_" + mg + "_" + mlsp;
+    string hname_ltag = "h_ltag_" + mg + "_" + mlsp;
+    string hname_ltageff = "h_ltageff_" + mg + "_" + mlsp;
+
+    
+    //if this point isn't loaded yet, create a histogram
+    if ( h_point_bjet.count(thispoint)==0){
+      h_point_bjet[thispoint]= new TH1F(hname_bjet.c_str(),"bjet",15,bins);
+      h_point_btag[thispoint]= new TH1F(hname_btag.c_str(),"bjet",15,bins);
+      h_point_btageff[thispoint]= new TH1F(hname_btageff.c_str(),"bjet",15,bins);
+      h_point_bjet[thispoint]->Sumw2();
+      h_point_btag[thispoint]->Sumw2();
+
+      h_point_cjet[thispoint]= new TH1F(hname_cjet.c_str(),"cjet",15,bins);
+      h_point_ctag[thispoint]= new TH1F(hname_ctag.c_str(),"cjet",15,bins);
+      h_point_ctageff[thispoint]= new TH1F(hname_ctageff.c_str(),"cjet",15,bins);
+      h_point_cjet[thispoint]->Sumw2();
+      h_point_ctag[thispoint]->Sumw2();
+
+      h_point_ljet[thispoint]= new TH1F(hname_ljet.c_str(),"ljet",15,bins);
+      h_point_ltag[thispoint]= new TH1F(hname_ltag.c_str(),"ljet",15,bins);
+      h_point_ltageff[thispoint]= new TH1F(hname_ltageff.c_str(),"ljet",15,bins);
+      h_point_ljet[thispoint]->Sumw2();
+      h_point_ltag[thispoint]->Sumw2();
+
+    }
+
+
+    //double avgval=bjetSumSUSY[ipoint->first]>0 ? bjetEffSum[ipoint->first]/bjetSumSUSY[ipoint->first] : -1;
+    
+
     if(entry%10000==0) cout << "entry: " << entry << ", percent done=" << (int)(entry/(double)nevents*100.)<<  endl;
     
     npass++;
@@ -9361,20 +9976,37 @@ void EventCalculator::plotBTagEffMC(itreestream& stream){
       if(isGoodJet(i,30)){
       
 	  
-	if(abs(flavor)==5)
-	  h_bjet->Fill( getJetPt(i) ) ;
-	else if(abs(flavor)==4)
+	if(abs(flavor)==5){
+	  h_bjet->Fill( getJetPt(i) ) ;	  
+
+	  h_point_bjet[thispoint]->Fill( getJetPt(i) );
+	}
+	else if(abs(flavor)==4){
 	  h_cjet->Fill( getJetPt(i) ) ;
-	else if(abs(flavor)==3 ||abs(flavor)==2 ||abs(flavor)==1 ||abs(flavor)==21 )
+
+	  h_point_cjet[thispoint]->Fill( getJetPt(i) );
+	}
+	else if(abs(flavor)==3 ||abs(flavor)==2 ||abs(flavor)==1 ||abs(flavor)==21 ){
 	  h_ljet->Fill( getJetPt(i) ) ;
-      
+
+	  h_point_ljet[thispoint]->Fill( getJetPt(i) );
+	}
 	if(passBTagger(i)){
-	  if(abs(flavor)==5)
+	  if(abs(flavor)==5){
 	    h_btag->Fill( getJetPt(i) ) ;
-	  else if(abs(flavor)==4)
+
+	    h_point_btag[thispoint]->Fill( getJetPt(i) );
+	  }
+	  else if(abs(flavor)==4){
 	    h_ctag->Fill( getJetPt(i) ) ;
-	  else if(abs(flavor)==3 ||abs(flavor)==2 ||abs(flavor)==1 ||abs(flavor)==21 )
+
+	    h_point_ctag[thispoint]->Fill( getJetPt(i) );
+	  }
+	  else if(abs(flavor)==3 ||abs(flavor)==2 ||abs(flavor)==1 ||abs(flavor)==21 ){
 	    h_ltag->Fill( getJetPt(i) ) ;
+
+	    h_point_ltag[thispoint]->Fill( getJetPt(i) );
+	  }
 	}
       
       }
@@ -9413,6 +10045,24 @@ void EventCalculator::plotBTagEffMC(itreestream& stream){
   TH1F * h_ltageff = new TH1F("h_ltageff","ltageff",15,bins);
   h_ltageff->Divide(h_ltag,h_ljet,1,1,"B");
   
+
+  for (map<pair<int, int>, TH1F* >::iterator iscanpoint=h_point_bjet.begin(); iscanpoint!=h_point_bjet.end(); ++iscanpoint) {
+
+
+    h_point_btageff[ iscanpoint->first ]->Divide(h_point_btag[ iscanpoint->first ], 
+						 h_point_bjet[ iscanpoint->first ],
+						 1,1,"B");
+
+    h_point_ctageff[ iscanpoint->first ]->Divide(h_point_ctag[ iscanpoint->first ], 
+						 h_point_cjet[ iscanpoint->first ],
+						 1,1,"B");
+
+    h_point_ltageff[ iscanpoint->first ]->Divide(h_point_ltag[ iscanpoint->first ], 
+						 h_point_ljet[ iscanpoint->first ],
+						 1,1,"B");
+
+
+  }
   
   fout.Write();
   fout.Close();
