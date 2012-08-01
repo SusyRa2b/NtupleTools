@@ -201,13 +201,26 @@ void EventCalculator::stopTimer(const Long64_t ntotal) {
 }
 
 bool EventCalculator::isSampleRealData() {
-  //CAREFUL HERE!
+
   if (sampleName_.BeginsWith("HT_Run2012A")) return true;
-  if (sampleName_.BeginsWith("DoubleElectron_Run2012B")) return true;
   if (sampleName_.BeginsWith("HTMHT_Run2012B")) return true;
   if (sampleName_.BeginsWith("JetHT_Run2012B")) return true;
+
+  if (sampleName_.BeginsWith("MET_Run2012")) return true;
+
+  if (sampleName_.BeginsWith("MuEG_Run2012")) return true;
+
+  if (sampleName_.BeginsWith("DoubleElectron_Run2012")) return true;
+
+  if (sampleName_.BeginsWith("DoubleMu_Run2012")) return true;
+
+  if (sampleName_.BeginsWith("ElectronHad_Run2012")) return true;
   if (sampleName_.BeginsWith("MuHad_Run2012")) return true;
+
   if (sampleName_.BeginsWith("SingleMu_Run2012")) return true;
+  if (sampleName_.BeginsWith("SingleElectron_Run2012")) return true;
+
+  if (sampleName_.BeginsWith("Photon_Run2012")) return true;
 
   return false;
 }
@@ -4201,7 +4214,9 @@ Long64_t EventCalculator::getNEventsGenerated() {
     
     This function is intended to fulfill this solution by returning the number of events in each sample's original (unskimmed) ntuples.
     This may vary from one round of cfA production to another due to failed jobs, so the =entire= directory string is needed.
-    
+    UPDATE -- I think I can use the UCSBxxxx code as a unique identifier...
+
+
     The cfA page that catelogs the samples has this information automatically filled in -- just MAKE SURE TO TAKE THE
     NUMBER FROM THE UNSKIMMED SAMPLE!
   */
@@ -4237,8 +4252,49 @@ Long64_t EventCalculator::getNEventsGenerated() {
 
   // ============= v63 samples ============
   // SKIM is applied, so this is now important
-  //number tbc!
-  if (sampleName_=="TTJets_MassiveBinDECAY_TuneZ2star_8TeV-madgraph-tauola_Summer12-PU_S6_START52_V9-v1_AODSIM_UCSB1355ra2b_v63") return 7619888;
+
+  //numbers come from 
+  //http://cms2.physics.ucsb.edu/cgi-bin/cfA.pl?Institute=ALL&process=ALL&version=v63
+
+  if (sampleName_.Contains("UCSB1318")) return 3789889 ;
+  if (sampleName_.Contains("UCSB1319")) return 1703863 ;
+  if (sampleName_.Contains("UCSB1341")) return 30461028 ;
+
+  if (sampleName_.Contains("UCSB1311")) return 1964088 ;
+  if (sampleName_.Contains("UCSB1347")) return 5935732 ;
+  if (sampleName_.Contains("UCSB1312")) return 2000062 ;
+  if (sampleName_.Contains("UCSB1317")) return 1025622 ;
+  if (sampleName_.Contains("UCSB1336")) return 2947160 ;
+  if (sampleName_.Contains("UCSB1314")) return 977586 ;
+  if (sampleName_.Contains("UCSB1292")) return 5927300 ;
+  if (sampleName_.Contains("UCSB1332")) return 5480000 ;
+  if (sampleName_.Contains("UCSB1297")) return 3994848 ;
+  if (sampleName_.Contains("UCSB1298")) return 3992760 ;
+  if (sampleName_.Contains("UCSB1310")) return 3998563 ;
+  
+  if (sampleName_.Contains("UCSB1355")) return 7618593 ;
+  if (sampleName_.Contains("UCSB1338")) return 1087272 ;
+  if (sampleName_.Contains("UCSB1291")) return 13880079 ;
+  if (sampleName_.Contains("UCSB1344")) return 259961 ;
+  if (sampleName_.Contains("UCSB1306")) return 23777 ;
+  if (sampleName_.Contains("UCSB1307")) return 497658 ;
+  if (sampleName_.Contains("UCSB1345")) return 139974 ;
+  if (sampleName_.Contains("UCSB1330")) return 1935072 ;
+  if (sampleName_.Contains("UCSB1305")) return 493460 ;
+  
+  if (sampleName_.Contains("UCSB1322")) return 1634582 ;
+  if (sampleName_.Contains("UCSB1328")) return 1698744 ;
+  if (sampleName_.Contains("UCSB1339")) return 1647807 ;
+  if (sampleName_.Contains("UCSB1331")) return 18393090 ;
+  
+  if (sampleName_.Contains("UCSB1337")) return 6800431 ;
+  if (sampleName_.Contains("UCSB1326")) return 9996622 ;
+  if (sampleName_.Contains("UCSB1329")) return 4416646 ;
+  if (sampleName_.Contains("UCSB1327")) return 5066608 ;
+  if (sampleName_.Contains("UCSB1324")) return 1006928 ;
+  if (sampleName_.Contains("UCSB1323")) return 4053786 ;
+  if (sampleName_.Contains("UCSB1288")) return 9799908 ;
+
 
   if (sampleName_=="sbottom8lnotaus-189-270") return 50000;
 
@@ -4253,44 +4309,61 @@ double EventCalculator::getCrossSection(){
 
   //const double bf = 0.32442;
 
-  //NNLO
-  if (sampleName_.Contains("DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph")) return 3503.71;
+  //Drell Yan
+  if (sampleName_.BeginsWith("DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph")) return 3503.71; //NNLO
+  if (sampleName_.BeginsWith("DYJetsToLL_HT-200To400_TuneZ2Star_8TeV-madgraph")) return 19.73; //LO PREP
+  if (sampleName_.BeginsWith("DYJetsToLL_HT-400ToInf_TuneZ2Star_8TeV-madgraph")) return 2.826; //LO PREP
 
-  //LO PREP
-  if (sampleName_.Contains("QCD_Pt-1000to1400_TuneZ2star_8TeV_pythia6")) return 0.737844;
-  if (sampleName_.Contains("QCD_Pt-1400to1800_TuneZ2star_8TeV_pythia6")) return 0.03352235;
-  if (sampleName_.Contains("QCD_Pt-15to3000_TuneZ2star_Flat_8TeV_pythia6")) return 2.99815997E10; //correct thing to return?
-  if (sampleName_.Contains("QCD_Pt-170to300_TuneZ2star_8TeV_pythia6")) return 34138.15;
-  if (sampleName_.Contains("QCD_Pt-1800_TuneZ2star_8TeV_pythia6")) return 0.001829005;
-  if (sampleName_.Contains("QCD_Pt-300to470_TuneZ2star_8TeV_pythia6")) return 1759.549;
-  if (sampleName_.Contains("QCD_Pt-30to50_TuneZ2star_8TeV_pythia6")) return 6.6285328E7;
-  if (sampleName_.Contains("QCD_Pt-470to600_TuneZ2star_8TeV_pythia6")) return 113.8791;
-  if (sampleName_.Contains("QCD_Pt-600to800_TuneZ2star_8TeV_pythia6")) return 26.9921;
-  if (sampleName_.Contains("QCD_Pt-800to1000_TuneZ2star_8TeV_pythia6")) return 3.550036;
-  if (sampleName_.Contains("QCD_Pt-80to120_TuneZ2star_8TeV_pythia6")) return 1033680.0;
 
-  //LO PREP
-  if (sampleName_.Contains("Tbar_t-channel_TuneZ2star_8TeV-powheg")) return 25;
-  if (sampleName_.Contains("Tbar_tW-channel-DR_TuneZ2star_8TeV-powheg")) return 10.7;
-  if (sampleName_.Contains("T_t-channel_TuneZ2star_8TeV-powheg")) return 47.0;
-  if (sampleName_.Contains("T_tW-channel-DR_TuneZ2star_8TeV-powheg")) return 10.7;
+  //Pythia QCD - all LO PREP
+  if (sampleName_.BeginsWith("QCD_Pt-1000to1400_TuneZ2star_8TeV_pythia6")) return 0.737844;
+  if (sampleName_.BeginsWith("QCD_Pt-120to170_TuneZ2star_8TeV_pythia6")) return 156293.3;
+  if (sampleName_.BeginsWith("QCD_Pt-1400to1800_TuneZ2star_8TeV_pythia6")) return 0.03352235;
+  if (sampleName_.BeginsWith("QCD_Pt-15to3000_TuneZ2star_Flat_8TeV_pythia6")) return 2.99815997E10; //correct thing to return?
+  if (sampleName_.BeginsWith("QCD_Pt-170to300_TuneZ2star_8TeV_pythia6")) return 34138.15;
+  if (sampleName_.BeginsWith("QCD_Pt-1800_TuneZ2star_8TeV_pythia6")) return 0.001829005;
+  if (sampleName_.BeginsWith("QCD_Pt-300to470_TuneZ2star_8TeV_pythia6")) return 1759.549;
+  if (sampleName_.BeginsWith("QCD_Pt-30to50_TuneZ2star_8TeV_pythia6")) return 6.6285328E7;
+  if (sampleName_.BeginsWith("QCD_Pt-470to600_TuneZ2star_8TeV_pythia6")) return 113.8791;
+  if (sampleName_.BeginsWith("QCD_Pt-600to800_TuneZ2star_8TeV_pythia6")) return 26.9921;
+  if (sampleName_.BeginsWith("QCD_Pt-800to1000_TuneZ2star_8TeV_pythia6")) return 3.550036;
+  if (sampleName_.BeginsWith("QCD_Pt-80to120_TuneZ2star_8TeV_pythia6")) return 1033680.0;
 
-  if (sampleName_.Contains("WJetsToLNu_HT-400ToInf_8TeV-madgraph")) return 25.22; //LO PREP
-  if (sampleName_.Contains("WJetsToLNu_TuneZ2Star_8TeV-madgraph")) return 36257.2; //NNLO
-  if (sampleName_.Contains("WZ_TuneZ2star_8TeV_pythia6_tauola")) return 12.63; //LO PREP
-  if (sampleName_.Contains("ZZ_TuneZ2star_8TeV_pythia6_tauola")) return 5.196; //LO PREP
-  
-  if (sampleName_.Contains("ZJetsToNuNu_400_HT_inf_TuneZ2Star_8TeV_madgraph")) return 5.274; //from cfA page. needs verification
-  
-  //8 TeV  
-  if (sampleName_.Contains("SUSY_LM9_sftsht_8TeV"))          return 9.287; //LO 8TeV from PREP
+  //single top
+  if (sampleName_.BeginsWith("Tbar_t-channel_TuneZ2star_8TeV-powheg")) return 25;//LO PREP 
+  if (sampleName_.BeginsWith("Tbar_tW-channel-DR_TuneZ2star_8TeV-powheg")) return 10.7;//LO PREP
+  if (sampleName_.BeginsWith("T_t-channel_TuneZ2star_8TeV-powheg")) return 47.0;//LO PREP
+  if (sampleName_.BeginsWith("T_tW-channel-DR_TuneZ2star_8TeV-powheg")) return 10.7;//LO PREP
+  if (sampleName_.BeginsWith("T_s-channel_TuneZ2star_8TeV-powheg-tauola")) return 2.82; //LO PREP
+  if (sampleName_.BeginsWith("Tbar_s-channel_TuneZ2star_8TeV-powheg-tauola")) return 1.57; //LO PREP
+
+  //W+Jets
+  if (sampleName_.BeginsWith("WJetsToLNu_HT-400ToInf_8TeV-madgraph")) return 25.22; //LO PREP
+  if (sampleName_.BeginsWith("WJetsToLNu_HT-250To300_8TeV-madgraph")) return 48.01; //LO PREP
+  if (sampleName_.BeginsWith("WJetsToLNu_HT-300To400_8TeV-madgraph")) return 38.3; //LO PREP
+  if (sampleName_.BeginsWith("WJetsToLNu_TuneZ2Star_8TeV-madgraph")) return 36257.2; //NNLO
+  //diboson
+  if (sampleName_.BeginsWith("WZ_TuneZ2star_8TeV_pythia6_tauola")) return 12.63; //LO PREP
+  if (sampleName_.BeginsWith("WW_TuneZ2star_8TeV_pythia6_tauola")) return 33.61; //LO PREP
+  if (sampleName_.BeginsWith("ZZ_TuneZ2star_8TeV_pythia6_tauola")) return 5.196; //LO PREP
+
+  //Z -> nu nu  
+  if (sampleName_.BeginsWith("ZJetsToNuNu_100_HT_200_TuneZ2Star_8TeV_madgraph")) return 160.3 ; //LO PREP
+  if (sampleName_.BeginsWith("ZJetsToNuNu_200_HT_400_TuneZ2Star_8TeV_madgraph")) return 41.49; //LO PREP
+  if (sampleName_.BeginsWith("ZJetsToNuNu_400_HT_inf_TuneZ2Star_8TeV_madgraph")) return 5.274; //LO PREP
+  if (sampleName_.BeginsWith("ZJetsToNuNu_50_HT_100_TuneZ2Star_8TeV_madgraph")) return 381.2; //LO PREP
+
+  //LM
+  if (sampleName_.BeginsWith("SUSY_LM9_sftsht_8TeV"))          return 9.287; //LO 8TeV from PREP
 
   //ttbar
-  if (sampleName_.Contains("TTJets_TuneZ2star_8TeV-madgraph-tauola") )                return 234;  //approx NNLO
-  if (sampleName_.Contains("TTJets_MassiveBinDECAY_TuneZ2star_8TeV-madgraph-tauola")) return 234;  //approx NNLO
+  if (sampleName_.BeginsWith("TTJets_TuneZ2star_8TeV-madgraph-tauola") )                return 234;  //approx NNLO
+  if (sampleName_.BeginsWith("TTJets_MassiveBinDECAY_TuneZ2star_8TeV-madgraph-tauola")) return 234;  //approx NNLO
+
+  if (sampleName_.BeginsWith("TTTo2L2Nu2B_8TeV-powheg-pythia6_Summer12")) return 22.14 *(234.0 / 136.3); //PREP corrected to NNLO
 
   //RPV 8 TeV
-  if (sampleName_.Contains("sbottom8lnotaus-189-270")) return 3.7;
+  if (sampleName_.Contains("sbottom8lnotaus-189-270")) return 3.7; //LO madgraph
 
   if (sampleName_.Contains("mSUGRA")) return 1; //NLO cross sections will be specially stored per point
   if (sampleName_.Contains("T1bbbb")) return 1;
@@ -4308,34 +4381,53 @@ TString EventCalculator::getSampleNameOutputString(){
   //strategy: as much as possible, give the name that drawReducedTrees expects,
   //and return sampleName for samples that have to be 'hadd'ed afterwards anyway
 
+  //part of me likes this because it makes the filenames clean. but it can be dangerous if there are multiple samples with small differences (like only a difference in PU scenario)
+
   //8TeV
-  if (sampleName_.Contains("TTJets_TuneZ2star_8TeV-madgraph-tauola") )              return "TTbarJets";
 
-  if (sampleName_.Contains("zjets") )                                                return "Zinvisible";
-  //if (sampleName_.Contains("wjets") )                                                return "WJets";
-  if (sampleName_.Contains("WJetsToLNu_TuneZ2_7TeV-madgraph-tauola") )               return "WJets";
-  if (sampleName_.Contains("WJetsToLNu_250_HT_300_TuneZ2_7TeV-madgraph-tauola") )    return "WJetsHT250";
-  if (sampleName_.Contains("WJetsToLNu_300_HT_inf_TuneZ2_7TeV-madgraph-tauola") )    return "WJetsHT300";
-  if (sampleName_.Contains("DYJetsToLL_TuneZ2_M-50_7TeV-madgraph-tauola") )          return "ZJets";
-  if (sampleName_.Contains("ww") )                                                   return "WW";
-  if (sampleName_.Contains("wz") )                                                   return "WZ";
-  if (sampleName_.Contains("zz") )                                                   return "ZZ";
-  //if (sampleName_.Contains("t_s-channel") )                                          return "SingleTop-sChannel";
-  //if (sampleName_.Contains("tbar_s-channel") )                                       return "SingleTopBar-sChannel";
-  //if (sampleName_.Contains("t_t-channel") )                                          return "SingleTop-tChannel";
-  //if (sampleName_.Contains("tbar_t-channel") )                                       return "SingleTopBar-tChannel";
-  //if (sampleName_.Contains("t_tW-channel") )                                         return "SingleTop-tWChannel";
-  //if (sampleName_.Contains("tbar_tW-channel") )                                      return "SingleTopBar-tWChannel";
-  if (sampleName_.Contains("T_TuneZ2_s-channel_7TeV-powheg-tauola") )                return "SingleTop-sChannel";
-  if (sampleName_.Contains("Tbar_TuneZ2_s-channel_7TeV-powheg-tauola") )             return "SingleTopBar-sChannel";
-  if (sampleName_.Contains("T_TuneZ2_t-channel_7TeV-powheg-tauola") )                return "SingleTop-tChannel";
-  if (sampleName_.Contains("Tbar_TuneZ2_t-channel_7TeV-powheg-tauola") )             return "SingleTopBar-tChannel";
-  if (sampleName_.Contains("T_TuneZ2_tW-channel-DR_7TeV-powheg-tauola") )            return "SingleTop-tWChannel";
-  if (sampleName_.Contains("Tbar_TuneZ2_tW-channel-DR_7TeV-powheg-tauola") )         return "SingleTopBar-tWChannel";
+  //Drell Yan
+  if (sampleName_.BeginsWith("DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph")) return "ZJets";
+  if (sampleName_.BeginsWith("DYJetsToLL_HT-200To400_TuneZ2Star_8TeV-madgraph")) return "ZJets_HT200To400";
+  if (sampleName_.BeginsWith("DYJetsToLL_HT-400ToInf_TuneZ2Star_8TeV-madgraph")) return "ZJets_HT400ToInf";
 
 
+  //Pythia QCD - all LO PREP
+  if (sampleName_.BeginsWith("QCD_Pt-1000to1400_TuneZ2star_8TeV_pythia6")) return "QCD1000";
+  if (sampleName_.BeginsWith("QCD_Pt-120to170_TuneZ2star_8TeV_pythia6")) return "QCD120";
+  if (sampleName_.BeginsWith("QCD_Pt-1400to1800_TuneZ2star_8TeV_pythia6")) return "QCD1400";
+  if (sampleName_.BeginsWith("QCD_Pt-170to300_TuneZ2star_8TeV_pythia6")) return "QCD170";
+  if (sampleName_.BeginsWith("QCD_Pt-1800_TuneZ2star_8TeV_pythia6")) return "QCD1800";
+  if (sampleName_.BeginsWith("QCD_Pt-300to470_TuneZ2star_8TeV_pythia6")) return "QCD300";
+  if (sampleName_.BeginsWith("QCD_Pt-30to50_TuneZ2star_8TeV_pythia6")) return "QCD30";
+  if (sampleName_.BeginsWith("QCD_Pt-470to600_TuneZ2star_8TeV_pythia6")) return "QCD470";
+  if (sampleName_.BeginsWith("QCD_Pt-600to800_TuneZ2star_8TeV_pythia6")) return "QCD600"; 
+  if (sampleName_.BeginsWith("QCD_Pt-800to1000_TuneZ2star_8TeV_pythia6")) return "QCD800";
+  if (sampleName_.BeginsWith("QCD_Pt-80to120_TuneZ2star_8TeV_pythia6")) return  "QCD80";
 
-  if (sampleName_.Contains("LM9_SUSY_sftsht_7TeV-pythia6") )                         return "LM9";
+  //single top (don't bother)
+
+  //W+Jets
+  if (sampleName_.BeginsWith("WJetsToLNu_HT-400ToInf_8TeV-madgraph")) return "WJets_HT400ToInf";
+  if (sampleName_.BeginsWith("WJetsToLNu_HT-250To300_8TeV-madgraph")) return "WJets_HT250To300";
+  if (sampleName_.BeginsWith("WJetsToLNu_HT-300To400_8TeV-madgraph")) return "WJets_HT300To400";
+  if (sampleName_.BeginsWith("WJetsToLNu_TuneZ2Star_8TeV-madgraph")) return "WJets";
+  //diboson
+  if (sampleName_.BeginsWith("WZ_TuneZ2star_8TeV_pythia6_tauola")) return "WZ";
+  if (sampleName_.BeginsWith("WW_TuneZ2star_8TeV_pythia6_tauola")) return "WW";
+  if (sampleName_.BeginsWith("ZZ_TuneZ2star_8TeV_pythia6_tauola")) return "ZZ";
+
+  //Z -> nu nu  
+  if (sampleName_.BeginsWith("ZJetsToNuNu_100_HT_200_TuneZ2Star_8TeV_madgraph")) return "Zinvisible_HT100To200";
+  if (sampleName_.BeginsWith("ZJetsToNuNu_200_HT_400_TuneZ2Star_8TeV_madgraph")) return "Zinvisible_HT200To400";
+  if (sampleName_.BeginsWith("ZJetsToNuNu_400_HT_inf_TuneZ2Star_8TeV_madgraph")) return "Zinvisible_HT400ToInf";
+  if (sampleName_.BeginsWith("ZJetsToNuNu_50_HT_100_TuneZ2Star_8TeV_madgraph")) return "Zinvisible_HT50To100";
+
+  //LM
+  if (sampleName_.BeginsWith("SUSY_LM9_sftsht_8TeV"))          return "LM9";
+
+  //ttbar
+  //don't do this -- there are already 2 ttbar samples with very similar names
+
 
   //if it isn't found, just use the full name 
   return sampleName_;
@@ -5191,13 +5283,14 @@ Also the pdfWeightSum* histograms that are used for LM9.
   std::vector< float > DataDist;
   std::vector< float > MCDist;
   for( int i=0; i<60; ++i) {
-    //for PU_S3 (only in-time)
-    //1D reweighting -- for QCD and Fastsim scans
-    if (puReweightIs1D)    DataDist.push_back(pu::FirstData2012[i]);
+    //1D reweighting -- all I have done for 2012 (not sure if 3D is used anymore)
+    if (puReweightIs1D)    DataDist.push_back(pu::RunsThrough199703[i]);
     //for 3dPU reweighting 
     //    else DataDist2011.push_back(pu::TrueDist2011_f[i]);
-    MCDist.push_back(pu::Summer2012[i]);
-  } 
+    if (sampleName_.Contains("PU_S7"))  MCDist.push_back(pu::Summer2012[i]);
+    else if (sampleName_.Contains("PU_S6")) MCDist.push_back(pu::Summer2012[i]); //this should really be something else
+    else MCDist.push_back(pu::Summer2012[i]); //just a safety valve
+  }
 
   reweight::LumiReWeighting * LumiWeights=0;
   // FIXME CFA
@@ -5679,7 +5772,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
       else{
 	cout << "This is data!"<< endl;
       }
-      cout << "weight: "<< getWeight(nevents) << endl;
+      cout << "Running over n out of total generated = "<< nevents<<" / "<<getNEventsGenerated() << endl;
     }
     if (entry%100000==0 ) cout << "  entry: " << entry << ", percent done=" << (int)(entry/(double)nevents*100.)<<  endl;
 
@@ -5796,7 +5889,20 @@ Also the pdfWeightSum* histograms that are used for LM9.
 
     bool passAnyTrigger=passHLT(triggerlist); //evaluate all trigger decisions
 
-    cutTrigger= triggerlist["PFHT350_PFMET100"].pass; //shortcut name for the physics trigger
+    //idea -- we should do a dataset-aware OR of the two groups of physics triggers here, to allow easy combination of the MET and HTMHT datasets
+    bool passMETtriggers = triggerlist["DiCentralPFJet50_PFMET80"].pass || triggerlist["DiCentralPFNoPUJet50_PFMETORPFMETNoMu80"].pass;
+    bool passHTMHTtriggers = triggerlist["PFHT350_PFMET100"].pass || triggerlist["PFNoPUHT350_PFMET100"].pass;
+    if (sampleName_.BeginsWith("HT_Run2012A") || sampleName_.BeginsWith("HTMHT_Run2012B")) {
+      //from MHT dataset, use only events that don't pass the MET triggers
+      cutTrigger =   	passHTMHTtriggers && 	(!passMETtriggers);
+    }
+    else if (sampleName_.BeginsWith("MET_Run2012")) {
+      cutTrigger = passMETtriggers;
+    }
+    else { //MC etc
+      cutTrigger = passHTMHTtriggers || passMETtriggers;
+    }
+
     pass_utilityHLT = triggerlist["PFHT350"].pass; //shortcut name for HT-only trigger
     prescaleUtilityHLT = triggerlist["PFHT350"].prescale;
     versionUtilityHLT = triggerlist["PFHT350"].version;
