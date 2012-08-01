@@ -3084,7 +3084,7 @@ void EventCalculator::hadronicTopFinder_DeltaR(float & mjjb1, float & mjjb2 , fl
     //we need to do the loop twice
 
     //loop over light jets
-    for (unsigned int ii=0; ii<jets_AK5PF_pt->size(); ii++) {
+    for ( int ii=0; ii<int(jets_AK5PF_pt->size()); ii++) {
       //on the 2nd iteration, skip jets that are already used
       if (iteration==1 && ( (ii == mindrlight_ii[0]) || (ii == mindrlight_jj[0]) )) continue;
 
@@ -3093,7 +3093,7 @@ void EventCalculator::hadronicTopFinder_DeltaR(float & mjjb1, float & mjjb2 , fl
 	if(iteration==0) nlightjets++;
 	
 	//loop over other light jets in the event
-	for (unsigned int jj=0; jj<jets_AK5PF_pt->size(); jj++) {
+	for ( int jj=0; jj<int(jets_AK5PF_pt->size()); jj++) {
 	  if ( ii==jj) continue;
 	  //on the 2nd iteration, skip jets that are already used
 	  if (iteration==1 && ( (jj == mindrlight_ii[0]) || (jj == mindrlight_jj[0]) )) continue;
@@ -3166,6 +3166,102 @@ void EventCalculator::hadronicTopFinder_DeltaR(float & mjjb1, float & mjjb2 , fl
     swap(topPT1,topPT2);
   }
   return;
+}
+
+void EventCalculator::printDecay() {
+  cout<<" -- printDecay --"<<endl;
+  for (unsigned int k = 0; k< mc_doc_id->size(); k++) {
+    // cout<<k<<"\t"<<TMath::Nint(mc_doc_id->at(k))<<" "<<mc_doc_mass->at(k)<<" mom="<<TMath::Nint(mc_doc_mother_id->at(k))<<endl;
+    if ( abs(TMath::Nint(mc_doc_mother_id->at(k))) == 1000006) {
+      cout<<TMath::Nint(mc_doc_mother_id->at(k))<<"\t"<<mc_doc_eta->at(k)<<" "<<mc_doc_phi->at(k)<<" "<<mc_doc_pt->at(k)<<endl;
+    }
+  }
+
+}
+
+int EventCalculator::jjResonance_mcTruthCheck(int jj1, int jj2) {
+
+  if (!sampleName_.BeginsWith("sbottom8lnotaus")) return 0; //don't evaluate this for data or any MC except the RPV sbottom signal
+  /*
+Goal:
+check if the two reco'd jets actually came from the resonance decay of the stop
+
+return either 0,1,2
+
+0 == these jets do not match a stop
+1 == these jets match stop 1
+2 == these jets match stop 2
+
+  */
+
+  //after some checks by eye, i don't trust the partonFlavour variable
+  float jet1_eta = jets_AK5PF_eta->at( jj1);
+  float jet1_phi = jets_AK5PF_phi->at( jj1);
+
+  float jet2_eta = jets_AK5PF_eta->at( jj2);
+  float jet2_phi = jets_AK5PF_phi->at( jj2);
+
+  float stop1_eta[2]={-99,-99};
+  float stop1_phi[2]={-99,-99};
+  int stop1_i = 0;
+
+  float stop2_eta[2]={-99,-99};
+  float stop2_phi[2]={-99,-99};
+  int stop2_i = 0;
+
+  //loop over gen particles and find the (anti)stops
+  for (unsigned int k = 0; k< mc_doc_id->size(); k++) {
+    if (  TMath::Nint(mc_doc_mother_id->at(k)) == 1000006) { // found the stop
+      if (stop1_i <2) {
+	stop1_eta[stop1_i] = mc_doc_eta->at(k);
+	stop1_phi[stop1_i] = mc_doc_phi->at(k);
+
+      }
+      else cout<<"Too many stop daughters!"<<endl;
+      ++stop1_i;
+    }
+    else if (  TMath::Nint(mc_doc_mother_id->at(k)) == -1000006) { // found the anti-stop
+      if (stop2_i <2) {
+	stop2_eta[stop2_i] = mc_doc_eta->at(k);
+	stop2_phi[stop2_i] = mc_doc_phi->at(k);
+      }
+      else cout<<"Too many antistop daughters!"<<endl;
+      ++stop2_i;
+    }
+  }
+
+  const float matchingRadius=0.3; //seems to work ok in 10 test events
+
+  //for stop1, do both jets match?
+  bool match1 
+    =   jmt::deltaR(jet1_eta,jet1_phi , stop1_eta[0], stop1_phi[0])<matchingRadius 
+    &&  jmt::deltaR(jet2_eta,jet2_phi , stop1_eta[1], stop1_phi[1])<matchingRadius;
+  //or the other combo
+  bool match2 
+    =   jmt::deltaR(jet2_eta,jet2_phi , stop1_eta[0], stop1_phi[0])<matchingRadius 
+    &&  jmt::deltaR(jet1_eta,jet1_phi , stop1_eta[1], stop1_phi[1])<matchingRadius;
+  
+  //now try stop2
+  bool match3 
+    =   jmt::deltaR(jet1_eta,jet1_phi , stop2_eta[0], stop2_phi[0])<matchingRadius 
+    &&  jmt::deltaR(jet2_eta,jet2_phi , stop2_eta[1], stop2_phi[1])<matchingRadius;
+  //or the other combo
+  bool match4 
+    =   jmt::deltaR(jet2_eta,jet2_phi , stop2_eta[0], stop2_phi[0])<matchingRadius 
+    &&  jmt::deltaR(jet1_eta,jet1_phi , stop2_eta[1], stop2_phi[1])<matchingRadius;
+  
+  //debug
+//   if (match1) cout<<" match 1 DR = "<<jmt::deltaR(jet1_eta,jet1_phi , stop1_eta[0], stop1_phi[0])<<"\t"<<jmt::deltaR(jet2_eta,jet2_phi , stop1_eta[1], stop1_phi[1])<<endl;
+//   else if (match2)cout<<" match 2 DR = "<<jmt::deltaR(jet2_eta,jet2_phi , stop1_eta[0], stop1_phi[0])<<"\t"<<jmt::deltaR(jet1_eta,jet1_phi , stop1_eta[1], stop1_phi[1])<<endl;
+
+//   if (match3) cout<<" match 3 DR = "<<jmt::deltaR(jet1_eta,jet1_phi , stop2_eta[0], stop2_phi[0])<<"\t"<<jmt::deltaR(jet2_eta,jet2_phi , stop2_eta[1], stop2_phi[1])<<endl;
+//   else if (match4)cout<<" match 4 DR = "<<jmt::deltaR(jet2_eta,jet2_phi , stop2_eta[0], stop2_phi[0])<<"\t"<<jmt::deltaR(jet1_eta,jet1_phi , stop2_eta[1], stop2_phi[1])<<endl;
+
+  if ( (match1 || match2) && (match3||match4)) cout<<"WAIT -- Double match!"<<endl;
+  if (match1 ||match2) return 1;
+  if (match3 ||match4) return 2;
+  return 0;
+
 }
 
 //FIXME CFA
@@ -4239,9 +4335,10 @@ double EventCalculator::getScanCrossSection( SUSYProcess p, const TString & vari
   return 0;
 }
 
-void EventCalculator::jjResonanceFinder(float & mjj1, float & mjj2) {//simple first try
+void EventCalculator::jjResonanceFinder(float & mjj1, float & mjj2, int & ngoodMC) {//simple first try
   mjj1=0;
   mjj2=0;
+  ngoodMC=0;
 
   //find the good jets
   vector<unsigned int> gjets;
@@ -4256,6 +4353,11 @@ void EventCalculator::jjResonanceFinder(float & mjj1, float & mjj2) {//simple fi
   //0,3  1,2
 
   float mindiff=1e9;
+
+  int r1_index1=-1;
+  int r1_index2=-1;
+  int r2_index1=-1;
+  int r2_index2=-1;
 
   //we only want to look at the lead 4 jets
   const unsigned int maxjets=4;
@@ -4279,10 +4381,29 @@ void EventCalculator::jjResonanceFinder(float & mjj1, float & mjj2) {//simple fi
       mindiff = fabs(this_mjj1-this_mjj2);
       mjj1=this_mjj1;
       mjj2=this_mjj2;
+
+      r1_index1 = gjets.at(ii);
+      r1_index2 = gjets.at(jj);
+      r2_index1 = gjets.at(otherjet1);
+      r2_index2 = gjets.at(otherjet2);
     }
 
   }
-   
+
+//   cout<<"\t1a) "<<jets_AK5PF_eta->at(r1_index1)<<" "<<jets_AK5PF_phi->at(r1_index1)<<" "<<jets_AK5PF_pt->at(r1_index1)<<endl;
+//   cout<<"\t1b) "<<jets_AK5PF_eta->at(r1_index2)<<" "<<jets_AK5PF_phi->at(r1_index2)<<" "<<jets_AK5PF_pt->at(r1_index2)<<endl;
+
+//   cout<<"\t2a) "<<jets_AK5PF_eta->at(r2_index1)<<" "<<jets_AK5PF_phi->at(r2_index1)<<" "<<jets_AK5PF_pt->at(r2_index1)<<endl;
+//   cout<<"\t2b) "<<jets_AK5PF_eta->at(r2_index2)<<" "<<jets_AK5PF_phi->at(r2_index2)<<" "<<jets_AK5PF_pt->at(r2_index2)<<endl;
+
+  //now check if we found the right jets (in MC)
+  int stop1index=  jjResonance_mcTruthCheck(r1_index1,r1_index2);
+  int stop2index=  jjResonance_mcTruthCheck(r2_index1,r2_index2);
+  //cout<<"[jjResFinder] "<<stop1index<< " "<<stop2index<<endl;
+  if ( (stop1index ==stop2index) && stop1index>0) cout<<"WAIT -- we properly reco'd the same stop twice?"<<endl;
+  if (stop1index>0) ++ngoodMC;
+  if (stop2index>0) ++ngoodMC;
+
 }
 
 std::vector<unsigned int> EventCalculator::jetsetToVector(const vector<unsigned int> & goodjets, const set<unsigned int> & myset) {
@@ -4373,13 +4494,28 @@ void EventCalculator::loadJetTagEffMaps() {
   f_tageff_ = new TFile(filename,"READ");
   if (f_tageff_->IsZombie()) {
     cout<<"Failed to load the b-tag eff map for sample "<<sampleName_<<endl;
-    assert(0); //let's not make mistakes caused by choosing a default and running anyway
+    delete f_tageff_;
+    f_tageff_=0;
   }
 
 }
 
 void EventCalculator::calculateTagProb(float &Prob0, float &ProbGEQ1, float &Prob1, float &ProbGEQ2, float &Prob2, float &ProbGEQ3,
 				       const float extraSFb, const float extraSFc, const float extraSFl, BTagEffModifier modifier) {
+
+  //must initialize correctly
+  Prob2 = 0;
+  Prob1 = 0; ProbGEQ1 = 1; Prob0 = 1; ProbGEQ2 = 0;
+
+  if (f_tageff_ == 0) { //if the b-tag eff file is not there make sure it will be obvious to the user -- fill all with zero
+    Prob0 = 0;
+    ProbGEQ1=0;
+    Prob1=0;
+    ProbGEQ2=0;
+    Prob2=0;
+    ProbGEQ3=0;
+    return;
+  }
 
   char btageffname[200], ctageffname[200], ltageffname[200];
   std::string sbtageff = "h_btageff";  std::string sctageff = "h_ctageff";  std::string sltageff = "h_ltageff";
@@ -4389,10 +4525,6 @@ void EventCalculator::calculateTagProb(float &Prob0, float &ProbGEQ1, float &Pro
   TH1F * h_btageff  = (TH1F *)f_tageff_->Get(btageffname);
   TH1F * h_ctageff  = (TH1F *)f_tageff_->Get(ctageffname);
   TH1F * h_ltageff  = (TH1F *)f_tageff_->Get(ltageffname);
-
-  //must initialize correctly
-  Prob2 = 0;
-  Prob1 = 0; ProbGEQ1 = 1; Prob0 = 1; ProbGEQ2 = 0;
 
   for (unsigned int ijet=0; ijet<jets_AK5PF_pt->size(); ++ijet) {
     float subprob1=0;
@@ -4814,6 +4946,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   float bestZmass;
   float mjj1,mjj2,mjjdiff;
   float mjj1_5,mjj2_5,mjjdiff_5;
+  int nCorrectRecoStop;
 
   float jetpt1, jetgenpt1, jetphi1, jetgenphi1, jeteta1, jetgeneta1, jetenergy1, bjetpt1, bjetphi1, bjeteta1, bjetenergy1;
   float jetpt2, jetgenpt2, jetphi2, jetgenphi2, jeteta2, jetgeneta2, jetenergy2, bjetpt2, bjetphi2, bjeteta2, bjetenergy2;
@@ -5035,6 +5168,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("m0",&m0,"m0/I");
   reducedTree.Branch("m12",&m12,"m12/I");
 
+
   reducedTree.Branch("W1decayType",&W1decayType,"W1decayType/I");
   reducedTree.Branch("W2decayType",&W2decayType,"W2decayType/I");
   reducedTree.Branch("decayType",&decayType,"decayType/I");
@@ -5113,6 +5247,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("SUSY_nb",&SUSY_nb,"SUSY_nb/I");
   reducedTree.Branch("SUSY_process",&SUSY_process,"SUSY_process/I");
   reducedTree.Branch("SUSY_recoilPt",&SUSY_recoilPt,"SUSY_recoilPt/F");
+  reducedTree.Branch("nCorrectRecoStop",&nCorrectRecoStop,"nCorrectRecoStop/I");
 
   reducedTree.Branch("njets",&njets,"njets/I");
   reducedTree.Branch("njets30",&njets30,"njets30/I");
@@ -5484,6 +5619,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
     }
     if (entry%100000==0 ) cout << "  entry: " << entry << ", percent done=" << (int)(entry/(double)nevents*100.)<<  endl;
 
+    //    printDecay();
 
     pair<int,int> thispoint;
     if (theScanType_==kmSugra) assert(0);// FIXME CFA // thispoint=make_pair(TMath::Nint(eventlhehelperextra_m0),TMath::Nint(eventlhehelperextra_m12)) ;
@@ -5685,7 +5821,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
       njets30 = nGoodJets30();
 
       //look for jj resonances
-      jjResonanceFinder(mjj1,mjj2);
+      jjResonanceFinder(mjj1,mjj2, nCorrectRecoStop);
       mjjdiff=fabs(mjj1-mjj2);
       jjResonanceFinder5(mjj1_5,mjj2_5);
       mjjdiff_5=fabs(mjj1_5-mjj2_5);

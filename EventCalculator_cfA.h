@@ -129,11 +129,12 @@ public:
   void getSphericityJetMET(float & lambda1, float & lambda2, float & det,const int jetmax, bool addMET);
 
   std::vector<unsigned int> jetsetToVector(const std::vector<unsigned int> & goodjets, const std::set<unsigned int> & myset) ;
-  void jjResonanceFinder(float & mjj1, float & mjj2);//simple first try
+  void jjResonanceFinder(float & mjj1, float & mjj2, int & ngoodMC);//simple first try
   void jjResonanceFinder5(float & mjj1, float & mjj2);
 
   void hadronicTopFinder_DeltaR(float & mjjb1, float & mjjb2, float & topPT1, float & topPT2);
-
+  void printDecay();
+  int jjResonance_mcTruthCheck(int jj1, int jj2);
 
   unsigned int getNthGoodJet(unsigned int goodJetN, float mainpt, float maineta, bool mainid);
   double getMinDeltaPhiMET(unsigned int maxjets);
