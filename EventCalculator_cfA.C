@@ -5033,7 +5033,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   bool badjetFilter; // new for 2012
 
   bool passCleaning;
-  int PBNRcode; //seems this didn't catch on....(may as well keep it)
+  int PBNRcode; //being used in 2012
 
   bool buggyEvent;
 
