@@ -39,7 +39,6 @@ TChain* dtree=0;
 TH1D* hdata=0;
 TH2D* hdata2d=0;
 
-
 TString currentConfig_;
 TH2D* scanSMSngen=0;
 //TH1D* referenceCrossSectionGluino=0;
@@ -49,6 +48,8 @@ CrossSectionTable * CrossSectionTable_stop_=0;
 
 //default selection
 TString selection_ ="cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1";
+
+TString nameOfEventWeight_="weight";
 
 //intentionally bogus values
 float eff_SB_MHT_             = 0.1;
@@ -1346,7 +1347,7 @@ for legacy purposes I am keeping all of the weight and selection TStrings, altho
   else if (type==kSMSPlane) lumiscale=1;
   else {assert(0);}
 
-  TString weightedcut="weight"; 
+  TString weightedcut=nameOfEventWeight_;
   
   weightedcut += "*(";
   weightedcut +=lumiscale;
@@ -1713,6 +1714,7 @@ void setColorScheme(const TString & name) {
     sampleColor_["TTbarJets-other"]=kPink-9;
     sampleColor_["SingleTop"] = kMagenta;
     sampleColor_["WJets"] = kGreen-3;
+    sampleColor_["WJetsInc"] = kGreen+3;
     sampleColor_["WJets-mu"]=kSpring+9;
     sampleColor_["WJets-muGood"]=kSpring+9;
     sampleColor_["WJets-muFailEta"]=kSpring+9;
@@ -1728,9 +1730,8 @@ void setColorScheme(const TString & name) {
     sampleColor_["WJets-tauHad"]=kGreen-10;
     sampleColor_["WJetsZ2"] = kGreen-3;
     sampleColor_["ZJets"] = kViolet-3;
-    //sampleColor_["ZJets"] = kOrange-3;
+    sampleColor_["ZJetsInc"] = kOrange+3;
     sampleColor_["Zinvisible"] = kOrange-3;
-    //sampleColor_["Zinvisible"] = kRed-5;
     sampleColor_["Zinvisible-2vAcc"] = kOrange-3;
     sampleColor_["Zinvisible-1vAcc"] = kSpring+4;
     sampleColor_["Zinvisible-0vAcc"] = kGray+3;
@@ -1805,6 +1806,7 @@ void setColorScheme(const TString & name) {
     sampleColor_["TTbarJets-other"]=kPink-9;
     sampleColor_["SingleTop"] = kMagenta;
     sampleColor_["WJets"] = kOrange;
+    sampleColor_["WJetsInc"] = kOrange+3;
     sampleColor_["WJets-mu"]=kSpring+9;
     sampleColor_["WJets-muGood"]=kSpring+9;
     sampleColor_["WJets-muFailEta"]=kSpring+9;
@@ -1820,6 +1822,7 @@ void setColorScheme(const TString & name) {
     sampleColor_["WJets-tauHad"]=kGreen-10;
     sampleColor_["WJetsZ2"] = kOrange;
     sampleColor_["ZJets"] = 7;
+    sampleColor_["ZJetsInc"] = kOrange+3;
     sampleColor_["Zinvisible"] = kOrange+7;
     sampleColor_["Zinvisible-2vAcc"] = kOrange-3;
     sampleColor_["Zinvisible-1vAcc"] = kSpring+4;
@@ -2060,6 +2063,7 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   samplesAll_.insert("TTbarJets-had");
   samplesAll_.insert("TTbarJets-other");
   samplesAll_.insert("WJets");
+  samplesAll_.insert("WJetsInc");
   samplesAll_.insert("WJets-muGood");
   samplesAll_.insert("WJets-muFailEta");
   samplesAll_.insert("WJets-muFailPt");
@@ -2074,6 +2078,7 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   samplesAll_.insert("WJets-ele");
   samplesAll_.insert("WJets-tauHad");
   samplesAll_.insert("ZJets");
+  samplesAll_.insert("ZJetsInc");
   samplesAll_.insert("Zinvisible");
   samplesAll_.insert("Zinvisible-2vAcc");
   samplesAll_.insert("Zinvisible-1vAcc");
@@ -2132,10 +2137,10 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   //FOR PLOTS
   ////////////
   if (signalEffMode=="") {
-    configDescriptions_.setDefault("CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff04_HLTEff0");
-    configDescriptions_.setCorrected("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff04_HLTEff0");
-    //configDescriptions_.setDefault("CSVM_PFMETTypeI_PF2PATjets_JES0_JER0_PFMETTypeI_METunc0_PUunc0_BTagEff04_HLTEff0");
-    //configDescriptions_.setCorrected("CSVM_PFMETTypeI_PF2PATjets_JES0_JERbias_PFMETTypeI_METunc0_PUunc0_BTagEff04_HLTEff0");
+    //configDescriptions_.setDefault("CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff04_HLTEff0");
+    //configDescriptions_.setCorrected("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff04_HLTEff0");
+    configDescriptions_.setDefault("CSVM_PF2PATjets_JES0_JER0_PFMETTypeI_METunc0_PUunc0_BTagEff04_HLTEff0");
+    configDescriptions_.setCorrected("CSVM_PF2PATjets_JES0_JERbias_PFMETTypeI_METunc0_PUunc0_BTagEff04_HLTEff0");
 
   }
   else if (signalEffMode=="scan" || signalEffMode=="complete") {  //Only for signal systematics
@@ -2216,6 +2221,7 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   sampleLabel_["TTbarJets-other"]="t#bar{t}:other";
   sampleLabel_["SingleTop"] = "Single-Top";
   sampleLabel_["WJets"] = "W#rightarrowl#nu";
+  sampleLabel_["WJetsInc"] = "W#rightarrowl#nu (all HT)";
   sampleLabel_["WJets-mu"] = "W#rightarrow#mu#nu";
   sampleLabel_["WJets-muGood"] = "W#rightarrow#mu#nu - good";
   sampleLabel_["WJets-muFailEta"] = "W#rightarrow#mu#nu - faileta";
@@ -2231,6 +2237,7 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   sampleLabel_["WJets-tauHad"] = "W#rightarrow#tau(#rightarrow had)#nu";
   sampleLabel_["WJetsZ2"] = "W#rightarrowl#nu (Z2)";
   sampleLabel_["ZJets"] = "Z/#gamma*#rightarrowl^{+}l^{-}";
+  sampleLabel_["ZJetsInc"] = "Z/#gamma*#rightarrowl^{+}l^{-} (all HT)";
   sampleLabel_["Zinvisible"] = "Z#rightarrow#nu#nu";
   sampleLabel_["Zinvisible-2vAcc"] = "Z#rightarrow#nu#nu - 2Acc";
   sampleLabel_["Zinvisible-1vAcc"] = "Z#rightarrow#nu#nu - 1Acc";
@@ -2313,6 +2320,7 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   sampleMarkerStyle_["TTbarJets-other"]= kFullSquare;
   sampleMarkerStyle_["SingleTop"] = kOpenSquare;
   sampleMarkerStyle_["WJets"] = kMultiply;
+  sampleMarkerStyle_["WJetsInc"] = kMultiply;
   sampleMarkerStyle_["WJets-mu"] = kMultiply;
   sampleMarkerStyle_["WJets-muGood"] = kMultiply;
   sampleMarkerStyle_["WJets-muFailEta"] = kMultiply;
@@ -2328,6 +2336,7 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   sampleMarkerStyle_["WJets-tauHad"] = kMultiply;
   sampleMarkerStyle_["WJetsZ2"] = kMultiply;
   sampleMarkerStyle_["ZJets"] = kFullTriangleUp;
+  sampleMarkerStyle_["ZJetsInc"] = kFullTriangleDown;
   sampleMarkerStyle_["Zinvisible"] = kFullTriangleDown;
   sampleMarkerStyle_["Zinvisible-2vAcc"] = kFullTriangleDown;
   sampleMarkerStyle_["Zinvisible-1vAcc"] = kFullTriangleDown;
@@ -2387,8 +2396,10 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   sampleOwenName_["ttbar"]="ttbar";
   sampleOwenName_["SingleTop"] = "singletop";
   sampleOwenName_["WJets"] = "wjets";
+  sampleOwenName_["WJetsInc"] = "wjetsinc";
   sampleOwenName_["WJetsZ2"] = "wjets";
   sampleOwenName_["ZJets"] = "zjets";
+  sampleOwenName_["ZJetsInc"] = "zjetsinc";
   sampleOwenName_["HerwigQCDFlat"] = "herwigqcdflat";
   sampleOwenName_["Zinvisible"] = "zinvis";
   sampleOwenName_["VV"] = "vv";
@@ -2467,8 +2478,15 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   primaryDatasets_["HTMHT"]=0;
   primaryDatasets_["JetHT"]=0;
   primaryDatasets_["SingleMu"]=0;
+  primaryDatasets_["SingleElectron"]=0;
   primaryDatasets_["MuHad"]=0;
-  //   primaryDatasets_["DoubleElectron"]=0;
+  primaryDatasets_["ElectronHad"]=0;
+  primaryDatasets_["DoubleElectron"]=0;
+  primaryDatasets_["DoubleMu"]=0;
+  primaryDatasets_["MuEG"]=0;
+  primaryDatasets_["Photon"]=0;
+  primaryDatasets_["MET"]=0;
+ 
   //there are others, but this is what I have now
   //2011 names  
   primaryDatasets_["2011HT"]=0;
@@ -2476,7 +2494,6 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   primaryDatasets_["2011SingleElectron"]=0;
   primaryDatasets_["2011DoubleMu"]=0;
   primaryDatasets_["2011DoubleElectron"]=0;
-
 
 
   for (map<TString, TChain*>::iterator idataset=primaryDatasets_.begin(); idataset!=primaryDatasets_.end(); ++idataset) {
@@ -2492,18 +2509,50 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
     }
     else if (idataset->first == "SingleMu") {
       idataset->second = new TChain("reducedTree");
-      cout<<"WARNING -- don't have Run2012A for SingleMu for some reason"<<endl;
+      addDataToChain(idataset->second,"SingleMu_Run2012A");
       addDataToChain(idataset->second,"SingleMu_Run2012B");
+    }
+    else if (idataset->first == "SingleElectron") {
+      idataset->second = new TChain("reducedTree");
+      addDataToChain(idataset->second,"SingleElectron_Run2012A");
+      addDataToChain(idataset->second,"SingleElectron_Run2012B");
+    }
+    else if (idataset->first == "Photon") {
+      idataset->second = new TChain("reducedTree");
+      addDataToChain(idataset->second,"Photon_Run2012A");
+      cout<<"Warning -- Photon Run2012B not here"<<endl;
+    }
+    else if (idataset->first == "MET") {
+      idataset->second = new TChain("reducedTree");
+      addDataToChain(idataset->second,"MET_Run2012A");
+      cout<<"Warning -- MET Run2012B not here"<<endl;
     }
     else if (idataset->first == "MuHad") {
       idataset->second = new TChain("reducedTree");
       addDataToChain(idataset->second,"MuHad_Run2012A");
-      addDataToChain(idataset->second,"MuHad_Run2012B");
+      cout<<"Warning -- MuHad Run2012B not here"<<endl;
+      //      addDataToChain(idataset->second,"MuHad_Run2012B");
     }
-//     else if (idataset->first == "DoubleElectron") {
-//       idataset->second = new TChain("reducedTree");
-//       addDataToChain(idataset->second,"DoubleElectron_Run2012B");
-//     }
+    else if (idataset->first == "ElectronHad") {
+      idataset->second = new TChain("reducedTree");
+      addDataToChain(idataset->second,"ElectronHad_Run2012A");
+      addDataToChain(idataset->second,"ElectronHad_Run2012B");
+    }
+    else if (idataset->first == "DoubleElectron") {
+      idataset->second = new TChain("reducedTree");
+      addDataToChain(idataset->second,"DoubleElectron_Run2012A");
+      addDataToChain(idataset->second,"DoubleElectron_Run2012B");
+    }
+    else if (idataset->first == "DoubleMu") {
+      idataset->second = new TChain("reducedTree");
+      addDataToChain(idataset->second,"DoubleMu_Run2012A");
+      addDataToChain(idataset->second,"DoubleMu_Run2012B");
+    }
+    else if (idataset->first == "MuEG") {
+      idataset->second = new TChain("reducedTree");
+      addDataToChain(idataset->second,"MuEG_Run2012A");
+      addDataToChain(idataset->second,"MuEG_Run2012B");
+    }
     else if (idataset->first == "2011HT") {
       idataset->second = new TChain("reducedTree");
       addDataToChain(idataset->second,"ht");
@@ -2524,7 +2573,6 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
       idataset->second = new TChain("reducedTree");
       addDataToChain(idataset->second,"doubleelectron");
     }
-
     else assert(0);
   }
 
@@ -2841,6 +2889,9 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
     histos_[samples_[isample]] = (varbins==0) ? new TH1D(hname,"",nbins,low,high) : new TH1D(hname,"",nbins,varbins);
     histos_[samples_[isample]]->Sumw2();
     TTree* tree = (TTree*) files_[currentConfig_][samplename]->Get("reducedTree");
+    if (tree==0) {
+      cout<<"tree is null! Something must be wrong!"<<endl<<currentConfig_<<endl<<samplename<<endl;
+    }
     gROOT->cd();
     TString weightopt= useFlavorHistoryWeights_ && samples_[isample].Contains("WJets") ? "flavorHistoryWeight" : "";
 
@@ -4617,7 +4668,7 @@ void drawTrigEff(const TString & pd, const TCut & tag, const TCut & probe, const
   text3=new TLatex(5,23,selection_.Data());
   text3->SetNDC();
   text3->SetX(0.15);
-  text3->SetY(0.9);
+  text3->SetY(0.875);
   text3->SetTextFont(42);
   text3->SetTextSize(0.022);
   text3->Draw();
