@@ -60,8 +60,9 @@ bool mumode = true;
 //(if this is on, then use the fitted shape from MC and apply to data (with gaussian convolution))
 bool mcmode = false; 
 
-//**** switch for fixing signal shape between pass and fail distribution ****//
-//(for data, the fit works best if you constain the signal shape to be the same between pass and fail distributions)
+//**** switch for fixing signal shape between pass and fail distribution ****// 
+//(for data, the fit works best if you constain the signal shape to be
+//the same between pass and fail distributions, unless you use kMCxGauss mode for signal) 
 //for Zll MC, it works best if you use separate signal shapes
 bool samePassFailSigShape = false;
 
