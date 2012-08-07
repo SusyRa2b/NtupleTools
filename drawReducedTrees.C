@@ -75,10 +75,6 @@ in order to get one file per sample.
 TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35u/Fall11/"; //uncorrected MET
 TString dataInputPath =  "/cu2/ra2b/reducedTrees/V00-02-35u/";//uncorrected MET
 
-//TString inputPath = "/cu3/wteo/reducedTrees/V00-02-35w_ZllMET/Fall11/"; //inclusive DYsample
-//TString inputPath = "/cu3/wteo/reducedTrees/V00-02-35w_ZllMET_v2/Fall11/"; //HT200 Zjets sample
-//TString dataInputPath =  "/cu3/wteo/reducedTrees/V00-02-35y_ZllMET/";//uncorrected MET
-
 //double lumiScale_ = 1143; //official summer conf lumi
 //double lumiScale_ = 3464.581;//oct25
  //double lumiScale_ = 4683.719;//nov4
@@ -93,6 +89,8 @@ const bool useBNNEffCurves_=false;
 const bool btaggedLSB_=false;
 const bool use1B_SL_=false; // use ge1b selection for SL sample in ttbar method
 const bool doNJetRWClosure_ = true; //should usually be true; set it to false only to save time
+
+const bool useColoradoZvv_ = true; //if false, it will use Don's predictions
 
 void RSL(double SIG, double SB) {
 
@@ -662,6 +660,9 @@ std::pair<double,std::vector<double> > anotherABCD( const SearchRegion & region,
   useFlavorHistoryWeights_=false;
   
   loadSamples(); //needs to come first! this is why this should be turned into a class, with this guy in the ctor
+
+  if(is2011Data_) setDatasetToDraw("2011HT");
+
   setColorScheme("nostack");
   //clearSamples();
   //addSample("PythiaPUQCD");
@@ -1308,18 +1309,19 @@ void runDataQCD2011(const bool forOwen=false) {
 
   setSearchRegions();
   assert(sbRegions_.size() == searchRegions_.size());
-
+  
   //data structures to hold results
-  vector<std::pair<double,std::vector<double> > > n;
-  vector<std::pair<double,std::vector<double> > > subp;
-  vector<std::pair<double,std::vector<double> > > subm;
+  //the structure is organized as {SB1,SIG1,SB2,SIG2,...,SBN,SIGN}
+  vector<std::pair<double,std::vector<double> > > n;     //nominal results 
+  vector<std::pair<double,std::vector<double> > > subp;  //LDP-MC +40% results
+  vector<std::pair<double,std::vector<double> > > subm;  //LDP-MC -40% results
 			  
-  vector<std::pair<double,std::vector<double> > > sbp;
-  vector<std::pair<double,std::vector<double> > > sbm;
+  vector<std::pair<double,std::vector<double> > > sbp;   //SB shifted +10 GeV results
+  vector<std::pair<double,std::vector<double> > > sbm;   //SB shifted -10 GeV results
 			  
-  vector<std::pair<double,std::vector<double> > > lsbp;
-  vector<std::pair<double,std::vector<double> > > lsbm;
-
+  vector<std::pair<double,std::vector<double> > > lsbp;  //LSB reweighting correction +100% results
+  vector<std::pair<double,std::vector<double> > > lsbm;  //LSB reweighting correction -100% results
+  
   if (!doNJetRWClosure_) cout<<"Warning! njet reweighting for closure test is turned off!"<<endl;
   cout<<" ==== Nominal data results === "<<endl;
   for (unsigned int i=0; i<sbRegions_.size(); i++) {
@@ -1332,14 +1334,14 @@ void runDataQCD2011(const bool forOwen=false) {
     resultsMap_[ searchRegions_[i].id()]["QCD"].trigErrorMinus = qcdresult.second.at(2);
   }
   cout<<" =END Nominal data results === "<<endl;
-
+  
   /*
     the "owen mode" is collecting in global data structures the quantities that owen needs
     If we run the systematics then we will clobber the regular numbers. So quit now with just the nominal
     values.
   */
   if (forOwen) return;
-
+  
   //now do it again with +40% subtraction
   cout<<" subtraction +40% "<<endl;
   for (unsigned int i=0; i<sbRegions_.size(); i++) {
@@ -1428,7 +1430,7 @@ void runDataQCD2011(const bool forOwen=false) {
   
   cout<<" == Running QCD closure test =="<<endl;
   runClosureTest2011(qcdSystErrors,doNJetRWClosure_);
-  
+
   cout<<" == QCD systematics summary =="<<endl;
   cout.setf(ios_base::fixed); //want exactly one decimal place....
   cout.precision(1);
@@ -1456,6 +1458,951 @@ void runDataQCD2011(const bool forOwen=false) {
   cout.precision(6);
 
 }
+
+
+// Zvv estimate
+//return {MC closure,extrapolation factor} or {DD estimate, DD estimate error}
+std::pair<double,double> zvvClosureTest(const SearchRegion & region,
+					const TString & mode="", 
+					bool isExtrapMode = false, 
+					const TString FCmode = "", 
+					bool datamode = false 
+					) {
+  assert( mode=="mu" || mode=="ele" );
+
+  if(datamode && !isExtrapMode){std::cout << "isExtrapMode must be true in data mode.  Aborting." << std::endl;  assert(0);}
+
+  doOverflowAddition(true);
+
+  TString btagselection = region.btagSelection;
+  bool isSIG = region.isSIG;
+
+  TString sampleOfInterest = "totalsm";
+  loadSamples(); //needs to come first! this is why this should be turned into a class, with this guy in the ctor
+
+  if(mode=="mu") setDatasetToDraw("2011DoubleMu");
+  else if(mode=="ele") setDatasetToDraw("2011DoubleElectron");
+
+  setColorScheme("nostack");
+  clearSamples();
+  addSample("Zinvisible");
+
+  
+  savePlots_=false;
+  setLogY(false);
+
+  // --  count events
+  TCut btagcut = "nbjetsCSVM>=1";
+  btagSFweight_="1";
+  TString btagSFweight=""; //we're going to have to switch this one in and out of the global var
+  if (useScaleFactors_) {
+
+    usePUweight_=true;
+    useHTeff_=true;
+    useMHTeff_=false;
+    //useMHTeff_=true;
+    thebnnMHTeffMode_ = kOff;//dealt with later
+    currentConfig_=configDescriptions_.getCorrected(); //add JERbias
+
+    if(isExtrapMode){
+      //turn of all btag weights stuff
+      btagSFweight_="1";
+      if (btagselection=="ge2b") {
+	btagcut="nbjetsCSVM>=2";
+      }
+      else if (btagselection=="ge1b") {}
+      else if (btagselection=="ge3b") {
+	btagcut="nbjetsCSVM>=3";
+      }
+      else if (btagselection=="eq1b") {
+	btagcut="nbjetsCSVM==1";
+      }
+      else if (btagselection=="eq2b") {
+	btagcut="nbjetsCSVM==2";
+      }
+      else {assert(0);}
+    }
+    else{
+      btagcut="1";    
+      if (btagselection=="ge2b") {
+	btagSFweight="probge2";
+      }
+      else if (btagselection=="ge1b") {
+	btagSFweight="probge1";
+      }
+      else if (btagselection=="ge3b") {
+	btagSFweight="probge3";
+      }
+      else if (btagselection=="eq1b") {
+	btagSFweight="prob1";
+      }
+      else if (btagselection=="eq2b") {
+	btagSFweight="prob2";
+      }
+      else if (btagselection=="ge0b") {
+	btagSFweight="(prob0 + probge1)";
+      }
+      else {assert(0);}
+
+      btagSFweight_=btagSFweight;
+
+    }
+  }
+  else {
+    usePUweight_=false;
+    useHTeff_=false;
+    useMHTeff_=false;
+    thebnnMHTeffMode_ = kOff;
+    btagSFweight_="1";
+
+    currentConfig_=configDescriptions_.getDefault(); //completely raw MC
+    
+    if (btagselection=="ge2b") {
+      btagcut="nbjetsCSVM>=2";
+    }
+    else if (btagselection=="ge1b") {}
+    else if (btagselection=="ge3b") {
+      btagcut="nbjetsCSVM>=3";
+    }
+    else if (btagselection=="eq1b") {
+      btagcut="nbjetsCSVM==1";
+    }
+    else if (btagselection=="eq2b") {
+      btagcut="nbjetsCSVM==2";
+    }
+    else {assert(0);}
+  }
+
+  setStackMode(false);
+  doData(datamode);
+  setQuiet(true);
+
+  TString var,xtitle;
+  int nbins;
+  float low,high;
+
+  var="HT"; xtitle=var;
+  nbins=1; low=0; high=5000;
+
+  TCut HTcut = region.htSelection.Data(); 
+  TCut SRMET = region.metSelection.Data();
+  TCut baseline = "cutPV==1 && cut3Jets==1";
+  TCut lepvetocut = "cutEleVeto==1 && cutMuVeto==1";
+  TCut cleaning = "weight<1000 && passCleaning==1";
+  TCut dpcut = "minDeltaPhiN>=4";
+
+  //test btag extrapolation
+  TCut csvlbtagcut = "nbjetsCSVL>=1";
+  
+  double zvvSIG, zvvSIGerr;
+
+  selection_ = baseline && cleaning && lepvetocut && dpcut && SRMET && HTcut && btagcut; 
+  drawPlots(var,nbins,low,high,xtitle,"events","zvvSIG");
+  zvvSIG=getIntegral(sampleOfInterest);
+  zvvSIGerr=getIntegralErr(sampleOfInterest);
+  
+  std::cout << "zvvSIG = " << zvvSIG << " +/- " << zvvSIGerr << std::endl;
+
+  //count the corresponding number of Z->ll events
+  clearSamples();
+  addSample("ZJets");
+
+  TString modmetSelection = region.metSelection;
+  //TRegexp regmet("MET");
+  //modmetSelection(regmet) = "zmumuMET";
+  if(mode=="mu")  modmetSelection.ReplaceAll("MET","zmumuMET");
+  else if(mode=="ele") modmetSelection.ReplaceAll("MET","zeeMET");
+  TCut SRModMET = modmetSelection.Data();
+  //std::cout << "modmetSelection = " << modmetSelection << std::endl;
+
+  TCut dpllcut = "zmumuMinDeltaPhiN>=4";
+  if(mode=="ele") dpllcut = "zeeMinDeltaPhiN>=4";
+
+  TCut zllCut = "passZmumuCand==1";
+  if(mode=="ele") zllCut = "passZeeCand==1";
+
+  TCut modlepvetocut = "nMuons<3 && cutEleVeto==1";
+  if(mode=="ele") modlepvetocut = "cutMuVeto==1 && nElectrons<3";
+
+  TCut trigcut = "pass_ZmumuHLT == 1";
+  if(mode=="ele") trigcut = "pass_ZeeHLT == 1";
+
+  double zllSIG, zllSIGerr;
+  double zllObs_Allcuts=-1, zllObs_Allcuts_err=-1;
+
+  if(isExtrapMode){ 
+    selection_ = baseline && trigcut && cleaning && modlepvetocut && dpllcut && SRModMET && HTcut && csvlbtagcut && zllCut;
+  }
+  else selection_ = baseline && trigcut && cleaning && modlepvetocut && dpllcut && SRModMET && HTcut && btagcut && zllCut;
+
+  if(datamode){
+
+    //dummy output file 
+    TString histfilename = "dummy.root";
+    TFile fh(histfilename,"RECREATE");
+    fh.Close(); 
+
+    drawSimple(var,nbins,low,high,histfilename, "zllSIG_data", "data");
+    zllSIG = hinteractive->IntegralAndError(hinteractive->GetXaxis()->GetFirst(),
+					    hinteractive->GetXaxis()->GetLast(),
+					    zllSIGerr);
+
+    //what we observe if we really apply all analysis cuts (i.e. nominal btagging)
+    selection_ = baseline && trigcut && cleaning && modlepvetocut && dpllcut && SRModMET && HTcut && btagcut && zllCut;
+    drawSimple(var,nbins,low,high,histfilename, "zllObs_data", "data");
+    zllObs_Allcuts = hinteractive->IntegralAndError(hinteractive->GetXaxis()->GetFirst(),
+						     hinteractive->GetXaxis()->GetLast(),
+						     zllObs_Allcuts_err);
+  }
+  else{
+    drawPlots(var,nbins,low,high,xtitle,"events","zllSIG");
+    zllSIG=getIntegral(sampleOfInterest);
+    zllSIGerr=getIntegralErr(sampleOfInterest);
+  }
+
+  std::cout << "zllSIG = " << zllSIG << " +/- " << zllSIGerr << std::endl;
+  if(datamode)  std::cout << "zllObs_Allcuts = " << zllObs_Allcuts << " +/- " << zllObs_Allcuts_err << std::endl;
+
+  ////////////////////////////////
+  //b-tag Extrapolation Fraction
+  ////////////////////////////////
+  double extrapF=-1, extrapFerr_l=-1, extrapFerr_h=-1;
+  double zllSIG_exF , zllSIGerr_exF;
+  if(isExtrapMode){
+    cout << "correct for b-tag scale factor..." << endl;
+    //doOverflowAddition(false);
+
+    ////temporarily switch off btag weight stuff
+    //TString btagSFweight_temp = btagSFweight_;
+    //btagSFweight_="1";
+    //TCut btagcut_temp = btagcut;
+    //if (btagselection=="ge2b") btagcut="nbjetsCSVM>=2";
+    //else if (btagselection=="ge1b") btagcut="nbjetsCSVM>=1";
+    //else if (btagselection=="ge3b") btagcut="nbjetsCSVM>=3";
+    //else assert(0);
+
+    //dummy output file 
+    TString histfilename = "dummy.root";
+    TFile fh(histfilename,"RECREATE");
+    fh.Close(); 
+
+    //get the extrapolation factor from a 
+    //50<MET<150, 300<HT<400 region
+
+    var="HT"; xtitle=var;
+    nbins=1; low=0; high=1000;    
+
+    //TCut FModHTCut = "HT>200 && HT<400";
+    TCut FModHTCut = HTcut;//try same HT cut
+
+    TString htcutstring = region.htSelection.Data();
+    TString btagcutstring = region.btagSelection.Data();
+
+    //cout << "btagcutstring = " << btagcutstring << endl;
+    //cout << "htcutstring = " << htcutstring << endl;
+
+    //For 2BT and 3B, use different HT range to get extrapolation
+    //factor (for better stats) (with the caveat that we now have to
+    //quantify the HT-independence of the extrapolation factor) note:
+    //The MC sample I'm using for Zll has a gen-HT cut of 200.  I
+    //checked that this does not affect the *extrapolation ratio*
+    //N(>=nCSVM)/N(>=1CSVL)
+    if(btagcutstring=="ge2b" && htcutstring=="HT>=600"){
+      if(FCmode=="FCdownHT") FModHTCut = "HT>=200 && HT<400"; //(if we are doing the HT-variation systematic -> drop down even lower)
+      else if(FCmode=="FCupHT") FModHTCut = HTcut; //for HT-up, use same HT cut as signal selection
+      else FModHTCut = "HT>=400 && HT<600";//for 2BT, drop down in HT 
+    }
+    if(btagcutstring =="ge3b"){
+      if(FCmode=="FCdownHT") FModHTCut = "HT>=100 && HT<200"; //(if we are doing the HT-variation systematic -> drop down even lower)
+      else if(FCmode=="FCupHT") FModHTCut = HTcut; //for HT-up, use same HT cut as signal selection
+      else FModHTCut = "HT>=200 && HT<400"; //for 3B, drop down in HT 
+    }
+
+    TCut FModMETCut;
+    if(mode=="mu"){ 
+      if(FCmode=="FCdown")FModMETCut = "zmumuMET>0 && zmumuMET<50";
+      else if(FCmode=="FCup")FModMETCut = "zmumuMET>150 && zmumuMET<250";
+      else FModMETCut = "zmumuMET>50 && zmumuMET<150";
+    }
+    else if(mode=="ele"){
+      if(FCmode=="FCdown")FModMETCut = "zeeMET>0 && zeeMET<50";
+      else if(FCmode=="FCup")FModMETCut = "zeeMET>150 && zeeMET<250";
+      else FModMETCut = "zeeMET>50 && zeeMET<150";
+    }
+
+    selection_ = baseline && trigcut && zllCut && FModHTCut && FModMETCut && dpllcut && modlepvetocut && csvlbtagcut;
+    TH1D* zllPlot_csvl;
+    if(datamode) drawSimple(var,nbins,low,high,histfilename, "ht_data_csvl", "data");
+    else drawSimple(var,nbins,low,high,histfilename, "ht_zll_csvl", "ZJets");
+    zllPlot_csvl = (TH1D*)hinteractive->Clone("zllPlot");
+    //cout << "extrap_den = " << zllPlot_csvl->GetBinContent(1) << " +/- " << zllPlot_csvl->GetBinError(1) << endl;
+
+    TH1D* zllPlot_csvm;
+    selection_ = baseline && trigcut && zllCut && FModHTCut && FModMETCut && dpllcut && modlepvetocut && btagcut;
+    if(datamode) drawSimple(var,nbins,low,high,histfilename, "ht_data_csvm", "data");
+    else  drawSimple(var,nbins,low,high,histfilename, "ht_zll_csvm", "ZJets");
+    zllPlot_csvm = (TH1D*)hinteractive->Clone("zllPlot_num");
+    //cout << "extrap_num = " << zllPlot_csvm->GetBinContent(1) << " +/- " << zllPlot_csvm->GetBinError(1) << endl;
+
+    TGraphAsymmErrors * h_zllratio = new TGraphAsymmErrors(zllPlot_csvm,zllPlot_csvl,"cl=0.683 b(1,1) mode");
+   
+    double xval;
+    h_zllratio->GetPoint(0,xval,extrapF);
+    extrapFerr_l= h_zllratio->GetErrorYlow(0);
+    extrapFerr_h= h_zllratio->GetErrorYhigh(0);
+    std::cout << "---> extrapF = " << extrapF << " + " << extrapFerr_h << " - " << extrapFerr_l << std::endl;
+
+    //correct yield by extrapolation factor
+    zllSIG_exF = zllSIG * extrapF;
+    zllSIGerr_exF = jmt::errAtimesB( zllSIG, zllSIGerr, extrapF, max(extrapFerr_h,extrapFerr_l));
+    //std::cout << "(post-extrapolation) zllSIG = " << zllSIG_exF << " +/- " << zllSIGerr_exF << std::endl;
+
+    delete h_zllratio;
+
+    ////switch btag weight stuff back on
+    //btagSFweight_ = btagSFweight_temp;
+    //btagcut = btagcut_temp;
+
+  }
+
+
+  ////////////////////////////////
+  //BR(Z->vv)/BR(Z->mumu)
+  ////////////////////////////////
+  double BRfactor = 5.95;
+  double BRfactorerr = 0.02;
+  double zllSIG_BRcorr, zllSIG_BRcorrerr;
+  if(isExtrapMode){
+    zllSIG_BRcorr = zllSIG_exF * BRfactor;
+    zllSIG_BRcorrerr = jmt::errAtimesB(zllSIG_exF, zllSIGerr_exF, BRfactor, BRfactorerr);
+  }
+  else{
+    zllSIG_BRcorr = zllSIG * BRfactor;
+    zllSIG_BRcorrerr = jmt::errAtimesB(zllSIG, zllSIGerr, BRfactor, BRfactorerr);
+  }
+  std::cout << "Correct for BR(Z->vv)/BR(Z->mumu)..." << std::endl;
+  //std::cout << "zllSIG_BRcorr = " << zllSIG_BRcorr << " +/- " << zllSIG_BRcorrerr << std::endl;
+
+
+  ///////////////////////////////
+  //Acceptance
+  ///////////////////////////////
+  btagSFweight_="1";//HACKY, TO AVOID APPLYING BTAG CUT!
+
+  doData(false);
+  clearSamples();
+  addSample("ZJets");
+
+  doOverflowAddition(true);
+
+  var="HT"; xtitle=var;
+  nbins=1; low=0; high=5000;
+
+  std::cout << "Correct for acceptance..." << std::endl;
+  TCut zdecaymodeCut = "zDecayMode==13";
+  if(mode=="ele") zdecaymodeCut = "zDecayMode==11";
+
+  modmetSelection = region.metSelection;
+  modmetSelection.ReplaceAll("MET","zllMCHybridMET");
+  TCut SRzllMCHybridMETCut = modmetSelection.Data();
+  //std::cout << "modmetSelection2 = " << modmetSelection << std::endl;
+
+  TCut dpMCHybridCut = "zllMCHybridMinDeltaPhiN>=4";
+
+  //testing keith/ale's method
+  //TCut recomatchCut0or1 = "zllNLeptonsRecoMatched==0 || zllNLeptonsRecoMatched==1";
+  TCut recomatchCut2 = "zllNLeptonsRecoMatched==2";
+ 
+  selection_ = zdecaymodeCut && baseline && HTcut && SRzllMCHybridMETCut && dpMCHybridCut;
+  //selection_ = zdecaymodeCut && baseline && HTcut && SRzllMCHybridMETCut;
+  //selection_ = zdecaymodeCut && baseline && HTcut && recomatchCut2;
+  //selection_ = zdecaymodeCut && baseline && HTcut;
+  drawPlots(var,nbins,low,high,xtitle,"events","zllacc_den");
+  TH1D* h_zllaccep_denom = (TH1D*)hinteractive->Clone("h_zllaccep_denom");
+  //std::cout << "denom = " << h_zllaccep_denom->GetBinContent(1) << std::endl;
+
+  TCut accepCut = "passGenZllInAcc==1";
+  selection_ = zdecaymodeCut && accepCut && baseline && HTcut && SRzllMCHybridMETCut && dpMCHybridCut;
+  //selection_ = zdecaymodeCut && accepCut && baseline && HTcut && SRzllMCHybridMETCut;
+  //selection_ = zdecaymodeCut && accepCut && baseline && HTcut && recomatchCut2;
+  //selection_ = zdecaymodeCut && accepCut && baseline && HTcut;
+  drawPlots(var,nbins,low,high,xtitle,"events","zllacc_num");
+  TH1D* h_zllaccep_num = (TH1D*)hinteractive->Clone("h_zllaccep_num");
+  //std::cout << "num = " << h_zllaccep_num->GetBinContent(1) << std::endl;
+
+  TGraphAsymmErrors * h_acc = new TGraphAsymmErrors(h_zllaccep_num,h_zllaccep_denom,"cl=0.683 b(1,1) mode");
+  double x, acc;
+  h_acc->GetPoint(0,x,acc);
+  double accerr_l= h_acc->GetErrorYlow(0);
+  double accerr_h= h_acc->GetErrorYhigh(0);
+  std::cout << "---> Acc = " << acc << " + " << accerr_h << " - " << accerr_l << std::endl;
+
+  double zllSIG_Acorr, zllSIG_Acorrerr;
+  zllSIG_Acorr = zllSIG_BRcorr / acc;
+  zllSIG_Acorrerr = jmt::errAoverB(zllSIG_BRcorr, zllSIG_BRcorrerr, acc, accerr_l); //eyl is the larger one
+
+  //std::cout << "zllSIG_Acorr = " << zllSIG_Acorr << " +/- " << zllSIG_Acorrerr << std::endl;
+
+  /////////////////////////////
+  //Efficiency
+  /////////////////////////////
+  std::cout << "Correct for efficiency..." << std::endl;
+
+  double totaleff, totaleff_err;
+
+  if(datamode){
+    //Reco efficiency (should make this more visible)
+    double eff_reco=0, eff_reco_err=0;
+    if(mode=="mu"){ eff_reco = 0.985; eff_reco_err = 0.005;}
+    else if(mode=="ele"){ eff_reco = 0.987; eff_reco_err = 0.014;}
+
+    //Selection efficiency (should make this more visible)
+    double eff_sel=0, eff_sel_err=0;
+    if(mode=="mu"){ eff_sel = 0.81; eff_sel_err = 0.01;}//jul24
+    else if(mode=="ele"){ eff_sel = 0.78; eff_sel_err = 0.03;}
+    //if(mode=="mu"){ eff_sel = 0.78; eff_sel_err = 0.03;}
+    //else if(mode=="ele"){ eff_sel = 0.75; eff_sel_err = 0.03;}
+
+    //HLT efficiciency (should make this more visible)
+    double eff_hlt=0, eff_hlt_err=0;
+    if(mode=="mu"){ eff_hlt = 0.87; eff_hlt_err = 0.04;}
+    else if(mode=="ele"){ eff_hlt = 1.0; eff_hlt_err = 0.01;}
+
+    //total efficiency
+    totaleff = eff_reco * eff_reco * eff_sel * eff_sel * eff_hlt;
+    
+    //propagating the error of Y = A^2 * B^2 * C
+    totaleff_err = sqrt( 4*eff_reco_err*eff_reco_err/eff_reco/eff_reco
+			 + 4*eff_sel_err*eff_sel_err/eff_sel/eff_sel
+			 + eff_hlt_err*eff_hlt_err/eff_hlt/eff_hlt
+			 );
+
+  }
+  else{
+    //for the moment, get from MC truth
+    var = "zllNLeptonsRecoMatched";xtitle=var;
+    nbins=3; low=0; high=3;
+    //selection_ = zdecaymodeCut;
+    selection_ = zdecaymodeCut && baseline && HTcut;
+
+    drawPlots(var,nbins,low,high,xtitle,"events","nleptonsrecomatch");
+    TH1D* h_nleptonsrecomatch = (TH1D*)hinteractive->Clone("h_nleptonsrecomatch");
+
+    int nGenLTotal = 2*h_nleptonsrecomatch->Integral();
+    float nGenLTotalerr = sqrt(nGenLTotal);
+
+    int nOneGenLMatch = h_nleptonsrecomatch->GetBinContent(2);
+    //float nOneGenLMatcherr = sqrt(nOneGenLMatch);
+
+    int nTwoGenLMatch = 2*h_nleptonsrecomatch->GetBinContent(3);
+    //float nTwoGenLMatcherr = sqrt(nTwoGenLMatch);
+
+    //std::cout << "nGenLTotal = "    << nGenLTotal    << " +/- " << nGenLTotalerr << std::endl;
+    //std::cout << "nOneGenLMatch = " << nOneGenLMatch << " +/- " << nOneGenLMatcherr << std::endl;
+    //std::cout << "nTwoGenLMatch = " << nTwoGenLMatch << " +/- " << nTwoGenLMatcherr << std::endl;
+
+    //float eff_reco = (float)(nOneGenMuMatch + nTwoGenMuMatch)/(float)nGenMuTotal;
+    //std::cout << "eff_reco = " << eff_reco << std::endl;
+
+    TH1D* h_eff_denom = (TH1D*)h_zllaccep_denom->Clone("h_eff_denom");
+    h_eff_denom->SetBinContent(1,nGenLTotal);
+    h_eff_denom->SetBinError(1,nGenLTotalerr);
+
+    TH1D* h_eff_num = (TH1D*)h_zllaccep_denom->Clone("h_eff_num");
+    float nNumGenLMatcherr = sqrt(nOneGenLMatch + nTwoGenLMatch);
+    h_eff_num->SetBinContent(1, nOneGenLMatch + nTwoGenLMatch);
+    h_eff_num->SetBinError(1, nNumGenLMatcherr);
+
+    TGraphAsymmErrors * h_eff = new TGraphAsymmErrors(h_eff_num,h_eff_denom,"cl=0.683 b(1,1) mode");
+
+    double xeff,yeff;
+    h_eff->GetPoint(0,xeff,yeff);
+    double eyeffl= h_eff->GetErrorYlow(0);
+    double eyeffh= h_eff->GetErrorYhigh(0);
+    std::cout << "eff = " << yeff << " + " << eyeffh << " - " << eyeffl << std::endl;
+
+    double effsquare = yeff*yeff;
+    double effsquareerr = effsquare * ( 2 * eyeffl/yeff ); //eyeffl is the larger one
+
+    totaleff = effsquare;
+    totaleff_err = effsquareerr;
+  }
+
+
+  cout << "---> total efficiency = " << totaleff << " +/- " << totaleff_err << endl;
+
+  double zllSIG_effcorr, zllSIG_effcorrerr;
+  zllSIG_effcorr = zllSIG_Acorr / totaleff;
+  zllSIG_effcorrerr = jmt::errAoverB(zllSIG_Acorr, zllSIG_Acorrerr, totaleff, totaleff_err); 
+
+  //std::cout << "zllSIG_effcorr = " << zllSIG_effcorr << " +/- " << zllSIG_effcorrerr << std::endl;
+
+
+  ////////////////////////
+  // Purity
+  ////////////////////////
+  std::cout << "Correct for purity..." << std::endl;
+  double zllSIG_purcorr, zllSIG_purcorrerr;
+  if(datamode){
+    double purity=0, purity_err=0;
+
+
+    if(mode=="mu"){ 
+      if(isSIG){
+	purity = 0.93; purity_err = 0.09;
+      }
+      else{
+	purity = 0.87; purity_err = 0.21;
+      }
+    }//jul23
+    else if(mode=="ele"){
+      if(isSIG){
+	purity = 0.95; purity_err = 0.09;
+      }
+      else{
+	purity = 0.91; purity_err = 0.07;
+      }
+    }
+    //if(mode=="mu"){ purity = 0.97; purity_err = 0.19;}
+    //else if(mode=="ele"){ purity = 1.00; purity_err = 0.17;}
+
+    zllSIG_purcorr = zllSIG_effcorr * purity;
+    zllSIG_purcorrerr = jmt::errAtimesB(zllSIG_effcorr, zllSIG_effcorrerr, purity, purity_err);
+
+  }
+  else{//if MC, the purity is 1
+    zllSIG_purcorr = zllSIG_effcorr; 
+    zllSIG_purcorrerr = zllSIG_effcorrerr;
+
+  }
+
+
+  double estimate = zllSIG_purcorr;
+  double estimateerr = zllSIG_purcorrerr;
+
+  double closure = 100*(estimate-zvvSIG)/estimate;
+  double closureerr = 100*jmt::errAoverB(zvvSIG,zvvSIGerr,estimate,estimateerr);
+
+  char output[500];
+  TString name = region.btagSelection;
+  name += region.owenId;
+  name += isSIG ? ", SIG":", SB";
+
+
+  if(mode=="mu")  std::cout << "---mumu prediction---" << std::endl;
+  else if (mode=="ele") std::cout << "---ee prediction---" << std::endl;
+
+  if(isExtrapMode){
+    if(datamode){
+      sprintf(output,"%s & %s & %s & %s & %s & %s & %s \\\\ ",
+	      name.Data(),
+	      jmt::format_nevents(zllObs_Allcuts,zllObs_Allcuts_err).Data(),
+	      jmt::format_nevents(zllSIG,zllSIGerr).Data(),
+	      jmt::format_nevents(extrapF, max(extrapFerr_h,extrapFerr_l)).Data(),
+	      jmt::format_nevents(acc,accerr_l).Data(),
+	      jmt::format_nevents(totaleff,totaleff_err).Data(),
+	      jmt::format_nevents(estimate,estimateerr).Data());
+    }
+    else{
+      sprintf(output,"%s & %s & %s & %s & %s & %s & %s & %s \\\\ ",
+	      name.Data(),
+	      jmt::format_nevents(zllSIG,zllSIGerr).Data(),
+	      jmt::format_nevents(extrapF, max(extrapFerr_h,extrapFerr_l)).Data(),
+	      jmt::format_nevents(acc,accerr_l).Data(),
+	      jmt::format_nevents(totaleff,totaleff_err).Data(),
+	      jmt::format_nevents(estimate,estimateerr).Data(),
+	      jmt::format_nevents(zvvSIG,zvvSIGerr).Data(),
+	      jmt::format_nevents(closure, closureerr).Data());
+    }
+  }
+  else{
+    sprintf(output,"%s & %s & %s & %s & %s & %s & %s \\\\ ",
+	    name.Data(),
+	    jmt::format_nevents(zllSIG,zllSIGerr).Data(),
+	    jmt::format_nevents(acc,accerr_l).Data(),
+	    jmt::format_nevents(totaleff,totaleff_err).Data(),
+	    jmt::format_nevents(estimate,estimateerr).Data(),
+	    jmt::format_nevents(zvvSIG,zvvSIGerr).Data(),
+	    jmt::format_nevents(closure, closureerr).Data());
+  }
+  cout<<output<<endl;
+
+  delete h_acc;
+
+  if (datamode) return make_pair( estimate, estimateerr );
+  return make_pair( sqrt(pow(closure,2) + pow(closureerr,2)), extrapF); //estimate in denominator
+
+}
+
+
+//to hold systematics
+//the string is the category of systematic
+//the vector is list of values for all of the search and sb regions (not a very good approach)
+std::map<TString, std::vector<double> > zvvSystErrors_mu;
+std::map<TString, std::vector<double> > zvvSystErrors_ele;
+void runZvvEstimate2011(){
+  setSearchRegions();
+  assert(sbRegions_.size() == searchRegions_.size());
+
+  //data structures to hold results
+  //(following the structure of QCD estimate)
+  //the structure is organized as {SB1,SIG1,SB2,SIG2,...,SBN,SIGN}
+  std::vector< std::pair<double,double> > muresults_nom;          //nominal results
+  std::vector< std::pair<double,double> > eleresults_nom;         //nominal results
+
+  std::vector< std::pair<double,double> > muresults_FCup;         //b-tag extrapolation factor using higher MET region
+  std::vector< std::pair<double,double> > eleresults_FCup;        //b-tag extrapolation factor using higher MET region
+  std::vector< std::pair<double,double> > muresults_FCdown;       //b-tag extrapolation factor using lower MET region  
+  std::vector< std::pair<double,double> > eleresults_FCdown;      //b-tag extrapolation factor using lower MET region  
+  std::vector< std::pair<double,double> > muresults_FCupHT;       //b-tag extrapolation factor using higher HT region
+  std::vector< std::pair<double,double> > eleresults_FCupHT;	  //b-tag extrapolation factor using higher HT region
+  std::vector< std::pair<double,double> > muresults_FCdownHT;	  //b-tag extrapolation factor using lower HT region  
+  std::vector< std::pair<double,double> > eleresults_FCdownHT;	  //b-tag extrapolation factor using lower HT region  
+
+  std::vector< std::pair<double,double> > muresults_data_nom;
+  std::vector< std::pair<double,double> > eleresults_data_nom;
+  std::vector< std::pair<double,double> > muresults_data_FCdown;
+  std::vector< std::pair<double,double> > eleresults_data_FCdown;
+  //std::vector< std::pair<double,double> > muresults_data_FCupHT; //not enough stats
+  //std::vector< std::pair<double,double> > eleresults_data_FCupHT;//not enough stats
+  std::vector< std::pair<double,double> > muresults_data_FCdownHT;
+  std::vector< std::pair<double,double> > eleresults_data_FCdownHT;
+
+
+  //first the nominal data estimate
+  cout<<" ==== Nominal data results === "<<endl;
+  for (unsigned int j=0; j<searchRegions_.size();j++){    
+    muresults_data_nom.push_back(zvvClosureTest(sbRegions_.at(j),"mu",true,"",true)); 
+    muresults_data_nom.push_back(zvvClosureTest(searchRegions_.at(j),"mu",true,"",true)); 
+
+    eleresults_data_nom.push_back(zvvClosureTest(sbRegions_.at(j),"ele",true,"",true)); 
+    eleresults_data_nom.push_back(zvvClosureTest(searchRegions_.at(j),"ele",true,"",true)); 
+  }
+  cout<<" ==== END Nominal data results === "<<endl;
+
+
+  //extrapolation factor systematic
+  cout<<" ==== systematics for b-tag extrapolation ==== "<<endl;
+  for (unsigned int j=0; j<searchRegions_.size();j++){    
+
+    //try the data estimate with FC down 
+    muresults_data_FCdown.push_back( zvvClosureTest(sbRegions_.at(j),"mu",true,"FCdown",true)); 
+    muresults_data_FCdown.push_back( zvvClosureTest(searchRegions_.at(j),"mu",true,"FCdown",true)); 
+    eleresults_data_FCdown.push_back(zvvClosureTest(sbRegions_.at(j),"ele",true,"FCdown",true)); 
+    eleresults_data_FCdown.push_back(zvvClosureTest(searchRegions_.at(j),"ele",true,"FCdown",true)); 
+
+    bool is2BT=false, is3B=false;
+    SearchRegion region = searchRegions_.at(j);
+    TString htcutstring = region.htSelection.Data();
+    TString btagcutstring = region.btagSelection.Data();
+    if(btagcutstring=="ge2b" && htcutstring=="HT>=600") is2BT = true;
+    if(btagcutstring =="ge3b") is3B = true;
+
+    if(is2BT || is3B){
+      //muresults_data_FCupHT.push_back( zvvClosureTest(j,"mu",true,"FCupHT",true));
+      //eleresults_data_FCupHT.push_back(zvvClosureTest(j,"ele",true,"FCupHT",true));
+      muresults_data_FCdownHT.push_back( zvvClosureTest(sbRegions_.at(j),"mu",true,"FCdownHT",true));
+      muresults_data_FCdownHT.push_back( zvvClosureTest(searchRegions_.at(j),"mu",true,"FCdownHT",true));
+      eleresults_data_FCdownHT.push_back(zvvClosureTest(sbRegions_.at(j),"ele",true,"FCdownHT",true));
+      eleresults_data_FCdownHT.push_back(zvvClosureTest(searchRegions_.at(j),"ele",true,"FCdownHT",true));
+    }
+    else{
+      //default to 0 systematic (we are using the same HT range for the other selections)
+      //muresults_data_FCupHT.push_back(muresults_data_nom.at(j));
+      //eleresults_data_FCupHT.push_back(eleresults_data_nom.at(j));
+      muresults_data_FCdownHT.push_back(muresults_data_nom.at(2*j));//the one for SB
+      muresults_data_FCdownHT.push_back(muresults_data_nom.at(2*j+1));//the one for SIG
+      eleresults_data_FCdownHT.push_back(eleresults_data_nom.at(2*j));
+      eleresults_data_FCdownHT.push_back(eleresults_data_nom.at(2*j+1));
+    }
+  }
+
+  for (unsigned int j=0; j<muresults_data_nom.size(); j++) {
+   
+    double mudeltaMET = 100 * fabs(muresults_data_FCdown.at(j).first - muresults_data_nom.at(j).first) / muresults_data_nom.at(j).first;
+    //double mudeltaHT = 100 * (muresults_data_FCupHT.at(j).first - muresults_data_nom.at(j).first) / muresults_data_nom.at(j).first;
+    double mudeltaHT = 100 * fabs(muresults_data_FCdownHT.at(j).first - muresults_data_nom.at(j).first) / muresults_data_nom.at(j).first;
+    //cout << "mudeltaMET = " << mudeltaMET << ", mudeltaHT = " << mudeltaHT << endl;
+    double mudelta = (mudeltaMET > mudeltaHT) ? mudeltaMET : mudeltaHT;
+
+    //musys_extrap.push_back(mudelta);
+    zvvSystErrors_mu["BTAGEXTRAP"].push_back(mudelta);
+
+    double eledeltaMET = 100 * fabs(eleresults_data_FCdown.at(j).first - eleresults_data_nom.at(j).first) / eleresults_data_nom.at(j).first;
+    //double eledeltaHT = 100 * (eleresults_data_FCupHT.at(j).first - eleresults_data_nom.at(j).first) / eleresults_data_nom.at(j).first;
+    double eledeltaHT = 100 * fabs(eleresults_data_FCdownHT.at(j).first - eleresults_data_nom.at(j).first) / eleresults_data_nom.at(j).first;
+    //cout << "eledeltaMET = " << eledeltaMET << ", eledeltaHT = " << eledeltaHT << endl;
+    double eledelta = (eledeltaMET > eledeltaHT) ? eledeltaMET : eledeltaHT;
+
+    //elesys_extrap.push_back(eledelta);
+    zvvSystErrors_ele["BTAGEXTRAP"].push_back(eledelta);
+
+  }  
+  cout<<" ==== END systematics for b-tag extrapolation ==== "<<endl;
+
+
+  //the last systematic we perform  on the fly is the closure test
+  cout<<" ==== systematics for MC closure test ==== "<<endl;
+  //for (unsigned int j=0; j<sbRegions_.size();j++){
+  for (unsigned int j=0; j<searchRegions_.size();j++){
+    //nominal MC closure test
+    std::pair<double,double> sbclosure_result_nom_mu = zvvClosureTest(sbRegions_.at(j),"mu",true);//extrap mode on
+    muresults_nom.push_back(sbclosure_result_nom_mu);
+    std::pair<double,double> sigclosure_result_nom_mu = zvvClosureTest(searchRegions_.at(j),"mu",true);
+    muresults_nom.push_back(sigclosure_result_nom_mu);
+    std::pair<double,double> sbclosure_result_nom_ele = zvvClosureTest(sbRegions_.at(j),"ele",true);
+    eleresults_nom.push_back(sbclosure_result_nom_ele);
+    std::pair<double,double> sigclosure_result_nom_ele = zvvClosureTest(searchRegions_.at(j),"ele",true);
+    eleresults_nom.push_back(sigclosure_result_nom_ele);
+
+    //take the *worst* closure of FC-nominal, FC-down and FC-up
+    //MC closure test with FC MET region up
+    muresults_FCup.push_back(sbclosure_result_nom_mu);     // *don't* do FC up for sideband estimate (that's where our SB region is)
+    muresults_FCup.push_back(zvvClosureTest(searchRegions_.at(j),"mu",true,"FCup"));
+    eleresults_FCup.push_back(sbclosure_result_nom_ele);   // *don't* do FC up for sideband estimate (that's where our SB region is)
+    eleresults_FCup.push_back(zvvClosureTest(searchRegions_.at(j),"ele",true,"FCup"));
+    //MC closure test with FC MET region down
+    muresults_FCdown.push_back(zvvClosureTest(sbRegions_.at(j),"mu",true,"FCdown"));
+    muresults_FCdown.push_back(zvvClosureTest(searchRegions_.at(j),"mu",true,"FCdown"));
+    eleresults_FCdown.push_back(zvvClosureTest(sbRegions_.at(j),"ele",true,"FCdown"));
+    eleresults_FCdown.push_back(zvvClosureTest(searchRegions_.at(j),"ele",true,"FCdown"));
+
+    //for 2BT and 3B, also consider the closure with the HT up/down
+    bool is2BT=false, is3B=false;
+    SearchRegion region = searchRegions_[j];
+    TString htcutstring = region.htSelection.Data();
+    TString btagcutstring = region.btagSelection.Data();
+    if(btagcutstring=="ge2b" && htcutstring=="HT>=600") is2BT = true;
+    if(btagcutstring =="ge3b") is3B = true;
+
+    if(is2BT || is3B){
+      muresults_FCupHT.push_back( zvvClosureTest(sbRegions_.at(j),"mu",true,"FCupHT"));
+      muresults_FCupHT.push_back( zvvClosureTest(searchRegions_.at(j),"mu",true,"FCupHT"));
+      eleresults_FCupHT.push_back(zvvClosureTest(sbRegions_.at(j),"ele",true,"FCupHT"));
+      eleresults_FCupHT.push_back(zvvClosureTest(searchRegions_.at(j),"ele",true,"FCupHT"));
+
+      muresults_FCdownHT.push_back( zvvClosureTest(sbRegions_.at(j),"mu",true,"FCdownHT"));
+      muresults_FCdownHT.push_back( zvvClosureTest(searchRegions_.at(j),"mu",true,"FCdownHT"));
+      eleresults_FCdownHT.push_back(zvvClosureTest(sbRegions_.at(j),"ele",true,"FCdownHT"));
+      eleresults_FCdownHT.push_back(zvvClosureTest(searchRegions_.at(j),"ele",true,"FCdownHT"));
+    }
+    else{
+      //default to 0 systematic (we are using the same HT range for the other selections)
+      muresults_FCupHT.push_back(sbclosure_result_nom_mu);
+      muresults_FCupHT.push_back(sigclosure_result_nom_mu);
+      eleresults_FCupHT.push_back(sbclosure_result_nom_ele);
+      eleresults_FCupHT.push_back(sigclosure_result_nom_ele);
+
+      muresults_FCdownHT.push_back(sbclosure_result_nom_mu);
+      muresults_FCdownHT.push_back(sigclosure_result_nom_mu);
+      eleresults_FCdownHT.push_back(sbclosure_result_nom_ele);
+      eleresults_FCdownHT.push_back(sigclosure_result_nom_ele);
+    }
+  }
+  
+  for (unsigned int j=0; j<muresults_data_nom.size(); j++) {
+
+    //take the worst closure 
+    double muclosure, eleclosure;
+    muclosure = (muresults_nom.at(j).first > muresults_FCup.at(j).first ) ? muresults_nom.at(j).first : muresults_FCup.at(j).first;
+    muclosure = (muclosure > muresults_FCdown.at(j).first ) ? muclosure : muresults_FCdown.at(j).first;
+    muclosure = (muclosure > muresults_FCupHT.at(j).first ) ? muclosure : muresults_FCupHT.at(j).first;
+    muclosure = (muclosure > muresults_FCdownHT.at(j).first ) ? muclosure : muresults_FCdownHT.at(j).first;
+    //musys_closure.push_back(muclosure);
+    zvvSystErrors_mu["CLOSURE"].push_back(muclosure);
+
+    eleclosure = (eleresults_nom.at(j).first > eleresults_FCup.at(j).first ) ? eleresults_nom.at(j).first : eleresults_FCup.at(j).first;
+    eleclosure = (eleclosure > eleresults_FCdown.at(j).first ) ? eleclosure : eleresults_FCdown.at(j).first;
+    eleclosure = (eleclosure > eleresults_FCupHT.at(j).first ) ? eleclosure : eleresults_FCupHT.at(j).first;
+    eleclosure = (eleclosure > eleresults_FCdownHT.at(j).first ) ? eleclosure : eleresults_FCdownHT.at(j).first;
+    //elesys_closure.push_back(eleclosure);
+    zvvSystErrors_ele["CLOSURE"].push_back(eleclosure);
+
+  }
+  cout<<" ==== END systematics for MC closure test ==== "<<endl;
+
+  //std::cout << "CLOSURE = " <<  muresults_nom.at(0).first << ", F = " << muresults_nom.at(0).second << std::endl;
+
+  //this prints outs the MC table of the extrapolation factor comparison (not really needed since we compare the closure result directly)
+  /*
+  for(uint i=0; i<2;++i){
+    for (unsigned int j=0; j<searchRegions_.size();j++){
+
+      const SearchRegion region = searchRegions_[j];
+      TString btagname = region.btagSelection;
+      
+      //make a table that shows relative difference in F
+      double F_nom, F_up, F_down;
+      F_nom  = i ? eleresults_nom.at(j).second :    muresults_nom.at(j).second;
+      F_up   = i ? eleresults_FCup.at(j).second :   muresults_FCup.at(j).second;
+      F_down = i ? eleresults_FCdown.at(j).second : muresults_FCdown.at(j).second;
+      
+      double dF_up = (F_up - F_nom) / F_nom;
+      double dF_down = (F_down - F_nom) / F_nom;
+      
+      char output[500];
+
+      if(i) cout << "ele"<< endl;
+      else cout << "mu" << endl;
+      
+      sprintf(output,"%s SIG & %.3f & %.3f & %.3f \\\\ ",btagname.Data(),F_nom, dF_up, dF_down);
+      cout << output << endl;	       
+    }
+  }
+  */
+
+  cout<<" ==== systematics for selection eff, trig eff, and purity ==== "<<endl;
+  //fill the purity, trig eff, and sel eff systematics vectors
+  //******* NEED TO MAKE THIS MORE VISIBLE *******************
+  //******* This is in percentages ***************************
+  double syst_purity_mu = 10;
+  double syst_purity_ele = 10;
+  double syst_trigeff_mu = 4;
+  double syst_trigeff_ele = 4;
+  double syst_seleff_mu = 7 * 2; //times 2 because the prediction is linear with eff_sel^2 !
+  double syst_seleff_ele = 10 * 2;
+
+  for (unsigned int j=0; j<searchRegions_.size();j++){
+
+    zvvSystErrors_mu["PURITY"].push_back(syst_purity_mu);//SB
+    zvvSystErrors_mu["PURITY"].push_back(syst_purity_mu);//SIG
+
+    zvvSystErrors_ele["PURITY"].push_back(syst_purity_ele);
+    zvvSystErrors_ele["PURITY"].push_back(syst_purity_ele);
+
+    zvvSystErrors_mu["SELEFF"].push_back(syst_seleff_mu);
+    zvvSystErrors_mu["SELEFF"].push_back(syst_seleff_mu);
+
+    zvvSystErrors_ele["SELEFF"].push_back(syst_seleff_ele);
+    zvvSystErrors_ele["SELEFF"].push_back(syst_seleff_ele);
+
+    zvvSystErrors_mu["TRIGEFF"].push_back(syst_trigeff_mu);
+    zvvSystErrors_mu["TRIGEFF"].push_back(syst_trigeff_mu);
+
+    zvvSystErrors_ele["TRIGEFF"].push_back(syst_trigeff_ele);
+    zvvSystErrors_ele["TRIGEFF"].push_back(syst_trigeff_ele);
+
+  }
+  cout<<" ==== END systematics for selection eff, trig eff, and purity ==== "<<endl;
+
+  ////////////////////////////////////
+  //print the final systematics table
+  ////////////////////////////////////
+
+  cout.setf(ios_base::fixed); //want exactly one decimal place....
+  cout.precision(1);
+
+  cout<<" == Zvv (mu) systematics summary =="<<endl;
+  /*
+    stuffing the alternating SB and SIG into a vector was ugly, so here we have to be careful if we want to print out something
+    human-readable as a label. Also we are hard-coding the fact that the *odd* elements are SIG
+  */
+  for (unsigned int j=0; j<muresults_data_nom.size(); j++) {
+
+    int index = ( j - (j%2))/2;
+    SearchRegion thisregion = (j%2==0) ? sbRegions_.at(index) : searchRegions_.at(index);
+    
+    TString name = thisregion.btagSelection;
+    bool isSIG = thisregion.isSIG;
+    name += thisregion.owenId;
+    name += isSIG ? ", SIG":", SB";
+
+    zvvSystErrors_mu["TOTAL"].push_back( sqrt( pow(zvvSystErrors_mu["BTAGEXTRAP"].at(j),2) 
+					       + pow(zvvSystErrors_mu["CLOSURE"].at(j),2)
+					       + pow(zvvSystErrors_mu["PURITY"].at(j),2)
+					       + pow(zvvSystErrors_mu["SELEFF"].at(j),2)
+					       + pow(zvvSystErrors_mu["TRIGEFF"].at(j),2)));
+    
+    cout << name << "\t& $"<<zvvSystErrors_mu["PURITY"].at(j)
+	 <<"$ & $"<<zvvSystErrors_mu["TRIGEFF"].at(j)
+	 <<"$ & $"<<zvvSystErrors_mu["SELEFF"].at(j)
+	 <<"$ & $"<<zvvSystErrors_mu["CLOSURE"].at(j)
+      	 <<"$ & $"<<zvvSystErrors_mu["BTAGEXTRAP"].at(j)
+	 <<"$ & $"<<zvvSystErrors_mu["TOTAL"].at(j)
+	 << "$ \\\\"<< endl;    
+
+  }
+  cout<<" == Zvv (ele) systematics summary =="<<endl;
+  for (unsigned int j=0; j<eleresults_data_nom.size(); j++) {
+
+    int index = ( j - (j%2))/2;
+    SearchRegion thisregion = (j%2==0) ? sbRegions_.at(index) : searchRegions_.at(index);
+    
+    TString name = thisregion.btagSelection;
+    bool isSIG = thisregion.isSIG;
+    name += thisregion.owenId;
+    name += isSIG ? ", SIG":", SB";
+
+    zvvSystErrors_ele["TOTAL"].push_back( sqrt( pow(zvvSystErrors_ele["BTAGEXTRAP"].at(j),2) 
+						+ pow(zvvSystErrors_ele["CLOSURE"].at(j),2)
+						+ pow(zvvSystErrors_ele["PURITY"].at(j),2)
+						+ pow(zvvSystErrors_ele["SELEFF"].at(j),2)
+						+ pow(zvvSystErrors_ele["TRIGEFF"].at(j),2)));
+
+    cout << name << "\t& $"<<zvvSystErrors_ele["PURITY"].at(j)
+	 <<"$ & $"<<zvvSystErrors_ele["TRIGEFF"].at(j)
+	 <<"$ & $"<<zvvSystErrors_ele["SELEFF"].at(j)
+	 <<"$ & $"<<zvvSystErrors_ele["CLOSURE"].at(j)
+      	 <<"$ & $"<<zvvSystErrors_ele["BTAGEXTRAP"].at(j)
+	 <<"$ & $"<<zvvSystErrors_ele["TOTAL"].at(j)
+	 << "$ \\\\"<< endl;
+  }
+  cout.unsetf(ios_base::fixed); //reset the cout precision
+  cout.precision(6);
+
+
+  //////////////////////////////////
+  //print final estimates (+ combined estimate)
+  //////////////////////////////////
+
+  cout<<" == Zvv combined predictions =="<<endl;
+
+  for (unsigned int j=0; j<muresults_data_nom.size(); j++) {
+
+    int index = ( j - (j%2))/2;
+    SearchRegion thisregion = (j%2==0) ? sbRegions_.at(index) : searchRegions_.at(index);
+   
+    double pred_mu = muresults_data_nom.at(j).first;
+    double pred_mu_staterr = muresults_data_nom.at(j).second;
+    double pred_mu_systerr = 0.01 * zvvSystErrors_mu["TOTAL"].at(j) * pred_mu; //scale back from percentage
+    double pred_mu_totalerr = jmt::addInQuad(pred_mu_staterr, pred_mu_systerr);
+
+    double pred_ele = eleresults_data_nom.at(j).first;
+    double pred_ele_staterr = eleresults_data_nom.at(j).second;
+    double pred_ele_systerr = 0.01 * zvvSystErrors_ele["TOTAL"].at(j) * pred_ele; //scale back from percentage
+    double pred_ele_totalerr = jmt::addInQuad(pred_ele_staterr, pred_ele_systerr);
+
+    double zest[2];
+    zest[0] = pred_mu;
+    zest[1] = pred_ele;
+    double zerr[2];
+    zerr[0] = pred_mu_totalerr;
+    zerr[1] = pred_ele_totalerr;
+
+    double pred_average = jmt::weightedMean(2,zest,zerr);
+    double pred_average_err = jmt::weightedMean(2,zest,zerr,true);
+
+    TString name = thisregion.btagSelection;
+    bool isSIG = thisregion.isSIG;
+    name += thisregion.owenId;
+    name += isSIG ? ", SIG":", SB";
+
+    char final_output[500];    
+    sprintf(final_output,"%s SIG & %s & %s & %s \\\\ ",
+	    name.Data(), 
+	    jmt::format_nevents(pred_mu,pred_mu_totalerr).Data(), 
+	    jmt::format_nevents(pred_ele,pred_ele_totalerr).Data(), 
+	    jmt::format_nevents(pred_average,pred_average_err).Data()
+	    );
+
+    cout << final_output << endl;	       
+
+ 
+  }
+
+  return;
+}
+
 
 //we've resorted to all sorts of ugly solutions for returning values (vectors, pairs, pass by reference, etc)
 //here's another ugly solution
@@ -2033,127 +2980,178 @@ modifications for SHAPE analysis: (bShape = true)
     double zinvscale = 1; 
     bool doMean = true;
 
-    //for 200-250 GeV SB (OLD NUMBERS)
-    if (qcdsubregion.owenId == "Loose" && qcdsubregion.btagSelection=="ge1b") {
-      doMean=false;//averaging already done
-      zv[0] = 82; ze[0]=20; // *(70.3/67.4)
-      zsbsyst = 0.0;//ze is stat+syst error combined
-    }
-    else if (qcdsubregion.owenId == "Tight" && qcdsubregion.btagSelection=="ge1b") {
-      doMean=false;//averaging already done
-      zv[0] = 44; ze[0]=13; // * (36.9/35.4)
-      zsbsyst = 0.0;
-    }
-    else if (qcdsubregion.owenId == "Loose" && qcdsubregion.btagSelection=="ge2b") {
-      doMean=false;//averaging already done
-      zv[0] = 14 ; ze[0]=9; //*(10.1/9.5)
-      zsbsyst = 0.0;
-    }
-    else if (qcdsubregion.owenId == "Tight" && qcdsubregion.btagSelection=="ge2b") {
-      doMean=false;//averaging already done
-      zv[0] = 3.8; ze[0]=2.7;// *(2.6/2.5)
-      zsbsyst = 0.0;
-    }
-    else if (qcdsubregion.owenId == "Loose"  && qcdsubregion.btagSelection=="ge3b") {
-      doMean=false;//averaging already done
-      zv[0] = 1.9; ze[0]=2.8; // *(0.7/0.6)
-      zsbsyst = 0.0;   
-    }
-    //for 150-200 GeV SB (OLD NUMBERS)
-    else if (qcdsubregion.owenId == "LooseLowSB" && qcdsubregion.btagSelection=="ge1b") {
-      doMean=false;   zv[0] = 116.7; ze[0]=26.9;    zsbsyst = 0.0;
-    }
-    else if (qcdsubregion.owenId == "TightLowSB" && qcdsubregion.btagSelection=="ge1b") {
-      doMean=false;   zv[0] = 58.9; ze[0]=15.8;    zsbsyst = 0.0;
-    }
-    else if (qcdsubregion.owenId == "LooseLowSB" && qcdsubregion.btagSelection=="ge2b") {
-      doMean=false;   zv[0] = 19.5; ze[0]=12.9;    zsbsyst = 0.0;
-    }
-    else if (qcdsubregion.owenId == "TightLowSB" && qcdsubregion.btagSelection=="ge2b") {
-      doMean=false;   zv[0] = 5.0; ze[0]=3.5;    zsbsyst = 0.0;
-    }
-    else if (qcdsubregion.owenId == "LooseLowSB" && qcdsubregion.btagSelection=="ge3b") {
-      doMean=false;   zv[0] = 2.7; ze[0]=3.9;    zsbsyst = 0.0;
-    }
-    //for 150-250 GeV SB (Updated from Ale on May 22)
-    else if ((qcdsubregion.owenId == "LooseWideSB" || qcdsubregion.owenId.Contains( "METFineBin")) && qcdsubregion.btagSelection=="ge1b") {
-      doMean=false;   zv[0] = 246.021; ze[0]= 52.1476;    zsbsyst = 0.0;
-    }
-    else if (qcdsubregion.owenId == "TightWideSB" && qcdsubregion.btagSelection=="ge1b") {
-      doMean=false;   zv[0] = 130.686; ze[0]= 30.6828;    zsbsyst = 0.0;
-    }
-    else if ((qcdsubregion.owenId == "LooseWideSB" || qcdsubregion.owenId.Contains( "METFineBin")) && qcdsubregion.btagSelection=="ge2b") {
-      doMean=false;   zv[0] = 50.4704; ze[0]= 33.0571;    zsbsyst = 0.0;
-    }
-    else if ((qcdsubregion.owenId == "TightWideSB" || qcdsubregion.owenId.Contains( "METFineBin")) && qcdsubregion.btagSelection=="ge2b") {
-      doMean=false;   zv[0] = 13.2494; ze[0]= 8.99994;    zsbsyst = 0.0;
-    }
-    else if ((qcdsubregion.owenId == "LooseWideSB" || qcdsubregion.owenId.Contains( "METBin")|| qcdsubregion.owenId.Contains( "METFineBin")) && qcdsubregion.btagSelection=="ge3b") {
-      doMean=false;   zv[0] = 7.70626; ze[0]= 11.2734;    zsbsyst = 0.0;
-    }
-    else if (qcdsubregion.owenId == "Loose" && qcdsubregion.btagSelection=="eq1b") {
-      doMean=false;//averaging already done
-      //preliminary numbers from http://www.slac.stanford.edu/~gaz/RA2b/ZinvTable.pdf
-      zv[0] =68; ze[0]=15;
-      zsbsyst = 0.0;    //this is a *percent* error...but we're not putting it in that way anymore
-    }
-    else if (qcdsubregion.owenId == "Loose" && qcdsubregion.btagSelection=="eq2b") {
-      doMean=false;//averaging already done
-      zv[0] =12; ze[0]=8;
-      zsbsyst = 0.0;   
-    }
-    else if (qcdsubregion.owenId == "TightMET" && qcdsubregion.btagSelection=="eq1b") {
-      doMean=false;//averaging already done
-      zv[0] =36; ze[0]=10;
-      zsbsyst = 0.0; 
-    }
-    else if (qcdsubregion.owenId == "TightMET" && qcdsubregion.btagSelection=="eq2b") {
-      doMean=false;//averaging already done
-      zv[0] =6; ze[0]=4;
-      zsbsyst = 0.0; 
-    }
-    else if (qcdsubregion.owenId == "TightMET" && qcdsubregion.btagSelection=="ge3b") {
-      doMean=false;//averaging already done
-      zv[0] =1.0; ze[0]=1.4;
-      zsbsyst = 0.0; 
-    }
-    else if (qcdsubregion.owenId == "TightHT" && qcdsubregion.btagSelection=="eq1b") {
-      doMean=false;//averaging already done
-      zv[0] =19; ze[0]=7;
-      zsbsyst = 0.0; 
-    }
-    else if (qcdsubregion.owenId == "TightHT" && qcdsubregion.btagSelection=="eq2b") {
-      doMean=false;//averaging already done
-      zv[0] =3.3; ze[0]=2.4;
-      zsbsyst = 0.0; 
-    }
-    else if (qcdsubregion.owenId == "TightHT" && qcdsubregion.btagSelection=="ge3b") {
-      doMean=false;//averaging already done
-      zv[0] =0.5; ze[0]=0.8;
-      zsbsyst = 0.0; 
-    }
-    else if (qcdsubregion.owenId == "TightHTWideSB" && qcdsubregion.btagSelection=="eq2b") {
-      doMean=false;//averaging already done
-      zv[0] =7.59; ze[0]=5.16;
-      zsbsyst = 0.0; 
-    }
-    else {assert(0);}
+    //for Don's estimate
+    std::pair<double,double> SBsubZvvp_mu;
+    std::pair<double,double> SBsubZvvp_ele;      
+    double SBsubZ_mu,SBsubZ_mu_err;
+    double SBsubZ_ele,SBsubZ_ele_err;
 
-    if(doMean){
-      SBsubZ = zinvscale*(jmt::weightedMean(2,zv,ze));
-      SBsubZerr = zinvscale*(jmt::weightedMean(2,zv,ze,true));
+    ////////////////////////////////////////////
+    // Colorado group's numbers
+    ////////////////////////////////////////////
+
+    if(useColoradoZvv_){
+
+      //for 200-250 GeV SB (OLD NUMBERS)
+      if (qcdsubregion.owenId == "Loose" && qcdsubregion.btagSelection=="ge1b") {
+	doMean=false;//averaging already done
+	zv[0] = 82; ze[0]=20; // *(70.3/67.4)
+	zsbsyst = 0.0;//ze is stat+syst error combined
+      }
+      else if (qcdsubregion.owenId == "Tight" && qcdsubregion.btagSelection=="ge1b") {
+	doMean=false;//averaging already done
+	zv[0] = 44; ze[0]=13; // * (36.9/35.4)
+	zsbsyst = 0.0;
+      }
+      else if (qcdsubregion.owenId == "Loose" && qcdsubregion.btagSelection=="ge2b") {
+	doMean=false;//averaging already done
+	zv[0] = 14 ; ze[0]=9; //*(10.1/9.5)
+	zsbsyst = 0.0;
+      }
+      else if (qcdsubregion.owenId == "Tight" && qcdsubregion.btagSelection=="ge2b") {
+	doMean=false;//averaging already done
+	zv[0] = 3.8; ze[0]=2.7;// *(2.6/2.5)
+	zsbsyst = 0.0;
+      }
+      else if (qcdsubregion.owenId == "Loose"  && qcdsubregion.btagSelection=="ge3b") {
+	doMean=false;//averaging already done
+	zv[0] = 1.9; ze[0]=2.8; // *(0.7/0.6)
+	zsbsyst = 0.0;   
+      }
+      //for 150-200 GeV SB (OLD NUMBERS)
+      else if (qcdsubregion.owenId == "LooseLowSB" && qcdsubregion.btagSelection=="ge1b") {
+	doMean=false;   zv[0] = 116.7; ze[0]=26.9;    zsbsyst = 0.0;
+      }
+      else if (qcdsubregion.owenId == "TightLowSB" && qcdsubregion.btagSelection=="ge1b") {
+	doMean=false;   zv[0] = 58.9; ze[0]=15.8;    zsbsyst = 0.0;
+      }
+      else if (qcdsubregion.owenId == "LooseLowSB" && qcdsubregion.btagSelection=="ge2b") {
+	doMean=false;   zv[0] = 19.5; ze[0]=12.9;    zsbsyst = 0.0;
+      }
+      else if (qcdsubregion.owenId == "TightLowSB" && qcdsubregion.btagSelection=="ge2b") {
+	doMean=false;   zv[0] = 5.0; ze[0]=3.5;    zsbsyst = 0.0;
+      }
+      else if (qcdsubregion.owenId == "LooseLowSB" && qcdsubregion.btagSelection=="ge3b") {
+	doMean=false;   zv[0] = 2.7; ze[0]=3.9;    zsbsyst = 0.0;
+      }
+      //for 150-250 GeV SB (Updated from Ale on May 22)
+      else if ((qcdsubregion.owenId == "LooseWideSB" || qcdsubregion.owenId.Contains( "METFineBin")) && qcdsubregion.btagSelection=="ge1b") {
+	doMean=false;   zv[0] = 246.021; ze[0]= 52.1476;    zsbsyst = 0.0;
+      }
+      else if (qcdsubregion.owenId == "TightWideSB" && qcdsubregion.btagSelection=="ge1b") {
+	doMean=false;   zv[0] = 130.686; ze[0]= 30.6828;    zsbsyst = 0.0;
+      }
+      else if ((qcdsubregion.owenId == "LooseWideSB" || qcdsubregion.owenId.Contains( "METFineBin")) && qcdsubregion.btagSelection=="ge2b") {
+	doMean=false;   zv[0] = 50.4704; ze[0]= 33.0571;    zsbsyst = 0.0;
+      }
+      else if ((qcdsubregion.owenId == "TightWideSB" || qcdsubregion.owenId.Contains( "METFineBin")) && qcdsubregion.btagSelection=="ge2b") {
+	doMean=false;   zv[0] = 13.2494; ze[0]= 8.99994;    zsbsyst = 0.0;
+      }
+      else if ((qcdsubregion.owenId == "LooseWideSB" || qcdsubregion.owenId.Contains( "METBin")|| qcdsubregion.owenId.Contains( "METFineBin")) && qcdsubregion.btagSelection=="ge3b") {
+	doMean=false;   zv[0] = 7.70626; ze[0]= 11.2734;    zsbsyst = 0.0;
+      }
+      else if (qcdsubregion.owenId == "Loose" && qcdsubregion.btagSelection=="eq1b") {
+	doMean=false;//averaging already done
+	//preliminary numbers from http://www.slac.stanford.edu/~gaz/RA2b/ZinvTable.pdf
+	zv[0] =68; ze[0]=15;
+	zsbsyst = 0.0;    //this is a *percent* error...but we're not putting it in that way anymore
+      }
+      else if (qcdsubregion.owenId == "Loose" && qcdsubregion.btagSelection=="eq2b") {
+	doMean=false;//averaging already done
+	zv[0] =12; ze[0]=8;
+	zsbsyst = 0.0;   
+      }
+      else if (qcdsubregion.owenId == "TightMET" && qcdsubregion.btagSelection=="eq1b") {
+	doMean=false;//averaging already done
+	zv[0] =36; ze[0]=10;
+	zsbsyst = 0.0; 
+      }
+      else if (qcdsubregion.owenId == "TightMET" && qcdsubregion.btagSelection=="eq2b") {
+	doMean=false;//averaging already done
+	zv[0] =6; ze[0]=4;
+	zsbsyst = 0.0; 
+      }
+      else if (qcdsubregion.owenId == "TightMET" && qcdsubregion.btagSelection=="ge3b") {
+	doMean=false;//averaging already done
+	zv[0] =1.0; ze[0]=1.4;
+	zsbsyst = 0.0; 
+      }
+      else if (qcdsubregion.owenId == "TightHT" && qcdsubregion.btagSelection=="eq1b") {
+	doMean=false;//averaging already done
+	zv[0] =19; ze[0]=7;
+	zsbsyst = 0.0; 
+      }
+      else if (qcdsubregion.owenId == "TightHT" && qcdsubregion.btagSelection=="eq2b") {
+	doMean=false;//averaging already done
+	zv[0] =3.3; ze[0]=2.4;
+	zsbsyst = 0.0; 
+      }
+      else if (qcdsubregion.owenId == "TightHT" && qcdsubregion.btagSelection=="ge3b") {
+	doMean=false;//averaging already done
+	zv[0] =0.5; ze[0]=0.8;
+	zsbsyst = 0.0; 
+      }
+      else if (qcdsubregion.owenId == "TightHTWideSB" && qcdsubregion.btagSelection=="eq2b") {
+	doMean=false;//averaging already done
+	zv[0] =7.59; ze[0]=5.16;
+	zsbsyst = 0.0; 
+      }
+      else {assert(0);}
+
+      if(doMean){
+	SBsubZ = zinvscale*(jmt::weightedMean(2,zv,ze));
+	SBsubZerr = zinvscale*(jmt::weightedMean(2,zv,ze,true));
+      }
+      else{//if weighted averaging was already done
+	SBsubZ = zinvscale*zv[0];
+	SBsubZerr = zinvscale*ze[0];
+      }
+
     }
-    else{//if weighted averaging was already done
-      SBsubZ = zinvscale*zv[0];
-      SBsubZerr = zinvscale*ze[0];
+
+    //////////////////////////
+    // Don's Zvv numbers
+    //////////////////////////
+    else{
+
+      //get the Zvv estimate for the SB region
+      SBsubZvvp_mu = zvvClosureTest(qcdsubregion,"mu",true,"",true); 
+      SBsubZvvp_ele = zvvClosureTest(qcdsubregion,"ele",true,"",true); 
+
+      SBsubZ_mu = SBsubZvvp_mu.first;
+      SBsubZ_mu_err = SBsubZvvp_mu.second;
+      SBsubZ_ele = SBsubZvvp_ele.first;
+      SBsubZ_ele_err = SBsubZvvp_ele.second;
+
+      //what's the systematic err
+      //factor 0.01 to convert from human-readable % to fractional
+      double Zsbsyst_mu=0.01*zvvSystErrors_mu["TOTAL"].at(2*searchRegionIndex);
+      double Zsbsyst_ele=0.01*zvvSystErrors_ele["TOTAL"].at(2*searchRegionIndex);
+
+      //now let's combine stat+syst
+      double Zsbtotalerr_mu = jmt::addInQuad(SBsubZ_mu_err, Zsbsyst_mu*SBsubZ_mu);
+      double Zsbtotalerr_ele = jmt::addInQuad(SBsubZ_ele_err, Zsbsyst_ele*SBsubZ_ele);
+            
+      //to compute the central value use the stat+syst combined error
+      zv[0] = SBsubZ_mu; ze[0]= Zsbtotalerr_mu; 
+      zv[1] = SBsubZ_ele; ze[1]= Zsbtotalerr_ele;
+      zsbsyst = 0.0; //treat both errors as one (like how we do with Colorado's numbers)
+
+      SBsubZ = jmt::weightedMean(2,zv,ze);
+      SBsubZerr = jmt::weightedMean(2,zv,ze,true);
     }
+
 
     if (mode.Contains("Z")) {
+
+
       SBsubZerr = sqrt( SBsubZerr*SBsubZerr + pow(zsbsyst*SBsubZ,2));
       
       if (mode=="Zup") SBsubZ += SBsubZerr;
       if (mode=="Zdown") SBsubZ -= SBsubZerr;
     }
+
+
   }
 
   setStackMode(false);
@@ -2163,6 +3161,9 @@ modifications for SHAPE analysis: (bShape = true)
   TString sampleOfInterest = "totalsm";
   useFlavorHistoryWeights_=false;
   loadSamples(); //needs to come first! this is why this should be turned into a class, with this guy in the ctor
+
+  if(is2011Data_) setDatasetToDraw("2011HT");
+
   setColorScheme("nostack");
   clearSamples();
   if (datamode) {
@@ -3571,6 +4572,15 @@ void printOwenAll() { //no b shape
 
 }
 
+void run2011Estimates(TString regions) {
+  setSearchRegions(regions);
+
+  runDataQCD2011();
+  runZvvEstimate2011();
+  runTtbarEstimate2011(); //no shape analysis
+
+}
+
 void printOwenSyst(TString regions) {
   setSearchRegions(regions);
   //note that because of the way the code is written, i am not at all sure that
@@ -4956,13 +5966,15 @@ other.
     mytext->SetTextFont(42);
     mytext->SetTextSizePixels(24);
     mytext->Draw();
-    TLegend* myLegend = new TLegend(0.615,0.84,0.81,0.7);
+    //TLegend* myLegend = new TLegend(0.615,0.84,0.81,0.7);
+    TLegend* myLegend = new TLegend(0.4,0.65,0.9,0.85);
     myLegend->SetFillColor(0);
     myLegend->SetBorderSize(0);
     myLegend->SetLineStyle(0);
     myLegend->SetTextFont(42);
     myLegend->SetFillStyle(0);
-    myLegend->SetTextSize(0.045);
+    //myLegend->SetTextSize(0.045);
+    myLegend->SetTextSize(0.065);
     if(sample=="ttbar"){
       if (PVhack) {
 	myLegend->AddEntry(SIGplot,"t#bar{t}, 0 lepton (n_{PV} #leq 9)", "lp");
@@ -5032,6 +6044,7 @@ other.
       if(component=="All"){
 	myC->Print("METshape_logAndRatio_"+sample+"_SLandStandard_"+btagselection+"_"+HTselection+".pdf");	
 	//myC->Print("METshape_logAndRatio_"+sample+"_SLandStandard_"+btagselection+"_"+HTselection+".png");	
+	myC->Print("METshape_logAndRatio_"+sample+"_SLandStandard_"+btagselection+"_"+HTselection+".C");	
       }
       else{
 	myC->Print("METshape_"+component+"_logAndRatio_"+sample+"_SLandStandard_"+btagselection+"_"+HTselection+".pdf");	
@@ -5287,7 +6300,7 @@ void makeTTbarWMETPlots(bool forttbarbreakdown=false, bool forwjetsbreakdown=fal
     AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Loose" , "TTbarSingleTopWJetsCombined");
     selections.push_back("1BL");
     ratios_sl.push_back(ratio_sl);  ratios_sl_err.push_back(ratio_sl_err);  ratios_nom.push_back(ratio_nom);  ratios_nom_err.push_back(ratio_nom_err);
-
+    
     AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge1b", "Tight" , "TTbarSingleTopWJetsCombined");
     selections.push_back("1BT");
     ratios_sl.push_back(ratio_sl);  ratios_sl_err.push_back(ratio_sl_err);  ratios_nom.push_back(ratio_nom);  ratios_nom_err.push_back(ratio_nom_err);
@@ -9967,7 +10980,7 @@ void getCutStringForMETCleaningCutflow(vector<TString> &vectorOfCuts, vector<TSt
 }
 
 
-
+//This makes the MET tail-cleaning filter cutflow table for the 2011 AN
 void METCleaningCutflow(){
 
   loadSamples();
@@ -10173,7 +11186,28 @@ void METCleaningCutflow(){
 }
 
 
-void drawZllPlots( TString btagselection="ge1b",const int mode=1) {
+void plotLegendForZll(TH1D* ZinvPlot, TH1D* ZllPlot, TH1D* dataPlot, TString leptonmode = "mu", double xoffset=0.0 ){
+
+  //TLegend* myLegend = new TLegend(0.615,0.84,0.81,0.7);
+  TLegend* myLegend = new TLegend(0.65+xoffset,0.65,0.9,0.85);
+  myLegend->SetFillColor(0);
+  myLegend->SetBorderSize(0);
+  myLegend->SetLineStyle(0);
+  myLegend->SetTextFont(42);
+  myLegend->SetFillStyle(0);
+  myLegend->SetTextSize(0.045);
+  myLegend->AddEntry(ZinvPlot,"Z#rightarrow #nu#nu", "lp");
+  if(leptonmode=="mu") myLegend->AddEntry(ZllPlot, "Z#rightarrow #mu^{+}#mu^{-}", "lp");
+  else myLegend->AddEntry(ZllPlot, "Z#rightarrow e^{+}e^{-}", "lp");
+  myLegend->AddEntry(dataPlot,"Data", "lp");
+  myLegend->Draw();
+
+  return;
+}
+
+void drawZllPlots( TString btagselection="ge1b",const int mode=1, TString leptonmode = "mu") {
+
+  assert( leptonmode=="mu" || leptonmode=="ele" );
 
   //setLogY(true);setPlotMinimum(0.5);
   loadSamples();
@@ -10253,104 +11287,301 @@ void drawZllPlots( TString btagselection="ge1b",const int mode=1) {
   }
 
   loadSamples();
-  
+
+  if(leptonmode=="mu")  setDatasetToDraw("2011DoubleMu");
+  else if(leptonmode=="ele") setDatasetToDraw("2011DoubleElectron");
+
   int nbins;
   float low,high;
-  TString var,xtitle;
+  TString var,xtitle,ytitle;
   
-  //doOverflowAddition(true);
-  doOverflowAddition(false);
+  doOverflowAddition(true);
+  //doOverflowAddition(false);
   
 
-  setStackMode(true); //regular stack
-  setColorScheme("stack");
-  drawMCErrors_=true;
+  //setStackMode(true); //regular stack
+  //setColorScheme("stack");
+  //drawMCErrors_=true;
 
 
-  ////setStackMode(false,true); //normalized
+  setStackMode(false,true); //normalized
   //setStackMode(false,false); //not normalized
-  //setColorScheme("nostack");
+  setColorScheme("nostack");
 
 
 
   clearSamples();
-  addSample("TTbarJets");
+  //addSample("TTbarJets");
   addSample("ZJets");
 
   //resetSamples();
   doData(true);
 
-  doRatioPlot(true);
+  //doRatioPlot(true);
 
 
-  //var="MET"; xtitle="E_{T}^{miss} [GeV]";
-  //var="zmumuMET"; xtitle="E_{T}^{miss} [GeV]";
-  //nbins = 40; low=0; high=400;
-  //nbins = 50; low=0; high=500;
-  //if(btagselection=="ge2b") nbins = 10;
-  //if(btagselection=="ge3b") nbins = 5;
+  /////////////////////////////////////////////
+  // Collect the data plots
+  /////////////////////////////////////////////
 
-  //var="zeeMET"; xtitle="E_{T}^{miss} [GeV]";
-  //nbins = 20; low=0; high=600;
-
-  ////var="minDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}";
-  //var="zmumuMinDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}";
-  //nbins = 10; low=0; high=40;
-  ////if(btagselection=="ge2b") nbins = 10;
-  ////if(btagselection=="ge3b") nbins = 5;
-
-  //var="zeeMinDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}";
-  //nbins = 10; low=0; high=40;
-
-  //var="njets"; xtitle="Jet Multiplicity";
-  //nbins = 10; low=0; high=10;
-  //var="nbjetsCSVM"; xtitle="b-Jet Multiplicity";
-  //bins = 5; low=0; high=5;
-
-  //var="HT"; xtitle="H_{T} [GeV]";
-  //nbins = 20; low=150; high=1300;
-
-  //var="zmumuMass"; xtitle="M_{ll} [GeV]";
-  //var="zeeMass"; xtitle="M_{ll} [GeV]";
-  //nbins = 20; low=60; high=120;
-  //nbins = 20; low=76; high=116;
-
-  //var="zeeMass"; xtitle="M_{ll} [GeV]";
-  //nbins = 20; low=60; high=120;
-
-  //var="muonpt1"; xtitle="muon p_{T}";
-  ////var="muonpt2"; xtitle="muon p_{T}";
-  ////var="nMuons"; xtitle="number of muons";
-  //nbins = 20; low=0; high=400;
-  ////nbins = 30; low=0; high=300;
-  ////nbins = 5; low=0; high=5;
 
   //output file 
-  //TString histfilename = "dummy.root";
-  //TString histfilename = "zmass_purity_mu.root";
-  TString histfilename = "zmass_purity_ele.root";
+  TString histfilename = "dummy.root";
   TFile fh(histfilename,"RECREATE");//will delete old root file if present 
   fh.Close(); //going to open only when needed 
 
+  // **** MET plot **** //
+  if(leptonmode=="mu") { 
+    var="zmumuMET"; xtitle="E_{T}^{miss} [GeV]"; ytitle="Arbitrary units";
+    selection_ =TCut("pass_ZmumuHLT==1 && cutHT==1 && cutPV==1 && cut3Jets==1 && passZmumuCand==1 && cutEleVeto==1 && nMuons<3 && zmumuMinDeltaPhiN>=4")&&btagcut;
+  }
+  else if(leptonmode=="ele"){ 
+    var="zeeMET"; xtitle="E_{T}^{miss} [GeV]"; ytitle="Arbitrary units";
+    selection_ =TCut("pass_ZeeHLT==1 && cutHT==1 && cutPV==1 && cut3Jets==1 && passZeeCand==1 && nElectrons<3 && cutMuVeto==1 && zeeMinDeltaPhiN>=4")&&btagcut;
+  }
+  nbins = 25; low=0; high=500;  
+  drawSimple(var,nbins,low,high,histfilename, "ZllMET_data", "data",0,xtitle,ytitle);
+  TH1D* dataPlot_MET = (TH1D*)hinteractive->Clone("dataPlot_MET");
+  if( dataPlot_MET->Integral() >0)  dataPlot_MET->Scale( 1.0 / dataPlot_MET->Integral() );
 
-  //selection_ =TCut("pass_ZmumuHLT==1 && HT>400 && cutPV==1 && njets>=1 && muonpt1>17 && muonpt2>17 && TMath::Abs(muoneta1)<2.4 && TMath::Abs(muoneta2)<2.4")&&btagcut;
-  //selection_ =TCut("pass_ZmumuHLT==1 && cutHT==1 && cutPV==1 && cut3Jets==1 && passZmumuCand && zmumuMinDeltaPhiN>4 && nMuons<3 && cutEleVeto==1 && nbjetsCSVL>=1");
-  //selection_ =TCut("pass_ZmumuHLT==1 && cutHT==1 && cutPV==1 && cut3Jets==1 && passZmumuCand && zmumuMET>250 && nMuons<3 && cutEleVeto==1 && nbjetsCSVL>=1");
-  //selection_ =TCut("pass_ZmumuHLT==1 && cutPV==1 && cut3Jets==1 && passZmumuCand && zmumuMET>250 && zmumuMinDeltaPhiN>4 && nMuons<3 && cutEleVeto==1 && nbjetsCSVL>=1");
+  // **** mdp plot **** //
+  if(leptonmode=="mu") { 
+    var="zmumuMinDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}"; ytitle="Arbitrary units";
+    selection_ =TCut("pass_ZmumuHLT==1 && cutHT==1 && cutPV==1 && cut3Jets==1 && passZmumuCand==1 && cutEleVeto==1 && nMuons<3 && zmumuMET>150")&&btagcut;
+  }
+  else if(leptonmode=="ele"){ 
+    var="zeeMinDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}"; ytitle="Arbitrary units";
+    selection_ =TCut("pass_ZeeHLT==1 && cutHT==1 && cutPV==1 && cut3Jets==1 && passZeeCand==1 && nElectrons<3 && cutMuVeto==1 && zeeMET>150")&&btagcut;
+  }
+  nbins = 10; low=0; high=40;
+  drawSimple(var,nbins,low,high,histfilename, "Zllmdp_data", "data",0,xtitle,ytitle);
+  TH1D* dataPlot_mdp = (TH1D*)hinteractive->Clone("dataPlot_mdp");
+  if( dataPlot_mdp->Integral() >0)  dataPlot_mdp->Scale( 1.0 / dataPlot_mdp->Integral() );
+
+
+  // **** njet plot **** //
+  if(leptonmode=="mu") { 
+    var="njets"; xtitle="Jet Multiplicity"; ytitle="Arbitrary units";
+    selection_ =TCut("pass_ZmumuHLT==1 && HT>300 && cutPV==1 && passZmumuCand==1 && cutEleVeto==1 && nMuons<3 && zmumuMET>150 && zmumuMinDeltaPhiN>=4")&&btagcut;
+  }
+  else if(leptonmode=="ele"){ 
+    var="njets"; xtitle="Jet Multiplicity"; ytitle="Arbitrary units";
+    selection_ =TCut("pass_ZeeHLT==1 && HT>300 && cutPV==1 && passZeeCand==1 && nElectrons<3 && cutMuVeto==1 && zeeMET>150 && zeeMinDeltaPhiN>=4")&&btagcut;
+  }
+  nbins = 8; low=0; high=8;
+  drawSimple(var,nbins,low,high,histfilename, "Zllnjet_data", "data",0,xtitle,ytitle);
+  TH1D* dataPlot_njet = (TH1D*)hinteractive->Clone("dataPlot_njet");
+  if( dataPlot_njet->Integral() >0)  dataPlot_njet->Scale( 1.0 / dataPlot_njet->Integral() );
+
+  // **** nbjet plot **** //
+  //turn off btag weight momentarily
+  TString btagSFweight_temp = btagSFweight_;
+  btagSFweight_="1";
+
+  if(leptonmode=="mu") { 
+    var="nbjetsCSVM"; xtitle="b-Jet Multiplicity"; ytitle="Arbitrary units";
+    selection_ =TCut("pass_ZmumuHLT==1 && HT>300 && cutPV==1 && cut3Jets==1 && passZmumuCand==1 && cutEleVeto==1 && nMuons<3 && zmumuMET>150 && zmumuMinDeltaPhiN>=4");
+  }
+  else if(leptonmode=="ele"){ 
+    var="nbjetsCSVM"; xtitle="b-Jet Multiplicity"; ytitle="Arbitrary units";
+    selection_ =TCut("pass_ZeeHLT==1 && HT>300 && cutPV==1 && cut3Jets==1 && passZeeCand==1 && nElectrons<3 && cutMuVeto==1 && zeeMET>150 && zeeMinDeltaPhiN>=4");
+  }
+  nbins = 5; low=0; high=5;
+  drawSimple(var,nbins,low,high,histfilename, "Zllnbjet_data", "data",0,xtitle,ytitle);
+  TH1D* dataPlot_nbjet = (TH1D*)hinteractive->Clone("dataPlot_nbjet");
+  if( dataPlot_nbjet->Integral() >0)  dataPlot_nbjet->Scale( 1.0 / dataPlot_nbjet->Integral() );
+  //turn btag weight back on
+  btagSFweight_ = btagSFweight_temp;
+
+
+  /////////////////////////////////////////////
+  // Collect the Zvv plots
+  /////////////////////////////////////////////
+
+  clearSamples();
+
+  if(splitZinvisible_){
+    addSample("Zinvisible-2vAcc");
+    addSample("Zinvisible-1vAcc");
+    addSample("Zinvisible-0vAcc");    
+  }	
+  else addSample("Zinvisible");
+  doData(false);
+
+  TString s_splitzinv = "";
+  if(splitZinvisible_) s_splitzinv="splitzinv";
+
+  // **** MET plot **** //
+  var="MET"; xtitle="E_{T}^{miss} [GeV]";
+  nbins = 25; low=0; high=500;
+  selection_ =TCut("cutHT==1 && cutPV==1 && cut3Jets==1 && minDeltaPhiN>=4 && cutEleVeto==1 && cutMuVeto==1")&&btagcut;
+  drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "MET_Zinvonly_"+btagselection+modestring+"_"+s_splitzinv);
+  //drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "MET_Zinvonly_vaccele_lowmet250_"+btagselection+modestring+"_"+s_splitzinv);
+  TH1D* ZinvPlot_MET = (TH1D*)hinteractive->Clone("ZinvPlot_MET");
+
+
+  // **** mdp plot **** //
+  var="minDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}"; 
+  nbins = 10; low=0; high=40;
+  selection_ =TCut("cutHT==1 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto && MET>150")&&btagcut;
+  drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "mdp_Zinvonly_"+btagselection+modestring+"_"+s_splitzinv);
+  TH1D* ZinvPlot_mdp = (TH1D*)hinteractive->Clone("ZinvPlot_mdp");
+
+
+  // **** njet plot **** //
+  var="njets"; xtitle="Jet Multiplicity";
+  nbins = 8; low=0; high=8;
+  selection_ =TCut("HT>300 && cutPV==1 && cutEleVeto==1 && cutMuVeto==1 && MET>150 && minDeltaPhiN>=4")&&btagcut;
+  drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "njet_Zinvonly_"+btagselection+modestring+"_"+s_splitzinv);
+  TH1D* ZinvPlot_njet = (TH1D*)hinteractive->Clone("ZinvPlot_njet");
+
+
+  // **** nbjet plot **** //
+  //turn off btag weight momentarily
+  btagSFweight_temp = btagSFweight_;
+  btagSFweight_="1";
+
+  var="nbjetsCSVM"; xtitle="b-Jet Multiplicity";
+  nbins = 5; low=0; high=5;
+  selection_ =TCut("HT>300 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>150 && minDeltaPhiN>=4");
+  drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "nbjet_Zinvonly_"+btagselection+modestring+"_"+s_splitzinv);
+  TH1D* ZinvPlot_nbjet = (TH1D*)hinteractive->Clone("ZinvPlot_nbjet");
+  //turn btag weight back on
+  btagSFweight_ = btagSFweight_temp;
+
+
+
+  /////////////////////////////////////////////
+  // Collect the Zll plots
+  /////////////////////////////////////////////
+
+  clearSamples();
+  addSample("ZJets");
+
+  // **** MET plot **** //
+  if(leptonmode=="mu") {
+    var="zmumuMET";  xtitle="E_{T}^{miss} [GeV]";
+    selection_ =TCut("cutHT==1 && cutPV==1 && cut3Jets==1 && passZmumuCand==1 && cutEleVeto==1 && nMuons<3 && zmumuMinDeltaPhiN>=4")&&btagcut;
+  }
+  else if(leptonmode=="ele"){
+    var="zeeMET";  xtitle="E_{T}^{miss} [GeV]";
+    selection_ =TCut("cutHT==1 && cutPV==1 && cut3Jets==1 && passZeeCand==1 && nElectrons<3 && cutMuVeto==1 && zeeMinDeltaPhiN>=4")&&btagcut;
+  }
+  nbins = 25; low=0; high=500;
+  drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "ModMET_Zll_"+btagselection+modestring);
+  TH1D* ZllPlot_MET = (TH1D*)hinteractive->Clone("ZllPlot_MET");
+
+  
+  // **** mdp plot **** //
+  if(leptonmode=="mu") { 
+    var="zmumuMinDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}";
+    selection_ =TCut("pass_ZmumuHLT==1 && cutHT==1 && cutPV==1 && cut3Jets==1 && passZmumuCand==1 && cutEleVeto==1 && nMuons<3 && zmumuMET>150")&&btagcut;
+  }
+  else if(leptonmode=="ele"){ 
+    var="zeeMinDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}";
+    selection_ =TCut("pass_ZeeHLT==1 && cutHT==1 && cutPV==1 && cut3Jets==1 && passZeeCand==1 && nElectrons<3 && cutMuVeto==1 && zeeMET>150")&&btagcut;
+  }
+  nbins = 10; low=0; high=40;
+  drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "Modmdp_Zll_"+btagselection+modestring);
+  TH1D* ZllPlot_mdp = (TH1D*)hinteractive->Clone("zllPlot_mdp");
+
+
+  // **** njet plot **** //
+  if(leptonmode=="mu") { 
+    var="njets"; xtitle="Jet Multiplicity"; ytitle="Arbitrary units";
+    selection_ =TCut("pass_ZmumuHLT==1 && HT>300 && cutPV==1 && passZmumuCand==1 && cutEleVeto==1 && nMuons<3 && zmumuMET>150 && zmumuMinDeltaPhiN>=4")&&btagcut;
+  }
+  else if(leptonmode=="ele"){ 
+    var="njets"; xtitle="Jet Multiplicity"; ytitle="Arbitrary units";
+    selection_ =TCut("pass_ZeeHLT==1 && HT>300 && cutPV==1 && passZeeCand==1 && nElectrons<3 && cutMuVeto==1 && zeeMET>150 && zeeMinDeltaPhiN>=4")&&btagcut;
+  }
+  nbins = 8; low=0; high=8;
+  drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "njet_Zll_"+btagselection+modestring);
+  TH1D* ZllPlot_njet = (TH1D*)hinteractive->Clone("zllPlot_njet");
+
+
+  // **** nbjet plot **** //
+  //turn off btag weight momentarily
+  btagSFweight_temp = btagSFweight_;
+  btagSFweight_="1";
+
+  if(leptonmode=="mu") { 
+    var="nbjetsCSVM"; xtitle="b-Jet Multiplicity"; ytitle="Arbitrary units";
+    selection_ =TCut("pass_ZmumuHLT==1 && HT>300 && cutPV==1 && cut3Jets==1 && passZmumuCand==1 && cutEleVeto==1 && nMuons<3 && zmumuMET>150 && zmumuMinDeltaPhiN>=4");
+  }
+  else if(leptonmode=="ele"){ 
+    var="nbjetsCSVM"; xtitle="b-Jet Multiplicity"; ytitle="Arbitrary units";
+    selection_ =TCut("pass_ZeeHLT==1 && HT>300 && cutPV==1 && cut3Jets==1 && passZeeCand==1 && nElectrons<3 && cutMuVeto==1 && zeeMET>150 && zeeMinDeltaPhiN>=4");
+  }
+  nbins = 5; low=0; high=5;
+  drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "nbjet_Zll_"+btagselection+modestring);
+  TH1D* ZllPlot_nbjet = (TH1D*)hinteractive->Clone("zllPlot_nbjet");
+
+  //turn btag weight back on
+  btagSFweight_ = btagSFweight_temp;
+
+
+
+  /////////////////////////////////////////////
+  // Draw them all
+  /////////////////////////////////////////////
+  double plotScale = 1.5;  
+
+  dataPlot_MET->SetMaximum(plotScale * dataPlot_MET->GetMaximum());
+  dataPlot_MET->Draw("E");  //first to set the y scale
+  ZinvPlot_MET->Draw("EHISTSAME");
+  ZllPlot_MET->Draw("EHISTSAME");
+  dataPlot_MET->Draw("ESAME");  //last to get the dots up front
+
+  setStackMode(true); //just to get the data header plotted
+  drawPlotHeader();
+  plotLegendForZll(ZinvPlot_MET, ZllPlot_MET, dataPlot_MET,leptonmode);
+
+  thecanvas->SaveAs("Zll_"+leptonmode+"_Zvv_METshape_"+btagselection+".pdf");
+
+  dataPlot_mdp->SetMaximum(plotScale * dataPlot_mdp->GetMaximum());
+  dataPlot_mdp->Draw("E");  //first to set the y scale
+  ZinvPlot_mdp->Draw("EHISTSAME");
+  ZllPlot_mdp->Draw("EHISTSAME");
+  dataPlot_mdp->Draw("ESAME");  //last to get the dots up front
+
+  drawPlotHeader();
+  plotLegendForZll(ZinvPlot_mdp, ZllPlot_mdp, dataPlot_mdp,leptonmode);
+
+  thecanvas->SaveAs("Zll_"+leptonmode+"_Zvv_mdpshape_"+btagselection+".pdf");
+
+  dataPlot_njet->SetMaximum(plotScale * dataPlot_njet->GetMaximum());
+  dataPlot_njet->GetXaxis()->SetNdivisions(-8);
+  dataPlot_njet->Draw("E");  //first to set the y scale
+  ZinvPlot_njet->Draw("EHISTSAME");
+  ZllPlot_njet->Draw("EHISTSAME");
+  dataPlot_njet->Draw("ESAME");  //last to get the dots up front
+
+  drawPlotHeader();
+  plotLegendForZll(ZinvPlot_njet, ZllPlot_njet, dataPlot_njet,leptonmode);
+
+  thecanvas->SaveAs("Zll_"+leptonmode+"_Zvv_njetshape_"+btagselection+".pdf");
+
+  dataPlot_nbjet->SetMaximum(plotScale * dataPlot_nbjet->GetMaximum());
+  dataPlot_nbjet->GetXaxis()->SetNdivisions(-5);
+  dataPlot_nbjet->Draw("E");  //first to set the y scale
+  ZinvPlot_nbjet->Draw("EHISTSAME");
+  ZllPlot_nbjet->Draw("EHISTSAME");
+  dataPlot_nbjet->Draw("ESAME");  //last to get the dots up front
+
+  drawPlotHeader();
+  plotLegendForZll(ZinvPlot_nbjet, ZllPlot_nbjet, dataPlot_nbjet,leptonmode);
+
+  thecanvas->SaveAs("Zll_"+leptonmode+"_Zvv_nbjetshape_"+btagselection+".pdf");
+
+
+  //var="zmumuMass"; xtitle="M_{ll} [GeV]";
+  //var="zeeMass"; xtitle="M_{ll} [GeV]";
+  //nbins = 60; low=91.188-15; high=91.188+15;
+  //nbins = 20; low=60; high=120;
+
   //selection_ =TCut("pass_ZmumuHLT==1 && cutHT==1 && cutPV==1 && cut3Jets==1 && passZmumuCandLoose && zmumuMET>250 && zmumuMinDeltaPhiN>4 && nMuons<3 && cutEleVeto==1 && nbjetsCSVL>=1");
-
-
-  //selection_ =TCut("pass_ZeeHLT==1 && cutHT==1 && cutPV==1 && cut3Jets==1 && passZeeCand && zeeMinDeltaPhiN>4 && nElectrons<3 && cutMuVeto==1 && nbjetsCSVL>=1");
-  //selection_ =TCut("pass_ZeeHLT==1 && cutHT==1 && cutPV==1 && cut3Jets==1 && passZeeCand && zeeMET>250 && nElectrons<3 && cutMuVeto==1 && nbjetsCSVL>=1");
-  //selection_ =TCut("pass_ZeeHLT==1 && cutPV==1 && cut3Jets==1 && passZeeCand && zeeMET>250 && zeeMinDeltaPhiN>4 && nElectrons<3 && cutMuVeto==1 && nbjetsCSVL>=1");
   //selection_ =TCut("pass_ZeeHLT==1 && cutHT==1 && cutPV==1 && cut3Jets==1 && passZeeCandLoose && zeeMET>250 && zeeMinDeltaPhiN>4 && nElectrons<3 && cutMuVeto==1 && nbjetsCSVL>=1");
-
-  //drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "MET_stack_doublemudata_cvsl_"+modestring);
-  //drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "MET_stack_doubleeledata_cvsl_"+modestring);
-  //drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "mdp_stack_doublemudata_cvsl_"+modestring);
-  //drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "mdp_stack_doubleeledata_cvsl_"+modestring);
-  //drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "HT_stack_doublemudata_cvsl_"+modestring);
-  //drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "HT_stack_doubleeledata_cvsl_"+modestring);
   //drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "zMass_stack_doublemudata_cvsl_"+modestring);
   //drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "zMass_stack_doubleeledata_cvsl_"+modestring);
 
@@ -10358,256 +11589,21 @@ void drawZllPlots( TString btagselection="ge1b",const int mode=1) {
   //drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "zMass_stack_doublmudata_loosecuts_HT400_met30_"+modestring);
   //selection_ =TCut("pass_ZmumuHLT==1 && passZmumuCand && HT>400");//for nick
   //drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "MET_stack_doublmudata_loosecuts_HT400_"+modestring);
-  //selection_ =TCut("pass_ZmumuHLT==1 && passZmumuCand && cutHT==1");//for nick
-  //drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "zMass_stack_doublmudata_loosecuts_ht400_"+modestring);
 
-  ////selection_ =TCut("pass_ZmumuHLT==1 && HT>400 && cutPV==1 && njets>=1 && muonpt1>17 && muonpt2>17 && TMath::Abs(muoneta1)<2.4 && TMath::Abs(muoneta2)<2.4")&&btagcut;
-  //selection_ =TCut("pass_ZmumuHLT==1 && cutHT==1 && cutPV==1 && cut3Jets==1 && passZmumuCandLoose && zmumuMinDeltaPhiN>4 && zmumuMET>250 && nMuons<3 && cutEleVeto==1 && nbjetsCSVL>=1");
-  ////drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "met_FC_stack_doublemudata_"+btagselection+modestring);
-  ////drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "met_FC_stack_doublemudata_"+modestring);
-  
-  //return;
+  //var="ntruebjets"; xtitle="# true bjets";  
+  //selection_ =TCut("cutHT==1 && cutPV==1 && cut3Jets==1");
+  //drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "ntruebjets_Zinvonly_"+btagselection+modestring);
 
-  /////////////Z -> mumu Purity
-
-  //var="zmumuMass"; xtitle="M_{ll} [GeV]";
-  //nbins = 40; low=60; high=120;
-  //selection_ =TCut("pass_ZmumuHLT==1 && cutPV==1 && passZmumuCandLoose");
-  //drawSimple(var,nbins,low,high,histfilename, "zmumumass_loose_doublemudata", "data");  
-  //nbins = 20; low=60; high=120;
-  //selection_ =TCut("pass_ZmumuHLT==1 && cutHT==1 && cutPV==1 && cut3Jets==1 && passZmumuCandLoose && zmumuMinDeltaPhiN>4 && zmumuMET>250 && nMuons<3 && cutEleVeto==1 && nbjetsCSVL>=1");
-  //drawSimple(var,nbins,low,high,histfilename, "zmumumass_VL_stack_doublemudata", "data");
-  ////nbins = 1; low=91.188-15; high=91.188+15;//just to get the purity in the window
-  ////drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "zmumumass_FC_stack_"+modestring);
-  //
-  //
-  //selection_ =TCut("pass_ZmumuHLT==1 && HT>500 && cutPV==1 && cut3Jets==1 && passZmumuCandLoose && zmumuMinDeltaPhiN>4 && zmumuMET>500 && nMuons<3 && cutEleVeto==1 && nbjetsCSVL>=1");
-  //drawSimple(var,nbins,low,high,histfilename, "zmumumass_VL_stack_tightMET_doublemudata", "data");
-  ////nbins = 1; low=91.188-15; high=91.188+15;//just to get the purity in the window
-  ////drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "zmumumass_FC_stack_tightMET_"+modestring);
-  //
-  //selection_ =TCut("pass_ZmumuHLT==1 && HT>600 && cutPV==1 && cut3Jets==1 && passZmumuCandLoose && zmumuMinDeltaPhiN>4 && zmumuMET>300 && nMuons<3 && cutEleVeto==1 && nbjetsCSVL>=1");
-  //drawSimple(var,nbins,low,high,histfilename, "zmumumass_VL_stack_tightHT_doublemudata", "data");
-  ////nbins = 1; low=91.188-15; high=91.188+15;//just to get the purity in the window
-  ////drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "zmumumass_FC_stack_tightHT_"+modestring);
-  //
-  ////loosen the HT requirement on the VL sample
-  //selection_ =TCut("pass_ZmumuHLT==1 && HT>300 && cutPV==1 && cut3Jets==1 && passZmumuCandLoose && zmumuMinDeltaPhiN>4 && zmumuMET>250 && nMuons<3 && cutEleVeto==1 && nbjetsCSVL>=1");
-  //drawSimple(var,nbins,low,high,histfilename, "zmumumass_VL_stack_HT300_doublemudata", "data");
-  //
-  ////loosen the MET requirement on the VL sample
-  //selection_ =TCut("pass_ZmumuHLT==1 && cutHT==1 && cutPV==1 && cut3Jets==1 && passZmumuCandLoose && zmumuMinDeltaPhiN>4 && zmumuMET>50 && zmumuMET<150 && nMuons<3 && cutEleVeto==1 && nbjetsCSVL>=1");
-  //drawSimple(var,nbins,low,high,histfilename, "zmumumass_VL_stack_MET50to150_doublemudata", "data");
-  //
-  ////loosen the MET requirement on the VL sample
-  //selection_ =TCut("pass_ZmumuHLT==1 && cutHT==1 && cutPV==1 && cut3Jets==1 && passZmumuCandLoose && zmumuMinDeltaPhiN>4 && zmumuMET>150 && zmumuMET<250 && nMuons<3 && cutEleVeto==1 && nbjetsCSVL>=1");
-  //drawSimple(var,nbins,low,high,histfilename, "zmumumass_VL_stack_MET150to250_doublemudata", "data");
-  //
-  //return;
+  //cout << "zinv integral = " <<  ZinvPlot->Integral() << endl;
+  //integral = ZinvPlot->IntegralAndError(1,ZinvPlot->FindBin(150)-1, integralerr);
+  //cout << "zinv integral(0-150) = " << integral << " +- " << integralerr  << endl;
+  //integral = ZinvPlot->IntegralAndError(ZinvPlot->FindBin(150), ZinvPlot->FindBin(250)-1, integralerr);
+  //cout << "zinv integral(150-250) = " << integral << " +- " << integralerr  << endl;
+  //integral = ZinvPlot->IntegralAndError(ZinvPlot->FindBin(250), ZinvPlot->FindBin(500), integralerr);
+  //cout << "zinv integral(>250) = " << integral << " +- " << integralerr  << endl;
 
 
-  /////////////Z -> ee Purity
-
-  var="zeeMass"; xtitle="M_{ll} [GeV]";
-  nbins = 40; low=60; high=120;
-  selection_ =TCut("pass_ZeeHLT==1 && cutPV==1 && passZeeCandLoose");
-  drawSimple(var,nbins,low,high,histfilename, "zeemass_loose_doubleeledata", "data");
-  nbins = 20; low=60; high=120;
-  selection_ =TCut("pass_ZeeHLT==1 && cutHT==1 && cutPV==1 && cut3Jets==1 && passZeeCandLoose && zeeMinDeltaPhiN>4 && zeeMET>250 && nElectrons<3 && cutMuVeto==1 && nbjetsCSVL>=1");
-  drawSimple(var,nbins,low,high,histfilename, "zeemass_VL_stack_doubleeledata", "data");
-  //nbins = 1; low=91.188-15; high=91.188+15;//just to get the purity in the window
-  //drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "zeemass_VL_stack_"+modestring);
-  
-  selection_ =TCut("pass_ZeeHLT==1 && HT>500 && cutPV==1 && cut3Jets==1 && passZeeCandLoose && zeeMinDeltaPhiN>4 && zeeMET>500 && nElectrons<3 && cutMuVeto==1 && nbjetsCSVL>=1");
-  drawSimple(var,nbins,low,high,histfilename, "zeemass_VL_stack_tightMET_doubleeledata", "data");
-  //nbins = 1; low=91.188-15; high=91.188+15;//just to get the purity in the window
-  //drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "zeemass_VL_stack_tightMET_"+modestring);
-
-  selection_ =TCut("pass_ZeeHLT==1 && HT>600 && cutPV==1 && cut3Jets==1 && passZeeCandLoose && zeeMinDeltaPhiN>4 && zeeMET>300 && nElectrons<3 && cutMuVeto==1 && nbjetsCSVL>=1");
-  drawSimple(var,nbins,low,high,histfilename, "zeemass_VL_stack_tightHT_doubleeledata", "data");
-  //nbins = 1; low=91.188-15; high=91.188+15;//just to get the purity in the window
-  //drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "zeemass_VL_stack_tightHT_"+modestring);
-
-  //loosen the HT requirement on VL sample
-  selection_ =TCut("pass_ZeeHLT==1 && HT>300 && cutPV==1 && cut3Jets==1 && passZeeCandLoose && zeeMinDeltaPhiN>4 && zeeMET>250 && nElectrons<3 && cutMuVeto==1 && nbjetsCSVL>=1");
-  drawSimple(var,nbins,low,high,histfilename, "zeemass_VL_stack_HT300_doubleeledata", "data");
-
-  //loosen the MET requirement on VL sample
-  selection_ =TCut("pass_ZeeHLT==1 && cutHT==1 && cutPV==1 && cut3Jets==1 && passZeeCandLoose && zeeMinDeltaPhiN>4 && zeeMET>50 && zeeMET<150 && nElectrons<3 && cutMuVeto==1 && nbjetsCSVL>=1");
-  drawSimple(var,nbins,low,high,histfilename, "zeemass_VL_stack_MET50to150_doubleeledata", "data");
-
-  //loosen the MET requirement on VL sample
-  selection_ =TCut("pass_ZeeHLT==1 && cutHT==1 && cutPV==1 && cut3Jets==1 && passZeeCandLoose && zeeMinDeltaPhiN>4 && zeeMET>150 && zeeMET<250 && nElectrons<3 && cutMuVeto==1 && nbjetsCSVL>=1");
-  drawSimple(var,nbins,low,high,histfilename, "zeemass_VL_stack_MET150to250_doubleeledata", "data");
-
-
-  return;
-
-
-
- 
-  //selection_ =TCut("pass_ZmumuHLT==1 && cutHT==1 && cutPV==1 && cut3Jets==1 && passZmumuCand==1")&&btagcut;
-  //selection_ =TCut("pass_ZmumuHLT==1 && HT>400 && cutPV==1 && njets>=3 && passZmumuCand==1")&&btagcut;
-  //drawSimple(var,nbins,low,high,histfilename, "MET_doublemudata", "data");
-  ////drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "MET_doublemudata_"+btagselection+modestring);
-
-
-  //selection_ =TCut("cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && MET>100")&&btagcut;
-  //selection_ =TCut("pass_ZmumuHLT==1 && HT>300 && cutPV==1 && njets>=1 && passZmumuCand==1 && zmumuMET>100")&&btagcut;
-  //drawSimple(var,nbins,low,high,histfilename, "mdp_doublemudata", "data");
-  //drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "mdp_Zinvonly_"+btagselection+modestring);
-
-  ////selection_ =TCut("cutHT==1 && cutPV==1 && cutTrigger==1 && MET>100 && minDeltaPhiN>=4")&&btagcut;
-  //selection_ =TCut("pass_ZmumuHLT==1 && HT>300 && cutPV==1 && njets>=0 && passZmumuCand==1 && zmumuMET>100")&&btagcut;
-  //drawSimple(var,nbins,low,high,histfilename, "njet_doublemudata", "data");
-  ////drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "njet_Zinvonly_"+btagselection+modestring);
-
-  //selection_ =TCut("cutHT==1 && cutPV==1 && cutTrigger==1 && MET>100 && minDeltaPhiN>=4")&&btagcut;
-  //drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "nbjet_Zinvonly_"+btagselection+modestring);
-
-  //selection_ =TCut("cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && MET>100 && minDeltaPhiN>=4")&&btagcut;
-  //selection_ =TCut("pass_ZmumuHLT==1 && HT>300 && cutPV==1 && njets>=1 && passZmumuCand==1 && zmumuMET>100")&&btagcut;
-  //drawSimple(var,nbins,low,high,histfilename, "ht_doublemudata", "data");
-  //drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "HT_Zinvonly_"+btagselection+modestring);
-
-  ////selection_ =TCut("pass_ZmumuHLT==1 && cutHT==1 && cutPV==1 && njets>=1 && passZmumuCand==1")&&btagcut;
-  //selection_ =TCut("pass_ZmumuHLT==1 && cutHT==1 && cutPV==1 && njets>=1 && muonpt2>17")&&btagcut;
-  //drawSimple(var,nbins,low,high,histfilename, "muonpt1_doublemudata", "data");
-  ////drawSimple(var,nbins,low,high,histfilename, "nmuons_doublemudata", "data");
-
-
-  //TH1D* dataPlot = (TH1D*)hinteractive->Clone("dataPlot");
-  //if( dataPlot->Integral() >0)  dataPlot->Scale( 1.0 / dataPlot->Integral() );
-
-
-
-  clearSamples();
-  addSample("Zinvisible");
-  doData(false);
-
-  var="MET"; xtitle="E_{T}^{miss} [GeV]";
-  //nbins = 15; low=0; high=500;
-  //if(btagselection=="ge2b") nbins = 10;
-  //if(btagselection=="ge3b") nbins = 5;
-  nbins = 50; low=0; high=500;
-  if(btagselection=="ge3b") nbins = 25;
-
-
-  //var="minDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}";
-  //nbins = 10; low=0; high=40;
-  ////if(btagselection=="ge2b") nbins = 10;
-  ////if(btagselection=="ge3b") nbins = 5;
-
-  //var="njets"; xtitle="Jet Multiplicity";
-  //nbins = 10; low=0; high=10;
-  //var="nbjetsCSVM"; xtitle="b-Jet Multiplicity";
-  //bins = 5; low=0; high=5;
-
-  //var="HT"; xtitle="H_{T} [GeV]";
-  //nbins = 10; low=300; high=1300;
-
-  //var="muonpt1"; xtitle="muon p_{T}";
-  ////var="muonpt2"; xtitle="muon p_{T}";
-  ////var="nMuons"; xtitle="number of muons";
-  //nbins = 20; low=0; high=400;
-  ////nbins = 30; low=0; high=300;
-  ////nbins = 5; low=0; high=5;
-
-
-  selection_ =TCut("cutHT==1 && cutPV==1 && cut3Jets==1")&&btagcut;
-  //selection_ =TCut("HT>300 && cutPV==1 && njets>=1")&&btagcut;
-  drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "MET_Zinvonly_"+btagselection+modestring);
-
-  //selection_ =TCut("cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && MET>100")&&btagcut;
-  //selection_ =TCut("HT>300 && cutPV==1 && njets>=1 && MET>100")&&btagcut;
-  //drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "mdp_Zinvonly_"+btagselection+modestring);
-
-  ////selection_ =TCut("cutHT==1 && cutPV==1 && cutTrigger==1 && MET>100 && minDeltaPhiN>=4")&&btagcut;
-  //selection_ =TCut("HT>300 && cutPV==1 && njets>=0 && MET>100")&&btagcut;
-  //drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "njet_Zinvonly_"+btagselection+modestring);
-
-  //selection_ =TCut("cutHT==1 && cutPV==1 && cutTrigger==1 && MET>100 && minDeltaPhiN>=4")&&btagcut;
-  //drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "nbjet_Zinvonly_"+btagselection+modestring);
-
-  //selection_ =TCut("cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && MET>100 && minDeltaPhiN>=4")&&btagcut;
-  //selection_ =TCut("HT>300 && cutPV==1 && njets>=1 && MET>100")&&btagcut;
-  //drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "HT_Zinvonly_"+btagselection+modestring);
-
-  TH1D* ZinvPlot = (TH1D*)hinteractive->Clone("ZinvPlot");
- 
-  clearSamples();
-  addSample("ZJets");
-
-  ////temporary
-  //selection_ =TCut("cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && passZmumuCand==1")&&btagcut;
-  //drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "MET_Zmumuonly_"+btagselection+modestring);
-  //TH1D* ZllPlottemp = (TH1D*)hinteractive->Clone("ZllPlottemp");
-  //ZllPlottemp->SetLineColor(kBlack);
-
-  //var="zmumuMET"; xtitle="E_{T}^{miss} [GeV]";
-  //selection_ =TCut("HT>300 && cutPV==1 && njets>=1 && passZmumuCand==1")&&btagcut;
-  //selection_ =TCut("cutHT==1 && cutPV==1 && cut3Jets==1 && passZmumuCand==1")&&btagcut;
-  //drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "ModMET_Zmumuonly_"+btagselection+modestring);
-
-  var="zeeMET"; xtitle="E_{T}^{miss} [GeV]";
-  //selection_ =TCut("cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && passZeeCand==1")&&btagcut;
-  selection_ =TCut("cutHT==1 && cutPV==1 && cut3Jets==1 && passZeeCand==1")&&btagcut;
-  drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "ModMET_Zeeonly_"+btagselection+modestring);
-
-  //var="zmumuMinDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}";
-  ////selection_ =TCut("cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && zmumuMET>100 && passZmumuCand==1")&&btagcut;
-  //selection_ =TCut("HT>300 && cutPV==1 && cutTrigger==1 && njets>=1 && zmumuMET>100 && passZmumuCand==1")&&btagcut;
-  //drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "Modmdp_Zmumuonly_"+btagselection+modestring);
-
-  //var="zeeMinDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}";
-  //selection_ =TCut("cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && zeeMET>100 && passZeeCand==1")&&btagcut;
-  //drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "Modmdp_Zeeonly_"+btagselection+modestring);
-
-  //var="njets"; xtitle="Jet Multiplicity";
-  ////selection_ =TCut("cutHT==1 && cutPV==1 && cutTrigger==1 && zmumuMET>100 && zmumuMinDeltaPhiN>=4 && passZmumuCand==1")&&btagcut;
-  //selection_ =TCut("HT>300 && cutPV==1 && njets>=0 && zmumuMET>100 && passZmumuCand==1")&&btagcut;
-  //drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "njet_Zmumuonly_"+btagselection+modestring);
-  ////var="njets"; xtitle="Jet Multiplicity";
-  ////selection_ =TCut("cutHT==1 && cutPV==1 && cutTrigger==1 && zeeMET>100 && zeeMinDeltaPhiN>=4 && passZeeCand==1")&&btagcut;
-  ////drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "njet_Zeeonly_"+btagselection+modestring);
-
-  //var="nbjetsCSVM"; xtitle="b-Jet Multiplicity";
-  //selection_ =TCut("cutHT==1 && cutPV==1 && cutTrigger==1 && zmumuMET>100 && zmumuMinDeltaPhiN>=4 && passZmumuCand==1")&&btagcut;
-  //drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "nbjet_Zmumuonly_"+btagselection+modestring);
-  //var="nbjetsCSVM"; xtitle="b-Jet Multiplicity";
-  //selection_ =TCut("cutHT==1 && cutPV==1 && cutTrigger==1 && zeeMET>100 && zeeMinDeltaPhiN>=4 && passZeeCand==1")&&btagcut;
-  //drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "nbjet_Zeeonly_"+btagselection+modestring);
-
-  //var="HT"; xtitle="H_{T} [GeV]";
-  //selection_ =TCut("cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && zmumuMET>100 && zmumuMinDeltaPhiN>=4 && passZmumuCand==1")&&btagcut;
-  //selection_ =TCut("HT>300 && cutPV==1 && njets>=1 && zmumuMET>100 && passZmumuCand==1")&&btagcut;
-  //drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "HT_Zmumuonly_"+btagselection+modestring);
-  //var="HT"; xtitle="H_{T} [GeV]";
-  //selection_ =TCut("cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && zeeMET>100 && zeeMinDeltaPhiN>=4 && passZeeCand==1")&&btagcut;
-  //drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "HT_Zeeonly_"+btagselection+modestring);
-
-  //var="muonpt1"; xtitle="muon p_{T}";
-  ////var="muonpt2"; xtitle="muon p_{T}";
-  ////var="nMuons"; xtitle="number of muons";
-  ////selection_ =TCut("cutHT==1 && cutPV==1 && cutTrigger==1 && njets>=1 && passZmumuCand==1")&&btagcut;
-  //selection_ =TCut("cutHT==1 && cutPV==1 && cutTrigger==1 && njets>=1 && muonpt2>17")&&btagcut;
-  ////drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "muonpt1_Zmumuonly_"+btagselection+modestring);
-  //drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "muonpt1_Zmumuonly_"+btagselection+modestring);
-
-
-  TH1D* ZllPlot = (TH1D*)hinteractive->Clone("ZllPlot");
-
-  ////for Z->mumu color
-  //ZllPlot->SetLineColor(kSpring-1);
-  //ZllPlot->SetMarkerColor(kSpring-1);
-
-
-  //normalize Zinv shape to Zll integral
-  if( ZinvPlot->Integral() >0)  ZinvPlot->Scale( ZllPlot->Integral() / ZinvPlot->Integral() );
-
-  //ZinvPlot->Draw("ESAME");
-  //thecanvas->SaveAs("METshape_ZinvAndZmumu_"+btagselection+".png");
-
+  /*
   //Hack to get it plotted with ratio plot
   TCanvas* myC = 0;
   myC = new TCanvas("myC", "myC", 600,700);
@@ -10620,7 +11616,7 @@ void drawZllPlots( TString btagselection="ge1b",const int mode=1) {
   const float padding=1e-5; const float ydivide=0.3;
   myC->GetPad(1)->SetPad( padding, ydivide + padding, 1-padding, 1-padding);
   myC->GetPad(2)->SetPad( padding, padding, 1-padding, ydivide-padding);
-  //myC->GetPad(1)->SetLogy(1);
+  myC->GetPad(1)->SetLogy(1);
   myC->GetPad(1)->SetRightMargin(.05);
   myC->GetPad(2)->SetRightMargin(.05);
   myC->GetPad(2)->SetBottomMargin(.4);
@@ -10644,7 +11640,6 @@ void drawZllPlots( TString btagselection="ge1b",const int mode=1) {
   ZllPlot->Draw("HIST E");
   ZinvPlot->Draw("HIST E SAME");
   //dataPlot->Draw("E SAME");  
-
 
   TH1D* myRatio;
   myRatio = new TH1D("ratio", "ratio", nbins,low,high);
@@ -10685,601 +11680,13 @@ void drawZllPlots( TString btagselection="ge1b",const int mode=1) {
   myLine = new TLine(low, 1, high, 1);
   myLine->Draw();
   myC->cd(1);
-  //TLatex* mytext = new TLatex(3.570061,23.08044,"CMS Preliminary");
-  TLatex* mytext = new TLatex(3.570061,23.08044,"CMS Simulation");
-  mytext->SetNDC();
-  mytext->SetTextAlign(13);
-  mytext->SetX(0.6);
-  mytext->SetY(0.9);
-  mytext->SetTextFont(42);
-  mytext->SetTextSizePixels(24);
-  mytext->Draw();
-  TLegend* myLegend = new TLegend(0.615,0.84,0.81,0.7);
-  myLegend->SetFillColor(0);
-  myLegend->SetBorderSize(0);
-  myLegend->SetLineStyle(0);
-  myLegend->SetTextFont(42);
-  myLegend->SetFillStyle(0);
-  myLegend->SetTextSize(0.045);
-  myLegend->AddEntry(ZinvPlot,"Z#rightarrow #nu#nu", "lp");
-  //myLegend->AddEntry(ZllPlot, "Z/#gamma*#rightarrow #mu^{+}#mu^{-}", "lp");
-  myLegend->AddEntry(ZllPlot, "Z/#gamma*#rightarrow e^{+}e^{-}", "lp");
-  //myLegend->AddEntry(dataPlot,"Data", "lp");
-  myLegend->Draw();
-
-  //myC->Print("METshape_ZinvAndZmumu_withRatio_"+btagselection+".png");	
-  //myC->Print("METshape_ZinvAndZmumu_withorigmet_withRatio_"+btagselection+".png");	
-  //myC->Print("METshape_ZinvAndZmumu_withRatio_test3jets_"+btagselection+".png");	
-  //myC->Print("METshape_ZinvAndZmumu_withData_withRatio_"+btagselection+".png");	
-  myC->Print("METshape_ZinvAndZee_withRatio_"+btagselection+".png");	
-  //myC->Print("METshape_ZinvAndZmumu_withRatio_"+btagselection+".png");	
-
-  //myC->Print("MDPshape_ZinvAndZmumu_withRatio_"+btagselection+".png");	
-  //myC->Print("MDPshape_ZinvAndZee_withRatio_"+btagselection+".png");	
-
-  //myC->Print("njet_ZinvAndZmumu_withRatio_"+btagselection+".png");	
-  //myC->Print("njet_ZinvAndZee_withRatio_"+btagselection+".png");	
-
-  //myC->Print("nbjet_ZinvAndZmumu_withRatio_"+btagselection+".png");	
-  //myC->Print("nbjet_ZinvAndZee_withRatio_"+btagselection+".png");	
-
-  //myC->Print("HT_ZinvAndZmumu_withRatio_"+btagselection+".png");	
-  //myC->Print("HT_ZinvAndZee_withRatio_"+btagselection+".png");	
-
-  //myC->Print("MET_HT300_ZinvAndZmumu_withDatav3_withRatio_"+btagselection+".png");	
-
-  //myC->Print("MDPshape_MET50_HT300_ZinvAndZmumu_withDatav3_withRatio_"+btagselection+".png");	
-  //myC->Print("MDPshape_MET100_HT300_ZinvAndZmumu_withDatav3_withRatio_"+btagselection+".png");	
-
-  //myC->Print("njet_MET100_HT300_ZinvAndZmumu_withDatav3_withRatio_"+btagselection+".png");	
-
-  //myC->Print("HT_MET100_HT300_ZinvAndZmumu_withDatav3_withRatio_"+btagselection+".png");	
-
-  //myC->Print("muonpt1_ZinvAndZmumu_withDatav2_withRatio_muonpt2geq17"+btagselection+".png");	
-  //myC->Print("muonpt1_ZinvAndZmumu_withDatav3_withRatio_muonpt2geq17"+btagselection+".png");	
-  //myC->Print("muonpt1_ZinvAndZmumu_noinvmasscut_withData_withRatio_may10only_"+btagselection+".png");	
-  //myC->Print("muonpt1_ZinvAndZmumu_withDatav2_withRatio_promptv4only_muonpt2geq17"+btagselection+".png");	
-  //myC->Print("muonpt1_ZinvAndZmumu_noinvmasscut_withData_withRatio_aug5only_"+btagselection+".png");	
-  //myC->Print("muonpt1_ZinvAndZmumu_noinvmasscut_withDatav2_withRatio_aug5only_"+btagselection+".png");
-  //myC->Print("muonpt1_ZinvAndZmumu_noinvmasscut_withData_withRatiov2_promptv6only_"+btagselection+".png");	
-  //myC->Print("muonpt1_ZinvAndZmumu_noinvmasscut_withDatav2_withRatio_run2011bonly_"+btagselection+".png");		
-  //myC->Print("muonpt2_ZinvAndZmumu_withData_withRatio_"+btagselection+".png");	
-  //myC->Print("muonpt2_ZinvAndZmumu_noinvmasscut_withData_withRatio_may10rerecoonly_"+btagselection+".png");	
-  //myC->Print("muonpt2_ZinvAndZmumu_noinvmasscut_withDatav2_withRatio_aug5only_"+btagselection+".png");	
-  //myC->Print("muonpt2_ZinvAndZmumu_withDatav2_withRatio_promptv4only_"+btagselection+".png");	
-
-  //myC->Print("nmuons_ZinvAndZmumu_noinvmasscut_withDatav2_withRatio_may10only_"+btagselection+".png");	
-  //myC->Print("nmuons_ZinvAndZmumu_noinvmasscut_withDatav2_withRatio_promptv4only_"+btagselection+".png");	
+  */
 
 
 }
 
-//return closure and extrapolation factor
-std::pair<double,double> zvvClosureTest(const unsigned int searchRegionIndex,const TString & mode="", bool isExtrapMode = false, const TString FCmode = "", bool datamode = false) {
 
-  assert( mode=="mu" || mode=="ele" );
-
-  if(datamode && !isExtrapMode){std::cout << "isExtrapMode must be true in data mode.  Aborting." << std::endl;  assert(0);}
-
-  doOverflowAddition(true);
-
-  //const SearchRegion region = sbRegions_[searchRegionIndex];
-  const SearchRegion region = searchRegions_[searchRegionIndex];
-
-  TString btagselection = region.btagSelection;
-
-  TString sampleOfInterest = "totalsm";
-  loadSamples(); //needs to come first! this is why this should be turned into a class, with this guy in the ctor
-  setColorScheme("nostack");
-  clearSamples();
-  addSample("Zinvisible");
-  
-  savePlots_=false;
-  setLogY(false);
-
-  // --  count events
-  TCut btagcut = "nbjetsCSVM>=1";
-  btagSFweight_="1";
-  TString btagSFweight=""; //we're going to have to switch this one in and out of the global var
-  if (useScaleFactors_) {
-
-    usePUweight_=true;
-    useHTeff_=true;
-    useMHTeff_=false;
-    //useMHTeff_=true;
-    thebnnMHTeffMode_ = kOff;//dealt with later
-    currentConfig_=configDescriptions_.getCorrected(); //add JERbias
-
-    if(isExtrapMode){
-      //turn of all btag weights stuff
-      btagSFweight_="1";
-      if (btagselection=="ge2b") {
-	btagcut="nbjetsCSVM>=2";
-      }
-      else if (btagselection=="ge1b") {}
-      else if (btagselection=="ge3b") {
-	btagcut="nbjetsCSVM>=3";
-      }
-      else if (btagselection=="eq1b") {
-	btagcut="nbjetsCSVM==1";
-      }
-      else if (btagselection=="eq2b") {
-	btagcut="nbjetsCSVM==2";
-      }
-      else {assert(0);}
-    }
-    else{
-      btagcut="1";    
-      if (btagselection=="ge2b") {
-	btagSFweight="probge2";
-      }
-      else if (btagselection=="ge1b") {
-	btagSFweight="probge1";
-      }
-      else if (btagselection=="ge3b") {
-	btagSFweight="probge3";
-      }
-      else if (btagselection=="eq1b") {
-	btagSFweight="prob1";
-      }
-      else if (btagselection=="eq2b") {
-	btagSFweight="prob2";
-      }
-      else if (btagselection=="ge0b") {
-	btagSFweight="(prob0 + probge1)";
-      }
-      else {assert(0);}
-
-      btagSFweight_=btagSFweight;
-
-    }
-  }
-  else {
-    usePUweight_=false;
-    useHTeff_=false;
-    useMHTeff_=false;
-    thebnnMHTeffMode_ = kOff;
-    btagSFweight_="1";
-
-    currentConfig_=configDescriptions_.getDefault(); //completely raw MC
-    
-    if (btagselection=="ge2b") {
-      btagcut="nbjetsCSVM>=2";
-    }
-    else if (btagselection=="ge1b") {}
-    else if (btagselection=="ge3b") {
-      btagcut="nbjetsCSVM>=3";
-    }
-    else if (btagselection=="eq1b") {
-      btagcut="nbjetsCSVM==1";
-    }
-    else if (btagselection=="eq2b") {
-      btagcut="nbjetsCSVM==2";
-    }
-    else {assert(0);}
-  }
-
-  setStackMode(false);
-  doData(datamode);
-  setQuiet(true);
-
-  TString var,xtitle;
-  int nbins;
-  float low,high;
-
-  var="HT"; xtitle=var;
-  nbins=1; low=0; high=5000;
-
-  TCut HTcut=region.htSelection.Data(); 
-  TCut SRMET = region.metSelection.Data();
-  TCut baseline = "cutPV==1 && cut3Jets==1";
-  TCut lepvetocut = "cutEleVeto==1 && cutMuVeto==1";
-  TCut cleaning = "weight<1000 && passCleaning==1";
-  TCut dpcut = "minDeltaPhiN>=4";
-
-  //test btag extrapolation
-  TCut csvlbtagcut = "nbjetsCSVL>=1";
-
-  
-  double zvvSIG, zvvSIGerr;
-
-  selection_ = baseline && cleaning && lepvetocut && dpcut && SRMET && HTcut && btagcut; 
-  drawPlots(var,nbins,low,high,xtitle,"events","zvvSIG");
-  zvvSIG=getIntegral(sampleOfInterest);
-  zvvSIGerr=getIntegralErr(sampleOfInterest);
-  
-  std::cout << "zvvSIG = " << zvvSIG << " +/- " << zvvSIGerr << std::endl;
-
-  //count the corresponding number of Z->ll events
-  clearSamples();
-  addSample("ZJets");
-
-  TString modmetSelection = region.metSelection;
-  //TRegexp regmet("MET");
-  //modmetSelection(regmet) = "zmumuMET";
-  if(mode=="mu")  modmetSelection.ReplaceAll("MET","zmumuMET");
-  else if(mode=="ele") modmetSelection.ReplaceAll("MET","zeeMET");
-  TCut SRModMET = modmetSelection.Data();
-
-  std::cout << "modmetSelection = " << modmetSelection << std::endl;
-
-  TCut dpllcut = "zmumuMinDeltaPhiN>=4";
-  if(mode=="ele") dpllcut = "zeeMinDeltaPhiN>=4";
-
-  TCut zllCut = "passZmumuCand==1";
-  if(mode=="ele") zllCut = "passZeeCand==1";
-
-  TCut modlepvetocut = "nMuons<3 && cutEleVeto==1";
-  if(mode=="ele") modlepvetocut = "cutMuVeto==1 && nElectrons<3";
-
-  TCut trigcut = "pass_ZmumuHLT == 1";
-  if(mode=="ele") trigcut = "pass_ZeeHLT == 1";
-
-  double zllSIG, zllSIGerr;
-  double zllObs_Allcuts=-1, zllObs_Allcuts_err=-1;
-
-  if(isExtrapMode){ 
-    selection_ = baseline && trigcut && cleaning && modlepvetocut && dpllcut && SRModMET && HTcut && csvlbtagcut && zllCut;
-  }
-  else selection_ = baseline && trigcut && cleaning && modlepvetocut && dpllcut && SRModMET && HTcut && btagcut && zllCut;
-
-  if(datamode){
-
-    //dummy output file 
-    TString histfilename = "dummy.root";
-    TFile fh(histfilename,"RECREATE");
-    fh.Close(); 
-
-    drawSimple(var,nbins,low,high,histfilename, "zllSIG_data", "data");
-    zllSIG = hinteractive->IntegralAndError(hinteractive->GetXaxis()->GetFirst(),
-					    hinteractive->GetXaxis()->GetLast(),
-					    zllSIGerr);
-
-    //what we observe if we really apply all analysis cuts (i.e. nominal btagging)
-    selection_ = baseline && trigcut && cleaning && modlepvetocut && dpllcut && SRModMET && HTcut && btagcut && zllCut;
-    drawSimple(var,nbins,low,high,histfilename, "zllObs_data", "data");
-    zllObs_Allcuts = hinteractive->IntegralAndError(hinteractive->GetXaxis()->GetFirst(),
-						     hinteractive->GetXaxis()->GetLast(),
-						     zllObs_Allcuts_err);
-
-  }
-  else{
-    drawPlots(var,nbins,low,high,xtitle,"events","zllSIG");
-    zllSIG=getIntegral(sampleOfInterest);
-    zllSIGerr=getIntegralErr(sampleOfInterest);
-  }
-
-  std::cout << "zllSIG = " << zllSIG << " +/- " << zllSIGerr << std::endl;
-  if(datamode)  std::cout << "zllObs_Allcuts = " << zllObs_Allcuts << " +/- " << zllObs_Allcuts_err << std::endl;
-
-  ////////////////////////////////
-  //b-tag Extrapolation Fraction
-  ////////////////////////////////
-  double extrapF=-1, extrapFerr_l=-1, extrapFerr_h=-1;
-  double zllSIG_exF , zllSIGerr_exF;
-  if(isExtrapMode){
-    //doOverflowAddition(false);
-
-    ////temporarily switch off btag weight stuff
-    //TString btagSFweight_temp = btagSFweight_;
-    //btagSFweight_="1";
-    //TCut btagcut_temp = btagcut;
-    //if (btagselection=="ge2b") btagcut="nbjetsCSVM>=2";
-    //else if (btagselection=="ge1b") btagcut="nbjetsCSVM>=1";
-    //else if (btagselection=="ge3b") btagcut="nbjetsCSVM>=3";
-    //else assert(0);
-
-    //dummy output file 
-    TString histfilename = "dummy.root";
-    TFile fh(histfilename,"RECREATE");
-    fh.Close(); 
-
-    //get the extrapolation factor from a 
-    //50<MET<150, 300<HT<400 region
-
-    var="HT"; xtitle=var;
-    nbins=1; low=0; high=1000;    
-
-    //TCut FModHTCut = "HT>200 && HT<400";
-    TCut FModHTCut = HTcut;//try same HT cut
-    TCut FModMETCut;
-    if(mode=="mu"){ 
-      if(FCmode=="FCdown")FModMETCut = "zmumuMET>0 && zmumuMET<50";
-      else if(FCmode=="FCup")FModMETCut = "zmumuMET>150 && zmumuMET<250";
-      else FModMETCut = "zmumuMET>50 && zmumuMET<150";
-    }
-    else if(mode=="ele"){
-      if(FCmode=="FCdown")FModMETCut = "zeeMET>0 && zeeMET<50";
-      else if(FCmode=="FCup")FModMETCut = "zeeMET>150 && zeeMET<250";
-      else FModMETCut = "zeeMET>50 && zeeMET<150";
-    }
-
-    selection_ = baseline && trigcut && zllCut && FModHTCut && FModMETCut && dpllcut && modlepvetocut && csvlbtagcut;
-    TH1D* zllPlot_csvl;
-    if(datamode) drawSimple(var,nbins,low,high,histfilename, "ht_data_csvl", "data");
-    else drawSimple(var,nbins,low,high,histfilename, "ht_zll_csvl", "ZJets");
-    zllPlot_csvl = (TH1D*)hinteractive->Clone("zllPlot");
-    TH1D* zllPlot_csvm;
-    selection_ = baseline && trigcut && zllCut && FModHTCut && FModMETCut && dpllcut && modlepvetocut && btagcut;
-    if(datamode) drawSimple(var,nbins,low,high,histfilename, "ht_data_csvm", "data");
-    else  drawSimple(var,nbins,low,high,histfilename, "ht_zll_csvm", "ZJets");
-    zllPlot_csvm = (TH1D*)hinteractive->Clone("zllPlot_num");
-    
-    TGraphAsymmErrors * h_zllratio = new TGraphAsymmErrors(zllPlot_csvm,zllPlot_csvl,"cl=0.683 b(1,1) mode");
-   
-    double xval;
-    h_zllratio->GetPoint(0,xval,extrapF);
-    extrapFerr_l= h_zllratio->GetErrorYlow(0);
-    extrapFerr_h= h_zllratio->GetErrorYhigh(0);
-    std::cout << "extrapF = " << extrapF << " + " << extrapFerr_h << " - " << extrapFerr_l << std::endl;
-
-    //correct yield by extrapolation factor
-    zllSIG_exF = zllSIG * extrapF;
-    zllSIGerr_exF = jmt::errAtimesB( zllSIG, zllSIGerr, extrapF, max(extrapFerr_h,extrapFerr_l));
-    std::cout << "(post-extrapolation) zllSIG = " << zllSIG_exF << " +/- " << zllSIGerr_exF << std::endl;
-
-    delete h_zllratio;
-
-    ////switch btag weight stuff back on
-    //btagSFweight_ = btagSFweight_temp;
-    //btagcut = btagcut_temp;
-
-  }
-
-
-  ////////////////////////////////
-  //BR(Z->vv)/BR(Z->mumu)
-  ////////////////////////////////
-  double BRfactor = 5.95;
-  double BRfactorerr = 0.02;
-  double zllSIG_BRcorr, zllSIG_BRcorrerr;
-  if(isExtrapMode){
-    zllSIG_BRcorr = zllSIG_exF * BRfactor;
-    zllSIG_BRcorrerr = jmt::errAtimesB(zllSIG_exF, zllSIGerr_exF, BRfactor, BRfactorerr);
-  }
-  else{
-    zllSIG_BRcorr = zllSIG * BRfactor;
-    zllSIG_BRcorrerr = jmt::errAtimesB(zllSIG, zllSIGerr, BRfactor, BRfactorerr);
-  }
-  std::cout << "Correct for BR(Z->vv)/BR(Z->mumu)........" << std::endl;
-  std::cout << "zllSIG_BRcorr = " << zllSIG_BRcorr << " +/- " << zllSIG_BRcorrerr << std::endl;
-
-
-  ///////////////////////////////
-  //Acceptance
-  ///////////////////////////////
-  btagSFweight_="1";//HACKY, TO AVOID APPLYING BTAG CUT!
-
-  doData(false);
-  clearSamples();
-  addSample("ZJets");
-
-  doOverflowAddition(true);
-
-  var="HT"; xtitle=var;
-  nbins=1; low=0; high=5000;
-
-  std::cout << "Correct for acceptance..........." << std::endl;
-  TCut zdecaymodeCut = "zDecayMode==13";
-  if(mode=="ele") zdecaymodeCut = "zDecayMode==11";
-
-
-  modmetSelection = region.metSelection;
-  modmetSelection.ReplaceAll("MET","zllMCHybridMET");
-  TCut SRzllMCHybridMETCut = modmetSelection.Data();
-  std::cout << "modmetSelection2 = " << modmetSelection << std::endl;
-
-  TCut dpMCHybridCut = "zllMCHybridMinDeltaPhiN>=4";
-
-  //testing keith/ale's method
-  //TCut recomatchCut0or1 = "zllNLeptonsRecoMatched==0 || zllNLeptonsRecoMatched==1";
-  TCut recomatchCut2 = "zllNLeptonsRecoMatched==2";
- 
-
-  selection_ = zdecaymodeCut && baseline && HTcut && SRzllMCHybridMETCut && dpMCHybridCut;
-  //selection_ = zdecaymodeCut && baseline && HTcut && SRzllMCHybridMETCut;
-  //selection_ = zdecaymodeCut && baseline && HTcut && recomatchCut2;
-  //selection_ = zdecaymodeCut && baseline && HTcut;
-  drawPlots(var,nbins,low,high,xtitle,"events","zllacc_den");
-  TH1D* h_zllaccep_denom = (TH1D*)hinteractive->Clone("h_zllaccep_denom");
-
-  std::cout << "denom = " << h_zllaccep_denom->GetBinContent(1) << std::endl;
-
-  TCut accepCut = "passGenZllInAcc==1";
-  selection_ = zdecaymodeCut && accepCut && baseline && HTcut && SRzllMCHybridMETCut && dpMCHybridCut;
-  //selection_ = zdecaymodeCut && accepCut && baseline && HTcut && SRzllMCHybridMETCut;
-  //selection_ = zdecaymodeCut && accepCut && baseline && HTcut && recomatchCut2;
-  //selection_ = zdecaymodeCut && accepCut && baseline && HTcut;
-  drawPlots(var,nbins,low,high,xtitle,"events","zllacc_num");
-  TH1D* h_zllaccep_num = (TH1D*)hinteractive->Clone("h_zllaccep_num");
-  std::cout << "num = " << h_zllaccep_num->GetBinContent(1) << std::endl;
-
-  TGraphAsymmErrors * h_acc = new TGraphAsymmErrors(h_zllaccep_num,h_zllaccep_denom,"cl=0.683 b(1,1) mode");
-  double x, acc;
-  h_acc->GetPoint(0,x,acc);
-  double accerr_l= h_acc->GetErrorYlow(0);
-  double accerr_h= h_acc->GetErrorYhigh(0);
-  std::cout << "Acc = " << acc << " + " << accerr_h << " - " << accerr_l << std::endl;
-
-  double zllSIG_Acorr, zllSIG_Acorrerr;
-  zllSIG_Acorr = zllSIG_BRcorr / acc;
-  zllSIG_Acorrerr = jmt::errAoverB(zllSIG_BRcorr, zllSIG_BRcorrerr, acc, accerr_l); //eyl is the larger one
-
-  std::cout << "zllSIG_Acorr = " << zllSIG_Acorr << " +/- " << zllSIG_Acorrerr << std::endl;
-
-  /////////////////////////////
-  //Efficiency
-  /////////////////////////////
-  std::cout << "Correct for efficiency..........." << std::endl;
-
-  //for the moment, get from MC truth
-  var = "zllNLeptonsRecoMatched";xtitle=var;
-  nbins=3; low=0; high=3;
-  //selection_ = zdecaymodeCut;
-  selection_ = zdecaymodeCut && baseline && HTcut;
-
-  drawPlots(var,nbins,low,high,xtitle,"events","nleptonsrecomatch");
-  TH1D* h_nleptonsrecomatch = (TH1D*)hinteractive->Clone("h_nleptonsrecomatch");
-
-  int nGenLTotal = 2*h_nleptonsrecomatch->Integral();
-  float nGenLTotalerr = sqrt(nGenLTotal);
-
-  int nOneGenLMatch = h_nleptonsrecomatch->GetBinContent(2);
-  float nOneGenLMatcherr = sqrt(nOneGenLMatch);
-
-  int nTwoGenLMatch = 2*h_nleptonsrecomatch->GetBinContent(3);
-  float nTwoGenLMatcherr = sqrt(nTwoGenLMatch);
-
-  std::cout << "nGenLTotal = "    << nGenLTotal    << " +/- " << nGenLTotalerr << std::endl;
-  std::cout << "nOneGenLMatch = " << nOneGenLMatch << " +/- " << nOneGenLMatcherr << std::endl;
-  std::cout << "nTwoGenLMatch = " << nTwoGenLMatch << " +/- " << nTwoGenLMatcherr << std::endl;
-
-  //float eff_reco = (float)(nOneGenMuMatch + nTwoGenMuMatch)/(float)nGenMuTotal;
-  //std::cout << "eff_reco = " << eff_reco << std::endl;
-
-  TH1D* h_eff_denom = (TH1D*)h_zllaccep_denom->Clone("h_eff_denom");
-  h_eff_denom->SetBinContent(1,nGenLTotal);
-  h_eff_denom->SetBinError(1,nGenLTotalerr);
-
-  TH1D* h_eff_num = (TH1D*)h_zllaccep_denom->Clone("h_eff_num");
-  float nNumGenLMatcherr = sqrt(nOneGenLMatch + nTwoGenLMatch);
-  h_eff_num->SetBinContent(1, nOneGenLMatch + nTwoGenLMatch);
-  h_eff_num->SetBinError(1, nNumGenLMatcherr);
-
-  TGraphAsymmErrors * h_eff = new TGraphAsymmErrors(h_eff_num,h_eff_denom,"cl=0.683 b(1,1) mode");
-
-  double xeff,yeff;
-  h_eff->GetPoint(0,xeff,yeff);
-  double eyeffl= h_eff->GetErrorYlow(0);
-  double eyeffh= h_eff->GetErrorYhigh(0);
-  std::cout << "eff = " << yeff << " + " << eyeffh << " - " << eyeffl << std::endl;
-
-
-  double effsquare = yeff*yeff;
-  double effsquareerr = effsquare * ( 2 * eyeffl/yeff ); //eyeffl is the larger one
-
-  double zllSIG_effcorr, zllSIG_effcorrerr;
-  zllSIG_effcorr = zllSIG_Acorr / effsquare;
-  zllSIG_effcorrerr = jmt::errAoverB(zllSIG_Acorr, zllSIG_Acorrerr, effsquare, effsquareerr); 
-
-  std::cout << "zllSIG_effcorr = " << zllSIG_effcorr << " +/- " << zllSIG_effcorrerr << std::endl;
-
-
-  std::cout << "----------------------------------------------" << std::endl;
-
-  double estimate = zllSIG_effcorr;
-  double estimateerr = zllSIG_effcorrerr;
-
-  double closure = 100*(estimate-zvvSIG)/estimate;
-  double closureerr = 100*jmt::errAoverB(zvvSIG,zvvSIGerr,estimate,estimateerr);
-
-  char output[500];
-  TString name = region.btagSelection;
-
-  if(mode=="mu")  std::cout << "---mumu results---" << std::endl;
-  else if (mode=="ele") std::cout << "---ee results---" << std::endl;
-
-  if(isExtrapMode){
-    if(datamode){
-      sprintf(output,"%s SIG  & %s & %s & %s & %s & %s & %s \\\\ ",
-	      name.Data(),
-	      jmt::format_nevents(zllObs_Allcuts,zllObs_Allcuts_err).Data(),
-	      jmt::format_nevents(zllSIG,zllSIGerr).Data(),
-	      jmt::format_nevents(extrapF, max(extrapFerr_h,extrapFerr_l)).Data(),
-	      jmt::format_nevents(acc,accerr_l).Data(),
-	      jmt::format_nevents(yeff,eyeffl).Data(),
-	      jmt::format_nevents(estimate,estimateerr).Data());
-    }
-    else{
-      sprintf(output,"%s SIG  & %s & %s & %s & %s & %s & %s & %s \\\\ ",
-	      name.Data(),
-	      jmt::format_nevents(zllSIG,zllSIGerr).Data(),
-	      jmt::format_nevents(extrapF, max(extrapFerr_h,extrapFerr_l)).Data(),
-	      jmt::format_nevents(acc,accerr_l).Data(),
-	      jmt::format_nevents(yeff,eyeffl).Data(),
-	      jmt::format_nevents(estimate,estimateerr).Data(),
-	      jmt::format_nevents(zvvSIG,zvvSIGerr).Data(),
-	      jmt::format_nevents(closure, closureerr).Data());
-    }
-  }
-  else{
-    sprintf(output,"%s SIG  & %s & %s & %s & %s & %s & %s \\\\ ",
-	    name.Data(),
-	    jmt::format_nevents(zllSIG,zllSIGerr).Data(),
-	    jmt::format_nevents(acc,accerr_l).Data(),
-	    jmt::format_nevents(yeff,eyeffl).Data(),
-	    jmt::format_nevents(estimate,estimateerr).Data(),
-	    jmt::format_nevents(zvvSIG,zvvSIGerr).Data(),
-	    jmt::format_nevents(closure, closureerr).Data());
-  }
-  cout<<output<<endl;
-
-  delete h_acc;
-
-  return make_pair( sqrt(pow(closure,2) + pow(closureerr,2)), extrapF); //estimate in denominator
-
-}
-
-void runZvvEstimate2011(){
-  setSearchRegions();
-
-  //data structures to hold results
-  std::vector< std::pair<double,double> > muresults_nom;
-  std::vector< std::pair<double,double> > eleresults_nom;
-  std::vector< std::pair<double,double> > muresults_FCup;
-  std::vector< std::pair<double,double> > eleresults_FCup;
-  std::vector< std::pair<double,double> > muresults_FCdown;
-  std::vector< std::pair<double,double> > eleresults_FCdown;
-
- 
-  //for (unsigned int j=0; j<sbRegions_.size();j++){
-  for (unsigned int j=0; j<searchRegions_.size();j++){
-    //zvvClosureTest(j,"mu");
-    //zvvClosureTest(j,"ele");
-
-    muresults_nom.push_back(zvvClosureTest(j,"mu",true));//extrap mode on
-    eleresults_nom.push_back(zvvClosureTest(j,"ele",true));//extrap mode on
-
-    muresults_FCup.push_back(zvvClosureTest(j,"mu",true,"FCup"));//extrap mode on 
-    eleresults_FCup.push_back(zvvClosureTest(j,"ele",true,"FCup"));//extrap mode on 
-
-    muresults_FCdown.push_back(zvvClosureTest(j,"mu",true,"FCdown"));//extrap mode on 
-    eleresults_FCdown.push_back(zvvClosureTest(j,"ele",true,"FCdown"));//extrap mode on 
-
-    //zvvClosureTest(j,"mu",true,"",true);//extrap mode on, data mode on
-  }
-
-  //std::cout << "CLOSURE = " <<  muresults_nom.at(0).first << ", F = " << muresults_nom.at(0).second << std::endl;
-  
-  for(uint i=0; i<2;++i){
-    for (unsigned int j=0; j<searchRegions_.size();j++){
-
-      const SearchRegion region = searchRegions_[j];
-      TString btagname = region.btagSelection;
-      
-      //make a table that shows relative difference in F
-      double F_nom, F_up, F_down;
-      F_nom  = i ? eleresults_nom.at(j).second :    muresults_nom.at(j).second;
-      F_up   = i ? eleresults_FCup.at(j).second :   muresults_FCup.at(j).second;
-      F_down = i ? eleresults_FCdown.at(j).second : muresults_FCdown.at(j).second;
-      
-      double dF_up = (F_up - F_nom) / F_nom;
-      double dF_down = (F_down - F_nom) / F_nom;
-      
-      char output[500];
-
-      if(i) cout << "ele"<< endl;
-      else cout << "mu" << endl;
-      
-      sprintf(output,"%s SIG & %.3f & %.3f & %.3f \\\\ ",btagname.Data(),F_nom, dF_up, dF_down);
-      cout << output << endl;	       
-    }
-  }
-  
-
-  //zvvClosureTest(0,"mu");
-}
-
+//TODO: to be cleaned up
 void drawZllExtrap( TString btagselection="ge1b",const int mode=1, TString leptonmode = "mu", TString plotmode="MET", float otherCut=400) {
 
   assert( leptonmode=="mu" || leptonmode=="ele");
@@ -11364,6 +11771,10 @@ void drawZllExtrap( TString btagselection="ge1b",const int mode=1, TString lepto
   //}
 
   loadSamples();
+
+  if(leptonmode=="mu")  setDatasetToDraw("2011DoubleMu");
+  else if(leptonmode=="ele") setDatasetToDraw("2011DoubleElectron");
+
   
   int nbins;
   float low,high;
@@ -11709,56 +12120,17 @@ void drawZllExtrap( TString btagselection="ge1b",const int mode=1, TString lepto
   theLegend3->Draw();
   
   thecanvas->SaveAs("CSVoutput_FC_HT400_zvv_"+btagselection+".png");
-
-
-
 }
 
 
-void drawZllPurity( TString btagselection="ge1b",const int mode=1) {
+void drawZllPurity(TString mode = "mu") {
 
-  loadSamples();
+  assert(mode=="mu" || mode =="ele");
 
-  //this mode thing is a bit kludgey
-  TString modestring="";
-  if (mode==1) {
-    usePUweight_=true; //we used to have this set to false
-    useHTeff_=false;
-    useMHTeff_=false;
-    thebnnMHTeffMode_ = kOff;
-    btagSFweight_="1";
-    currentConfig_=configDescriptions_.getCorrected(); //JER bias
-  }
-  else if (mode==2) {
-    usePUweight_=true;
-    useHTeff_=false;
-    //useMHTeff_=true;    
-    useMHTeff_=false;    
-    thebnnMHTeffMode_ = kOff;
-    currentConfig_=configDescriptions_.getCorrected(); //JER bias
-    if (mode==2) modestring="-JER-PU-HLT";
-  }
-  else assert(0);
+  if(mode=="mu")  setDatasetToDraw("2011DoubleMu");
+  else if(mode=="ele") setDatasetToDraw("2011DoubleElectron");
 
-
-  TCut btagcut = "nbjetsCSVM>=1";
-  if ( btagselection=="ge1b") {} //do nothing
-  else  if ( btagselection=="ge2b" ) {
-    btagcut = "nbjetsCSVM>=2";
-  }
-  else if ( btagselection=="eq1b" ) {
-    btagcut = "nbjetsCSVM==1";
-  }
-  else if ( btagselection=="ge3b" ) {
-    btagcut = "nbjetsCSVM>=3";
-  }
-  else if ( btagselection=="ge0b" ) {
-    btagcut = "nbjetsCSVM>=0";
-  }
-  else {
-    assert(0);
-  }
-
+  currentConfig_=configDescriptions_.getCorrected(); //JER bias
 
   loadSamples();
   
@@ -11766,33 +12138,380 @@ void drawZllPurity( TString btagselection="ge1b",const int mode=1) {
   float low,high;
   TString var,xtitle;
   
-  doOverflowAddition(false);
-  setStackMode(true);
-  setColorScheme("stack");
+  //doOverflowAddition(true);
+  doOverflowAddition(false);  
 
-  //clearSamples();
-  resetSamples();
+  setStackMode(true); //regular stack
+  setColorScheme("stack");
+  drawMCErrors_=true;
+
+  ////setStackMode(false,true); //normalized
+  //setStackMode(false,false); //not normalized
+  //setColorScheme("nostack");
+
+  clearSamples();
+  addSample("TTbarJets");
+  addSample("ZJets");
+
+  //resetSamples();
   doData(true);
 
-  renewCanvas();
-  thecanvas->cd();
+  doRatioPlot(true);
 
   //output file 
-  TString histfilename = "zmass.root";
+  //TString histfilename = "dummy.root";
+  TString histfilename;
+  if(mode=="mu") histfilename= "zmass_purity_mu.root";
+  else histfilename = "zmass_purity_ele.root";
+
   TFile fh(histfilename,"RECREATE");//will delete old root file if present 
   fh.Close(); //going to open only when needed 
- 
 
-  var="zmumuMass"; xtitle="M_{ll} [GeV]";
-  nbins = 60; low=60; high=120;
+  // ************ Z -> mumu Purity ************ //
+  if(mode=="mu"){
+    var="zmumuMass"; xtitle="M_{ll} [GeV]";
+    nbins = 40; low=60; high=120;
+    selection_ =TCut("pass_ZmumuHLT==1 && cutPV==1 && passZmumuCandLoose");
+    drawSimple(var,nbins,low,high,histfilename, "zmumumass_loose_doublemudata", "data");  
+    nbins = 20; low=60; high=120;
+    selection_ =TCut("pass_ZmumuHLT==1 && cutHT==1 && cutPV==1 && cut3Jets==1 && passZmumuCandLoose && zmumuMinDeltaPhiN>4 && zmumuMET>250 && nMuons<3 && cutEleVeto==1 && nbjetsCSVL>=1");
+    drawSimple(var,nbins,low,high,histfilename, "zmumumass_VL_stack_doublemudata", "data");
+    //nbins = 1; low=91.188-15; high=91.188+15;//just to get the purity in the window
+    //drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "zmumumass_FC_stack_"+modestring);  
+  
+    selection_ =TCut("pass_ZmumuHLT==1 && HT>500 && cutPV==1 && cut3Jets==1 && passZmumuCandLoose && zmumuMinDeltaPhiN>4 && zmumuMET>500 && nMuons<3 && cutEleVeto==1 && nbjetsCSVL>=1");
+    drawSimple(var,nbins,low,high,histfilename, "zmumumass_VL_stack_tightMET_doublemudata", "data");
+    //nbins = 1; low=91.188-15; high=91.188+15;//just to get the purity in the window
+    //drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "zmumumass_FC_stack_tightMET_"+modestring);
+  
+    selection_ =TCut("pass_ZmumuHLT==1 && HT>600 && cutPV==1 && cut3Jets==1 && passZmumuCandLoose && zmumuMinDeltaPhiN>4 && zmumuMET>300 && nMuons<3 && cutEleVeto==1 && nbjetsCSVL>=1");
+    drawSimple(var,nbins,low,high,histfilename, "zmumumass_VL_stack_tightHT_doublemudata", "data");
+    //nbins = 1; low=91.188-15; high=91.188+15;//just to get the purity in the window
+    //drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "zmumumass_FC_stack_tightHT_"+modestring);
+  
+    //loosen the HT requirement on the VL sample
+    selection_ =TCut("pass_ZmumuHLT==1 && HT>300 && cutPV==1 && cut3Jets==1 && passZmumuCandLoose && zmumuMinDeltaPhiN>4 && zmumuMET>250 && nMuons<3 && cutEleVeto==1 && nbjetsCSVL>=1");
+    drawSimple(var,nbins,low,high,histfilename, "zmumumass_VL_stack_HT300_doublemudata", "data");
+  
+    //loosen the MET requirement on the VL sample
+    selection_ =TCut("pass_ZmumuHLT==1 && cutHT==1 && cutPV==1 && cut3Jets==1 && passZmumuCandLoose && zmumuMinDeltaPhiN>4 && zmumuMET>50 && zmumuMET<150 && nMuons<3 && cutEleVeto==1 && nbjetsCSVL>=1");
+    drawSimple(var,nbins,low,high,histfilename, "zmumumass_VL_stack_MET50to150_doublemudata", "data");
+  
+    //loosen the MET requirement on the VL sample
+    selection_ =TCut("pass_ZmumuHLT==1 && cutHT==1 && cutPV==1 && cut3Jets==1 && passZmumuCandLoose && zmumuMinDeltaPhiN>4 && zmumuMET>150 && zmumuMET<250 && nMuons<3 && cutEleVeto==1 && nbjetsCSVL>=1");
+    drawSimple(var,nbins,low,high,histfilename, "zmumumass_VL_stack_MET150to250_doublemudata", "data");
+  }
 
-  //without any cuts (to get ultra clean DY sample for z-mass shape)
-  selection_ =TCut("pass_ZmumuHLT==1");
-  drawSimple(var,nbins,low,high,histfilename, "zmumumass_doublemudata", "data");
+  // ************ Z -> ee Purity ************ //
+  else{
+    var="zeeMass"; xtitle="M_{ll} [GeV]";
+    nbins = 40; low=60; high=120;
+    selection_ =TCut("pass_ZeeHLT==1 && cutPV==1 && passZeeCandLoose");
+    drawSimple(var,nbins,low,high,histfilename, "zeemass_loose_doubleeledata", "data");
 
-  //with all Vl cuts (need modMET and mod-mdphin for doublemu events within the looser (say |mll-mz|<50 GeV) mll range
-  selection_ =TCut("pass_ZmumuHLT==1 && HT>400 && cutPV==1 && cut3Jets==1 && muonpt1>17 && muonpt2>17 && TMath::Abs(muoneta1)<2.4 && TMath::Abs(muoneta2)<2.4 && cutEleVeto==1")&&btagcut;
-  drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "zmumumass_doublemudata_"+modestring);
-  drawSimple(var,nbins,low,high,histfilename, "zmumumass_doublemudata_ge1VLb", "data");
+    /*
+    //can i just peek here to see what the fraction of electrons are that are in the barrel
+    var="eleeta1"; xtitle="eta";
+    nbins = 1; low=-5; high=5;
+    selection_ =TCut("pass_ZeeHLT==1 && cutPV==1 && passZeeCand");
+    drawSimple(var,nbins,low,high,histfilename, "ele1eta_all_doubleeledata", "data");
+    selection_ =TCut("pass_ZeeHLT==1 && cutPV==1 && passZeeCand && TMath::Abs(eleeta1)<1.479");
+    drawSimple(var,nbins,low,high,histfilename, "ele1eta_barrel_doubleeledata", "data");
+    selection_ =TCut("pass_ZeeHLT==1 && cutPV==1 && passZeeCand && TMath::Abs(eleeta1)>1.479 && TMath::Abs(eleeta1)<3");
+    drawSimple(var,nbins,low,high,histfilename, "ele1eta_endcap_doubleeledata", "data");
+    var="eleeta2"; xtitle="eta";
+    selection_ =TCut("pass_ZeeHLT==1 && cutPV==1 && passZeeCand");
+    drawSimple(var,nbins,low,high,histfilename, "ele2eta_all_doubleeledata", "data");
+    selection_ =TCut("pass_ZeeHLT==1 && cutPV==1 && passZeeCand && TMath::Abs(eleeta2)<1.479");
+    drawSimple(var,nbins,low,high,histfilename, "ele2eta_barrel_doubleeledata", "data");
+    selection_ =TCut("pass_ZeeHLT==1 && cutPV==1 && passZeeCand && TMath::Abs(eleeta2)>1.479 && TMath::Abs(eleeta2)<3");
+    drawSimple(var,nbins,low,high,histfilename, "ele2eta_endcap_doubleeledata", "data");
+    */
+
+    var="zeeMass"; xtitle="M_{ll} [GeV]";
+    nbins = 20; low=60; high=120;
+    selection_ =TCut("pass_ZeeHLT==1 && cutHT==1 && cutPV==1 && cut3Jets==1 && passZeeCandLoose && zeeMinDeltaPhiN>4 && zeeMET>250 && nElectrons<3 && cutMuVeto==1 && nbjetsCSVL>=1");
+    drawSimple(var,nbins,low,high,histfilename, "zeemass_VL_stack_doubleeledata", "data");
+    //nbins = 1; low=91.188-15; high=91.188+15;//just to get the purity in the window
+    //drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "zeemass_VL_stack_"+modestring);
+  
+    selection_ =TCut("pass_ZeeHLT==1 && HT>500 && cutPV==1 && cut3Jets==1 && passZeeCandLoose && zeeMinDeltaPhiN>4 && zeeMET>500 && nElectrons<3 && cutMuVeto==1 && nbjetsCSVL>=1");
+    drawSimple(var,nbins,low,high,histfilename, "zeemass_VL_stack_tightMET_doubleeledata", "data");
+    //nbins = 1; low=91.188-15; high=91.188+15;//just to get the purity in the window
+    //drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "zeemass_VL_stack_tightMET_"+modestring);
+
+    selection_ =TCut("pass_ZeeHLT==1 && HT>600 && cutPV==1 && cut3Jets==1 && passZeeCandLoose && zeeMinDeltaPhiN>4 && zeeMET>300 && nElectrons<3 && cutMuVeto==1 && nbjetsCSVL>=1");
+    drawSimple(var,nbins,low,high,histfilename, "zeemass_VL_stack_tightHT_doubleeledata", "data");
+    //nbins = 1; low=91.188-15; high=91.188+15;//just to get the purity in the window
+    //drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "zeemass_VL_stack_tightHT_"+modestring);
+
+    //loosen the HT requirement on VL sample
+    selection_ =TCut("pass_ZeeHLT==1 && HT>300 && cutPV==1 && cut3Jets==1 && passZeeCandLoose && zeeMinDeltaPhiN>4 && zeeMET>250 && nElectrons<3 && cutMuVeto==1 && nbjetsCSVL>=1");
+    drawSimple(var,nbins,low,high,histfilename, "zeemass_VL_stack_HT300_doubleeledata", "data");
+
+    //loosen the MET requirement on VL sample
+    selection_ =TCut("pass_ZeeHLT==1 && cutHT==1 && cutPV==1 && cut3Jets==1 && passZeeCandLoose && zeeMinDeltaPhiN>4 && zeeMET>50 && zeeMET<150 && nElectrons<3 && cutMuVeto==1 && nbjetsCSVL>=1");
+    drawSimple(var,nbins,low,high,histfilename, "zeemass_VL_stack_MET50to150_doubleeledata", "data");
+
+    //loosen the MET requirement on VL sample
+    selection_ =TCut("pass_ZeeHLT==1 && cutHT==1 && cutPV==1 && cut3Jets==1 && passZeeCandLoose && zeeMinDeltaPhiN>4 && zeeMET>150 && zeeMET<250 && nElectrons<3 && cutMuVeto==1 && nbjetsCSVL>=1");
+    drawSimple(var,nbins,low,high,histfilename, "zeemass_VL_stack_MET150to250_doubleeledata", "data");
+  }
+
+  return;
+
+}
+
+
+// computes the lepton selection efficiency from MC-truth
+// OR
+// computes the dilepton trigger efficiency from data
+void PrintLeptonEff(const TString & mode="mu"){
+
+  assert(mode=="mu" || mode =="ele");
+
+  /////////////////////////////
+  //Efficiency
+  /////////////////////////////
+
+  loadSamples(); //needs to come first! this is why this should be turned into a class, with this guy in the ctor
+
+  currentConfig_=configDescriptions_.getCorrected(); //JER bias
+
+  doData(false);
+  clearSamples();
+  addSample("ZJets");
+
+  TCut zdecaymodeCut = "zDecayMode==13";
+  if(mode=="ele") zdecaymodeCut = "zDecayMode==11";
+
+  TCut HTcut="HT>400"; 
+  TCut baseline = "cutPV==1 && cut3Jets==1 && passGenZllInAcc==1";
+
+  TString var,xtitle;
+  int nbins;
+  float low,high;
+
+
+  var="HT"; xtitle=var;
+  nbins=1; low=0; high=5000;
+
+
+  //if true, compute the trigger efficiency
+  //if false, compute the lepton reco+selection efficiency (from MC)
+  bool skipmc = true; 
+
+  if(!skipmc){
+    //this is just a dummy thing
+    selection_ = zdecaymodeCut && baseline && HTcut;
+    drawPlots(var,nbins,low,high,xtitle,"events","zllacc_den");
+    TH1D* h_zllaccep_denom = (TH1D*)hinteractive->Clone("h_zllaccep_denom");
+
+
+    //for the moment, get from MC truth
+    var = "zllNLeptonsRecoMatched";xtitle=var;
+    nbins=3; low=0; high=3;
+    //selection_ = zdecaymodeCut;
+    selection_ = zdecaymodeCut && baseline && HTcut;
+
+    drawPlots(var,nbins,low,high,xtitle,"events","nleptonsrecomatch");
+    TH1D* h_nleptonsrecomatch = (TH1D*)hinteractive->Clone("h_nleptonsrecomatch");
+
+    int nGenLTotal = 2*h_nleptonsrecomatch->Integral();
+    float nGenLTotalerr = sqrt(nGenLTotal);
+
+    int nOneGenLMatch = h_nleptonsrecomatch->GetBinContent(2);
+    float nOneGenLMatcherr = sqrt(nOneGenLMatch);
+
+    int nTwoGenLMatch = 2*h_nleptonsrecomatch->GetBinContent(3);
+    float nTwoGenLMatcherr = sqrt(nTwoGenLMatch);
+
+    std::cout << "nGenLTotal = "    << nGenLTotal    << " +/- " << nGenLTotalerr << std::endl;
+    std::cout << "nOneGenLMatch = " << nOneGenLMatch << " +/- " << nOneGenLMatcherr << std::endl;
+    std::cout << "nTwoGenLMatch = " << nTwoGenLMatch << " +/- " << nTwoGenLMatcherr << std::endl;
+
+    //float eff_reco = (float)(nOneGenMuMatch + nTwoGenMuMatch)/(float)nGenMuTotal;
+    //std::cout << "eff_reco = " << eff_reco << std::endl;
+
+    TH1D* h_eff_denom = (TH1D*)h_zllaccep_denom->Clone("h_eff_denom");
+    h_eff_denom->SetBinContent(1,nGenLTotal);
+    h_eff_denom->SetBinError(1,nGenLTotalerr);
+
+    TH1D* h_eff_num = (TH1D*)h_zllaccep_denom->Clone("h_eff_num");
+    float nNumGenLMatcherr = sqrt(nOneGenLMatch + nTwoGenLMatch);
+    h_eff_num->SetBinContent(1, nOneGenLMatch + nTwoGenLMatch);
+    h_eff_num->SetBinError(1, nNumGenLMatcherr);
+
+    TGraphAsymmErrors * h_eff = new TGraphAsymmErrors(h_eff_num,h_eff_denom,"cl=0.683 b(1,1) mode");
+
+    double xeff,yeff;
+    h_eff->GetPoint(0,xeff,yeff);
+    double eyeffl= h_eff->GetErrorYlow(0);
+    double eyeffh= h_eff->GetErrorYhigh(0);
+    std::cout << "eff = " << yeff << " + " << eyeffh << " - " << eyeffl << std::endl;
+
+
+    /////////// DO everything again, but with zllNLeptonsRecoNoCutMatched
+    //for the moment, get from MC truth
+    var = "zllNLeptonsRecoNoCutMatched";xtitle=var;
+    nbins=3; low=0; high=3;
+    //selection_ = zdecaymodeCut;
+    selection_ = zdecaymodeCut && baseline && HTcut;
+
+    drawPlots(var,nbins,low,high,xtitle,"events","nleptonsreconocutmatch");
+    TH1D* h_nleptonsreconocutmatch = (TH1D*)hinteractive->Clone("h_nleptonsreconocutmatch");
+
+    int nGenLNoCutTotal = 2*h_nleptonsreconocutmatch->Integral();
+    float nGenLNoCutTotalerr = sqrt(nGenLNoCutTotal);
+
+    int nOneGenLNoCutMatch = h_nleptonsreconocutmatch->GetBinContent(2);
+    float nOneGenLNoCutMatcherr = sqrt(nOneGenLNoCutMatch);
+
+    int nTwoGenLNoCutMatch = 2*h_nleptonsreconocutmatch->GetBinContent(3);
+    float nTwoGenLNoCutMatcherr = sqrt(nTwoGenLNoCutMatch);
+
+    std::cout << "nGenLNoCutTotal = "    << nGenLNoCutTotal    << " +/- " << nGenLNoCutTotalerr << std::endl;
+    std::cout << "nOneGenLNoCutMatch = " << nOneGenLNoCutMatch << " +/- " << nOneGenLNoCutMatcherr << std::endl;
+    std::cout << "nTwoGenLNoCutMatch = " << nTwoGenLNoCutMatch << " +/- " << nTwoGenLNoCutMatcherr << std::endl;
+
+    //float eff_reco = (float)(nOneGenMuMatch + nTwoGenMuMatch)/(float)nGenMuTotal;
+    //std::cout << "eff_reco = " << eff_reco << std::endl;
+
+    TH1D* h_eff2_denom = (TH1D*)h_zllaccep_denom->Clone("h_eff_denom");
+    h_eff2_denom->SetBinContent(1,nGenLNoCutTotal);
+    h_eff2_denom->SetBinError(1,nGenLNoCutTotalerr);
+
+    TH1D* h_eff2_num = (TH1D*)h_zllaccep_denom->Clone("h_eff_num");
+    float nNumGenLNoCutMatcherr = sqrt(nOneGenLNoCutMatch + nTwoGenLNoCutMatch);
+    h_eff2_num->SetBinContent(1, nOneGenLNoCutMatch + nTwoGenLNoCutMatch);
+    h_eff2_num->SetBinError(1, nNumGenLNoCutMatcherr);
+
+    TGraphAsymmErrors * h_eff2 = new TGraphAsymmErrors(h_eff2_num,h_eff2_denom,"cl=0.683 b(1,1) mode");
+
+    double xeff2,yeff2;
+    h_eff2->GetPoint(0,xeff2,yeff2);
+    double eyeff2l= h_eff2->GetErrorYlow(0);
+    double eyeff2h= h_eff2->GetErrorYhigh(0);
+    std::cout << "eff2 = " << yeff2 << " + " << eyeff2h << " - " << eyeff2l << std::endl;
+
+    return;
+
+  }
+
+
+  //compute the dilepton trigger efficiency
+
+  clearSamples();
+
+  //if(mode=="mu") setDatasetToDraw("2011DoubleMu");
+  //else if(mode=="ele") setDatasetToDraw("2011DoubleElectron");
+  setDatasetToDraw("2011HT");
+
+
+  setStackMode(false);
+  doData(true);
+  doOverflowAddition(true);  
+
+  TString histfilename = "dummy.root";
+  TFile fh(histfilename,"RECREATE");
+  fh.Close(); 
+
+  var = "HT";xtitle=var;
+  nbins=1; low=0; high=5000;
+  //selection_ = zdecaymodeCut;
+
+  TCut nomtrigcut = "cutTrigger==1";
+  baseline = "cutPV==1 && cut3Jets==1";
+
+  TCut dpllcut = "zmumuMinDeltaPhiN>=4";
+  if(mode=="ele") dpllcut = "zeeMinDeltaPhiN>=4";
+
+  TCut zllCut = "passZmumuCand==1";
+  if(mode=="ele") zllCut = "passZeeCand==1";
+
+  TCut modlepvetocut = "nMuons<3 && cutEleVeto==1";
+  if(mode=="ele") modlepvetocut = "cutMuVeto==1 && nElectrons<3";
+
+  //try tightening ht cut, see what difference it makes
+  //HTcut="HT>500"; 
+
+  TCut metcut = "zmumuMET>150";
+  if(mode=="ele") metcut = "zeeMET>150";
+
+  ////try tightening this, see what difference it makes
+  //TCut metcut = "zmumuMET>250";
+  //if(mode=="ele") metcut = "zeeMET>250";
+
+  TCut trigcut = "pass_ZmumuHLT == 1";
+  if(mode=="ele") trigcut = "pass_ZeeHLT == 1";
+
+
+  //selection_ = nomtrigcut && baseline && HTcut && zllCut  && dpllcut && metcut;
+  //selection_ = baseline && HTcut && zllCut  && dpllcut && metcut;
+  selection_ = baseline && HTcut && zllCut && metcut && dpllcut;
+
+  //drawPlots(var,nbins,low,high,xtitle,"events","dileptrig_denom");
+  drawSimple(var,nbins,low,high,histfilename, "h_dileptrig_den", "data");
+
+  TH1D* h_dileptrig_denom = (TH1D*)hinteractive->Clone("h_dileptrig_denom");
+
+  /*
+  //plot the ele id variables...i want to see if they really pass the trigger thresholds (assuming they are directly comparable)
+  var = "elehovere1";xtitle=var;
+  nbins=100; low=0; high=0.3;
+  drawSimple(var,nbins,low,high,histfilename,"h_deleptrig_denom_elehovere1","data");
+  var = "elehovere2";xtitle=var;
+  drawSimple(var,nbins,low,high,histfilename,"h_deleptrig_denom_elehovere2","data");
+
+  var = "eledphi1";xtitle=var;
+  nbins=100; low=-0.2; high=0.2;
+  drawSimple(var,nbins,low,high,histfilename,"h_deleptrig_denom_eledphi1","data");
+  var = "eledphi2";xtitle=var;
+  drawSimple(var,nbins,low,high,histfilename,"h_deleptrig_denom_eledphi2","data");
+
+  var = "eledeta1";xtitle=var;
+  nbins=100; low=-0.2; high=0.2;
+  drawSimple(var,nbins,low,high,histfilename,"h_deleptrig_denom_eledeta1","data");
+  var = "eledeta2";xtitle=var;
+  drawSimple(var,nbins,low,high,histfilename,"h_deleptrig_denom_eledeta2","data");
+
+  var = "elesigmaietaieta1";xtitle=var;
+  nbins=100; low=0; high=0.05;
+  TCut eleetacut = "TMath::Abs(eleeta1)<1.479";
+  selection_ =  baseline && HTcut && zllCut && eleetacut;
+  drawSimple(var,nbins,low,high,histfilename,"h_deleptrig_denom_elesigmaietaieta1_EB","data");
+  eleetacut = "TMath::Abs(eleeta1)>1.479";
+  selection_ =  baseline && HTcut && zllCut && eleetacut;
+  drawSimple(var,nbins,low,high,histfilename,"h_deleptrig_denom_elesigmaietaieta1_EE","data");
+  var = "elesigmaietaieta2";xtitle=var;
+  eleetacut = "TMath::Abs(eleeta2)<1.479";
+  selection_ =  baseline && HTcut && zllCut && eleetacut;
+  drawSimple(var,nbins,low,high,histfilename,"h_deleptrig_denom_elesigmaietaieta2_EB","data");
+  eleetacut = "TMath::Abs(eleeta2)>1.479";
+  selection_ =  baseline && HTcut && zllCut && eleetacut;
+  drawSimple(var,nbins,low,high,histfilename,"h_deleptrig_denom_elesigmaietaieta2_EE","data");
+  */
+
+
+  //selection_ = nomtrigcut && baseline && HTcut && zllCut && dpllcut && metcut && trigcut;
+  //selection_ = baseline && HTcut && zllCut && dpllcut && metcut && trigcut;
+  selection_ = baseline && zllCut && HTcut && metcut && dpllcut && trigcut;
+  var = "HT";xtitle=var;
+  nbins=1; low=0; high=5000;
+
+  //drawPlots(var,nbins,low,high,xtitle,"events","dileptrig_num");
+  drawSimple(var,nbins,low,high,histfilename, "h_dileptrig_num", "data");
+
+  TH1D* h_dileptrig_num = (TH1D*)hinteractive->Clone("h_dileptrig_num");
+
+
+  TGraphAsymmErrors * h_dileptrig_eff = new TGraphAsymmErrors(h_dileptrig_num,h_dileptrig_denom,"cl=0.683 b(1,1) mode");
+
+  double xeff3,yeff3;
+  h_dileptrig_eff->GetPoint(0,xeff3,yeff3);
+  double eyeff3l= h_dileptrig_eff->GetErrorYlow(0);
+  double eyeff3h= h_dileptrig_eff->GetErrorYhigh(0);
+  std::cout << "eff(trig) = " << yeff3 << " + " << eyeff3h << " - " << eyeff3l << std::endl;
+
 
 }
