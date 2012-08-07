@@ -2627,7 +2627,8 @@ TCut getSingleElectronCut() {
 
 //if something is passed to varbins, then low and high will be ignored
 float drawSimple(const TString var, const int nbins, const double low, const double high, const TString filename, 
-		 const TString histname , const TString samplename, const float* varbins=0) {
+		 const TString histname , const TString samplename, const float* varbins=0 ,
+		 const TString xtitle="",const TString ytitle="") {
 
   loadSamples();
   gROOT->SetStyle("CMS");
@@ -2659,7 +2660,9 @@ float drawSimple(const TString var, const int nbins, const double low, const dou
     hh = new TH1D(histname,histname,nbins,varbins);
   }
   hh->Sumw2();
-   
+  hh->SetXTitle(xtitle);
+  hh->GetYaxis()->SetTitle(ytitle);
+
   TString optfh= useFlavorHistoryWeights_ && samplename.Contains("WJets") ? "flavorHistoryWeight" : "";
   if (samplename=="data") tree->Project(histname,var,getCutString(true).Data());
   else tree->Project(histname,var,getCutString( getSampleType(samplename,"point"),optfh,selection_,"",0,"").Data());
@@ -2679,8 +2682,8 @@ float drawSimple(const TString var, const int nbins, const double low, const dou
 }
 
 float drawSimple(const TString var, const int nbins, const float* varbins, const TString filename, 
-		 const TString histname , const TString samplename) {
-  return drawSimple(var, nbins, 0, 1, filename, histname, samplename, varbins);
+		 const TString histname, const TString samplename, const TString xtitle="",const TString ytitle="") {
+  return drawSimple(var, nbins, 0, 1, filename, histname, samplename, varbins, xtitle, ytitle);
 }
 
 
@@ -2888,6 +2891,10 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
     TString hname = jmt::fortranize(var); hname += "_"; hname += samples_[isample];
     histos_[samples_[isample]] = (varbins==0) ? new TH1D(hname,"",nbins,low,high) : new TH1D(hname,"",nbins,varbins);
     histos_[samples_[isample]]->Sumw2();
+    if( !files_[currentConfig_][samplename] ){
+      cout << "ERROR: TFile for " << samples_[isample] << " is null.  Check that the file exists.  Exiting." << endl;
+      assert(0);
+    }
     TTree* tree = (TTree*) files_[currentConfig_][samplename]->Get("reducedTree");
     if (tree==0) {
       cout<<"tree is null! Something must be wrong!"<<endl<<currentConfig_<<endl<<samplename<<endl;
