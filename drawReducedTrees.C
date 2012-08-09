@@ -11346,11 +11346,11 @@ void drawZllPlots( TString btagselection="ge1b",const int mode=1, TString lepton
 
   // **** mdp plot **** //
   if(leptonmode=="mu") { 
-    var="zmumuMinDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}"; ytitle="Arbitrary units";
+    var="zmumuMinDeltaPhiN"; xtitle="#Delta #hat{#phi}_{min}"; ytitle="Arbitrary units";
     selection_ =TCut("pass_ZmumuHLT==1 && cutHT==1 && cutPV==1 && cut3Jets==1 && passZmumuCand==1 && cutEleVeto==1 && nMuons<3 && zmumuMET>150")&&btagcut;
   }
   else if(leptonmode=="ele"){ 
-    var="zeeMinDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}"; ytitle="Arbitrary units";
+    var="zeeMinDeltaPhiN"; xtitle="#Delta #hat{#phi}_{min}"; ytitle="Arbitrary units";
     selection_ =TCut("pass_ZeeHLT==1 && cutHT==1 && cutPV==1 && cut3Jets==1 && passZeeCand==1 && nElectrons<3 && cutMuVeto==1 && zeeMET>150")&&btagcut;
   }
   nbins = 10; low=0; high=40;
@@ -11421,7 +11421,7 @@ void drawZllPlots( TString btagselection="ge1b",const int mode=1, TString lepton
 
 
   // **** mdp plot **** //
-  var="minDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}"; 
+  var="minDeltaPhiN"; xtitle="#Delta #hat{#phi}_{min}";
   nbins = 10; low=0; high=40;
   selection_ =TCut("cutHT==1 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto && MET>150")&&btagcut;
   drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "mdp_Zinvonly_"+btagselection+modestring+"_"+s_splitzinv);
@@ -11474,11 +11474,11 @@ void drawZllPlots( TString btagselection="ge1b",const int mode=1, TString lepton
   
   // **** mdp plot **** //
   if(leptonmode=="mu") { 
-    var="zmumuMinDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}";
+    var="zmumuMinDeltaPhiN"; xtitle="#Delta #hat{#phi}_{min}";
     selection_ =TCut("pass_ZmumuHLT==1 && cutHT==1 && cutPV==1 && cut3Jets==1 && passZmumuCand==1 && cutEleVeto==1 && nMuons<3 && zmumuMET>150")&&btagcut;
   }
   else if(leptonmode=="ele"){ 
-    var="zeeMinDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}";
+    var="zeeMinDeltaPhiN"; xtitle="#Delta #hat{#phi}_{min}";
     selection_ =TCut("pass_ZeeHLT==1 && cutHT==1 && cutPV==1 && cut3Jets==1 && passZeeCand==1 && nElectrons<3 && cutMuVeto==1 && zeeMET>150")&&btagcut;
   }
   nbins = 10; low=0; high=40;
@@ -11686,99 +11686,54 @@ void drawZllPlots( TString btagselection="ge1b",const int mode=1, TString lepton
 }
 
 
-//TODO: to be cleaned up
-void drawZllExtrap( TString btagselection="ge1b",const int mode=1, TString leptonmode = "mu", TString plotmode="MET", float otherCut=400) {
+//this plots: 
+// -> extrapolation factor vs MET and HT
+// -> CSV-output distribution comparison in LSB'-ll and SIG-ll regions
+// use drawAllExtrap to make all plots
+void drawZllExtrap( TString btagselection="ge1b",
+		    TString leptonmode = "mu", 
+		    TString plotmode="MET", 
+		    float otherCut=400, // if plotmode==MET(HT), this is the HT(MET) cut applied
+		    bool drawCSVoutput=false) {
 
   assert( leptonmode=="mu" || leptonmode=="ele");
-
-  //setLogY(logy);
-  //if(logy)  setPlotMinimum(0.5);
-  loadSamples();
-
-  //this mode thing is a bit kludgey
-  TString modestring="";
-  if (mode==1) {
-    usePUweight_=true; //we used to have this set to false
-    useHTeff_=false;
-    useMHTeff_=false;
-    thebnnMHTeffMode_ = kOff;
-    btagSFweight_="1";
-    //currentConfig_=configDescriptions_.getDefault(); //completely raw MC
-    currentConfig_=configDescriptions_.getCorrected(); //JER bias
-
-  }
-  //  else if (mode==2 || mode==3) {
-  else if (mode==2) {
-    usePUweight_=true;
-    useHTeff_=false;
-    //useMHTeff_=true;    
-    useMHTeff_=false;    
-    thebnnMHTeffMode_ = kOff;
-    currentConfig_=configDescriptions_.getCorrected(); //JER bias
-    if (mode==2) modestring="-JER-PU-HLT";
-    else if(mode==3) modestring="-JER-PU-HLT-bSF";
-  }
-  //else if (mode==4) {
-  //  usePUweight_=true;
-  //  useHTeff_=true;
-  //  useMHTeff_=false;    
-  //  thebnnMHTeffMode_ = kPlot;
-  //  currentConfig_=configDescriptions_.getCorrected(); //JER bias
-  //  modestring="-JER-PU-HLT-BNN-bSF";
-  //}
-  else assert(0);
-
-
-  TCut btagcut = "nbjetsCSVM>=1";
-  if (mode==1 || mode==2) {
-    if ( btagselection=="ge1b") {} //do nothing
-    else  if ( btagselection=="ge2b" ) {
-      btagcut = "nbjetsCSVM>=2";
-    }
-    else if ( btagselection=="eq1b" ) {
-      btagcut = "nbjetsCSVM==1";
-    }
-    else if ( btagselection=="ge3b" ) {
-      btagcut = "nbjetsCSVM>=3";
-    }
-    else if ( btagselection=="ge0b" ) {
-      btagcut = "nbjetsCSVM>=0";
-    }
-    else {
-      assert(0);
-    }
-  }
-  //else if (mode==3 ||mode==4) {
-  //  if ( btagselection=="eq0b") {
-  //    btagcut="1";
-  //    btagSFweight_="prob0";
-  //  }
-  //  else if ( btagselection=="ge1b") {
-  //    btagcut="1";
-  //    btagSFweight_="probge1";
-  //  }
-  //  else  if ( btagselection=="ge2b" ) {
-  //    btagcut = "1";
-  //    btagSFweight_="probge2";
-  //  }
-  //  else if ( btagselection=="ge3b" ) {
-  //    btagcut = "1";
-  //    btagSFweight_="probge3";
-  //  }
-  //  else {
-  //    assert(0);
-  //  }
-  //}
+  assert( plotmode=="MET" || plotmode=="HT" || plotmode=="leptonpt" );
 
   loadSamples();
 
   if(leptonmode=="mu")  setDatasetToDraw("2011DoubleMu");
   else if(leptonmode=="ele") setDatasetToDraw("2011DoubleElectron");
 
+  usePUweight_=true; 
+  useHTeff_=false;
+  useMHTeff_=false;
+  thebnnMHTeffMode_ = kOff;
+  currentConfig_=configDescriptions_.getCorrected(); //JER bias
+  btagSFweight_="1";
+
+  TCut btagcut = "nbjetsCSVM>=1";
+
+  if ( btagselection=="ge1b") {} //do nothing
+  else  if ( btagselection=="ge2b" ) {
+    btagcut = "nbjetsCSVM>=2";
+  }
+  else if ( btagselection=="eq1b" ) {
+    btagcut = "nbjetsCSVM==1";
+  }
+  else if ( btagselection=="ge3b" ) {
+    btagcut = "nbjetsCSVM>=3";
+  }
+  else if ( btagselection=="ge0b" ) {
+    btagcut = "nbjetsCSVM>=0";
+  }
+  else {
+    assert(0);
+  }
+
   
   int nbins;
   float low,high;
-  TString var,xtitle;
+  TString var,xtitle,ytitle;
   
   doOverflowAddition(true);
  //doOverflowAddition(false);
@@ -11787,19 +11742,13 @@ void drawZllExtrap( TString btagselection="ge1b",const int mode=1, TString lepto
   setStackMode(false,false); //not normalized
   setColorScheme("nostack");
 
-
   //clearSamples();
   doData(true);
 
   renewCanvas();
   thecanvas->cd();
 
-  gPad->SetRightMargin(0.1);
-  gPad->Modified();
-
   TCut csvlbtagcut = "nbjetsCSVL>=1";
-
-  bool doHTMETplot = true;
   
   //output file 
   TString histfilename = "dummy.root";
@@ -11807,14 +11756,19 @@ void drawZllExtrap( TString btagselection="ge1b",const int mode=1, TString lepto
   fh.Close(); //going to open only when needed 
 
 
-  if(doHTMETplot){
+  if(!drawCSVoutput){
     int nvarbins_data = 3;
     float ivarbins_data[] = {0,100,250,650};
-    //int nvarbins = 11;
-    //float ivarbins[] = {0, 25, 50, 75, 100, 150, 200, 250, 300, 400,  500, 650};
-    int nvarbins = 4;
-    float ivarbins[] = {0,50,150,250,650};
-    float ivarbinsHT[] = {200,300,400,600,1000};
+    int nvarbins = 11;
+    float ivarbins[] = {0, 25, 50, 75, 100, 150, 200, 250, 300, 400,  500, 650};
+    //int nvarbins = 4;
+    //float ivarbins[] = {0,50,150,250,650};
+    int nvarbinsHT_data = 5;
+    float ivarbinsHT_data[] = {150,200,300,400,600,1000};
+    int nvarbinsHT_data_ge2b = 3;
+    float ivarbinsHT_data_ge2b[] = {150,300,500,1000};
+    int nvarbinsHT = 12;
+    float ivarbinsHT[] = {150,200,250,300,350,400,450,500,600,700,800,900,1000};
     if(plotmode=="MET"){
       if(leptonmode == "mu") var="zmumuMET"; 
       else if(leptonmode == "ele") var="zeeMET"; 
@@ -11829,16 +11783,11 @@ void drawZllExtrap( TString btagselection="ge1b",const int mode=1, TString lepto
     }
     else{assert(0);}
 
-    ////var="minDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}";
-    //var="zmumuMinDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}";
-    //nbins = 10; low=0; high=40;
-    ////if(btagselection=="ge2b") nbins = 10;
-    ////if(btagselection=="ge3b") nbins = 5;
-
+    //  Set the "othercut" condition
     TCut HTcut, METcut, zllMETcut;
     stringstream ss;
     ss << otherCut;
-    if(plotmode=="MET"){
+    if(plotmode=="MET" || plotmode=="leptonpt"){
       TString htselection = "HT>"+ss.str();
       HTcut = htselection.Data();
     }
@@ -11851,6 +11800,7 @@ void drawZllExtrap( TString btagselection="ge1b",const int mode=1, TString lepto
       zllMETcut = zllmetselection.Data();
     } 
 
+    // plot denominator (>=1CSVL) for data, Z->ll
     if(plotmode=="MET" || plotmode=="leptonpt"){
       if(leptonmode=="mu")
 	selection_ =TCut("pass_ZmumuHLT==1 && cutPV==1 && cut3Jets==1 && passZmumuCand==1 && zmumuMinDeltaPhiN>4 && cutEleVeto==1 && nMuons<3")&&HTcut&&csvlbtagcut;
@@ -11863,7 +11813,8 @@ void drawZllExtrap( TString btagselection="ge1b",const int mode=1, TString lepto
 	selection_ =TCut("pass_ZmumuHLT==1 && cutPV==1 && cut3Jets==1 && passZmumuCand==1 && zmumuMinDeltaPhiN>4 && cutEleVeto==1 && nMuons<3")&&zllMETcut&&csvlbtagcut;
       else if(leptonmode=="ele")
 	selection_ =TCut("pass_ZeeHLT==1 && cutPV==1 && cut3Jets==1 && passZeeCand==1 && zeeMinDeltaPhiN>4 && cutMuVeto==1 && nElectrons<3")&&zllMETcut&&csvlbtagcut;
-      drawSimple(var,nvarbins,ivarbinsHT,histfilename, "ht_double"+leptonmode+"data_csvl", "data");
+      if(btagselection=="ge2b") drawSimple(var,nvarbinsHT_data_ge2b,ivarbinsHT_data_ge2b,histfilename, "ht_double"+leptonmode+"data_csvl", "data");
+      else drawSimple(var,nvarbinsHT_data,ivarbinsHT_data,histfilename, "ht_double"+leptonmode+"data_csvl", "data");
     }
     TH1D* dataPlot_csvl = (TH1D*)hinteractive->Clone("dataPlot");
 
@@ -11871,10 +11822,11 @@ void drawZllExtrap( TString btagselection="ge1b",const int mode=1, TString lepto
       drawSimple(var,nvarbins,ivarbins,histfilename, "met_zll_csvl", "ZJets");
     }
     else if(plotmode=="HT"){
-      drawSimple(var,nvarbins,ivarbinsHT,histfilename, "ht_zll_csvl", "ZJets");
+      drawSimple(var,nvarbinsHT,ivarbinsHT,histfilename, "ht_zll_csvl", "ZJets");
     }
     TH1D* zllPlot_csvl = (TH1D*)hinteractive->Clone("zllPlot");
 
+    // plot numerator (>=nCSVM) for data, Z->ll
     if(plotmode=="MET" || plotmode=="leptonpt"){
       if(leptonmode=="mu")
 	selection_ =TCut("pass_ZmumuHLT==1 && cutPV==1 && cut3Jets==1 && passZmumuCand==1 && zmumuMinDeltaPhiN>4 && cutEleVeto==1 && nMuons<3")&&HTcut&&btagcut;
@@ -11887,51 +11839,28 @@ void drawZllExtrap( TString btagselection="ge1b",const int mode=1, TString lepto
 	selection_ =TCut("pass_ZmumuHLT==1 && cutPV==1 && cut3Jets==1 && passZmumuCand==1 && zmumuMinDeltaPhiN>4 && cutEleVeto==1 && nMuons<3")&&zllMETcut&&btagcut;
       else if(leptonmode=="ele")
 	selection_ =TCut("pass_ZeeHLT==1 && cutPV==1 && cut3Jets==1 && passZeeCand==1 && zeeMinDeltaPhiN>4 && cutMuVeto==1 && nElectrons<3")&&zllMETcut&&btagcut;
-      drawSimple(var,nvarbins,ivarbinsHT,histfilename, "ht_double"+leptonmode+"data_csvm", "data");
+      if(btagselection=="ge2b")drawSimple(var,nvarbinsHT_data_ge2b,ivarbinsHT_data_ge2b,histfilename, "ht_double"+leptonmode+"data_csvm", "data");
+      else drawSimple(var,nvarbinsHT_data,ivarbinsHT_data,histfilename, "ht_double"+leptonmode+"data_csvm", "data");
     }
-    //drawSimple(var,nbins,low,high,histfilename, "ht_doublemudata_csvm", "data");
+
     TH1D* dataPlot_csvm = (TH1D*)hinteractive->Clone("dataPlot");
 
     if(plotmode=="MET" || plotmode=="leptonpt"){
       drawSimple(var,nvarbins,ivarbins,histfilename, "met_zll_csvm", "ZJets");
     }
     else if(plotmode=="HT"){
-      drawSimple(var,nvarbins,ivarbinsHT,histfilename, "ht_zll_csvm", "ZJets");
+      drawSimple(var,nvarbinsHT,ivarbinsHT,histfilename, "ht_zll_csvm", "ZJets");
     }
     TH1D* zllPlot_csvm = (TH1D*)hinteractive->Clone("zllPlot");
-
-    //TH1D* h_dataratio = new TH1D("ratio","ratio",nbins,low,high);
-    //h_dataratio->Divide(dataPlot_csvm, dataPlot_csvl);
-    //h_dataratio->SetXTitle(xtitle);
 
     TGraphAsymmErrors * h_dataratio = new TGraphAsymmErrors(dataPlot_csvm,dataPlot_csvl,"cl=0.683 b(1,1) mode");
     TGraphAsymmErrors * h_zllratio = new TGraphAsymmErrors(zllPlot_csvm,zllPlot_csvl,"cl=0.683 b(1,1) mode");
       
-    //clearSamples();
-    //addSample("Zinvisible");
-    //doData(false);
 
+    // plot denominator (>=nCSVM) for Z->vv
     if(plotmode=="MET"){
       var="MET"; xtitle="E_{T}^{miss} [GeV]";
     }
-
-    //nbins = 5; low=0; high=500;
-    //if(btagselection=="ge2b") nbins = 10;
-    //if(btagselection=="ge3b") nbins = 5;
-
-    //var="minDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}";
-    //nbins = 10; low=0; high=40;
-    ////if(btagselection=="ge2b") nbins = 10;
-    ////if(btagselection=="ge3b") nbins = 5;
-
-    //var="njets"; xtitle="Jet Multiplicity";
-    //nbins = 10; low=0; high=10;
-    //var="nbjetsCSVM"; xtitle="b-Jet Multiplicity";
-    //bins = 5; low=0; high=5;
-
-    //var="HT"; xtitle="H_{T} [GeV]";
-    //nbins = 10; low=300; high=1300;
-
 
     if(plotmode=="MET"){
       selection_ =TCut("cutPV==1 && cut3Jets==1 && minDeltaPhiN>=4 && cutEleVeto==1 && cutMuVeto==1")&&HTcut&&csvlbtagcut;
@@ -11939,34 +11868,35 @@ void drawZllExtrap( TString btagselection="ge1b",const int mode=1, TString lepto
     }
     else if(plotmode=="HT"){
       selection_ =TCut("cutPV==1 && cut3Jets==1 && minDeltaPhiN>=4 && cutEleVeto==1 && cutMuVeto==1")&&METcut&&csvlbtagcut;
-      drawSimple(var,nvarbins,ivarbinsHT,histfilename, "ht_zvv_csvl", "Zinvisible");
+      drawSimple(var,nvarbinsHT,ivarbinsHT,histfilename, "ht_zvv_csvl", "Zinvisible");
     }
     TH1D* zvvPlot_csvl = (TH1D*)hinteractive->Clone("zvvPlot");
 
+    // plot numerator (>=nCSVM) for data, Z->vv
     if(plotmode=="MET"){
       selection_ =TCut("cutPV==1 && cut3Jets==1 && minDeltaPhiN>=4 && cutEleVeto==1 && cutMuVeto==1")&&HTcut&&btagcut;
       drawSimple(var,nvarbins,ivarbins,histfilename, "met_zvv_csv", "Zinvisible");
     }
     else if(plotmode=="HT"){
       selection_ =TCut("cutPV==1 && cut3Jets==1 && minDeltaPhiN>=4 && cutEleVeto==1 && cutMuVeto==1")&&METcut&&btagcut;
-      drawSimple(var,nvarbins,ivarbinsHT,histfilename, "ht_zvv_csvl", "Zinvisible");
+      drawSimple(var,nvarbinsHT,ivarbinsHT,histfilename, "ht_zvv_csvl", "Zinvisible");
     }
-
 
     TH1D* zvvPlot_csvm = (TH1D*)hinteractive->Clone("zvvPlot_csvm");
 
     TGraphAsymmErrors * h_zvvratio = new TGraphAsymmErrors(zvvPlot_csvm,zvvPlot_csvl,"cl=0.683 b(1,1) mode");
-    
-    
-
+       
     renewCanvas();
     thecanvas->cd();
     
-    gPad->SetRightMargin(0.1);
-    gPad->Modified();
+    //gPad->SetRightMargin(0.1);
+    //gPad->Modified();
     
     h_dataratio->GetXaxis()->SetTitle( xtitle ); 
-    h_dataratio->GetYaxis()->SetTitle( "F(CSVM/CSVL)" ); 
+    if(btagselection=="ge1b") h_dataratio->GetYaxis()->SetTitle( "F(1)" ); 
+    else if(btagselection=="ge2b") h_dataratio->GetYaxis()->SetTitle( "F(2)" ); 
+    else if(btagselection=="ge2b") h_dataratio->GetYaxis()->SetTitle( "F(3)" ); 
+
 
     h_dataratio->SetMaximum(1);
     if(btagselection=="ge2b")   h_dataratio->SetMaximum(0.4);
@@ -11974,7 +11904,10 @@ void drawZllExtrap( TString btagselection="ge1b",const int mode=1, TString lepto
 
     h_dataratio->SetMinimum(0);
     if(plotmode=="MET" || plotmode=="leptonpt")  h_dataratio->GetXaxis()->SetRangeUser(ivarbins[0],ivarbins[nvarbins]);
-    else if(plotmode=="HT")  h_dataratio->GetXaxis()->SetRangeUser(ivarbinsHT[0],ivarbinsHT[nvarbins]);
+    else if(plotmode=="HT"){
+      if(btagselection=="ge2b")h_dataratio->GetXaxis()->SetRangeUser(ivarbinsHT_data_ge2b[0],ivarbinsHT_data_ge2b[nvarbinsHT_data_ge2b]);
+      else h_dataratio->GetXaxis()->SetRangeUser(ivarbinsHT_data[0],ivarbinsHT_data[nvarbinsHT_data]);
+    }
     h_dataratio->Draw("AP");
     //h_zvvratio->GetXaxis()->SetTitle( xtitle ); 
     if(!(plotmode=="leptonpt")){
@@ -11997,59 +11930,83 @@ void drawZllExtrap( TString btagselection="ge1b",const int mode=1, TString lepto
     myLegend->SetTextSize(0.045);
     if(!(plotmode=="leptonpt")) myLegend->AddEntry(h_zvvratio,"Z#rightarrow #nu#nu", "lp");
     if(leptonmode=="mu")
-      myLegend->AddEntry(h_zllratio, "Z/#gamma*#rightarrow #mu^{+}#mu^{-}", "lp");
+      myLegend->AddEntry(h_zllratio, "Z#rightarrow #mu^{+}#mu^{-}", "lp");
     else if(leptonmode=="ele")
-      myLegend->AddEntry(h_zllratio, "Z/#gamma*#rightarrow e^{+}e^{-}", "lp");
+      myLegend->AddEntry(h_zllratio, "Z#rightarrow e^{+}e^{-}", "lp");
     myLegend->AddEntry(h_dataratio,"Data", "lp");
     myLegend->Draw();
 
-    //thecanvas->SaveAs("CSVL_extrapF_"+plotmode+"_"+btagselection+".png");
-    if(plotmode=="MET") thecanvas->SaveAs("CSVL_extrapF_"+leptonmode+"_"+plotmode+"_"+btagselection+"_HTcut"+ss.str()+".png");
-    else if(plotmode=="HT") thecanvas->SaveAs("CSVL_extrapF_"+leptonmode+"_"+plotmode+"_"+btagselection+"_METcut"+ss.str()+".png");
-    else if(plotmode=="leptonpt") thecanvas->SaveAs("CSVL_extrapF_"+leptonmode+"_"+plotmode+"_"+btagselection+"_HTcut"+ss.str()+".png");
+    setStackMode(true); //just to get the data header plotted
+    drawPlotHeader();
+
+    if(plotmode=="MET") thecanvas->SaveAs("CSVL_extrapF_"+leptonmode+"_"+plotmode+"_"+btagselection+"_HTcut"+ss.str()+".pdf");
+    else if(plotmode=="HT") thecanvas->SaveAs("CSVL_extrapF_"+leptonmode+"_"+plotmode+"_"+btagselection+"_METcut"+ss.str()+".pdf");
+    else if(plotmode=="leptonpt") thecanvas->SaveAs("CSVL_extrapF_"+leptonmode+"_"+plotmode+"_"+btagselection+"_HTcut"+ss.str()+".pdf");
+
+
     return;
-
   }
-
 
   std::cout << "Now drawing CSV output for F control sample..." << std::endl;
 
-  //var="csvlb_CSVout1"; xtitle="CVS output for CVSL-tagged jet1";
+  //var="csvlb_CSVout1"; xtitle="CVS output for CSVL-tagged jet1";
   var="TMath::Max(TMath::Max(csvlb_CSVout1,csvlb_CSVout2),csvlb_CSVout3)"; xtitle="CSV output for most b-like jet";
   nbins = 10; low=0; high=1;
 
-  TCut fc_ModMETcut = "zmumuMET>50 && zmumuMET<150";
+  TCut fc_ModMETcut;
+  if(leptonmode == "mu")fc_ModMETcut = "zmumuMET>50 && zmumuMET<150";
+  else fc_ModMETcut = "zeeMET>50 && zeeMET<150";
+
   TCut fc_METcut = "MET>50 && MET<150";
   //TCut fc_HTcut = "HT>200 && HT<400";
   TCut fc_HTcut = "HT>400";
-  TCut nomModMETcut = "zmumuMET>250";
+
+  TCut nomModMETcut;
+  if(leptonmode == "mu")fc_ModMETcut = "zmumuMET>250";
+  else fc_ModMETcut = "zeeMET>250";
+
+  TCut leptoncut;
+  if(leptonmode == "mu") leptoncut = "pass_ZmumuHLT==1 && passZmumuCand==1";
+  else leptoncut = "pass_ZeeHLT==1 && passZeeCand==1";
+
+  TCut lepvetocut;
+  if(leptonmode == "mu") lepvetocut = "cutEleVeto==1 && nMuons<3";
+  else lepvetocut = "cutMuVeto==1 && nElectrons<3";
+  
+  TCut mdpcut;
+  if(leptonmode == "mu") mdpcut = "zmumuMinDeltaPhiN>4";
+  else mdpcut = "zeeMinDeltaPhiN>4";
+
+
   TCut nomMETcut = "MET>250";
   TCut nomHTcut = "HT>400";
-  selection_ =TCut("pass_ZmumuHLT==1 && cutPV==1 && cut3Jets==1 && passZmumuCand==1 && zmumuMinDeltaPhiN>4 && cutEleVeto==1 && nMuons<3")&&fc_ModMETcut&&fc_HTcut&&csvlbtagcut;
-  drawSimple(var,nbins,low,high,histfilename, "csv_doublemudata_fc", "data");
+
+  selection_ =TCut("cutPV==1 && cut3Jets==1") && fc_ModMETcut && fc_HTcut && leptoncut && lepvetocut && mdpcut && csvlbtagcut;
+  drawSimple(var,nbins,low,high,histfilename, "csv_doublelepdata_fc", "data",0,xtitle,"Arbitrary Units");
   TH1D* dataPlot_csv_fc = (TH1D*)hinteractive->Clone("dataPlot");
-  drawSimple(var,nbins,low,high,histfilename, "csv_zll_fc", "ZJets");
+  drawSimple(var,nbins,low,high,histfilename, "csv_zll_fc", "ZJets",0,xtitle,"Arbitrary Units");
   TH1D* zllPlot_csv_fc = (TH1D*)hinteractive->Clone("zllPlot");
 
-
-  selection_ =TCut("pass_ZmumuHLT==1 && cutPV==1 && cut3Jets==1 && passZmumuCand==1 && zmumuMinDeltaPhiN>4 && cutEleVeto==1 && nMuons<3")&&nomModMETcut&&nomHTcut&&csvlbtagcut;
-  drawSimple(var,nbins,low,high,histfilename, "csv_doublemudata_nom", "data");
+  selection_ =TCut("cutPV==1 && cut3Jets==1") && nomModMETcut && nomHTcut && leptoncut && lepvetocut && mdpcut && csvlbtagcut;
+  drawSimple(var,nbins,low,high,histfilename, "csv_doublelepdata_nom", "data",0,xtitle,"Arbitrary Units");
   TH1D* dataPlot_csv_nom = (TH1D*)hinteractive->Clone("dataPlot");
-  drawSimple(var,nbins,low,high,histfilename, "csv_zll_nom", "ZJets");
+  drawSimple(var,nbins,low,high,histfilename, "csv_zll_nom", "ZJets",0,xtitle,"Arbitrary Units");
   TH1D* zllPlot_csv_nom = (TH1D*)hinteractive->Clone("zllPlot");
 
-  dataPlot_csv_nom->SetXTitle( xtitle ); 
-  //dataPlot_csv_fc->GetYaxis()->SetTitle( "F(CSVM/CSVL)" ); 
-  //dataPlot_csv_fc->SetMaximum(1);
-  dataPlot_csv_nom->SetLineColor(kRed);
-  dataPlot_csv_nom->SetMarkerColor(kRed);
+  dataPlot_csv_fc->SetLineColor(kRed);
+  dataPlot_csv_fc->SetMarkerColor(kRed);
+
+  thecanvas->cd()->SetLeftMargin(0.16);//don't know why this became necessary
+  thecanvas->cd()->SetBottomMargin(0.13);//don't know why this became necessary
 
   TH1D* h_dataNorm = (TH1D*)dataPlot_csv_nom->DrawNormalized();  
-  h_dataNorm->SetMaximum(0.4);
+  //dataPlot_csv_nom->Draw();
+
+  h_dataNorm->SetMaximum(0.4);  
   h_dataNorm->Draw();
-
-
   dataPlot_csv_fc->DrawNormalized("SAME");  
+  h_dataNorm->Draw("SAME");
+
 
   TLegend* theLegend = new TLegend(0.55,0.84,0.81,0.7);
   theLegend->SetFillColor(0);
@@ -12058,22 +12015,33 @@ void drawZllExtrap( TString btagselection="ge1b",const int mode=1, TString lepto
   theLegend->SetTextFont(42);
   theLegend->SetFillStyle(0);
   theLegend->SetTextSize(0.045);
-  theLegend->AddEntry(dataPlot_csv_fc,"Data - FC", "lp");
-  theLegend->AddEntry(dataPlot_csv_nom,"Data -Nominal", "lp");
+  TString s_fc,s_nom;
+  if(leptonmode=="mu"){
+    s_fc = "Data (LSB'-#mu#mu)";
+    s_nom = "Data (SIG-#mu#mu)";
+  }
+  else{
+    s_fc = "Data (LSB'-ee)";
+    s_nom = "Data (SIG-ee)";
+  }
+  theLegend->AddEntry(dataPlot_csv_fc,s_fc, "lp");
+  theLegend->AddEntry(dataPlot_csv_nom,s_nom, "lp");
   theLegend->Draw();
   
-  thecanvas->SaveAs("CSVoutput_FC_HT400_"+btagselection+".png");
+  setStackMode(true); //just to get the data header plotted
+  drawPlotHeader();
 
-  ////////
-  zllPlot_csv_nom->SetXTitle( xtitle ); 
-  zllPlot_csv_nom->SetLineColor(kGreen);
-  zllPlot_csv_nom->SetMarkerColor(kGreen);
+  thecanvas->SaveAs("CSVoutput_FC_"+leptonmode+"_ge1bcsvl.pdf");
+
+  zllPlot_csv_fc->SetLineColor(kGreen);
+  zllPlot_csv_fc->SetMarkerColor(kGreen);
 
   TH1D* h_zllNorm = (TH1D*)zllPlot_csv_nom->DrawNormalized();  
+
   h_zllNorm->SetMaximum(0.4);
   h_zllNorm->Draw();
-
   zllPlot_csv_fc->DrawNormalized("SAME");  
+  h_zllNorm->Draw("SAME");
 
   TLegend* theLegend2 = new TLegend(0.55,0.84,0.81,0.7);
   theLegend2->SetFillColor(0);
@@ -12082,31 +12050,40 @@ void drawZllExtrap( TString btagselection="ge1b",const int mode=1, TString lepto
   theLegend2->SetTextFont(42);
   theLegend2->SetFillStyle(0);
   theLegend2->SetTextSize(0.045);
-  theLegend2->AddEntry(zllPlot_csv_fc,"Z/#gamma*#rightarrow #mu^{+}#mu^{-} - FC", "lp");
-  theLegend2->AddEntry(zllPlot_csv_nom,"Z/#gamma*#rightarrow #mu^{+}#mu^{-} -Nominal", "lp");
+  if(leptonmode=="mu"){
+    s_fc = "Z#rightarrow #mu^{+}#mu^{-} (LSB'-#mu#mu)";
+    s_nom = "Z#rightarrow #mu^{+}#mu^{-} (SIG-#mu#mu)";
+  }
+  else{
+    s_fc = "Z#rightarrow e^{+}e^{-} (LSB'-ee)";
+    s_nom = "Z#rightarrow e^{+}e^{-} (SIG-ee)";
+  }
+  theLegend2->AddEntry(zllPlot_csv_fc,s_fc, "lp");
+  theLegend2->AddEntry(zllPlot_csv_nom,s_nom, "lp");
   theLegend2->Draw();
-  
-  thecanvas->SaveAs("CSVoutput_FC_HT400_zll_"+btagselection+".png");
+
+  drawPlotHeaderInside();
+
+  thecanvas->SaveAs("CSVoutput_FC_zll_"+leptonmode+"_ge1bcsvl.pdf");
 
 
   selection_ =TCut("cutPV==1 && cut3Jets==1 && minDeltaPhiN>=4 && cutEleVeto==1 && cutMuVeto==1")&&fc_METcut&&fc_HTcut&&csvlbtagcut;
-  drawSimple(var,nbins,low,high,histfilename, "csv_zvv_fc", "Zinvisible");
+  drawSimple(var,nbins,low,high,histfilename, "csv_zvv_fc", "Zinvisible",0,xtitle,"Arbitrary Units");
   TH1D* zvvPlot_csv_fc = (TH1D*)hinteractive->Clone("zvvPlot");
   selection_ =TCut("cutPV==1 && cut3Jets==1 && minDeltaPhiN>=4 && cutEleVeto==1 && cutMuVeto==1")&&nomMETcut&&nomHTcut&&csvlbtagcut;
-  drawSimple(var,nbins,low,high,histfilename, "csv_zvv_nom", "Zinvisible");
+  drawSimple(var,nbins,low,high,histfilename, "csv_zvv_nom", "Zinvisible",0,xtitle,"Arbitrary Units");
   TH1D* zvvPlot_csv_nom = (TH1D*)hinteractive->Clone("zvvPlot");
 
-  ////////
-  zvvPlot_csv_fc->SetXTitle( xtitle ); 
-  zvvPlot_csv_nom->SetLineColor(kBlue);
-  zvvPlot_csv_nom->SetMarkerColor(kBlue);
+  zvvPlot_csv_fc->SetLineColor(kBlue);
+  zvvPlot_csv_fc->SetMarkerColor(kBlue);
 
 
-  TH1D* h_zvvNorm = (TH1D*)zvvPlot_csv_fc->DrawNormalized();  
+  TH1D* h_zvvNorm = (TH1D*)zvvPlot_csv_nom->DrawNormalized();  
+
   h_zvvNorm->SetMaximum(0.4);
   h_zvvNorm->Draw();
-
-  zvvPlot_csv_nom->DrawNormalized("SAME");  
+  zvvPlot_csv_fc->DrawNormalized("SAME");  
+  h_zvvNorm->Draw("SAME");
 
   TLegend* theLegend3 = new TLegend(0.55,0.84,0.81,0.7);
   theLegend3->SetFillColor(0);
@@ -12115,11 +12092,35 @@ void drawZllExtrap( TString btagselection="ge1b",const int mode=1, TString lepto
   theLegend3->SetTextFont(42);
   theLegend3->SetFillStyle(0);
   theLegend3->SetTextSize(0.045);
-  theLegend3->AddEntry(zvvPlot_csv_fc,"Z#rightarrow #nu#nu - FC", "lp");
-  theLegend3->AddEntry(zvvPlot_csv_nom,"Z#rightarrow #nu#nu -Nominal", "lp");
+  s_fc = "Z#rightarrow #nu#nu (LSB')";
+  s_nom = "Z#rightarrow #nu#nu (SIG)";
+  theLegend3->AddEntry(zvvPlot_csv_fc,s_fc, "lp");
+  theLegend3->AddEntry(zvvPlot_csv_nom,s_nom, "lp");
   theLegend3->Draw();
   
-  thecanvas->SaveAs("CSVoutput_FC_HT400_zvv_"+btagselection+".png");
+  drawPlotHeaderInside();
+
+  thecanvas->SaveAs("CSVoutput_FC_zvv_ge1bcsvl.pdf");
+}
+
+void drawAllZllExtrap(){
+
+  //draw F vs MET
+  drawZllExtrap("ge1b","ele","MET",400);
+  drawZllExtrap("ge2b","ele","MET",400);
+  drawZllExtrap("ge1b","mu","MET",400);
+  drawZllExtrap("ge2b","mu","MET",400);
+
+  //draw F vs HT 
+  drawZllExtrap("ge1b","ele","HT",150);
+  drawZllExtrap("ge2b","ele","HT",150);
+  drawZllExtrap("ge1b","mu","HT",150);
+  drawZllExtrap("ge2b","mu","HT",150);
+
+  //draw CSV output
+  drawZllExtrap("ge1b","ele","MET",400,true); //only leptonmode matters for this
+  drawZllExtrap("ge1b","mu","MET",400,true); //only leptonmode matters for this
+
 }
 
 
