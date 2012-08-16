@@ -18,6 +18,7 @@ TH2D* h2d=0;
 TLatex* text1=0;
 TLatex* text2=0;
 TLatex* text3=0;
+TLatex* text4=0;
 
 //holds a list of the *active* samples (to be plotted)
 std::vector<TString> samples_;
@@ -851,6 +852,7 @@ bool doCustomPlotMin_=false;
 double customPlotMin_=0;
 
 float maxScaleFactor_ = 1.05;
+float xlabeloffset_=0.015;
 
 bool splitTTbar_ = false;
 bool splitWJets_ = false;
@@ -863,9 +865,13 @@ bool splitSingleTopForClosureTest_ = false;
 bool splitZinvisible_ = false;
 bool vAccepMuon_ = false; //true(false) = muon(electron) definition of acceptance
 
-//this is only for plotting headers
+//this is for plotting headers and also for dd estimates
 bool is2011Data_ = false;
 bool isPreliminary_ = (is2011Data_) ? false : true;
+
+bool plotSelectionLabel_ = true;
+TString selectionLabel_="";
+bool doAppendBinWidth_ = true;
 
 //bool latexMode_=false;
 bool latexMode_=true;
@@ -1124,6 +1130,9 @@ void drawPlotHeaderInside() {
 }
 
 void drawPlotHeader(double xoffset = 0) {
+
+  const  bool publicationFormat = true; //to switch on the format suggested by Bill for the paper
+
   //  return;
   float ypos = 0.97;
   if(doRatio_) ypos=ypos+0.012;
@@ -1143,14 +1152,18 @@ void drawPlotHeader(double xoffset = 0) {
   text1->SetTextFont(42);
   text1->SetTextSizePixels(24);
   text1->SetTextSize(0.045); //copied from ben's code. maybe needs a switch so it is only used for AN2011()
-  text1->Draw();
+  if (!publicationFormat)  text1->Draw();
 
   if (normalized_ == false) {
     TString astring;
     if(is2011Data_){
       //astring.Form("%.0f pb^{-1} at #sqrt{s} = 7 TeV",lumiScale_);
-      //astring.Form("%.1f fb^{-1} at #sqrt{s} = 7 TeV",lumiScale_/1000.);
-      astring.Form("L_{int} = %.2f fb^{-1}, #sqrt{s} = 7 TeV",lumiScale_/1000.);
+      //astring.Form("%.1f fb^{-1} at #sqrt{s} = 7 TeV",lumiScale_/1000.);      
+      if (publicationFormat)    astring.Form("CMS, #sqrt{s} = 7 TeV, L_{int} = %.2f fb^{-1}",lumiScale_/1000.);
+      else     astring.Form("L_{int} = %.2f fb^{-1}, #sqrt{s} = 7 TeV",lumiScale_/1000.);
+
+      astring.Form("CMS, #sqrt{s} = 7 TeV, L_{int} = %.2f fb^{-1}",lumiScale_/1000.);
+
     }
     else astring.Form("L_{int} = %.2f fb^{-1}, #sqrt{s} = 8 TeV",lumiScale_/1000.);
     if(lumiScale_>33. && lumiScale_<34.) astring.Form("L_{int} = %.2f fb^{-1}, #sqrt{s} = 7 TeV", 4982.91/1000.);//hardcoded, but don't know what else to do for this...
@@ -1159,14 +1172,32 @@ void drawPlotHeader(double xoffset = 0) {
     text2->SetNDC();
     text2->SetTextAlign(13);
     text2->SetX(0.17);
-    text2->SetY(ypos+0.015);
+    const float extray= publicationFormat ? 0.01: 0;
+    text2->SetY(ypos+0.015 + extray);
     text2->SetTextFont(42);
     text2->SetTextSizePixels(24);
     text2->SetTextSize(0.045); //copied from ben's code. maybe needs a switch so it is only used for AN2011()
     text2->Draw();
   }
 
+  if(plotSelectionLabel_){
+    if (text4 != 0 ) delete text4;
+    text4 = new TLatex(5,23.08044,selectionLabel_);
+    text4->SetNDC();
+    text4->SetTextAlign(13);
+    text4->SetX(0.2);
+    text4->SetY(.89);
+    text4->SetTextFont(42);
+    //text4->SetTextSizePixels(26);
+    text4->SetTextSize(0.06);
+    text4->Draw();
+  }
 }
+
+void setSelectionLabel(TString label){
+  selectionLabel_ = label;
+}
+
 
 
 int mainpadWidth; int mainpadHeight;
@@ -1987,14 +2018,19 @@ void resetSamples(bool joinSingleTop=true) {
 
 TString getSampleLabel(const TString & sample) {
   TString label="Not Found";
-  if (  isSampleScan(sample) && useMassInLegend_) {
-    setScanPoint(sample); //set m0 and m12
+  if (  isSampleScan(sample) ){
     char ss[50];
-    //    sprintf(ss, "#splitline{m_{gluino} = %d GeV}{m_{LSP} = %d GeV}",m0_,m12_);
     //more compact format?
-    TString shortname = stripSamplename(sample);
-    sprintf(ss, "%s (%d GeV, %d GeV)",shortname.Data(),m0_,m12_);
-    label=ss;
+    TString shortname = stripSamplename(sample);    
+    if( useMassInLegend_) {
+      setScanPoint(sample); //set m0 and m12
+      //    sprintf(ss, "#splitline{m_{gluino} = %d GeV}{m_{LSP} = %d GeV}",m0_,m12_);
+      sprintf(ss, "%s (%d GeV, %d GeV)",shortname.Data(),m0_,m12_);
+    }
+    else{
+      sprintf(ss, "%s ",shortname.Data());
+    }
+    label=ss;  
   }
   else {
     if (sampleLabel_.count(sample))  label = sampleLabel_[sample];
@@ -2871,7 +2907,7 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
   totalsmsusy->SetMarkerStyle(sampleMarkerStyle_["Total"]);
   if (!drawMarkers_)  totalsmsusy->SetMarkerSize(0); //no marker for this one
 
-  if (varbins==0 && !renormalizeBins_) {ytitle = appendBinWidth(ytitle,low,high,nbins,unit);} //add the " / 10 GeV" part to the title
+  if (doAppendBinWidth_ && varbins==0 && !renormalizeBins_) {ytitle = appendBinWidth(ytitle,low,high,nbins,unit);} //add the " / 10 GeV" part to the title
 
   //here is the part that is really different from the previous implementation
   //need to make new histograms
@@ -3211,6 +3247,7 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
     if (addOverflow_)  addOverflowBin( histos_[samples_[isample]] ); //manipulates the TH1D
     histos_[samples_[isample]]->SetXTitle(xtitle);
     histos_[samples_[isample]]->SetYTitle(ytitle);
+    histos_[samples_[isample]]->GetXaxis()->SetLabelOffset(xlabeloffset_);
 
     hinteractive = histos_[samples_[isample]];// hinteractive will point to the last sample's histo
 
@@ -3282,11 +3319,11 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
   } //loop over samples and fill histograms
 
   //fill legend
-  if (drawTotalSMSusy_) leg->AddEntry(totalsmsusy, sampleLabel_["Total"]);
-  if (drawTotalSM_) leg->AddEntry(totalsm, sampleLabel_["TotalSM"]);
+  if (drawTotalSMSusy_) leg->AddEntry(totalsmsusy, sampleLabel_["Total"],"F");
+  if (drawTotalSM_) leg->AddEntry(totalsm, sampleLabel_["TotalSM"],"F");
   for (int isample=int(samples_.size())-1; isample>=0; isample--) {
     if (dostack_ || (!drawSusyOnly_ || samples_[isample].Contains("LM")|| samples_[isample].Contains("SUGRA"))) { //drawSusyOnly_ means don't draw SM
-      leg->AddEntry(histos_[samples_[isample]], getSampleLabel(samples_[isample]));
+      leg->AddEntry(histos_[samples_[isample]], getSampleLabel(samples_[isample]),"F");
     }
   }
 
@@ -3311,8 +3348,10 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
   }
   else {
     thestack->Draw("hist");
-    thestack->GetHistogram()->GetXaxis()->SetTitle(xtitle);
+    thestack->GetHistogram()->GetXaxis()->SetTitle(xtitle);    
+    thestack->GetHistogram()->GetXaxis()->SetLabelOffset(xlabeloffset_);
     thestack->GetHistogram()->GetYaxis()->SetTitle(ytitle);
+    thestack->GetHistogram()->GetXaxis()->SetTitleOffset(0.93);
 
     if (doVerticalLine_) drawVerticalLine(); //i want to draw the data last
 
@@ -3451,7 +3490,7 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
   //amazingly, \includegraphics cannot handle an extra dot in the filename. so avoid it.
   if (savePlots_) {
     thecanvas->SaveAs(savename+".eps"); //for me
-    //  thecanvas->Print(savename+".C");    //for formal purposes
+    //    thecanvas->Print(savename+".C");    //for formal purposes
     thecanvas->SaveAs(savename+".pdf"); //for pdftex
     thecanvas->SaveAs(savename+".png"); //for twiki
   }

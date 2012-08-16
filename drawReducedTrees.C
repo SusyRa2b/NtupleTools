@@ -4972,39 +4972,51 @@ double getKristenValue(const TString & what, const TString & region, const doubl
 
 
 //read back the file generated above and make a plot
-void drawDD(const bool kristen=false) 
+void drawDD(const bool kristen=false, TString selection = "3B") 
 {
+  assert(selection == "1BL" || selection == "2BL" || selection == "2BT" || selection == "3B" );
 
   gROOT->SetStyle("CMS");
   loadSamples();
-  removeSample("LM9");
-   addSample("T1bbbb$925$100");
-   addSample("T1tttt$925$100");
 
-   setSampleColor("T1bbbb$925$100",kRed+1);
-   setSampleColor("T1tttt$925$100",kRed+1);
+  setDatasetToDraw("2011HT");
+
+  removeSample("LM9");
+  addSample("T1bbbb$925$100");
+  addSample("T1tttt$925$100");
+
+  setSampleColor("T1bbbb$925$100",kRed+1);
+  setSampleColor("T1tttt$925$100",kRed+1);
   
-   setSampleLineStyle("T1bbbb$925$100",1);
-   setSampleLineStyle("T1tttt$925$100",7);
+  setSampleLineStyle("T1bbbb$925$100",1);
+  setSampleLineStyle("T1tttt$925$100",7);
   
   
   currentConfig_=configDescriptions_.getCorrected(); //add JERbias
 
-  setSearchRegions("METbins3B");
-  ifstream file("/afs/cern.ch/user/w/wteo/public/RA2boutput/May22/DDresults_METbins3B.dat");
-  maxScaleFactor_=2.4; //nasty way to set the y max
-
-//  setSearchRegions("METfinebins2BT");
-//  ifstream file("/afs/cern.ch/user/w/wteo/public/RA2boutput/May22/DDresults_METfinebins2BT.dat");
-//  maxScaleFactor_=1.5; //nasty way to set the y max
-
-//  setSearchRegions("METfinebins1BL");
-//  ifstream file("/afs/cern.ch/user/w/wteo/public/RA2boutput/May22/DDresults_METfinebins1BL.dat");
-//   maxScaleFactor_=1.1; //nasty way to set the y max
-
-//  setSearchRegions("METfinebins2BL");
-//  ifstream file("/afs/cern.ch/user/w/wteo/public/RA2boutput/May22/DDresults_METfinebins2BL.dat");
-//  maxScaleFactor_=1.15; //nasty way to set the y max
+  TString filename;
+  if(selection=="3B"){
+    setSearchRegions("METbins3B");
+    filename = "/afs/cern.ch/user/w/wteo/public/RA2boutput/May22/DDresults_METbins3B.dat";
+    //maxScaleFactor_=2.4; //nasty way to set the y max
+    maxScaleFactor_=2.6; //nasty way to set the y max
+  }
+  else if(selection=="2BT"){
+    setSearchRegions("METfinebins2BT");
+    filename = "/afs/cern.ch/user/w/wteo/public/RA2boutput/May22/DDresults_METfinebins2BT.dat";
+    maxScaleFactor_=1.5; //nasty way to set the y max
+  }
+  else if(selection=="1BL"){
+    setSearchRegions("METfinebins1BL");
+    filename = "/afs/cern.ch/user/w/wteo/public/RA2boutput/May22/DDresults_METfinebins1BL.dat";
+    maxScaleFactor_=1.3; //nasty way to set the y max
+  }
+  else if(selection=="2BL"){
+    setSearchRegions("METfinebins2BL");
+    filename = "/afs/cern.ch/user/w/wteo/public/RA2boutput/May22/DDresults_METfinebins2BL.dat";
+    maxScaleFactor_=1.15; //nasty way to set the y max
+  }
+  ifstream file(filename);
 
   //  setSearchRegions("METfinebins");
   //  ifstream file("DDresults_METfinebins3B_1BLSL.dat");
@@ -5033,6 +5045,7 @@ void drawDD(const bool kristen=false)
   metbins[nbins] = maxmet; //hard-coded because there is no upper bound on MET
 
   TString xtitle = "E_{T}^{miss} [GeV]";
+  TString ytitle = "Events";
 
   resetHistos();
   setColorScheme("stack");
@@ -5045,7 +5058,8 @@ void drawDD(const bool kristen=false)
   thestack = new THStack("thestack","--");
 
   //histos are now filled
-  leg_x1=0.5;
+  //leg_x1=0.5;
+  leg_x1=0.60;
   renewCanvas();
   renewLegend();
 
@@ -5090,7 +5104,6 @@ void drawDD(const bool kristen=false)
     histos_[backgroundName]->SetFillColor(sampleColor_[backgroundName]);
     histos_[backgroundName]->SetMarkerSize(0);
     histos_[backgroundName]->SetXTitle(xtitle);
-    //    histos_[backgroundName]->SetYTitle(ytitle);
 
   }
 
@@ -5130,21 +5143,25 @@ void drawDD(const bool kristen=false)
       histos_[samples_[isample]] = hSMPlusSignal;
       //leg->AddEntry(hSMPlusSignal,getSampleLabel(samples_[isample]));
       savePlots_=sp;
-      leg->AddEntry(histos_[samples_[isample]],getSampleLabel(samples_[isample]));
+      leg->AddEntry(histos_[samples_[isample]],getSampleLabel(samples_[isample]),"F");
     }
   }
 
   //get the legend filled in the opposite order
   for (map<TString, TH1D*>::reverse_iterator ih=histos_.rbegin(); ih!=histos_.rend(); ++ih) {
     backgroundName= ih->first;
-    if (backgroundName != "ttbarQCD" && isSampleSM(backgroundName) ) leg->AddEntry(histos_[backgroundName], getSampleLabel(backgroundName));
+    if (backgroundName != "ttbarQCD" && isSampleSM(backgroundName) ) leg->AddEntry(histos_[backgroundName], getSampleLabel(backgroundName),"F");
   }
 
   totalsm->SetMarkerStyle(sampleMarkerStyle_["totalsm"]);
 
   thecanvas->cd();
+  //gPad->SetTopMargin(0.08);//shift the CMS label up instead (using publicationFormat flag)
+
   thestack->Draw("hist");
   thestack->GetHistogram()->GetXaxis()->SetTitle(xtitle);
+  thestack->GetHistogram()->GetYaxis()->SetTitle(ytitle);
+  thestack->GetXaxis()->SetLabelOffset(0.017);
 
   //draw signals
   for (unsigned int isample=0; isample<samples_.size(); isample++) {
@@ -5169,7 +5186,7 @@ void drawDD(const bool kristen=false)
   }
   mcerrors->Draw("2 same");
   //  totalsm->Draw("same");
-  leg->Draw();
+
 
   gROOT->cd();
   if (hdata!=0) delete hdata;
@@ -5186,6 +5203,9 @@ void drawDD(const bool kristen=false)
   addOverflowBin(hdata);
   hdata->Draw("SAME");
 
+  leg->AddEntry(hdata,"Data");
+  leg->Draw();
+
   double mymax = thestack->GetMaximum();
   if ( findOverallMax(totalsm) >mymax) mymax = findOverallMax(totalsm);
   if (findOverallMax(hdata) > mymax) mymax = findOverallMax(hdata);
@@ -5193,16 +5213,29 @@ void drawDD(const bool kristen=false)
 
   drawPlotHeader();
 
+  TLatex* ddtext = new TLatex(5,23.08044,selection + " selection");
+  ddtext->SetNDC();
+  ddtext->SetTextAlign(13);
+  ddtext->SetX(0.2);
+  ddtext->SetY(.89);
+  ddtext->SetTextFont(42);
+  //ddtext->SetTextSizePixels(26);
+  ddtext->SetTextSize(0.06);
+  ddtext->Draw();
+
   //thecanvas->SaveAs("DDresults_METbins1BL.pdf");
   //thecanvas->SaveAs("DDresults_METbins2BL.pdf");
   //thecanvas->SaveAs("DDresults_METbins2BT.pdf");
   //thecanvas->SaveAs("DDresults_METbins3B.pdf");
+  thecanvas->SaveAs("DDresults_METbins"+selection+".pdf");
 
 }
 
 void AN2011_prescale( TString btagselection="ge1b",const int mode=1 ) {
 
   loadSamples();
+
+  setDatasetToDraw("2011HT");
 
   //this mode thing is kludgey
   TString modestring="";
@@ -5295,6 +5328,11 @@ void AN2011_prescale( TString btagselection="ge1b",const int mode=1 ) {
   // ========= regular N-1 plots
 
   resetSamples(); //use all samples
+
+  removeSample("LM9");//remove unnecessary samples
+  removeSample("ZJets");
+  removeSample("VV");
+
   setStackMode(true); //regular stack
   setColorScheme("stack");
   doData(true);
@@ -5317,7 +5355,9 @@ void AN2011_prescale( TString btagselection="ge1b",const int mode=1 ) {
   nbins = 7; low=2; high=9;
   setLogY(false); resetPlotMinimum();
   drawPlots(var,nbins,low,high,xtitle,"Events", "prescaled_njets_LSB_"+btagselection+modestring);
-  
+  setLogY(true);  setPlotMinimum(1e-1);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "prescaled_njets_LSB_"+btagselection+modestring);
+
 
   selection_ =TCut("cutHT==1 && cutPV==1 && MET>=50 && MET<100 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1  && passCleaning==1")&&util&&btagcut;
   var="minDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}";
@@ -5923,6 +5963,31 @@ other.
     SIGplot->Draw("HIST E");
     SLplot->SetMarkerStyle(kFullTriangleUp);
     SLplot->Draw("HIST E SAME");
+
+    //clearly label the selection on this plot
+    TString selLabel;
+    if(btagselection=="ge1b"){
+      if(HTselection=="Loose") selLabel = "1BL selection";
+      else selLabel = "1BT selection";
+    }
+    else if(btagselection=="ge2b"){
+      if(HTselection=="Loose") selLabel = "2BL selection";
+      else selLabel = "2BT selection";
+    }
+    else if(btagselection=="ge3b" && HTselection=="Loose") selLabel = "3B selection";
+    else {cout << "can't find selection label"<< endl; assert(0);}
+
+    TLatex* ddtext = new TLatex(5,23.08044,selLabel);
+    ddtext->SetNDC();
+    ddtext->SetTextAlign(13);
+    ddtext->SetX(0.2);
+    ddtext->SetY(.90);
+    ddtext->SetTextFont(42);
+    //ddtext->SetTextSizePixels(26);
+    ddtext->SetTextSize(0.06);
+    ddtext->Draw();
+
+
     TH1D* myRatio;
     if(vb) myRatio = new TH1D("ratio", "ratio", nvarbins, varbins);
     else  myRatio = new TH1D("ratio", "ratio", nbins,low,high);
@@ -5930,12 +5995,18 @@ other.
     myRatio->SetLineColor(kBlack);
     myRatio->SetMarkerColor(kBlack);
     myRatio->Divide(SIGplot,SLplot);
+    if(btagselection=="ge3b"){ ratioMin=0.5; ratioMax=1.5; }
+    else{ ratioMin=0.81; ratioMax=1.19; }
     myRatio->SetMinimum(ratioMin);
     myRatio->SetMaximum(ratioMax);
-    myRatio->GetYaxis()->SetNdivisions(200 + int(ratioMax-ratioMin)+1);    //float ratioMin=0; float ratioMax=2.5;
+    //myRatio->GetYaxis()->SetNdivisions(200 + int(ratioMax-ratioMin)+1);    //float ratioMin=0; float ratioMax=2.5;
     //myRatio->GetYaxis()->SetNdivisions(200 + 3);    //float ratioMin=0.7; float ratioMax=1.3;
-    //myRatio->GetYaxis()->SetNdivisions(300 + 4);    //float ratioMin=0.81; float ratioMax=1.19;
-    //myRatio->GetYaxis()->SetNdivisions(300 + 5);    //float ratioMin=0.5; float ratioMax=1.5;
+    if(btagselection=="ge3b"){
+      myRatio->GetYaxis()->SetNdivisions(300 + 5);    //float ratioMin=0.5; float ratioMax=1.5;
+    }
+    else{
+      myRatio->GetYaxis()->SetNdivisions(300 + 4);    //float ratioMin=0.81; float ratioMax=1.19;
+    }
     //myRatio->GetYaxis()->SetNdivisions(400);
     myRatio->GetYaxis()->SetLabelSize(0.1); //make y label bigger
     myRatio->GetXaxis()->SetLabelSize(0.1); //make y label bigger
@@ -6333,11 +6404,10 @@ void makeTTbarWMETPlots(bool forttbarbreakdown=false, bool forwjetsbreakdown=fal
     AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Loose" , mode);
     AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge2b", "Tight" , mode);
     AN2011_ttbarw(ratio_sl, ratio_sl_err, ratio_nom, ratio_nom_err,"ge3b", "Loose" , mode);
-  
+
   }
 
 }
-
 
 
 void AN2011_r(TString btagselection="ge1b", const int mode=1) { //for paper, data+MC plots at low MET
@@ -7453,6 +7523,7 @@ void chargeAsym(TString which) {
   */
 }
 
+
 void PAPER2011() {
 
   TString modestring="";
@@ -7461,6 +7532,9 @@ void PAPER2011() {
   setLogY(logy);
   if(logy)  setPlotMinimum(0.5);
   loadSamples();
+
+  setDatasetToDraw("2011HT");
+
   usePUweight_=true;
   useHTeff_=true;
   useMHTeff_=true;    
@@ -7484,6 +7558,7 @@ void PAPER2011() {
   
   removeSample("LM9");
  
+  removeSample("ZJets");
 
  addSample("T1tttt$925$100");
  addSample("T1bbbb$925$100");
@@ -7498,7 +7573,11 @@ void PAPER2011() {
  setSampleColor("ZJets",kViolet-3);
   // == all cuts except MET ==
 
- leg_x1=0.5; leg_y1=0.4;
+ //leg_x1=0.5; leg_y1=0.4;
+ leg_x1=0.6; leg_y1=0.3; //0.5 x1 for long sms names
+
+ leg_y1=0.37; //try this?
+ maxScaleFactor_=1.1;
 
   //1BL
   btagselection="ge1b";
@@ -7506,78 +7585,105 @@ void PAPER2011() {
   selection_ ="HT>=400 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4 &&passCleaning==1";
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
   nbins = 30; low=200; high=500;
+  setSelectionLabel("1BL selection");
   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_"+btagselection+modestring,0,"GeV");
 
   //2BT
+  maxScaleFactor_=1.26;
   btagselection="ge2b";
   btagSFweight_="probge2";
   selection_ ="HT>=600 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4 &&passCleaning==1";
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
   nbins = 6; low=200; high=500;
+  setSelectionLabel("2BT selection");
   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_HT600_"+btagselection+modestring,0,"GeV");
 
   //3B
+  maxScaleFactor_=1.5;
   //addSample("T1tttt"); useMassInLegend_=false;
   btagselection="ge3b";
   btagSFweight_="probge3";
   selection_ ="HT>=400 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4 &&passCleaning==1";
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
   nbins = 10; low=200; high=500;
+  setSelectionLabel("3B selection");
   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_"+btagselection+modestring,0,"GeV");
 
   //leg->Draw();
-  // == now the MET distributions for SL ==
 
+
+  maxScaleFactor_=1.15;
+  // == all cuts except minDeltaPhiN
+  //1BL, SIG only
+  btagselection="ge1b";
+  btagSFweight_="probge1";
+  selection_ ="HT>=400 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET >= 250 &&passCleaning==1";
+  var="minDeltaPhiN"; xtitle="#Delta#hat{#phi}_{min}";
+  nbins = 20; low=0; high=40;
+  setSelectionLabel("1BL selection");
+  drawPlots(var,nbins,low,high,xtitle,"Events", "SIG_minDeltaPhiN_1BL_"+btagselection+modestring,0);
+
+  //2BT, SIG only
+  maxScaleFactor_=1.4;
+  btagselection="ge2b";
+  btagSFweight_="probge2";
+  selection_ ="HT>=600 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET >= 300 &&passCleaning==1";
+  var="minDeltaPhiN"; xtitle="#Delta#hat{#phi}_{min}";
+  nbins = 10; low=0; high=40;
+  setSelectionLabel("2BT selection");
+  drawPlots(var,nbins,low,high,xtitle,"Events", "SIG_minDeltaPhiN_2BT_"+btagselection+modestring,0);
+
+  //3B, SIG only
+  maxScaleFactor_=1.5;
+  btagselection="ge3b";
+  btagSFweight_="probge3";
+  selection_ ="HT>=400 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET >= 250 &&passCleaning==1";
+  var="minDeltaPhiN"; xtitle="#Delta#hat{#phi}_{min}";
+  nbins = 10; low=0; high=40;
+  setSelectionLabel("3B selection");
+  drawPlots(var,nbins,low,high,xtitle,"Events", "SIG_minDeltaPhiN_3B_"+btagselection+modestring,0);
+
+  // == now the MET distributions for SL ==
+  removeSample("VV");
+  removeSample("PythiaPUQCD");
+  removeSample("Zinvisible");
+  removeSample("T1bbbb$925$100");
+
+ leg_y1=0.6; //to avoid extremely large legend font when plotting these
+
+  maxScaleFactor_=1.2;
   //1BL
   btagselection="ge1b";
   btagSFweight_="probge1";
   selection_ =TCut("HT>=400 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && minDeltaPhiN >= 4 &&passCleaning==1")&&getSingleLeptonCut();
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
   nbins = 30; low=200; high=500;
+  setSelectionLabel("1BL selection");
   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_SL_"+btagselection+modestring,0,"GeV");
 
   //2BT
+  maxScaleFactor_=1.3;
   btagselection="ge2b";
   btagSFweight_="probge2";
   selection_ =TCut("HT>=600 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && minDeltaPhiN >= 4 &&passCleaning==1")&&getSingleLeptonCut();
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
   nbins = 6; low=200; high=500;
+  setSelectionLabel("2BT selection");
   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_SL_HT600_"+btagselection+modestring,0,"GeV");
 
   //3B
+  maxScaleFactor_=1.5;
   btagselection="ge3b";
   btagSFweight_="probge3";
   selection_ =TCut("HT>=400 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && minDeltaPhiN >= 4 &&passCleaning==1")&&getSingleLeptonCut();
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
   nbins = 10; low=200; high=500;
+  setSelectionLabel("3B selection");
   drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_SL_"+btagselection+modestring,0,"GeV");
 
-  // == all cuts except minDeltaPhiN
-  //1BL, SIG only
-  btagselection="ge1b";
-  btagSFweight_="probge1";
-  selection_ ="HT>=400 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET >= 250 &&passCleaning==1";
-  var="minDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}";
-  nbins = 20; low=0; high=40;
-  drawPlots(var,nbins,low,high,xtitle,"Events", "SIG_minDeltaPhiN_1BL_"+btagselection+modestring,0);
-
-  //2BT, SIG only
-  btagselection="ge2b";
-  btagSFweight_="probge2";
-  selection_ ="HT>=600 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET >= 300 &&passCleaning==1";
-  var="minDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}";
-  nbins = 10; low=0; high=40;
-  drawPlots(var,nbins,low,high,xtitle,"Events", "SIG_minDeltaPhiN_2BT_"+btagselection+modestring,0);
-
-  //3B, SIG only
-  btagselection="ge3b";
-  btagSFweight_="probge3";
-  selection_ ="HT>=400 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET >= 250 &&passCleaning==1";
-  var="minDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}";
-  nbins = 10; low=0; high=40;
-  drawPlots(var,nbins,low,high,xtitle,"Events", "SIG_minDeltaPhiN_3B_"+btagselection+modestring,0);
-
   // == same thing but use the SB+SIG region
+
+  return;
 
 //   //1BL, SIG only
 //   btagselection="ge1b";
@@ -11585,7 +11691,7 @@ void drawZllPlots( TString btagselection="ge1b",const int mode=1, TString lepton
   //drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "zMass_stack_doublemudata_cvsl_"+modestring);
   //drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "zMass_stack_doubleeledata_cvsl_"+modestring);
 
-  //selection_ =TCut("pass_ZmumuHLT==1 && passZmumuCand && MET>30 && HT>400");//for nick
+  //selection_ =TCut("pass_ZmumuHLT==1 && passZmumuCand && MET>30 && HT>400");//for nic
   //drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "zMass_stack_doublmudata_loosecuts_HT400_met30_"+modestring);
   //selection_ =TCut("pass_ZmumuHLT==1 && passZmumuCand && HT>400");//for nick
   //drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "MET_stack_doublmudata_loosecuts_HT400_"+modestring);
@@ -12514,5 +12620,282 @@ void PrintLeptonEff(const TString & mode="mu"){
   double eyeff3h= h_dileptrig_eff->GetErrorYhigh(0);
   std::cout << "eff(trig) = " << yeff3 << " + " << eyeff3h << " - " << eyeff3l << std::endl;
 
+
+}
+
+void DATAMCTHESIS2011() {
+
+  TString modestring="";
+  const int mode=3; bool logy=false; bool doRatio=false;
+  doRatioPlot(doRatio);
+  setLogY(logy);
+  if(logy)  setPlotMinimum(0.5);
+  loadSamples();
+  usePUweight_=true;
+  useHTeff_=true;
+  useMHTeff_=true;    
+  thebnnMHTeffMode_ = kOff;
+  currentConfig_=configDescriptions_.getCorrected(); //JER bias
+
+  if(mode==3) modestring="-JER-PU-HLT-bSF";
+
+  TString btagselection;
+  int nbins;
+  float low,high;
+  TString var,xtitle;
+  
+  doOverflowAddition(true);
+ 
+  resetSamples(); //use all samples
+  setStackMode(true); //regular stack
+  setColorScheme("stack");
+  doData(true);
+  drawMCErrors_=true;
+  
+  removeSample("LM9");
+ 
+
+  addSample("T1tttt$925$100");
+  addSample("T1bbbb$925$100");
+  
+  setSampleColor("T1bbbb$925$100",kRed+1);
+  setSampleColor("T1tttt$925$100",kRed+1);
+  
+  setSampleLineStyle("T1bbbb$925$100",1);
+  setSampleLineStyle("T1tttt$925$100",7);
+  
+  //setSampleColor("TTbarJets",kAzure-3);
+  //setSampleColor("ZJets",kViolet-3);
+  setSampleColor("ZJets",kRed+1);
+
+  // == all cuts except MET ==
+  
+  leg_x1=0.5; leg_y1=0.6; leg_x2 = 0.9;
+
+  setDatasetToDraw("2011HT");
+
+
+  // == top+W plots ==
+  clearSamples();
+  addSample("TTbarJets");
+  addSample("WJets");
+  addSample("SingleTop");
+  //addSample("T1tttt$925$100"); keep this out for now
+
+  //1BL
+  btagselection="ge1b";
+  btagSFweight_="probge1";
+  selection_ =TCut("HT>=400 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && minDeltaPhiN >= 4 &&passCleaning==1")&&getSingleLeptonCut();
+  var="MET"; xtitle="E_{T}^{miss} [GeV]";
+  nbins = 35; low=150; high=500;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_SL_"+btagselection+modestring,0,"GeV");
+
+  //2BT
+  btagselection="ge2b";
+  btagSFweight_="probge2";
+  selection_ =TCut("HT>=600 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && minDeltaPhiN >= 4 &&passCleaning==1")&&getSingleLeptonCut();
+  var="MET"; xtitle="E_{T}^{miss} [GeV]";
+  nbins = 7; low=150; high=500;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_SL_HT600_"+btagselection+modestring,0,"GeV");
+
+  //3B
+  btagselection="ge3b";
+  btagSFweight_="probge3";
+  selection_ =TCut("HT>=400 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && minDeltaPhiN >= 4 &&passCleaning==1")&&getSingleLeptonCut();
+  var="MET"; xtitle="E_{T}^{miss} [GeV]";
+  nbins = 10; low=150; high=500;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "SBandSIG_MET_SL_"+btagselection+modestring,0,"GeV");
+  
+
+  
+  // == QCD plots ==
+
+  
+  resetLegendPosition();
+  resetSamples(); //use all samples
+  removeSample("LM9");
+  removeSample("ZJets");
+  removeSample("VV");
+  useMHTeff_=false;//SPECIAL FOR PRESCALE DATA!
+
+  // == all cuts except minDeltaPhiN
+  //1BL, SB only
+  btagselection="ge1b";
+  btagSFweight_="probge1";
+  selection_ ="HT>=400 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=150 && MET < 250 &&passCleaning==1";
+  var="minDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}";
+  nbins = 20; low=0; high=40;
+  setLogY(false); resetPlotMinimum();
+  drawPlots(var,nbins,low,high,xtitle,"Events", "SB_minDeltaPhiN_1BL_"+btagselection+modestring,0);
+  setLogY(true);  setPlotMinimum(1e-1);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "SB_minDeltaPhiN_1BL_"+btagselection+modestring,0);
+  
+  //2BT, SB only
+  btagselection="ge2b";
+  btagSFweight_="probge2";
+  selection_ ="HT>=600 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=150 && MET<250 &&passCleaning==1";
+  var="minDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}";
+  nbins = 10; low=0; high=40;
+  setLogY(false); resetPlotMinimum();
+  drawPlots(var,nbins,low,high,xtitle,"Events", "SB_minDeltaPhiN_2BT_"+btagselection+modestring,0);
+  setLogY(true);  setPlotMinimum(1e-1);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "SB_minDeltaPhiN_2BT_"+btagselection+modestring,0);
+
+  //3B, SB only
+  btagselection="ge3b";
+  btagSFweight_="probge3";
+  selection_ ="HT>=400 && cutPV==1 && cutTrigger==1  && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=150 && MET<250 &&passCleaning==1";
+  var="minDeltaPhiN"; xtitle="#Delta #phi_{N}^{min}";
+  nbins = 10; low=0; high=40;
+  setLogY(false); resetPlotMinimum();
+  drawPlots(var,nbins,low,high,xtitle,"Events", "SB_minDeltaPhiN_3B_"+btagselection+modestring,0);
+  setLogY(true);  setPlotMinimum(1e-1);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "SB_minDeltaPhiN_3B_"+btagselection+modestring,0);
+  
+  
+  // == Zvv plots ==
+  clearSamples();
+  addSample("TTbarJets");
+  addSample("ZJets");
+  useMHTeff_=false;//SPECIAL ALSO FOR DILEPTON SAMPLE
+  useHTeff_=false;//SPECIAL ALSO FOR DILEPTON SAMPLE
+
+  leg_x1=0.65; leg_y1=0.6; leg_x2 = 0.9;
+
+  doOverflowAddition(false);
+  
+  //zmumu Mass
+  setDatasetToDraw("2011DoubleMu");
+  btagSFweight_="1";
+  var="zmumuMass"; xtitle="M_{#mu#mu} [GeV]";
+  nbins = 20; low=60; high=120;
+  selection_ =TCut("pass_ZmumuHLT==1 && cutHT==1 && cutPV==1 && cut3Jets==1 && passZmumuCandLoose==1 && zmumuMET>150 && zmumuMinDeltaPhiN>4 && passCleaning==1 && nMuons<3 && cutEleVeto==1 && nbjetsCSVL>=1");
+  drawPlots(var,nbins,low,high,xtitle,"Events", "zmumuMass_DoubleMu_VL_zllMET150_"+modestring,0,"GeV");
+  //zee Mass
+  setDatasetToDraw("2011DoubleElectron");
+  var="zeeMass"; xtitle="M_{ee} [GeV]";
+  selection_ =TCut("pass_ZeeHLT==1 && cutHT==1 && cutPV==1 && cut3Jets==1 && passZeeCandLoose==1 && zeeMET>150 && zeeMinDeltaPhiN>4 && passCleaning==1 && nElectrons<3 && cutMuVeto==1 && nbjetsCSVL>=1");
+  drawPlots(var,nbins,low,high,xtitle,"Events", "zeeMass_DoubleElectron_VL_zllMET150_"+modestring,0,"GeV");
+  
+  doOverflowAddition(true);
+
+  //zmumu mod-MET
+  setDatasetToDraw("2011DoubleMu");
+  var="zmumuMET"; xtitle="modified E_{T}^{miss} [GeV]";
+  nbins = 15; low=50; high=500;
+  selection_ =TCut("pass_ZmumuHLT==1 && cutHT==1 && cutPV==1 && cut3Jets==1 && passZmumuCand==1 && zmumuMinDeltaPhiN>4 && passCleaning==1 && nMuons<3 && cutEleVeto==1 && nbjetsCSVL>=1");
+  drawPlots(var,nbins,low,high,xtitle,"Events", "MODMET_DoubleMu_VL_"+modestring,0,"GeV");
+
+  //zee mod-MET
+  setDatasetToDraw("2011DoubleElectron");
+  var="zeeMET"; xtitle="modified E_{T}^{miss} [GeV]";
+  nbins = 15; low=50; high=500;
+  selection_ =TCut("pass_ZeeHLT==1 && cutHT==1 && cutPV==1 && cut3Jets==1 && passZeeCand==1 && zeeMinDeltaPhiN>4 && passCleaning==1 && nElectrons<3 && cutMuVeto==1 && nbjetsCSVL>=1");
+  drawPlots(var,nbins,low,high,xtitle,"Events", "MODMET_DoubleElectron_VL_"+modestring,0,"GeV");
+
+}
+
+void plotQCDStuff(){
+
+
+
+  doRatioPlot(false);
+  setLogY(false);
+  loadSamples();
+  usePUweight_=true;
+  useHTeff_=true;
+  useMHTeff_=true;    
+  thebnnMHTeffMode_ = kOff;
+  currentConfig_=configDescriptions_.getCorrected(); //JER bias
+
+  TString btagselection;
+  int nbins;
+  float low,high;
+  TString var,xtitle;
+  
+  doOverflowAddition(true);
+ 
+  clearSamples(); //use all samples
+  setStackMode(false,true); //regular stack
+  setColorScheme("nostack");
+  doData(false);
+  drawMCErrors_=false;
+  addSample("PythiaPUQCD");
+
+  btagselection="ge1b";
+  btagSFweight_="probge1";
+
+  TCut baseline = "cutHT==1 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET<50 &&passCleaning==1 && weight<1000";
+
+  var="minDeltaPhi"; xtitle="#Delta #phi_{min} [rad.]";  
+  nbins = 10; low=0; high=TMath::Pi()+1e-4;
+  selection_ =TCut("FIXME");
+  drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "mdphi_QCD_0to50"+btagselection);
+  TH1D* h_mdphi_0to50 = (TH1D*)hinteractive->Clone("h_mdphi_0to50");
+  h_mdphi_0to50->SetLineColor(kRed+1);
+  h_mdphi_0to50->SetMarkerColor(kRed+1);
+
+  selection_ =TCut("cutHT==1 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=50 && MET<100 &&passCleaning==1");
+  drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "mdphi_QCD_50to100"+btagselection);
+  TH1D* h_mdphi_50to100 = (TH1D*)hinteractive->Clone("h_mdphi_50to100");
+  h_mdphi_50to100->SetLineColor(kOrange-3);
+  h_mdphi_50to100->SetMarkerColor(kOrange-3);
+
+  selection_ =TCut("cutHT==1 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=100 && MET<150 &&passCleaning==1");
+  drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "mdphi_QCD_100to150"+btagselection);
+  TH1D* h_mdphi_100to150 = (TH1D*)hinteractive->Clone("h_mdphi_100to150");
+  h_mdphi_100to150->SetLineColor(kGreen+3);
+  h_mdphi_100to150->SetMarkerColor(kGreen+3);
+
+  selection_ =TCut("cutHT==1 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && MET>=150 &&passCleaning==1");
+  drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "mdphi_QCD_150"+btagselection);
+  TH1D* h_mdphi_150 = (TH1D*)hinteractive->Clone("h_mdphi_150");
+  h_mdphi_150->SetLineColor(kAzure-3);
+  h_mdphi_150->SetMarkerColor(kAzure-3);
+
+  h_mdphi_0to50->Draw("EHIST");
+  h_mdphi_50to100->Draw("EHISTSAME");
+  h_mdphi_100to150->Draw("EHISTSAME");
+  h_mdphi_150->Draw("EHISTSAME");
+
+  TLegend* theLegend3 = new TLegend(0.55,0.84,0.81,0.7);
+  theLegend3->SetFillColor(0);
+  theLegend3->SetBorderSize(0);
+  theLegend3->SetLineStyle(0);
+  theLegend3->SetTextFont(42);
+  theLegend3->SetFillStyle(0);
+  theLegend3->SetTextSize(0.045);
+  theLegend3->AddEntry(h_mdphi_0to50, "E_{T}^{miss}<50 GeV","lp");
+  theLegend3->AddEntry(h_mdphi_50to100, "50 GeV < E_{T}^{miss}<100 GeV","lp");
+  theLegend3->AddEntry(h_mdphi_100to150, "100 GeV<E_{T}^{miss}<150 GeV","lp");
+  theLegend3->AddEntry(h_mdphi_150, "E_{T}^{miss}>150 GeV","lp");
+  theLegend3->Draw();
+  
+  drawPlotHeaderInside();
+
+  thecanvas->SaveAs("mdphi_qcd_metbin.pdf");
+
+  return;
+
+  clearSamples(); //use all samples
+  setStackMode(true); //regular stack
+  setColorScheme("stack");
+  doData(false);
+  drawMCErrors_=true;
+  addSample("PythiaPUQCD");
+
+
+  var="ntruebjets"; xtitle="# true bjets";  
+  nbins = 5; low=0; high=5;
+  selection_ =TCut("cutHT==1 && cutPV==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1 && minDeltaPhiN >= 4 && MET>=250 &&passCleaning==1");
+  btagselection="ge1b";
+  //btagcut = "nbjetsCSVM>=1";
+  //btagSFweight_="1";
+  btagSFweight_="probge1";
+  drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "ntruebjets_QCD_1BL"+btagselection);
+
+  btagselection="ge2b";
+  btagSFweight_="probge2";
+  drawPlots(var,nbins,low,high,xtitle,"Arbitrary units", "ntruebjets_QCD_2BL"+btagselection);
 
 }
