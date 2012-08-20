@@ -60,13 +60,13 @@ EventCalculator::EventCalculator(const TString & sampleName, const vector<string
   mhtgraphMinus_(0),
   f_tageff_(0),
   fDataJetRes_(0),
-  //FIXME CFA
-  ResJetPar_(0), //new JetCorrectorParameters("START42_V13_AK5PFchs_L2L3Residual.txt") ),
-  L3JetPar_(0),// new JetCorrectorParameters("START42_V13_AK5PFchs_L3Absolute.txt") ),
-  L2JetPar_(0),//new JetCorrectorParameters("START42_V13_AK5PFchs_L2Relative.txt") ),
-  L1JetPar_(0),//new JetCorrectorParameters("START42_V13_AK5PFchs_L1FastJet.txt") ),
+  //2011 values, to be used for code validation only
+  ResJetPar_(new JetCorrectorParameters("START42_V13_AK5PFchs_L2L3Residual.txt") ),
+  L3JetPar_(new JetCorrectorParameters("START42_V13_AK5PFchs_L3Absolute.txt") ),
+  L2JetPar_(new JetCorrectorParameters("START42_V13_AK5PFchs_L2Relative.txt") ),
+  L1JetPar_(new JetCorrectorParameters("START42_V13_AK5PFchs_L1FastJet.txt") ),
   JetCorrector_(0 ),
-  jecUnc_(0),//new JetCorrectionUncertainty("START42_V13_AK5PFchs_Uncertainty.txt")),
+  jecUnc_(new JetCorrectionUncertainty("START42_V13_AK5PFchs_Uncertainty.txt")), //2011 values, to be used for code tests only
   starttime_(0),
   recalculatedVariables_(false),
   watch_(0),
@@ -104,13 +104,12 @@ EventCalculator::EventCalculator(const TString & sampleName, const vector<string
 
   loadECALStatus();//could also be in reducedTree
 
-  //FIXME CFA
-//   vPar_.clear(); //should be overkill
-//   vPar_.push_back(*L1JetPar_);
-//   vPar_.push_back(*L2JetPar_);
-//   vPar_.push_back(*L3JetPar_);
-//   vPar_.push_back(*ResJetPar_);
-//   JetCorrector_ =  new FactorizedJetCorrector(vPar_);
+  vPar_.clear(); //should be overkill
+  vPar_.push_back(*L1JetPar_);
+  vPar_.push_back(*L2JetPar_);
+  vPar_.push_back(*L3JetPar_);
+  vPar_.push_back(*ResJetPar_);
+  JetCorrector_ =  new FactorizedJetCorrector(vPar_);
 
   loadJetTagEffMaps();  
 
@@ -153,7 +152,7 @@ void EventCalculator::initEnumNames() {
   theJESNames_[kJES0]="JES0";
   theJESNames_[kJESup]="JESup";
   theJESNames_[kJESdown]="JESdown";
-  theJESNames_[kJESFLY]="JESFLY";
+  //  theJESNames_[kJESFLY]="JESFLY"; //disable this
 
   theMETuncNames_[kMETunc0]="METunc0";
   theMETuncNames_[kMETuncUp]="METuncUp";
@@ -247,7 +246,7 @@ void EventCalculator::setOptions( const TString & opt) {
   if ( getOptPiece("JES",opt)== theJESNames_[kJES0]) theJESType_ = kJES0;
   else  if ( getOptPiece("JES",opt)== theJESNames_[kJESup]) theJESType_ = kJESup;
   else  if ( getOptPiece("JES",opt)== theJESNames_[kJESdown]) theJESType_ = kJESdown;
-  else  if ( getOptPiece("JES",opt)== theJESNames_[kJESFLY]) theJESType_ = kJESFLY;
+  //  else  if ( getOptPiece("JES",opt)== theJESNames_[kJESFLY]) theJESType_ = kJESFLY;
   else {cout<<"problem with opt in JES"<<endl; assert(0) ;} //enforce a complete set of options!
 
   if ( getOptPiece("JER",opt)== theJERNames_[kJER0]) theJERType_ = kJER0;
@@ -2076,8 +2075,7 @@ float EventCalculator::getJERbiasFactor(unsigned int ijet) {
 float EventCalculator::getJESUncertainty( unsigned int ijet, bool addL2L3toJES ) {
   assert ( theJESType_ != kJES0 );
 
-  /*  float uncertainty = -1000; */
-  return 0; //FIXME CFA
+  float uncertainty = -1000;
 
 
 /* for timing tests only
@@ -2085,48 +2083,49 @@ float EventCalculator::getJESUncertainty( unsigned int ijet, bool addL2L3toJES )
   else watch_->Continue(); //kFALSE == don't reset the timer
 */
 
-/* FIXME CFA
-  if ( theJESType_ == kJESup ) {
-    uncertainty = myJetsPFhelper->at(ijet).jetUncPlus; //ntuple values are much faster than running this on the fly
-//     if( fabs(myJetsPF->at(ijet).eta) <5 ){
-//       jecUnc_->setJetEta(myJetsPF->at(ijet).eta);
-//       jecUnc_->setJetPt(myJetsPF->at(ijet).pt); // here you must use the CORRECTED jet pt
-//       uncertainty = jecUnc_->getUncertainty(true);
+  bool uncarg=false;
 
-//       //      cout<<"[EventCalculator::getJESUncertainty] "<<myJetsPFhelper->at(ijet).jetUncPlus<<"\t"<<uncertainty<<endl;
-//       //      if ( fabs(  myJetsPFhelper->at(ijet).jetUncPlus - uncertainty) >0.01) cout<<"[EventCalculator::getJESUncertainty] something Bad!"<<endl;
-      
-//     }
+  if ( theJESType_ == kJESup ) {
+    //    uncertainty = myJetsPFhelper->at(ijet).jetUncPlus; //cfa ntuples don't appear to have these stored
+    uncarg=true;
   }
   else if (theJESType_ == kJESdown) {
-    uncertainty = myJetsPFhelper->at(ijet).jetUncMinus; //ntuple values are much faster than running this on the fly
-//     if( fabs(myJetsPF->at(ijet).eta) <5 ){
-//       jecUnc_->setJetEta(myJetsPF->at(ijet).eta);
-//       jecUnc_->setJetPt(myJetsPF->at(ijet).pt); // here you must use the CORRECTED jet pt
-//       uncertainty = jecUnc_->getUncertainty(false);
-//     }
+    //    uncertainty = myJetsPFhelper->at(ijet).jetUncMinus;  //cfa ntuples don't appear to have these stored
+    uncarg=false;
+  }
+  
+  //now get the uncertainty (from the files)
+  if ( fabs(jets_AK5PF_eta->at(ijet)) <5 ) {
+    jecUnc_->setJetEta( jets_AK5PF_eta->at(ijet));
+    jecUnc_->setJetPt( jets_AK5PF_pt->at(ijet)); // here you must use the CORRECTED jet pt
+    uncertainty = jecUnc_->getUncertainty(uncarg);
+    
+    //      cout<<"[EventCalculator::getJESUncertainty] "<<myJetsPFhelper->at(ijet).jetUncPlus<<"\t"<<uncertainty<<endl;
+    //      if ( fabs(  myJetsPFhelper->at(ijet).jetUncPlus - uncertainty) >0.01) cout<<"[EventCalculator::getJESUncertainty] something Bad!"<<endl;
+    
   }
 
   //  watch_->Stop(); //for timing tests only
 
   if (fabs(uncertainty) > 1) uncertainty=0; //important sanity check
 
-  //  cout<<"\t JES unc ("<< myJetsPF->at(ijet).pt <<") = "<<uncertainty;//JMT DEBUG
+  //cout<<"\t JES unc ("<< jets_AK5PF_pt->at(ijet) <<") = "<<uncertainty<<endl;//JMT DEBUG
 
-  if (addL2L3toJES ) {
-    JetCorrector_->setJetEta( myJetsPF->at(ijet).eta);
-    JetCorrector_->setJetPt( myJetsPF->at(ijet).uncor_pt );
-    JetCorrector_->setJetA( myJetsPF->at(ijet).jetArea );
-    JetCorrector_->setRho( sdouble_kt6pfjets_rho_value ); 
+  if (addL2L3toJES ) { //FIXME tbc that this is really the right recipe. THis is what was used for 2011
+    JetCorrector_->setJetEta( jets_AK5PF_eta->at(ijet) );
+    JetCorrector_->setJetPt( jets_AK5PF_rawPt->at(ijet) );
+    JetCorrector_->setJetA( jets_AK5PF_area->at(ijet) );
+    JetCorrector_->setRho( rho_kt6PFJetsForIsolation2012 ); //FIXME CFA this may be right but i'm not sure
     std::vector<float> factors = JetCorrector_->getSubCorrections();
     float L2L3Residual = factors[3]/factors[2] - 1;
 
     uncertainty = sqrt(uncertainty*uncertainty + pow(L2L3Residual,2) );
+
     //    cout<<" ++ "<<L2L3Residual<<" = "<<uncertainty<<endl; //JMT DEBUG
   }
 
   return uncertainty;
-*/
+
 }
 
 float EventCalculator::getJetPt( unsigned int ijet, bool addL2L3toJES ) {
@@ -2137,9 +2136,9 @@ float EventCalculator::getJetPt( unsigned int ijet, bool addL2L3toJES ) {
   float pt = jets_AK5PF_pt->at(ijet);
   //if ( theJESType_ == kJES0 && theJERType_ == kJER0) return pt;
 
+    /* leave this code intact but we don't really want to use this right now
   if (theJESType_ == kJESFLY) {
-    assert(0); //FIXME CFA
-    /* FIXME CFA
+    assert(0);
     JetCorrector_->setJetEta( myJetsPF->at(ijet).eta);
     JetCorrector_->setJetPt( myJetsPF->at(ijet).uncor_pt );
     JetCorrector_->setJetA( myJetsPF->at(ijet).jetArea );
@@ -2154,12 +2153,12 @@ float EventCalculator::getJetPt( unsigned int ijet, bool addL2L3toJES ) {
     //this will return the pt with "ANTI" L2L3Residual corrections!!
     float L2L3Residualonly = factors[3]/factors[2];
     pt = myJetsPF->at(ijet).uncor_pt * factors[2]/L2L3Residualonly;
-    */
+    
     //for study of L2L3Res
 	    //if (pt>30)  cout<<ijet<<" pT L2L3Residual Unc+ Unc- : "<<pt<<"\t"<<1-L2L3Residualonly<<" "<<myJetsPFhelper->at(ijet).jetUncPlus<<" "<<myJetsPFhelper->at(ijet).jetUncMinus <<" "<< sqrt( pow(1-L2L3Residualonly,2) + pow(myJetsPFhelper->at(ijet).jetUncPlus,2) ) <<endl;
 
   }
-
+end of kJESFLY block  */
   
  //first JER
   if ( theJERType_ != kJER0 ) {
