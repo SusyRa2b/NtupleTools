@@ -2,7 +2,6 @@
 to compile:
 
 must have symlink to MiscUtil.cxx in the working directory.
-TSelectorMultiDraw and CrossSectionTable need to be compiled only when they are changed.
 
 gSystem->Load("TSelectorMultiDraw_C.so");
 gSystem->Load("CrossSectionTable_cxx.so");
@@ -15,16 +14,11 @@ gSystem->Load("SignalEffData_cxx.so");
 ====== this is the nominal code for drawing RA2b data/MC comparison plots =======
 The signal efficiency functions are now forked into signalEffSyst.C
 
-2011 updates -- runDataQCD2011() computes all numbers needed for QCD estimate including systematics
-
 The functions that do the heavy lifting, along with various utility functions,
 are in drawReducedTrees.h.
 
 This code replaces drawCutflowPlots.C (which had replaced drawBasicPlots.C). 
 The input files are the reducedTrees.
-
-Depending on the exact setup in loadSamples(), the QCD and Single-top samples must be added together with 'hadd' 
-in order to get one file per sample.
 
 */
 
@@ -72,13 +66,6 @@ double preLumiScale_ = 30;//god only knows for 2012
 //this is to make the ROOT dictionary generation work correctly
 #include "drawReducedTrees2012.h"
 
-//2012 -- remove whatever of these are now crap
-const bool reweightLSBdata_=true; //whether or not LSB data is reweighted based on PV distribution
-const bool useScaleFactors_=true; //whether or not to use MC scale factors when doing subtraction for data-driven estimates
-const bool useBNNEffCurves_=false; 
-const bool btaggedLSB_=false;
-const bool use1B_SL_=false; // use ge1b selection for SL sample in ttbar method
-const bool doNJetRWClosure_ = true; //should usually be true; set it to false only to save time
 
 void RA2bControlPlots2012() {
 
@@ -350,8 +337,126 @@ void RA2bControlPlots2012() {
   setLogY(false);
   drawPlots(var,nbins,low,high,xtitle,"Events", "ra2b_Zmass_2mu_low",0,"GeV");
  
+  // == test of the HTMHT + MET business ==
+  setDatasetToDraw("2012hybrid");
+  lumiScale_ = 700;
+
+  selection_ =TCut("HT>=200 && MET>=175 && cutPV==1 && cutTrigger==1 && njets>=3  && minDeltaPhiN >= 4 && passCleaning==1 && nbjets==0")&&getSingleLeptonCut();
+  var="HT"; xtitle="H_{T} [GeV]";
+  nbins = 22; low=200; high=1300;
+  setLogY(false);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "ra2b_ht_eq0b_SL_hybrid",0,"GeV");
+  setLogY(true);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "ra2b_ht_eq0b_SL_hybrid",0,"GeV");
+
+
 }
 
+void RA2b2012_mtspectrum() {
+
+
+  nameOfEventWeight_="weight2"; //for 2012 cfA skimmed ntuples
+
+  loadSamples();
+  usePUweight_=false;
+
+  useHTeff_=false;
+  useMHTeff_=false;    
+  thebnnMHTeffMode_ = kOff;
+  currentConfig_=configDescriptions_.getDefault();
+
+  clearSamples();
+  addSample("TTbarJets:nbjets==1",kRed,"==1 b");
+  addSample("TTbarJets:nbjets==2",kGreen,"==2 b");
+  addSample("TTbarJets:nbjets>=3",kBlue,">=3 b");
+
+  int nbins;
+  float low,high;
+  TString var,xtitle;
+  
+  doOverflowAddition(true);
+
+  dodata_=false;
+  setStackMode(false,true);//normalized
+
+  selection_ ="HT>=400 && MET>=150 && cutPV==1 && cutTrigger==1 && njets>=3 && minDeltaPhiN >= 4 && passCleaning==1&& (nElectrons+nMuons==1)";
+
+  var="MT_Wlep"; xtitle="m_{T} [GeV]";
+  nbins = 10; low=0; high=200; 
+  drawPlots(var,nbins,low,high,xtitle,"au", "ra2b_mt",0,"GeV");
+
+
+}
+
+void RA2b2012_ttbarw() {
+
+  nameOfEventWeight_="weight2"; //for 2012 cfA skimmed ntuples
+
+  loadSamples();
+  usePUweight_=true;
+
+  useHTeff_=false;
+  useMHTeff_=false;    
+  thebnnMHTeffMode_ = kOff;
+  currentConfig_=configDescriptions_.getDefault();
+
+  clearSamples();
+  addSample("TTbarJets");
+  addSample("WJets");
+  addSample("SingleTop");
+
+
+  int nbins;
+  float low,high;
+  TString var,xtitle;
+  
+  doOverflowAddition(false);
+  drawMCErrors_=true;
+
+  dodata_=false;
+
+
+  setStackMode(true);//regular stack
+  
+  const int nvarbins=11;
+  const float varbins[]={100, 125, 150, 175, 200, 225, 250,  300, 350, 400,  500,  650}; //AN and PAS 
+  
+  selection_ =TCut("HT>=400 && rawPFMET>=150 && cutPV==1 && cutTrigger==1  && njets>=3 && minDeltaPhiN >= 4 && passCleaning==1 && nbjets>=1")&&getSingleLeptonCut();
+  var="rawPFMET"; xtitle="E_{T}^{miss} [GeV]";
+  nbins = 55; low=100; high=650; 
+  drawPlots(var,nvarbins, varbins, xtitle,"Arbitrary units", "ra2b_rawPFMET_SL_ttwt_ge1b_ht400");
+  
+  TH1D* SLplot = (TH1D*) totalsm->Clone("SLplot");
+
+  SLplot->Scale(1/SLplot->Integral());
+
+  selection_ =TCut("HT>=400 && rawPFMET>=150 && cutPV==1 && cutTrigger==1  && njets>=3 && minDeltaPhiN >= 4  &&passCleaning==1 && nbjets>=1")&&getLeptonVetoCut();
+  var="rawPFMET"; xtitle="E_{T}^{miss} [GeV]";
+  nbins = 55; low=100; high=650; 
+  drawPlots(var,nvarbins, varbins, xtitle,"Arbitrary units", "ra2b_rawPFMET_0L_ttwt_ge1b_ht400");
+  
+  TH1D* ZLplot = (TH1D*) totalsm->Clone("ZLplot");
+  ZLplot->Scale(1/ZLplot->Integral());
+
+  renewCanvas("ratio");
+
+  thecanvas->cd(1);
+  ZLplot->SetLineColor(kBlue);
+  ZLplot->SetMarkerColor(kBlue);
+  ZLplot->Draw();
+ 
+  SLplot->SetLineColor(kRed);
+  SLplot->SetMarkerColor(kRed);
+  SLplot->Draw("SAME");
+   
+  thecanvas->cd(2);
+  ratio = (TH1D*) ZLplot->Clone("ratio");
+  ratio->SetLineColor(kBlack);
+  ratio->SetMarkerColor(kBlack);
+  ratio->Divide(ZLplot,SLplot);
+  ratio->Draw();
+
+}
 
 void compareZMC() {
 
@@ -451,7 +556,6 @@ I need to use the "modified" MET that comes from recalculating MET after droppin
   var = "HT"; xtitle="HT";
   setLogY(false);
   drawPlots(var,nbins,low,high,xtitle,"", "ra2b_WvWinc_ht_nonorm",0,"GeV");
-
 
 }
 
@@ -574,355 +678,4 @@ void trg() {
 
 }
 
-void rpv_basic_plots() {
 
-  lumiScale_ = 20000;
-
-  loadSamples();
-
-
-  useHTeff_=false;
-  useMHTeff_=false;    
-  thebnnMHTeffMode_ = kOff;
-  currentConfig_=configDescriptions_.getDefault();
-
-  removeSample("LM9");
-
-  removeSample("VV");
-
-  addSample("sbottom-189-270");
-
-  setSampleScaleFactor("sbottom-189-270",0.04545424); //was 4/9
-
-  dodata_=false;
-
-  setStackMode(false,true);
-  //define some cuts
-  TCut dilepton = "(nElectrons + nMuons == 2) && (eleet1>=20 || muonpt1>=20)";
-  TCut zveto = "bestZmass <81 || bestZmass >101";
-
-  TCut ST = "STeff>=400";
-  TCut MET = "MET>=35";
-
-  TCut jets = "njets30>=4";
-
-  TCut rcuts = "rMET <0.15 && rl <0.15";
-
-  TCut resonance = "mjjdiff<10";
-  TCut resonance5 = "mjjdiff_5<10";
-
-  removeSample("PythiaPUQCD");
-  removeSample("WJets");
-  removeSample("Zinvisible");
-
-  //now plots
-  int nbins;
-  float low,high;
-  TString var,xtitle;
-  
-  //Z mass
-  nbins = 50;
-  low = 0; high = 300;
-  var = "bestZmass"; xtitle="l+l- mass";
-
-  selection_ = dilepton;
-  drawPlots(var,nbins,low,high,xtitle,"Events", "rpv_dileptonSelection_llmass",0,"GeV");
-
-  //add n jets
-  selection_ = dilepton && jets;
-  drawPlots(var,nbins,low,high,xtitle,"Events", "rpv_dileptonjetsSelection_llmass",0,"GeV");
-
-  //add z veto; plot ST
-  selection_ = dilepton&& jets && zveto;
-  nbins = 50;
-  low = 300; high = 1800;
-  var = "STeff"; xtitle="HT + lepton pT + MET";
-  drawPlots(var,nbins,low,high,xtitle,"Events", "rpv_dileptonjetsNoZSelection_STeff",0,"GeV");
-
-  //same selection; plot MET
-  selection_ = dilepton&& jets && zveto;
-  nbins = 50;
-  low = 0; high = 400;
-  var = "MET"; xtitle="MET";
-  drawPlots(var,nbins,low,high,xtitle,"Events", "rpv_dileptonjetsNoZSelection_MET",0,"GeV");
-
-  //same selection; plot HT
-  selection_ = dilepton&& jets && zveto;
-  nbins = 50;
-  low = 0; high = 1200;
-  var = "HT"; xtitle="HT";
-  drawPlots(var,nbins,low,high,xtitle,"Events", "rpv_dileptonjetsNoZSelection_HT",0,"GeV");
-
-  //add STeff and MET cuts
-  selection_ = dilepton&& jets && zveto &&ST&&MET;
-  //plot r quantities
-  nbins = 30;
-  low = 0; high = 0.5;
-  var = "rMET"; xtitle="MET / STeff";
-  drawPlots(var,nbins,low,high,xtitle,"Events", "rpv_dileptonjetsNoZ-ST-MET-Selection_rMET",0,"GeV");
-
-  nbins = 30;
-  low = 0; high = 0.5;
-  var = "rl"; xtitle="pT l1 / STeff";
-  drawPlots(var,nbins,low,high,xtitle,"Events", "rpv_dileptonjetsNoZ-ST-MET-Selection_rl",0,"GeV");
-
-  //add cuts on r quantities
-  selection_ = dilepton&& jets && zveto &&ST&&MET&&rcuts;
-
-  nbins = 20;
-  low = 0; high = 100;
-  var = "mjjdiff"; xtitle="reco stop mass difference";
-  drawPlots(var,nbins,low,high,xtitle,"Events", "rpv_dileptonjetsNoZ-ST-MET-r-Selection_recoMassDifference",0,"GeV");
-
-  nbins = 20;
-  selection_ = dilepton&& jets && zveto &&ST&&MET&&rcuts &&TCut("njets30>=5");
-  low = 0; high = 100;
-  var = "mjjdiff_5"; xtitle="reco stop mass difference (2+3)";
-  drawPlots(var,nbins,low,high,xtitle,"Events", "rpv_dileptonjetsNoZ-ST-MET-r-Selection_recoMassDifference5j",0,"GeV");
-
-
-
-  //finally plot the peak
-  removeSample("SingleTop");
-  removeSample("ZJets");
-
-  // this is the money plot (with no b tag)
-  selection_ = dilepton&& jets && zveto &&ST&&MET&&rcuts&&resonance;
-  nbins = 40;
-  low = 50; high = 450;
-  var = "mjj1"; xtitle="mjj";
-  drawPlots(var,nbins,low,high,xtitle,"Events", "rpv_dileptonjetsNoZ-ST-MET-r-jjdiff-Selection_mjj",0,"GeV");
-
-  setStackMode(true);
-  drawPlots(var,nbins,low,high,xtitle,"Events", "rpv_dileptonjetsNoZ-ST-MET-r-jjdiff-Selection_mjj",0,"GeV");
-
-  //plot without the 'resonance' cut
-  setStackMode(false,true);
-  selection_ = dilepton&& jets && zveto &&ST&&MET&&rcuts;
-  nbins = 40;
-  low = 50; high = 450;
-  var = "mjj1"; xtitle="mjj";
-  drawPlots(var,nbins,low,high,xtitle,"Events", "rpv_dileptonjetsNoZ-ST-MET-r-Selection_mjj",0,"GeV");
-  //conclusion -- the Delta mjj cut tightens up the signal peak
-
-  //but what about taking an average>
-  setStackMode(false,true);
-  selection_ = dilepton&& jets && zveto &&ST&&MET&&rcuts;
-  nbins = 40;
-  low = 50; high = 450;
-  var = "0.5*(mjj1+mjj2)"; xtitle="mjj average";
-  drawPlots(var,nbins,low,high,xtitle,"Events", "rpv_dileptonjetsNoZ-ST-MET-r-Selection_mjjav",0,"GeV");
-  //still not as nice as after the 'resonance
-
-  //try plotting the peak using the 5 jet variable
-  setStackMode(false,true);
-  selection_ = dilepton&& jets && zveto &&ST&&MET&&rcuts&&resonance5 &&TCut("njets30>=5");
-  nbins = 40;
-  low = 50; high = 450;
-  var = "mjj1_5"; xtitle="mjj (2+3)";
-  drawPlots(var,nbins,low,high,xtitle,"Events", "rpv_dileptonjetsNoZ-ST-MET-r-jjdiff-Selection_mjj5j",0,"GeV");
-  //result -- not nice at all!
-
-  //only >=5 jets events but using the leading 4
-  //also remove the "resonance" cut
-  selection_ = dilepton&& jets && zveto &&ST&&MET&&rcuts &&TCut("njets30>=5");
-  nbins = 40;
-  low = 50; high = 450;
-  var = "mjj1"; xtitle="mjj";
-  drawPlots(var,nbins,low,high,xtitle,"Events", "rpv_dileptonjets5NoZ-ST-MET-r-jjdiff-Selection_mjj",0,"GeV");
-  //not as bad as above...
-
-  setStackMode(true);
-  drawPlots(var,nbins,low,high,xtitle,"Events", "rpv_dileptonjets5NoZ-ST-MET-r-jjdiff-Selection_mjj",0,"GeV");
-  //Conclusion -- don't see the benefit of this 2+3 variable!
-
-
-  // try add b-jet veto
-  setStackMode(false,true);
-  selection_ = dilepton&& jets && zveto &&ST&&MET&&rcuts&&resonance && TCut("nbjets == 0");
-  nbins = 40;
-  low = 50; high = 450;
-  var = "mjj1"; xtitle="mjj";
-  drawPlots(var,nbins,low,high,xtitle,"Events", "rpv_dileptonjetsNoZ-ST-MET-r-jjdiff-bveto-Selection_mjj",0,"GeV");
-
-  setStackMode(true);
-  drawPlots(var,nbins,low,high,xtitle,"Events", "rpv_dileptonjetsNoZ-ST-MET-r-jjdiff-bveto-Selection_mjj",0,"GeV");
-
-  //now plot signal only
-  clearSamples();
-  dodata_=false;
-  //ideally i want a way to plot with a sample split into mutliple pieces, treated as different subsamples by the code
-  addSample("sbottom-189-270:nCorrectRecoStop==0");
-  addSample("sbottom-189-270:nCorrectRecoStop==1");
-  addSample("sbottom-189-270:nCorrectRecoStop==2");
-  setSampleColor("sbottom-189-270:nCorrectRecoStop==0",1);
-  setSampleColor("sbottom-189-270:nCorrectRecoStop==1",2);
-  setSampleColor("sbottom-189-270:nCorrectRecoStop==2",4);
-  setStackMode(false,true);
-  selection_ = dilepton&& jets && zveto &&ST&&MET&&rcuts&&resonance && TCut("nbjets == 0");
-  nbins = 40;
-  low = 50; high = 450;
-  var = "mjj1"; xtitle="mjj";
-  drawPlots(var,nbins,low,high,xtitle,"Events", "rpv_dileptonjetsNoZ-ST-MET-r-jjdiff-bveto-Selection_mjj_signalSplit",0,"GeV");
-
-
-}
-
-void profmattstrassler() {
-
-
-    lumiScale_ = 5000;
-
-    loadSamples();
-
-
-    useHTeff_=false;
-    useMHTeff_=false;
-    thebnnMHTeffMode_ = kOff;
-    currentConfig_=configDescriptions_.getDefault();
-
-    removeSample("LM9");
-
-    //    removeSample("VV");
-    addSample("sbottom-189-270");
-    setSampleScaleFactor("sbottom-189-270",0.04545424); //was 4/9                                                                                                   
-    dodata_=false;
-
-    TCut lepton = "(nElectrons15 >=1 || nMuons15>=1) && MT_Wlep15>20";
-    TCut jets = "njets30>=6";
-    //now plots                                                                                                                                                     
-    int nbins;
-    float low,high;
-    TString var,xtitle;
-
-    nbins = 40;
-    low = 300; high = 1500;
-    var = "STeff"; xtitle="ST";
-
-    selection_ = lepton&&jets;
-    drawPlots(var,nbins,low,high,xtitle,"Events", "pms_lepton6jets30_ST",0,"GeV");
-
-
-}
-
-
-void T1shape() {
-
-  loadSamples();
-
-  useHTeff_=false;
-  useMHTeff_=false;    
-  thebnnMHTeffMode_ = kOff;
-  currentConfig_=configDescriptions_.getCorrected();
-  dodata_=false;
-
-  setStackMode(false,true);
-
-  clearSamples();
-  addSample("T1bbbb$800$100");
-  addSample("T1bbbb$800$400");
-  addSample("T1bbbb$400$100");
-  useMassInLegend_=true;
-
-   setSampleColor("T1bbbb$800$100",kRed+1);
-   setSampleColor("T1bbbb$800$500",kBlue);
-   setSampleColor("T1bbbb$400$100",kGreen+2);
-
-   leg_x1=0.5;
-  //   setSampleColor("T1bbbb$925$100",kRed+1);
-  
-  //   setSampleLineStyle("T1bbbb$925$100",1);
-  
-  int nbins;
-  float low,high;
-  TString var,xtitle;
-  
-  //MET
-  nbins = 50;
-  low = 0; high = 800;
-  var = "MET"; xtitle="MET";
-  selection_="cutPV==1 && HT>=400 && njets>=2";
-  drawPlots(var,nbins,low,high,xtitle,"Events", "SMSexamples_T1bbbb_MET",0,"GeV");
-
-  //b jet pT
-  nbins = 50;
-  low = 0; high = 400;
-  var = "bjetpt3"; xtitle="3rd leading b jet pT";
-  selection_="cutPV==1 && HT>=400 && njets>=2 && nbjets>=3";
-  drawPlots(var,nbins,low,high,xtitle,"Events", "SMSexamples_T1bbbb_bjetpt",0,"GeV");
-
-}
-
-
-void stop_misc() {
-
-
-  //skim applied was ST>=150 && MET>=40
-  inputPath = "/cu3/joshmt/reducedTrees/V00-02-35aa/";
-  loadSamples();
-  clearSamples();
-  addSample("TTbarJets");
-  addSample("T2tt$250$50",2);
-  addSample("T2tt$350$50",3);
-  addSample("T2tt$450$50",6);
-  addSample("T2tt$900$50",kOrange);
-
-  useHTeff_=false;
-  useMHTeff_=false;    
-  thebnnMHTeffMode_ = kOff;
-  currentConfig_=configDescriptions_.getDefault();
-
-  dodata_=false;
-
-  setStackMode(false,true);
- 
-  TCut basic = "njets30>=6 && MET>=100 && nbjets>=1 && nElectrons5==0 && nMuons5==0";
-
-
-  int nbins;
-  float low,high;
-  TString var,xtitle;
-  nbins = 40;
-  low = 0; high = 1200;
-  var = "mjjb1"; xtitle="m_{jjb} [higher]";
-
-  selection_ = basic;
-  drawPlots(var,nbins,low,high,xtitle,"au", "stop_6jetsEtc_mjjb1",0);
-
-  nbins = 40;
-  low = 0; high = 400;
-  var = "mjjb2"; xtitle="m_{jjb} [lower]";
-  drawPlots(var,nbins,low,high,xtitle,"au", "stop_6jetsEtc_mjjb2",0);
-
-
-  nbins = 20;
-  low = 0; high = 800;
-  var = "mjjb1-mjjb2"; xtitle="m_{jjb} difference";
-  drawPlots(var,nbins,low,high,xtitle,"au", "stop_6jetsEtc_mjjbdiff",0);
-
-  nbins = 20;
-  low = 0; high = 600;
-  var = "topPT1"; xtitle="top pt 1";
-  drawPlots(var,nbins,low,high,xtitle,"au", "stop_6jetsEtc_topPt1",0);
-  var = "topPT2"; xtitle="top pt 2";
-  drawPlots(var,nbins,low,high,xtitle,"au", "stop_6jetsEtc_topPt2",0);
-
-  doOverflowAddition(false);
-  nbins = 20;
-  low = -500; high = 500;
-  var = "topPT1-topPT2"; xtitle="top pt diff";
-  drawPlots(var,nbins,low,high,xtitle,"au", "stop_6jetsEtc_topPtDiff",0);
-
-
-  doOverflowAddition(true);
-  nbins = 30;
-  low = 0; high = 800;
-  var = "abs(topPT1-topPT2)"; xtitle="abs top pt diff";
-  drawPlots(var,nbins,low,high,xtitle,"au", "stop_6jetsEtc_topPtDiffAbs",0);
-
-  basic = "njets30>=6 && MET>=175 && nbjets>=1 && nElectrons5==0 && nMuons5==0";
-  selection_ = basic;
-  drawPlots(var,nbins,low,high,xtitle,"au", "stop_6jetsEtcMET175_topPtDiffAbs",0);
-
-
-}
