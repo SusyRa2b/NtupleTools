@@ -28,14 +28,29 @@ all: run_Analysis
 CrossSectionTable.o: CrossSectionTable.cxx CrossSectionTable.h
 	$(CXX) $(CXXFLAGS) -c CrossSectionTable.cxx
 
+SimpleJetCorrector.o: SimpleJetCorrector.cc SimpleJetCorrector.h
+	$(CXX) $(CXXFLAGS) -c SimpleJetCorrector.cc
+
+FactorizedJetCorrector.o: FactorizedJetCorrector.cc FactorizedJetCorrector.h
+	$(CXX) $(CXXFLAGS) -c FactorizedJetCorrector.cc
+
+JetCorrectorParameters.o: JetCorrectorParameters.cc JetCorrectorParameters.h
+	$(CXX) $(CXXFLAGS) -c JetCorrectorParameters.cc
+
+JetCorrectionUncertainty.o: JetCorrectionUncertainty.cc JetCorrectionUncertainty.h
+	$(CXX) $(CXXFLAGS) -c JetCorrectionUncertainty.cc
+
+SimpleJetCorrectionUncertainty.o: SimpleJetCorrectionUncertainty.cc SimpleJetCorrectionUncertainty.h
+	$(CXX) $(CXXFLAGS) -c SimpleJetCorrectionUncertainty.cc
+
 EventCalculator_cfA.o: EventCalculator_cfA.C EventCalculator_cfA.h
 	$(CXX) $(CXXFLAGS) -c EventCalculator_cfA.C
 
 run_Analysis.o: run_Analysis.C
 	$(CXX) $(CXXFLAGS) -c run_Analysis.C
 
-run_Analysis: CrossSectionTable.o EventCalculator_cfA.o run_Analysis.o 
-	$(LD) $(LDFLAGS) -o run_Analysis CrossSectionTable.o EventCalculator_cfA.o run_Analysis.o $(GLIBS)
+run_Analysis: CrossSectionTable.o SimpleJetCorrector.o FactorizedJetCorrector.o JetCorrectorParameters.o SimpleJetCorrectionUncertainty.o JetCorrectionUncertainty.o EventCalculator_cfA.o run_Analysis.o 
+	$(LD) $(LDFLAGS) -o run_Analysis CrossSectionTable.o SimpleJetCorrector.o FactorizedJetCorrector.o JetCorrectorParameters.o SimpleJetCorrectionUncertainty.o JetCorrectionUncertainty.o EventCalculator_cfA.o run_Analysis.o $(GLIBS)
 
 clean:
 	rm -f *.o
