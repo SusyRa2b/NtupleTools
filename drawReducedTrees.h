@@ -2953,7 +2953,7 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
       cout << "ERROR: TFile for " << samples_[isample] << " is null.  Check that the file exists.  Exiting." << endl;
       assert(0);
     }
-    TTree* tree = (TTree*) files_[currentConfig_][samplename]->Get("reducedTree");
+    TTree* tree = (TTree*) files_[currentConfig_][samplename]->Get(reducedTreeName_);
     if (tree==0) {
       cout<<"tree is null! Something must be wrong!"<<endl<<currentConfig_<<endl<<samplename<<endl;
     }
