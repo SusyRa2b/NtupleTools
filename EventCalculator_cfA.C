@@ -4981,8 +4981,9 @@ void EventCalculator::reducedTree(TString outputpath) {
   double scanCrossSection,scanCrossSectionPlus,scanCrossSectionMinus;
   int m0,m12;
 
-  int W1decayType = -1, W2decayType = -1;
-  int decayType = -1;;
+//   int W1decayType = -1, W2decayType = -1;
+//   int decayType = -1;;
+  int ttbarDecayCode=0;
 
   ULong64_t lumiSection, eventNumber, runNumber;
   //  float METsig;
@@ -5326,9 +5327,10 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("m12",&m12,"m12/I");
 
 
-  reducedTree.Branch("W1decayType",&W1decayType,"W1decayType/I");
-  reducedTree.Branch("W2decayType",&W2decayType,"W2decayType/I");
-  reducedTree.Branch("decayType",&decayType,"decayType/I");
+//   reducedTree.Branch("W1decayType",&W1decayType,"W1decayType/I");
+//   reducedTree.Branch("W2decayType",&W2decayType,"W2decayType/I");
+//   reducedTree.Branch("decayType",&decayType,"decayType/I");
+  reducedTree.Branch("ttbarDecayCode",&ttbarDecayCode,"ttbarDecayCode/I");
 
   //  reducedTree.Branch("btagIPweight",&btagIPweight,"btagIPweight/F");
   //  reducedTree.Branch("pfmhtweight",&pfmhtweight,"pfmhtweight/F");
@@ -5938,13 +5940,11 @@ Also the pdfWeightSum* histograms that are used for LM9.
 	scanCrossSectionMinus = scanCrossSection; //there are no cross section errors for SMS
       }
 
- 
       //if we are running over ttbar, fill info on decay mode
-/* FIXME CFA
-      if (sampleName_.Contains("ttjets_madgraph") || sampleName_.Contains("TTJets_TuneZ2_7TeV-madgraph-tauola_Fall11_v2")){
-	int W1, W1daughter, W2, W2daughter;
-	decayType = getTTbarDecayType(W1decayType, W2decayType, W1, W1daughter, W2, W2daughter,false); //FIXME CFA
+      if (sampleName_.Contains("TTJets")) { //revived for cfA, using the old jmt-ntuples coding scheme
+	ttbarDecayCode = getTTbarDecayType();
       }
+/*
       //single-top tW-channel has two W's (one from a top)
       if (sampleName_.Contains("T_TuneZ2_tW-channel") || sampleName_.Contains("Tbar_TuneZ2_tW-channel")) {
 	int W1, W1daughter, W2, W2daughter;	
@@ -7141,7 +7141,121 @@ int EventCalculator::daughterMatch(const int Wdaughter, const int WdecayType)
     }
   return -1;
 }
+*/
 
+int EventCalculator::getTauDecayType( int tauid) {
+  //  cout<<" -- tau decays -- "<<tauid<<endl;
+  int founde=0;
+  int foundmu=0;
+
+  //kristen says:
+  //loop over the "mc_electrons_*" and "mc_mus_*" to find those with "mother_id" equal to the tau, and "grandmother_id" equal to the W.
+
+  //also, allow the gmother to be a tau as well:
+  /*
+    In the past, there has been occassional glitches with the mother and grandmother ids of the mc_mus and mc_electrons (where the mother id of the particle is entered in twice in the sequence), so to find if it came from a W->tau, I also allow the GRANDmother of the mc_mus or mc_electrons to be a tau
+  */
+
+  for ( size_t ii = 0; ii < mc_electrons_id->size(); ii++) {
+    //    cout<<"\telec "<<mc_electrons_mother_id->at(ii)<<" "<<mc_electrons_grandmother_id->at(ii)<<" "<<mc_electrons_ggrandmother_id->at(ii)<<endl;
+    //this should check the charge at well
+    if ((mc_electrons_mother_id->at(ii) == tauid) && (abs(mc_electrons_grandmother_id->at(ii))==24  ) ) founde++;
+    else if ( (mc_electrons_mother_id->at(ii) == tauid) && (mc_electrons_grandmother_id->at(ii) == tauid) && (abs(mc_electrons_ggrandmother_id->at(ii)) == 24)) founde++;
+
+  }
+
+  for ( size_t ii = 0; ii < mc_mus_id->size(); ii++) {
+    //    cout<<"\tmu "<<mc_mus_mother_id->at(ii)<<" "<<mc_mus_grandmother_id->at(ii)<<" "<<mc_mus_ggrandmother_id->at(ii)<<endl;
+    //this should check the charge at well
+    if ((mc_mus_mother_id->at(ii) == tauid) && (abs(mc_mus_grandmother_id->at(ii))==24  )) foundmu++;
+    else if ( (mc_mus_mother_id->at(ii) == tauid) && (mc_mus_grandmother_id->at(ii) == tauid) && (abs(mc_mus_ggrandmother_id->at(ii)) == 24)) foundmu++;
+  }
+
+  //  cout<<" tau decays -- "<<founde<<" "<<foundmu<<endl;
+
+
+//   cout<<" ~~~~~~~~~ now look at MC taus"<<endl;
+//   for (size_t ii = 0; ii<mc_taus_id->size(); ii++) {
+//     cout<<ii<<"\t"<<mc_taus_id->at(ii)<<" "<<mc_taus_grandmother_id->at(ii)<<" "<<mc_taus_ggrandmother_id->at(ii)<<endl;
+//   }
+
+
+//seems that there's no way to dig in and actually look for tau->had. just have to trust that all other decays are tau->had
+
+  if (founde>0) return 1;
+  if (foundmu>0) return 2;
+  return 0;
+}
+
+ //trying to rewrite from scratch for cfA
+int EventCalculator::getTTbarDecayType() {
+   
+  //use my old encoding scheme instead of don's
+
+  int founde=0;
+  int foundmu=0;
+  int foundhad=0;
+  int foundtau=0;
+
+  int taudecay[2]={-1,-1};
+
+  //  cout<< "----"<<endl;
+  for (size_t jj=0; jj<  mc_doc_id->size(); ++jj) {
+    //    cout<<jj <<"\t"<<mc_doc_id->at(jj)<<" "<<mc_doc_mother_id->at(jj)<<" "<<mc_doc_grandmother_id->at(jj)<<endl;
+
+    //go looking for particle who have the top as ~grandmother~
+    if ( abs(TMath::Nint(mc_doc_grandmother_id->at(jj))) == 6 ) {
+
+      //these should be the W decay products: q,l,nu
+      int wdau=    abs(TMath::Nint(mc_doc_id->at(jj)));
+      if (wdau == 11) { //e
+	founde++;
+      }
+      else if (wdau == 13) { // mu
+	foundmu++;
+      }
+      else if (wdau == 15) { //tau
+	taudecay[foundtau]=getTauDecayType(TMath::Nint(mc_doc_id->at(jj)) );
+	foundtau++;
+      }
+      else if (wdau == 12 || wdau ==14 || wdau==16) {
+	//neutrinos
+      }
+      else if (wdau>=1 && wdau<=4) { //quarks
+	foundhad++;
+      }
+      else {
+	cout<<" Wdau = "<<wdau<<endl;
+      }
+
+    }
+  }
+
+  //  enum TopDecayCategory {kTTbarUnknown=0,kAllLeptons=1,kAllHadronic=2,kOneElectron=3,kOneMuon=4,kOneTauE=5,kOneTauMu=6,kOneTauHadronic=7,kAllTau=8,kTauPlusLepton=9, nTopCategories=10};
+
+  if (!(foundhad%2==0)) cout<<"PROBLEM: foundhad = "<<foundhad<<endl; //W->qq' should always generate an even number!
+
+  foundhad /=2;
+
+  if ( founde+foundmu == 2) return 1;
+  else if ( foundhad == 2) return 2;
+  else if ( founde==1 && foundhad==1 ) return 3;
+  else if ( foundmu==1 && foundhad==1 ) return 4;
+  else if (foundtau==1 && foundhad==1 && taudecay[0]==1) return 5;
+  else if (foundtau==1 && foundhad==1 && taudecay[0]==2) return 6;
+  else if (foundtau==1 && foundhad==1 && taudecay[0]==0) return 7;
+  else if ( foundtau==2) return 8;
+  else if (foundtau==1 && founde==1) return 9;
+  else if (foundtau==1 && foundmu==1) return 9;
+
+  else {
+    cout<<"PROBLEM -- "<<founde<<" "<<foundmu<<" "<<foundtau<<" "<<foundhad<<" tau info -- "<<taudecay[0]<<" "<<taudecay[1]<<endl;
+  }
+
+  return 0;
+}
+ 
+/* old version pre cfA
 int EventCalculator::getTTbarDecayType(int& W1decayType, int& W2decayType, int& W1, int& W1daughter, int& W2, int& W2daughter, bool passW2info=false)
 {
   if(myGenParticles == 0 || myGenParticles->size() == 0) return -1;

@@ -284,7 +284,8 @@ public:
   int electronMatch(const int trueElectron);
   int tauMatch(const int trueTau);
   int daughterMatch(const int Wdaughter, const int WdecayType);
-  //  int getTTbarDecayType(int& W1decayType, int& W2decayType, int& W1, int& W1daughter, int& W2, int& W2daughter, bool passW2info);
+  int getTTbarDecayType();
+  int getTauDecayType(int tauid);
   //  int getWDecayType(int& WdecayType, int& W, int& Wdaughter, bool fromtop);
 
   double getCrossSection();
