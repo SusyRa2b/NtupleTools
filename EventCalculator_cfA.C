@@ -3088,6 +3088,39 @@ float EventCalculator::getMT_Wlep(const float ptthreshold) {
   return MT;
 }
 
+//get the transverse mass of the b-jet nearest the MET
+float EventCalculator::getMT_bMET() {
+
+  const float ptThreshold = 30;
+
+  float mindp = 1e9;
+  int thejet = -99;
+
+  //find b jet closest to MET
+  for (unsigned int i=0; i<jets_AK5PF_pt->size(); i++) {
+    
+    if (isGoodJet(i,ptThreshold)) {
+      if (passBTagger(i)) {
+	double dp=  getDeltaPhi( jets_AK5PF_phi->at(i) , getMETphi());
+	if (dp<mindp) {
+	  mindp=dp;
+	  thejet = i;
+	}
+      }
+    }
+  }
+
+  float mt = -1;
+  if (thejet>=0) {
+    mt  = 2*getJetPt(thejet)*getMET()*(1 - cos( getDeltaPhi( jets_AK5PF_phi->at(thejet) , getMETphi())));
+    if (mt>0) mt = sqrt(mt);
+    else cout<<"MT_b is negative"<<endl;
+  }
+
+  return mt;
+
+}
+
 //the ignored jet will be left out of the MHT calculation
 //default is -1 (meaning no jet will be ignored)
 std::pair<float,float> EventCalculator::getJERAdjustedMHTxy(int ignoredJet) {
@@ -5136,6 +5169,9 @@ void EventCalculator::reducedTree(TString outputpath) {
 
   float rl,rMET;
 
+  float METsig,METsig00,METsig10,METsig11;
+
+  float MT_b;
   float MT_Wlep;
   float MT_Wlep5,MT_Wlep15;
   float wMass, topMass, wCosHel, topCosHel;
@@ -5146,8 +5182,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   int SUSY_process;
   float SUSY_recoilPt;
 
-  //new variables from Luke
-/* jmt -- remove for now
+  //sphericity variables from Luke
   float lambda1_allJets;
   float lambda2_allJets;
   float determinant_allJets;
@@ -5160,7 +5195,6 @@ void EventCalculator::reducedTree(TString outputpath) {
   float lambda1_topThreeJetsPlusMET;
   float lambda2_topThreeJetsPlusMET;
   float determinant_topThreeJetsPlusMET;
-*/
 /*
   float transverseThrust,transverseThrustPhi;
   float transverseThrustWithMET,transverseThrustWithMETPhi;
@@ -5472,6 +5506,12 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("METphi",&METphi,"METphi/F");
   reducedTree.Branch("MHT",&MHT,"MHT/F");
 
+  reducedTree.Branch("METsig",&METsig,"METsig/F");
+  reducedTree.Branch("METsig00",&METsig00,"METsig00/F");
+  reducedTree.Branch("METsig10",&METsig10,"METsig10/F");
+  reducedTree.Branch("METsig11",&METsig11,"METsig11/F");
+
+
   //  reducedTree.Branch("correctedMET",&correctedMET,"correctedMET/F");
   //  reducedTree.Branch("correctedMETphi",&correctedMETphi,"correctedMETphi/F");
 
@@ -5483,6 +5523,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("bestTopMass",&topMass,"bestTopMass/F");
   reducedTree.Branch("topCosHel",&topCosHel,"topCosHel/F");
   reducedTree.Branch("WCosHel",&wCosHel,"WCosHel/F");
+  reducedTree.Branch("MT_b",&MT_b, "MT_b/F");
   reducedTree.Branch("MT_Wlep",&MT_Wlep, "MT_Wlep/F");
   reducedTree.Branch("MT_Wlep5",&MT_Wlep5, "MT_Wlep5/F");
   reducedTree.Branch("MT_Wlep15",&MT_Wlep15, "MT_Wlep15/F");
@@ -5525,6 +5566,8 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("deltaT2", &deltaT2, "deltaT2/F");
   reducedTree.Branch("deltaT3", &deltaT3, "deltaT3/F");
 
+  //variables for qcd studies. don't include if this isn't QCD MC (just to save time and space)
+  if (isSampleQCD() ) {
   reducedTree.Branch("minDeltaPhiN_otherEta5", &minDeltaPhiN_otherEta5, "minDeltaPhiN_otherEta5/F");
   reducedTree.Branch("minDeltaPhiN_otherEta5idNo", &minDeltaPhiN_otherEta5idNo, "minDeltaPhiN_otherEta5idNo/F");
   reducedTree.Branch("minDeltaPhiN_mainPt30_otherEta5idNo", &minDeltaPhiN_mainPt30_otherEta5idNo, "minDeltaPhiN_mainPt30_otherEta5idNo/F");
@@ -5564,6 +5607,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("max2JetFracMisAll30",&max2JetFracMisAll30,"max2JetFracMisAll30/F");
   reducedTree.Branch("deltaPhiMETJetMaxMis",&deltaPhiMETJetMaxMis,"deltaPhiMETJetMaxMis/F");
   reducedTree.Branch("deltaPhiMETJetMaxMis30",&deltaPhiMETJetMaxMis30,"deltaPhiMETJetMaxMis30/F");
+  } //if sample is qcd
   
   reducedTree.Branch("CSVout1",&CSVout1,"CSVout1/F");
   reducedTree.Branch("CSVout2",&CSVout2,"CSVout2/F");
@@ -5579,6 +5623,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("deltaPhiN2_lostJet", &deltaPhiN2_lostJet, "deltaPhiN2_lostJet/F");
   reducedTree.Branch("deltaPhiN3_lostJet", &deltaPhiN3_lostJet, "deltaPhiN3_lostJet/F");
 
+  if (isSampleQCD() ) {
   reducedTree.Branch("passBadECAL_METphi53_n10_s12", &passBadECAL_METphi53_n10_s12, "passBadECAL_METphi53_n10_s12/O");
   reducedTree.Branch("worstMisA_badECAL_METphi53_n10_s12",&worstMisA_badECAL_METphi53_n10_s12, "worstMisA_badECAL_METphi53_n10_s12/F");
   reducedTree.Branch("worstMisF_badECAL_METphi53_n10_s12",&worstMisF_badECAL_METphi53_n10_s12, "worstMisF_badECAL_METphi53_n10_s12/F");
@@ -5606,6 +5651,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("passBadECAL_METphi52_crackF", &passBadECAL_METphi52_crackF, "passBadECAL_METphi52_crackF/O");
   reducedTree.Branch("worstMisA_badECAL_METphi52_crackF",&worstMisA_badECAL_METphi52_crackF, "worstMisA_badECAL_METphi52_crackF/F");
   reducedTree.Branch("worstMisF_badECAL_METphi52_crackF",&worstMisF_badECAL_METphi52_crackF, "worstMisF_badECAL_METphi52_crackF/F");
+  }
 
   reducedTree.Branch("jetpt1",&jetpt1,"jetpt1/F");
   reducedTree.Branch("jetgenpt1",&jetgenpt1,"jetgenpt1/F");
@@ -5704,7 +5750,6 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("rl",&rl,"rl/F");
   reducedTree.Branch("rMET",&rMET,"rMET/F");
 
-/*
   reducedTree.Branch("lambda1_allJets",&lambda1_allJets,"lambda1_allJets/F");
   reducedTree.Branch("lambda2_allJets",&lambda2_allJets,"lambda2_allJets/F");
   reducedTree.Branch("determinant_allJets",&determinant_allJets,"determinant_allJets/F");
@@ -5717,7 +5762,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("lambda1_topThreeJetsPlusMET",&lambda1_topThreeJetsPlusMET,"lambda1_topThreeJetsPlusMET/F");
   reducedTree.Branch("lambda2_topThreeJetsPlusMET",&lambda2_topThreeJetsPlusMET,"lambda2_topThreeJetsPlusMET/F");
   reducedTree.Branch("determinant_topThreeJetsPlusMET",&determinant_topThreeJetsPlusMET,"determinant_topThreeJetsPlusMET/F");
-*/
+
 /*
   reducedTree.Branch("transverseThrust",&transverseThrust,"transverseThrust/F");
   reducedTree.Branch("transverseThrustPhi",&transverseThrustPhi,"transverseThrustPhi/F");
@@ -6040,6 +6085,11 @@ Also the pdfWeightSum* histograms that are used for LM9.
       MHT=getMHT();
       METphi = getMETphi();
 
+      METsig = pfmets_fullSignif;
+      METsig00 = pfmets_fullSignifCov00;
+      METsig10 = pfmets_fullSignifCov10;
+      METsig11 = pfmets_fullSignifCov11;
+
       caloMET = mets_AK5_et->at(0); //is this right?
       getUncorrectedMET(rawPFMET, rawPFMETphi);
 
@@ -6052,6 +6102,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
       maxDeltaPhiAll30 = getMaxDeltaPhiMET30(99);
       maxDeltaPhi30_eta5_noIdAll = getMaxDeltaPhiMET30_eta5_noId(99);
       
+      if (isSampleQCD()) { //don't fill except for QCD MC
       minDeltaPhiN_otherPt10                      = getMinDeltaPhiMETN(3,50,2.4,true, 10,2.4,true, false,false);
       minDeltaPhiN_otherPt20                      = getMinDeltaPhiMETN(3,50,2.4,true, 20,2.4,true, false,false);
       minDeltaPhiN_otherPt30                      = getMinDeltaPhiMETN(3,50,2.4,true, 30,2.4,true, false,false);
@@ -6064,6 +6115,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
       minDeltaPhiN_DJR_otherPt50                  = getMinDeltaPhiMETN(3,50,2.4,true, 50,2.4,true,true,false);
             
       minDeltaPhiN_withLepton = getMinDeltaPhiMETN(3,50,2.4,true,30,2.4,true,false,false,true);
+      }
 
       int badjet;
       deltaPhiStar = getDeltaPhiStar(badjet);
@@ -6071,6 +6123,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
       deltaPhiStar_badjet_phi = (badjet>=0) ? jets_AK5PF_phi->at(badjet) : -1;
       deltaPhiStar_badjet_eta = (badjet>=0) ? jets_AK5PF_eta->at(badjet) : -1;
 
+      if (isSampleQCD()) { //don't fill except for QCD MC
       maxJetMis=getMaxJetMis(1,3,50);
       max2JetMis=getMaxJetMis(2,3,50);
       maxJetMisAll30=getMaxJetMis(1,99,30);
@@ -6081,6 +6134,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
       max2JetFracMisAll30=getMaxJetFracMis(2,99,30);
       deltaPhiMETJetMaxMis = getDeltaPhiMETJetMaxMis(50);
       deltaPhiMETJetMaxMis30 = getDeltaPhiMETJetMaxMis(30);
+      }
 
       maxJetMis_chosenJet=1;
       float maxJetMis2_tmp =getMaxJetMis(1,2,50); 
@@ -6128,7 +6182,8 @@ Also the pdfWeightSum* histograms that are used for LM9.
 //       hltMHTeffBNNUp = effUp;
 //       hltMHTeffBNNDown = effDown;
 
-      //alternatives for testing
+      //alternatives for testing of qcd methods
+      if (isSampleQCD() ) {
       minDeltaPhiN_otherEta5                      = getMinDeltaPhiMETN(3,50,2.4,true, 30,5,true, false,false);
       minDeltaPhiN_otherEta5idNo                  = getMinDeltaPhiMETN(3,50,2.4,true, 30,5,false,false,false);
       minDeltaPhiN_mainPt30_otherEta5idNo         = getMinDeltaPhiMETN(3,30,2.4,true, 30,5,false,false,false);
@@ -6146,13 +6201,15 @@ Also the pdfWeightSum* histograms that are used for LM9.
       minDeltaPhiN_DJR_otherEta5 = getMinDeltaPhiMETN(3,50,2.4,true,30,5,  true,true,false);
       minDeltaPhiK_DJR           = getMinDeltaPhiMETN(3,50,2.4,true,30,2.4,true,true,true );
       minDeltaPhiK_DJR_otherEta5 = getMinDeltaPhiMETN(3,50,2.4,true,30,5,  true,true,true );
-      
+      } //don't calculate for non-qcd samples
+
       minDeltaPhiN_Luke = getMinDeltaPhiNMET(3);
       maxDeltaPhiN_Luke = getMaxDeltaPhiNMET(3);
       deltaPhiN1_Luke = getDeltaPhiNMET(0);
       deltaPhiN2_Luke = getDeltaPhiNMET(1);
       deltaPhiN3_Luke = getDeltaPhiNMET(2);
       
+      if (isSampleQCD() ) { //don't fill for non-qcd (save space)
       passBadECAL_METphi53_n10_s12 = passBadECALFilter("METphi",0.5,"deadCell",0.3,10,12);
       worstMisA_badECAL_METphi53_n10_s12 = passBadECALFilter_worstMis("METphi",0.5,"deadCell",0.3,10,12,"abs");
       worstMisF_badECAL_METphi53_n10_s12 = passBadECALFilter_worstMis("METphi",0.5,"deadCell",0.3,10,12,"frac");
@@ -6179,7 +6236,8 @@ Also the pdfWeightSum* histograms that are used for LM9.
       passBadECAL_METphi52_crackF = passBadECALFilter("METphi",0.5,"crackEEEF",0.2,0,0);
       worstMisA_badECAL_METphi52_crackF = passBadECALFilter_worstMis("METphi",0.5,"crackEEEF",0.2,0,0,"abs");
       worstMisF_badECAL_METphi52_crackF = passBadECALFilter_worstMis("METphi",0.5,"crackEEEF",0.2,0,0,"frac");
-      
+  }
+
       minTransverseMETSignificance = getMinTransverseMETSignificance(3);
       maxTransverseMETSignificance = getMaxTransverseMETSignificance(3);
       transverseMETSignificance1 = getTransverseMETSignificance(0);
@@ -6190,6 +6248,8 @@ Also the pdfWeightSum* histograms that are used for LM9.
       MT_Wlep5 = getMT_Wlep(5);
       MT_Wlep15 = getMT_Wlep(15);
       
+      MT_b = getMT_bMET();
+
       calcTopDecayVariables(  wMass, topMass, wCosHel, topCosHel);
       
 
@@ -6322,12 +6382,11 @@ Also the pdfWeightSum* histograms that are used for LM9.
       buggyEvent = inEventList(vrun, vlumi, vevent);
       
       //fill new variables from Luke
-/*
       getSphericityJetMET(lambda1_allJets,lambda2_allJets,determinant_allJets,99,false);
       getSphericityJetMET(lambda1_allJetsPlusMET,lambda2_allJetsPlusMET,determinant_allJetsPlusMET,99,true);
       getSphericityJetMET(lambda1_topThreeJets,lambda2_topThreeJets,determinant_topThreeJets,3,false);
       getSphericityJetMET(lambda1_topThreeJetsPlusMET,lambda2_topThreeJetsPlusMET,determinant_topThreeJetsPlusMET,3,true);
-*/
+
       //Uncomment next two lines to do thrust calculations
       //getTransverseThrustVariables(transverseThrust, transverseThrustPhi, false);
       //getTransverseThrustVariables(transverseThrustWithMET, transverseThrustWithMETPhi, true);

@@ -263,6 +263,7 @@ public:
   float getRelIsoForIsolationStudyMuon();
 
   float getMT_Wlep(const float pttreshold=10);
+  float getMT_bMET();
   void calcTopDecayVariables(float & wmass, float & tmass, float & wcoshel, float & tcoshel);
   void calcCosHel(unsigned int j1i, unsigned int j2i, unsigned int j3i, float & wcoshel,float &tcoshel);
 
@@ -302,6 +303,7 @@ public:
   //other stuff
   double getDeltaPhi(double a, double b);
   bool isSampleRealData();
+  bool isSampleQCD() { return sampleName_.Contains("qcd",TString::kIgnoreCase);}
   //  void loadBEFailEvents(std::vector<int> &vrun, std::vector<int> &vlumi, std::vector<int> &vevent);
   void dumpEvent ();
   TString getSampleNameOutputString();
