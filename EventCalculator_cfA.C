@@ -3257,7 +3257,7 @@ void EventCalculator::printDecay() {
 
 int EventCalculator::jjResonance_mcTruthCheck(int jj1, int jj2) {
 
-  if (!sampleName_.BeginsWith("sbottom8lnotaus")) return 0; //don't evaluate this for data or any MC except the RPV sbottom signal
+  if (!sampleName_.Contains("sbottom8lnotaus")) return 0; //don't evaluate this for data or any MC except the RPV sbottom signal
   /*
 Goal:
 check if the two reco'd jets actually came from the resonance decay of the stop
@@ -4295,7 +4295,12 @@ Long64_t EventCalculator::getNEventsGenerated() {
   if (sampleName_.Contains("UCSB1288")) return 9799908 ;
 
 
-  if (sampleName_=="sbottom8lnotaus-189-270") return 50000;
+  //  if (sampleName_=="sbottom8lnotaus-189-270") return 50000; //probably deprecated in favor of the names below
+
+  if (sampleName_=="RPVSUSY_sbottom8lnotaus-185-250") return 50000;
+  if (sampleName_=="RPVSUSY_sbottom8lnotaus-189-270") return 50000;
+  if (sampleName_=="RPVSUSY_sbottom8lnotaus-217-300") return 50000;
+
 
   cout<<"[getNEventsGenerated] unknown sample "<<sampleName_<<endl;
   assert(0);
@@ -4361,8 +4366,11 @@ double EventCalculator::getCrossSection(){
 
   if (sampleName_.BeginsWith("TTTo2L2Nu2B_8TeV-powheg-pythia6_Summer12")) return 22.14 *(234.0 / 136.3); //PREP corrected to NNLO
 
-  //RPV 8 TeV
+  //RPV 8 TeV -- cross-sections from 1206.2353. cross section is a function of the larger (sbottom) mass
+  if (sampleName_.Contains("sbottom8lnotaus-185-250")) return 5.7; //LO madgraph
   if (sampleName_.Contains("sbottom8lnotaus-189-270")) return 3.7; //LO madgraph
+  if (sampleName_.Contains("sbottom8lnotaus-217-300")) return 2.0; //LO madgraph
+
 
   if (sampleName_.Contains("mSUGRA")) return 1; //NLO cross sections will be specially stored per point
   if (sampleName_.Contains("T1bbbb")) return 1;
