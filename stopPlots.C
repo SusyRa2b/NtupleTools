@@ -812,6 +812,7 @@ void stopPAT_vetoComp2() {
 
   setSampleScaleFactor("T2tt",0.243755 / 50000.0); //manually set xsec / N factor                                                         
   smsHack_=true; //essential for using the T2tt files tau trees
+  overrideSMSlabels_=true; //want to use the labels i set above instead of the auto-SMS labels
 
   setStackMode(true);
   nbins = 20; low=175; high=500;
