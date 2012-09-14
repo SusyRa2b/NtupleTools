@@ -47,90 +47,17 @@ gSystem->Load("SignalEffData_cxx.so");
 #include <map>
 #include <set>
 	
+//these are redefined in the functions below
 TString inputPath = "/cu2/ra2b/reducedTrees/v63_0/"; //2012
 TString dataInputPath =  "/cu2/ra2b/reducedTrees/v63_0/ORIGINALS/";
-//TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35u/Fall11/";//7 TeV
 
-double lumiScale_ = 4301;//2012 lumi ????
+double lumiScale_ = 5000;//dummy number
 double preLumiScale_ = 30;//god only knows for 2012
 
 //make a symlink that point from this name to drawReducedTree.h
 //this is to make the ROOT dictionary generation work correctly
 #include "stopPlots.h"
 
-
-void stop_misc() {
-
-
-  //skim applied was ST>=150 && MET>=40
-  inputPath = "/cu3/joshmt/reducedTrees/V00-02-35aa/";
-  loadSamples();
-  clearSamples();
-  addSample("TTbarJets");
-  addSample("T2tt$250$50",2);
-  addSample("T2tt$350$50",3);
-  addSample("T2tt$450$50",6);
-  addSample("T2tt$900$50",kOrange);
-
-  useHTeff_=false;
-  useMHTeff_=false;    
-  thebnnMHTeffMode_ = kOff;
-  currentConfig_=configDescriptions_.getDefault();
-
-  dodata_=false;
-
-  setStackMode(false,true);
- 
-  TCut basic = "njets30>=6 && MET>=100 && nbjets>=1 && nElectrons5==0 && nMuons5==0";
-
-
-  int nbins;
-  float low,high;
-  TString var,xtitle;
-  nbins = 40;
-  low = 0; high = 1200;
-  var = "mjjb1"; xtitle="m_{jjb} [higher]";
-
-  selection_ = basic;
-  drawPlots(var,nbins,low,high,xtitle,"au", "stop_6jetsEtc_mjjb1",0);
-
-  nbins = 40;
-  low = 0; high = 400;
-  var = "mjjb2"; xtitle="m_{jjb} [lower]";
-  drawPlots(var,nbins,low,high,xtitle,"au", "stop_6jetsEtc_mjjb2",0);
-
-
-  nbins = 20;
-  low = 0; high = 800;
-  var = "mjjb1-mjjb2"; xtitle="m_{jjb} difference";
-  drawPlots(var,nbins,low,high,xtitle,"au", "stop_6jetsEtc_mjjbdiff",0);
-
-  nbins = 20;
-  low = 0; high = 600;
-  var = "topPT1"; xtitle="top pt 1";
-  drawPlots(var,nbins,low,high,xtitle,"au", "stop_6jetsEtc_topPt1",0);
-  var = "topPT2"; xtitle="top pt 2";
-  drawPlots(var,nbins,low,high,xtitle,"au", "stop_6jetsEtc_topPt2",0);
-
-  doOverflowAddition(false);
-  nbins = 20;
-  low = -500; high = 500;
-  var = "topPT1-topPT2"; xtitle="top pt diff";
-  drawPlots(var,nbins,low,high,xtitle,"au", "stop_6jetsEtc_topPtDiff",0);
-
-
-  doOverflowAddition(true);
-  nbins = 30;
-  low = 0; high = 800;
-  var = "abs(topPT1-topPT2)"; xtitle="abs top pt diff";
-  drawPlots(var,nbins,low,high,xtitle,"au", "stop_6jetsEtc_topPtDiffAbs",0);
-
-  basic = "njets30>=6 && MET>=175 && nbjets>=1 && nElectrons5==0 && nMuons5==0";
-  selection_ = basic;
-  drawPlots(var,nbins,low,high,xtitle,"au", "stop_6jetsEtcMET175_topPtDiffAbs",0);
-
-
-}
 
 void stopPAT() {
 
@@ -578,7 +505,7 @@ void stopPAT_PU_8TeV() {
   nameOfEventWeight_="(1)";
 
   lumiScale_=5000;
-  setSampleScaleFactor("TTbarJets8TeV",165.0/double(getTree("TTbarJets8TeV")->GetEntries())); // manually add sigma / Ngen weight factor (7 TeV) //assumes no skim
+  setSampleScaleFactor("TTbarJets8TeV",234.0/double(getTree("TTbarJets8TeV")->GetEntries())); // manually add sigma / Ngen weight factor  //assumes no skim
 
 
   //define variables
@@ -713,6 +640,8 @@ void distributions() {
   nbins=30; low=0; high=0.2;
   var = "jetLrm"; xtitle="jet lrm";
   drawPlots(var,nbins,low,high,xtitle,"au", "stop_jets_lrm");
+  //new tool to look at eff v rejection curve. depends on drawPlots!
+  drawEffVRej("TTbarJets:jetMatchGenTau==1","TTbarJets:jetMatchGenTau==0","tau matched","not tau");
 
   // try looking at these as a function of PU
 
@@ -748,5 +677,381 @@ void distributions() {
   nbins=30; low=0; high=0.2;
   var = "jetLrm"; xtitle="jet lrm";
   drawPlots(var,nbins,low,high,xtitle,"au", "stop_jets_lrm_pv_lowpt");
+
+
+
+}
+
+
+
+void stopPAT_vetoComp() {
+
+  inputPath = "/cu3/joshmt/stop/reducedTrees/v1_1/";
+  reducedTreeName_ = "MakeTauTree/reducedTree"; //for the TFileService-style output instead of the hand-rolled output
+
+  loadSamples(true,"stop");
+  clearSamples();
+  addSample("TTbarJets8TeV");
+  is2011Data_ = false; //use true for 7TeV and false for 8TeV
+
+  currentConfig_=configDescriptions_.getDefault();
+  dodata_=false;
+
+  //these trees have no weight!
+  nameOfEventWeight_="(1)";
+
+  lumiScale_=5000;
+  setSampleScaleFactor("TTbarJets8TeV",234.0/double(getTree("TTbarJets8TeV")->GetEntries())); // manually add sigma / Ngen weight factor (7 TeV) //assumes no skim
+
+
+  //define variables
+
+  int nbins;
+  float low,high;
+  TString var,xtitle;
+  
+  //don't stack and don't normalize
+  setStackMode(false,false);
+
+  selection_="MET>175 && nbjets30>=1 && njets30>=5 && njets50>=3 && nVetoElectrons==0 && nVetoMuons==0 && ttbarDecayCode==7"; //select tau->h
+
+    selection_="MET>175 && nbjets30>=1 && njets30>=5 && njets50>=3 && nVetoElectrons==0 && nVetoMuons==0 && (ttbarDecayCode==5 || ttbarDecayCode==6 || ttbarDecayCode==8|| ttbarDecayCode==9)"; //other tau decays
+
+  selection_="MET>175 && nbjets30>=1 && njets30>=5 && njets50>=3 && nVetoElectrons==0 && nVetoMuons==0 && (ttbarDecayCode==1 || ttbarDecayCode==3 || ttbarDecayCode==4)"; //not tau; ttbar -> lep
+
+  selection_="nbjets30>=1 && njets30>=5 && njets50>=3 && nVetoElectrons==0 && nVetoMuons==0 && ttbarDecayCode==2"; //ttbar->hadronic
+
+  nbins = 4; low=0; high=4;
+  var="nVetoTaus"; xtitle="n Indirect Tau Veto";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "stop_tauh_indirecttau");
+  TH1D* indirecttau=(TH1D*)  hinteractive->Clone("indirecttau");
+
+  var="nIsolatedTracks"; xtitle="n Isolated Tracks";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "stop_tauh_isolatedtrack");
+  TH1D* isolatedtrack=(TH1D*)  hinteractive->Clone("isolatedtrack");
+
+  var="nVLooseTaus15"; xtitle="n VL POG Taus 15";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "stop_tauh_vloose15");
+  TH1D* vloose15 = (TH1D*) hinteractive->Clone("vloose15");
+
+  renewCanvas();
+  renewLegend();
+  indirecttau->SetLineColor(kRed);
+  isolatedtrack->SetLineColor(kBlue);
+  vloose15->SetLineColor(kMagenta);
+
+  indirecttau->Draw("hist e");
+  isolatedtrack->Draw("hist e same");
+  vloose15->Draw("hist e same");
+
+  indirecttau->SetXTitle("n ID'd taus");
+  //  indirecttau->SetMaximum(500); //kludge for tau->h
+  //indirecttau->SetMaximum(20);
+  indirecttau->SetMaximum(160e3); 
+  leg->AddEntry(indirecttau,"Indirect");
+  leg->AddEntry(isolatedtrack,"IsoTrack");
+  leg->AddEntry(vloose15,"VLoose pT>15");
+  leg->Draw();
+
+}
+
+void stopPAT_vetoComp2() {
+
+  inputPath = "/cu3/joshmt/stop/reducedTrees/v1_1/";
+  reducedTreeName_ = "MakeTauTree/reducedTree"; //for the TFileService-style output instead of the hand-rolled output
+
+  loadSamples(true,"stop");
+  clearSamples();
+  addSample("TTbarJets8TeV");
+  is2011Data_ = false; //use true for 7TeV and false for 8TeV
+
+  currentConfig_=configDescriptions_.getDefault();
+  dodata_=false;
+
+  //these trees have no weight!
+  nameOfEventWeight_="(1)";
+
+  lumiScale_=5000;
+  setSampleScaleFactor("TTbarJets8TeV",234.0/double(getTree("TTbarJets8TeV")->GetEntries())); // manually add sigma / Ngen weight factor (7 TeV) //assumes no skim
+
+
+  //define variables
+
+  int nbins;
+  float low,high;
+  TString var,xtitle;
+  
+  setStackMode(true);  //stacked
+  selection_="MET>175 && nbjets30>=1 && njets30>=5 && njets50>=3 && nVetoElectrons==0 && nVetoMuons==0";
+
+  nbins = 20; low=175; high=500;
+  var="MET"; xtitle=var;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "stop_met_preselection");
+
+  selection_="MET>175 && nbjets30>=1 && njets30>=5 && njets50>=3 && nVetoElectrons==0 && nVetoMuons==0 &&nVetoTaus==0";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "stop_met_indirectveto");
+
+  selection_="MET>175 && nbjets30>=1 && njets30>=5 && njets50>=3 && nVetoElectrons==0 && nVetoMuons==0 &&nIsolatedTracks==0";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "stop_met_isotracks");
+
+  selection_="MET>175 && nbjets30>=1 && njets30>=5 && njets50>=3 && nVetoElectrons==0 && nVetoMuons==0 &&nVLooseTaus15==0";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "stop_met_isotracks");
+
+  //try splitting by topDecayCategory
+  clearSamples();
+  addSample("TTbarJets8TeV:ttbarDecayCode==1",kMagenta-5,"e/mu+e/mu");
+  addSample("TTbarJets8TeV:ttbarDecayCode==2",kOrange,"all hadronic");
+  addSample("TTbarJets8TeV:ttbarDecayCode==3",kAzure,"e");
+  addSample("TTbarJets8TeV:ttbarDecayCode==4",kMagenta,"#mu");
+  addSample("TTbarJets8TeV:ttbarDecayCode==5",kRed-5,"#tau #rightarrow e");
+  addSample("TTbarJets8TeV:ttbarDecayCode==6",kRed,"#tau #rightarrow #mu");
+  addSample("TTbarJets8TeV:ttbarDecayCode==7",kBlue,"#tau #rightarrow h");
+  addSample("TTbarJets8TeV:ttbarDecayCode==8",kGreen,"#tau + #tau (all)");
+  addSample("TTbarJets8TeV:ttbarDecayCode==9",kYellow,"#tau + e/#mu");
+  addSample("T2tt$425$50:ttbarDecayCode==2",kOrange,"T2tt (had)");
+
+  setSampleScaleFactor("T2tt",0.243755 / 50000.0); //manually set xsec / N factor                                                         
+  smsHack_=true; //essential for using the T2tt files tau trees
+
+  setStackMode(true);
+  nbins = 20; low=175; high=500;
+  var="MET"; xtitle=var;
+
+  selection_="MET>175 && nbjets30>=1 && njets30>=5 && njets50>=3";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "stop_met_prepreselection");
+
+  selection_="MET>175 && nbjets30>=1 && njets30>=5 && njets50>=3 && nVetoElectrons==0";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "stop_met_prepreselection_eveto");
+
+  selection_="MET>175 && nbjets30>=1 && njets30>=5 && njets50>=3 && nVetoMuons==0";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "stop_met_prepreselection_muveto");
+
+  selection_="MET>175 && nbjets30>=1 && njets30>=5 && njets50>=3 && nVetoElectrons==0 && nVetoMuons==0";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "stop_met_preselection");
+
+  selection_="MET>175 && nbjets30>=1 && njets30>=5 && njets50>=3 && nIsolatedTracks==0";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "stop_met_prepreselection_isotracks");
+
+  selection_="MET>175 && nbjets30>=1 && njets30>=5 && njets50>=3 && nVetoElectrons==0 && nVetoMuons==0 &&nVetoTaus==0";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "stop_met_indirectveto");
+
+  selection_="MET>175 && nbjets30>=1 && njets30>=5 && njets50>=3 && nVetoElectrons==0 && nVetoMuons==0 &&nIsolatedTracks==0";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "stop_met_isotracks");
+
+  selection_="MET>175 && nbjets30>=1 && njets30>=5 && njets50>=3 &&nVetoTaus==0";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "stop_met_onlyindirectveto");
+
+  selection_="MET>175 && nbjets30>=1 && njets30>=5 && njets50>=3 &&nVLooseTaus15==0";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "stop_met_onlyPOGtau");
+
+  selection_="MET>175 && nbjets30>=1 && njets30>=5 && njets50>=3 &&nVetoElectrons==0 && nVetoMuons==0 &&nVLooseTaus15==0";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "stop_met_emuPOGtau");
+
+  selection_="MET>175 && nbjets30>=1 && njets30>=5 && njets50>=3 && nIsolatedTracks==0 && nVLooseTaus15==0";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "stop_met_isoTkPOGtau");
+
+  selection_="MET>175 && nbjets30>=1 && njets30>=5 && njets50>=3 && nVetoElectrons==0 && nVetoMuons==0 &&nIsolatedTracks==0&&nVetoTaus==0";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "stop_met_emutauisotrack");
+
+  //request from rick: pre + ind tau + isotrack
+  selection_="MET>175 && nbjets30>=1 && njets30>=5 && njets50>=3 && nVetoTaus==0 &&nIsolatedTracks==0";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "stop_met_tauisotrack");
+
+
+
+  //more properties
+  clearSamples();
+  addSample("TTbarJets8TeV:nVetoTaus==1&&nIsolatedTracks==0",kRed,"Indirect only");
+  addSample("TTbarJets8TeV:nVetoTaus==0&&nIsolatedTracks==1",kBlue,"isoTrack only");
+  addSample("TTbarJets8TeV:nVetoTaus==1&&nIsolatedTracks==1",kBlack,"both");
+  addSample("TTbarJets8TeV:nVetoTaus==0&&nIsolatedTracks==0",kGreen,"neither");
+
+  selection_="MET>175 && nbjets30>=1 && njets30>=5 && njets50>=3 && ttbarDecayCode==7";
+
+  setStackMode(false,false);
+  var="(tauGenVisPt[0]>tauGenVisPt[1])*tauGenVisPt[0]+(tauGenVisPt[0]<tauGenVisPt[1])*tauGenVisPt[1]"; xtitle="lead gen vis tau pT";
+  nbins = 20; low=0; high=100;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "stop_taugenvispt_byveto");
+
+  //take a close look at the "isotrack only" guys
+  selection_="MET>175 && nbjets30>=1 && njets30>=5 && njets50>=3 && ttbarDecayCode==7 && jetMatchGenTau==1";
+
+  clearSamples();
+  addSample("TTbarJets8TeV:nVetoTaus==1&&nIsolatedTracks==0",kRed,"Indirect only");
+  addSample("TTbarJets8TeV:nVetoTaus==0&&nIsolatedTracks==1",kBlue,"isoTrack only");
+  addSample("TTbarJets8TeV:nVetoTaus==1&&nIsolatedTracks==1",kBlack,"both");
+  addSample("TTbarJets8TeV:nVetoTaus==0&&nIsolatedTracks==0",kGreen,"neither");
+
+
+  nbins=30; low=0; high=0.2;
+  var = "jetLrm"; xtitle="jet lrm";
+  drawPlots(var,nbins,low,high,xtitle,"", "stop_jets_lrm_byid");
+
+
+  nbins=10; low=0; high=10;
+  var = "jetChm"; xtitle="jet chm";
+  drawPlots(var,nbins,low,high,xtitle,"", "stop_jets_chm_byid");
+
+
+
+  nbins=30; low=-1.05; high=1.2;
+  var = "jetCSV"; xtitle="CSV value";
+  drawPlots(var,nbins,low,high,xtitle,"", "stop_jets_csv_byid");
+
+
+  nbins=50; low=0; high=500;
+  var = "jetMT"; xtitle="jet m_{T}";
+  drawPlots(var,nbins,low,high,xtitle,"", "stop_jets_mt_byid");
+
+
+  //selection_="MET>175 && nbjets30>=1 && njets30>=5 && njets50>=3 && ttbarDecayCode==7";
+  //  getTree("TTbarJets8TeV")->Draw("nVetoTaus:nIsolatedTracks",getCutString(false,"","4.00570590552320108e-05"),"colz")
+
+
+}
+
+void effVrej_7TeV() {
+
+  //first 7 TeV
+  inputPath = "/cu3/joshmt/stop/reducedTrees/v1_1/";
+  reducedTreeName_ = "MakeTauTree/reducedTree"; //for the TFileService-style output instead of the hand-rolled output
+
+  loadSamples(true,"stop");
+  clearSamples();
+  addSample("TTbarJets8TeV");
+
+  currentConfig_=configDescriptions_.getDefault();
+  dodata_=false;
+
+  //these trees have no weight!
+  nameOfEventWeight_="(1)";
+
+  lumiScale_=5000;
+  setSampleScaleFactor("TTbarJets8TeV",234.0/double(getTree("TTbarJets8TeV")->GetEntries())); // manually add sigma / Ngen weight factor (7 TeV) //assumes no skim
+
+  is2011Data_ = false;
+
+  //define variables
+
+  int nbins;
+  float low,high;
+  TString var,xtitle;
+  
+  //don't stack
+  setStackMode(false,true);
+
+  clearSamples();
+  addSample("TTbarJets8TeV:jetMatchGenTau==1",kRed,"jets matched to gen tau");
+  addSample("TTbarJets8TeV:jetMatchGenTau==0",kBlue,"jets not matched");
+
+
+  nbins=30; low=0; high=0.2;
+  var = "jetLrm"; xtitle="jet lrm";
+
+  //split into bins of 20 GeV in pT
+  selection_="jetPt>10&&jetPt<30 && jetEta<2.4 && jetEta>-2.4 && MET>175 && nbjets30>=1 && njets30>=5 && njets50>=3 && nVetoElectrons==0 && nVetoMuons==0"; // jet pt 10-30
+  drawPlots(var,nbins,low,high,xtitle,"au", "stop_jets_lrm_pt10-30");
+
+  selection_="jetPt>30&&jetPt<50 && jetEta<2.4 && jetEta>-2.4 && MET>175 && nbjets30>=1 && njets30>=5 && njets50>=3 && nVetoElectrons==0 && nVetoMuons==0";
+  drawPlots(var,nbins,low,high,xtitle,"au", "stop_jets_lrm_pt30-50");
+
+
+  selection_="jetPt>50&&jetPt<70 && jetEta<2.4 && jetEta>-2.4 && MET>175 && nbjets30>=1 && njets30>=5 && njets50>=3 && nVetoElectrons==0 && nVetoMuons==0";
+  drawPlots(var,nbins,low,high,xtitle,"au", "stop_jets_lrm_pt50-70");
+
+  selection_="jetPt>70&&jetPt<90 && jetEta<2.4 && jetEta>-2.4 && MET>175 && nbjets30>=1 && njets30>=5 && njets50>=3 && nVetoElectrons==0 && nVetoMuons==0";
+  drawPlots(var,nbins,low,high,xtitle,"au", "stop_jets_lrm_pt70-90");
+
+  selection_="jetPt>90 && jetEta<2.4 && jetEta>-2.4 && MET>175 && nbjets30>=1 && njets30>=5 && njets50>=3 && nVetoElectrons==0 && nVetoMuons==0";
+  drawPlots(var,nbins,low,high,xtitle,"au", "stop_jets_lrm_pt90");
+
+  // -- now do chm
+  //split into bins of 20 GeV in pT
+
+  nbins=10; low=0; high=10;
+  var = "jetChm"; xtitle="jet chm";
+
+  selection_="jetPt>10&&jetPt<30 && jetEta<2.4 && jetEta>-2.4 && MET>175 && nbjets30>=1 && njets30>=5 && njets50>=3 && nVetoElectrons==0 && nVetoMuons==0"; // jet pt 10-30
+  drawPlots(var,nbins,low,high,xtitle,"au", "stop_jets_chm_pt10-30");
+
+  selection_="jetPt>30&&jetPt<50 && jetEta<2.4 && jetEta>-2.4 && MET>175 && nbjets30>=1 && njets30>=5 && njets50>=3 && nVetoElectrons==0 && nVetoMuons==0";
+  drawPlots(var,nbins,low,high,xtitle,"au", "stop_jets_chm_pt30-50");
+
+
+  selection_="jetPt>50&&jetPt<70 && jetEta<2.4 && jetEta>-2.4 && MET>175 && nbjets30>=1 && njets30>=5 && njets50>=3 && nVetoElectrons==0 && nVetoMuons==0";
+  drawPlots(var,nbins,low,high,xtitle,"au", "stop_jets_chm_pt50-70");
+
+  selection_="jetPt>70&&jetPt<90 && jetEta<2.4 && jetEta>-2.4 && MET>175 && nbjets30>=1 && njets30>=5 && njets50>=3 && nVetoElectrons==0 && nVetoMuons==0";
+  drawPlots(var,nbins,low,high,xtitle,"au", "stop_jets_chm_pt70-90");
+
+  selection_="jetPt>90 && jetEta<2.4 && jetEta>-2.4 && MET>175 && nbjets30>=1 && njets30>=5 && njets50>=3 && nVetoElectrons==0 && nVetoMuons==0";
+  drawPlots(var,nbins,low,high,xtitle,"au", "stop_jets_chm_pt90");
+
+  //new tool to look at eff v rejection curve. depends on drawPlots!
+  //  drawEffVRej("TTbarJets:jetMatchGenTau==1","TTbarJets:jetMatchGenTau==0","tau matched","not tau");
+
+
+}
+
+void T2ttsanity() {
+
+  smsHack_=true; //avoid use of scansmsngen and all of the other ra2b infrastructure
+
+    inputPath = "/cu3/joshmt/stop/reducedTrees/v1_1/";
+    reducedTreeName_ = "MakeTauTree/reducedTree";
+
+    loadSamples(true,"stop");
+    clearSamples();
+    addSample("T2tt$425$50",kMagenta);
+
+    currentConfig_=configDescriptions_.getDefault();
+    dodata_=false;
+
+    //these trees have no weight!                                                                                                                     
+    nameOfEventWeight_="(1)";
+
+    lumiScale_=5000;
+
+    // the sampleScaleFactor may not work for T2tt in quite the expected way
+    setSampleScaleFactor("T2tt",0.243755 / 50000.0); //manually set xsec / N factor
+    //also just getting the number of entries in the tree doesn't work either
+    //for now just use an arbitrary normalization ....
+
+    is2011Data_ = false;
+    
+    int nbins;
+    float low,high;
+    TString var,xtitle;
+
+
+    //don't stack and don't normalize
+    setStackMode(false,false);
+
+    //sanity checks -- raw MET spectrum                                                                                    
+    selection_ ="(1)"; //no cuts         
+
+    var="MET"; xtitle="MET";
+    nbins = 40; low=0; high=400;
+    drawPlots(var,nbins,low,high,xtitle,"Events", "stop_t2tt_met",0,"GeV");
+
+    //seems sane i guess
+
+    selection_="MET>175 && nbjets30>=1 && njets30>=5 && njets50>=3 && nVetoElectrons==0 && nVetoMuons==0";  //preselection
+
+    //try splitting by topDecayCategory                                                                           
+    //in tests, this almost still works in T2tt...maybe not quite as well as for ttbar
+
+    clearSamples();
+    overrideSMSlabels_=true; //want to use the labels i set below instead of the auto-SMS labels
+    addSample("T2tt$425$50:ttbarDecayCode==4||ttbarDecayCode==6",kMagenta,"#mu, #tau #rightarrow #mu");
+    addSample("T2tt$425$50:ttbarDecayCode==5||ttbarDecayCode==3",kRed,"e, #tau #rightarrow e");
+    addSample("T2tt$425$50:ttbarDecayCode==1||ttbarDecayCode==9",kGreen,"misc e,#mu");
+    addSample("T2tt$425$50:ttbarDecayCode==2",kOrange,"hadronic");
+    addSample("T2tt$425$50:ttbarDecayCode==7||ttbarDecayCode==8",kBlue,"#tau #rightarrow h");
+    addSample("T2tt$425$50:ttbarDecayCode==0",1,"?");               
+
+    var="MET"; xtitle="MET";
+    nbins = 40; low=0; high=400;
+    drawPlots(var,nbins,low,high,xtitle,"Events", "stop_t2tt_met_bycat",0,"GeV");
 
 }

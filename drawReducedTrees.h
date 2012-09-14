@@ -803,6 +803,7 @@ void toPlot::print() {
   cout << varname << ": " << nbins << " bins, from " << binlow << " to " << binhigh << endl;
 }
 
+bool smsHack_=false; //horrible...
 
 bool quiet_=false;
 //bool quiet_=true;
@@ -1022,7 +1023,8 @@ TString extractExtraCut(TString fullname) {
 
 TString stripSamplename(TString fullname) {
 
-  if ( fullname.Contains("$") && fullname.Contains(":") )   cout<<"Simultaneous use of $ and : syntax not currently allowed!"<<endl;
+  //actually, this is ok
+  //  if ( fullname.Contains("$") && fullname.Contains(":") )   cout<<"Simultaneous use of $ and : syntax not currently allowed!"<<endl;
 
   //eg for samplename T1tttt$900$100, return T1tttt
   TString name = fullname.Tokenize("$")->At(0)->GetName();
@@ -1475,9 +1477,11 @@ for legacy purposes I am keeping all of the weight and selection TStrings, altho
       weightedcut +=extraSelection;
     }
     if (type == kmSugraPoint || type==kSMSPointGlGl|| type==kSMSPointStopStop) {
-      weightedcut += " && m0==";
+      if (smsHack_) weightedcut += " && mStop=="; //for stop samples where i used the wrong names
+      else          weightedcut += " && m0==";
       weightedcut +=m0_;
-      weightedcut += " && m12==";
+      if (smsHack_) weightedcut += " && mLSP=="; //for stop samples where i used the wrong names
+      else          weightedcut += " && m12==";
       weightedcut +=m12_;
     }
     weightedcut+=")";
@@ -1486,9 +1490,11 @@ for legacy purposes I am keeping all of the weight and selection TStrings, altho
     weightedcut += "*(";
     weightedcut +=extraSelection;
     if (type == kmSugraPoint || type==kSMSPointGlGl|| type==kSMSPointStopStop) {
-      weightedcut += " && m0==";
+      if (smsHack_)  weightedcut += " && mStop=="; //for stop samples where i used the wrong names
+      else           weightedcut += " && m0==";
       weightedcut +=m0_;
-      weightedcut += " && m12==";
+      if (smsHack_) weightedcut += " && mLSP=="; //for stop samples where i used the wrong names
+      else          weightedcut += " && m12=="; 
       weightedcut +=m12_;
     }
     weightedcut+=")";
@@ -1524,6 +1530,7 @@ for legacy purposes I am keeping all of the weight and selection TStrings, altho
     weightedcut += thisweight;
   }
   else if (type == kSMSPointGlGl || type == kSMSPointStopStop ||type == kSMSPointSbottomSbottom ) {
+    if (!smsHack_) {
     //need to weight with the standard sigma / N ; lumi factor is done above
     assert(scanSMSngen!=0);
     int bin=  scanSMSngen->FindBin(m0_,m12_);
@@ -1536,6 +1543,7 @@ for legacy purposes I am keeping all of the weight and selection TStrings, altho
     char xsweight[100];
     sprintf(xsweight,"*(%f/%f)",xs,ngen);
     weightedcut += xsweight;
+    }
   }
   else if (type == kmSugraPlane && susySubProcess<0) { //sanity check
     cout<<"You need to specify the susySubProcess!"<<endl; assert(0);
@@ -1717,7 +1725,9 @@ void setColorScheme(const TString & name) {
   if (name == "stack") {
     sampleColor_["LM13"] = kGray;
     sampleColor_["LM9"] =kGray;
-    sampleColor_["sbottom-189-270"]=kRed+2;
+    sampleColor_["sbottom-185-250"]=kRed-7;
+    sampleColor_["sbottom-189-270"]=kRed-3;
+    sampleColor_["sbottom-217-300"]=kRed+2;
     sampleColor_["mSUGRAtanb40"] =kGray;
     sampleColor_["T1bbbb"] =kBlack;
     sampleColor_["T1tttt"] =kBlack;
@@ -1810,7 +1820,9 @@ void setColorScheme(const TString & name) {
   else if (name == "nostack" || name=="owen") {
     sampleColor_["LM13"] = kBlue+2;
     sampleColor_["LM9"] = kCyan+2;
-    sampleColor_["sbottom-189-270"]=kBlue+2;
+    sampleColor_["sbottom-185-250"]=kRed-7;
+    sampleColor_["sbottom-189-270"]=kRed-3;
+    sampleColor_["sbottom-189-270"]=kRed+2;
     sampleColor_["mSUGRAtanb40"] =kCyan+2;
     sampleColor_["T1bbbb"] =kCyan+2;
     sampleColor_["T1tttt"] =kCyan+2;
@@ -2019,9 +2031,10 @@ void resetSamples(bool joinSingleTop=true) {
 
 }
 
+bool overrideSMSlabels_=false; //another dirty hack
 TString getSampleLabel(const TString & sample) {
   TString label="Not Found";
-  if (  isSampleScan(sample) ){
+  if (  isSampleScan(sample) && !overrideSMSlabels_){
     char ss[50];
     //more compact format?
     TString shortname = stripSamplename(sample);    
@@ -2084,6 +2097,7 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   samplesAll_.insert("PythiaPUQCD");
   //samplesAll_.insert("PythiaPUQCDFlat");
   samplesAll_.insert("TTbarJets");
+  samplesAll_.insert("TTTo2L2Nu2B");
   samplesAll_.insert("TTbarJets8TeV");
   samplesAll_.insert("TTbarSingleTopWJetsCombined");
   samplesAll_.insert("TTbarJets-semiMu");
@@ -2172,8 +2186,10 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   samplesAll_.insert("T2bb");
   samplesAll_.insert("T2tt");
 
+  samplesAll_.insert("sbottom-185-250"); 
   samplesAll_.insert("sbottom-189-270"); 
-  
+  samplesAll_.insert("sbottom-217-300"); 
+
   //FOR PLOTS
   ////////////
   if (signalEffMode=="") {
@@ -2240,7 +2256,9 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   sampleLabel_["T2tt"] = "T2tt";
   sampleLabel_["LM13"] = "LM13";
   sampleLabel_["LM9"] = "LM9";
+  sampleLabel_["sbottom-185-250"]="sbottom185-250";
   sampleLabel_["sbottom-189-270"]="sbottom189-270";
+  sampleLabel_["sbottom-217-300"]="sbottom217-300";
   sampleLabel_["QCD"] = "QCD";
   sampleLabel_["PythiaQCD"] = "QCD (no PU)";
   sampleLabel_["PythiaPUQCDFlat"] = "QCD"; 
@@ -2330,7 +2348,9 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   sampleLineStyle_["T2tt"] = 1;
   sampleLineStyle_["T2bb"] = 1;
   sampleLineStyle_["LM9"] = 1;
+  sampleLineStyle_["sbottom-185-250"]=1;
   sampleLineStyle_["sbottom-189-270"]=1;
+  sampleLineStyle_["sbottom-217-300"]=1;
 
   sampleMarkerStyle_["mSUGRAtanb40"] = kFullStar;
   sampleMarkerStyle_["T1bbbb"] = kFullStar;
@@ -2338,7 +2358,9 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   sampleMarkerStyle_["T2bb"] = kFullStar;
   sampleMarkerStyle_["T2tt"] = kFullStar;
   sampleMarkerStyle_["LM13"] = kFullStar;
+  sampleMarkerStyle_["sbottom-185-250"]=kFullStar;
   sampleMarkerStyle_["sbottom-189-270"]=kFullStar;
+  sampleMarkerStyle_["sbottom-217-300"]=kFullStar;
   sampleMarkerStyle_["LM9"] = kFullStar;
   sampleMarkerStyle_["QCD"] = kFullCircle;
   sampleMarkerStyle_["PythiaQCD"] = kOpenCircle;
@@ -2432,6 +2454,8 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   sampleOwenName_["LM13"] = "lm13";
   sampleOwenName_["LM9"] = "lm9";
   sampleOwenName_["sbottom-189-270"]="sbottom189-270";
+  sampleOwenName_["sbottom-185-250"]="sbottom185-250";
+  sampleOwenName_["sbottom-217-300"]="sbottom217-300";
   sampleOwenName_["QCD"] = "qcd";
   sampleOwenName_["PythiaQCD"] = "qcd";
   sampleOwenName_["PythiaPUQCDFlat"] = "qcd"; 
@@ -2552,10 +2576,10 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
     else if (idataset->first == "2012hybrid") {
       //HTMHT + MET, to be used with care to avoid duplicate events
       idataset->second = new TChain(reducedTreeName_);
-      //only Run2012A for now
       addDataToChain(idataset->second,"HT_Run2012A");
       addDataToChain(idataset->second,"MET_Run2012A");
-      //      addDataToChain(idataset->second,"HTMHT_Run2012B");
+      addDataToChain(idataset->second,"HTMHT_Run2012B");
+      addDataToChain(idataset->second,"MET_Run2012B");
     }
     else if (idataset->first == "JetHT") {
       idataset->second = new TChain(reducedTreeName_);
@@ -2580,7 +2604,7 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
     else if (idataset->first == "MET") {
       idataset->second = new TChain(reducedTreeName_);
       addDataToChain(idataset->second,"MET_Run2012A");
-      cout<<"Warning -- MET Run2012B not here"<<endl;
+      addDataToChain(idataset->second,"MET_Run2012B");
     }
     else if (idataset->first == "MuHad") {
       idataset->second = new TChain(reducedTreeName_);
@@ -4675,6 +4699,47 @@ void cutflow(bool isTightSelection){
   }//end loop over cuts
   cout<<hhline<<endl;
   
+}
+
+void drawEffVRej(const TString & h1, const TString h2,const TString & xtitle,const TString & ytitle,bool flip=false) {
+
+  //step over the bins in histos_[h1] and histos_[h2]
+
+  //first find h1, h2
+  if ( histos_.count(h1) ==0 ||histos_.count(h2) ==0 ) {
+    cout<<" Problem! "<<histos_.count(h1)<<" "<<histos_.count(h2)<<endl;
+    return;
+  }
+
+  const  int nbins=  histos_[h1]->GetNbinsX();
+
+  if (effgraph!=0) delete effgraph;
+  effgraph = new TGraphAsymmErrors(nbins );
+
+  for ( int ibin=1; ibin<=nbins; ibin++) {
+
+    double x,y;
+    if (flip) {
+      x=  histos_[h1]->Integral(ibin,nbins) / histos_[h1]->Integral();
+      y=  histos_[h2]->Integral(ibin,nbins) / histos_[h2]->Integral();
+    }
+    else {
+      x=  histos_[h1]->Integral(1,ibin) / histos_[h1]->Integral();
+      y=  histos_[h2]->Integral(1,ibin) / histos_[h2]->Integral();
+    }
+    //alternate
+    effgraph->SetPoint(ibin, x,y);
+
+    if (!quiet_)   cout<<ibin<<" "<<histos_[h1]->GetBinLowEdge(ibin)<<" \t "<<x<<" "<<y<<endl;
+  }
+
+  renewCanvas();
+  effgraph->Draw("Apl");
+  effgraph->GetHistogram()->SetXTitle(xtitle);
+  effgraph->GetHistogram()->SetYTitle(ytitle);
+  effgraph->GetHistogram()->SetMaximum(1);
+  effgraph->GetHistogram()->SetMinimum(0);
+
 }
 
 void drawTrigEff(const TString & pd, const TCut & tag, const TCut & probe, const TString & var, int nbins, float low,float high) {
