@@ -127,7 +127,7 @@ public:
   float getMHTphi(int ignoredJet);
 
   //  void getTransverseThrustVariables(float & thrust, float & thrustPhi, bool addMET);
-  void getSphericityJetMET(float & lambda1, float & lambda2, float & det,const int jetmax, bool addMET);
+  void getSphericity(float & sph, bool addMET, bool addLeptons, float jetthreshold);
 
   std::vector<unsigned int> jetsetToVector(const std::vector<unsigned int> & goodjets, const std::set<unsigned int> & myset) ;
   void jjResonanceFinder(float & mjj1, float & mjj2, int & ngoodMC);//simple first try
@@ -196,7 +196,7 @@ public:
   unsigned int nGoodJets();
   //  unsigned int nGoodJets(TH2D* count,TH2D* unc,TH2D* l2l3); //for a test
   unsigned int nGoodJets30();
-  unsigned int nGoodBJets( BTaggerType btagger=Nbtaggers);
+  unsigned int nGoodBJets(float ptthreshold=50, BTaggerType btagger=Nbtaggers);
   unsigned int nTrueBJets();
 
   void getSmearedUnclusteredMET(float & myMET, float & myMETphi);
@@ -270,8 +270,6 @@ public:
   std::pair<float,float> getJERAdjustedMHTxy(int ignoredJet=-1);
 
   //MC tools
-  unsigned int findSUSYMaternity( unsigned int k );
-  unsigned int getSUSYnb(std::vector<unsigned int> &susyb_index);
   unsigned int getSUSYnb();
   SUSYProcess getSUSYProcess(float & pt1, float & phi1, float & pt2, float & phi2); //momenta of the SUSY mothers
   std::pair<int,int> getSMSmasses();
@@ -287,6 +285,8 @@ public:
   int daughterMatch(const int Wdaughter, const int WdecayType);
   int getTTbarDecayType();
   int getTauDecayType(int tauid);
+  int findJetMatchGenTau();
+
   //  int getWDecayType(int& WdecayType, int& W, int& Wdaughter, bool fromtop);
 
   double getCrossSection();

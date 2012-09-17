@@ -1909,10 +1909,10 @@ unsigned int EventCalculator::nGoodJets30() {
   return njets;
 }
 
-unsigned int EventCalculator::nGoodBJets( BTaggerType btagger) {
+unsigned int EventCalculator::nGoodBJets( float ptthreshold,BTaggerType btagger) {
   unsigned int nb=0;
   for (unsigned int i = 0; i < jets_AK5PF_pt->size(); ++i) {
-    if (isGoodJet(i,30) ) {
+    if (isGoodJet(i,ptthreshold) ) {
       if ( passBTagger(i,btagger) ) nb++;
     }
   }
@@ -2611,9 +2611,7 @@ float  EventCalculator::jetPtOfN(unsigned int n) {
 
 
 float  EventCalculator::jetGenPhiOfN(unsigned int n) {
-  //FIXME CFA
   unsigned int ngood=0;
-/*
   for (unsigned int i=0; i<jets_AK5PF_pt->size(); i++) {
 
     if( isSampleRealData() ) return 0;
@@ -2623,10 +2621,9 @@ float  EventCalculator::jetGenPhiOfN(unsigned int n) {
 
     if (pass ) {
       ngood++;
-      if (ngood==n) return myJetsPF->at(i).genJet_phi;
+      if (ngood==n) return jets_AK5PF_gen_phi->at(i);
     }
   }
-*/
   return 0;
 }
 
@@ -2649,8 +2646,6 @@ float  EventCalculator::jetPhiOfN(unsigned int n) {
 
 float  EventCalculator::jetGenEtaOfN(unsigned int n) {
 
- return 99;//FIXME CFA
-/*
   unsigned int ngood=0;
   for (unsigned int i=0; i<jets_AK5PF_pt->size(); i++) {
 
@@ -2665,7 +2660,7 @@ float  EventCalculator::jetGenEtaOfN(unsigned int n) {
     }
   }
   return 0;
-*/
+
 }
 
 float  EventCalculator::jetEtaOfN(unsigned int n) {
@@ -2702,8 +2697,6 @@ float  EventCalculator::jetEnergyOfN(unsigned int n) {
 
 int  EventCalculator::jetFlavorOfN(unsigned int n) {
 
-  if (jets_AK5PF_partonFlavour==0) return 0; //FIXME CFA
-
   unsigned int ngood=0;
   for (unsigned int i=0; i<jets_AK5PF_pt->size(); i++) {
 
@@ -2733,21 +2726,18 @@ float  EventCalculator::jetChargedHadronFracOfN(unsigned int n) {
   return 0;
 }
 
-//FIXME CFA
 int  EventCalculator::jetChargedHadronMultOfN(unsigned int n) {
 
   unsigned int ngood=0;
-/*
   for (unsigned int i=0; i<jets_AK5PF_pt->size(); i++) {
     bool pass=false;
     pass = isGoodJet(i);
-
     if (pass ) {
       ++ngood;
-      if (ngood==n) return  TMath::Nint(myJetsPF->at(i).chargedHadronMultiplicity);
+      if (ngood==n) return  TMath::Nint(jets_AK5PF_chg_Mult->at(i));
     }
   }
-*/
+
   return 0;
 }
 
@@ -2850,40 +2840,34 @@ int  EventCalculator::bjetFlavorOfN(unsigned int n) {
   return 0;
 }
 
-//FIXME CFA
+
 float  EventCalculator::bjetChargedHadronFracOfN(unsigned int n) {
 
   unsigned int ngood=0;
-/*
   for (unsigned int i=0; i<jets_AK5PF_pt->size(); i++) {
-
     bool pass=false;
-    pass = (isGoodJet30(i) && passBTagger(i));
+    pass = isGoodJet(i) && passBTagger(i);
 
     if (pass ) {
-      ngood++;
-      if (ngood==n) return   myJetsPF->at(i).chargedHadronEnergyFraction;
+      ++ngood;
+      if (ngood==n) return jets_AK5PF_chgHadE->at(i) / (jets_AK5PF_energy->at(i) * jets_AK5PF_corrFactorRaw->at(i) );
     }
   }
-*/
   return 0;
 }
 
 int  EventCalculator::bjetChargedHadronMultOfN(unsigned int n) {
-  //FIXME CFA
-/*
+
   unsigned int ngood=0;
   for (unsigned int i=0; i<jets_AK5PF_pt->size(); i++) {
-
     bool pass=false;
-    pass = (isGoodJet30(i) && passBTagger(i));
+    pass = isGoodJet(i) && passBTagger(i);
 
     if (pass ) {
-      ngood++;
-      if (ngood==n) return   TMath::Nint(myJetsPF->at(i).chargedHadronMultiplicity);
+      ++ngood;
+      if (ngood==n) return TMath::Nint(jets_AK5PF_chg_Mult->at(i));
     }
   }
-*/
   return 0;
 }
 
@@ -3373,52 +3357,73 @@ return either 0,1,2
 
 }
 
-//FIXME CFA
-unsigned int EventCalculator::findSUSYMaternity( unsigned int k ) {
+unsigned int EventCalculator::getSUSYnb() {
 
-  int numSUSY=0;
-
-  return numSUSY; //FIXME CFA
-
-//   if (TMath::Nint(myGenParticles->at(k).firstMother) <0) {/*cout<<"got no mother!"<<endl;*/ return numSUSY;}
-
-//   int motherId = abs(TMath::Nint( myGenParticles->at(  TMath::Nint(myGenParticles->at(k).firstMother)).pdgId )); //get rid of minus signs!
-//   if ( (motherId>= 1000001 && motherId <=1000039) || (motherId>= 2000001 && motherId <=2000015)) {numSUSY++;}
-//   else if (motherId == 21) {/*cout<<"Found gluon splitting!"<<endl;*/}
-//   else if ( int(k) == TMath::Nint(myGenParticles->at(k).firstMother)) {} //particle is its own mother. do nothing. (avoids infinite loop)
-//   else { numSUSY+= findSUSYMaternity(TMath::Nint(myGenParticles->at(k).firstMother)  ); }
-
-//   return numSUSY;
-
-}
-
-unsigned int EventCalculator::getSUSYnb(std::vector<unsigned int> &susyb_index) {
-
-  //  for (unsigned int k = 0; k<myGenParticles->size(); k++) {
-    //for debugging
-  //  cout<<k<<"\t"<<TMath::Nint(myGenParticles->at(k).pdgId )<<"\t"<< TMath::Nint(myGenParticles->at(k).firstMother)<<"\t"<<TMath::Nint(myGenParticles->at(k).lastMother)<<"\t"<<TMath::Nint(myGenParticles->at(k).status ) <<endl;
-  //  }
-  
   unsigned int SUSY_nb=0;
-  /* FIXME CFA
-  for (unsigned int k = 0; k<myGenParticles->size(); k++) {
-    //important to require status 3!
-    if ( abs(TMath::Nint(myGenParticles->at(k).pdgId )) == 5 && TMath::Nint(myGenParticles->at(k).status)==3 ) { //find b quark
-      unsigned int nSUSY = findSUSYMaternity( k );      
-      if (nSUSY>0) {SUSY_nb++; susyb_index.push_back(k);}
+
+  //how to revive for cfA?
+  // answer: a much less fancy algo that just looks at materal ids
+
+  //testing on T1tttt it seems to get the right answer most of the time (not all of the time...)
+
+  for (unsigned int k = 0; k<mc_doc_id->size(); k++) {
+    //important to require status 3
+    if ( abs(TMath::Nint(mc_doc_id->at(k)))==5 && TMath::Nint(mc_doc_status->at(k))) {
+      unsigned int id_mom  = abs(TMath::Nint(mc_doc_mother_id->at(k)));
+      unsigned int id_gmom  = abs(TMath::Nint(mc_doc_grandmother_id->at(k)));
+      unsigned int id_ggmom  = abs(TMath::Nint(mc_doc_ggrandmother_id->at(k)));
+
+      if ( (id_mom>= 1000001 && id_mom <=1000039) || (id_mom>= 2000001 && id_mom <=2000015)) {SUSY_nb++;}
+      else if ( (id_gmom>= 1000001 && id_gmom <=1000039) || (id_gmom>= 2000001 && id_gmom <=2000015)) {SUSY_nb++;}
+      else if ( (id_ggmom>= 1000001 && id_ggmom <=1000039) || (id_ggmom>= 2000001 && id_ggmom <=2000015)) {SUSY_nb++;}
+
     }
   }
-  */
+
   //cout<<"SUSY_nb = "<<SUSY_nb<<endl;
   return SUSY_nb;
 
 }
 
-//in case you don't care about the indices of the b quarks
-unsigned int EventCalculator::getSUSYnb() {
-  std::vector<unsigned int> dummy;
-  return  getSUSYnb(dummy);
+int EventCalculator::findJetMatchGenTau() {
+  const float dr = 0.3;
 
+  set<int> jet_indices;
+
+  //loop over gen taus
+  for (size_t kk = 0; kk < mc_taus_id->size(); kk++) {
+
+    float tauphi = mc_taus_phi->at(kk);
+    float taueta = mc_taus_eta->at(kk);
+
+    //find the closest jet to this tau
+    float mindr = 1e9;
+    int index=-1;
+
+    //is there a jet within dr?
+    for (size_t jj = 0; jj < jets_AK5PF_pt->size(); jj++) {
+      float jetphi = jets_AK5PF_phi->at(jj);
+      float jeteta = jets_AK5PF_eta->at(jj);
+
+      float thisdr = jmt::deltaR(taueta,tauphi,jeteta,jetphi);
+      if ((thisdr < dr) && (thisdr<mindr)) {
+	mindr = thisdr;
+	index = jj;
+	//	cout<<"\t\t"<<taueta<<" "<<tauphi<<" "<<mc_taus_pt->at(kk)<<"   ;    "<<jeteta<<" "<<jetphi<<" "<<jets_AK5PF_pt->at(jj)<<endl;
+      }
+    }
+
+    if (index>=0) {
+      jet_indices.insert(index);
+    }
+
+  }
+
+  //jets should be sorted by pt, so lowest indices are highest pt
+  if (jet_indices.empty()) return -1;
+
+  set<int>::iterator the_first_one = jet_indices.begin();
+  return *the_first_one;
 }
 
 /*
@@ -3534,16 +3539,22 @@ SUSYProcess EventCalculator::getSUSYProcess(float & pt1, float & phi1, float & p
 }
 
 
-//FIXME CFA
 std::pair<int,int> EventCalculator::getSMSmasses() {
   assert(theScanType_==kSMS);
 
-  //our first pass at the official T1bbbb sample had bogus mGL, mLSP. we're not going to deal with that here.
+  //the string looks like this:
+  //# model T1tttt_1100_50  3.782E-12 
 
-  //Don says that the squark mass for T2qq is stored in the mGL field
+  TString modelstring = (*model_params).c_str();
+  TString thesubstring=  modelstring.Tokenize(" ")->At(2)->GetName();
 
-  return  make_pair(0,0);  //FIXME CFA
-  //  return make_pair( TMath::Nint(eventlhehelperextra_mGL), TMath::Nint(eventlhehelperextra_mLSP));
+  int m0=  TString(thesubstring.Tokenize("_")->At(1)->GetName()).Atoi();
+  int m12 = TString(thesubstring.Tokenize("_")->At(2)->GetName()).Atoi();
+
+  //  cout<<m0<<"\t"<<m12<<endl;
+
+  return  make_pair(m0,m12);
+
 }
 
 double EventCalculator::checkPdfWeightSanity( double a) {
@@ -4229,6 +4240,9 @@ Long64_t EventCalculator::getNEventsGenerated() {
   
   if (isSampleRealData()) return 1;
   
+  //normalization is handled in a special way for scans
+  if (theScanType_ == kSMS) return 1;
+
   /*
     in the past we have auto-calculated event weights based on the number of events in the parent TChain
     
@@ -4982,6 +4996,33 @@ TString EventCalculator::getOptPiece(const TString &key, const TString & opt) {
   return "";
 }
 
+/* an idea to really study taus that I don't have time to execute
+void EventCalculator::tauStudy(TString outputpath) {
+
+
+  //open output file
+  TString outfilename="tauTree";
+  outfilename += ".";
+  outfilename += getCutDescriptionString();
+  outfilename += ".";
+
+  outfilename += getSampleNameOutputString();
+  outfilename+=".root";
+  if (outputpath[outputpath.Length()-1] != '/') outputpath += "/";
+  outfilename.Prepend(outputpath);
+  TFile fout(outfilename,"RECREATE");
+
+  // define the TTree
+  TTree tauTree("tauTree","tree with minimal cuts");
+  tauTree.SetMaxTreeSize(30000000000LL); //increase maximum tree size to 30GB
+
+  //variables for tree
+  double jetpt; //vector, actually
+
+
+}
+*/
+
 void EventCalculator::reducedTree(TString outputpath) {
 
   //JSON file reading. For now the JSON file must be called GoldenJSON.txt
@@ -5028,7 +5069,7 @@ void EventCalculator::reducedTree(TString outputpath) {
 
   ULong64_t lumiSection, eventNumber, runNumber;
   //  float METsig;
-  float ST, STeff, HT, MHT, MET, METphi, minDeltaPhi, minDeltaPhiAll, minDeltaPhiAll30,minDeltaPhi30_eta5_noIdAll;
+  float ST, STeff, HT, HT30,MHT, MET, METphi, minDeltaPhi, minDeltaPhiAll, minDeltaPhiAll30,minDeltaPhi30_eta5_noIdAll;
   //  float correctedMET, correctedMETphi
   float caloMET;
   float rawPFMET,rawPFMETphi;
@@ -5136,8 +5177,8 @@ void EventCalculator::reducedTree(TString outputpath) {
   triggerlist["QuadJet80"]=triggerData();
 
 
-  int njets, njets30, nbjets, ntruebjets, nElectrons, nMuons, nTaus;
-  int nbjetsSSVM,nbjetsTCHET,nbjetsSSVHPT,nbjetsTCHPT,nbjetsTCHPM,nbjetsCSVM,nbjetsCSVL;
+  int njets, njets30, nbjets, nbjets30,ntruebjets, nElectrons, nMuons, nTaus;
+  int nbjetsSSVM,nbjetsTCHET,nbjetsSSVHPT,nbjetsTCHPT,nbjetsTCHPM,nbjetsCSVM,nbjetsCSVL; 
   int nElectrons5, nElectrons15,nElectrons20;
   int nMuons5, nMuons15,nMuons20;
 
@@ -5182,19 +5223,16 @@ void EventCalculator::reducedTree(TString outputpath) {
   int SUSY_process;
   float SUSY_recoilPt;
 
-  //sphericity variables from Luke
-  float lambda1_allJets;
-  float lambda2_allJets;
-  float determinant_allJets;
-  float lambda1_allJetsPlusMET;
-  float lambda2_allJetsPlusMET;
-  float determinant_allJetsPlusMET;
-  float lambda1_topThreeJets;
-  float lambda2_topThreeJets;
-  float determinant_topThreeJets;
-  float lambda1_topThreeJetsPlusMET;
-  float lambda2_topThreeJetsPlusMET;
-  float determinant_topThreeJetsPlusMET;
+  //sphericity variables (updated)
+  float transverseSphericity_jets;
+  float transverseSphericity_jetsMet;
+  float transverseSphericity_jetsMetLeptons;
+  float transverseSphericity_jetsLeptons;
+
+  float transverseSphericity_jets30;
+  float transverseSphericity_jets30Met;
+  float transverseSphericity_jets30MetLeptons;
+  float transverseSphericity_jets30Leptons;
 /*
   float transverseThrust,transverseThrustPhi;
   float transverseThrustWithMET,transverseThrustWithMETPhi;
@@ -5452,6 +5490,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("njets",&njets,"njets/I");
   reducedTree.Branch("njets30",&njets30,"njets30/I");
   reducedTree.Branch("nbjets",&nbjets,"nbjets/I");
+  reducedTree.Branch("nbjets30",&nbjets30,"nbjets30/I");
   reducedTree.Branch("ntruebjets",&ntruebjets,"ntruebjets/I");
   reducedTree.Branch("nElectrons",&nElectrons,"nElectrons/I");
   reducedTree.Branch("nMuons",&nMuons,"nMuons/I");
@@ -5499,10 +5538,10 @@ Also the pdfWeightSum* histograms that are used for LM9.
   }
 
   reducedTree.Branch("HT",&HT,"HT/F");
+  reducedTree.Branch("HT30",&HT30,"HT30/F");
   reducedTree.Branch("ST",&ST,"ST/F"); //includes HT + leptons
   reducedTree.Branch("STeff",&STeff,"STeff/F"); //includes HT + leptons + MET
   reducedTree.Branch("MET",&MET,"MET/F");
-  //  reducedTree.Branch("METsig",&METsig,"METsig/F");
   reducedTree.Branch("METphi",&METphi,"METphi/F");
   reducedTree.Branch("MHT",&MHT,"MHT/F");
 
@@ -5511,9 +5550,6 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("METsig10",&METsig10,"METsig10/F");
   reducedTree.Branch("METsig11",&METsig11,"METsig11/F");
 
-
-  //  reducedTree.Branch("correctedMET",&correctedMET,"correctedMET/F");
-  //  reducedTree.Branch("correctedMETphi",&correctedMETphi,"correctedMETphi/F");
 
   reducedTree.Branch("caloMET",&caloMET,"caloMET/F");
   reducedTree.Branch("rawPFMET",&rawPFMET, "rawPFMET/F");
@@ -5750,18 +5786,16 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("rl",&rl,"rl/F");
   reducedTree.Branch("rMET",&rMET,"rMET/F");
 
-  reducedTree.Branch("lambda1_allJets",&lambda1_allJets,"lambda1_allJets/F");
-  reducedTree.Branch("lambda2_allJets",&lambda2_allJets,"lambda2_allJets/F");
-  reducedTree.Branch("determinant_allJets",&determinant_allJets,"determinant_allJets/F");
-  reducedTree.Branch("lambda1_allJetsPlusMET",&lambda1_allJetsPlusMET,"lambda1_allJetsPlusMET/F");
-  reducedTree.Branch("lambda2_allJetsPlusMET",&lambda2_allJetsPlusMET,"lambda2_allJetsPlusMET/F");
-  reducedTree.Branch("determinant_allJetsPlusMET",&determinant_allJetsPlusMET,"determinant_allJetsPlusMET/F");
-  reducedTree.Branch("lambda1_topThreeJets",&lambda1_topThreeJets,"lambda1_topThreeJets/F");
-  reducedTree.Branch("lambda2_topThreeJets",&lambda2_topThreeJets,"lambda2_topThreeJets/F");
-  reducedTree.Branch("determinant_topThreeJets",&determinant_topThreeJets,"determinant_topThreeJets/F");
-  reducedTree.Branch("lambda1_topThreeJetsPlusMET",&lambda1_topThreeJetsPlusMET,"lambda1_topThreeJetsPlusMET/F");
-  reducedTree.Branch("lambda2_topThreeJetsPlusMET",&lambda2_topThreeJetsPlusMET,"lambda2_topThreeJetsPlusMET/F");
-  reducedTree.Branch("determinant_topThreeJetsPlusMET",&determinant_topThreeJetsPlusMET,"determinant_topThreeJetsPlusMET/F");
+  reducedTree.Branch("transverseSphericity_jets",&transverseSphericity_jets,"transverseSphericity_jets/F");
+  reducedTree.Branch("transverseSphericity_jetsMet",&transverseSphericity_jetsMet,"transverseSphericity_jetsMet/F");
+  reducedTree.Branch("transverseSphericity_jetsMetLeptons",&transverseSphericity_jetsMetLeptons,"transverseSphericity_jetsMetLeptons/F");
+  reducedTree.Branch("transverseSphericity_jetsLeptons",&transverseSphericity_jetsLeptons,"transverseSphericity_jetsLeptons/F");
+
+  reducedTree.Branch("transverseSphericity_jets30",&transverseSphericity_jets30,"transverseSphericity_jets30/F");
+  reducedTree.Branch("transverseSphericity_jets30Met",&transverseSphericity_jets30Met,"transverseSphericity_jets30Met/F");
+  reducedTree.Branch("transverseSphericity_jets30MetLeptons",&transverseSphericity_jets30MetLeptons,"transverseSphericity_jets30MetLeptons/F");
+  reducedTree.Branch("transverseSphericity_jets30Leptons",&transverseSphericity_jets30Leptons,"transverseSphericity_jets30Leptons/F");
+
 
 /*
   reducedTree.Branch("transverseThrust",&transverseThrust,"transverseThrust/F");
@@ -5886,11 +5920,10 @@ Also the pdfWeightSum* histograms that are used for LM9.
       else 	continue; // skip this event
     }
     else if (theScanType_==kSMS) {
-      assert(0); // FIXME CFA
-
       //increment a 2d histogram of mGL, mLSP
       //we know 10k were generated everywhere, but what if we have failed jobs?
-      scanSMSngen->Fill(m0,m12); //we can probably kill this 
+      // -- this scheme is not compatible with skim, unfortunately
+      scanSMSngen->Fill(m0,m12);
 
       //do the new 2D maps as well
       for (int ipdf=0 ; ipdf<45; ipdf++) {
@@ -5996,6 +6029,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
       //if we are running over ttbar, fill info on decay mode
       if (sampleName_.Contains("TTJets")) { //revived for cfA, using the old jmt-ntuples coding scheme
 	ttbarDecayCode = getTTbarDecayType();
+	  //findJetMatchGenTau()<<endl;
       }
 /*
       //single-top tW-channel has two W's (one from a top)
@@ -6015,6 +6049,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
 */
 
       HT=getHT();
+      HT30=getHT(30);
       hltHTeff = getHLTHTeff(HT);
       PUweight =  puReweightIs1D ? getPUWeight(*LumiWeights) : 1;// FIXME CFA getPUWeight(*LumiWeights3D);
       //      pfmhtweight = getPFMHTWeight();
@@ -6050,6 +6085,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
       //count b jets
       ntruebjets = nTrueBJets();
       nbjets = nGoodBJets();
+      nbjets30 = nGoodBJets(30);
       nbjetsSSVM = nGoodBJets( kSSVM);
       nbjetsSSVHPT = nGoodBJets( kSSVHPT);
       nbjetsTCHET = nGoodBJets( kTCHET);
@@ -6381,11 +6417,16 @@ Also the pdfWeightSum* histograms that are used for LM9.
 
       buggyEvent = inEventList(vrun, vlumi, vevent);
       
-      //fill new variables from Luke
-      getSphericityJetMET(lambda1_allJets,lambda2_allJets,determinant_allJets,99,false);
-      getSphericityJetMET(lambda1_allJetsPlusMET,lambda2_allJetsPlusMET,determinant_allJetsPlusMET,99,true);
-      getSphericityJetMET(lambda1_topThreeJets,lambda2_topThreeJets,determinant_topThreeJets,3,false);
-      getSphericityJetMET(lambda1_topThreeJetsPlusMET,lambda2_topThreeJetsPlusMET,determinant_topThreeJetsPlusMET,3,true);
+      //transverse sphericity
+      getSphericity(transverseSphericity_jets,false,false,50);
+      getSphericity(transverseSphericity_jetsMet,true,false,50);
+      getSphericity(transverseSphericity_jetsMetLeptons,true,true,50);
+      getSphericity(transverseSphericity_jetsLeptons,false,true,50);
+
+      getSphericity(transverseSphericity_jets30,false,false,30);
+      getSphericity(transverseSphericity_jets30Met,true,false,30);
+      getSphericity(transverseSphericity_jets30MetLeptons,true,true,30);
+      getSphericity(transverseSphericity_jets30Leptons,false,true,30);
 
       //Uncomment next two lines to do thrust calculations
       //getTransverseThrustVariables(transverseThrust, transverseThrustPhi, false);
@@ -6696,29 +6737,22 @@ double EventCalculator::calc_mNj( unsigned int j1i, unsigned int j2i, unsigned i
 // }
 
 
-void EventCalculator::getSphericityJetMET(float & lambda1, float & lambda2, float & det,
-			 const int jetmax, bool addMET) {
+void EventCalculator::getSphericity(float & sph, bool addMET, bool addLeptons, const float jetthreshold) {
 
-  TMatrixD top3Jets(2,2);
-  double top3JetsScale = 0;
+  float lambda1,lambda2;
+
+  //misnomer in the sense that we're going to use all jets
+  TMatrixD Smatrix(2,2);
   
-  unsigned int njets=  jets_AK5PF_pt->size();
-  int ngoodj=0;
+  const  unsigned int njets=  jets_AK5PF_pt->size();
   for (unsigned int i=0; i<njets ; i++) {
-    if ( isGoodJet(i) ) {
-      ++ngoodj;
-      double phi =jets_AK5PF_phi->at(i);
-      double eT = getJetPt(i);
-      double eX = eT*cos(phi);
-      double eY = eT*sin(phi);
-      if(ngoodj <= jetmax) {
-	top3Jets[0][0] += eX*eX/eT;
-	top3Jets[0][1] += eX*eY/eT;
-	top3Jets[1][0] += eX*eY/eT;
-	top3Jets[1][1] += eY*eY/eT;
-	top3JetsScale += eT;
-      }
-      else break;
+    if ( isGoodJet(i, jetthreshold) ) {
+      double px = getJetPx(i);
+      double py = getJetPy(i);
+      Smatrix[0][0] += px*px;
+      Smatrix[0][1] += px*py;
+      Smatrix[1][0] += px*py;
+      Smatrix[1][1] += py*py;
     }
   }
 
@@ -6727,18 +6761,43 @@ void EventCalculator::getSphericityJetMET(float & lambda1, float & lambda2, floa
     double eT = getMET();
     double eX = eT*cos(phi);
     double eY = eT*sin(phi);
-  
-    top3Jets[0][0] += eX*eX/eT;
-    top3Jets[0][1] += eX*eY/eT;
-    top3Jets[1][0] += eX*eY/eT;
-    top3Jets[1][1] += eY*eY/eT;
-    top3JetsScale += eT;
+    Smatrix[0][0] += eX*eX;
+    Smatrix[0][1] += eX*eY;
+    Smatrix[1][0] += eX*eY;
+    Smatrix[1][1] += eY*eY;
   }
-  top3Jets*=1/top3JetsScale;
-  TMatrixDEigen top3JetsEigen(top3Jets);
-  lambda1 = top3JetsEigen.GetEigenValuesRe()[0];
-  lambda2 = top3JetsEigen.GetEigenValuesRe()[1];
-  det = top3Jets.Determinant();
+
+  if (addLeptons) {
+    for ( unsigned int i = 0; i< pf_mus_pt->size(); i++) {
+      if (isCleanMuon(i,10)) {
+	double px = pf_mus_pt->at(i) * cos(pf_mus_phi->at(i));
+	double py = pf_mus_pt->at(i) * sin(pf_mus_phi->at(i));
+	Smatrix[0][0] += px*px;
+	Smatrix[0][1] += px*py;
+	Smatrix[1][0] += px*py;
+	Smatrix[1][1] += py*py;
+      }
+    }
+    for (unsigned int i=0; i <pf_els_pt->size() ; i++) {
+      if(isGoodElectron(i,false,10)) {
+	double px = pf_els_pt->at(i) * cos(pf_els_phi->at(i));
+	double py = pf_els_pt->at(i) * sin(pf_els_phi->at(i));
+	Smatrix[0][0] += px*px;
+	Smatrix[0][1] += px*py;
+	Smatrix[1][0] += px*py;
+	Smatrix[1][1] += py*py;
+      }
+    }
+  }
+
+  
+
+  TMatrixDEigen eigenv(Smatrix);
+  lambda1 = eigenv.GetEigenValuesRe()[0];
+  lambda2 = eigenv.GetEigenValuesRe()[1];
+
+  //for historical reasons, the output is returned via the reference rather than as a return value of the function
+  sph = 2*lambda2 / (lambda1 + lambda2);
   
 }
 
