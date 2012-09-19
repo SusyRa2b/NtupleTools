@@ -4739,7 +4739,7 @@ void EventCalculator::calculateTagProb(float &Prob0, float &ProbGEQ1, float &Pro
 
   for (unsigned int ijet=0; ijet<jets_AK5PF_pt->size(); ++ijet) {
     float subprob1=0;
-    if(isGoodJet30(ijet)){
+    if(isGoodJet(ijet,50)){ //switch to 50 GeV threshold for b jets
 
       float effi = jetTagEff(ijet, h_btageff, h_ctageff, h_ltageff, extraSFb,extraSFc,extraSFl,modifier);
       //      cout<<"effi = "<<effi<<endl;
@@ -4747,7 +4747,7 @@ void EventCalculator::calculateTagProb(float &Prob0, float &ProbGEQ1, float &Pro
       
       double product = 1;
       for (unsigned int kjet=0; kjet<jets_AK5PF_pt->size(); ++kjet) {
-	if(isGoodJet30(kjet)){
+	if(isGoodJet(kjet,50)){
 	  float effk = jetTagEff(kjet, h_btageff, h_ctageff, h_ltageff,extraSFb,extraSFc,extraSFl,modifier);
 	  if(kjet != ijet){
 	    product = product*(1-effk);
@@ -4758,7 +4758,7 @@ void EventCalculator::calculateTagProb(float &Prob0, float &ProbGEQ1, float &Pro
 	    for (unsigned int jjet=0; jjet<jets_AK5PF_pt->size(); ++jjet) {
 	      //if(jjet > kjet && jjet > ijet){
 	      if(jjet != kjet && jjet != ijet){
-		if(isGoodJet30(jjet)){
+		if(isGoodJet(jjet,50)){
 		  float effj = jetTagEff(jjet, h_btageff, h_ctageff, h_ltageff,extraSFb,extraSFc,extraSFl,modifier);
 		  //      cout<<"effj = "<<effj<<endl;
 		  subproduct = subproduct*(1-effj);
@@ -4786,8 +4786,137 @@ void EventCalculator::calculateTagProb(float &Prob0, float &ProbGEQ1, float &Pro
 
 }
 
+int EventCalculator::getPtBinIndex(const float pt) {
+  //binning in AN-12-175
+
+  const int n=15;
+  float bins[]={30,40,50,60,70,80,100,120,160,210,260,320,400,500,1e9}; //15 values
+ //real max is 670, but use last bin value for jets about 670
+
+  if (pt<bins[0] || pt>bins[n-1]) return -1;
+
+  int jj=0; //highest value of jj in loop is 13
+  for ( ; jj<n-1; ++jj)     if (pt >= bins[jj] && pt<bins[jj+1]) break;
+
+  return jj;  
+}
+
+float EventCalculator::get_AN_12_175_Table2_Value(const float pt) {
+
+  int bin = getPtBinIndex(pt);
+
+  if (bin<0) return 1;
+
+  float values[]={0.982,0.981,0.992,0.994,0.997,0.9998,1.001,1.000,0.992,0.979,0.947,0.928,0.87,0.84};
+
+  return values[bin];
+}
+
+float EventCalculator::get_AN_12_175_Table2_Error(const float pt) {
+
+  int bin = getPtBinIndex(pt);
+  if (bin<0) return 1;
+
+  float values[]={0.002,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.002,0.004,0.006,0.009,0.01,0.02};
+  return values[bin];
+}
+
+float EventCalculator::get_AN_12_175_Table3_Value(const float pt) {
+
+  int bin = getPtBinIndex(pt);
+  if (bin<0) return 1;
+
+  float values[]={0.980,0.984,0.992,0.995,0.999,1.002,0.999,0.999,0.994,0.978,0.943,0.92,0.88,0.86};
+  return values[bin];
+}
+
+float EventCalculator::get_AN_12_175_Table4_Value(const float pt) {
+  int bin = getPtBinIndex(pt);
+  if (bin<0) return 1;
+
+  //T1bbbb only!
+  //(tempted to put in an assert, but i guess that is paranoia)
+
+  float values[]={0.984,0.997,1.002,1.006,1.012,1.0115,1.0159,1.0171,1.0051,0.974,0.943,0.900,0.853,0.78};
+  return values[bin];
+
+}
+
+float EventCalculator::get_AN_12_175_Table5_Value(const float pt) {
+  int bin = getPtBinIndex(pt);
+  if (bin<0) return 1;
+
+  //T1tttt only!
+  //(tempted to put in an assert, but i guess that is paranoia)
+
+  float values[]={1.0046,1.0064,1.0136,1.0157,1.0173,1.0189,1.0224,1.0239,1.0087,0.981,0.945,0.899,0.858,0.800};
+  return values[bin];
+
+}
+
+float EventCalculator::get_AN_12_175_Table6_Value(const float pt) {
+  int bin = getPtBinIndex(pt);
+  if (bin<0) return 1;
+
+  float values[]={1.007,1.005,1.012,1.016,1.016,1.015,1.017,1.0191,1.0068,0.982,0.952,0.910,0.878,0.839};
+  return values[bin];
+
+}
+
+float EventCalculator::get_AN_12_175_Table8_Value(const float pt) {
+  int bin = getPtBinIndex(pt);
+  if (bin<0) return 1;
+
+  float values[]={0.9937,0.9945,1.0022,1.002,1.0031,1.0011,1.0006,1.0001,0.9861,0.967,0.946,0.914,0.884,0.840};
+  return values[bin];
+
+}
+
 
 //removed unused code getBTagIPWeight()
+float EventCalculator::bJetFastsimSF(const TString & what, int flavor,float pt) {
+  assert( what == "value" || what=="stat" || what=="syst");
+  //stat will be an absolute error
+  //syst will be a fractional error
+
+  float returnVal = 0;
+  if (what == "value") returnVal=1;
+
+  //first check if we're in a FASTSIM model
+  if (theScanType_ != kNotScan ) {
+    if ( abs(flavor) != 5) return returnVal; //no correction (for now) for non-b
+    
+    if (what == "syst") {//syst errors (fractional)
+      const float table2_value = get_AN_12_175_Table2_Value(pt);
+
+      //table 2 versus table 3 // note that this is a FRACTIONAL uncertainty
+      float systerr2 = (table2_value - get_AN_12_175_Table3_Value(pt)) / table2_value ;
+
+      //now the model-dependent part
+      float model_value = 1;
+      if (sampleName_.Contains("T1bbbb")) 	model_value = get_AN_12_175_Table4_Value(pt);
+      else if (sampleName_.Contains("T1tttt")) 	model_value = get_AN_12_175_Table5_Value(pt);
+      else if (sampleName_.Contains("T2bb")) 	model_value = get_AN_12_175_Table6_Value(pt);
+      else if (sampleName_.Contains("T2tt")) 	model_value = get_AN_12_175_Table8_Value(pt);
+      else assert(0);
+      //Table 2 versus Table 4
+      //Tom says syst_sample = (SF_avg - SF_ttbar)/SF_ttbar 
+      //syst_sample = ( (SF_T1bbbb + SF_ttbar)/2 - SF_ttbar)/SF_ttbar 
+      //note that this is a FRACTIONAL uncertainty
+
+      float systerr1 = ( ( model_value+table2_value)/2 - table2_value) / table2_value ;
+
+      //no need for fabs() on these errors because we're adding in quadrature
+      returnVal = sqrt(systerr1*systerr1 + systerr2*systerr2);
+    }
+    //table 2 applies to any FASTSIM sample
+    else if (what=="stat")    returnVal = get_AN_12_175_Table2_Error(pt);
+    else if (what=="value")   returnVal = get_AN_12_175_Table2_Value(pt);
+    else assert(0);
+  }
+  //cout<<what<<" "<<flavor<<" "<<pt<<"\t"<<returnVal<<endl;
+  return returnVal;
+}
 
 //get MC btag efficiency
 float EventCalculator::jetTagEff(unsigned int ijet, TH1F* h_btageff, TH1F* h_ctageff, TH1F* h_ltageff,
@@ -4801,7 +4930,7 @@ float EventCalculator::jetTagEff(unsigned int ijet, TH1F* h_btageff, TH1F* h_cta
 
   float noEfficiencyThreshold=350; //threshold for the highest SF bin, which we sometimes set to 0 efficiency
 
-  if(isGoodJet30(ijet)) {
+  if(isGoodJet(ijet,50)) {
 
     if (theBTagEffType_ == kBTagEff04 || theBTagEffType_ == kBTagEffup4 || theBTagEffType_ == kBTagEffdown4) { //new  BTV-11-004 prescription 
 
@@ -4816,6 +4945,9 @@ float EventCalculator::jetTagEff(unsigned int ijet, TH1F* h_btageff, TH1F* h_cta
 	if (abs(flavor) == 4)  errFactor=2; //charm has double the errors   "SFc = SFb with twice the quoted uncertainty"
 
 	float  SFb = 0.6981*((1.+(0.414063*x))/(1.+(0.300155*x)));
+
+	//apply FASTSTIM correction where needed
+	SFb *= bJetFastsimSF("value",flavor,pt);
 
 	if (theBTagEffType_ == kBTagEffup4 || theBTagEffType_ == kBTagEffdown4 || modifier==kHFup || modifier == kHFdown) {
 	  const int nbins=14;
@@ -4844,7 +4976,18 @@ float EventCalculator::jetTagEff(unsigned int ijet, TH1F* h_btageff, TH1F* h_cta
 	      break;
 	    }
 	  }
+
+	  //fastsim corrections to the error
+	  float fastsimerr_stat = bJetFastsimSF("stat",flavor,pt);
+	  //syst is a fractional err, so multiply by SFb to get absolute err
+	  float fastsimerr_syst = bJetFastsimSF("syst",flavor,pt) * SFb;
+	  myErr = sqrt( myErr*myErr + fastsimerr_stat*fastsimerr_stat + fastsimerr_syst*fastsimerr_syst);
+
 	  myErr *= errFactor; //high pT and charm get scaled up
+
+	  // preliminary 2012 correction to the SFb and SFb uncertainty 
+	  // https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagPOG#2012_Data_and_MC
+	  myErr *= 1.5;
 
 	  if ((theBTagEffType_ == kBTagEffup4) || (modifier==kHFup)) SFb += myErr;
 	  else if ((theBTagEffType_ == kBTagEffdown4) || (modifier==kHFdown)) SFb -= myErr;
@@ -4875,6 +5018,9 @@ float EventCalculator::jetTagEff(unsigned int ijet, TH1F* h_btageff, TH1F* h_cta
 	}
 	//design question -- what do to for jets at eta>2.4? assert? or return tageff=0?
 	//i guess tageff 0 makes the most sense
+
+	//2012 -- modify the SF by a 2012/2011 factor given here: https://twiki.cern.ch/twiki/pub/CMS/BtagPOG/SFlighCorrFunc_2012_06_06.txt
+	SF *= (1.10422 + (-0.000523856)*pt + (1.14251e-06)*pt*pt);
 
 	tageff = SF * extraSFl * h_ltageff->GetBinContent( h_ltageff->FindBin( pt )); 
 	//	cout<<"jet flavor, pt, SF = "<<abs(flavor)<<" "<<pt<<" "<<SF<<endl;
@@ -8375,6 +8521,8 @@ void EventCalculator::plotBTagEffMC( ) {
   int ntaggedjets_c = 0;
   int ntaggedjets_l = 0;
 
+  //this threshold does not need to be synced with the global b-tag pt threshold, because this histogram is binned in pT
+  const float jetptthreshold = 30;
 
   startTimer();
   for(Long64_t entry=0; entry < nevents; ++entry){
@@ -8387,8 +8535,9 @@ void EventCalculator::plotBTagEffMC( ) {
     
     for (unsigned int i = 0; i < jets_AK5PF_pt->size(); ++i) {
       int flavor = jets_AK5PF_partonFlavour->at(i);
-      
-      if(isGoodJet(i,30)){
+
+            
+      if(isGoodJet(i,jetptthreshold)){
       
 	  
 	if(abs(flavor)==5)
@@ -8409,7 +8558,7 @@ void EventCalculator::plotBTagEffMC( ) {
       
       }
 	
-      if (isGoodJet(i,30) && passBTagger(i) ){
+      if (isGoodJet(i,jetptthreshold) && passBTagger(i) ){
 	ntaggedjets++;
 	  
 	if(abs(flavor)==5)
