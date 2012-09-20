@@ -202,8 +202,8 @@ void EventCalculator::stopTimer(const Long64_t ntotal) {
 bool EventCalculator::isSampleRealData() {
 
   if (sampleName_.BeginsWith("HT_Run2012A")) return true;
-  if (sampleName_.BeginsWith("HTMHT_Run2012B")) return true;
-  if (sampleName_.BeginsWith("JetHT_Run2012B")) return true;
+  if (sampleName_.BeginsWith("HTMHT_Run2012")) return true;
+  if (sampleName_.BeginsWith("JetHT_Run2012")) return true;
 
   if (sampleName_.BeginsWith("MET_Run2012")) return true;
 
@@ -220,6 +220,8 @@ bool EventCalculator::isSampleRealData() {
   if (sampleName_.BeginsWith("SingleElectron_Run2012")) return true;
 
   if (sampleName_.BeginsWith("Photon_Run2012")) return true;
+
+  if (sampleName_.BeginsWith("PhotonHad_Run2012")) return true;
 
   return false;
 }
@@ -4267,35 +4269,6 @@ Long64_t EventCalculator::getNEventsGenerated() {
     NUMBER FROM THE UNSKIMMED SAMPLE!
   */
   
-  // ============== v60 samples ============
-  if (sampleName_=="DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph-tarball_Summer12-PU_S7_START52_V9-v2_AODSIM_UCSB1234_v60s") return 30461028;
-
-  if (sampleName_=="DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph-tarball_Summer12-PU_S7_START52_V9-v2_AODSIM_UCSB1261_v62s") return 14820000;
-    
-  if (sampleName_=="QCD_Pt-1000to1400_TuneZ2star_8TeV_pythia6_Summer12-PU_S7_START52_V9-v1_AODSIM_UCSB1245_v60s") return 1954088;
-  if (sampleName_=="QCD_Pt-1400to1800_TuneZ2star_8TeV_pythia6_Summer12-PU_S7_START52_V9-v1_AODSIM_UCSB1209_v60s") return 2000062;
-  if (sampleName_=="QCD_Pt-15to3000_TuneZ2star_Flat_8TeV_pythia6_Summer12-PU_S7_START52_V9-v5_AODSIM_UCSB1189_v60s") return 1025622;
-  if (sampleName_=="QCD_Pt-170to300_TuneZ2star_8TeV_pythia6_Summer12-PU_S7_START52_V9-v1_AODSIM_UCSB1241_v60s") return 5804398;
-  if (sampleName_=="QCD_Pt-1800_TuneZ2star_8TeV_pythia6_Summer12-PU_S7_START52_V9-v1_AODSIM_UCSB1226_v60s") return 977586;
-  if (sampleName_=="QCD_Pt-300to470_TuneZ2star_8TeV_pythia6_Summer12-PU_S7_START52_V9-v1_AODSIM+_UCSB1250_v60s") return 1;//PROBLEM
-  if (sampleName_=="QCD_Pt-30to50_TuneZ2star_8TeV_pythia6_Summer12-PU_S7_START52_V9-v1_AODSIM_UCSB1193_v60s") return 6000000;
-  if (sampleName_=="QCD_Pt-470to600_TuneZ2star_8TeV_pythia6_Summer12-PU_S7_START52_V9-v1_AODSIM_UCSB1238_v60s") return 3844848;
-  if (sampleName_=="QCD_Pt-600to800_TuneZ2star_8TeV_pythia6_Summer12-PU_S7_START52_V9-v1_AODSIM_UCSB1185_v60s") return 3992760;
-  if (sampleName_=="QCD_Pt-800to1000_TuneZ2star_8TeV_pythia6_Summer12-PU_S7_START52_V9-v1_AODSIM_UCSB1212_v60s") return 3954563;
-  if (sampleName_=="QCD_Pt-80to120_TuneZ2star_8TeV_pythia6_Summer12-PU_S7_START52_V9-v1_AODSIM_UCSB1237_v60s") return 5981328;
-  if (sampleName_=="SUSY_LM9_sftsht_8TeV-pythia6_Summer12-PU_S7_START52_V9-v1_AODSIM_UCSB1198_v60s") return 1000080;
-
-  if (sampleName_=="TTJets_TuneZ2star_8TeV-madgraph-tauola_Summer12-PU_S7_START52_V9-v1_AODSIM_UCSB1176_v60s") return 6736135;
-  if (sampleName_=="T_t-channel_TuneZ2star_8TeV-powheg-tauola_Summer12-PU_S7_START52_V9-v1_AODSIM_UCSB1201_v60s") return 23777;
-  if (sampleName_=="T_tW-channel-DR_TuneZ2star_8TeV-powheg-tauola_Summer12-PU_S7_START52_V9-v1_AODSIM_UCSB1233_v60s") return 497658;
-  if (sampleName_=="Tbar_t-channel_TuneZ2star_8TeV-powheg-tauola_Summer12-PU_S7_START52_V9-v1_AODSIM_UCSB1220_v60s") return 1935072;
-  if (sampleName_=="Tbar_tW-channel-DR_TuneZ2star_8TeV-powheg-tauola_Summer12-PU_S7_START52_V9-v1_AODSIM+_UCSB1240_v60s") return 1; //PROBLEM
-  if (sampleName_=="WJetsToLNu_HT-400ToInf_8TeV-madgraph_Summer12-PU_S7_START52_V9-v1_AODSIM_UCSB1229_v60s") return 1647807;
-  if (sampleName_=="WJetsToLNu_TuneZ2Star_8TeV-madgraph-tarball_Summer12-PU_S7_START52_V9-v1_AODSIM_UCSB1177_v60s") return 18393090;
-  if (sampleName_=="WZ_TuneZ2star_8TeV_pythia6_tauola_Summer12-PU_S7_START52_V9-v1_AODSIM_UCSB1196_v60s") return 9996622;
-  if (sampleName_=="ZJetsToNuNu_400_HT_inf_TuneZ2Star_8TeV_madgraph_Summer12-PU_S7_START52_V9-v1_AODSIM_UCSB1242_v60s") return 1006928;
-  if (sampleName_=="ZZ_TuneZ2star_8TeV_pythia6_tauola_Summer12-PU_S7_START52_V9-v1_AODSIM_UCSB1218_v60s") return 9599908;
-
   // ============= v63 samples ============
   // SKIM is applied, so this is now important
 
@@ -4347,6 +4320,13 @@ Long64_t EventCalculator::getNEventsGenerated() {
   if (sampleName_=="RPVSUSY_sbottom8lnotaus-185-250") return 50000;
   if (sampleName_=="RPVSUSY_sbottom8lnotaus-189-270") return 50000;
   if (sampleName_=="RPVSUSY_sbottom8lnotaus-217-300") return 50000;
+
+  // ============= v65 samples ============
+  // SKIM is applied, so this is now important
+
+  //numbers come from 
+  //http://cms2.physics.ucsb.edu/cgi-bin/cfA.pl?Institute=ALL&process=ALL&version=v63
+  if (sampleName_.Contains("UCSB1403")) return 6923750 ;
 
 
   cout<<"[getNEventsGenerated] unknown sample "<<sampleName_<<endl;
@@ -5510,11 +5490,12 @@ Also the pdfWeightSum* histograms that are used for LM9.
   std::vector< float > MCDist;
   for( int i=0; i<60; ++i) {
     //1D reweighting -- all I have done for 2012 (not sure if 3D is used anymore)
-    if (puReweightIs1D)    DataDist.push_back(pu::RunsThrough199703[i]);
+    if (puReweightIs1D)    DataDist.push_back(pu::RunsThrough202016[i]);
     //for 3dPU reweighting 
     //    else DataDist2011.push_back(pu::TrueDist2011_f[i]);
     if (sampleName_.Contains("PU_S7"))  MCDist.push_back(pu::Summer2012[i]);
-    else if (sampleName_.Contains("PU_S6")) MCDist.push_back(pu::Fall2011[i]); //is this right? dubious
+    else if (sampleName_.Contains("PU_S6")) MCDist.push_back(pu::Fall2011[i]);
+    else if (sampleName_.Contains("PU_S10")) MCDist.push_back(pu::Summer2012_S10[i]);
     else MCDist.push_back(pu::Summer2012[i]); //just a safety valve
   }
 
@@ -8729,10 +8710,8 @@ bool EventCalculator::jetNearBadECALCell(unsigned int i, TString type, double ne
 }
 
 
-
 void EventCalculator::InitializeA(TChain *fChain) 
 {
-
    // Set object pointer
    trigger_prescalevalue = 0;
    trigger_name = 0;
@@ -8779,12 +8758,7 @@ void EventCalculator::InitializeA(TChain *fChain)
    jets_AK5PFclean_corrL1L2L3 = 0;
    jets_AK5PFclean_corrL1FastL2L3Residual = 0;
    jets_AK5PFclean_corrL1L2L3Residual = 0;
-   jets_AK5_corrL2L3 = 0;
-   jets_AK5_corrL2L3Residual = 0;
-   jets_AK5_corrL1FastL2L3 = 0;
-   jets_AK5_corrL1L2L3 = 0;
-   jets_AK5_corrL1FastL2L3Residual = 0;
-   jets_AK5_corrL1L2L3Residual = 0;
+   jets_AK5PFclean_Uncert = 0;
    PU_zpositions = 0;
    PU_sumpT_lowpT = 0;
    PU_sumpT_highpT = 0;
@@ -8858,12 +8832,7 @@ void EventCalculator::InitializeA(TChain *fChain)
    fChain->SetBranchAddress("jets_AK5PFclean_corrL1L2L3", &jets_AK5PFclean_corrL1L2L3, &b_jets_AK5PFclean_corrL1L2L3);
    fChain->SetBranchAddress("jets_AK5PFclean_corrL1FastL2L3Residual", &jets_AK5PFclean_corrL1FastL2L3Residual, &b_jets_AK5PFclean_corrL1FastL2L3Residual);
    fChain->SetBranchAddress("jets_AK5PFclean_corrL1L2L3Residual", &jets_AK5PFclean_corrL1L2L3Residual, &b_jets_AK5PFclean_corrL1L2L3Residual);
-   fChain->SetBranchAddress("jets_AK5_corrL2L3", &jets_AK5_corrL2L3, &b_jets_AK5_corrL2L3);
-   fChain->SetBranchAddress("jets_AK5_corrL2L3Residual", &jets_AK5_corrL2L3Residual, &b_jets_AK5_corrL2L3Residual);
-   fChain->SetBranchAddress("jets_AK5_corrL1FastL2L3", &jets_AK5_corrL1FastL2L3, &b_jets_AK5_corrL1FastL2L3);
-   fChain->SetBranchAddress("jets_AK5_corrL1L2L3", &jets_AK5_corrL1L2L3, &b_jets_AK5_corrL1L2L3);
-   fChain->SetBranchAddress("jets_AK5_corrL1FastL2L3Residual", &jets_AK5_corrL1FastL2L3Residual, &b_jets_AK5_corrL1FastL2L3Residual);
-   fChain->SetBranchAddress("jets_AK5_corrL1L2L3Residual", &jets_AK5_corrL1L2L3Residual, &b_jets_AK5_corrL1L2L3Residual);
+   fChain->SetBranchAddress("jets_AK5PFclean_Uncert", &jets_AK5PFclean_Uncert, &b_jets_AK5PFclean_Uncert);
    fChain->SetBranchAddress("PU_zpositions", &PU_zpositions, &b_PU_zpositions);
    fChain->SetBranchAddress("PU_sumpT_lowpT", &PU_sumpT_lowpT, &b_PU_sumpT_lowpT);
    fChain->SetBranchAddress("PU_sumpT_highpT", &PU_sumpT_highpT, &b_PU_sumpT_highpT);
@@ -8878,9 +8847,10 @@ void EventCalculator::InitializeA(TChain *fChain)
    fChain->SetBranchAddress("pfmets_fullSignifCov00", &pfmets_fullSignifCov00, &b_pfmets_fullSignifCov00);
    fChain->SetBranchAddress("pfmets_fullSignifCov10", &pfmets_fullSignifCov10, &b_pfmets_fullSignifCov10);
    fChain->SetBranchAddress("pfmets_fullSignifCov11", &pfmets_fullSignifCov11, &b_pfmets_fullSignifCov11);
+   fChain->SetBranchAddress("softjetUp_dMEx", &softjetUp_dMEx, &b_softjetUp_dMEx);
+   fChain->SetBranchAddress("softjetUp_dMEy", &softjetUp_dMEy, &b_softjetUp_dMEy);
 
 }
-
 
 void EventCalculator::InitializeB(TChain *fChain)
 {
@@ -9023,6 +8993,7 @@ void EventCalculator::InitializeB(TChain *fChain)
    els_cx = 0;
    els_cy = 0;
    els_cz = 0;
+   els_PATpassConversionVeto = 0;
    jets_AK5PF_status = 0;
    jets_AK5PF_phi = 0;
    jets_AK5PF_pt = 0;
@@ -9562,6 +9533,16 @@ void EventCalculator::InitializeB(TChain *fChain)
    mus_tpfms_numvalPixelhits = 0;
    mus_dB = 0;
    mus_numberOfMatchedStations = 0;
+   pfTypeINoXYCorrmets_et = 0;
+   pfTypeINoXYCorrmets_phi = 0;
+   pfTypeINoXYCorrmets_ex = 0;
+   pfTypeINoXYCorrmets_ey = 0;
+   pfTypeINoXYCorrmets_gen_et = 0;
+   pfTypeINoXYCorrmets_gen_phi = 0;
+   pfTypeINoXYCorrmets_sign = 0;
+   pfTypeINoXYCorrmets_sumEt = 0;
+   pfTypeINoXYCorrmets_unCPhi = 0;
+   pfTypeINoXYCorrmets_unCPt = 0;
    pfTypeIType0mets_et = 0;
    pfTypeIType0mets_phi = 0;
    pfTypeIType0mets_ex = 0;
@@ -9706,6 +9687,7 @@ void EventCalculator::InitializeB(TChain *fChain)
    pf_els_cx = 0;
    pf_els_cy = 0;
    pf_els_cz = 0;
+   pf_els_PATpassConversionVeto = 0;
    pf_mus_energy = 0;
    pf_mus_et = 0;
    pf_mus_eta = 0;
@@ -10093,6 +10075,28 @@ void EventCalculator::InitializeB(TChain *fChain)
    tcmets_ex = 0;
    tcmets_ey = 0;
    tcmets_sumEt = 0;
+   tracks_chi2 = 0;
+   tracks_ndof = 0;
+   tracks_chg = 0;
+   tracks_pt = 0;
+   tracks_px = 0;
+   tracks_py = 0;
+   tracks_pz = 0;
+   tracks_eta = 0;
+   tracks_phi = 0;
+   tracks_d0dum = 0;
+   tracks_dz = 0;
+   tracks_vx = 0;
+   tracks_vy = 0;
+   tracks_vz = 0;
+   tracks_numvalhits = 0;
+   tracks_numlosthits = 0;
+   tracks_d0dumErr = 0;
+   tracks_dzErr = 0;
+   tracks_ptErr = 0;
+   tracks_etaErr = 0;
+   tracks_phiErr = 0;
+   tracks_highPurity = 0;
    model_params = 0;
 
    fChain->SetBranchAddress("NbeamSpot", &NbeamSpot, &b_NbeamSpot);
@@ -10234,6 +10238,7 @@ void EventCalculator::InitializeB(TChain *fChain)
    fChain->SetBranchAddress("els_cx", &els_cx, &b_els_cx);
    fChain->SetBranchAddress("els_cy", &els_cy, &b_els_cy);
    fChain->SetBranchAddress("els_cz", &els_cz, &b_els_cz);
+   fChain->SetBranchAddress("els_PATpassConversionVeto", &els_PATpassConversionVeto, &b_els_PATpassConversionVeto);
    fChain->SetBranchAddress("Njets_AK5PF", &Njets_AK5PF, &b_Njets_AK5PF);
    fChain->SetBranchAddress("jets_AK5PF_status", &jets_AK5PF_status, &b_jets_AK5PF_status);
    fChain->SetBranchAddress("jets_AK5PF_phi", &jets_AK5PF_phi, &b_jets_AK5PF_phi);
@@ -10785,6 +10790,17 @@ void EventCalculator::InitializeB(TChain *fChain)
    fChain->SetBranchAddress("mus_tpfms_numvalPixelhits", &mus_tpfms_numvalPixelhits, &b_mus_tpfms_numvalPixelhits);
    fChain->SetBranchAddress("mus_dB", &mus_dB, &b_mus_dB);
    fChain->SetBranchAddress("mus_numberOfMatchedStations", &mus_numberOfMatchedStations, &b_mus_numberOfMatchedStations);
+   fChain->SetBranchAddress("NpfTypeINoXYCorrmets", &NpfTypeINoXYCorrmets, &b_NpfTypeINoXYCorrmets);
+   fChain->SetBranchAddress("pfTypeINoXYCorrmets_et", &pfTypeINoXYCorrmets_et, &b_pfTypeINoXYCorrmets_et);
+   fChain->SetBranchAddress("pfTypeINoXYCorrmets_phi", &pfTypeINoXYCorrmets_phi, &b_pfTypeINoXYCorrmets_phi);
+   fChain->SetBranchAddress("pfTypeINoXYCorrmets_ex", &pfTypeINoXYCorrmets_ex, &b_pfTypeINoXYCorrmets_ex);
+   fChain->SetBranchAddress("pfTypeINoXYCorrmets_ey", &pfTypeINoXYCorrmets_ey, &b_pfTypeINoXYCorrmets_ey);
+   fChain->SetBranchAddress("pfTypeINoXYCorrmets_gen_et", &pfTypeINoXYCorrmets_gen_et, &b_pfTypeINoXYCorrmets_gen_et);
+   fChain->SetBranchAddress("pfTypeINoXYCorrmets_gen_phi", &pfTypeINoXYCorrmets_gen_phi, &b_pfTypeINoXYCorrmets_gen_phi);
+   fChain->SetBranchAddress("pfTypeINoXYCorrmets_sign", &pfTypeINoXYCorrmets_sign, &b_pfTypeINoXYCorrmets_sign);
+   fChain->SetBranchAddress("pfTypeINoXYCorrmets_sumEt", &pfTypeINoXYCorrmets_sumEt, &b_pfTypeINoXYCorrmets_sumEt);
+   fChain->SetBranchAddress("pfTypeINoXYCorrmets_unCPhi", &pfTypeINoXYCorrmets_unCPhi, &b_pfTypeINoXYCorrmets_unCPhi);
+   fChain->SetBranchAddress("pfTypeINoXYCorrmets_unCPt", &pfTypeINoXYCorrmets_unCPt, &b_pfTypeINoXYCorrmets_unCPt);
    fChain->SetBranchAddress("NpfTypeIType0mets", &NpfTypeIType0mets, &b_NpfTypeIType0mets);
    fChain->SetBranchAddress("pfTypeIType0mets_et", &pfTypeIType0mets_et, &b_pfTypeIType0mets_et);
    fChain->SetBranchAddress("pfTypeIType0mets_phi", &pfTypeIType0mets_phi, &b_pfTypeIType0mets_phi);
@@ -10932,6 +10948,7 @@ void EventCalculator::InitializeB(TChain *fChain)
    fChain->SetBranchAddress("pf_els_cx", &pf_els_cx, &b_pf_els_cx);
    fChain->SetBranchAddress("pf_els_cy", &pf_els_cy, &b_pf_els_cy);
    fChain->SetBranchAddress("pf_els_cz", &pf_els_cz, &b_pf_els_cz);
+   fChain->SetBranchAddress("pf_els_PATpassConversionVeto", &pf_els_PATpassConversionVeto, &b_pf_els_PATpassConversionVeto);
    fChain->SetBranchAddress("Npf_mus", &Npf_mus, &b_Npf_mus);
    fChain->SetBranchAddress("pf_mus_energy", &pf_mus_energy, &b_pf_mus_energy);
    fChain->SetBranchAddress("pf_mus_et", &pf_mus_et, &b_pf_mus_et);
@@ -11326,6 +11343,29 @@ void EventCalculator::InitializeB(TChain *fChain)
    fChain->SetBranchAddress("tcmets_ex", &tcmets_ex, &b_tcmets_ex);
    fChain->SetBranchAddress("tcmets_ey", &tcmets_ey, &b_tcmets_ey);
    fChain->SetBranchAddress("tcmets_sumEt", &tcmets_sumEt, &b_tcmets_sumEt);
+   fChain->SetBranchAddress("Ntracks", &Ntracks, &b_Ntracks);
+   fChain->SetBranchAddress("tracks_chi2", &tracks_chi2, &b_tracks_chi2);
+   fChain->SetBranchAddress("tracks_ndof", &tracks_ndof, &b_tracks_ndof);
+   fChain->SetBranchAddress("tracks_chg", &tracks_chg, &b_tracks_chg);
+   fChain->SetBranchAddress("tracks_pt", &tracks_pt, &b_tracks_pt);
+   fChain->SetBranchAddress("tracks_px", &tracks_px, &b_tracks_px);
+   fChain->SetBranchAddress("tracks_py", &tracks_py, &b_tracks_py);
+   fChain->SetBranchAddress("tracks_pz", &tracks_pz, &b_tracks_pz);
+   fChain->SetBranchAddress("tracks_eta", &tracks_eta, &b_tracks_eta);
+   fChain->SetBranchAddress("tracks_phi", &tracks_phi, &b_tracks_phi);
+   fChain->SetBranchAddress("tracks_d0dum", &tracks_d0dum, &b_tracks_d0dum);
+   fChain->SetBranchAddress("tracks_dz", &tracks_dz, &b_tracks_dz);
+   fChain->SetBranchAddress("tracks_vx", &tracks_vx, &b_tracks_vx);
+   fChain->SetBranchAddress("tracks_vy", &tracks_vy, &b_tracks_vy);
+   fChain->SetBranchAddress("tracks_vz", &tracks_vz, &b_tracks_vz);
+   fChain->SetBranchAddress("tracks_numvalhits", &tracks_numvalhits, &b_tracks_numvalhits);
+   fChain->SetBranchAddress("tracks_numlosthits", &tracks_numlosthits, &b_tracks_numlosthits);
+   fChain->SetBranchAddress("tracks_d0dumErr", &tracks_d0dumErr, &b_tracks_d0dumErr);
+   fChain->SetBranchAddress("tracks_dzErr", &tracks_dzErr, &b_tracks_dzErr);
+   fChain->SetBranchAddress("tracks_ptErr", &tracks_ptErr, &b_tracks_ptErr);
+   fChain->SetBranchAddress("tracks_etaErr", &tracks_etaErr, &b_tracks_etaErr);
+   fChain->SetBranchAddress("tracks_phiErr", &tracks_phiErr, &b_tracks_phiErr);
+   fChain->SetBranchAddress("tracks_highPurity", &tracks_highPurity, &b_tracks_highPurity);
    fChain->SetBranchAddress("run", &run, &b_run);
    fChain->SetBranchAddress("event", &event, &b_event);
    fChain->SetBranchAddress("lumiblock", &lumiblock, &b_lumiblock);
