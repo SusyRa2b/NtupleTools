@@ -817,6 +817,7 @@ bool addOverflow_=true;
 bool drawMCErrors_=false;
 bool renormalizeBins_=false;//no setter function
 bool owenColor_ = false;
+bool drawFilenameOnPlot_=false;
 
 int m0_=0;
 int m12_=0;
@@ -1213,6 +1214,8 @@ void renewCanvas(const TString opt="") {
 
   int canvasWidth = mainpadWidth;
   int canvasHeight = opt.Contains("ratio") ? mainpadHeight+ratiopadHeight : mainpadHeight;
+
+  //  if (drawCutsOnPlot_) canvasHeight += 50;
 
   thecanvas= new TCanvas("thecanvas","the canvas",canvasWidth,canvasHeight);
   thecanvas->cd()->SetRightMargin(0.04);
@@ -3523,6 +3526,17 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
   thecanvas->cd(mainPadIndex);
   if (doleg_)  leg->Draw();
   drawPlotHeader();
+
+  if (drawFilenameOnPlot_) {
+    if (text3!=0) delete text3;
+    text3=new TLatex(5,23,filename.Data());
+    text3->SetNDC();
+    text3->SetX(0.2);
+    text3->SetY(0.89);
+    text3->SetTextFont(42);
+    text3->SetTextSize(0.03);
+    text3->Draw();
+  }
 
   //  if (doSubtraction_) savename+="-MCSub";
   TString savename = filename;
