@@ -2349,6 +2349,30 @@ float EventCalculator::elePhiOfN(unsigned int n, const float ptthreshold) {
   return 0;
 }
 
+int EventCalculator::eleChargeOfN(unsigned int n, const float ptthreshold) {
+
+  unsigned int ngood=0;
+  for (unsigned int i=0; i < pf_els_pt->size(); i++) {
+    if(isGoodElectron(i,false,ptthreshold)){
+      ngood++;
+      if (ngood==n) return TMath::Nint(pf_els_charge->at(i));
+    }
+  }
+  return 0;
+}
+
+int EventCalculator::muonChargeOfN(unsigned int n, const float ptthreshold) {
+
+  unsigned int ngood=0;
+  for (unsigned int i=0; i < pf_mus_pt->size(); i++) {
+    if (isCleanMuon(i,ptthreshold)) {
+      ngood++;
+      if (ngood==n) return TMath::Nint(pf_mus_charge->at(i));
+    }
+  }
+  return 0;
+}
+
 float EventCalculator::muonPtOfN(unsigned int n, const float ptthreshold) {
 
   unsigned int ngood=0;
@@ -4325,7 +4349,7 @@ Long64_t EventCalculator::getNEventsGenerated() {
   // SKIM is applied, so this is now important
 
   //numbers come from 
-  //http://cms2.physics.ucsb.edu/cgi-bin/cfA.pl?Institute=ALL&process=ALL&version=v63
+  //http://cms2.physics.ucsb.edu/cgi-bin/cfA.pl?Institute=ALL&process=ALL&version=v65
   if (sampleName_.Contains("UCSB1403")) return 6923750 ;
 
 
@@ -4342,8 +4366,8 @@ double EventCalculator::getCrossSection(){
 
   //Drell Yan
   if (sampleName_.BeginsWith("DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph")) return 3503.71; //NNLO
-  if (sampleName_.BeginsWith("DYJetsToLL_HT-200To400_TuneZ2Star_8TeV-madgraph")) return 19.73; //LO PREP
-  if (sampleName_.BeginsWith("DYJetsToLL_HT-400ToInf_TuneZ2Star_8TeV-madgraph")) return 2.826; //LO PREP
+  if (sampleName_.BeginsWith("DYJetsToLL_HT-200To400_TuneZ2Star_8TeV-madgraph")) return 23.43; //from AN //19.73; //LO PREP
+  if (sampleName_.BeginsWith("DYJetsToLL_HT-400ToInf_TuneZ2Star_8TeV-madgraph")) return  3.36; //from AN // 2.826; //LO PREP
 
 
   //Pythia QCD - all LO PREP
@@ -4361,28 +4385,28 @@ double EventCalculator::getCrossSection(){
   if (sampleName_.BeginsWith("QCD_Pt-80to120_TuneZ2star_8TeV_pythia6")) return 1033680.0;
 
   //single top
-  if (sampleName_.BeginsWith("Tbar_t-channel_TuneZ2star_8TeV-powheg")) return 25;//LO PREP 
-  if (sampleName_.BeginsWith("Tbar_tW-channel-DR_TuneZ2star_8TeV-powheg")) return 10.7;//LO PREP
-  if (sampleName_.BeginsWith("T_t-channel_TuneZ2star_8TeV-powheg")) return 47.0;//LO PREP
-  if (sampleName_.BeginsWith("T_tW-channel-DR_TuneZ2star_8TeV-powheg")) return 10.7;//LO PREP
-  if (sampleName_.BeginsWith("T_s-channel_TuneZ2star_8TeV-powheg-tauola")) return 2.82; //LO PREP
-  if (sampleName_.BeginsWith("Tbar_s-channel_TuneZ2star_8TeV-powheg-tauola")) return 1.57; //LO PREP
+  if (sampleName_.BeginsWith("Tbar_t-channel_TuneZ2star_8TeV-powheg")) return 30.7; //from AN //25;//LO PREP 
+  if (sampleName_.BeginsWith("Tbar_tW-channel-DR_TuneZ2star_8TeV-powheg")) return 11.1;//from AN //10.7;//LO PREP
+  if (sampleName_.BeginsWith("T_t-channel_TuneZ2star_8TeV-powheg")) return 56.4;// from AN //47.0;//LO PREP
+  if (sampleName_.BeginsWith("T_tW-channel-DR_TuneZ2star_8TeV-powheg")) return 11.1; //from AN //10.7;//LO PREP
+  if (sampleName_.BeginsWith("T_s-channel_TuneZ2star_8TeV-powheg-tauola")) return 3.79; // from AN //2.82; //LO PREP
+  if (sampleName_.BeginsWith("Tbar_s-channel_TuneZ2star_8TeV-powheg-tauola")) return  1.76;//from AN //1.57; //LO PREP
 
   //W+Jets
-  if (sampleName_.BeginsWith("WJetsToLNu_HT-400ToInf_8TeV-madgraph")) return 25.22; //LO PREP
-  if (sampleName_.BeginsWith("WJetsToLNu_HT-250To300_8TeV-madgraph")) return 48.01; //LO PREP
-  if (sampleName_.BeginsWith("WJetsToLNu_HT-300To400_8TeV-madgraph")) return 38.3; //LO PREP
+  if (sampleName_.BeginsWith("WJetsToLNu_HT-250To300_8TeV-madgraph")) return 57.3; //from AN //48.01; //LO PREP
+  if (sampleName_.BeginsWith("WJetsToLNu_HT-300To400_8TeV-madgraph")) return 45.7; //from AN //38.3; //LO PREP
+  if (sampleName_.BeginsWith("WJetsToLNu_HT-400ToInf_8TeV-madgraph")) return 30.1; //from AN //25.22; //LO PREP
   if (sampleName_.BeginsWith("WJetsToLNu_TuneZ2Star_8TeV-madgraph")) return 36257.2; //NNLO
   //diboson
-  if (sampleName_.BeginsWith("WZ_TuneZ2star_8TeV_pythia6_tauola")) return 12.63; //LO PREP
-  if (sampleName_.BeginsWith("WW_TuneZ2star_8TeV_pythia6_tauola")) return 33.61; //LO PREP
+  if (sampleName_.BeginsWith("WZ_TuneZ2star_8TeV_pythia6_tauola")) return 32.3;// from AN //12.63; //LO PREP
+  if (sampleName_.BeginsWith("WW_TuneZ2star_8TeV_pythia6_tauola")) return 55; //from AN //33.61; //LO PREP
   if (sampleName_.BeginsWith("ZZ_TuneZ2star_8TeV_pythia6_tauola")) return 5.196; //LO PREP
 
   //Z -> nu nu  
-  if (sampleName_.BeginsWith("ZJetsToNuNu_100_HT_200_TuneZ2Star_8TeV_madgraph")) return 160.3 ; //LO PREP
-  if (sampleName_.BeginsWith("ZJetsToNuNu_200_HT_400_TuneZ2Star_8TeV_madgraph")) return 41.49; //LO PREP
-  if (sampleName_.BeginsWith("ZJetsToNuNu_400_HT_inf_TuneZ2Star_8TeV_madgraph")) return 5.274; //LO PREP
-  if (sampleName_.BeginsWith("ZJetsToNuNu_50_HT_100_TuneZ2Star_8TeV_madgraph")) return 381.2; //LO PREP
+  if (sampleName_.BeginsWith("ZJetsToNuNu_100_HT_200_TuneZ2Star_8TeV_madgraph")) return 160.3 *1.19 ; //LO PREP times DY k-factor
+  if (sampleName_.BeginsWith("ZJetsToNuNu_200_HT_400_TuneZ2Star_8TeV_madgraph")) return 41.49 *1.19; //LO PREP times DY k-factor
+  if (sampleName_.BeginsWith("ZJetsToNuNu_400_HT_inf_TuneZ2Star_8TeV_madgraph")) return 5.274 *1.19; //LO PREP times DY k-factor
+  if (sampleName_.BeginsWith("ZJetsToNuNu_50_HT_100_TuneZ2Star_8TeV_madgraph")) return 381.2  *1.19; //LO PREP times DY k-factor
 
   //LM
   if (sampleName_.BeginsWith("SUSY_LM9_sftsht_8TeV"))          return 9.287; //LO 8TeV from PREP
@@ -4980,6 +5004,7 @@ float EventCalculator::jetTagEff(unsigned int ijet, TH1F* h_btageff, TH1F* h_cta
 	else assert(0);
       }
       else { //light flavor [ see https://twiki.cern.ch/twiki/pub/CMS/BtagPOG/SFlightFuncs.C ]
+	//need a bug fix here for pt>670 ! FIXME
 	float SF=0;
 	if ( eta < 0.8 ) {
 	  if       (theBTagEffType_ == kBTagEff04 && (modifier==kBTagModifier0 || modifier==kHFdown||modifier==kHFup))    SF = ((1.06182+(0.000617034*pt))+(-1.5732e-06*(pt*pt)))+(3.02909e-10*(pt*(pt*pt)));
@@ -5324,7 +5349,9 @@ void EventCalculator::reducedTree(TString outputpath) {
   float mjjb1,mjjb2,topPT1,topPT2;
 
   float eleet1, elephi1, eleeta1, muonpt1, muonphi1, muoneta1;
+  int elecharge1, muoncharge1;
   float eleet2, elephi2, eleeta2, muonpt2, muonphi2, muoneta2;
+  int elecharge2, muoncharge2;
   float muoniso1,muonchhadiso1,muonphotoniso1,muonneutralhadiso1;
   float taupt1, taueta1;
   float eleRelIso,muonRelIso;
@@ -5876,9 +5903,11 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("eleet1",&eleet1,"eleet1/F");
   reducedTree.Branch("elephi1",&elephi1,"elephi1/F");
   reducedTree.Branch("eleeta1",&eleeta1,"eleeta1/F");
+  reducedTree.Branch("elecharge1",&elecharge1,"elecharge1/F");
   reducedTree.Branch("muonpt1",&muonpt1,"muonpt1/F");
   reducedTree.Branch("muonphi1",&muonphi1,"muonphi1/F");
   reducedTree.Branch("muoneta1",&muoneta1,"muoneta1/F");
+  reducedTree.Branch("muoncharge1",&muoncharge1,"muoncharge1/F");
   reducedTree.Branch("muoniso1",&muoniso1,"muoniso1/F");
   reducedTree.Branch("muonchhadiso1",&muonchhadiso1,"muonchhadiso1/F");
   reducedTree.Branch("muonphotoniso1",&muonphotoniso1,"muonphotoniso1/F");
@@ -6476,10 +6505,12 @@ Also the pdfWeightSum* histograms that are used for LM9.
       eleet1 = elePtOfN(1,5);
       elephi1 = elePhiOfN(1,5);
       eleeta1 = eleEtaOfN(1,5);
+      elecharge1 = eleChargeOfN(1,5);
       muonpt1 = muonPtOfN(1,5);
       muonphi1 = muonPhiOfN(1,5);
       muoneta1 = muonEtaOfN(1,5);
       muoniso1 = muonIsoOfN(1,5);
+      muoncharge1 = muonChargeOfN(1,5);
       muonchhadiso1 = muonChHadIsoOfN(1,5);
       muonphotoniso1 = muonPhotonIsoOfN(1,5);
       muonneutralhadiso1 = muonNeutralHadIsoOfN(1,5);

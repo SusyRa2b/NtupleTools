@@ -238,6 +238,9 @@ public:
   float eleEtaOfN(unsigned int n, const float ptthreshold=10);
   float elePhiOfN(unsigned int n, const float ptthreshold=10);
 
+  int eleChargeOfN(unsigned int n, const float ptthreshold=10) ;
+  int muonChargeOfN(unsigned int n, const float ptthreshold=10) ;
+
   float muonPtOfN(unsigned int n, const float ptthreshold=10);
   float muonEtaOfN(unsigned int n, const float ptthreshold=10);
   float muonPhiOfN(unsigned int n, const float ptthreshold=10);
