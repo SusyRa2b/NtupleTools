@@ -4351,8 +4351,17 @@ Long64_t EventCalculator::getNEventsGenerated() {
   //numbers come from 
   //http://cms2.physics.ucsb.edu/cgi-bin/cfA.pl?Institute=ALL&process=ALL&version=v65
   if (sampleName_.Contains("UCSB1403")) return 6923750 ;
+  if (sampleName_.Contains("UCSB1405")) return 1699486 ;
+  if (sampleName_.Contains("UCSB1406")) return 1647807 ;
+  if (sampleName_.Contains("UCSB1422")) return 139974 ;
+  if (sampleName_.Contains("UCSB1421")) return 259961 ;
+  if (sampleName_.Contains("UCSB1425")) return 5927300 ;
+  if (sampleName_.Contains("UCSB1391")) return 1006928 ;
+  if (sampleName_.Contains("UCSB1389")) return 3789889 ;
+  if (sampleName_.Contains("UCSB1390")) return 1703863 ;
+  if (sampleName_.Contains("UCSB1388")) return 30459503 ;
 
-
+  
   cout<<"[getNEventsGenerated] unknown sample "<<sampleName_<<endl;
   assert(0);
   return 1;
