@@ -5263,7 +5263,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   UInt_t minDeltaPhi_chosenJet, minDeltaPhiN_chosenJet;
   UInt_t maxJetMis_chosenJet, maxJetFracMis_chosenJet;
   float minDeltaPhiN_withLepton;
-  float minDeltaPhiN_asin;
+  float minDeltaPhiN_asin, deltaPhiN_asin1, deltaPhiN_asin2, deltaPhiN_asin3;
 
   float maxJetMis, max2JetMis, maxJetMisAll30, max2JetMisAll30;
   float maxJetFracMis, max2JetFracMis, maxJetFracMisAll30, max2JetFracMisAll30;
@@ -5784,6 +5784,9 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("deltaT3", &deltaT3, "deltaT3/F");
 
   reducedTree.Branch("minDeltaPhiN_asin", &minDeltaPhiN_asin, "minDeltaPhiN_asin/F");
+  reducedTree.Branch("deltaPhiN_asin1", &deltaPhiN_asin1, "deltaPhiN_asin1/F");
+  reducedTree.Branch("deltaPhiN_asin2", &deltaPhiN_asin2, "deltaPhiN_asin2/F");
+  reducedTree.Branch("deltaPhiN_asin3", &deltaPhiN_asin3, "deltaPhiN_asin3/F");
 
   //variables for qcd studies. don't include if this isn't QCD MC (just to save time and space)
   if (isSampleQCD() ) {
@@ -6373,9 +6376,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
       diffDeltaPhi = maxDeltaPhi - minDeltaPhi;
             
       minDeltaPhiN = getMinDeltaPhiMETN(3);
-      deltaPhiN1 = getDeltaPhiMETN(0);
-      deltaPhiN2 = getDeltaPhiMETN(1);
-      deltaPhiN3 = getDeltaPhiMETN(2);
+
 
       deltaPhi1 = getDeltaPhiMET(1,50,false);
       deltaPhi2 = getDeltaPhiMET(2,50,false);
@@ -6425,6 +6426,9 @@ Also the pdfWeightSum* histograms that are used for LM9.
       } //don't calculate for non-qcd samples
 
       minDeltaPhiN_asin = getMinDeltaPhiMETN(3,50,2.4,true,30,2.4,true, false,false,false,true);
+      deltaPhiN_asin1 = getDeltaPhiMETN(0,50,2.4,true,30,2.4,true, false,false,true);
+      deltaPhiN_asin2 = getDeltaPhiMETN(1,50,2.4,true,30,2.4,true, false,false,true);
+      deltaPhiN_asin3 = getDeltaPhiMETN(2,50,2.4,true,30,2.4,true, false,false,true);
 
       minDeltaPhiN_Luke = getMinDeltaPhiNMET(3);
       maxDeltaPhiN_Luke = getMaxDeltaPhiNMET(3);
