@@ -4375,16 +4375,16 @@ Long64_t EventCalculator::getNEventsGenerated() {
   if (sampleName_.Contains("UCSB1422")) return 139974 ;  //tbar s channel
   if (sampleName_.Contains("UCSB1421")) return 259961 ;  //t s channel
   if (sampleName_.Contains("UCSB1451")) return 493460 ;  //tbar tW channel
-                                                         //t tW channel
+  if (sampleName_.Contains("UCSB1455")) return 497658 ;  //t tW channel
 							 //tbar t channel
 							 //t t channel
   if (sampleName_.Contains("UCSB1438")) return 5995944; // QCD 50-80
                                                         //QCD 80-120
 							//QCD120-170
-							//QCD170-300
+  if (sampleName_.Contains("UCSB1453")) return 5814398 ;//QCD170-300
   if (sampleName_.Contains("UCSB1425")) return 5927300 ; //QCD 300-470
   if (sampleName_.Contains("UCSB1446")) return 3994848 ; //QCD 470-600
-                                                         //QCD 600-800
+  if (sampleName_.Contains("UCSB1447")) return 3992760 ; //QCD 600-800
 							 //QCD 800-1000
   if (sampleName_.Contains("UCSB1448")) return 1964088; //QCD 1000-1400
   if (sampleName_.Contains("UCSB1449")) return 2000062; //QCD 1400-1800
