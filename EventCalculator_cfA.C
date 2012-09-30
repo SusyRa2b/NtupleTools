@@ -4385,7 +4385,7 @@ Long64_t EventCalculator::getNEventsGenerated() {
   if (sampleName_.Contains("UCSB1425")) return 5927300 ; //QCD 300-470
   if (sampleName_.Contains("UCSB1446")) return 3994848 ; //QCD 470-600
   if (sampleName_.Contains("UCSB1447")) return 3992760 ; //QCD 600-800
-							 //QCD 800-1000
+  if (sampleName_.Contains("UCSB1459")) return 3998563 ; //QCD 800-1000
   if (sampleName_.Contains("UCSB1448")) return 1964088; //QCD 1000-1400
   if (sampleName_.Contains("UCSB1449")) return 2000062; //QCD 1400-1800
   if (sampleName_.Contains("UCSB1450")) return 977586 ; // QCD 1800-
@@ -4397,7 +4397,7 @@ Long64_t EventCalculator::getNEventsGenerated() {
   if (sampleName_.Contains("UCSB1390")) return 1703863 ; //DY 400-
   if (sampleName_.Contains("UCSB1388")) return 30459503 ;//DY inclusive
   if (sampleName_.Contains("UCSB1424")) return 9799908 ; //ZZ
-                                                         //WW
+  if (sampleName_.Contains("UCSB1458")) return 10000431; //WW
   if (sampleName_.Contains("UCSB1445")) return 10000283 ; //WZ
 
   
