@@ -6190,7 +6190,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
     //idea -- we should do a dataset-aware OR of the two groups of physics triggers here, to allow easy combination of the MET and HTMHT datasets
     bool passMETtriggers = triggerlist["DiCentralPFJet50_PFMET80"].pass || triggerlist["DiCentralPFNoPUJet50_PFMETORPFMETNoMu80"].pass;
     bool passHTMHTtriggers = triggerlist["PFHT350_PFMET100"].pass || triggerlist["PFNoPUHT350_PFMET100"].pass;
-    if (sampleName_.BeginsWith("HT_Run2012A") || sampleName_.BeginsWith("HTMHT_Run2012B")) {
+    if (sampleName_.BeginsWith("HT_Run2012A") || sampleName_.BeginsWith("HTMHT_Run2012B")|| sampleName_.BeginsWith("HTMHT_Run2012C")) {
       //from MHT dataset, use only events that don't pass the MET triggers
       cutTrigger =   	passHTMHTtriggers && 	(!passMETtriggers);
     }
