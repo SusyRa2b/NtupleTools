@@ -377,6 +377,72 @@ namespace pu {
 
 
   //https://twiki.cern.ch/twiki/bin/view/CMS/PileupJSONFileforData
+// command run for all pre technical stop data (ku):
+// pileupCalc.py -i /afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Prompt/Cert_190456-203002_8TeV_PromptReco_Collisions12_JSON.txt --inputLumiJSON /afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/PileUp/pileup_JSON_DCSONLY_190389-203002_corr.txt --calcMode true --minBiasXsec 73500 --maxPileupBin 60 --numPileupBins 60 MyDataPileupHistogram.root
+
+  float RunsThrough203002[60] = {
+    11267.8,	      
+    17830.4,	      
+    31465.3,	      
+    203836,	      
+    453856,	      
+    884081,	      
+    7.4738e+06,       
+    2.6826e+07,       
+    6.40799e+07,      
+    1.28058e+08,      
+    2.25003e+08,      
+    3.60398e+08,      
+    5.02337e+08,      
+    6.02038e+08,      
+    6.55226e+08,      
+    6.91904e+08,      
+    7.21875e+08,      
+    7.34934e+08,      
+    7.27792e+08,      
+    7.09462e+08,      
+    6.84817e+08,      
+    6.56681e+08,      
+    6.27203e+08,      
+    5.97767e+08,      
+    5.67254e+08,      
+    5.29928e+08,      
+    4.80151e+08,      
+    4.17443e+08,      
+    3.46324e+08,      
+    2.73094e+08,      
+    2.03778e+08,      
+    1.43532e+08,      
+    9.56936e+07,      
+    6.08551e+07,      
+    3.72323e+07,      
+    2.20123e+07,      
+    1.25469e+07,      
+    6.84526e+06,      
+    3.54681e+06,      
+    1.73821e+06,      
+    807241,	      
+    358102,	      
+    153605,	      
+    64548.6,	      
+    26851,	      
+    11118.1,	      
+    4586.4,	      
+    1881.03,	      
+    764.753,	      
+    307.439,	      
+    122.04,	      
+    47.8314,	      
+    18.5277,	      
+    7.10434,	      
+    2.70077,	      
+    1.01883,	      
+    0.381335,	      
+    0.141453,	      
+    0.0519055,
+    107717	};		      
+
+
   //very crude first attempt...just trying to get something
   //at command line:
 /*
@@ -450,8 +516,7 @@ Then copy/paste here
     0.0140697,
     0.00469646,
     0.00153769,
-    157660
-  };
+    157660  };
 
   float RunsThrough199703[60] = {
     9676.51,

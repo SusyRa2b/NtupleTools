@@ -4462,6 +4462,7 @@ double EventCalculator::getCrossSection(){
   //ttbar
   if (sampleName_.BeginsWith("TTJets_TuneZ2star_8TeV-madgraph-tauola") )                return 234;  //approx NNLO
   if (sampleName_.BeginsWith("TTJets_MassiveBinDECAY_TuneZ2star_8TeV-madgraph-tauola")) return 234;  //approx NNLO
+  if (sampleName_.BeginsWith("TT_CT10_TuneZ2star_8TeV-powheg")) return 234;  //approx NNLO
 
   if (sampleName_.BeginsWith("TTTo2L2Nu2B_8TeV-powheg-pythia6_Summer12")) return 22.14 *(234.0 / 136.3); //PREP corrected to NNLO
 
@@ -5566,7 +5567,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
   std::vector< float > MCDist;
   for( int i=0; i<60; ++i) {
     //1D reweighting -- all I have done for 2012 (not sure if 3D is used anymore)
-    if (puReweightIs1D)    DataDist.push_back(pu::RunsThrough202016[i]);
+    if (puReweightIs1D)    DataDist.push_back(pu::RunsThrough203002[i]);
     //for 3dPU reweighting 
     //    else DataDist2011.push_back(pu::TrueDist2011_f[i]);
     if (sampleName_.Contains("PU_S7"))  MCDist.push_back(pu::Summer2012[i]);
