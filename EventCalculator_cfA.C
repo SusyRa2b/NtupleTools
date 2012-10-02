@@ -4372,6 +4372,7 @@ Long64_t EventCalculator::getNEventsGenerated() {
   if (sampleName_.Contains("UCSB1443")) return 1634582 ; //W 250-300
   if (sampleName_.Contains("UCSB1405")) return 1699486 ; //W 300-400
   if (sampleName_.Contains("UCSB1406")) return 1647807 ; //W 400-
+  if (sampleName_.Contains("UCSB1464")) return 1647807 ; //W 400- (52X)
   if (sampleName_.Contains("UCSB1422")) return 139974 ;  //tbar s channel
   if (sampleName_.Contains("UCSB1421")) return 259961 ;  //t s channel
   if (sampleName_.Contains("UCSB1451")) return 493460 ;  //tbar tW channel
@@ -4399,7 +4400,6 @@ Long64_t EventCalculator::getNEventsGenerated() {
   if (sampleName_.Contains("UCSB1424")) return 9799908 ; //ZZ
   if (sampleName_.Contains("UCSB1458")) return 10000431; //WW
   if (sampleName_.Contains("UCSB1445")) return 10000283 ; //WZ
-
   
   cout<<"[getNEventsGenerated] unknown sample "<<sampleName_<<endl;
   assert(0);
