@@ -5227,7 +5227,13 @@ void EventCalculator::reducedTree(TString outputpath) {
 
   //JSON file reading. For now the JSON file must be called GoldenJSON.txt
   //not clear to me if a sym link will be good enough w.r.t. the tarball, etc process
+  // from /afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Prompt/Cert_190456-203002_8TeV_PromptReco_Collisions12_JSON.txt
   vector< vector<int> > VRunLumi = MakeVRunLumi("GoldenJSON.txt");
+  // from /afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Reprocessing/Cert_190456-196531_8TeV_13Jul2012ReReco_Collisions12_JSON.txt
+  vector< vector<int> > VRunLumiJuly13 = MakeVRunLumi("July13JSON.txt");
+  // from /afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Reprocessing/Cert_198022-198523_8TeV_24Aug2012ReReco_Collisions12_JSON.txt
+  vector< vector<int> > VRunLumiAug24 = MakeVRunLumi("Aug24JSON.txt");
+
 
   //open output file
   TString outfilename="reducedTree";
@@ -6212,7 +6218,13 @@ Also the pdfWeightSum* histograms that are used for LM9.
     //stuff that we only do on data....
     bool      passJSON=true;
     //check the JSON file for data
-    if (isRealData)   passJSON=  inJSON(VRunLumi,runNumber,lumiSection);
+    if (isRealData)   {
+      // use appropriate rereco json as needed
+      if ( (runNumber>=190456) && (runNumber<=196531) ) passJSON=  inJSON(VRunLumiJuly13,runNumber,lumiSection);
+      else if ( (runNumber>=198022) && (runNumber<=198913) ) passJSON=  inJSON(VRunLumiAug24,runNumber,lumiSection);
+      // otherwise use prompt reco json
+      else passJSON=  inJSON(VRunLumi,runNumber,lumiSection);    
+    }
 
     //keep some tallies of why we failed the skim
     if (passAnyTrigger)  skimCounter.Fill(2); else skimCounter.Fill(3);
