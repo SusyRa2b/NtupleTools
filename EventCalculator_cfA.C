@@ -29,6 +29,7 @@
 
 using namespace std;
 
+
 EventCalculator::EventCalculator(const TString & sampleName, const vector<string> inputFiles, jetType theJetType, METType theMETType) :
   sampleName_(sampleName),
   sampleIsSignal_(false),
@@ -5529,8 +5530,8 @@ Also the pdfWeightSum* histograms that are used for LM9.
   else if (theScanType_==kSMS) {
     //will need a loop over scan points. probably i need to do the loop by hand.
     //for each scan point generate a histogram, as above
-    for (int im0= 0; im0<=1500; im0+=5) {
-      for (int im12= 0; im12<=1500; im12+=5) {
+    for (int im0= 0; im0<= 2000; im0+=25) {
+      for (int im12= 0; im12<= 2000; im12+=25) {
 	TString histoname = "scanProcessTotals"; 
 	histoname += "_";
 	histoname +=im0;
@@ -5564,7 +5565,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
   else assert(0);
 
   TH2D* scanSMSngen=0; //should be redundant to the scanProcessTotals histograms, but let's keep it for now
-  if (theScanType_==kSMS) scanSMSngen = new TH2D("scanSMSngen","number of generated events",150,0,1500,150,0,1500); //mgluino,mLSP
+  if (theScanType_==kSMS) scanSMSngen = new TH2D("scanSMSngen","number of generated events",80,0,2000,80,0,2000); //mgluino,mLSP
 
   const  bool puReweightIs1D = true;//((theScanType_!=kNotScan) || sampleName_.Contains("QCD")); //CFA -- no 3D for now
 
