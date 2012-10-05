@@ -717,9 +717,9 @@ TString EventCalculator::stripTriggerVersion(const TString & fullname, int & ver
   return stripped;
 }
 
-bool EventCalculator::passHLT(map<TString,triggerData> & triggerlist) {
+bool EventCalculator::passHLT(map<TString,triggerData> & triggerlist, bool alwaysPassMc) {
 
-  if ( !isSampleRealData() ) {
+  if ( !isSampleRealData() && alwaysPassMc) {
     for ( map<TString,triggerData>::iterator ii=triggerlist.begin(); ii!=triggerlist.end(); ++ii) ii->second.pass = true;
     return true;
   }
@@ -5384,6 +5384,8 @@ void EventCalculator::reducedTree(TString outputpath) {
   triggerlist["SixJet45"]=triggerData();
   triggerlist["QuadJet80"]=triggerData();
 
+  //want a copy of triggerlist, for storing mc trigger results
+  map<TString, triggerData > triggerlist_mc(triggerlist);
 
   int njets, njets30, nbjets, nbjets30,ntruebjets, nElectrons, nMuons, nTaus;
   int nbjetsSSVM,nbjetsTCHET,nbjetsSSVHPT,nbjetsTCHPT,nbjetsTCHPM,nbjetsCSVM,nbjetsCSVL; 
@@ -5743,6 +5745,14 @@ Also the pdfWeightSum* histograms that are used for LM9.
 
   for ( map<TString,triggerData>::iterator itrigger = triggerlist.begin() ; itrigger!=triggerlist.end() ; ++itrigger) {
     TString treename = "pass_";
+    treename+=itrigger->first;
+    TString withcode = treename+"/O";
+    reducedTree.Branch(treename,&(itrigger->second.pass),withcode);
+  }
+
+  //now for the mc trigger results
+  for ( map<TString,triggerData>::iterator itrigger = triggerlist_mc.begin() ; itrigger!=triggerlist_mc.end() ; ++itrigger) {
+    TString treename = "passMC_";
     treename+=itrigger->first;
     TString withcode = treename+"/O";
     reducedTree.Branch(treename,&(itrigger->second.pass),withcode);
@@ -6192,7 +6202,8 @@ Also the pdfWeightSum* histograms that are used for LM9.
     MET=getMET();
     STeff = ST + MET; //obviously STeff is always bigger than ST
 
-    bool passAnyTrigger=passHLT(triggerlist); //evaluate all trigger decisions
+    bool passAnyTrigger=passHLT(triggerlist,true); //evaluate all trigger decisions
+    passHLT(triggerlist_mc,false); //re-evaluate, storing real results for mc (will be a duplicate for data)
 
     //idea -- we should do a dataset-aware OR of the two groups of physics triggers here, to allow easy combination of the MET and HTMHT datasets
     bool passMETtriggers = triggerlist["DiCentralPFJet50_PFMET80"].pass || triggerlist["DiCentralPFNoPUJet50_PFMETORPFMETNoMu80"].pass;

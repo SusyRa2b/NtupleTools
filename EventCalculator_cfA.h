@@ -103,7 +103,7 @@ public:
 
 
   TString stripTriggerVersion(const TString & fullname, int & version);
-  bool passHLT(std::map<TString,triggerData> & triggerlist);
+  bool passHLT(std::map<TString,triggerData> & triggerlist, bool alwaysPassMc);
   //  bool passUtilityHLT(int &version, int &prescale); //deprecated
   bool passUtilityPrescaleModuleHLT();
   float getHLTHTeff(float offHT);
