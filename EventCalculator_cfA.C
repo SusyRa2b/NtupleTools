@@ -4979,6 +4979,7 @@ float EventCalculator::jetTagEff(unsigned int ijet, TH1F* h_btageff, TH1F* h_cta
 
   float tageff=0;
   const float pt = getJetPt(ijet);
+  const float x = pt>670 ? 670 : pt;
   const float eta = fabs(jets_AK5PF_eta->at(ijet));
   int flavor = jets_AK5PF_partonFlavour->at(ijet);
 
@@ -4990,14 +4991,14 @@ float EventCalculator::jetTagEff(unsigned int ijet, TH1F* h_btageff, TH1F* h_cta
 
       if (abs(flavor) ==4 || abs(flavor)==5) { //heavy flavor
 	float errFactor = 1;
-	float x=pt;
+
 	// Tagger: CSVM within 30 < pt < 670 GeV, abs(eta) < 2.4, x = pt
-	if (x >670) { //use SF for 670 with twice the errors
-	  x=670;
+	if (pt >670) { //use SF for 670 with twice the errors
 	  errFactor=2;
 	}
 	if (abs(flavor) == 4)  errFactor=2; //charm has double the errors   "SFc = SFb with twice the quoted uncertainty"
 
+	//calculate sf using 'x' which is copy of pT with upper limit of 670
 	float  SFb = 0.6981*((1.+(0.414063*x))/(1.+(0.300155*x)));
 
 	//apply FASTSTIM correction where needed
@@ -5046,43 +5047,56 @@ float EventCalculator::jetTagEff(unsigned int ijet, TH1F* h_btageff, TH1F* h_cta
 	  if ((theBTagEffType_ == kBTagEffup4) || (modifier==kHFup)) SFb += myErr;
 	  else if ((theBTagEffType_ == kBTagEffdown4) || (modifier==kHFdown)) SFb -= myErr;
 	  else assert(0);
-	}
+	} //if syst variation
 
 	//	cout<<"jet flavor, pt, SF = "<<abs(flavor)<<" "<<pt<<" "<<SFb<<endl;
 	if      (abs(flavor) == 5) tageff = extraSFb * SFb * h_btageff->GetBinContent( h_btageff->FindBin( pt ) );
 	else if (abs(flavor) == 4) tageff = extraSFc * SFb * h_ctageff->GetBinContent( h_ctageff->FindBin( pt ) );
 	else assert(0);
-      }
+      } // if heavy flavor
       else { //light flavor [ see https://twiki.cern.ch/twiki/pub/CMS/BtagPOG/SFlightFuncs.C ]
-	//need a bug fix here for pt>670 ! FIXME
+	//note that these are valid only to 670 GeV, so use 'x' and not 'pt'
 	float SF=0;
+	float nominalSF=0;
+
 	if ( eta < 0.8 ) {
-	  if       (theBTagEffType_ == kBTagEff04 && (modifier==kBTagModifier0 || modifier==kHFdown||modifier==kHFup))    SF = ((1.06182+(0.000617034*pt))+(-1.5732e-06*(pt*pt)))+(3.02909e-10*(pt*(pt*pt)));
-	  else  if (theBTagEffType_ == kBTagEffdown4 || (modifier==kLFdown)) SF = ((0.972455+(7.51396e-06*pt))+(4.91857e-07*(pt*pt)))+(-1.47661e-09*(pt*(pt*pt)));
-	  else  if (theBTagEffType_ == kBTagEffup4 || (modifier==kLFup))   SF = ((1.15116+(0.00122657*pt))+(-3.63826e-06*(pt*pt)))+(2.08242e-09*(pt*(pt*pt)));
+	  nominalSF =  ((1.06182+(0.000617034*x))+(-1.5732e-06*(x*x)))+(3.02909e-10*(x*(x*x))); // SF without + or - variation in mistag rate
+	  if       (theBTagEffType_ == kBTagEff04 && (modifier==kBTagModifier0 || modifier==kHFdown||modifier==kHFup))    SF = nominalSF;
+	  else  if (theBTagEffType_ == kBTagEffdown4 || (modifier==kLFdown)) SF = ((0.972455+(7.51396e-06*x))+(4.91857e-07*(x*x)))+(-1.47661e-09*(x*(x*x)));
+	  else  if (theBTagEffType_ == kBTagEffup4 || (modifier==kLFup))   SF = ((1.15116+(0.00122657*x))+(-3.63826e-06*(x*x)))+(2.08242e-09*(x*(x*x)));
 	}
 	else if (eta>=0.8 && eta<1.6) {
-	  if       (theBTagEffType_ == kBTagEff04 && (modifier==kBTagModifier0 || modifier==kHFdown||modifier==kHFup))    SF = ((1.111+(-9.64191e-06*pt))+(1.80811e-07*(pt*pt)))+(-5.44868e-10*(pt*(pt*pt)));
-	  else  if (theBTagEffType_ == kBTagEffdown4 || (modifier==kLFdown)) SF = ((1.02055+(-0.000378856*pt))+(1.49029e-06*(pt*pt)))+(-1.74966e-09*(pt*(pt*pt)));
-	  else  if (theBTagEffType_ == kBTagEffup4 || (modifier==kLFup))   SF = ((1.20146+(0.000359543*pt))+(-1.12866e-06*(pt*pt)))+(6.59918e-10*(pt*(pt*pt)));
+	  nominalSF = ((1.111+(-9.64191e-06*x))+(1.80811e-07*(x*x)))+(-5.44868e-10*(x*(x*x)));
+	  if       (theBTagEffType_ == kBTagEff04 && (modifier==kBTagModifier0 || modifier==kHFdown||modifier==kHFup))    SF = nominalSF;
+	  else  if (theBTagEffType_ == kBTagEffdown4 || (modifier==kLFdown)) SF = ((1.02055+(-0.000378856*x))+(1.49029e-06*(x*x)))+(-1.74966e-09*(x*(x*x)));
+	  else  if (theBTagEffType_ == kBTagEffup4 || (modifier==kLFup))   SF = ((1.20146+(0.000359543*x))+(-1.12866e-06*(x*x)))+(6.59918e-10*(x*(x*x)));
 	}
 	else if (eta>=1.6 && eta<=2.4) {
-	  if       (theBTagEffType_ == kBTagEff04 && (modifier==kBTagModifier0 || modifier==kHFdown||modifier==kHFup))    SF = ((1.08498+(-0.000701422*pt))+(3.43612e-06*(pt*pt)))+(-4.11794e-09*(pt*(pt*pt)));
-	  else  if (theBTagEffType_ == kBTagEffdown4 || (modifier==kLFdown)) SF = ((0.983476+(-0.000607242*pt))+(3.17997e-06*(pt*pt)))+(-4.01242e-09*(pt*(pt*pt)));
-	  else  if (theBTagEffType_ == kBTagEffup4 || (modifier==kLFup))   SF = ((1.18654+(-0.000795808*pt))+(3.69226e-06*(pt*pt)))+(-4.22347e-09*(pt*(pt*pt)));
+	  nominalSF = ((1.08498+(-0.000701422*x))+(3.43612e-06*(x*x)))+(-4.11794e-09*(x*(x*x)));
+	  if       (theBTagEffType_ == kBTagEff04 && (modifier==kBTagModifier0 || modifier==kHFdown||modifier==kHFup))    SF = nominalSF;
+	  else  if (theBTagEffType_ == kBTagEffdown4 || (modifier==kLFdown)) SF = ((0.983476+(-0.000607242*x))+(3.17997e-06*(x*x)))+(-4.01242e-09*(x*(x*x)));
+	  else  if (theBTagEffType_ == kBTagEffup4 || (modifier==kLFup))   SF = ((1.18654+(-0.000795808*x))+(3.69226e-06*(x*x)))+(-4.22347e-09*(x*(x*x)));
 	}
 	//design question -- what do to for jets at eta>2.4? assert? or return tageff=0?
-	//i guess tageff 0 makes the most sense
+	//i guess tageff 0 makes the most sense, so leave SF = 0
 
 	//2012 -- modify the SF by a 2012/2011 factor given here: https://twiki.cern.ch/twiki/pub/CMS/BtagPOG/SFlighCorrFunc_2012_06_06.txt
-	SF *= (1.10422 + (-0.000523856)*pt + (1.14251e-06)*pt*pt);
+	SF *= (1.10422 + (-0.000523856)*x + (1.14251e-06)*x*x);
+	nominalSF *=  (1.10422 + (-0.000523856)*x + (1.14251e-06)*x*x);
+
+	//for pT > 670, need to double the uncertainty
+	if (pt>670) {
+	  float deltaSF = SF - nominalSF; //here is the nominal uncertainty
+	  deltaSF *= 2; //double it
+	  SF = nominalSF + deltaSF;
+	}
 
 	tageff = SF * extraSFl * h_ltageff->GetBinContent( h_ltageff->FindBin( pt )); 
 	//	cout<<"jet flavor, pt, SF = "<<abs(flavor)<<" "<<pt<<" "<<SF<<endl;
 
-      }
+      } // if light flavor
 
-    }
+    } //if BTV-11-004 prescription
     else {
 
       assert(modifier==kBTagModifier0);// not implementing this for the old options
@@ -5331,6 +5345,7 @@ void EventCalculator::reducedTree(TString outputpath) {
 
   //triggers
   bool cutTrigger;
+  bool cutTrigger2;
   bool pass_utilityHLT;
   UInt_t prescaleUtilityHLT;
   UInt_t versionUtilityHLT;
@@ -5678,6 +5693,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
 
   reducedTree.Branch("cutPV",&cutPV,"cutPV/O");
   reducedTree.Branch("cutTrigger",&cutTrigger,"cutTrigger/O");
+  reducedTree.Branch("cutTrigger2",&cutTrigger2,"cutTrigger2/O");
   
   reducedTree.Branch("csctighthaloFilter",&csctighthaloFilter,"csctighthaloFilter/O");
   reducedTree.Branch("eenoiseFilter",&eenoiseFilter,"eenoiseFilter/O");
@@ -5975,11 +5991,11 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("eleet1",&eleet1,"eleet1/F");
   reducedTree.Branch("elephi1",&elephi1,"elephi1/F");
   reducedTree.Branch("eleeta1",&eleeta1,"eleeta1/F");
-  reducedTree.Branch("elecharge1",&elecharge1,"elecharge1/F");
+  reducedTree.Branch("elecharge1",&elecharge1,"elecharge1/I");
   reducedTree.Branch("muonpt1",&muonpt1,"muonpt1/F");
   reducedTree.Branch("muonphi1",&muonphi1,"muonphi1/F");
   reducedTree.Branch("muoneta1",&muoneta1,"muoneta1/F");
-  reducedTree.Branch("muoncharge1",&muoncharge1,"muoncharge1/F");
+  reducedTree.Branch("muoncharge1",&muoncharge1,"muoncharge1/I");
   reducedTree.Branch("muoniso1",&muoniso1,"muoniso1/F");
   reducedTree.Branch("muonchhadiso1",&muonchhadiso1,"muonchhadiso1/F");
   reducedTree.Branch("muonphotoniso1",&muonphotoniso1,"muonphotoniso1/F");
@@ -6201,6 +6217,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
     ST = getST(30,10); //ST is always bigger than HT; reducing the jet cut to 30 will only make it larger
     MET=getMET();
     STeff = ST + MET; //obviously STeff is always bigger than ST
+    HT=getHT();
 
     bool passAnyTrigger=passHLT(triggerlist,true); //evaluate all trigger decisions
     passHLT(triggerlist_mc,false); //re-evaluate, storing real results for mc (will be a duplicate for data)
@@ -6219,6 +6236,32 @@ Also the pdfWeightSum* histograms that are used for LM9.
       cutTrigger = passHTMHTtriggers || passMETtriggers;
     }
 
+    //now we do a super-OR of MET/HTMHT/JetHT
+    //i kind of coded this upside down; the logic is:
+    //    take all events that pass MET triggers from MET dataset
+    //    for those that don't pass MET triggers, look in JetHT dataset
+    //    for those that don't pass either of the above, look in HTMHT
+    //with an additional complication from the fact that the dataset breakdown is a bit different in Run2012A
+    bool passHTtriggers = triggerlist["PFHT650"].pass || triggerlist["PFNoPUHT650"].pass;
+    if (sampleName_.BeginsWith("HT_Run2012A") ) { //contains both HTMHT and HT triggers
+      cutTrigger2 = (passHTMHTtriggers||passHTtriggers) && (!passMETtriggers);
+    }
+    else if ( sampleName_.BeginsWith("HTMHT_Run2012B")|| sampleName_.BeginsWith("HTMHT_Run2012C")) { //contains HTMHT
+      cutTrigger2 = passHTMHTtriggers && (!( passMETtriggers||passHTtriggers));
+    }
+    else if ( sampleName_.BeginsWith("JetHT_Run2012B")|| sampleName_.BeginsWith("JetHT_Run2012C")) { //contains HT
+      //pick up events here that have failed the MET triggers
+      cutTrigger2 = passHTtriggers && (!passMETtriggers);
+    }
+    else if (sampleName_.BeginsWith("MET_Run2012")) { //MET triggers
+      //always take events in MET dataset passing the trigger
+      cutTrigger2 = passMETtriggers;
+    }
+    else { //MC etc
+      cutTrigger2 = passHTMHTtriggers||passMETtriggers||passHTtriggers;
+    }
+
+  //these variables are basically not needed anymore, but leave them in for now
     pass_utilityHLT = triggerlist["PFHT350"].pass; //shortcut name for HT-only trigger
     prescaleUtilityHLT = triggerlist["PFHT350"].prescale;
     versionUtilityHLT = triggerlist["PFHT350"].version;
@@ -6283,7 +6326,6 @@ Also the pdfWeightSum* histograms that are used for LM9.
       }
 */
 
-      HT=getHT();
       HT30=getHT(30);
       hltHTeff = getHLTHTeff(HT);
       PUweight =  puReweightIs1D ? getPUWeight(*LumiWeights) : 1;// FIXME CFA getPUWeight(*LumiWeights3D);
