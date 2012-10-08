@@ -4378,11 +4378,11 @@ Long64_t EventCalculator::getNEventsGenerated() {
   if (sampleName_.Contains("UCSB1421")) return 259961 ;  //t s channel
   if (sampleName_.Contains("UCSB1451")) return 493460 ;  //tbar tW channel
   if (sampleName_.Contains("UCSB1455")) return 497658 ;  //t tW channel
-							 //tbar t channel
-							 //t t channel
+  if (sampleName_.Contains("UCSB1461")) return 1923628;	//tbar t channel
+  if (sampleName_.Contains("UCSB1470")) return 23777; //t t channel
   if (sampleName_.Contains("UCSB1438")) return 5995944; // QCD 50-80
                                                         //QCD 80-120
-							//QCD120-170
+  if (sampleName_.Contains("UCSB1477")) return 5755732; //QCD120-170
   if (sampleName_.Contains("UCSB1453")) return 5814398 ;//QCD170-300
   if (sampleName_.Contains("UCSB1425")) return 5927300 ; //QCD 300-470
   if (sampleName_.Contains("UCSB1446")) return 3994848 ; //QCD 470-600
@@ -4391,8 +4391,8 @@ Long64_t EventCalculator::getNEventsGenerated() {
   if (sampleName_.Contains("UCSB1448")) return 1964088; //QCD 1000-1400
   if (sampleName_.Contains("UCSB1449")) return 2000062; //QCD 1400-1800
   if (sampleName_.Contains("UCSB1450")) return 977586 ; // QCD 1800-
-                                                         //Znn100-200
-							 //Znn200-400
+  if (sampleName_.Contains("UCSB1469")) return 4416646; //Znn100-200
+  if (sampleName_.Contains("UCSB1468")) return 5055885; //Znn200-400
   if (sampleName_.Contains("UCSB1391")) return 1006928 ; //Znn 400-
                                            
   if (sampleName_.Contains("UCSB1389")) return 3789889 ; //DY 200-400
@@ -5242,9 +5242,9 @@ void EventCalculator::reducedTree(TString outputpath) {
 
   //JSON file reading. For now the JSON file must be called GoldenJSON.txt
   //not clear to me if a sym link will be good enough w.r.t. the tarball, etc process
-  // from /afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Prompt/Cert_190456-203002_8TeV_PromptReco_Collisions12_JSON.txt
+  // from /afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Prompt/Cert_190456-203002_8TeV_PromptReco_Collisions12_JSON_v2.txt
   vector< vector<int> > VRunLumi = MakeVRunLumi("GoldenJSON.txt");
-  // from /afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Reprocessing/Cert_190456-196531_8TeV_13Jul2012ReReco_Collisions12_JSON.txt
+  // from /afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Reprocessing/Cert_190456-196531_8TeV_13Jul2012ReReco_Collisions12_JSON_v2.txt
   vector< vector<int> > VRunLumiJuly13 = MakeVRunLumi("July13JSON.txt");
   // from /afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Reprocessing/Cert_198022-198523_8TeV_24Aug2012ReReco_Collisions12_JSON.txt
   vector< vector<int> > VRunLumiAug24 = MakeVRunLumi("Aug24JSON.txt");
@@ -6243,15 +6243,25 @@ Also the pdfWeightSum* histograms that are used for LM9.
     //    for those that don't pass either of the above, look in HTMHT
     //with an additional complication from the fact that the dataset breakdown is a bit different in Run2012A
     bool passHTtriggers = triggerlist["PFHT650"].pass || triggerlist["PFNoPUHT650"].pass;
+    //if (sampleName_.BeginsWith("HT_Run2012A") ) { //contains both HTMHT and HT triggers
+    //  cutTrigger2 = (passHTMHTtriggers||passHTtriggers) && (!passMETtriggers);
+    //}
+    //else if ( sampleName_.BeginsWith("HTMHT_Run2012B")|| sampleName_.BeginsWith("HTMHT_Run2012C")) { //contains HTMHT
+    //  cutTrigger2 = passHTMHTtriggers && (!( passMETtriggers||passHTtriggers));
+    //}
+    //else if ( sampleName_.BeginsWith("JetHT_Run2012B")|| sampleName_.BeginsWith("JetHT_Run2012C")) { //contains HT
+    //  //pick up events here that have failed the MET triggers
+    //  cutTrigger2 = passHTtriggers && (!passMETtriggers);
+    //}
     if (sampleName_.BeginsWith("HT_Run2012A") ) { //contains both HTMHT and HT triggers
       cutTrigger2 = (passHTMHTtriggers||passHTtriggers) && (!passMETtriggers);
     }
-    else if ( sampleName_.BeginsWith("HTMHT_Run2012B")|| sampleName_.BeginsWith("HTMHT_Run2012C")) { //contains HTMHT
-      cutTrigger2 = passHTMHTtriggers && (!( passMETtriggers||passHTtriggers));
-    }
     else if ( sampleName_.BeginsWith("JetHT_Run2012B")|| sampleName_.BeginsWith("JetHT_Run2012C")) { //contains HT
-      //pick up events here that have failed the MET triggers
-      cutTrigger2 = passHTtriggers && (!passMETtriggers);
+      //pick up events here for HT that have failed the MET and HTMHT triggers
+      cutTrigger2 = passHTtriggers && (!(passMETtriggers||passHTMHTtriggers));
+    }
+    else if ( sampleName_.BeginsWith("HTMHT_Run2012B")|| sampleName_.BeginsWith("HTMHT_Run2012C")) { //contains HTMHT
+      cutTrigger2 = passHTMHTtriggers && ( !passMETtriggers );
     }
     else if (sampleName_.BeginsWith("MET_Run2012")) { //MET triggers
       //always take events in MET dataset passing the trigger
