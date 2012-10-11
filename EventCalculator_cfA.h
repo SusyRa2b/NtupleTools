@@ -3171,8 +3171,14 @@ private:
   
   // ==== END giant copy/paste of cfA variable ================================================================
 
-
-
+  //special! for signal only
+  std::vector<float> *pdfweights_cteq;
+  std::vector<float> *pdfweights_mstw;
+  std::vector<float> *pdfweights_nnpdf;
+  TBranch *b_pdfweights_cteq;
+  TBranch *b_pdfweights_mstw;
+  TBranch *b_pdfweights_nnpdf;
+  
 };
 
 #endif

@@ -62,12 +62,12 @@ EventCalculator::EventCalculator(const TString & sampleName, const vector<string
   f_tageff_(0),
   fDataJetRes_(0),
   //2011 values, to be used for code validation only
-  ResJetPar_(new JetCorrectorParameters("START42_V13_AK5PFchs_L2L3Residual.txt") ),
-  L3JetPar_(new JetCorrectorParameters("START42_V13_AK5PFchs_L3Absolute.txt") ),
-  L2JetPar_(new JetCorrectorParameters("START42_V13_AK5PFchs_L2Relative.txt") ),
-  L1JetPar_(new JetCorrectorParameters("START42_V13_AK5PFchs_L1FastJet.txt") ),
+  ResJetPar_(new JetCorrectorParameters("JESfiles/START53_V7F_L2L3Residual_AK5PFchs.txt") ),
+  L3JetPar_(new JetCorrectorParameters("JESfiles/START53_V7F_L3Absolute_AK5PFchs.txt") ),
+  L2JetPar_(new JetCorrectorParameters("JESfiles/START53_V7F_L2Relative_AK5PFchs.txt") ),
+  L1JetPar_(new JetCorrectorParameters("JESfiles/START53_V7F_L1FastJet_AK5PFchs.txt") ),
   JetCorrector_(0 ),
-  jecUnc_(new JetCorrectionUncertainty("START42_V13_AK5PFchs_Uncertainty.txt")), //2011 values, to be used for code tests only
+  jecUnc_(new JetCorrectionUncertainty("JESfiles/START53_V7F_Uncertainty_AK5PFchs.txt")),
   starttime_(0),
   recalculatedVariables_(false),
   watch_(0),
@@ -3603,9 +3603,11 @@ std::pair<int,int> EventCalculator::getSMSmasses() {
 
 double EventCalculator::checkPdfWeightSanity( double a) {
 
-  if ( std::isnan(a) ) {cout<<"Found PDF NaN!"<<endl; return 1;}
-  if ( a<0 ) return 1;
-  if ( a>10) return 1; //i'm not sure if this is a good idea at all, nor do i know what threshold to set
+  //not sure what to do here now
+
+  if ( std::isnan(a) ) {cout<<"Found PDF NaN!"<<endl; return 0;}
+  //  if ( a<0 ) return -1;
+  //  if ( a>10) return 1; //i'm not sure if this is a good idea at all, nor do i know what threshold to set
 
   return a;
 }
@@ -6170,24 +6172,55 @@ Also the pdfWeightSum* histograms that are used for LM9.
       scanSMSngen->Fill(m0,m12);
 
       //do the new 2D maps as well
-      for (int ipdf=0 ; ipdf<45; ipdf++) {
-	pdfWeightsCTEQ[ipdf] = checkPdfWeightSanity(1 /*geneventinfoproducthelper1.at(ipdf).pdfweight*/); //FIXME CFA
-	  scanProcessTotalsMapCTEQ[thispoint]->SetBinContent( int(prodprocess),  ipdf,
+      //the v66 ntuples have a problem -- i didn't store the central pdf weight
+      /* 	 to handle this:
+	 make counters (ipdf) start from 1 instead of 0
+	 access pdfweights arrays at ipdf-1 instead of ipdf
+	 calculate an average pdf weight
+	 after each loop, set the values for the [0] elements by hand
+      */
+
+      double av=0; //v66 kludge
+      for (int ipdf=1 ; ipdf<45; ipdf++) {
+	pdfWeightsCTEQ[ipdf] = checkPdfWeightSanity(pdfweights_cteq->at(ipdf-1));
+	av += pdfWeightsCTEQ[ipdf]; //v66 kludge
+	scanProcessTotalsMapCTEQ[thispoint]->SetBinContent( int(prodprocess),  ipdf,
 							      scanProcessTotalsMapCTEQ[thispoint]->GetBinContent( int(prodprocess),  ipdf) 
-							      + pdfWeightsCTEQ[ipdf] );
+							    + pdfWeightsCTEQ[ipdf] );
       }
-      for (int ipdf=0 ; ipdf<41; ipdf++) { 
-	pdfWeightsMSTW[ipdf] = checkPdfWeightSanity(1 /*geneventinfoproducthelper2.at(ipdf).pdfweight*/); //FIXME CFA
+
+      av /= 44; //v66 kludge
+      pdfWeightsCTEQ[0] = av; //v66 kludge
+      scanProcessTotalsMapCTEQ[thispoint]->SetBinContent( int(prodprocess),  0, //v66 kludge
+							  scanProcessTotalsMapCTEQ[thispoint]->GetBinContent( int(prodprocess),  0) 
+							  + pdfWeightsCTEQ[0] );
+      av=0;   //v66 kludge    
+      for (int ipdf=1 ; ipdf<41; ipdf++) { 
+	pdfWeightsMSTW[ipdf] = checkPdfWeightSanity(pdfweights_mstw->at(ipdf-1));
+	av += pdfWeightsMSTW[ipdf]; //v66 kludge
 	scanProcessTotalsMapMSTW[thispoint]->SetBinContent( int(prodprocess),  ipdf,
 							    scanProcessTotalsMapMSTW[thispoint]->GetBinContent( int(prodprocess),  ipdf) 
 							    + pdfWeightsMSTW[ipdf] );
       }
-      for (int ipdf=0 ; ipdf<100; ipdf++) { 
-	pdfWeightsNNPDF[ipdf] = checkPdfWeightSanity(1 /*geneventinfoproducthelper.at(ipdf).pdfweight*/); //FIXME CFA
+      av/=40; //v66 kludge
+      pdfWeightsMSTW[0] = av; //v66 kludge
+      scanProcessTotalsMapMSTW[thispoint]->SetBinContent( int(prodprocess),  0, //v66 kludge
+							  scanProcessTotalsMapMSTW[thispoint]->GetBinContent( int(prodprocess),  0) 
+							  + pdfWeightsMSTW[0] );
+      av=0; //v66 kludge
+      for (int ipdf=1 ; ipdf<100; ipdf++) { 
+	pdfWeightsNNPDF[ipdf] = checkPdfWeightSanity(pdfweights_nnpdf->at(ipdf-1));
+	av += pdfWeightsNNPDF[ipdf]; //v66 kludge
 	scanProcessTotalsMapNNPDF[thispoint]->SetBinContent( int(prodprocess),  ipdf,
 							     scanProcessTotalsMapNNPDF[thispoint]->GetBinContent( int(prodprocess),  ipdf) 
 							     + pdfWeightsNNPDF[ipdf] );
       }
+      av/=100; //v66 kludge
+      pdfWeightsNNPDF[0] = av; //v66 kludge
+      scanProcessTotalsMapNNPDF[thispoint]->SetBinContent( int(prodprocess),  0, //v66 kludge
+							  scanProcessTotalsMapNNPDF[thispoint]->GetBinContent( int(prodprocess),  0) 
+							  + pdfWeightsNNPDF[0] );
+
     }
     else if (theScanType_==kNotScan && sampleIsSignal_) {
       //do the new 2D maps as well
@@ -9014,6 +9047,18 @@ void EventCalculator::InitializeA(TChain *fChain)
    fChain->SetBranchAddress("pfmets_fullSignifCov11", &pfmets_fullSignifCov11, &b_pfmets_fullSignifCov11);
    fChain->SetBranchAddress("softjetUp_dMEx", &softjetUp_dMEx, &b_softjetUp_dMEx);
    fChain->SetBranchAddress("softjetUp_dMEy", &softjetUp_dMEy, &b_softjetUp_dMEy);
+
+
+   //special! added by hand for signal
+   pdfweights_cteq=0;
+   pdfweights_mstw=0;
+   pdfweights_nnpdf=0;
+   if ( sampleIsSignal_) {
+     cout<<"Signal sample -- setting branch addresses for pdf weights ..."<<endl;
+     fChain->SetBranchAddress("pdfweights_cteq", &pdfweights_cteq, &b_pdfweights_cteq);
+     fChain->SetBranchAddress("pdfweights_mstw", &pdfweights_mstw, &b_pdfweights_mstw);
+     fChain->SetBranchAddress("pdfweights_nnpdf", &pdfweights_nnpdf, &b_pdfweights_nnpdf);
+   }
 
 }
 
