@@ -5301,7 +5301,9 @@ void EventCalculator::reducedTree(TString outputpath) {
   outfilename+=".root";
   if (outputpath[outputpath.Length()-1] != '/') outputpath += "/";
   outfilename.Prepend(outputpath);
+  cout<<"will save reducedTree to file: "<<outfilename<<endl;
   TFile fout(outfilename,"RECREATE");
+  if (fout.IsZombie()) assert(0); //save a lot of time in case of file problems
 
   // define the TTree
   TTree reducedTree("reducedTree","tree with minimal cuts");
@@ -6223,7 +6225,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
 
       double av=0; //v66 kludge
       for (int ipdf=1 ; ipdf<45; ipdf++) {
-	pdfWeightsCTEQ[ipdf] = 1;//checkPdfWeightSanity(pdfweights_cteq->at(ipdf-1));
+	pdfWeightsCTEQ[ipdf] = checkPdfWeightSanity(pdfweights_cteq->at(ipdf-1));
 	av += pdfWeightsCTEQ[ipdf]; //v66 kludge
 	scanProcessTotalsMapCTEQ[thispoint]->SetBinContent( int(prodprocess),  ipdf,
 							      scanProcessTotalsMapCTEQ[thispoint]->GetBinContent( int(prodprocess),  ipdf) 
@@ -6237,7 +6239,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
 							  + pdfWeightsCTEQ[0] );
       av=0;   //v66 kludge    
       for (int ipdf=1 ; ipdf<41; ipdf++) { 
-	pdfWeightsMSTW[ipdf] = 1;//checkPdfWeightSanity(pdfweights_mstw->at(ipdf-1));
+	pdfWeightsMSTW[ipdf] = checkPdfWeightSanity(pdfweights_mstw->at(ipdf-1));
 	av += pdfWeightsMSTW[ipdf]; //v66 kludge
 	scanProcessTotalsMapMSTW[thispoint]->SetBinContent( int(prodprocess),  ipdf,
 							    scanProcessTotalsMapMSTW[thispoint]->GetBinContent( int(prodprocess),  ipdf) 
@@ -6250,7 +6252,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
 							  + pdfWeightsMSTW[0] );
       av=0; //v66 kludge
       for (int ipdf=1 ; ipdf<100; ipdf++) { 
-	pdfWeightsNNPDF[ipdf] = 1;//checkPdfWeightSanity(pdfweights_nnpdf->at(ipdf-1));
+	pdfWeightsNNPDF[ipdf] = checkPdfWeightSanity(pdfweights_nnpdf->at(ipdf-1));
 	av += pdfWeightsNNPDF[ipdf]; //v66 kludge
 	scanProcessTotalsMapNNPDF[thispoint]->SetBinContent( int(prodprocess),  ipdf,
 							     scanProcessTotalsMapNNPDF[thispoint]->GetBinContent( int(prodprocess),  ipdf) 
