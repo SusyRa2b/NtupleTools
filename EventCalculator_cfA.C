@@ -4411,24 +4411,24 @@ Long64_t EventCalculator::getNEventsGenerated() {
   //numbers come from 
   //http://cms2.physics.ucsb.edu/cgi-bin/cfA.pl?Institute=ALL&process=ALL&version=v66
   if (sampleName_.Contains("UCSB1489")) return 6923750 ; //TT madgraph
-//  if (sampleName_.Contains("UCSB1439")) return 21673270; //TT powheg
+  if (sampleName_.Contains("UCSB1558")) return 21675970; //TT powheg
   if (sampleName_.Contains("UCSB1488")) return 1634582 ; //W 250-300
   if (sampleName_.Contains("UCSB1512")) return 1699486 ; //W 300-400
   if (sampleName_.Contains("UCSB1487")) return 1647807 ; //W 400-
   if (sampleName_.Contains("UCSB1533")) return 139974 ;  //tbar s channel
   if (sampleName_.Contains("UCSB1530")) return 259961 ;  //t s channel
-//  if (sampleName_.Contains("UCSB1451")) return 493460 ;  //tbar tW channel
+  if (sampleName_.Contains("UCSB1534")) return 493460 ;  //tbar tW channel
   if (sampleName_.Contains("UCSB1532")) return 497658 ;  //t tW channel
-//  if (sampleName_.Contains("UCSB1461")) return 1923628;	//tbar t channel
+  if (sampleName_.Contains("UCSB1562")) return 1935072;	//tbar t channel
   if (sampleName_.Contains("UCSB1531")) return 23777; //t t channel
 //  if (sampleName_.Contains("UCSB1438")) return 5995944; // QCD 50-80
                                                         //QCD 80-120
   if (sampleName_.Contains("UCSB1513")) return 5755732; //QCD120-170
-  if (sampleName_.Contains("UCSB1514")) return 5814398 ;//QCD170-300
-  if (sampleName_.Contains("UCSB1519")) return 5927300 ; //QCD 300-470
+  if (sampleName_.Contains("UCSB1561")) return 5814398 ;//QCD170-300
+  if (sampleName_.Contains("UCSB1560")) return 5927300 ; //QCD 300-470
   if (sampleName_.Contains("UCSB1515")) return 3994848 ; //QCD 470-600
   if (sampleName_.Contains("UCSB1516")) return 3992760 ; //QCD 600-800
-  if (sampleName_.Contains("UCSB1520")) return 3998563 ; //QCD 800-1000
+  if (sampleName_.Contains("UCSB1559")) return 3998563 ; //QCD 800-1000
   if (sampleName_.Contains("UCSB1521")) return 1964088; //QCD 1000-1400
   if (sampleName_.Contains("UCSB1522")) return 2000062; //QCD 1400-1800
   if (sampleName_.Contains("UCSB1517")) return 977586 ; // QCD 1800-
@@ -4436,12 +4436,12 @@ Long64_t EventCalculator::getNEventsGenerated() {
   if (sampleName_.Contains("UCSB1524")) return 5055885; //Znn200-400
   if (sampleName_.Contains("UCSB1523")) return 1006928 ; //Znn 400-
                                            
-//  if (sampleName_.Contains("UCSB1389")) return 3789889 ; //DY 200-400
-//  if (sampleName_.Contains("UCSB1390")) return 1703863 ; //DY 400-
+  if (sampleName_.Contains("UCSB1526")) return 3789889 ; //DY 200-400
+  if (sampleName_.Contains("UCSB1535")) return 1703863 ; //DY 400-
 //  if (sampleName_.Contains("UCSB1388")) return 30459503 ;//DY inclusive
-//  if (sampleName_.Contains("UCSB1424")) return 9799908 ; //ZZ
+  if (sampleName_.Contains("UCSB1551")) return 9799908 ; //ZZ
 //  if (sampleName_.Contains("UCSB1458")) return 10000431; //WW
-//  if (sampleName_.Contains("UCSB1445")) return 10000283 ; //WZ
+  if (sampleName_.Contains("UCSB1552")) return 10000283 ; //WZ
 
   cout<<"[getNEventsGenerated] unknown sample "<<sampleName_<<endl;
   assert(0);
