@@ -4440,7 +4440,7 @@ Long64_t EventCalculator::getNEventsGenerated() {
   if (sampleName_.Contains("UCSB1535")) return 1703863 ; //DY 400-
 //  if (sampleName_.Contains("UCSB1388")) return 30459503 ;//DY inclusive
   if (sampleName_.Contains("UCSB1551")) return 9799908 ; //ZZ
-//  if (sampleName_.Contains("UCSB1458")) return 10000431; //WW
+  if (sampleName_.Contains("UCSB1563")) return 10000431; //WW
   if (sampleName_.Contains("UCSB1552")) return 10000283 ; //WZ
 
   cout<<"[getNEventsGenerated] unknown sample "<<sampleName_<<endl;
