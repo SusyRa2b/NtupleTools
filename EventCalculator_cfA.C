@@ -5303,6 +5303,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   outfilename.Prepend(outputpath);
   cout<<"will save reducedTree to file: "<<outfilename<<endl;
   TFile fout(outfilename,"RECREATE");
+  cout<<"will write to file "<<outfilename<<endl;
   if (fout.IsZombie()) assert(0); //save a lot of time in case of file problems
 
   // define the TTree
@@ -5460,6 +5461,11 @@ void EventCalculator::reducedTree(TString outputpath) {
   float jetpt3, jetgenpt3, jetphi3, jetgenphi3, jeteta3, jetgeneta3, jetenergy3, bjetpt3, bjetphi3, bjeteta3, bjetenergy3;
   int jetflavor1, jetflavor2, jetflavor3, bjetflavor1, bjetflavor2, bjetflavor3;
 
+  //lead jet quality info
+  float alletajetpt1,alletajetphi1,alletajeteta1;
+  float alletajetneutralhadronfrac1,alletajetneutralemfrac1,alletajetphotonfrac1;
+
+
   float jetchargedhadronfrac1, jetchargedhadronfrac2, jetchargedhadronfrac3, bjetchargedhadronfrac1, bjetchargedhadronfrac2, bjetchargedhadronfrac3;
   int jetchargedhadronmult1, jetchargedhadronmult2, jetchargedhadronmult3, bjetchargedhadronmult1, bjetchargedhadronmult2, bjetchargedhadronmult3;
 
@@ -5530,6 +5536,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   bool passBadECAL_METphi52_crackF;
   float worstMisA_badECAL_METphi52_crackF, worstMisF_badECAL_METphi52_crackF;
 
+  int nTracks1,nTracks10;
 
   float prob0,probge1,prob1,probge2,probge3,prob2;
   
@@ -5985,6 +5992,13 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("jetchargedhadronfrac1",&jetchargedhadronfrac1,"jetchargedhadronfrac1/F");
   reducedTree.Branch("jetchargedhadronmult1",&jetchargedhadronmult1,"jetchargedhadronmult1/I");
 
+  reducedTree.Branch("alletajetpt1",&alletajetpt1,"alletajetpt1/F");
+  reducedTree.Branch("alletajetphi1",&alletajetphi1,"alletajetphi1/F");
+  reducedTree.Branch("alletajeteta1",&alletajeteta1,"alletajeteta1/F");
+  reducedTree.Branch("alletajetneutralhadronfrac1",&alletajetneutralhadronfrac1,"alletajetneutralhadronfrac1/F");
+  reducedTree.Branch("alletajetneutralemfrac1",&alletajetneutralemfrac1,"alletajetneutralemfrac1/F");
+  reducedTree.Branch("alletajetphotonfrac1",&alletajetphotonfrac1,"alletajetphotonfrac1/F");
+
   reducedTree.Branch("jetpt2",&jetpt2,"jetpt2/F");
   reducedTree.Branch("jetgenpt2",&jetgenpt2,"jetgenpt2/F");
   reducedTree.Branch("jeteta2",&jeteta2,"jeteta2/F");
@@ -6119,6 +6133,9 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("transverseMETSignificance3_lostJet", &transverseMETSignificance3_lostJet, "transverseMETSignificance3_lostJet/F");
 
   reducedTree.Branch("nLostJet", &nLostJet, "nLostJet/F");
+
+  reducedTree.Branch("nTracks1",&nTracks1,"nTracks1/I");
+  reducedTree.Branch("nTracks10",&nTracks10,"nTracks10/I");
 
   const int nskimCounter=8;
   TH1D skimCounter("skimCounter","[nevents] ntotal nselected npasstrig nfailtrig npassjson nfailjson npassST nfailST [ntotalgen]",nskimCounter,0,nskimCounter);
@@ -6785,6 +6802,26 @@ Also the pdfWeightSum* histograms that are used for LM9.
 
       buggyEvent = inEventList(vrun, vlumi, vevent);
       
+      //jet info for the lead jet, no matter where it is
+      if (jets_AK5PF_pt->size() >0) {
+	alletajetpt1 = jets_AK5PF_pt->at(0);
+	alletajeteta1 = jets_AK5PF_eta->at(0);
+	alletajetphi1 = jets_AK5PF_phi->at(0);
+	//same as used in PBNR, with 0.9 cut
+	const float rawjetenergy = jets_AK5PF_energy->at(0) * jets_AK5PF_corrFactorRaw->at(0);
+	alletajetneutralhadronfrac1 = jets_AK5PF_neutralHadE->at(0)/rawjetenergy;
+	alletajetneutralemfrac1 =  jets_AK5PF_neutralEmE->at(0) / rawjetenergy;
+	alletajetphotonfrac1 = jets_AK5PF_photonEnergy->at(0)/rawjetenergy;
+      }
+      else {
+	alletajetpt1 = -99;
+	alletajeteta1 =-99;
+	alletajetphi1 =-99;
+	alletajetneutralhadronfrac1 =-99;
+	alletajetneutralemfrac1 =  -99;
+	alletajetphotonfrac1 = -99;
+      }
+
       //transverse sphericity
       getSphericity(transverseSphericity_jets,false,false,50);
       getSphericity(transverseSphericity_jetsMet,true,false,50);
@@ -6795,6 +6832,18 @@ Also the pdfWeightSum* histograms that are used for LM9.
       getSphericity(transverseSphericity_jets30Met,true,false,30);
       getSphericity(transverseSphericity_jets30MetLeptons,true,true,30);
       getSphericity(transverseSphericity_jets30Leptons,false,true,30);
+
+      //tracking...should really have quality cuts but i don't know the appropriate cuts
+      nTracks1=0;
+      nTracks10=0;
+      for (unsigned int iii=0; iii<tracks_chi2->size(); iii++) {
+	if (tracks_pt->at(iii) >= 1) {
+	  ++nTracks1;
+	  if (tracks_pt->at(iii) >= 10) {
+	    ++nTracks10;
+	  }
+	}
+      }
 
       //Uncomment next two lines to do thrust calculations
       //getTransverseThrustVariables(transverseThrust, transverseThrustPhi, false);
