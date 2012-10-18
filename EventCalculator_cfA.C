@@ -4795,7 +4795,7 @@ void EventCalculator::loadJetTagEffMaps() {
 
   assert(f_tageff_ ==0);
 
-  TString filename = assembleBTagEffFilename();
+  TString filename = assembleBTagEffFilename(true); //pass true because we want to cut off the .XXXX in scan sample names
   filename.Prepend("btagEffMaps/");
   f_tageff_ = new TFile(filename,"READ");
   if (f_tageff_->IsZombie()) {
@@ -8756,10 +8756,24 @@ void EventCalculator::sampleAnalyzer() {
   return;
 }
 
-TString EventCalculator::assembleBTagEffFilename() {
+TString EventCalculator::assembleBTagEffFilename(bool cutnametail) {
 
   TString outfile = "histos_btageff_csvm_";
-  outfile+=sampleName_;
+  TString basesamplename = sampleName_;
+  if (cutnametail) {
+    //goal: take e.g. "SMS-T1bbbb_Mgluino-100to2000_mLSP-0to2000_8TeV-Pythia6Z_Summer12-START52_V9_FSIM-v1_AODSIM_UCSB1548_v66.9"
+    //and chop off the end to produce "SMS-T1bbbb_Mgluino-100to2000_mLSP-0to2000_8TeV-Pythia6Z_Summer12-START52_V9_FSIM-v1_AODSIM_UCSB1548_v66"
+    int npieces= basesamplename.Tokenize(".")->GetEntries();
+    if (npieces>1) {
+      //make sure that this last piece is an index. otherwise we might be in a situation we did not expect
+      assert( TString(basesamplename.Tokenize(".")->At(npieces-1)->GetName()).IsDigit());
+      //we want to chop off the end. how many digits are there?
+      int sizetochop = TString(basesamplename.Tokenize(".")->At(npieces-1)->GetName()).Length();
+      ++sizetochop; //include the length of the period
+      for ( int ii=0;ii<sizetochop;ii++) basesamplename.Chop(); //chop off the end
+    }
+  }
+  outfile+=basesamplename;
   outfile+=".root";
   return outfile;
 }

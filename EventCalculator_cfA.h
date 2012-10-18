@@ -369,7 +369,7 @@ private:
 
   //stuff for the btag probability 
   TFile *f_tageff_;
-  TString assembleBTagEffFilename();
+  TString assembleBTagEffFilename(bool cutnametail=false);
   void loadJetTagEffMaps();
 
   void loadHLTHTeff();
