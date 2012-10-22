@@ -4409,7 +4409,7 @@ Long64_t EventCalculator::getNEventsGenerated() {
   // SKIM is applied, so this is now important
 
   //numbers come from 
-  //http://cms2.physics.ucsb.edu/cgi-bin/cfA.pl?Institute=ALL&process=ALL&version=v66
+  //`http://cms2.physics.ucsb.edu/cgi-bin/cfA.pl?Institute=ALL&process=ALL&version=v66
   if (sampleName_.Contains("UCSB1489")) return 6923750 ; //TT madgraph
   if (sampleName_.Contains("UCSB1558")) return 21675970; //TT powheg
   if (sampleName_.Contains("UCSB1488")) return 1634582 ; //W 250-300
@@ -4429,8 +4429,8 @@ Long64_t EventCalculator::getNEventsGenerated() {
   if (sampleName_.Contains("UCSB1515")) return 3994848 ; //QCD 470-600
   if (sampleName_.Contains("UCSB1516")) return 3992760 ; //QCD 600-800
   if (sampleName_.Contains("UCSB1559")) return 3998563 ; //QCD 800-1000
-  if (sampleName_.Contains("UCSB1521")) return 1964088; //QCD 1000-1400
-  if (sampleName_.Contains("UCSB1522")) return 2000062; //QCD 1400-1800
+  if (sampleName_.Contains("UCSB1577")) return 1964088; //QCD 1000-1400
+  if (sampleName_.Contains("UCSB1578")) return 2000062; //QCD 1400-1800
   if (sampleName_.Contains("UCSB1517")) return 977586 ; // QCD 1800-
   if (sampleName_.Contains("UCSB1525")) return 4416646; //Znn100-200
   if (sampleName_.Contains("UCSB1524")) return 5055885; //Znn200-400
@@ -4442,6 +4442,9 @@ Long64_t EventCalculator::getNEventsGenerated() {
   if (sampleName_.Contains("UCSB1551")) return 9799908 ; //ZZ
   if (sampleName_.Contains("UCSB1563")) return 10000431; //WW
   if (sampleName_.Contains("UCSB1552")) return 10000283 ; //WZ
+
+  if (sampleName_.Contains("UCSB1571")) return 4246444 ; //TT MG full lep
+  if (sampleName_.Contains("UCSB1575")) return 11229902 ; //TT MG semi lep
 
   cout<<"[getNEventsGenerated] unknown sample "<<sampleName_<<endl;
   assert(0);
