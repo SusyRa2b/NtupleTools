@@ -436,7 +436,6 @@ private:
 
   TStopwatch* watch_; //not used for everyday running; just for testing
 
-
   // ==== BEGIN giant copy/paste of cfA variables =============================================================
   // generated from ra2b skimmed v65 --
   //source: http://cms2.physics.ucsb.edu/cfA/TTJets_MassiveBinDECAY_TuneZ2star_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1403ra2b_v65/TTJets_MassiveBinDECAY_TuneZ2star_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1403ra2b_v65.h

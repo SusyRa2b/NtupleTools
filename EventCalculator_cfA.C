@@ -1072,7 +1072,6 @@ float EventCalculator::getMET() {
 
   //JER and JES are automatically handled inside getCorrectedMET()
   if (theMETuncType_!=kMETunc0) {
-    assert( theMETType_ != kPFMETTypeI); //not implemented (or at least not checked)
     getSmearedUnclusteredMET(myMET,myMETphi);
   }
   return myMET;
@@ -1090,7 +1089,6 @@ float EventCalculator::getMETphi() {
   }
 
   if (theMETuncType_!=kMETunc0) {
-    assert( theMETType_ != kPFMETTypeI); //not implemented (or at least not checked)
     getSmearedUnclusteredMET(myMET,myMETphi);
   }
 
@@ -1953,28 +1951,27 @@ unsigned int EventCalculator::nTrueBJets() {
 }
 
 void EventCalculator::getSmearedUnclusteredMET(float & myMET, float & myMETphi) {
-  assert(theJetType_ == kPF2PAT);
+  assert(theJetType_ == kPF2PAT); //enforce that jets and leptons are already disambiguated in the ntuple
 
-  //start with uncorrected MET
-  if (theMETType_== kPFMET ) {
-    myMET = pfmets_et->at(0);
-    myMETphi = pfmets_phi->at(0);
-  }
-  else {assert(0);} //this code isn't set up to handle corrected MET
+  //input values myMET and myMETphi should correspond to the 
+  //type of MET being used (corrected or uncorrected)
 
   float myMETx = myMET * cos(myMETphi);
   float myMETy = myMET * sin(myMETphi);
 
-  //  float a,b; getCorrectedMET(a,b);
-  //  cout<<a<<"\t";
- 
   //first remove jets from MET
   for (unsigned int i=0; i<jets_AK5PF_pt->size(); i++) {
     //    if (isCleanJet(i) ){//this only has an effect for recopfjets    
-      //remove the uncorrected jet pT from the raw MET
     if ( jets_AK5PF_pt->at(i) >10 ) {
-      myMETx += getUncorrectedJetPt(i) * cos(jets_AK5PF_phi->at(i));
-      myMETy += getUncorrectedJetPt(i) * sin(jets_AK5PF_phi->at(i));
+      if (theMETType_ == kPFMET) {    //remove the uncorrected jet pT from the raw MET
+	myMETx += getUncorrectedJetPt(i) * cos(jets_AK5PF_phi->at(i));
+	myMETy += getUncorrectedJetPt(i) * sin(jets_AK5PF_phi->at(i));
+      }
+      else if (theMETType_ == kPFMETTypeI) { //remove the corrected jet pT from the corrected MET
+	myMETx += getJetPt(i) * cos(jets_AK5PF_phi->at(i));
+	myMETy += getJetPt(i) * sin(jets_AK5PF_phi->at(i));
+      }
+      else assert(0);
     }
   }
   //then muons
@@ -1992,9 +1989,10 @@ void EventCalculator::getSmearedUnclusteredMET(float & myMET, float & myMETphi) 
       //    }
   }
 
-  //  if (sqrt(myMETx*myMETx + myMETy*myMETy) >50) {
-  //    cout<<sqrt(myMETx*myMETx + myMETy*myMETy)<<"\t"<<atan2(myMETy,myMETx)<<endl; dumpEvent();
-  //  }
+
+//   if (sqrt(myMETx*myMETx + myMETy*myMETy) >100) {
+//     cout<<myMET<<" "<<sqrt(myMETx*myMETx + myMETy*myMETy)<<"\t"<<atan2(myMETy,myMETx)<<endl; dumpEvent();
+//   }
 
   //now we've got the unclustered component only in myMETxy
   float factor=1;
@@ -2008,11 +2006,16 @@ void EventCalculator::getSmearedUnclusteredMET(float & myMET, float & myMETphi) 
 
   //jets
   for (unsigned int i=0; i<jets_AK5PF_pt->size(); i++) {
-    //    if (isCleanJet(i) ){//this only has an effect for recopfjets    
-      //remove the corrected jet pT from MET
-    if (jets_AK5PF_pt->at(i) >10 ) {
-      myMETx -= getUncorrectedJetPt(i) * cos(jets_AK5PF_phi->at(i));
-      myMETy -= getUncorrectedJetPt(i) * sin(jets_AK5PF_phi->at(i));
+    if ( jets_AK5PF_pt->at(i) >10 ) {
+      if (theMETType_ == kPFMET) {    //add the uncorrected jet pT to the raw MET
+	myMETx -= getUncorrectedJetPt(i) * cos(jets_AK5PF_phi->at(i));
+	myMETy -= getUncorrectedJetPt(i) * sin(jets_AK5PF_phi->at(i));
+      }
+      else if (theMETType_ == kPFMETTypeI) { //add the corrected jet pT to the corrected MET
+	myMETx -= getJetPt(i) * cos(jets_AK5PF_phi->at(i));
+	myMETy -= getJetPt(i) * sin(jets_AK5PF_phi->at(i));
+      }
+      else assert(0);
     }
   }
   //muons
@@ -2038,30 +2041,19 @@ void EventCalculator::getSmearedUnclusteredMET(float & myMET, float & myMETphi) 
 float EventCalculator::getJERbiasFactor(unsigned int ijet) {
   float abseta = fabs(jets_AK5PF_eta->at(ijet));
 
- 
   if (theJERType_ == kJERup || theJERType_ ==kJERbias ||theJERType_ ==kJERdown) {
-    //numbers from JME-10-014-pas
-    //i have done my own averaging of Table 1
-    //these numbers are only valid for PF Jets
+    //old numbers were from JME-10-014-pas
+    //now replaced by 2011 numbers from https://twiki.cern.ch/twiki/bin/view/CMS/JetResolution
     float m = 0;
     if (theJERType_ == kJERup) m=1;
     else if (theJERType_==kJERdown) m=-1;
 
-    if (abseta < 1.1) {
-      return 0.06303 + m*0.02478;
-    }
-    else if (abseta <1.7 && abseta>=1.1) {
-      return 0.08467 + m*0.033169;
-    }
-    else if (abseta <2.3 && abseta>=1.7) {
-      return  0.02557 + m*0.049505;
-    }
-    else if (abseta<=5 && abseta>= 2.3) {
-      return 0.15819 + m*0.0663391;
-    }
-    else { //eta>5 not given
-      return 0;
-    }
+    if (abseta < 0.5)                     return 0.052   + m*0.063;
+    else if (abseta <1.1 && abseta>=0.5)  return 0.057   + m*0.057;
+    else if (abseta <1.7 && abseta>=1.1)  return 0.096   + m*0.065;
+    else if (abseta <2.3 && abseta>=1.7)  return 0.134   + m*0.094;
+    else if (abseta<=5 && abseta>= 2.3)   return 0.288   + m*0.200;
+    else return 0; //eta>5 not given
   }
   else if (theJERType_ == kJERra2) {
     //from the RA2 AN 2011/247
@@ -5220,25 +5212,27 @@ float EventCalculator::jetTagEff(unsigned int ijet, TH1F* h_btageff, TH1F* h_cta
   return tageff;
 }
 
-/* FIXME CFA
 void EventCalculator::dumpEvent () {
 
-  cout<<" == jets"<<endl;
-  for (unsigned int i=0; i<jets_AK5PF_pt->size(); i++) {
-    //    if (isCleanJet(i) ){//this only has an effect for recopfjets    
-    cout<<"\t"<<myJetsPF->at(i).pt<<" "<<myJetsPF->at(i).eta<<" "<<myJetsPF->at(i).phi<<"\t"<<isCleanJet(i)<<endl;
-  }
-  cout<<" == muons"<<endl;
-  for ( unsigned int i = 0; i<myMuonsPF->size() ; i++) {
-    cout<<"\t"<<myMuonsPF->at(i).pt<<" "<<myMuonsPF->at(i).eta<<" "<<myMuonsPF->at(i).phi<<"\t"<<isCleanMuon(i)<<endl;
-  }
-  cout<<" == electrons"<<endl;
-  for ( unsigned int i = 0; i<myElectronsPF->size() ; i++) {
-    cout<<"\t"<<myElectronsPF->at(i).pt<<" "<<myElectronsPF->at(i).eta<<" "<<myElectronsPF->at(i).phi<<"\t"<<isGoodElectron(i)<<endl;
-  }
+  //  if (!calledThisEvent_) {
+  //    calledThisEvent_=true;    
+
+    cout<<" == jets"<<endl;
+    for (unsigned int i=0; i<jets_AK5PF_pt->size(); i++) {
+      //    if (isCleanJet(i) ){//this only has an effect for recopfjets    
+      cout<<"\t"<<jets_AK5PF_pt->at(i)<<" "<<jets_AK5PF_eta->at(i)<<" "<<jets_AK5PF_phi->at(i)<<"\t"<<isCleanJet(i)<<endl;
+    }
+    cout<<" == muons"<<endl;
+    for ( unsigned int i = 0; i<pf_mus_et->size() ; i++) {
+      cout<<"\t"<<pf_mus_pt->at(i)<<" "<<pf_mus_eta->at(i)<<" "<<pf_mus_phi->at(i)<<"\t"<<isCleanMuon(i)<<endl;
+    }
+    cout<<" == electrons"<<endl;
+    for ( unsigned int i = 0; i<pf_els_et->size() ; i++) {
+      cout<<"\t"<<pf_els_et->at(i)<<" "<<pf_els_eta->at(i)<<" "<<pf_els_phi->at(i)<<"\t"<<isGoodElectron(i)<<endl;
+    }
+    //  }
 
 }
-*/
 
 
 TString EventCalculator::getOptPiece(const TString &key, const TString & opt) {
@@ -5339,7 +5333,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   //  float METsig;
   float ST, STeff, HT, HT30,MHT, MET, METphi, minDeltaPhi, minDeltaPhiAll, minDeltaPhiAll30,minDeltaPhi30_eta5_noIdAll;
   //  float correctedMET, correctedMETphi
-  float caloMET;
+  float caloMET,caloMETphi;
   float rawPFMET,rawPFMETphi;
   float maxDeltaPhi, maxDeltaPhiAll, maxDeltaPhiAll30, maxDeltaPhi30_eta5_noIdAll;
   float deltaPhi1, deltaPhi2, deltaPhi3;
@@ -5842,6 +5836,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
 
 
   reducedTree.Branch("caloMET",&caloMET,"caloMET/F");
+  reducedTree.Branch("caloMETphi",&caloMETphi,"caloMETphi/F");
   reducedTree.Branch("rawPFMET",&rawPFMET, "rawPFMET/F");
   reducedTree.Branch("rawPFMETphi",&rawPFMETphi, "rawPFMETphi/F");
   
@@ -6156,6 +6151,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
   for(Long64_t entry=0; entry < nevents; ++entry) {
     chainB->GetEntry(entry);
     chainA->GetEntry(entry);
+    //    calledThisEvent_=false;
 
     skimCounter.Fill(0); //ntotal
 
@@ -6509,7 +6505,8 @@ Also the pdfWeightSum* histograms that are used for LM9.
       METsig10 = pfmets_fullSignifCov10;
       METsig11 = pfmets_fullSignifCov11;
 
-      caloMET = mets_AK5_et->at(0); //is this right?
+      caloMET = mets_AK5_et->at(0);
+      caloMETphi = mets_AK5_phi->at(0);
       getUncorrectedMET(rawPFMET, rawPFMETphi);
 
       minDeltaPhi = getMinDeltaPhiMET(3);
