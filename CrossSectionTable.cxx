@@ -12,18 +12,25 @@ enum defined in the header file
 -- new addition: handle SMS cross sections in a format such as seen here:
 https://twiki.cern.ch/twiki/pub/LHCPhysics/SUSYCrossSections/stst_decoupled7TeV.txt
 
+also handle SMS cross sections in a ROOT input file
+
 */
 
 #include "TObjArray.h"
+#include "TFile.h"
+#include "TH1.h"
 
 #include <string>
 
-CrossSectionTable::CrossSectionTable(const TString & inputFile, bool smsFormat) //:
+CrossSectionTable::CrossSectionTable(const TString & inputFile, const TString & format,const TString & histoname) //:
 //  filename_(inputFile) {
 {
   //load the contents of file into the database
-  if (smsFormat) loadFileToDatabaseSMS(inputFile);
-  else loadFileToDatabase(inputFile);
+  if (format=="smstext") loadFileToDatabaseSMS(inputFile);
+  else if (format=="smsroot") loadFileToDatabaseSMSRoot(inputFile,histoname);
+  else if (format=="CMSSM") loadFileToDatabase(inputFile);
+  else assert(0);
+
 }
 
 CrossSectionTable::~CrossSectionTable() {}
@@ -85,6 +92,32 @@ void CrossSectionTable::loadFileToDatabase(const TString & filename) {
   }
   file10.close();
   cout<<"Loaded cross sections for "<<database_.size()<<" scan points"<<endl;
+
+}
+
+void CrossSectionTable::loadFileToDatabaseSMSRoot(const TString & filename,const TString & histoname) { //SMS from root file
+  const int m12 = 0; //no change as a function of m12 axis; used fixed value. 0 seems logical
+
+  TFile fxs(filename);
+  TH1D* h = (TH1D*) fxs.Get(histoname);
+  if (h!=0) {
+
+    for (int ibin=1; ibin<=h->GetNbinsX(); ibin++) {
+      int m0 = h->GetBinLowEdge(ibin);
+      double xs = h->GetBinContent(ibin);
+
+      pair<int, int> scanpoint = make_pair(m0,m12);
+      map<SUSYProcess, double> theseCrossSections;
+      //i could do this not as NotFound but as the actual SUSY process (tb for stop-stop, gg for gluino-gluino)
+      //but i think that is not needed
+      //this choice is connected to the hard-coded use of NotFound in getSMSCrossSection()
+      theseCrossSections[NotFound] = xs;
+      database_[scanpoint] = theseCrossSections;
+    }
+  }
+  else cout << "Problem with file or histogram!"<<endl; 
+
+  fxs.Close();
 
 }
 

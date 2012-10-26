@@ -31,10 +31,11 @@ enum SUSYProcess {
 
 class CrossSectionTable {
 public:
-  CrossSectionTable(const TString & inputFile, bool smsFormat=false);
+  CrossSectionTable(const TString & inputFile, const TString & format="CMSSM" ,const TString & histoname="");
   ~CrossSectionTable();
   void loadFileToDatabase(const TString & filename); //CMSSM
   void loadFileToDatabaseSMS(const TString & filename); //SMS
+  void loadFileToDatabaseSMSRoot(const TString & filename,const TString & histoname); //SMS from root file
 
   //allow const-safe direct access to the database
   std::map<SUSYProcess,double>  operator[] (const std::pair<int,int> & scanpoint) const;
