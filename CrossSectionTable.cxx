@@ -96,6 +96,7 @@ void CrossSectionTable::loadFileToDatabase(const TString & filename) {
 }
 
 void CrossSectionTable::loadFileToDatabaseSMSRoot(const TString & filename,const TString & histoname) { //SMS from root file
+  using namespace std;
   const int m12 = 0; //no change as a function of m12 axis; used fixed value. 0 seems logical
 
   TFile fxs(filename);
