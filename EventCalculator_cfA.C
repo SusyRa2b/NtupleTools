@@ -1820,6 +1820,66 @@ bool EventCalculator::isCleanJet(const unsigned int ijet){
 }
 
 
+//i'm tempted to muck with the jet pT threhsold....
+float EventCalculator::deltaRBestTwoBjets(int & jetindex1, int & jetindex2 ) {
+
+  jetindex1 = -1;
+  jetindex2=-2;
+
+  float bestcsv1=-98;
+  float bestcsv2=-99;
+
+  for (unsigned int it = 0; it<jets_AK5PF_pt->size(); it++) {
+    if (isGoodJet(it) ) {
+      float csv = jets_AK5PF_btag_secVertexCombined->at(it) ;
+
+      if (csv> bestcsv1) {
+	bestcsv2 = bestcsv1;
+	bestcsv1 = csv;
+	jetindex2=jetindex1;
+	jetindex1=it;
+      }
+      else if (csv>bestcsv2) {
+	bestcsv2 = csv;
+	jetindex2=it;
+      }
+    }
+  }
+
+  float dr=-1;
+  if (jetindex1>=0 && jetindex2>=0) dr= jmt::deltaR( jets_AK5PF_eta->at(jetindex1), jets_AK5PF_phi->at(jetindex1),jets_AK5PF_eta->at(jetindex2), jets_AK5PF_phi->at(jetindex2));
+
+  return dr;
+}
+
+float EventCalculator::deltaRClosestTwoBjets(int & jetindex1, int & jetindex2 ) {
+
+  float mindr=1e9;
+  jetindex1 = -1;
+  jetindex2=-1;
+
+  for (unsigned int j1 = 0; j1<jets_AK5PF_pt->size(); j1++) {
+    if (isGoodJet(j1) && passBTagger(j1)) {
+
+      //avoid duplicates by starting loop at the jet after j1
+      for (unsigned int j2 = j1+1; j2<jets_AK5PF_pt->size(); j2++) {
+	
+	if (isGoodJet(j2) && passBTagger(j2)) {
+	  float   dr= jmt::deltaR( jets_AK5PF_eta->at(j1), jets_AK5PF_phi->at(j1),jets_AK5PF_eta->at(j2), jets_AK5PF_phi->at(j2));
+	  if (dr<mindr) {
+	    mindr=dr;
+	    jetindex1 = j1;
+	    jetindex2 = j2;
+	  }
+	}
+      }
+    }
+  }
+
+  return mindr;
+}
+
+
 bool EventCalculator::isGoodJet(const unsigned int ijet, const float pTthreshold, const float etaMax, const bool jetid) {
 
   if ( getJetPt(ijet) <pTthreshold) return false;
@@ -5471,7 +5531,6 @@ void EventCalculator::reducedTree(TString outputpath) {
   float eleet1, elephi1, eleeta1, muonpt1, muonphi1, muoneta1;
   int elecharge1, muoncharge1;
   float eleet2, elephi2, eleeta2, muonpt2, muonphi2, muoneta2;
-  int elecharge2, muoncharge2;
   float muoniso1,muonchhadiso1,muonphotoniso1,muonneutralhadiso1;
   float taupt1, taueta1;
   float eleRelIso,muonRelIso;
@@ -5506,6 +5565,12 @@ void EventCalculator::reducedTree(TString outputpath) {
   float transverseSphericity_jets30Met;
   float transverseSphericity_jets30MetLeptons;
   float transverseSphericity_jets30Leptons;
+
+  float deltaR_bestTwoCSV;
+  float mjj_bestTwoCSV;
+  float deltaR_closestB;
+  float mjj_closestB;
+
 /*
   float transverseThrust,transverseThrustPhi;
   float transverseThrustWithMET,transverseThrustWithMETPhi;
@@ -5849,6 +5914,11 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("MT_Wlep5",&MT_Wlep5, "MT_Wlep5/F");
   reducedTree.Branch("MT_Wlep15",&MT_Wlep15, "MT_Wlep15/F");
 
+  reducedTree.Branch("deltaR_bestTwoCSV",&deltaR_bestTwoCSV,"deltaR_bestTwoCSV/F");
+  reducedTree.Branch("mjj_bestTwoCSV",&mjj_bestTwoCSV,"mjj_bestTwoCSV/F");
+  reducedTree.Branch("deltaR_closestB",&deltaR_closestB,"deltaR_closestB/F");
+  reducedTree.Branch("mjj_closestB",&mjj_closestB,"mjj_closestB/F");
+
   reducedTree.Branch("minDeltaPhi",&minDeltaPhi,"minDeltaPhi/F");
   reducedTree.Branch("minDeltaPhiAll",&minDeltaPhiAll,"minDeltaPhiAll/F");
   reducedTree.Branch("minDeltaPhiAll30",&minDeltaPhiAll30,"minDeltaPhiAll30/F");
@@ -6094,6 +6164,8 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("transverseSphericity_jets30Met",&transverseSphericity_jets30Met,"transverseSphericity_jets30Met/F");
   reducedTree.Branch("transverseSphericity_jets30MetLeptons",&transverseSphericity_jets30MetLeptons,"transverseSphericity_jets30MetLeptons/F");
   reducedTree.Branch("transverseSphericity_jets30Leptons",&transverseSphericity_jets30Leptons,"transverseSphericity_jets30Leptons/F");
+
+
 
 
 /*
@@ -6518,6 +6590,12 @@ Also the pdfWeightSum* histograms that are used for LM9.
       maxDeltaPhiAll30 = getMaxDeltaPhiMET30(99);
       maxDeltaPhi30_eta5_noIdAll = getMaxDeltaPhiMET30_eta5_noId(99);
       
+      int j_index_1,j_index_2;
+      deltaR_bestTwoCSV = deltaRBestTwoBjets(j_index_1,j_index_2);
+      mjj_bestTwoCSV = (j_index_1>=0 && j_index_2>=0) ? calc_mNj(j_index_1,j_index_2) : -1;
+      deltaR_closestB=deltaRClosestTwoBjets(j_index_1,j_index_2);
+      mjj_closestB= (j_index_1>=0 && j_index_2>=0) ? calc_mNj(j_index_1,j_index_2) : -1;
+
       if (isSampleQCD()) { //don't fill except for QCD MC
       minDeltaPhiN_otherPt10                      = getMinDeltaPhiMETN(3,50,2.4,true, 10,2.4,true, false,false);
       minDeltaPhiN_otherPt20                      = getMinDeltaPhiMETN(3,50,2.4,true, 20,2.4,true, false,false);

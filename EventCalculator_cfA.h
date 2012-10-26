@@ -137,6 +137,10 @@ public:
   void printDecay();
   int jjResonance_mcTruthCheck(int jj1, int jj2);
 
+  //two ways to find deltaR between b jets
+  float deltaRBestTwoBjets(int & jetindex1, int & jetindex2 );
+  float deltaRClosestTwoBjets(int & jetindex1, int & jetindex2 ) ;
+
   unsigned int getNthGoodJet(unsigned int goodJetN, float mainpt, float maineta, bool mainid);
   double getMinDeltaPhiMET(unsigned int maxjets);
   double getTransverseMETError(unsigned int thisJet);
