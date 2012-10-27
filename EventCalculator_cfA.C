@@ -4467,6 +4467,7 @@ Long64_t EventCalculator::getNEventsGenerated() {
   if (sampleName_.Contains("UCSB1488")) return 1634582 ; //W 250-300
   if (sampleName_.Contains("UCSB1512")) return 1699486 ; //W 300-400
   if (sampleName_.Contains("UCSB1487")) return 1647807 ; //W 400-
+  if (sampleName_.Contains("UCSB1587")) return 4971847 ; //W 400- (not sure what the difference is here)
   if (sampleName_.Contains("UCSB1533")) return 139974 ;  //tbar s channel
   if (sampleName_.Contains("UCSB1530")) return 259961 ;  //t s channel
   if (sampleName_.Contains("UCSB1534")) return 493460 ;  //tbar tW channel
@@ -4484,6 +4485,7 @@ Long64_t EventCalculator::getNEventsGenerated() {
   if (sampleName_.Contains("UCSB1577")) return 1964088; //QCD 1000-1400
   if (sampleName_.Contains("UCSB1578")) return 2000062; //QCD 1400-1800
   if (sampleName_.Contains("UCSB1517")) return 977586 ; // QCD 1800-
+  if (sampleName_.Contains("UCSB1579")) return 4040980; //Znn50-100
   if (sampleName_.Contains("UCSB1525")) return 4416646; //Znn100-200
   if (sampleName_.Contains("UCSB1524")) return 5055885; //Znn200-400
   if (sampleName_.Contains("UCSB1523")) return 1006928 ; //Znn 400-
@@ -4497,6 +4499,7 @@ Long64_t EventCalculator::getNEventsGenerated() {
 
   if (sampleName_.Contains("UCSB1571")) return 4246444 ; //TT MG full lep
   if (sampleName_.Contains("UCSB1575")) return 11229902 ; //TT MG semi lep
+  if (sampleName_.Contains("UCSB1586")) return 10537444;//TT MG hadronic
 
   cout<<"[getNEventsGenerated] unknown sample "<<sampleName_<<endl;
   assert(0);
@@ -4562,6 +4565,10 @@ double EventCalculator::getCrossSection(){
   if (sampleName_.BeginsWith("TT_CT10_TuneZ2star_8TeV-powheg")) return 234;  //approx NNLO
 
   if (sampleName_.BeginsWith("TTTo2L2Nu2B_8TeV-powheg-pythia6_Summer12")) return 22.14 *(234.0 / 136.3); //PREP corrected to NNLO
+
+  if (sampleName_.BeginsWith("TTJets_FullLeptMGDecays_8TeV-madgraph")) return 13.43*(234.0 / (13.43+53.4+53.2)); // PREP corrected to NNLO
+  if (sampleName_.BeginsWith("TTJets_HadronicMGDecays_8TeV-madgraph")) return 53.4*(234.0 / (13.43+53.4+53.2)); // PREP corrected to NNLO
+  if (sampleName_.BeginsWith("TTJets_SemiLeptMGDecays_8TeV-madgraph")) return 53.2*(234.0 / (13.43+53.4+53.2)); //PREP corrected to NNLO
 
   //RPV 8 TeV -- cross-sections from 1206.2353. cross section is a function of the larger (sbottom) mass
   if (sampleName_.Contains("sbottom8lnotaus-185-250")) return 5.7; //LO madgraph
