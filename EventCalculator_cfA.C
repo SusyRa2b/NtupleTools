@@ -4485,6 +4485,7 @@ Long64_t EventCalculator::getNEventsGenerated() {
   if (sampleName_.Contains("UCSB1577")) return 1964088; //QCD 1000-1400
   if (sampleName_.Contains("UCSB1578")) return 2000062; //QCD 1400-1800
   if (sampleName_.Contains("UCSB1517")) return 977586 ; // QCD 1800-
+  if (sampleName_.Contains("UCSB1585")) return 977586 ; // QCD 1800- (53X)
   if (sampleName_.Contains("UCSB1579")) return 4040980; //Znn50-100
   if (sampleName_.Contains("UCSB1525")) return 4416646; //Znn100-200
   if (sampleName_.Contains("UCSB1524")) return 5055885; //Znn200-400
