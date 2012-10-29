@@ -228,6 +228,8 @@ public:
   int jetFlavorOfN(unsigned int n);
   float jetChargedHadronFracOfN(unsigned int n);
   int jetChargedHadronMultOfN(unsigned int n);
+  int jetNeutralHadronMultOfN(unsigned int n);
+  int jetMuMultOfN(unsigned int n);
 
   float bjetPtOfN(unsigned int n);
   float bjetPhiOfN(unsigned int n);

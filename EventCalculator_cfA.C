@@ -2837,6 +2837,35 @@ int  EventCalculator::jetChargedHadronMultOfN(unsigned int n) {
   return 0;
 }
 
+int  EventCalculator::jetMuMultOfN(unsigned int n) {
+
+  unsigned int ngood=0;
+  for (unsigned int i=0; i<jets_AK5PF_pt->size(); i++) {
+    bool pass=false;
+    pass = isGoodJet(i);
+    if (pass ) {
+      ++ngood;
+      if (ngood==n) return  TMath::Nint(jets_AK5PF_mu_Mult->at(i));
+    }
+  }
+
+  return 0;
+}
+int  EventCalculator::jetNeutralHadronMultOfN(unsigned int n) {
+
+  unsigned int ngood=0;
+  for (unsigned int i=0; i<jets_AK5PF_pt->size(); i++) {
+    bool pass=false;
+    pass = isGoodJet(i);
+    if (pass ) {
+      ++ngood;
+      if (ngood==n) return  TMath::Nint(jets_AK5PF_neutral_Mult->at(i));
+    }
+  }
+
+  return 0;
+}
+
 float EventCalculator::bjetCSVOfN(unsigned int n) {
   
   unsigned int ngood=0;
@@ -5533,6 +5562,9 @@ void EventCalculator::reducedTree(TString outputpath) {
 
   float jetchargedhadronfrac1, jetchargedhadronfrac2, jetchargedhadronfrac3, bjetchargedhadronfrac1, bjetchargedhadronfrac2, bjetchargedhadronfrac3;
   int jetchargedhadronmult1, jetchargedhadronmult2, jetchargedhadronmult3, bjetchargedhadronmult1, bjetchargedhadronmult2, bjetchargedhadronmult3;
+  int jetneutralhadronmult1, jetneutralhadronmult2,jetneutralhadronmult3;
+  int jetmumult1, jetmumult2,jetmumult3;
+
 
   float mjjb1,mjjb2,topPT1,topPT2;
 
@@ -6067,6 +6099,8 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("jetflavor1",&jetflavor1,"jetflavor1/I");
   reducedTree.Branch("jetchargedhadronfrac1",&jetchargedhadronfrac1,"jetchargedhadronfrac1/F");
   reducedTree.Branch("jetchargedhadronmult1",&jetchargedhadronmult1,"jetchargedhadronmult1/I");
+  reducedTree.Branch("jetneutralhadronmult1",&jetneutralhadronmult1,"jetneutralhadronmult1/I");
+  reducedTree.Branch("jetmumult1",&jetmumult1,"jetmumult1/I");
 
   reducedTree.Branch("alletajetpt1",&alletajetpt1,"alletajetpt1/F");
   reducedTree.Branch("alletajetphi1",&alletajetphi1,"alletajetphi1/F");
@@ -6085,6 +6119,8 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("jetflavor2",&jetflavor2,"jetflavor2/I");
   reducedTree.Branch("jetchargedhadronfrac2",&jetchargedhadronfrac2,"jetchargedhadronfrac2/F");
   reducedTree.Branch("jetchargedhadronmult2",&jetchargedhadronmult2,"jetchargedhadronmult2/I");
+  reducedTree.Branch("jetneutralhadronmult2",&jetneutralhadronmult2,"jetneutralhadronmult2/I");
+  reducedTree.Branch("jetmumult2",&jetmumult2,"jetmumult2/I");
 
   reducedTree.Branch("jetpt3",&jetpt3,"jetpt3/F");
   reducedTree.Branch("jetgenpt3",&jetgenpt3,"jetgenpt3/F");
@@ -6096,6 +6132,8 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("jetflavor3",&jetflavor3,"jetflavor3/I");
   reducedTree.Branch("jetchargedhadronfrac3",&jetchargedhadronfrac3,"jetchargedhadronfrac3/F");
   reducedTree.Branch("jetchargedhadronmult3",&jetchargedhadronmult3,"jetchargedhadronmult3/I");
+  reducedTree.Branch("jetneutralhadronmult3",&jetneutralhadronmult3,"jetneutralhadronmult3/I");
+  reducedTree.Branch("jetmumult3",&jetmumult3,"jetmumult3/I");
 
   reducedTree.Branch("bjetpt1",&bjetpt1,"bjetpt1/F");
   reducedTree.Branch("bjeteta1",&bjeteta1,"bjeteta1/F");
@@ -6768,6 +6806,8 @@ Also the pdfWeightSum* histograms that are used for LM9.
       jetflavor1 = jetFlavorOfN(1);
       jetchargedhadronfrac1 = jetChargedHadronFracOfN(1);
       jetchargedhadronmult1 = jetChargedHadronMultOfN(1);
+      jetneutralhadronmult1 = jetNeutralHadronMultOfN(1);
+      jetmumult1 = jetMuMultOfN(1);
 
       jetpt2 = jetPtOfN(2);
       jetgenpt2 = jetGenPtOfN(2); 
@@ -6779,6 +6819,8 @@ Also the pdfWeightSum* histograms that are used for LM9.
       jetflavor2 = jetFlavorOfN(2);
       jetchargedhadronfrac2 = jetChargedHadronFracOfN(2);
       jetchargedhadronmult2 = jetChargedHadronMultOfN(2);
+      jetneutralhadronmult2 = jetNeutralHadronMultOfN(2);
+      jetmumult2 = jetMuMultOfN(2);
 
       jetpt3 = jetPtOfN(3);
       jetgenpt3 = jetGenPtOfN(3); 
@@ -6790,6 +6832,8 @@ Also the pdfWeightSum* histograms that are used for LM9.
       jetflavor3 = jetFlavorOfN(3);
       jetchargedhadronfrac3 = jetChargedHadronFracOfN(3);
       jetchargedhadronmult3 = jetChargedHadronMultOfN(3);
+      jetneutralhadronmult3 = jetNeutralHadronMultOfN(3);
+      jetmumult3 = jetMuMultOfN(3);
 
       bjetpt1 = bjetPtOfN(1);
       bjetphi1 = bjetPhiOfN(1);
