@@ -3513,6 +3513,9 @@ unsigned int EventCalculator::getSUSYnb() {
 int EventCalculator::findJetMatchGenTau() {
   const float dr = 0.3;
 
+  //finds the *leading* jet that matches within dr of a gen tau
+  //arguably one should take the _closest_ jet instead.....
+
   set<int> jet_indices;
 
   //loop over gen taus
@@ -6159,6 +6162,13 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("bjetchargedhadronfrac3",&bjetchargedhadronfrac3,"bjetchargedhadronfrac3/F");
   reducedTree.Branch("bjetchargedhadronmult3",&bjetchargedhadronmult3,"bjetchargedhadronmult3/I");
 
+  float tauMatch_jetpt,tauMatch_chhadmult,tauMatch_jetcsv,tauMatch_MT;
+  reducedTree.Branch("tauMatch_jetpt",&tauMatch_jetpt,"tauMatch_jetpt/F");
+  reducedTree.Branch("tauMatch_chhadmult",&tauMatch_chhadmult,"tauMatch_chhadmult/F");
+  reducedTree.Branch("tauMatch_jetcsv",&tauMatch_jetcsv,"tauMatch_jetcsv/F");
+  reducedTree.Branch("tauMatch_MT",&tauMatch_MT,"tauMatch_MT/F");
+
+
   reducedTree.Branch("eleet1",&eleet1,"eleet1/F");
   reducedTree.Branch("elephi1",&elephi1,"elephi1/F");
   reducedTree.Branch("eleeta1",&eleeta1,"eleeta1/F");
@@ -6527,7 +6537,22 @@ Also the pdfWeightSum* histograms that are used for LM9.
       //if we are running over ttbar, fill info on decay mode
       if (sampleName_.Contains("TTJets")) { //revived for cfA, using the old jmt-ntuples coding scheme
 	ttbarDecayCode = getTTbarDecayType();
-	  //findJetMatchGenTau()<<endl;
+	  
+      }
+      //somewhat experimental code; maybe this is a backwards way to do it (look for tau match then store stuff)
+      //anyway this will give me a first look
+      int tauindex=findJetMatchGenTau();
+      if (tauindex>=0) { //crude tau id variables
+	tauMatch_jetpt = jets_AK5PF_pt->at(tauindex);
+	tauMatch_chhadmult = jets_AK5PF_chg_Mult->at(tauindex);
+	tauMatch_jetcsv = jets_AK5PF_btag_secVertexCombined->at(tauindex);
+	tauMatch_MT = 2*getJetPt(tauindex)*getMET()*(1 - cos( getDeltaPhi( jets_AK5PF_phi->at(tauindex) , getMETphi())));
+      }
+      else {
+	tauMatch_jetpt=-1;
+	tauMatch_chhadmult=-1;
+	tauMatch_jetcsv = -1;
+	tauMatch_MT = -1;
       }
 /*
       //single-top tW-channel has two W's (one from a top)
