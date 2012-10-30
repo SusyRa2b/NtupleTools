@@ -7514,45 +7514,18 @@ void EventCalculator::loadEventList(std::vector<int> &vrun, std::vector<int> &vl
   //inFile.open("eventlist_pfht350_r178866_SUM.txt"); 
   if (sampleName_.Contains("HT_Run2012A") )
     inFile.open("eventFilterLists/ecalLaserFilter_HT_Run2012A.txt");
-  if (sampleName_.Contains("HTMHT_Run2012B") )
+  else  if (sampleName_.Contains("HTMHT_Run2012B") )
     inFile.open("eventFilterLists/ecalLaserFilter_HTMHT_Run2012B.txt");
-  if (sampleName_.Contains("MET_Run2012A") )
+  else  if (sampleName_.Contains("MET_Run2012A") )
     inFile.open("eventFilterLists/ecalLaserFilter_MET_Run2012A.txt");
-  if (sampleName_.Contains("MET_Run2012B") )
+  else  if (sampleName_.Contains("MET_Run2012B") )
     inFile.open("eventFilterLists/ecalLaserFilter_MET_Run2012B.txt");
-  if (sampleName_.Contains("JetHT_Run2012B") )
+  else  if (sampleName_.Contains("JetHT_Run2012B") )
     inFile.open("eventFilterLists/ecalLaserFilter_JetHT_Run2012B.txt");
 
-  
-  else if (sampleName_.Contains("ttjets_madgraph") )
-    inFile.open("badeventlist_pythia6bug_ttjets_madgraph.txt");
-  //else if (sampleName_.Contains("t_s-channel") )
-  else if (sampleName_.Contains("T_TuneZ2_s-channel_7TeV-powheg-tauola") )            
-    inFile.open("badeventlist_pythia6bug_t_schannel_madgraph.txt");
-  //else if (sampleName_.Contains("tbar_s-channel") )
-  else if (sampleName_.Contains("Tbar_TuneZ2_s-channel_7TeV-powheg-tauola") )         
-    inFile.open("badeventlist_pythia6bug_tbar_schannel_madgraph.txt");
-  //else if (sampleName_.Contains("t_t-channel") )
-  else if (sampleName_.Contains("T_TuneZ2_t-channel_7TeV-powheg-tauola") )            
-    inFile.open("badeventlist_pythia6bug_t_tchannel_madgraph.txt");
-  //else if (sampleName_.Contains("tbar_t-channel") )
-  else if (sampleName_.Contains("Tbar_TuneZ2_t-channel_7TeV-powheg-tauola") )         
-    inFile.open("badeventlist_pythia6bug_tbar_tchannel_madgraph.txt");
-  //else if (sampleName_.Contains("t_tW-channel") )
-  else if (sampleName_.Contains("T_TuneZ2_tW-channel-DR_7TeV-powheg-tauola") )        
-    inFile.open("badeventlist_pythia6bug_t_tWchannel_madgraph.txt");
-  //else if (sampleName_.Contains("tbar_tW-channel") )
-  else if (sampleName_.Contains("Tbar_TuneZ2_tW-channel-DR_7TeV-powheg-tauola") )     
-    inFile.open("badeventlist_pythia6bug_tbar_tWchannel_madgraph.txt");
-  else if (sampleName_.Contains("WJetsToLNu_300_HT_inf_TuneZ2_7TeV-madgraph-tauola") )
-    inFile.open("badeventlist_pythia6bug_wjets_ht300_madgraph.txt");
-  else if (sampleName_.Contains("DYJetsToLL_TuneZ2_M-50_7TeV-madgraph-tauola") )
-    inFile.open("badeventlist_pythia6bug_dyjets_madgraph.txt");
-  else if (sampleName_.Contains("zjets") )
-    inFile.open("badeventlist_pythia6bug_zinvjets_madgraph.txt");
   else return;
 
-  if(!inFile) {std::cout << "ERROR: can't open event list" << std::endl;  assert(0);}
+  if(!inFile || !inFile.good()) {std::cout << "ERROR: can't open event list" << std::endl;  assert(0);}
   while(!inFile.eof()) {
     std::string line;
     getline(inFile,line);
