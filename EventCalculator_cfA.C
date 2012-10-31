@@ -692,13 +692,14 @@ bool EventCalculator::isQualityTrack(const int trackindex) {
   //sanity
   if ( trackindex >= (int) tracks_chi2->size() ) return false;
 
-  if (tracks_chi2->at(trackindex)/tracks_ndof->at(trackindex) > 5) return false;
+  //  if (tracks_chi2->at(trackindex)/tracks_ndof->at(trackindex) > 5) return false;
 
   if (fabs(tracks_eta->at(trackindex))>2.4 ) return false;
 
-  if ( tracks_numlosthits->at(trackindex)>0) return false;
+  //  if ( tracks_numlosthits->at(trackindex)>0) return false;
 
-  //could add: cuts on the 'err' variables; cut on 'highPurity' discriminator value
+  //keith suggest requiring just the highPurity flag
+  if (!(tracks_highPurity->at(trackindex)>0)) return false;
 
   return true;
 }
