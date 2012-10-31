@@ -5418,6 +5418,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   double eventweight2; //one exception to the float rule
   //  float btagIPweight;//, pfmhtweight; //
   float PUweight;
+  float PUweightSystVar;
   float hltHTeff;
   float hltMHTeff;
   //  float hltMHTeffBNN,hltMHTeffBNNUp,hltMHTeffBNNDown;
@@ -5743,10 +5744,14 @@ Also the pdfWeightSum* histograms that are used for LM9.
 
   //initialize PU things
   std::vector< float > DataDist;
+  std::vector< float > DataDistSystVar;
   std::vector< float > MCDist;
   for( int i=0; i<60; ++i) {
     //1D reweighting -- all I have done for 2012 (not sure if 3D is used anymore)
-    if (puReweightIs1D)    DataDist.push_back(pu::RunsThrough203002[i]);
+    if (puReweightIs1D) {    
+      DataDist.push_back(pu::RunsThrough203002[i]);
+      DataDistSystVar.push_back(pu::RunsThrough203002systVar[i]);
+    }
     //for 3dPU reweighting 
     //    else DataDist2011.push_back(pu::TrueDist2011_f[i]);
     if (sampleName_.Contains("PU_S7"))  MCDist.push_back(pu::Summer2012[i]);
@@ -5756,9 +5761,13 @@ Also the pdfWeightSum* histograms that are used for LM9.
   }
 
   reweight::LumiReWeighting * LumiWeights=0;
+  reweight::LumiReWeighting * LumiWeightsSystVar=0;
   // FIXME CFA
   //Lumi3DReWeighting * LumiWeights3D=0;
-  if (puReweightIs1D)  LumiWeights = new reweight::LumiReWeighting( MCDist, DataDist );
+  if (puReweightIs1D)  {
+    LumiWeights = new reweight::LumiReWeighting( MCDist, DataDist );
+    LumiWeightsSystVar = new reweight::LumiReWeighting( MCDist, DataDistSystVar );
+  }
   else                 assert(0); //LumiWeights3D = new Lumi3DReWeighting( MCDist2011, DataDist2011);
 
   //FIXME CFA...this is for PU systematics
@@ -5798,6 +5807,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
   //  reducedTree.Branch("btagIPweight",&btagIPweight,"btagIPweight/F");
   //  reducedTree.Branch("pfmhtweight",&pfmhtweight,"pfmhtweight/F");
   reducedTree.Branch("PUweight",&PUweight,"PUweight/F");
+  reducedTree.Branch("PUweightSystVar",&PUweightSystVar,"PUweightSystVar/F");
   reducedTree.Branch("hltHTeff",&hltHTeff,"hltHTeff/F");
   reducedTree.Branch("hltMHTeff",&hltMHTeff,"hltMHTeff/F");
 
@@ -6574,6 +6584,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
       HT30=getHT(30);
       hltHTeff = getHLTHTeff(HT);
       PUweight =  puReweightIs1D ? getPUWeight(*LumiWeights) : 1;// FIXME CFA getPUWeight(*LumiWeights3D);
+      PUweightSystVar =  puReweightIs1D ? getPUWeight(*LumiWeightsSystVar) : 1;// FIXME CFA getPUWeight(*LumiWeights3D);
       //      pfmhtweight = getPFMHTWeight();
 
       cutPV = passPV();
