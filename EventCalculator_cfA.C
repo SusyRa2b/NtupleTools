@@ -672,37 +672,164 @@ float EventCalculator::getBestZmmCandidate(const float pt_threshold1,const float
 }
 
 
-bool EventCalculator::isGoodTau(const unsigned int itau, const float pTthreshold, const float etaMax) {
-  return false; //FIXME CFA
-/*
-  if ( getTauPt(itau) >= pTthreshold
-      && fabs(taus_eta->at(itau)) < etaMax
-      && taus_againstElectron->at(itau) > 0
-      && taus_againstMuon->at(itau) > 0
-      && taus_taNC_half->at(itau) > 0
-      ) {
-    return true;
+bool EventCalculator::isGoodTau(const unsigned int itau, const float pTthreshold, const float etaMax, const TString & wp) {
+
+  if ( (getTauPt(itau) >= pTthreshold) && (fabs(taus_eta->at(itau)) < etaMax) ) {
+    
+    if (wp == "VLoose")     return (taus_byVLooseIsolationDeltaBetaCorr->at(itau) > 0);
+    else if (wp == "Loose") return (taus_byLooseIsolationDeltaBetaCorr->at(itau) > 0);
+    else if (wp == "Medium")return (taus_byMediumIsolationDeltaBetaCorr->at(itau) > 0);
+    else if (wp == "Tight") return (taus_byTightIsolationDeltaBetaCorr->at(itau) > 0);
+    else assert(0);
   }
 
   return false;
-*/
 }
+
+bool EventCalculator::isQualityTrack(const int trackindex) {
+  //these are made up by looking at some distributions in ttbar MC
+
+  //sanity
+  if ( trackindex >= (int) tracks_chi2->size() ) return false;
+
+  if (tracks_chi2->at(trackindex)/tracks_ndof->at(trackindex) > 5) return false;
+
+  if (fabs(tracks_eta->at(trackindex))>2.4 ) return false;
+
+  if ( tracks_numlosthits->at(trackindex)>0) return false;
+
+  //could add: cuts on the 'err' variables; cut on 'highPurity' discriminator value
+
+  return true;
+}
+
+int EventCalculator::countIsoTracks(const float minpt, const float miniso) {
+  if (!isGoodPV(0)) return 0;
+
+  int nisotracks=0;
+
+  const float maxdr = 0.3; //this is hooberman's default
+  const float maxdz = 0.05; //ditto
+
+  for (unsigned int iii=0; iii<tracks_chi2->size(); iii++) {
+    if (tracks_pt->at(iii) >= minpt) {
+      if (isQualityTrack(iii)) {
+	
+	//now check deltaz to the PV, and using the Hooberman default value
+	if ( fabs(tracks_vz->at(iii) - pv_z->at(0) ) >= maxdz ) return false;
+
+
+	//finally, compute the iso sum
+	float isosum=0;
+	//imitate hooberman's algorithm here
+	for (unsigned int jjj=0; jjj<tracks_chi2->size(); jjj++) {
+	  if (iii==jjj) continue;  //don't count yourself
+	  if ( !isQualityTrack(jjj)) continue;
+	  //should i have a pt cut?
+	  float dr = jmt::deltaR(tracks_eta->at(iii),tracks_phi->at(iii),tracks_eta->at(jjj),tracks_phi->at(jjj));
+	  if (dr > maxdr) continue;
+	  //cut on dz of this track
+	  if ( fabs( tracks_vz->at(jjj) - pv_z->at(0)) >= maxdz) continue;
+	  isosum += tracks_pt->at(jjj);
+	}
+	//now, if it is isolated, increment counter
+	if ( isosum / tracks_pt->at(iii) <= miniso) ++nisotracks;
+      }
+    }
+  }
+  
+  return nisotracks;
+}
+
+int EventCalculator::countIsoPFCands(const float minpt, const float miniso) {
+  //a pf cand-based implementation of ben hooberman's isoTrack counter
+
+  //code largely copied and pasted from countIsoTracks()
+
+  if (!isGoodPV(0)) return 0;
+
+  int nisotracks=0;
+
+  const float maxdr = 0.3; //this is hooberman's default
+  //  const float maxdz = 0.05; //ditto
+
+  for (unsigned int iii=0; iii<pfcand_pt->size(); ++iii) {
+    
+    //look only at charged candidates above a certain pt
+    if (pfcand_pt->at(iii) >= minpt && TMath::Nint(pfcand_charge->at(iii))!=0 ) {
+      
+      //now check deltaz to the PV, and using the Hooberman default value
+      //	if ( fabs(tracks_vz->at(iii) - pv_z->at(0) ) >= maxdz ) return false;
+      //do not have z vertex info for pf cands.
+      //dream of matching pf cands to tracks using pt,eta,phi. for now leave it out
+      
+      //finally, compute the iso sum
+      float isosum=0;
+      //imitate hooberman's algorithm here
+      for (unsigned int jjj=0; jjj<pfcand_pt->size(); jjj++) {
+	if (iii==jjj) continue;  //don't count yourself
+	
+	//don't use neutrals
+	if ( TMath::Nint(pfcand_charge->at(jjj))==0) continue;
+	
+	//this is the isolation cone definition
+	float dr = jmt::deltaR(pfcand_eta->at(iii),pfcand_phi->at(iii),pfcand_eta->at(jjj),pfcand_phi->at(jjj));
+	if (dr > maxdr) continue;
+	//cut on dz of this track -- or not in this case
+	//	if ( fabs( tracks_vz->at(jjj) - pv_z->at(0)) >= maxdz) continue;
+	isosum += pfcand_pt->at(jjj);
+      }
+      //now, if it is isolated, increment counter
+      if ( isosum / pfcand_pt->at(iii) <= miniso) ++nisotracks;
+      
+    }
+    
+  }
+  return nisotracks;
+  
+}
+
+bool EventCalculator::isIndirectTau( unsigned int ijet, const int maxmult) {
+
+  if (getJetPt(ijet) <15 ) return false;
+
+  if ( jets_AK5PF_chg_Mult->at(ijet) > maxmult) return false;
+
+  double  mt  = 2*getJetPt(ijet)*getMET()*(1 - cos( getDeltaPhi( jets_AK5PF_phi->at(ijet) , getMETphi())));
+  if (mt>0) mt = sqrt(mt);
+  if (mt> 90) return false;
+
+  if ( passBTagger(ijet)) return false;
+
+  return true;
+
+}
+
+int EventCalculator::countIndirectTau( const int maxmult ) {
+
+  int ntau=0;
+
+  for (unsigned int ijet = 0; ijet<jets_AK5PF_eta->size(); ijet++) {
+
+    if (isIndirectTau(ijet,maxmult)) ++ntau;
+
+  }
+
+  return ntau;
+}
+
 
 float EventCalculator::getTauPt( unsigned int itau) {
-  return 0; //FIXME CFA
-  //  return taus_pt->at(itau);
+  return taus_pt->at(itau);
 }
 
-unsigned int EventCalculator::countTau() {
-  return 0; //FIXME CFA
-  //  if (taus_pt==0) return 0; //FIXME CFA
-/*
+unsigned int EventCalculator::countTau(const TString & wp) {
+
   unsigned int ngoodtau=0;
   for (unsigned int i=0; i <taus_pt->size() ; i++) {
-    if(isGoodTau(i))      ++ngoodtau;
+    if(isGoodTau(i,20,2.4,wp))      ++ngoodtau;
   }
   return ngoodtau;
-*/
 }
 
 TString EventCalculator::stripTriggerVersion(const TString & fullname, int & version) {
@@ -5544,7 +5671,9 @@ void EventCalculator::reducedTree(TString outputpath) {
   //want a copy of triggerlist, for storing mc trigger results
   map<TString, triggerData > triggerlist_mc(triggerlist);
 
-  int njets, njets30, nbjets, nbjets30,ntruebjets, nElectrons, nMuons, nTaus;
+  int njets, njets30, nbjets, nbjets30,ntruebjets, nElectrons, nMuons;
+  int nTausVLoose,nTausLoose,nTausMedium,nTausTight;
+  int nIndirectTaus4,nIndirectTaus5,nIndirectTaus6,nIndirectTaus7;
   int nbjetsSSVM,nbjetsTCHET,nbjetsSSVHPT,nbjetsTCHPT,nbjetsTCHPM,nbjetsCSVM,nbjetsCSVL; 
   int nElectrons5, nElectrons15,nElectrons20;
   int nMuons5, nMuons15,nMuons20;
@@ -5642,7 +5771,10 @@ void EventCalculator::reducedTree(TString outputpath) {
   bool passBadECAL_METphi52_crackF;
   float worstMisA_badECAL_METphi52_crackF, worstMisF_badECAL_METphi52_crackF;
 
-  int nTracks1,nTracks10;
+  int nIsoTracks10_020,nIsoTracks10_015,nIsoTracks10_010,nIsoTracks10_005;
+  int nIsoTracks5_020,nIsoTracks5_015,nIsoTracks5_010,nIsoTracks5_005;
+  int nIsoPFCands10_020,nIsoPFCands10_015,nIsoPFCands10_010,nIsoPFCands10_005;
+  int nIsoPFCands5_020,nIsoPFCands5_015,nIsoPFCands5_010,nIsoPFCands5_005;
 
   float prob0,probge1,prob1,probge2,probge3,prob2;
   
@@ -5888,7 +6020,6 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("ntruebjets",&ntruebjets,"ntruebjets/I");
   reducedTree.Branch("nElectrons",&nElectrons,"nElectrons/I");
   reducedTree.Branch("nMuons",&nMuons,"nMuons/I");
-  reducedTree.Branch("nTaus",&nTaus,"nTaus/I");
   reducedTree.Branch("nElectrons5",&nElectrons5,"nElectrons5/I");
   reducedTree.Branch("nMuons5",&nMuons5,"nMuons5/I");
   reducedTree.Branch("nElectrons15",&nElectrons15,"nElectrons15/I");
@@ -5896,6 +6027,18 @@ Also the pdfWeightSum* histograms that are used for LM9.
 
   reducedTree.Branch("nElectrons20",&nElectrons20,"nElectrons20/I"); //jmt
   reducedTree.Branch("nMuons20",&nMuons20,"nMuons20/I");
+
+  reducedTree.Branch("nTausVLoose",&nTausVLoose,"nTausVLoose/I");
+  reducedTree.Branch("nTausLoose",&nTausLoose,"nTausLoose/I");
+  reducedTree.Branch("nTausMedium",&nTausMedium,"nTausMedium/I");
+  reducedTree.Branch("nTausTight",&nTausTight,"nTausTight/I");
+
+
+  reducedTree.Branch("nIndirectTaus4",&nIndirectTaus4,"nIndirectTaus4/I");
+  reducedTree.Branch("nIndirectTaus5",&nIndirectTaus5,"nIndirectTaus5/I");
+  reducedTree.Branch("nIndirectTaus6",&nIndirectTaus6,"nIndirectTaus6/I");
+  reducedTree.Branch("nIndirectTaus7",&nIndirectTaus7,"nIndirectTaus7/I");
+
 
   reducedTree.Branch("bestZmass",&bestZmass,"bestZmass/F");
   reducedTree.Branch("mjj1",&mjj1,"mjj1/F");
@@ -6270,8 +6413,26 @@ Also the pdfWeightSum* histograms that are used for LM9.
 
   reducedTree.Branch("nLostJet", &nLostJet, "nLostJet/F");
 
-  reducedTree.Branch("nTracks1",&nTracks1,"nTracks1/I");
-  reducedTree.Branch("nTracks10",&nTracks10,"nTracks10/I");
+  reducedTree.Branch("nIsoTracks10_020",&nIsoTracks10_020,"nIsoTracks10_020/I");
+  reducedTree.Branch("nIsoTracks10_015",&nIsoTracks10_015,"nIsoTracks10_015/I");
+  reducedTree.Branch("nIsoTracks10_010",&nIsoTracks10_010,"nIsoTracks10_010/I");
+  reducedTree.Branch("nIsoTracks10_005",&nIsoTracks10_005,"nIsoTracks10_005/I");
+
+  reducedTree.Branch("nIsoTracks5_020",&nIsoTracks5_020,"nIsoTracks5_020/I");
+  reducedTree.Branch("nIsoTracks5_015",&nIsoTracks5_015,"nIsoTracks5_015/I");
+  reducedTree.Branch("nIsoTracks5_010",&nIsoTracks5_010,"nIsoTracks5_010/I");
+  reducedTree.Branch("nIsoTracks5_005",&nIsoTracks5_005,"nIsoTracks5_005/I");
+
+  reducedTree.Branch("nIsoPFCands10_020",&nIsoPFCands10_020,"nIsoPFCands10_020/I");
+  reducedTree.Branch("nIsoPFCands10_015",&nIsoPFCands10_015,"nIsoPFCands10_015/I");
+  reducedTree.Branch("nIsoPFCands10_010",&nIsoPFCands10_010,"nIsoPFCands10_010/I");
+  reducedTree.Branch("nIsoPFCands10_005",&nIsoPFCands10_005,"nIsoPFCands10_005/I");
+
+  reducedTree.Branch("nIsoPFCands5_020",&nIsoPFCands5_020,"nIsoPFCands5_020/I");
+  reducedTree.Branch("nIsoPFCands5_015",&nIsoPFCands5_015,"nIsoPFCands5_015/I");
+  reducedTree.Branch("nIsoPFCands5_010",&nIsoPFCands5_010,"nIsoPFCands5_010/I");
+  reducedTree.Branch("nIsoPFCands5_005",&nIsoPFCands5_005,"nIsoPFCands5_005/I");
+
 
   const int nskimCounter=8;
   TH1D skimCounter("skimCounter","[nevents] ntotal nselected npasstrig nfailtrig npassjson nfailjson npassST nfailST [ntotalgen]",nskimCounter,0,nskimCounter);
@@ -6557,6 +6718,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
 	tauMatch_chhadmult = jets_AK5PF_chg_Mult->at(tauindex);
 	tauMatch_jetcsv = jets_AK5PF_btag_secVertexCombined->at(tauindex);
 	tauMatch_MT = 2*getJetPt(tauindex)*getMET()*(1 - cos( getDeltaPhi( jets_AK5PF_phi->at(tauindex) , getMETphi())));
+	tauMatch_MT = (tauMatch_MT>0) ? sqrt(tauMatch_MT) : -1;
       }
       else {
 	tauMatch_jetpt=-1;
@@ -6650,7 +6812,10 @@ Also the pdfWeightSum* histograms that are used for LM9.
 
       bestZmass=getBestZCandidate(20,10);
 
-      nTaus = countTau();
+      nTausVLoose = countTau("VLoose");
+      nTausLoose = countTau("Loose");
+      nTausMedium = countTau("Medium");
+      nTausTight = countTau("Tight");
       MHT=getMHT();
       METphi = getMETphi();
 
@@ -6999,17 +7164,32 @@ Also the pdfWeightSum* histograms that are used for LM9.
       getSphericity(transverseSphericity_jets30MetLeptons,true,true,30);
       getSphericity(transverseSphericity_jets30Leptons,false,true,30);
 
-      //tracking...should really have quality cuts but i don't know the appropriate cuts
-      nTracks1=0;
-      nTracks10=0;
-      for (unsigned int iii=0; iii<tracks_chi2->size(); iii++) {
-	if (tracks_pt->at(iii) >= 1) {
-	  ++nTracks1;
-	  if (tracks_pt->at(iii) >= 10) {
-	    ++nTracks10;
-	  }
-	}
-      }
+      //isolated tracks
+      nIsoTracks10_020=countIsoTracks(10,0.2);
+      nIsoTracks10_015=countIsoTracks(10,0.15);
+      nIsoTracks10_010=countIsoTracks(10,0.1);
+      nIsoTracks10_005=countIsoTracks(10,0.05);
+
+      nIsoTracks5_020=countIsoTracks(5,0.2);
+      nIsoTracks5_015=countIsoTracks(5,0.15);
+      nIsoTracks5_010=countIsoTracks(5,0.1);
+      nIsoTracks5_005=countIsoTracks(5,0.05);
+
+      //now, isolated pf candidates
+      nIsoPFCands10_020=countIsoPFCands(10,0.2);
+      nIsoPFCands10_015=countIsoPFCands(10,0.15);
+      nIsoPFCands10_010=countIsoPFCands(10,0.1);
+      nIsoPFCands10_005=countIsoPFCands(10,0.05);
+
+      nIsoPFCands5_020=countIsoPFCands(5,0.2);
+      nIsoPFCands5_015=countIsoPFCands(5,0.15);
+      nIsoPFCands5_010=countIsoPFCands(5,0.1);
+      nIsoPFCands5_005=countIsoPFCands(5,0.05);
+
+      nIndirectTaus4 = countIndirectTau(4);
+      nIndirectTaus5 = countIndirectTau(5);
+      nIndirectTaus6 = countIndirectTau(6);
+      nIndirectTaus7 = countIndirectTau(7);
 
       //Uncomment next two lines to do thrust calculations
       //getTransverseThrustVariables(transverseThrust, transverseThrustPhi, false);

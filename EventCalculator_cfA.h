@@ -97,9 +97,16 @@ public:
   bool isCleanMuon(const unsigned int imuon, const float ptthreshold=10);
   unsigned int countMu(const float ptthreshold=10);
 
-  bool isGoodTau(const unsigned int itau, const float pTthreshold=20, const float etaMax=2.4);
+  bool isIndirectTau( unsigned int ijet, const int maxmult) ;
+  int countIndirectTau( const int maxmult );
+
+  bool isGoodTau(const unsigned int itau, const float pTthreshold=20, const float etaMax=2.4, const TString & wp="Loose");
   float getTauPt( unsigned int itau );
-  unsigned int countTau();
+  unsigned int countTau(const TString & wp);
+
+  int countIsoPFCands(const float minpt, const float miniso) ;
+  int countIsoTracks(const float minpt, const float miniso) ;
+  bool isQualityTrack(const int trackindex) ;
 
 
   TString stripTriggerVersion(const TString & fullname, int & version);
