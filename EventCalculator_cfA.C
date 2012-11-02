@@ -704,20 +704,63 @@ bool EventCalculator::isQualityTrack(const int trackindex) {
   return true;
 }
 
-int EventCalculator::countIsoTracks(const float minpt, const float miniso) {
+float EventCalculator::mostIsolatedTrackValue(const float minpt, const float maxdr) {
+  //hooberman's maxdr is 0.3
+
+  //exactly the same as countIsoTracks but no cut. rather just return the isolation of the most isolated track
   if (!isGoodPV(0)) return 0;
 
+  const float maxdz = 0.05; //ditto
+
+  float miniso=1e9;
+
+  for (unsigned int iii=0; iii<tracks_chi2->size(); iii++) {
+    if (tracks_pt->at(iii) >= minpt) {
+      if (isQualityTrack(iii)) {
+
+	//now check deltaz to the PV, and using the Hooberman default value
+	if ( fabs(tracks_vz->at(iii) - pv_z->at(0) ) >= maxdz ) continue;
+
+	//finally, compute the iso sum
+	float isosum=0;
+	//imitate hooberman's algorithm here
+	for (unsigned int jjj=0; jjj<tracks_chi2->size(); jjj++) {
+	  if (iii==jjj) continue;  //don't count yourself
+	  if ( !isQualityTrack(jjj)) continue;
+
+	  //track pT cut?
+	  //if (tracks_pt->at(jjj) < 1) continue;
+
+	  float dr = jmt::deltaR(tracks_eta->at(iii),tracks_phi->at(iii),tracks_eta->at(jjj),tracks_phi->at(jjj));
+	  if (dr > maxdr) continue;
+	  //cut on dz of this track
+	  if ( fabs( tracks_vz->at(jjj) - pv_z->at(0)) >= maxdz) continue;
+	  isosum += tracks_pt->at(jjj);
+	}
+	if ( isosum / tracks_pt->at(iii) < miniso) miniso = isosum / tracks_pt->at(iii);
+      }
+    }
+  }
+  return miniso;
+
+}
+
+int EventCalculator::countIsoTracks(const float minpt, const float miniso, const float maxdr) {
+  if (!isGoodPV(0)) return 0;
+  const bool verbose=false;
   int nisotracks=0;
 
-  const float maxdr = 0.3; //this is hooberman's default
+  //  const float maxdr = 0.3; //this is hooberman's default
   const float maxdz = 0.05; //ditto
+
+  if (verbose) cout<<"[countIsoTracks("<<minpt<<","<<miniso<<")] "<<endl;
 
   for (unsigned int iii=0; iii<tracks_chi2->size(); iii++) {
     if (tracks_pt->at(iii) >= minpt) {
       if (isQualityTrack(iii)) {
 	
 	//now check deltaz to the PV, and using the Hooberman default value
-	if ( fabs(tracks_vz->at(iii) - pv_z->at(0) ) >= maxdz ) return false;
+	if ( fabs(tracks_vz->at(iii) - pv_z->at(0) ) >= maxdz ) continue;
 
 
 	//finally, compute the iso sum
@@ -734,7 +777,10 @@ int EventCalculator::countIsoTracks(const float minpt, const float miniso) {
 	  isosum += tracks_pt->at(jjj);
 	}
 	//now, if it is isolated, increment counter
-	if ( isosum / tracks_pt->at(iii) <= miniso) ++nisotracks;
+	if ( isosum / tracks_pt->at(iii) <= miniso) {
+	  if (verbose) cout<<" found iso track "<<tracks_pt->at(iii)<<" "<<isosum <<" "<<isosum/ tracks_pt->at(iii)<<endl;
+	  ++nisotracks;
+	}
       }
     }
   }
@@ -5674,7 +5720,7 @@ void EventCalculator::reducedTree(TString outputpath) {
 
   int njets, njets30, nbjets, nbjets30,ntruebjets, nElectrons, nMuons;
   int nTausVLoose,nTausLoose,nTausMedium,nTausTight;
-  int nIndirectTaus4,nIndirectTaus5,nIndirectTaus6,nIndirectTaus7;
+  int nIndirectTaus4,nIndirectTaus5,nIndirectTaus2,nIndirectTaus3;
   int nbjetsSSVM,nbjetsTCHET,nbjetsSSVHPT,nbjetsTCHPT,nbjetsTCHPM,nbjetsCSVM,nbjetsCSVL; 
   int nElectrons5, nElectrons15,nElectrons20;
   int nMuons5, nMuons15,nMuons20;
@@ -5772,10 +5818,25 @@ void EventCalculator::reducedTree(TString outputpath) {
   bool passBadECAL_METphi52_crackF;
   float worstMisA_badECAL_METphi52_crackF, worstMisF_badECAL_METphi52_crackF;
 
-  int nIsoTracks10_020,nIsoTracks10_015,nIsoTracks10_010,nIsoTracks10_005;
-  int nIsoTracks5_020,nIsoTracks5_015,nIsoTracks5_010,nIsoTracks5_005;
-  int nIsoPFCands10_020,nIsoPFCands10_015,nIsoPFCands10_010,nIsoPFCands10_005;
-  int nIsoPFCands5_020,nIsoPFCands5_015,nIsoPFCands5_010,nIsoPFCands5_005;
+  int nIsoTracks20_020_03,nIsoTracks20_015_03,nIsoTracks20_010_03,nIsoTracks20_005_03;
+  int nIsoTracks15_020_03,nIsoTracks15_015_03,nIsoTracks15_010_03,nIsoTracks15_005_03;
+  int nIsoTracks10_020_03,nIsoTracks10_015_03,nIsoTracks10_010_03,nIsoTracks10_005_03;
+  int nIsoTracks5_020_03,nIsoTracks5_015_03,nIsoTracks5_010_03,nIsoTracks5_005_03;
+
+  int nIsoTracks20_020_05,nIsoTracks20_015_05,nIsoTracks20_010_05,nIsoTracks20_005_05;
+  int nIsoTracks15_020_05,nIsoTracks15_015_05,nIsoTracks15_010_05,nIsoTracks15_005_05;
+  int nIsoTracks10_020_05,nIsoTracks10_015_05,nIsoTracks10_010_05,nIsoTracks10_005_05;
+  int nIsoTracks5_020_05,nIsoTracks5_015_05,nIsoTracks5_010_05,nIsoTracks5_005_05;
+
+  int nIsoTracks20_020_07,nIsoTracks20_015_07,nIsoTracks20_010_07,nIsoTracks20_005_07;
+  int nIsoTracks15_020_07,nIsoTracks15_015_07,nIsoTracks15_010_07,nIsoTracks15_005_07;
+  int nIsoTracks10_020_07,nIsoTracks10_015_07,nIsoTracks10_010_07,nIsoTracks10_005_07;
+  int nIsoTracks5_020_07,nIsoTracks5_015_07,nIsoTracks5_010_07,nIsoTracks5_005_07;
+
+
+  //  int nIsoPFCands10_020,nIsoPFCands10_015,nIsoPFCands10_010,nIsoPFCands10_005;
+  //  int nIsoPFCands5_020,nIsoPFCands5_015,nIsoPFCands5_010,nIsoPFCands5_005;
+  float minTrackIso10,minTrackIso5,minTrackIso15,minTrackIso20;
 
   float prob0,probge1,prob1,probge2,probge3,prob2;
   
@@ -6037,8 +6098,8 @@ Also the pdfWeightSum* histograms that are used for LM9.
 
   reducedTree.Branch("nIndirectTaus4",&nIndirectTaus4,"nIndirectTaus4/I");
   reducedTree.Branch("nIndirectTaus5",&nIndirectTaus5,"nIndirectTaus5/I");
-  reducedTree.Branch("nIndirectTaus6",&nIndirectTaus6,"nIndirectTaus6/I");
-  reducedTree.Branch("nIndirectTaus7",&nIndirectTaus7,"nIndirectTaus7/I");
+  reducedTree.Branch("nIndirectTaus2",&nIndirectTaus2,"nIndirectTaus2/I");
+  reducedTree.Branch("nIndirectTaus3",&nIndirectTaus3,"nIndirectTaus3/I");
 
 
   reducedTree.Branch("bestZmass",&bestZmass,"bestZmass/F");
@@ -6414,25 +6475,83 @@ Also the pdfWeightSum* histograms that are used for LM9.
 
   reducedTree.Branch("nLostJet", &nLostJet, "nLostJet/F");
 
-  reducedTree.Branch("nIsoTracks10_020",&nIsoTracks10_020,"nIsoTracks10_020/I");
-  reducedTree.Branch("nIsoTracks10_015",&nIsoTracks10_015,"nIsoTracks10_015/I");
-  reducedTree.Branch("nIsoTracks10_010",&nIsoTracks10_010,"nIsoTracks10_010/I");
-  reducedTree.Branch("nIsoTracks10_005",&nIsoTracks10_005,"nIsoTracks10_005/I");
 
-  reducedTree.Branch("nIsoTracks5_020",&nIsoTracks5_020,"nIsoTracks5_020/I");
-  reducedTree.Branch("nIsoTracks5_015",&nIsoTracks5_015,"nIsoTracks5_015/I");
-  reducedTree.Branch("nIsoTracks5_010",&nIsoTracks5_010,"nIsoTracks5_010/I");
-  reducedTree.Branch("nIsoTracks5_005",&nIsoTracks5_005,"nIsoTracks5_005/I");
+  reducedTree.Branch("nIsoTracks20_020_03",&nIsoTracks20_020_03,"nIsoTracks20_020_03/I");
+  reducedTree.Branch("nIsoTracks20_015_03",&nIsoTracks20_015_03,"nIsoTracks20_015_03/I");
+  reducedTree.Branch("nIsoTracks20_010_03",&nIsoTracks20_010_03,"nIsoTracks20_010_03/I");
+  reducedTree.Branch("nIsoTracks20_005_03",&nIsoTracks20_005_03,"nIsoTracks20_005_03/I");
 
-  reducedTree.Branch("nIsoPFCands10_020",&nIsoPFCands10_020,"nIsoPFCands10_020/I");
-  reducedTree.Branch("nIsoPFCands10_015",&nIsoPFCands10_015,"nIsoPFCands10_015/I");
-  reducedTree.Branch("nIsoPFCands10_010",&nIsoPFCands10_010,"nIsoPFCands10_010/I");
-  reducedTree.Branch("nIsoPFCands10_005",&nIsoPFCands10_005,"nIsoPFCands10_005/I");
+  reducedTree.Branch("nIsoTracks15_020_03",&nIsoTracks15_020_03,"nIsoTracks15_020_03/I");
+  reducedTree.Branch("nIsoTracks15_015_03",&nIsoTracks15_015_03,"nIsoTracks15_015_03/I");
+  reducedTree.Branch("nIsoTracks15_010_03",&nIsoTracks15_010_03,"nIsoTracks15_010_03/I");
+  reducedTree.Branch("nIsoTracks15_005_03",&nIsoTracks15_005_03,"nIsoTracks15_005_03/I");
 
-  reducedTree.Branch("nIsoPFCands5_020",&nIsoPFCands5_020,"nIsoPFCands5_020/I");
-  reducedTree.Branch("nIsoPFCands5_015",&nIsoPFCands5_015,"nIsoPFCands5_015/I");
-  reducedTree.Branch("nIsoPFCands5_010",&nIsoPFCands5_010,"nIsoPFCands5_010/I");
-  reducedTree.Branch("nIsoPFCands5_005",&nIsoPFCands5_005,"nIsoPFCands5_005/I");
+  reducedTree.Branch("nIsoTracks10_020_03",&nIsoTracks10_020_03,"nIsoTracks10_020_03/I");
+  reducedTree.Branch("nIsoTracks10_015_03",&nIsoTracks10_015_03,"nIsoTracks10_015_03/I");
+  reducedTree.Branch("nIsoTracks10_010_03",&nIsoTracks10_010_03,"nIsoTracks10_010_03/I");
+  reducedTree.Branch("nIsoTracks10_005_03",&nIsoTracks10_005_03,"nIsoTracks10_005_03/I");
+
+  reducedTree.Branch("nIsoTracks5_020_03",&nIsoTracks5_020_03,"nIsoTracks5_020_03/I");
+  reducedTree.Branch("nIsoTracks5_015_03",&nIsoTracks5_015_03,"nIsoTracks5_015_03/I");
+  reducedTree.Branch("nIsoTracks5_010_03",&nIsoTracks5_010_03,"nIsoTracks5_010_03/I");
+  reducedTree.Branch("nIsoTracks5_005_03",&nIsoTracks5_005_03,"nIsoTracks5_005_03/I");
+
+
+  reducedTree.Branch("nIsoTracks20_020_05",&nIsoTracks20_020_05,"nIsoTracks20_020_05/I");
+  reducedTree.Branch("nIsoTracks20_015_05",&nIsoTracks20_015_05,"nIsoTracks20_015_05/I");
+  reducedTree.Branch("nIsoTracks20_010_05",&nIsoTracks20_010_05,"nIsoTracks20_010_05/I");
+  reducedTree.Branch("nIsoTracks20_005_05",&nIsoTracks20_005_05,"nIsoTracks20_005_05/I");
+
+  reducedTree.Branch("nIsoTracks15_020_05",&nIsoTracks15_020_05,"nIsoTracks15_020_05/I");
+  reducedTree.Branch("nIsoTracks15_015_05",&nIsoTracks15_015_05,"nIsoTracks15_015_05/I");
+  reducedTree.Branch("nIsoTracks15_010_05",&nIsoTracks15_010_05,"nIsoTracks15_010_05/I");
+  reducedTree.Branch("nIsoTracks15_005_05",&nIsoTracks15_005_05,"nIsoTracks15_005_05/I");
+
+  reducedTree.Branch("nIsoTracks10_020_05",&nIsoTracks10_020_05,"nIsoTracks10_020_05/I");
+  reducedTree.Branch("nIsoTracks10_015_05",&nIsoTracks10_015_05,"nIsoTracks10_015_05/I");
+  reducedTree.Branch("nIsoTracks10_010_05",&nIsoTracks10_010_05,"nIsoTracks10_010_05/I");
+  reducedTree.Branch("nIsoTracks10_005_05",&nIsoTracks10_005_05,"nIsoTracks10_005_05/I");
+
+  reducedTree.Branch("nIsoTracks5_020_05",&nIsoTracks5_020_05,"nIsoTracks5_020_05/I");
+  reducedTree.Branch("nIsoTracks5_015_05",&nIsoTracks5_015_05,"nIsoTracks5_015_05/I");
+  reducedTree.Branch("nIsoTracks5_010_05",&nIsoTracks5_010_05,"nIsoTracks5_010_05/I");
+  reducedTree.Branch("nIsoTracks5_005_05",&nIsoTracks5_005_05,"nIsoTracks5_005_05/I");
+
+
+  reducedTree.Branch("nIsoTracks20_020_07",&nIsoTracks20_020_07,"nIsoTracks20_020_07/I");
+  reducedTree.Branch("nIsoTracks20_015_07",&nIsoTracks20_015_07,"nIsoTracks20_015_07/I");
+  reducedTree.Branch("nIsoTracks20_010_07",&nIsoTracks20_010_07,"nIsoTracks20_010_07/I");
+  reducedTree.Branch("nIsoTracks20_005_07",&nIsoTracks20_005_07,"nIsoTracks20_005_07/I");
+
+  reducedTree.Branch("nIsoTracks15_020_07",&nIsoTracks15_020_07,"nIsoTracks15_020_07/I");
+  reducedTree.Branch("nIsoTracks15_015_07",&nIsoTracks15_015_07,"nIsoTracks15_015_07/I");
+  reducedTree.Branch("nIsoTracks15_010_07",&nIsoTracks15_010_07,"nIsoTracks15_010_07/I");
+  reducedTree.Branch("nIsoTracks15_005_07",&nIsoTracks15_005_07,"nIsoTracks15_005_07/I");
+
+  reducedTree.Branch("nIsoTracks10_020_07",&nIsoTracks10_020_07,"nIsoTracks10_020_07/I");
+  reducedTree.Branch("nIsoTracks10_015_07",&nIsoTracks10_015_07,"nIsoTracks10_015_07/I");
+  reducedTree.Branch("nIsoTracks10_010_07",&nIsoTracks10_010_07,"nIsoTracks10_010_07/I");
+  reducedTree.Branch("nIsoTracks10_005_07",&nIsoTracks10_005_07,"nIsoTracks10_005_07/I");
+
+  reducedTree.Branch("nIsoTracks5_020_07",&nIsoTracks5_020_07,"nIsoTracks5_020_07/I");
+  reducedTree.Branch("nIsoTracks5_015_07",&nIsoTracks5_015_07,"nIsoTracks5_015_07/I");
+  reducedTree.Branch("nIsoTracks5_010_07",&nIsoTracks5_010_07,"nIsoTracks5_010_07/I");
+  reducedTree.Branch("nIsoTracks5_005_07",&nIsoTracks5_005_07,"nIsoTracks5_005_07/I");
+
+//   reducedTree.Branch("nIsoPFCands10_020",&nIsoPFCands10_020,"nIsoPFCands10_020/I");
+//   reducedTree.Branch("nIsoPFCands10_015",&nIsoPFCands10_015,"nIsoPFCands10_015/I");
+//   reducedTree.Branch("nIsoPFCands10_010",&nIsoPFCands10_010,"nIsoPFCands10_010/I");
+//   reducedTree.Branch("nIsoPFCands10_005",&nIsoPFCands10_005,"nIsoPFCands10_005/I");
+
+//   reducedTree.Branch("nIsoPFCands5_020",&nIsoPFCands5_020,"nIsoPFCands5_020/I");
+//   reducedTree.Branch("nIsoPFCands5_015",&nIsoPFCands5_015,"nIsoPFCands5_015/I");
+//   reducedTree.Branch("nIsoPFCands5_010",&nIsoPFCands5_010,"nIsoPFCands5_010/I");
+//   reducedTree.Branch("nIsoPFCands5_005",&nIsoPFCands5_005,"nIsoPFCands5_005/I");
+
+  reducedTree.Branch("minTrackIso10", &minTrackIso10, "minTrackIso10/F");
+  reducedTree.Branch("minTrackIso5", &minTrackIso5, "minTrackIso5/F");
+  reducedTree.Branch("minTrackIso15", &minTrackIso15, "minTrackIso15/F");
+  reducedTree.Branch("minTrackIso20", &minTrackIso20, "minTrackIso20/F");
 
 
   const int nskimCounter=8;
@@ -7166,31 +7285,88 @@ Also the pdfWeightSum* histograms that are used for LM9.
       getSphericity(transverseSphericity_jets30Leptons,false,true,30);
 
       //isolated tracks
-      nIsoTracks10_020=countIsoTracks(10,0.2);
-      nIsoTracks10_015=countIsoTracks(10,0.15);
-      nIsoTracks10_010=countIsoTracks(10,0.1);
-      nIsoTracks10_005=countIsoTracks(10,0.05);
+      nIsoTracks10_020_03=countIsoTracks(10,0.2,0.3);
+      nIsoTracks10_015_03=countIsoTracks(10,0.15,0.3);
+      nIsoTracks10_010_03=countIsoTracks(10,0.1,0.3);
+      nIsoTracks10_005_03=countIsoTracks(10,0.05,0.3);
 
-      nIsoTracks5_020=countIsoTracks(5,0.2);
-      nIsoTracks5_015=countIsoTracks(5,0.15);
-      nIsoTracks5_010=countIsoTracks(5,0.1);
-      nIsoTracks5_005=countIsoTracks(5,0.05);
+      nIsoTracks5_020_03=countIsoTracks(5,0.2,0.3);
+      nIsoTracks5_015_03=countIsoTracks(5,0.15,0.3);
+      nIsoTracks5_010_03=countIsoTracks(5,0.1,0.3);
+      nIsoTracks5_005_03=countIsoTracks(5,0.05,0.3);
+
+      nIsoTracks15_020_03=countIsoTracks(15,0.2,0.3);
+      nIsoTracks15_015_03=countIsoTracks(15,0.15,0.3);
+      nIsoTracks15_010_03=countIsoTracks(15,0.1,0.3);
+      nIsoTracks15_005_03=countIsoTracks(15,0.05,0.3);
+
+      nIsoTracks20_020_03=countIsoTracks(20,0.2,0.3);
+      nIsoTracks20_020_03=countIsoTracks(20,0.15,0.3);
+      nIsoTracks20_010_03=countIsoTracks(20,0.1,0.3);
+      nIsoTracks20_005_03=countIsoTracks(20,0.05,0.3);
+
+      nIsoTracks10_020_05=countIsoTracks(10,0.2,0.5);
+      nIsoTracks10_015_05=countIsoTracks(10,0.15,0.5);
+      nIsoTracks10_010_05=countIsoTracks(10,0.1,0.5);
+      nIsoTracks10_005_05=countIsoTracks(10,0.05,0.5);
+
+      nIsoTracks5_020_05=countIsoTracks(5,0.2,0.5);
+      nIsoTracks5_015_05=countIsoTracks(5,0.15,0.5);
+      nIsoTracks5_010_05=countIsoTracks(5,0.1,0.5);
+      nIsoTracks5_005_05=countIsoTracks(5,0.05,0.5);
+
+      nIsoTracks15_020_05=countIsoTracks(15,0.2,0.5);
+      nIsoTracks15_015_05=countIsoTracks(15,0.15,0.5);
+      nIsoTracks15_010_05=countIsoTracks(15,0.1,0.5);
+      nIsoTracks15_005_05=countIsoTracks(15,0.05,0.5);
+
+      nIsoTracks20_020_05=countIsoTracks(20,0.2,0.5);
+      nIsoTracks20_020_05=countIsoTracks(20,0.15,0.5);
+      nIsoTracks20_010_05=countIsoTracks(20,0.1,0.5);
+      nIsoTracks20_005_05=countIsoTracks(20,0.05,0.5);
+
+
+      nIsoTracks10_020_07=countIsoTracks(10,0.2,0.7);
+      nIsoTracks10_015_07=countIsoTracks(10,0.15,0.7);
+      nIsoTracks10_010_07=countIsoTracks(10,0.1,0.7);
+      nIsoTracks10_005_07=countIsoTracks(10,0.05,0.7);
+
+      nIsoTracks5_020_07=countIsoTracks(5,0.2,0.7);
+      nIsoTracks5_015_07=countIsoTracks(5,0.15,0.7);
+      nIsoTracks5_010_07=countIsoTracks(5,0.1,0.7);
+      nIsoTracks5_005_07=countIsoTracks(5,0.05,0.7);
+
+      nIsoTracks15_020_07=countIsoTracks(15,0.2,0.7);
+      nIsoTracks15_015_07=countIsoTracks(15,0.15,0.7);
+      nIsoTracks15_010_07=countIsoTracks(15,0.1,0.7);
+      nIsoTracks15_005_07=countIsoTracks(15,0.05,0.7);
+
+      nIsoTracks20_020_07=countIsoTracks(20,0.2,0.7);
+      nIsoTracks20_020_07=countIsoTracks(20,0.15,0.7);
+      nIsoTracks20_010_07=countIsoTracks(20,0.1,0.7);
+      nIsoTracks20_005_07=countIsoTracks(20,0.05,0.7);
+
 
       //now, isolated pf candidates
-      nIsoPFCands10_020=countIsoPFCands(10,0.2);
-      nIsoPFCands10_015=countIsoPFCands(10,0.15);
-      nIsoPFCands10_010=countIsoPFCands(10,0.1);
-      nIsoPFCands10_005=countIsoPFCands(10,0.05);
+//       nIsoPFCands10_020=countIsoPFCands(10,0.2);
+//       nIsoPFCands10_015=countIsoPFCands(10,0.15);
+//       nIsoPFCands10_010=countIsoPFCands(10,0.1);
+//       nIsoPFCands10_005=countIsoPFCands(10,0.05);
 
-      nIsoPFCands5_020=countIsoPFCands(5,0.2);
-      nIsoPFCands5_015=countIsoPFCands(5,0.15);
-      nIsoPFCands5_010=countIsoPFCands(5,0.1);
-      nIsoPFCands5_005=countIsoPFCands(5,0.05);
+//       nIsoPFCands5_020=countIsoPFCands(5,0.2);
+//       nIsoPFCands5_015=countIsoPFCands(5,0.15);
+//       nIsoPFCands5_010=countIsoPFCands(5,0.1);
+//       nIsoPFCands5_005=countIsoPFCands(5,0.05);
 
+      minTrackIso10 = mostIsolatedTrackValue(10,0.3);
+      minTrackIso5 = mostIsolatedTrackValue(5,0.3);
+      minTrackIso15 = mostIsolatedTrackValue(15,0.3);
+      minTrackIso20 = mostIsolatedTrackValue(20,0.3);
+
+      nIndirectTaus2 = countIndirectTau(2);
+      nIndirectTaus3 = countIndirectTau(3);
       nIndirectTaus4 = countIndirectTau(4);
       nIndirectTaus5 = countIndirectTau(5);
-      nIndirectTaus6 = countIndirectTau(6);
-      nIndirectTaus7 = countIndirectTau(7);
 
       //Uncomment next two lines to do thrust calculations
       //getTransverseThrustVariables(transverseThrust, transverseThrustPhi, false);

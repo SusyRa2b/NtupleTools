@@ -105,9 +105,9 @@ public:
   unsigned int countTau(const TString & wp);
 
   int countIsoPFCands(const float minpt, const float miniso) ;
-  int countIsoTracks(const float minpt, const float miniso) ;
+  int countIsoTracks(const float minpt, const float miniso, const float maxdr);
   bool isQualityTrack(const int trackindex) ;
-
+  float mostIsolatedTrackValue(const float minpt, const float maxdr);
 
   TString stripTriggerVersion(const TString & fullname, int & version);
   bool passHLT(std::map<TString,triggerData> & triggerlist, bool alwaysPassMc);
