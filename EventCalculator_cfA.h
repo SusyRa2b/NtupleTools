@@ -105,9 +105,11 @@ public:
   unsigned int countTau(const TString & wp);
 
   int countIsoPFCands(const float minpt, const float miniso) ;
-  int countIsoTracks(const float minpt, const float miniso, const float maxdr);
+  int countIsoTracks(const float minpt, const float miniso, const float maxdr, float & thept, float & theeta, float & thephi);
   bool isQualityTrack(const int trackindex) ;
-  float mostIsolatedTrackValue(const float minpt, const float maxdr);
+  float mostIsolatedTrackValue(const float minpt, const float maxdr, float & d0,float & thept);
+
+  int getMaxTOBTECjetDeltaMult(int & TOBTECjetChMult);
 
   TString stripTriggerVersion(const TString & fullname, int & version);
   bool passHLT(std::map<TString,triggerData> & triggerlist, bool alwaysPassMc);
@@ -212,6 +214,7 @@ public:
 
   void getSmearedUnclusteredMET(float & myMET, float & myMETphi);
 
+  void getUnclusteredMET(float & theUncMET, float & theUncMETphi);
 
   float getJERbiasFactor(unsigned int ijet);
   float getJESUncertainty( unsigned int ijet, bool addL2L3toJES );

@@ -704,8 +704,11 @@ bool EventCalculator::isQualityTrack(const int trackindex) {
   return true;
 }
 
-float EventCalculator::mostIsolatedTrackValue(const float minpt, const float maxdr) {
+float EventCalculator::mostIsolatedTrackValue(const float minpt, const float maxdr, float & d0,float & thept) {
   //hooberman's maxdr is 0.3
+
+  d0=99;
+  thept=-1;
 
   //exactly the same as countIsoTracks but no cut. rather just return the isolation of the most isolated track
   if (!isGoodPV(0)) return 0;
@@ -737,7 +740,11 @@ float EventCalculator::mostIsolatedTrackValue(const float minpt, const float max
 	  if ( fabs( tracks_vz->at(jjj) - pv_z->at(0)) >= maxdz) continue;
 	  isosum += tracks_pt->at(jjj);
 	}
-	if ( isosum / tracks_pt->at(iii) < miniso) miniso = isosum / tracks_pt->at(iii);
+	if ( isosum / tracks_pt->at(iii) < miniso) {
+	  miniso = isosum / tracks_pt->at(iii);
+	  d0 = tracks_d0dum->at(iii);
+	  thept = tracks_pt->at(iii);
+	}
       }
     }
   }
@@ -745,7 +752,12 @@ float EventCalculator::mostIsolatedTrackValue(const float minpt, const float max
 
 }
 
-int EventCalculator::countIsoTracks(const float minpt, const float miniso, const float maxdr) {
+int EventCalculator::countIsoTracks(const float minpt, const float miniso, const float maxdr,float & thept, float & theeta, float & thephi) {
+
+  thept = -1;
+  theeta=99;
+  thephi=99;
+
   if (!isGoodPV(0)) return 0;
   const bool verbose=false;
   int nisotracks=0;
@@ -780,6 +792,11 @@ int EventCalculator::countIsoTracks(const float minpt, const float miniso, const
 	if ( isosum / tracks_pt->at(iii) <= miniso) {
 	  if (verbose) cout<<" found iso track "<<tracks_pt->at(iii)<<" "<<isosum <<" "<<isosum/ tracks_pt->at(iii)<<endl;
 	  ++nisotracks;
+	  if (tracks_pt->at(iii) > thept) { //store info about the highest pT isolated track
+	    thept = tracks_pt->at(iii);
+	    theeta = tracks_eta->at(iii);
+	    thephi = tracks_phi->at(iii);
+	  }
 	}
       }
     }
@@ -2184,6 +2201,57 @@ unsigned int EventCalculator::nTrueBJets() {
   return nb;
 }
 
+void EventCalculator::getUnclusteredMET(float & theUncMET, float & theUncMETphi) {
+
+  //this is copied and pasted from getSmearedUnclustedMET()
+  //not my favorite way to do things, but that's how i'm going to do it for the moment
+
+  assert(theJetType_ == kPF2PAT); //enforce that jets and leptons are already disambiguated in the ntuple
+
+  //input values myMET and myMETphi should correspond to the 
+  //type of MET being used (corrected or uncorrected)
+
+  float myMETx = theUncMET * cos(theUncMETphi);
+  float myMETy = theUncMET * sin(theUncMETphi);
+
+  //first remove jets from MET
+  for (unsigned int i=0; i<jets_AK5PF_pt->size(); i++) {
+    //    if (isCleanJet(i) ){//this only has an effect for recopfjets    
+    if ( jets_AK5PF_pt->at(i) >10 ) {
+      if (theMETType_ == kPFMET) {    //remove the uncorrected jet pT from the raw MET
+	myMETx += getUncorrectedJetPt(i) * cos(jets_AK5PF_phi->at(i));
+	myMETy += getUncorrectedJetPt(i) * sin(jets_AK5PF_phi->at(i));
+      }
+      else if (theMETType_ == kPFMETTypeI) { //remove the corrected jet pT from the corrected MET
+	myMETx += getJetPt(i) * cos(jets_AK5PF_phi->at(i));
+	myMETy += getJetPt(i) * sin(jets_AK5PF_phi->at(i));
+      }
+      else assert(0);
+    }
+  }
+  //then muons
+  for ( unsigned int i = 0; i<pf_mus_pt->size() ; i++) {
+    //    if (isCleanMuon(i)) {
+      myMETx += pf_mus_pt->at(i) * cos(pf_mus_phi->at(i));
+      myMETy += pf_mus_pt->at(i) * sin(pf_mus_phi->at(i));
+      //    }
+  }
+  //electrons
+  for ( unsigned int i = 0; i<pf_els_pt->size() ; i++) {
+    //    if (isGoodElectron(i)) {
+      myMETx += pf_els_pt->at(i) * cos(pf_els_phi->at(i));
+      myMETy += pf_els_pt->at(i) * sin(pf_els_phi->at(i));
+      //    }
+  }
+
+
+  //now we've got the unclustered component only in myMETxy
+
+  theUncMET = sqrt(myMETx*myMETx + myMETy*myMETy);
+  theUncMETphi = atan2(myMETy,myMETx); 
+
+}
+
 void EventCalculator::getSmearedUnclusteredMET(float & myMET, float & myMETphi) {
   assert(theJetType_ == kPF2PAT); //enforce that jets and leptons are already disambiguated in the ntuple
 
@@ -2814,24 +2882,52 @@ float EventCalculator::recoMuonMinDeltaPhiJetOfN(unsigned int n, const float ptt
 }
 
 
+
 float EventCalculator::tauPtOfN(unsigned int n) {
 
- return 0; //FIXME CFA
-/*
   unsigned int ngood=0;
   for (unsigned int i=0; i < taus_pt->size(); i++) {
-    if(isGoodTau(i)){
+    if(isGoodTau(i)) {
       ngood++;
       if (ngood==n) return getTauPt(i);
     }
   }
   return 0;
-*/
+
 }
 
+int EventCalculator::getMaxTOBTECjetDeltaMult(int & TOBTECjetChMult) {
+
+  //eta of 0.9-1.9
+  //
+  int maxdelta = -99;
+  TOBTECjetChMult=-1;
+
+  for (unsigned int i=0; i<jets_AK5PF_pt->size(); i++) {
+
+    if ( getJetPt(i) > 50 ) {
+      float abseta = fabs(jets_AK5PF_eta->at(i));
+      if ( abseta>0.9 && abseta<1.9 ) {
+	int ch = TMath::Nint(jets_AK5PF_chg_Mult->at(i));
+	int neu = TMath::Nint(jets_AK5PF_neutral_Mult->at(i));
+	
+	int delta = ch-neu;
+	
+	if (delta> maxdelta) {
+	  maxdelta = delta;
+	  TOBTECjetChMult = ch;
+	}
+      }
+    }
+  }
+
+  return maxdelta;
+
+}
+
+
 float EventCalculator::tauEtaOfN(unsigned int n) {
-  return 99; //FIXME CFA
-/*
+
   unsigned int ngood=0;
   for (unsigned int i=0; i < taus_pt->size(); i++) {
     if(isGoodTau(i)){
@@ -2840,7 +2936,7 @@ float EventCalculator::tauEtaOfN(unsigned int n) {
     }
   }
   return 0;
-*/
+
 }
 
 
@@ -5610,6 +5706,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   //  float correctedMET, correctedMETphi
   float caloMET,caloMETphi;
   float rawPFMET,rawPFMETphi;
+  float unclusteredMET,unclusteredMETphi;
   float maxDeltaPhi, maxDeltaPhiAll, maxDeltaPhiAll30, maxDeltaPhi30_eta5_noIdAll;
   float deltaPhi1, deltaPhi2, deltaPhi3;
   float sumDeltaPhi, diffDeltaPhi;
@@ -5720,7 +5817,7 @@ void EventCalculator::reducedTree(TString outputpath) {
 
   int njets, njets30, nbjets, nbjets30,ntruebjets, nElectrons, nMuons;
   int nTausVLoose,nTausLoose,nTausMedium,nTausTight;
-  int nIndirectTaus4,nIndirectTaus5,nIndirectTaus2,nIndirectTaus3;
+  //  int nIndirectTaus4,nIndirectTaus5,nIndirectTaus2,nIndirectTaus3;
   int nbjetsSSVM,nbjetsTCHET,nbjetsSSVHPT,nbjetsTCHPT,nbjetsTCHPM,nbjetsCSVM,nbjetsCSVL; 
   int nElectrons5, nElectrons15,nElectrons20;
   int nMuons5, nMuons15,nMuons20;
@@ -5745,6 +5842,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   int jetneutralhadronmult1, jetneutralhadronmult2,jetneutralhadronmult3;
   int jetmumult1, jetmumult2,jetmumult3;
 
+  int maxTOBTECjetDeltaMult,TOBTECjetChMult;
 
   float mjjb1,mjjb2,topPT1,topPT2;
 
@@ -5755,10 +5853,10 @@ void EventCalculator::reducedTree(TString outputpath) {
   float taupt1, taueta1;
   float eleRelIso,muonRelIso;
 
-  float recomuonpt1, recomuonphi1, recomuoneta1;
-  float recomuonpt2, recomuonphi2, recomuoneta2;
-  float recomuoniso1, recomuoniso2;
-  float recomuonmindphijet1, recomuonmindphijet2;
+//   float recomuonpt1, recomuonphi1, recomuoneta1;
+//   float recomuonpt2, recomuonphi2, recomuoneta2;
+//   float recomuoniso1, recomuoniso2;
+//   float recomuonmindphijet1, recomuonmindphijet2;
 
   float rl,rMET;
 
@@ -5818,25 +5916,14 @@ void EventCalculator::reducedTree(TString outputpath) {
   bool passBadECAL_METphi52_crackF;
   float worstMisA_badECAL_METphi52_crackF, worstMisF_badECAL_METphi52_crackF;
 
-  int nIsoTracks20_020_03,nIsoTracks20_015_03,nIsoTracks20_010_03,nIsoTracks20_005_03;
-  int nIsoTracks15_020_03,nIsoTracks15_015_03,nIsoTracks15_010_03,nIsoTracks15_005_03;
-  int nIsoTracks10_020_03,nIsoTracks10_015_03,nIsoTracks10_010_03,nIsoTracks10_005_03;
-  int nIsoTracks5_020_03,nIsoTracks5_015_03,nIsoTracks5_010_03,nIsoTracks5_005_03;
+  int nIsoTracks20_005_03;
+  int nIsoTracks15_005_03;
+  int nIsoTracks10_005_03;
+  int nIsoTracks5_005_03;
 
-  int nIsoTracks20_020_05,nIsoTracks20_015_05,nIsoTracks20_010_05,nIsoTracks20_005_05;
-  int nIsoTracks15_020_05,nIsoTracks15_015_05,nIsoTracks15_010_05,nIsoTracks15_005_05;
-  int nIsoTracks10_020_05,nIsoTracks10_015_05,nIsoTracks10_010_05,nIsoTracks10_005_05;
-  int nIsoTracks5_020_05,nIsoTracks5_015_05,nIsoTracks5_010_05,nIsoTracks5_005_05;
-
-  int nIsoTracks20_020_07,nIsoTracks20_015_07,nIsoTracks20_010_07,nIsoTracks20_005_07;
-  int nIsoTracks15_020_07,nIsoTracks15_015_07,nIsoTracks15_010_07,nIsoTracks15_005_07;
-  int nIsoTracks10_020_07,nIsoTracks10_015_07,nIsoTracks10_010_07,nIsoTracks10_005_07;
-  int nIsoTracks5_020_07,nIsoTracks5_015_07,nIsoTracks5_010_07,nIsoTracks5_005_07;
-
-
-  //  int nIsoPFCands10_020,nIsoPFCands10_015,nIsoPFCands10_010,nIsoPFCands10_005;
-  //  int nIsoPFCands5_020,nIsoPFCands5_015,nIsoPFCands5_010,nIsoPFCands5_005;
   float minTrackIso10,minTrackIso5,minTrackIso15,minTrackIso20;
+  float trackd0_10,trackd0_5,trackd0_15,trackd0_20;
+  float trackpt_10,trackpt_5,trackpt_15,trackpt_20;
 
   float prob0,probge1,prob1,probge2,probge3,prob2;
   
@@ -5992,7 +6079,6 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("m0",&m0,"m0/I");
   reducedTree.Branch("m12",&m12,"m12/I");
 
-
 //   reducedTree.Branch("W1decayType",&W1decayType,"W1decayType/I");
 //   reducedTree.Branch("W2decayType",&W2decayType,"W2decayType/I");
 //   reducedTree.Branch("decayType",&decayType,"decayType/I");
@@ -6068,6 +6154,9 @@ Also the pdfWeightSum* histograms that are used for LM9.
 
   reducedTree.Branch("buggyEvent",&buggyEvent,"buggyEvent/O");
 
+  reducedTree.Branch("maxTOBTECjetDeltaMult",&maxTOBTECjetDeltaMult,"maxTOBTECjetDeltaMult/I");
+  reducedTree.Branch("TOBTECjetChMult",&TOBTECjetChMult,"TOBTECjetChMult/I");
+
   reducedTree.Branch("nGoodPV",&nGoodPV,"nGoodPV/I");
 
   reducedTree.Branch("SUSY_nb",&SUSY_nb,"SUSY_nb/I");
@@ -6094,12 +6183,6 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("nTausLoose",&nTausLoose,"nTausLoose/I");
   reducedTree.Branch("nTausMedium",&nTausMedium,"nTausMedium/I");
   reducedTree.Branch("nTausTight",&nTausTight,"nTausTight/I");
-
-
-  reducedTree.Branch("nIndirectTaus4",&nIndirectTaus4,"nIndirectTaus4/I");
-  reducedTree.Branch("nIndirectTaus5",&nIndirectTaus5,"nIndirectTaus5/I");
-  reducedTree.Branch("nIndirectTaus2",&nIndirectTaus2,"nIndirectTaus2/I");
-  reducedTree.Branch("nIndirectTaus3",&nIndirectTaus3,"nIndirectTaus3/I");
 
 
   reducedTree.Branch("bestZmass",&bestZmass,"bestZmass/F");
@@ -6163,6 +6246,9 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("rawPFMET",&rawPFMET, "rawPFMET/F");
   reducedTree.Branch("rawPFMETphi",&rawPFMETphi, "rawPFMETphi/F");
   
+  reducedTree.Branch("unclusteredMET",&unclusteredMET,"unclusteredMET/F");
+  reducedTree.Branch("unclusteredMETphi",&unclusteredMETphi,"unclusteredMETphi/F");
+
   reducedTree.Branch("bestWMass",&wMass,"bestWMass/F");
   reducedTree.Branch("bestTopMass",&topMass,"bestTopMass/F");
   reducedTree.Branch("topCosHel",&topCosHel,"topCosHel/F");
@@ -6407,21 +6493,27 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("taupt1",&taupt1,"taupt1/F");
   reducedTree.Branch("taueta1",&taueta1,"taueta1/F");
 
+  float isotrackpt1,isotracketa1,isotrackphi1;
+  reducedTree.Branch("isotrackpt1",&isotrackpt1,"isotrackpt1/F");
+  reducedTree.Branch("isotracketa1",&isotracketa1,"isotracketa1/F");
+  reducedTree.Branch("isotrackphi1",&isotrackphi1,"isotrackphi1/F");
+
+
   reducedTree.Branch("eleRelIso",&eleRelIso,"eleRelIso/F");
   reducedTree.Branch("muonRelIso",&muonRelIso,"muonRelIso/F");
 
 
-  reducedTree.Branch("recomuonpt1",&recomuonpt1,"recomuonpt1/F");
-  reducedTree.Branch("recomuonphi1",&recomuonphi1,"recomuonphi1/F");
-  reducedTree.Branch("recomuoneta1",&recomuoneta1,"recomuoneta1/F");
-  reducedTree.Branch("recomuoniso1",&recomuoniso1,"recomuoniso1/F");
-  reducedTree.Branch("recomuonmindphijet1",&recomuonmindphijet1,"recomuonmindphijet1/F");
+//   reducedTree.Branch("recomuonpt1",&recomuonpt1,"recomuonpt1/F");
+//   reducedTree.Branch("recomuonphi1",&recomuonphi1,"recomuonphi1/F");
+//   reducedTree.Branch("recomuoneta1",&recomuoneta1,"recomuoneta1/F");
+//   reducedTree.Branch("recomuoniso1",&recomuoniso1,"recomuoniso1/F");
+//   reducedTree.Branch("recomuonmindphijet1",&recomuonmindphijet1,"recomuonmindphijet1/F");
 
-  reducedTree.Branch("recomuonpt2",&recomuonpt2,"recomuonpt2/F");
-  reducedTree.Branch("recomuonphi2",&recomuonphi2,"recomuonphi2/F");
-  reducedTree.Branch("recomuoneta2",&recomuoneta2,"recomuoneta2/F");
-  reducedTree.Branch("recomuoniso2",&recomuoniso2,"recomuoniso2/F");
-  reducedTree.Branch("recomuonmindphijet2",&recomuonmindphijet1,"recomuonmindphijet2/F");
+//   reducedTree.Branch("recomuonpt2",&recomuonpt2,"recomuonpt2/F");
+//   reducedTree.Branch("recomuonphi2",&recomuonphi2,"recomuonphi2/F");
+//   reducedTree.Branch("recomuoneta2",&recomuoneta2,"recomuoneta2/F");
+//   reducedTree.Branch("recomuoniso2",&recomuoniso2,"recomuoniso2/F");
+//   reducedTree.Branch("recomuonmindphijet2",&recomuonmindphijet1,"recomuonmindphijet2/F");
 
   reducedTree.Branch("rl",&rl,"rl/F");
   reducedTree.Branch("rMET",&rMET,"rMET/F");
@@ -6476,83 +6568,25 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("nLostJet", &nLostJet, "nLostJet/F");
 
 
-  reducedTree.Branch("nIsoTracks20_020_03",&nIsoTracks20_020_03,"nIsoTracks20_020_03/I");
-  reducedTree.Branch("nIsoTracks20_015_03",&nIsoTracks20_015_03,"nIsoTracks20_015_03/I");
-  reducedTree.Branch("nIsoTracks20_010_03",&nIsoTracks20_010_03,"nIsoTracks20_010_03/I");
   reducedTree.Branch("nIsoTracks20_005_03",&nIsoTracks20_005_03,"nIsoTracks20_005_03/I");
-
-  reducedTree.Branch("nIsoTracks15_020_03",&nIsoTracks15_020_03,"nIsoTracks15_020_03/I");
-  reducedTree.Branch("nIsoTracks15_015_03",&nIsoTracks15_015_03,"nIsoTracks15_015_03/I");
-  reducedTree.Branch("nIsoTracks15_010_03",&nIsoTracks15_010_03,"nIsoTracks15_010_03/I");
   reducedTree.Branch("nIsoTracks15_005_03",&nIsoTracks15_005_03,"nIsoTracks15_005_03/I");
-
-  reducedTree.Branch("nIsoTracks10_020_03",&nIsoTracks10_020_03,"nIsoTracks10_020_03/I");
-  reducedTree.Branch("nIsoTracks10_015_03",&nIsoTracks10_015_03,"nIsoTracks10_015_03/I");
-  reducedTree.Branch("nIsoTracks10_010_03",&nIsoTracks10_010_03,"nIsoTracks10_010_03/I");
   reducedTree.Branch("nIsoTracks10_005_03",&nIsoTracks10_005_03,"nIsoTracks10_005_03/I");
-
-  reducedTree.Branch("nIsoTracks5_020_03",&nIsoTracks5_020_03,"nIsoTracks5_020_03/I");
-  reducedTree.Branch("nIsoTracks5_015_03",&nIsoTracks5_015_03,"nIsoTracks5_015_03/I");
-  reducedTree.Branch("nIsoTracks5_010_03",&nIsoTracks5_010_03,"nIsoTracks5_010_03/I");
   reducedTree.Branch("nIsoTracks5_005_03",&nIsoTracks5_005_03,"nIsoTracks5_005_03/I");
-
-
-  reducedTree.Branch("nIsoTracks20_020_05",&nIsoTracks20_020_05,"nIsoTracks20_020_05/I");
-  reducedTree.Branch("nIsoTracks20_015_05",&nIsoTracks20_015_05,"nIsoTracks20_015_05/I");
-  reducedTree.Branch("nIsoTracks20_010_05",&nIsoTracks20_010_05,"nIsoTracks20_010_05/I");
-  reducedTree.Branch("nIsoTracks20_005_05",&nIsoTracks20_005_05,"nIsoTracks20_005_05/I");
-
-  reducedTree.Branch("nIsoTracks15_020_05",&nIsoTracks15_020_05,"nIsoTracks15_020_05/I");
-  reducedTree.Branch("nIsoTracks15_015_05",&nIsoTracks15_015_05,"nIsoTracks15_015_05/I");
-  reducedTree.Branch("nIsoTracks15_010_05",&nIsoTracks15_010_05,"nIsoTracks15_010_05/I");
-  reducedTree.Branch("nIsoTracks15_005_05",&nIsoTracks15_005_05,"nIsoTracks15_005_05/I");
-
-  reducedTree.Branch("nIsoTracks10_020_05",&nIsoTracks10_020_05,"nIsoTracks10_020_05/I");
-  reducedTree.Branch("nIsoTracks10_015_05",&nIsoTracks10_015_05,"nIsoTracks10_015_05/I");
-  reducedTree.Branch("nIsoTracks10_010_05",&nIsoTracks10_010_05,"nIsoTracks10_010_05/I");
-  reducedTree.Branch("nIsoTracks10_005_05",&nIsoTracks10_005_05,"nIsoTracks10_005_05/I");
-
-  reducedTree.Branch("nIsoTracks5_020_05",&nIsoTracks5_020_05,"nIsoTracks5_020_05/I");
-  reducedTree.Branch("nIsoTracks5_015_05",&nIsoTracks5_015_05,"nIsoTracks5_015_05/I");
-  reducedTree.Branch("nIsoTracks5_010_05",&nIsoTracks5_010_05,"nIsoTracks5_010_05/I");
-  reducedTree.Branch("nIsoTracks5_005_05",&nIsoTracks5_005_05,"nIsoTracks5_005_05/I");
-
-
-  reducedTree.Branch("nIsoTracks20_020_07",&nIsoTracks20_020_07,"nIsoTracks20_020_07/I");
-  reducedTree.Branch("nIsoTracks20_015_07",&nIsoTracks20_015_07,"nIsoTracks20_015_07/I");
-  reducedTree.Branch("nIsoTracks20_010_07",&nIsoTracks20_010_07,"nIsoTracks20_010_07/I");
-  reducedTree.Branch("nIsoTracks20_005_07",&nIsoTracks20_005_07,"nIsoTracks20_005_07/I");
-
-  reducedTree.Branch("nIsoTracks15_020_07",&nIsoTracks15_020_07,"nIsoTracks15_020_07/I");
-  reducedTree.Branch("nIsoTracks15_015_07",&nIsoTracks15_015_07,"nIsoTracks15_015_07/I");
-  reducedTree.Branch("nIsoTracks15_010_07",&nIsoTracks15_010_07,"nIsoTracks15_010_07/I");
-  reducedTree.Branch("nIsoTracks15_005_07",&nIsoTracks15_005_07,"nIsoTracks15_005_07/I");
-
-  reducedTree.Branch("nIsoTracks10_020_07",&nIsoTracks10_020_07,"nIsoTracks10_020_07/I");
-  reducedTree.Branch("nIsoTracks10_015_07",&nIsoTracks10_015_07,"nIsoTracks10_015_07/I");
-  reducedTree.Branch("nIsoTracks10_010_07",&nIsoTracks10_010_07,"nIsoTracks10_010_07/I");
-  reducedTree.Branch("nIsoTracks10_005_07",&nIsoTracks10_005_07,"nIsoTracks10_005_07/I");
-
-  reducedTree.Branch("nIsoTracks5_020_07",&nIsoTracks5_020_07,"nIsoTracks5_020_07/I");
-  reducedTree.Branch("nIsoTracks5_015_07",&nIsoTracks5_015_07,"nIsoTracks5_015_07/I");
-  reducedTree.Branch("nIsoTracks5_010_07",&nIsoTracks5_010_07,"nIsoTracks5_010_07/I");
-  reducedTree.Branch("nIsoTracks5_005_07",&nIsoTracks5_005_07,"nIsoTracks5_005_07/I");
-
-//   reducedTree.Branch("nIsoPFCands10_020",&nIsoPFCands10_020,"nIsoPFCands10_020/I");
-//   reducedTree.Branch("nIsoPFCands10_015",&nIsoPFCands10_015,"nIsoPFCands10_015/I");
-//   reducedTree.Branch("nIsoPFCands10_010",&nIsoPFCands10_010,"nIsoPFCands10_010/I");
-//   reducedTree.Branch("nIsoPFCands10_005",&nIsoPFCands10_005,"nIsoPFCands10_005/I");
-
-//   reducedTree.Branch("nIsoPFCands5_020",&nIsoPFCands5_020,"nIsoPFCands5_020/I");
-//   reducedTree.Branch("nIsoPFCands5_015",&nIsoPFCands5_015,"nIsoPFCands5_015/I");
-//   reducedTree.Branch("nIsoPFCands5_010",&nIsoPFCands5_010,"nIsoPFCands5_010/I");
-//   reducedTree.Branch("nIsoPFCands5_005",&nIsoPFCands5_005,"nIsoPFCands5_005/I");
 
   reducedTree.Branch("minTrackIso10", &minTrackIso10, "minTrackIso10/F");
   reducedTree.Branch("minTrackIso5", &minTrackIso5, "minTrackIso5/F");
   reducedTree.Branch("minTrackIso15", &minTrackIso15, "minTrackIso15/F");
   reducedTree.Branch("minTrackIso20", &minTrackIso20, "minTrackIso20/F");
 
+  reducedTree.Branch("trackd0_5", &trackd0_5, "trackd0_5/F");
+  reducedTree.Branch("trackd0_10", &trackd0_10, "trackd0_10/F");
+  reducedTree.Branch("trackd0_15", &trackd0_15, "trackd0_15/F");
+  reducedTree.Branch("trackd0_20", &trackd0_20, "trackd0_20/F");
+
+  reducedTree.Branch("trackpt_5", &trackpt_5, "trackpt_5/F");
+  reducedTree.Branch("trackpt_10", &trackpt_10, "trackpt_10/F");
+  reducedTree.Branch("trackpt_15", &trackpt_15, "trackpt_15/F");
+  reducedTree.Branch("trackpt_20", &trackpt_20, "trackpt_20/F");
 
   const int nskimCounter=8;
   TH1D skimCounter("skimCounter","[nevents] ntotal nselected npasstrig nfailtrig npassjson nfailjson npassST nfailST [ntotalgen]",nskimCounter,0,nskimCounter);
@@ -6920,6 +6954,9 @@ Also the pdfWeightSum* histograms that are used for LM9.
       deltaPhib3=getDeltaPhiMET(3,30,true);
       minDeltaPhiMETMuonsAll=getMinDeltaPhiMETMuons(99);
 
+      maxTOBTECjetDeltaMult = getMaxTOBTECjetDeltaMult(TOBTECjetChMult);
+
+
       //count leptons
       nElectrons = countEle();
       nMuons = countMu();
@@ -6939,6 +6976,9 @@ Also the pdfWeightSum* histograms that are used for LM9.
       MHT=getMHT();
       METphi = getMETphi();
 
+      unclusteredMET=MET; unclusteredMETphi = METphi;
+      getUnclusteredMET(unclusteredMET, unclusteredMETphi);
+
       METsig = pfmets_fullSignif;
       METsig00 = pfmets_fullSignifCov00;
       METsig10 = pfmets_fullSignifCov10;
@@ -6947,6 +6987,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
       caloMET = mets_AK5_et->at(0);
       caloMETphi = mets_AK5_phi->at(0);
       getUncorrectedMET(rawPFMET, rawPFMETphi);
+
 
       minDeltaPhi = getMinDeltaPhiMET(3);
       minDeltaPhiAll = getMinDeltaPhiMET(99);
@@ -7208,17 +7249,17 @@ Also the pdfWeightSum* histograms that are used for LM9.
       muonRelIso = getRelIsoForIsolationStudyMuon();
 
 
-      recomuonpt1  = recoMuonPtOfN(1,5);
-      recomuonphi1 = recoMuonPhiOfN(1,5);
-      recomuoneta1 = recoMuonEtaOfN(1,5);
-      recomuoniso1 = recoMuonIsoOfN(1,5);
-      recomuonmindphijet1 = recoMuonMinDeltaPhiJetOfN(1,5);
+//       recomuonpt1  = recoMuonPtOfN(1,5);
+//       recomuonphi1 = recoMuonPhiOfN(1,5);
+//       recomuoneta1 = recoMuonEtaOfN(1,5);
+//       recomuoniso1 = recoMuonIsoOfN(1,5);
+//       recomuonmindphijet1 = recoMuonMinDeltaPhiJetOfN(1,5);
 
-      recomuonpt2  = recoMuonPtOfN(2,5);
-      recomuonphi2 = recoMuonPhiOfN(2,5);
-      recomuoneta2 = recoMuonEtaOfN(2,5);
-      recomuoniso2 = recoMuonIsoOfN(2,5);
-      recomuonmindphijet2 = recoMuonMinDeltaPhiJetOfN(2,5);
+//       recomuonpt2  = recoMuonPtOfN(2,5);
+//       recomuonphi2 = recoMuonPhiOfN(2,5);
+//       recomuoneta2 = recoMuonEtaOfN(2,5);
+//       recomuoniso2 = recoMuonIsoOfN(2,5);
+//       recomuonmindphijet2 = recoMuonMinDeltaPhiJetOfN(2,5);
 
       rl=0;
       if (eleet1>muonpt1) rl= eleet1/STeff;
@@ -7285,88 +7326,19 @@ Also the pdfWeightSum* histograms that are used for LM9.
       getSphericity(transverseSphericity_jets30Leptons,false,true,30);
 
       //isolated tracks
-      nIsoTracks10_020_03=countIsoTracks(10,0.2,0.3);
-      nIsoTracks10_015_03=countIsoTracks(10,0.15,0.3);
-      nIsoTracks10_010_03=countIsoTracks(10,0.1,0.3);
-      nIsoTracks10_005_03=countIsoTracks(10,0.05,0.3);
+      float dummyval1,dummyval2,dummyval3;
+      nIsoTracks10_005_03=countIsoTracks(10,0.05,0.3,dummyval1,dummyval2,dummyval3);
+      //use the 5 GeV cut version for detailed info (pt,eta,phi). it will use the hardest isotrack
+      nIsoTracks5_005_03=countIsoTracks(5,0.05,0.3,isotrackpt1,isotracketa1,isotrackphi1);
+      nIsoTracks15_005_03=countIsoTracks(15,0.05,0.3,dummyval1,dummyval2,dummyval3);
+      nIsoTracks20_005_03=countIsoTracks(20,0.05,0.3,dummyval1,dummyval2,dummyval3);
 
-      nIsoTracks5_020_03=countIsoTracks(5,0.2,0.3);
-      nIsoTracks5_015_03=countIsoTracks(5,0.15,0.3);
-      nIsoTracks5_010_03=countIsoTracks(5,0.1,0.3);
-      nIsoTracks5_005_03=countIsoTracks(5,0.05,0.3);
-
-      nIsoTracks15_020_03=countIsoTracks(15,0.2,0.3);
-      nIsoTracks15_015_03=countIsoTracks(15,0.15,0.3);
-      nIsoTracks15_010_03=countIsoTracks(15,0.1,0.3);
-      nIsoTracks15_005_03=countIsoTracks(15,0.05,0.3);
-
-      nIsoTracks20_020_03=countIsoTracks(20,0.2,0.3);
-      nIsoTracks20_015_03=countIsoTracks(20,0.15,0.3);
-      nIsoTracks20_010_03=countIsoTracks(20,0.1,0.3);
-      nIsoTracks20_005_03=countIsoTracks(20,0.05,0.3);
-
-      nIsoTracks10_020_05=countIsoTracks(10,0.2,0.5);
-      nIsoTracks10_015_05=countIsoTracks(10,0.15,0.5);
-      nIsoTracks10_010_05=countIsoTracks(10,0.1,0.5);
-      nIsoTracks10_005_05=countIsoTracks(10,0.05,0.5);
-
-      nIsoTracks5_020_05=countIsoTracks(5,0.2,0.5);
-      nIsoTracks5_015_05=countIsoTracks(5,0.15,0.5);
-      nIsoTracks5_010_05=countIsoTracks(5,0.1,0.5);
-      nIsoTracks5_005_05=countIsoTracks(5,0.05,0.5);
-
-      nIsoTracks15_020_05=countIsoTracks(15,0.2,0.5);
-      nIsoTracks15_015_05=countIsoTracks(15,0.15,0.5);
-      nIsoTracks15_010_05=countIsoTracks(15,0.1,0.5);
-      nIsoTracks15_005_05=countIsoTracks(15,0.05,0.5);
-
-      nIsoTracks20_020_05=countIsoTracks(20,0.2,0.5);
-      nIsoTracks20_015_05=countIsoTracks(20,0.15,0.5);
-      nIsoTracks20_010_05=countIsoTracks(20,0.1,0.5);
-      nIsoTracks20_005_05=countIsoTracks(20,0.05,0.5);
+      minTrackIso10 = mostIsolatedTrackValue(10,0.3,trackd0_10,trackpt_10);
+      minTrackIso5 = mostIsolatedTrackValue(5,0.3,trackd0_5,trackpt_5);
+      minTrackIso15 = mostIsolatedTrackValue(15,0.3,trackd0_15,trackpt_15);
+      minTrackIso20 = mostIsolatedTrackValue(20,0.3,trackd0_20,trackpt_20);
 
 
-      nIsoTracks10_020_07=countIsoTracks(10,0.2,0.7);
-      nIsoTracks10_015_07=countIsoTracks(10,0.15,0.7);
-      nIsoTracks10_010_07=countIsoTracks(10,0.1,0.7);
-      nIsoTracks10_005_07=countIsoTracks(10,0.05,0.7);
-
-      nIsoTracks5_020_07=countIsoTracks(5,0.2,0.7);
-      nIsoTracks5_015_07=countIsoTracks(5,0.15,0.7);
-      nIsoTracks5_010_07=countIsoTracks(5,0.1,0.7);
-      nIsoTracks5_005_07=countIsoTracks(5,0.05,0.7);
-
-      nIsoTracks15_020_07=countIsoTracks(15,0.2,0.7);
-      nIsoTracks15_015_07=countIsoTracks(15,0.15,0.7);
-      nIsoTracks15_010_07=countIsoTracks(15,0.1,0.7);
-      nIsoTracks15_005_07=countIsoTracks(15,0.05,0.7);
-
-      nIsoTracks20_020_07=countIsoTracks(20,0.2,0.7);
-      nIsoTracks20_015_07=countIsoTracks(20,0.15,0.7);
-      nIsoTracks20_010_07=countIsoTracks(20,0.1,0.7);
-      nIsoTracks20_005_07=countIsoTracks(20,0.05,0.7);
-
-
-      //now, isolated pf candidates
-//       nIsoPFCands10_020=countIsoPFCands(10,0.2);
-//       nIsoPFCands10_015=countIsoPFCands(10,0.15);
-//       nIsoPFCands10_010=countIsoPFCands(10,0.1);
-//       nIsoPFCands10_005=countIsoPFCands(10,0.05);
-
-//       nIsoPFCands5_020=countIsoPFCands(5,0.2);
-//       nIsoPFCands5_015=countIsoPFCands(5,0.15);
-//       nIsoPFCands5_010=countIsoPFCands(5,0.1);
-//       nIsoPFCands5_005=countIsoPFCands(5,0.05);
-
-      minTrackIso10 = mostIsolatedTrackValue(10,0.3);
-      minTrackIso5 = mostIsolatedTrackValue(5,0.3);
-      minTrackIso15 = mostIsolatedTrackValue(15,0.3);
-      minTrackIso20 = mostIsolatedTrackValue(20,0.3);
-
-      nIndirectTaus2 = countIndirectTau(2);
-      nIndirectTaus3 = countIndirectTau(3);
-      nIndirectTaus4 = countIndirectTau(4);
-      nIndirectTaus5 = countIndirectTau(5);
 
       //Uncomment next two lines to do thrust calculations
       //getTransverseThrustVariables(transverseThrust, transverseThrustPhi, false);
