@@ -7301,7 +7301,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
       nIsoTracks15_005_03=countIsoTracks(15,0.05,0.3);
 
       nIsoTracks20_020_03=countIsoTracks(20,0.2,0.3);
-      nIsoTracks20_020_03=countIsoTracks(20,0.15,0.3);
+      nIsoTracks20_015_03=countIsoTracks(20,0.15,0.3);
       nIsoTracks20_010_03=countIsoTracks(20,0.1,0.3);
       nIsoTracks20_005_03=countIsoTracks(20,0.05,0.3);
 
@@ -7321,7 +7321,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
       nIsoTracks15_005_05=countIsoTracks(15,0.05,0.5);
 
       nIsoTracks20_020_05=countIsoTracks(20,0.2,0.5);
-      nIsoTracks20_020_05=countIsoTracks(20,0.15,0.5);
+      nIsoTracks20_015_05=countIsoTracks(20,0.15,0.5);
       nIsoTracks20_010_05=countIsoTracks(20,0.1,0.5);
       nIsoTracks20_005_05=countIsoTracks(20,0.05,0.5);
 
@@ -7342,7 +7342,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
       nIsoTracks15_005_07=countIsoTracks(15,0.05,0.7);
 
       nIsoTracks20_020_07=countIsoTracks(20,0.2,0.7);
-      nIsoTracks20_020_07=countIsoTracks(20,0.15,0.7);
+      nIsoTracks20_015_07=countIsoTracks(20,0.15,0.7);
       nIsoTracks20_010_07=countIsoTracks(20,0.1,0.7);
       nIsoTracks20_005_07=countIsoTracks(20,0.05,0.7);
 
