@@ -4804,6 +4804,9 @@ Long64_t EventCalculator::getNEventsGenerated() {
   if (sampleName_.Contains("UCSB1575")) return 11229902 ; //TT MG semi lep
   if (sampleName_.Contains("UCSB1586")) return 10537444;//TT MG hadronic
 
+  if (sampleName_.Contains("UCSB1605")) return 196046; // ttW
+  if (sampleName_.Contains("UCSB1604")) return 210160; // ttZ
+
   cout<<"[getNEventsGenerated] unknown sample "<<sampleName_<<endl;
   assert(0);
   return 1;
@@ -4872,6 +4875,10 @@ double EventCalculator::getCrossSection(){
   if (sampleName_.BeginsWith("TTJets_FullLeptMGDecays_8TeV-madgraph")) return 13.43*(234.0 / (13.43+53.4+53.2)); // PREP corrected to NNLO
   if (sampleName_.BeginsWith("TTJets_HadronicMGDecays_8TeV-madgraph")) return 53.4*(234.0 / (13.43+53.4+53.2)); // PREP corrected to NNLO
   if (sampleName_.BeginsWith("TTJets_SemiLeptMGDecays_8TeV-madgraph")) return 53.2*(234.0 / (13.43+53.4+53.2)); //PREP corrected to NNLO
+
+  //ttV
+  if (sampleName_.BeginsWith("TTWJets_8TeV-madgraph")) return 0.2149; // from PREP (LO)
+  if (sampleName_.BeginsWith("TTZJets_8TeV-madgraph")) return 0.172; // from PREP (LO)
 
   //RPV 8 TeV -- cross-sections from 1206.2353. cross section is a function of the larger (sbottom) mass
   if (sampleName_.Contains("sbottom8lnotaus-185-250")) return 5.7; //LO madgraph
