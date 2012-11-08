@@ -473,7 +473,7 @@ bool EventCalculator::isCleanMuon(const unsigned int imuon, const float ptthresh
 }
 
 //this bool could be turned into a more powerful selector for N-1 studies. keep it simple for now
-bool EventCalculator::isGoodElectron(const unsigned int k, const bool disableRelIso, const float ptthreshold) {
+bool EventCalculator::isGoodElectron(const unsigned int k, const bool disableRelIso, const float ptthreshold, const bool use2012id) {
 
   //sanity check
   if ( k >= pf_els_pt->size() ) return false;
@@ -530,13 +530,25 @@ bool EventCalculator::isGoodElectron(const unsigned int k, const bool disableRel
   float rho = rho_kt6PFJetsForIsolation2011;
   // get effective area from delR=0.3 2011 data table for neutral+gamma based on supercluster eta pf_els_scEta->at(k)
   float AE = 0.10; 
-  //jmt -- this strikes me as inefficient, but it's not a big enough deal to change it
-  if ( fabs( pf_els_scEta->at(k) ) > 1.0 ) AE = 0.12;      
-  if ( fabs( pf_els_scEta->at(k) ) > 1.479 ) AE = 0.085;      
-  if ( fabs( pf_els_scEta->at(k) ) > 2.0 ) AE = 0.11;      
-  if ( fabs( pf_els_scEta->at(k) ) > 2.2 ) AE = 0.12;      
-  if ( fabs( pf_els_scEta->at(k) ) > 2.3 ) AE = 0.12;
-  if ( fabs( pf_els_scEta->at(k) ) > 2.4 ) AE = 0.13;      
+  if (use2012id) { //2012 id R=0.4
+    rho = rho_kt6PFJetsForIsolation2012;
+    float abseta = fabs(pf_els_scEta->at(k) );
+    if      ( abseta < 1.0 ) AE = 0.19;
+    else if ( abseta >=1.0 && abseta <1.479) AE = 0.25;
+    else if ( abseta >=1.479&&abseta <2.0)   AE = 0.12;
+    else if ( abseta >=2.0 && abseta <2.2) AE = 0.21;
+    else if ( abseta >=2.2 && abseta <2.3) AE = 0.27;
+    else if ( abseta >=2.3 && abseta <2.4) AE = 0.44;
+    else if ( abseta >=2.4 ) AE = 0.52;
+  }
+  else { //2011 id R=0.3
+    if ( fabs( pf_els_scEta->at(k) ) > 1.0 ) AE = 0.12;      
+    if ( fabs( pf_els_scEta->at(k) ) > 1.479 ) AE = 0.085;      
+    if ( fabs( pf_els_scEta->at(k) ) > 2.0 ) AE = 0.11;      
+    if ( fabs( pf_els_scEta->at(k) ) > 2.2 ) AE = 0.12;      
+    if ( fabs( pf_els_scEta->at(k) ) > 2.3 ) AE = 0.12;
+    if ( fabs( pf_els_scEta->at(k) ) > 2.4 ) AE = 0.13;      
+  }
   float eleIso = pf_els_PFphotonIsoR03->at(k) + pf_els_PFneutralHadronIsoR03->at(k) - rho*AE;
   float  elRelIso = ( pf_els_PFchargedHadronIsoR03->at(k) + ( eleIso > 0 ? eleIso : 0.0 ) )/pf_els_pt->at(k);
   if (elRelIso >= 0.15) return false; 
@@ -545,11 +557,11 @@ bool EventCalculator::isGoodElectron(const unsigned int k, const bool disableRel
 }
 
 
-unsigned int EventCalculator::countEle(const float ptthreshold) {
+unsigned int EventCalculator::countEle(const float ptthreshold,const bool use2012id) {
 
   unsigned int ngoodele=0;
   for (unsigned int i=0; i <pf_els_pt->size() ; i++) {
-    if(isGoodElectron(i,false,ptthreshold))      ++ngoodele;
+    if(isGoodElectron(i,false,ptthreshold,use2012id))      ++ngoodele;
   }
   return ngoodele;
 }
@@ -5822,7 +5834,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   //want a copy of triggerlist, for storing mc trigger results
   map<TString, triggerData > triggerlist_mc(triggerlist);
 
-  int njets, njets30, nbjets, nbjets30,ntruebjets, nElectrons, nMuons;
+  int njets, njets30, nbjets, nbjets30,ntruebjets, nElectrons,nElectrons2012, nMuons;
   int nTausVLoose,nTausLoose,nTausMedium,nTausTight;
   //  int nIndirectTaus4,nIndirectTaus5,nIndirectTaus2,nIndirectTaus3;
   int nbjetsSSVM,nbjetsTCHET,nbjetsSSVHPT,nbjetsTCHPT,nbjetsTCHPM,nbjetsCSVM,nbjetsCSVL; 
@@ -6177,6 +6189,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("nbjets30",&nbjets30,"nbjets30/I");
   reducedTree.Branch("ntruebjets",&ntruebjets,"ntruebjets/I");
   reducedTree.Branch("nElectrons",&nElectrons,"nElectrons/I");
+  reducedTree.Branch("nElectrons2012",&nElectrons2012,"nElectrons2012/I");
   reducedTree.Branch("nMuons",&nMuons,"nMuons/I");
   reducedTree.Branch("nElectrons5",&nElectrons5,"nElectrons5/I");
   reducedTree.Branch("nMuons5",&nMuons5,"nMuons5/I");
@@ -6966,6 +6979,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
 
       //count leptons
       nElectrons = countEle();
+      nElectrons2012 = countEle(10,true);
       nMuons = countMu();
       nElectrons5 = countEle(5);
       nMuons5 = countMu(5);
