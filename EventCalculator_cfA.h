@@ -92,8 +92,8 @@ public:
 
   bool isGoodMuon(const unsigned int imuon, const bool disableRelIso=false, const float ptthreshold=10);
   bool isGoodRecoMuon(const unsigned int imuon, const bool disableRelIso=false, const float ptthreshold=10);
-  bool isGoodElectron(const unsigned int iele, const bool disableRelIso=false, const float ptthreshold=10, const bool use2012id=false);
-  unsigned int countEle(const float ptthreshold=10,const bool use2012id=false) ;
+  bool isGoodElectron(const unsigned int iele, const bool disableRelIso=false, const float ptthreshold=10, const bool use2012id=true);
+  unsigned int countEle(const float ptthreshold=10,const bool use2012id=true) ;
   bool isCleanMuon(const unsigned int imuon, const float ptthreshold=10);
   unsigned int countMu(const float ptthreshold=10);
 

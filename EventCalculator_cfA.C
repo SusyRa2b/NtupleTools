@@ -5834,7 +5834,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   //want a copy of triggerlist, for storing mc trigger results
   map<TString, triggerData > triggerlist_mc(triggerlist);
 
-  int njets, njets30, nbjets, nbjets30,ntruebjets, nElectrons,nElectrons2012, nMuons;
+  int njets, njets30, nbjets, nbjets30,ntruebjets, nElectrons,nElectrons2011, nMuons;
   int nTausVLoose,nTausLoose,nTausMedium,nTausTight;
   //  int nIndirectTaus4,nIndirectTaus5,nIndirectTaus2,nIndirectTaus3;
   int nbjetsSSVM,nbjetsTCHET,nbjetsSSVHPT,nbjetsTCHPT,nbjetsTCHPM,nbjetsCSVM,nbjetsCSVL; 
@@ -6189,7 +6189,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("nbjets30",&nbjets30,"nbjets30/I");
   reducedTree.Branch("ntruebjets",&ntruebjets,"ntruebjets/I");
   reducedTree.Branch("nElectrons",&nElectrons,"nElectrons/I");
-  reducedTree.Branch("nElectrons2012",&nElectrons2012,"nElectrons2012/I");
+  reducedTree.Branch("nElectrons2011",&nElectrons2011,"nElectrons2011/I");
   reducedTree.Branch("nMuons",&nMuons,"nMuons/I");
   reducedTree.Branch("nElectrons5",&nElectrons5,"nElectrons5/I");
   reducedTree.Branch("nMuons5",&nMuons5,"nMuons5/I");
@@ -6979,7 +6979,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
 
       //count leptons
       nElectrons = countEle();
-      nElectrons2012 = countEle(10,true);
+      nElectrons2011 = countEle(10,false);
       nMuons = countMu();
       nElectrons5 = countEle(5);
       nMuons5 = countMu(5);
