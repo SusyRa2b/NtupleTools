@@ -86,7 +86,8 @@ public:
 
   // functions that calculate stuff
   double getWeight(Long64_t nentries);
-  Long64_t getNEventsGenerated();
+  Long64_t getNEventsGenerated(TString sample="");
+  Long64_t getNEventsGeneratedExtended();
   float getPUWeight(reweight::LumiReWeighting lumiWeights);
   //  float getPUWeight(/* Lumi3DReWeighting lumiWeights*/); //FIXME CFA
 

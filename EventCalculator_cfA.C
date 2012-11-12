@@ -4648,12 +4648,39 @@ double EventCalculator::getHLTMHTeffBNN(float offMET, float offHT, uint nElectro
 */
 }
 
-Long64_t EventCalculator::getNEventsGenerated() {
+Long64_t EventCalculator::getNEventsGeneratedExtended() {
+
+  /* idea:
+     some samples come in pieces -- a nominal sample plus one or more 'ext' samples
+     they are intended to be combined, so the weight should be calculated with the total number of events generated summed over all samples
+  */
+
+  //this could probably be programmed more elegantly so that the codes do not have to be hard-coded twice on each row. but this is good enough for now
+
+  if ( sampleName_.Contains("UCSB1579") || sampleName_.Contains("UCSB1600"))   return getNEventsGenerated("UCSB1579")+getNEventsGenerated("UCSB1600"); //Znn50-100
+  if ( sampleName_.Contains("UCSB1525") || sampleName_.Contains("UCSB1607"))   return getNEventsGenerated("UCSB1525")+getNEventsGenerated("UCSB1607"); //Znn100-200
+  if ( sampleName_.Contains("UCSB1524") || sampleName_.Contains("UCSB1594"))   return getNEventsGenerated("UCSB1524")+getNEventsGenerated("UCSB1594"); //Znn200-400
+  if ( sampleName_.Contains("UCSB1523") || sampleName_.Contains("UCSB1602"))   return getNEventsGenerated("UCSB1523")+getNEventsGenerated("UCSB1602"); //Znn400-inf
+
+  if ( sampleName_.Contains("UCSB1535") || sampleName_.Contains("UCSB1595"))   return getNEventsGenerated("UCSB1535")+getNEventsGenerated("UCSB1595"); //DY 400-inf
+
+  if ( sampleName_.Contains("UCSB1575") || sampleName_.Contains("UCSB1606"))   return getNEventsGenerated("UCSB1575")+getNEventsGenerated("UCSB1606"); //TT MG semi lep
+
+  //if we make it here, then it is not an extended sample
+  return getNEventsGenerated();
+}
+
+
+Long64_t EventCalculator::getNEventsGenerated( TString sample) {
   
+
   if (isSampleRealData()) return 1;
   
   //normalization is handled in a special way for scans
   if (theScanType_ == kSMS) return 1;
+
+  //the argument let's you override the default. by default, we return the current sample
+  if(sample=="") sample = sampleName_;
 
   /*
     in the past we have auto-calculated event weights based on the number of events in the parent TChain
@@ -4679,96 +4706,103 @@ Long64_t EventCalculator::getNEventsGenerated() {
     NUMBER FROM THE UNSKIMMED SAMPLE!
   */
   
+  /*
+    ideas for the future.
+    Instead of string matching, we should extract the integer UCSB code from the string, then compare look it up in 
+    a std::map that holds the number of events. The map can be initialized once per job in a dedicated function.
+    The init routine should check for duplicates, to catch humor error in updating this database.
+  */
+
   // ============= v63 samples ============
   // SKIM is applied, so this is now important
 
   //numbers come from 
   //http://cms2.physics.ucsb.edu/cgi-bin/cfA.pl?Institute=ALL&process=ALL&version=v63
 
-  if (sampleName_.Contains("UCSB1318")) return 3789889 ;
-  if (sampleName_.Contains("UCSB1319")) return 1703863 ;
-  if (sampleName_.Contains("UCSB1341")) return 30461028 ;
+  if (sample.Contains("UCSB1318")) return 3789889 ;
+  if (sample.Contains("UCSB1319")) return 1703863 ;
+  if (sample.Contains("UCSB1341")) return 30461028 ;
 
-  if (sampleName_.Contains("UCSB1311")) return 1964088 ;
-  if (sampleName_.Contains("UCSB1347")) return 5935732 ;
-  if (sampleName_.Contains("UCSB1312")) return 2000062 ;
-  if (sampleName_.Contains("UCSB1317")) return 1025622 ;
-  if (sampleName_.Contains("UCSB1336")) return 2947160 ;
-  if (sampleName_.Contains("UCSB1314")) return 977586 ;
-  if (sampleName_.Contains("UCSB1292")) return 5927300 ;
-  if (sampleName_.Contains("UCSB1332")) return 5480000 ;
-  if (sampleName_.Contains("UCSB1297")) return 3994848 ;
-  if (sampleName_.Contains("UCSB1298")) return 3992760 ;
-  if (sampleName_.Contains("UCSB1310")) return 3998563 ;
+  if (sample.Contains("UCSB1311")) return 1964088 ;
+  if (sample.Contains("UCSB1347")) return 5935732 ;
+  if (sample.Contains("UCSB1312")) return 2000062 ;
+  if (sample.Contains("UCSB1317")) return 1025622 ;
+  if (sample.Contains("UCSB1336")) return 2947160 ;
+  if (sample.Contains("UCSB1314")) return 977586 ;
+  if (sample.Contains("UCSB1292")) return 5927300 ;
+  if (sample.Contains("UCSB1332")) return 5480000 ;
+  if (sample.Contains("UCSB1297")) return 3994848 ;
+  if (sample.Contains("UCSB1298")) return 3992760 ;
+  if (sample.Contains("UCSB1310")) return 3998563 ;
   
-  if (sampleName_.Contains("UCSB1355")) return 7618593 ;
-  if (sampleName_.Contains("UCSB1338")) return 1087272 ;
-  if (sampleName_.Contains("UCSB1291")) return 13880079 ;
-  if (sampleName_.Contains("UCSB1344")) return 259961 ;
-  if (sampleName_.Contains("UCSB1306")) return 23777 ;
-  if (sampleName_.Contains("UCSB1307")) return 497658 ;
-  if (sampleName_.Contains("UCSB1345")) return 139974 ;
-  if (sampleName_.Contains("UCSB1330")) return 1935072 ;
-  if (sampleName_.Contains("UCSB1305")) return 493460 ;
+  if (sample.Contains("UCSB1355")) return 7618593 ;
+  if (sample.Contains("UCSB1338")) return 1087272 ;
+  if (sample.Contains("UCSB1291")) return 13880079 ;
+  if (sample.Contains("UCSB1344")) return 259961 ;
+  if (sample.Contains("UCSB1306")) return 23777 ;
+  if (sample.Contains("UCSB1307")) return 497658 ;
+  if (sample.Contains("UCSB1345")) return 139974 ;
+  if (sample.Contains("UCSB1330")) return 1935072 ;
+  if (sample.Contains("UCSB1305")) return 493460 ;
   
-  if (sampleName_.Contains("UCSB1322")) return 1634582 ;
-  if (sampleName_.Contains("UCSB1328")) return 1698744 ;
-  if (sampleName_.Contains("UCSB1339")) return 1647807 ;
-  if (sampleName_.Contains("UCSB1331")) return 18393090 ;
+  if (sample.Contains("UCSB1322")) return 1634582 ;
+  if (sample.Contains("UCSB1328")) return 1698744 ;
+  if (sample.Contains("UCSB1339")) return 1647807 ;
+  if (sample.Contains("UCSB1331")) return 18393090 ;
   
-  if (sampleName_.Contains("UCSB1337")) return 6800431 ;
-  if (sampleName_.Contains("UCSB1326")) return 9996622 ;
-  if (sampleName_.Contains("UCSB1329")) return 4416646 ;
-  if (sampleName_.Contains("UCSB1327")) return 5066608 ;
-  if (sampleName_.Contains("UCSB1324")) return 1006928 ;
-  if (sampleName_.Contains("UCSB1323")) return 4053786 ;
-  if (sampleName_.Contains("UCSB1288")) return 9799908 ;
+  if (sample.Contains("UCSB1337")) return 6800431 ;
+  if (sample.Contains("UCSB1326")) return 9996622 ;
+  if (sample.Contains("UCSB1329")) return 4416646 ;
+  if (sample.Contains("UCSB1327")) return 5066608 ;
+  if (sample.Contains("UCSB1324")) return 1006928 ;
+  if (sample.Contains("UCSB1323")) return 4053786 ;
+  if (sample.Contains("UCSB1288")) return 9799908 ;
 
 
-  //  if (sampleName_=="sbottom8lnotaus-189-270") return 50000; //probably deprecated in favor of the names below
+  //  if (sample=="sbottom8lnotaus-189-270") return 50000; //probably deprecated in favor of the names below
 
-  if (sampleName_=="RPVSUSY_sbottom8lnotaus-185-250") return 50000;
-  if (sampleName_=="RPVSUSY_sbottom8lnotaus-189-270") return 50000;
-  if (sampleName_=="RPVSUSY_sbottom8lnotaus-217-300") return 50000;
+  if (sample=="RPVSUSY_sbottom8lnotaus-185-250") return 50000;
+  if (sample=="RPVSUSY_sbottom8lnotaus-189-270") return 50000;
+  if (sample=="RPVSUSY_sbottom8lnotaus-217-300") return 50000;
 
   // ============= v65 samples ============
   // SKIM is applied, so this is now important
 
   //numbers come from 
   //http://cms2.physics.ucsb.edu/cgi-bin/cfA.pl?Institute=ALL&process=ALL&version=v65
-  if (sampleName_.Contains("UCSB1403")) return 6923750 ; //TT madgraph
-  if (sampleName_.Contains("UCSB1439")) return 21673270; //TT powheg
-  if (sampleName_.Contains("UCSB1443")) return 1634582 ; //W 250-300
-  if (sampleName_.Contains("UCSB1405")) return 1699486 ; //W 300-400
-  if (sampleName_.Contains("UCSB1406")) return 1647807 ; //W 400-
-  if (sampleName_.Contains("UCSB1464")) return 1647807 ; //W 400- (52X)
-  if (sampleName_.Contains("UCSB1422")) return 139974 ;  //tbar s channel
-  if (sampleName_.Contains("UCSB1421")) return 259961 ;  //t s channel
-  if (sampleName_.Contains("UCSB1451")) return 493460 ;  //tbar tW channel
-  if (sampleName_.Contains("UCSB1455")) return 497658 ;  //t tW channel
-  if (sampleName_.Contains("UCSB1461")) return 1923628;	//tbar t channel
-  if (sampleName_.Contains("UCSB1470")) return 23777; //t t channel
-  if (sampleName_.Contains("UCSB1438")) return 5995944; // QCD 50-80
+  if (sample.Contains("UCSB1403")) return 6923750 ; //TT madgraph
+  if (sample.Contains("UCSB1439")) return 21673270; //TT powheg
+  if (sample.Contains("UCSB1443")) return 1634582 ; //W 250-300
+  if (sample.Contains("UCSB1405")) return 1699486 ; //W 300-400
+  if (sample.Contains("UCSB1406")) return 1647807 ; //W 400-
+  if (sample.Contains("UCSB1464")) return 1647807 ; //W 400- (52X)
+  if (sample.Contains("UCSB1422")) return 139974 ;  //tbar s channel
+  if (sample.Contains("UCSB1421")) return 259961 ;  //t s channel
+  if (sample.Contains("UCSB1451")) return 493460 ;  //tbar tW channel
+  if (sample.Contains("UCSB1455")) return 497658 ;  //t tW channel
+  if (sample.Contains("UCSB1461")) return 1923628;	//tbar t channel
+  if (sample.Contains("UCSB1470")) return 23777; //t t channel
+  if (sample.Contains("UCSB1438")) return 5995944; // QCD 50-80
                                                         //QCD 80-120
-  if (sampleName_.Contains("UCSB1477")) return 5755732; //QCD120-170
-  if (sampleName_.Contains("UCSB1453")) return 5814398 ;//QCD170-300
-  if (sampleName_.Contains("UCSB1425")) return 5927300 ; //QCD 300-470
-  if (sampleName_.Contains("UCSB1446")) return 3994848 ; //QCD 470-600
-  if (sampleName_.Contains("UCSB1447")) return 3992760 ; //QCD 600-800
-  if (sampleName_.Contains("UCSB1459")) return 3998563 ; //QCD 800-1000
-  if (sampleName_.Contains("UCSB1448")) return 1964088; //QCD 1000-1400
-  if (sampleName_.Contains("UCSB1449")) return 2000062; //QCD 1400-1800
-  if (sampleName_.Contains("UCSB1450")) return 977586 ; // QCD 1800-
-  if (sampleName_.Contains("UCSB1469")) return 4416646; //Znn100-200
-  if (sampleName_.Contains("UCSB1468")) return 5055885; //Znn200-400
-  if (sampleName_.Contains("UCSB1391")) return 1006928 ; //Znn 400-
+  if (sample.Contains("UCSB1477")) return 5755732; //QCD120-170
+  if (sample.Contains("UCSB1453")) return 5814398 ;//QCD170-300
+  if (sample.Contains("UCSB1425")) return 5927300 ; //QCD 300-470
+  if (sample.Contains("UCSB1446")) return 3994848 ; //QCD 470-600
+  if (sample.Contains("UCSB1447")) return 3992760 ; //QCD 600-800
+  if (sample.Contains("UCSB1459")) return 3998563 ; //QCD 800-1000
+  if (sample.Contains("UCSB1448")) return 1964088; //QCD 1000-1400
+  if (sample.Contains("UCSB1449")) return 2000062; //QCD 1400-1800
+  if (sample.Contains("UCSB1450")) return 977586 ; // QCD 1800-
+  if (sample.Contains("UCSB1469")) return 4416646; //Znn100-200
+  if (sample.Contains("UCSB1468")) return 5055885; //Znn200-400
+  if (sample.Contains("UCSB1391")) return 1006928 ; //Znn 400-
                                            
-  if (sampleName_.Contains("UCSB1389")) return 3789889 ; //DY 200-400
-  if (sampleName_.Contains("UCSB1390")) return 1703863 ; //DY 400-
-  if (sampleName_.Contains("UCSB1388")) return 30459503 ;//DY inclusive
-  if (sampleName_.Contains("UCSB1424")) return 9799908 ; //ZZ
-  if (sampleName_.Contains("UCSB1458")) return 10000431; //WW
-  if (sampleName_.Contains("UCSB1445")) return 10000283 ; //WZ
+  if (sample.Contains("UCSB1389")) return 3789889 ; //DY 200-400
+  if (sample.Contains("UCSB1390")) return 1703863 ; //DY 400-
+  if (sample.Contains("UCSB1388")) return 30459503 ;//DY inclusive
+  if (sample.Contains("UCSB1424")) return 9799908 ; //ZZ
+  if (sample.Contains("UCSB1458")) return 10000431; //WW
+  if (sample.Contains("UCSB1445")) return 10000283 ; //WZ
 
 
     // ============= v66 samples ============
@@ -4776,50 +4810,59 @@ Long64_t EventCalculator::getNEventsGenerated() {
 
   //numbers come from 
   //`http://cms2.physics.ucsb.edu/cgi-bin/cfA.pl?Institute=ALL&process=ALL&version=v66
-  if (sampleName_.Contains("UCSB1489")) return 6923750 ; //TT madgraph
-  if (sampleName_.Contains("UCSB1558")) return 21675970; //TT powheg
-  if (sampleName_.Contains("UCSB1488")) return 1634582 ; //W 250-300
-  if (sampleName_.Contains("UCSB1512")) return 1699486 ; //W 300-400
-  if (sampleName_.Contains("UCSB1487")) return 1647807 ; //W 400-
-  if (sampleName_.Contains("UCSB1587")) return 4971847 ; //W 400- (not sure what the difference is here)
-  if (sampleName_.Contains("UCSB1533")) return 139974 ;  //tbar s channel
-  if (sampleName_.Contains("UCSB1530")) return 259961 ;  //t s channel
-  if (sampleName_.Contains("UCSB1534")) return 493460 ;  //tbar tW channel
-  if (sampleName_.Contains("UCSB1532")) return 497658 ;  //t tW channel
-  if (sampleName_.Contains("UCSB1562")) return 1935072;	//tbar t channel
-  if (sampleName_.Contains("UCSB1531")) return 23777; //t t channel
-//  if (sampleName_.Contains("UCSB1438")) return 5995944; // QCD 50-80
+  if (sample.Contains("UCSB1489")) return 6923750 ; //TT madgraph
+  if (sample.Contains("UCSB1558")) return 21675970; //TT powheg
+  if (sample.Contains("UCSB1488")) return 1634582 ; //W 250-300
+  if (sample.Contains("UCSB1512")) return 1699486 ; //W 300-400
+  if (sample.Contains("UCSB1487")) return 1647807 ; //W 400-
+  if (sample.Contains("UCSB1587")) return 4971847 ; //W 400- (this is the larger v2 sample; cannot be used together with smaller '1487' sample)
+  if (sample.Contains("UCSB1533")) return 139974 ;  //tbar s channel
+  if (sample.Contains("UCSB1530")) return 259961 ;  //t s channel
+  if (sample.Contains("UCSB1534")) return 493460 ;  //tbar tW channel
+  if (sample.Contains("UCSB1532")) return 497658 ;  //t tW channel
+  if (sample.Contains("UCSB1562")) return 1935072;	//tbar t channel
+  if (sample.Contains("UCSB1531")) return 23777; //t t channel
+//  if (sample.Contains("UCSB1438")) return 5995944; // QCD 50-80
                                                         //QCD 80-120
-  if (sampleName_.Contains("UCSB1513")) return 5755732; //QCD120-170
-  if (sampleName_.Contains("UCSB1561")) return 5814398 ;//QCD170-300
-  if (sampleName_.Contains("UCSB1560")) return 5927300 ; //QCD 300-470
-  if (sampleName_.Contains("UCSB1515")) return 3994848 ; //QCD 470-600
-  if (sampleName_.Contains("UCSB1516")) return 3992760 ; //QCD 600-800
-  if (sampleName_.Contains("UCSB1559")) return 3998563 ; //QCD 800-1000
-  if (sampleName_.Contains("UCSB1577")) return 1964088; //QCD 1000-1400
-  if (sampleName_.Contains("UCSB1578")) return 2000062; //QCD 1400-1800
-  if (sampleName_.Contains("UCSB1517")) return 977586 ; // QCD 1800-
-  if (sampleName_.Contains("UCSB1585")) return 977586 ; // QCD 1800- (53X)
-  if (sampleName_.Contains("UCSB1579")) return 4040980; //Znn50-100
-  if (sampleName_.Contains("UCSB1525")) return 4416646; //Znn100-200
-  if (sampleName_.Contains("UCSB1524")) return 5055885; //Znn200-400
-  if (sampleName_.Contains("UCSB1523")) return 1006928 ; //Znn 400-
-                                           
-  if (sampleName_.Contains("UCSB1526")) return 3789889 ; //DY 200-400
-  if (sampleName_.Contains("UCSB1535")) return 1703863 ; //DY 400-
-//  if (sampleName_.Contains("UCSB1388")) return 30459503 ;//DY inclusive
-  if (sampleName_.Contains("UCSB1551")) return 9799908 ; //ZZ
-  if (sampleName_.Contains("UCSB1563")) return 10000431; //WW
-  if (sampleName_.Contains("UCSB1552")) return 10000283 ; //WZ
+  if (sample.Contains("UCSB1513")) return 5755732; //QCD120-170
+  if (sample.Contains("UCSB1561")) return 5814398 ;//QCD170-300
+  if (sample.Contains("UCSB1560")) return 5927300 ; //QCD 300-470
+  if (sample.Contains("UCSB1515")) return 3994848 ; //QCD 470-600
+  if (sample.Contains("UCSB1516")) return 3992760 ; //QCD 600-800
+  if (sample.Contains("UCSB1559")) return 3998563 ; //QCD 800-1000
+  if (sample.Contains("UCSB1577")) return 1964088; //QCD 1000-1400
+  if (sample.Contains("UCSB1578")) return 2000062; //QCD 1400-1800
+  if (sample.Contains("UCSB1517")) return 977586 ; // QCD 1800-
+  if (sample.Contains("UCSB1585")) return 977586 ; // QCD 1800- (53X)
+  if (sample.Contains("UCSB1579")) return 4040980; //Znn50-100
+  if (sample.Contains("UCSB1600")) return 20023018 ;//Znn50-100 ext
+  if (sample.Contains("UCSB1525")) return 4416646; //Znn100-200
+  if (sample.Contains("UCSB1607")) return 5571413 ;//Znn100-200 ext
+  if (sample.Contains("UCSB1524")) return 5055885; //Znn200-400
+  if (sample.Contains("UCSB1594")) return 4689734 ; //Znn200-400 ext
 
-  if (sampleName_.Contains("UCSB1571")) return 4246444 ; //TT MG full lep
-  if (sampleName_.Contains("UCSB1575")) return 11229902 ; //TT MG semi lep
-  if (sampleName_.Contains("UCSB1586")) return 10537444;//TT MG hadronic
+  if (sample.Contains("UCSB1523")) return 1006928 ; //Znn 400-
+  if (sample.Contains("UCSB1602")) return 4088782 ; //Znn 400- ext
 
-  if (sampleName_.Contains("UCSB1605")) return 196046; // ttW
-  if (sampleName_.Contains("UCSB1604")) return 210160; // ttZ
+  if (sample.Contains("UCSB1526")) return 3789889 ; //DY 200-400
+  if (sample.Contains("UCSB1608")) return 3118888 ; //DY 200-400 ext
+  if (sample.Contains("UCSB1535")) return 1703863 ; //DY 400-
+  if (sample.Contains("UCSB1595")) return 1023926 ; //ext DY 400- 
+//  if (sample.Contains("UCSB1388")) return 30459503 ;//DY inclusive
+  if (sample.Contains("UCSB1551")) return 9799908 ; //ZZ
+  if (sample.Contains("UCSB1563")) return 10000431; //WW
+  if (sample.Contains("UCSB1552")) return 10000283 ; //WZ
 
-  cout<<"[getNEventsGenerated] unknown sample "<<sampleName_<<endl;
+  if (sample.Contains("UCSB1571")) return 4246444 ; //TT MG full lep
+  if (sample.Contains("UCSB1575")) return 11229902 ; //TT MG semi lep
+  if (sample.Contains("UCSB1606")) return 25423514 ; //TT MG semi lep ext
+
+  if (sample.Contains("UCSB1586")) return 10537444;//TT MG hadronic
+
+  if (sample.Contains("UCSB1605")) return 196046; // ttW
+  if (sample.Contains("UCSB1604")) return 210160; // ttZ
+
+  cout<<"[getNEventsGenerated] unknown sample "<<sample<<endl;
   assert(0);
   return 1;
 
@@ -5705,6 +5748,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   //oddly the compiler did not complain about this double-declaration.
   double eventweight; //one exception to the float rule
   double eventweight2; //one exception to the float rule
+  double eventweight3; //one exception to the float rule
   //  float btagIPweight;//, pfmhtweight; //
   float PUweight;
   float PUweightSystVar;
@@ -6088,6 +6132,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
   // ~~~~~~~ define tree branches ~~~~~~~
   reducedTree.Branch("weight",&eventweight,"weight/D"); //special case; 'weight' is already taken here but I want the reducedTree to use it
   reducedTree.Branch("weight2",&eventweight2,"weight2/D");
+  reducedTree.Branch("weight3",&eventweight3,"weight3/D");
   reducedTree.Branch("scanCrossSection",&scanCrossSection,"scanCrossSection/D");
   reducedTree.Branch("scanCrossSectionPlus",&scanCrossSectionPlus,"scanCrossSectionPlus/D");
   reducedTree.Branch("scanCrossSectionMinus",&scanCrossSectionMinus,"scanCrossSectionMinus/D");
@@ -6636,7 +6681,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
       else{
 	cout << "This is data!"<< endl;
       }
-      cout << "Running over n out of total generated = "<< nevents<<" / "<<getNEventsGenerated() << endl;
+      cout << "Running over n out of total generated = "<< nevents<<" / "<<getNEventsGeneratedExtended() << endl;
     }
     if (entry%100000==0 ) cout << "  entry: " << entry << ", percent done=" << (int)(entry/(double)nevents*100.)<<  endl;
 
@@ -6867,6 +6912,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
 
       eventweight = getWeight(nevents);
       eventweight2 = getWeight( getNEventsGenerated());
+      eventweight3 = getWeight( getNEventsGeneratedExtended());
       
       if (theScanType_!=kSMS) {
 	scanCrossSection = getScanCrossSection(prodprocess,"");
