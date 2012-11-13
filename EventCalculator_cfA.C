@@ -4954,6 +4954,10 @@ double EventCalculator::getCrossSection(){
 
 TString EventCalculator::getSampleNameOutputString(){
 
+  // update -- this code is just too dangerous now, with multiple samples having extensions
+  //got to keep the full name just in case
+  return sampleName_;
+
   //strategy: as much as possible, give the name that drawReducedTrees expects,
   //and return sampleName for samples that have to be 'hadd'ed afterwards anyway
 
