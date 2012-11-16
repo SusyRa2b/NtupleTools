@@ -7,12 +7,14 @@
 #include "TStopwatch.h"
 #include <iostream>
 
+#include <map>
+
 void signalEff2012::Loop()
 {
 
 //   In a ROOT session, you can do:
 //      Root > .L signalEff2012.C++
-//      Root > signalEff2012 t(path, stub, joinbtagbins,usebtagsf);
+//      Root > signalEff2012 t(path, stub, joinbtagbins,usebtagsf,dopdfs);
 //everything between reducedTree. and .root is the stub
 //      Root > t.Loop();       // Loop on all entries
 
@@ -23,18 +25,37 @@ void signalEff2012::Loop()
   float htedges[]={400,500,800,1000,100000};
   float metedges[]={125,150,250,350,100000};
 
+  vector<TString> pdfsets;
+  map<TString, int> pdfsetsize;
+  pdfsets.push_back("none");
+  pdfsetsize["none"]=1;
+  if ( dopdfs_) {
+    pdfsets.push_back("CTEQ");
+    pdfsets.push_back("MSTW");
+    pdfsets.push_back("NNPDF");
+    pdfsetsize["CTEQ"]=45;
+    pdfsetsize["MSTW"]=41;
+    pdfsetsize["NNPDF"]=100;
+  }
+
   vector<SearchRegion> searchregions;
 
   for (int ildp=0;ildp<2;ildp++) {
     for (int imet = 0;imet<4; imet++) {
       for (int iht = 0;iht<4; iht++) {
 	bool theldp = ildp==1 ? true:false;
-	if (joinbtagbins_) 
-	  searchregions.push_back( SearchRegion(1,99,htedges[iht],htedges[iht+1],metedges[imet],metedges[imet+1],theldp,false));
-	else {
-	  searchregions.push_back( SearchRegion(1,1,htedges[iht],htedges[iht+1],metedges[imet],metedges[imet+1],theldp,false));
-	  searchregions.push_back( SearchRegion(2,2,htedges[iht],htedges[iht+1],metedges[imet],metedges[imet+1],theldp,false));
-	  searchregions.push_back( SearchRegion(3,99,htedges[iht],htedges[iht+1],metedges[imet],metedges[imet+1],theldp,false));
+	for (unsigned int ipdfset = 0; ipdfset<pdfsets.size();ipdfset++) {
+	  for (int ipdfindex=0; ipdfindex<pdfsetsize[pdfsets.at(ipdfset)]; ipdfindex++) {
+
+	    if (joinbtagbins_) 
+	      searchregions.push_back( SearchRegion(1,99,htedges[iht],htedges[iht+1],metedges[imet],metedges[imet+1],theldp,false,pdfsets[ipdfset],ipdfindex));
+	    else {
+	      searchregions.push_back( SearchRegion(1,1,htedges[iht],htedges[iht+1],metedges[imet],metedges[imet+1],theldp,false,pdfsets[ipdfset],ipdfindex));
+	      searchregions.push_back( SearchRegion(2,2,htedges[iht],htedges[iht+1],metedges[imet],metedges[imet+1],theldp,false,pdfsets[ipdfset],ipdfindex));
+	      searchregions.push_back( SearchRegion(3,99,htedges[iht],htedges[iht+1],metedges[imet],metedges[imet+1],theldp,false,pdfsets[ipdfset],ipdfindex));
+	    }
+
+	  }
 	}
       }
     }
@@ -44,6 +65,7 @@ void signalEff2012::Loop()
   //open an output file
   TString outfilename = "eventcounts.";
   if (joinbtagbins_) outfilename+="mergebbins.";
+  if (dopdfs_) outfilename+="withpdfs.";
   outfilename += filestub_;
   outfilename += ".root";
   TFile fout(outfilename,"RECREATE");
@@ -57,6 +79,7 @@ void signalEff2012::Loop()
     TString hname = TString("events_")+searchregions[ii].id();
     //    searchregions[ii].Print();
     eventcounts.push_back( (TH2D*) scanSMSngen_->Clone(hname));
+    cout<<searchregions[ii].id()<<endl;
   }
 
   for ( size_t ii = 0; ii<searchregions.size(); ii++)   {
@@ -93,7 +116,7 @@ void signalEff2012::Loop()
       if (ientry < 0) assert(0); //jmt mod to increase the severity of this (be sure to notice)
       nb = fChain->GetEntry(jentry);   nbytes += nb;
       
-      if (jentry%500000==0) cout<<100*double(jentry)/double(nentries)<<" % done"<<endl;
+      if (jentry%300000==0) cout<<100*double(jentry)/double(nentries)<<" % done"<<endl;
 
       // first apply baseline selection
       //njets, jet pT
@@ -135,7 +158,9 @@ void signalEff2012::Loop()
 
 	if (passb && passmet && passht) {
 	  //for SMS do not use regular weights
-	  float thisweight = PUweight;
+	  //Use PU weight
+	  double thisweight = PUweight;
+	  //use b tag SF if desired
 	  if (usebtagsf_) { //support only =1,=2,>=3 b bins for now
 	    if ( (searchregions[ii].minb_ == searchregions[ii].maxb_) && (searchregions[ii].minb_ == 1) ) 
 	      thisweight *= prob1;
@@ -145,6 +170,17 @@ void signalEff2012::Loop()
 	      thisweight *= probge3;
 	    else assert(0);
 	  }
+	  //if this search region is a pdf variation then use pdf weight
+	  if ( searchregions[ii].pdfset_ == "CTEQ" ) { //for speed reasons i am scared of doing all of these string comparisons. still outweighed by i/o speed?
+	    thisweight *= pdfWeightsCTEQ[searchregions[ii].pdfindex_];
+	  }
+	  else if (searchregions[ii].pdfset_ == "MSTW" ) {
+	    thisweight *= pdfWeightsMSTW[searchregions[ii].pdfindex_];
+	  }
+	  else if (searchregions[ii].pdfset_ == "NNPDF" ) {
+	    thisweight *= pdfWeightsNNPDF[searchregions[ii].pdfindex_];
+	  }
+
 	  eventcounts[ii]->Fill(m0,m12,thisweight);
 	}
       }
@@ -153,6 +189,7 @@ void signalEff2012::Loop()
    }
    watch.Stop();
    scanSMSngen_->Write();
+   for (unsigned int ih=0;ih<scanProcessTotals_.size();ih++)   scanProcessTotals_[ih]->Write();
    fout.Write();
    fout.Close();
 

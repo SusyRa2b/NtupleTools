@@ -18,7 +18,7 @@
 // Header file for the classes stored in the TTree if any.
 class SearchRegion { //a DIFFERENT class than my other SearchRegion class...oh well
 public:
-  SearchRegion(int minb, int maxb,float minHT, float maxHT,float minMET,float maxMET,bool isLDP,bool isSL);
+  SearchRegion(int minb, int maxb,float minHT, float maxHT,float minMET,float maxMET,bool isLDP,bool isSL,TString pdfset,int pdfindex);
   ~SearchRegion();
   //  void Print() const;
 
@@ -31,6 +31,9 @@ public:
   bool isLDP_;
   bool isSL_;
 
+  TString pdfset_;
+  int pdfindex_;
+
   TString id() const;
 
   //  bool operator==(const SearchRegion& other);
@@ -39,9 +42,13 @@ public:
 };
 
 
-SearchRegion::SearchRegion(int minb, int maxb,float minHT, float maxHT,float minMET,float maxMET,bool isLDP,bool isSL) :
+SearchRegion::SearchRegion(int minb, int maxb,float minHT, float maxHT,float minMET,float maxMET,bool isLDP,bool isSL,
+			   TString pdfset,int pdfindex) :
   minb_(minb), maxb_(maxb),minHT_(minHT),maxHT_(maxHT),minMET_(minMET),maxMET_(maxMET),isLDP_(isLDP),isSL_(isSL)
-{}
+  ,pdfset_(pdfset),pdfindex_(pdfindex)
+{
+  assert( pdfset=="none" || pdfset=="CTEQ" || pdfset=="MSTW" ||pdfset=="NNPDF");
+}
 
 SearchRegion::~SearchRegion() {}
 
@@ -74,6 +81,12 @@ TString SearchRegion::id() const {
     theid.Form("b%d_HT%.0fto%.0f_MET%.0fto%.0f%s%s",minb_,minHT_,maxHT_,minMET_,maxMET_,ldpstring.Data(),slstring.Data());
   else
     theid.Form("b%dto%d_HT%.0fto%.0f_MET%.0fto%.0f%s%s",minb_,maxb_,minHT_,maxHT_,minMET_,maxMET_,ldpstring.Data(),slstring.Data());
+
+  if (pdfset_ != "none") {
+    TString suffix;
+    suffix.Form("_%s%d",pdfset_.Data(),pdfindex_);
+    theid+=suffix;
+  }
 
   return theid;
 }
@@ -732,7 +745,7 @@ public :
    TBranch        *b_transverseMETSignificance3_lostJet;   //!
    TBranch        *b_nLostJet;   //!
 
-   signalEff2012(TString path, TString filestub, bool joinbtagbins, bool usebtagsf); //BEGIN END jmt
+   signalEff2012(TString path, TString filestub, bool joinbtagbins, bool usebtagsf, bool dopdfs); //BEGIN END jmt
    virtual ~signalEff2012();
    virtual Int_t    Cut(Long64_t entry);
    virtual Int_t    GetEntry(Long64_t entry);
@@ -744,9 +757,11 @@ public :
 
    //BEGIN jmt
    TH2D* scanSMSngen_;
+   vector<TH2D*> scanProcessTotals_;
    TString filestub_;
    bool joinbtagbins_;
    bool usebtagsf_;
+   bool dopdfs_;
    //END jmt
 };
 
@@ -754,11 +769,12 @@ public :
 
 #ifdef signalEff2012_cxx
 //BEGIN jmt mod
-signalEff2012::signalEff2012(TString path, TString filestub,bool joinbtagbins, bool usebtagsf) : fChain(0) 
-									       , scanSMSngen_(0)
-									       ,filestub_(filestub)
-									       ,joinbtagbins_(joinbtagbins)
-									       ,usebtagsf_(usebtagsf)
+signalEff2012::signalEff2012(TString path, TString filestub,bool joinbtagbins, bool usebtagsf, bool dopdfs) : fChain(0) 
+													    , scanSMSngen_(0)
+													    ,filestub_(filestub)
+													    ,joinbtagbins_(joinbtagbins)
+													    ,usebtagsf_(usebtagsf)
+													    ,dopdfs_(dopdfs)
 			    //END jmt mod
 {
  //BEGIN jmt
@@ -777,7 +793,16 @@ signalEff2012::signalEff2012(TString path, TString filestub,bool joinbtagbins, b
 	f = new TFile(filename); //BEGIN END jmt
       }
       f->GetObject("reducedTree",tree);
-      scanSMSngen_ = (TH2D*) f->Get("scanSMSngen"); //BEGIN END jmt mod
+      scanSMSngen_ = (TH2D*) f->Get("scanSMSngen"); //BEGIN  jmt mod
+      //need to loop over the keys in the file and load all scan process totals histos
+      for (int ih = 0; ih<f->GetListOfKeys()->GetEntries(); ih++) {
+	TString histname = f->GetListOfKeys()->At(ih)->GetName();
+	if (!histname.BeginsWith("scanProcessTotals")) continue;
+	scanProcessTotals_.push_back( (TH2D*) f->Get(histname));
+      }
+
+      //END jmt mod
+
    }
    Init(tree);
 }
