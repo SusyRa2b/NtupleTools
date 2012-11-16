@@ -106,9 +106,12 @@ public:
   unsigned int countTau(const TString & wp);
 
   int countIsoPFCands(const float minpt, const float miniso) ;
-  int countIsoTracks(const float minpt, const float miniso, const float maxdr, float & thept, float & theeta, float & thephi);
+  int countIsoTracks(const float minpt, const float miniso, const float maxdr, float & thept, float & theeta, float & thephi, const bool leptondisambiguation=false);
   bool isQualityTrack(const int trackindex) ;
   float mostIsolatedTrackValue(const float minpt, const float maxdr, float & d0,float & thept);
+
+  bool trackIsGoodElectron(const unsigned int tkidx);
+  bool trackIsGoodMuon(const unsigned int tkidx);
 
   int getMaxTOBTECjetDeltaMult(int & TOBTECjetChMult);
 

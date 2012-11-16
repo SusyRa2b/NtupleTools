@@ -400,7 +400,7 @@ bool EventCalculator::isGoodMuon(const unsigned int k, const bool disableRelIso,
 
   if (!isGoodPV(0)) return false;
 
-  if (pf_mus_pt->at(k) < 10) return false;
+  if (pf_mus_pt->at(k) < ptthreshold) return false;
   if (fabs(pf_mus_eta->at(k)) >= 2.4 ) return false; 
   
   //i like to use TMath::Nint for quantities stored as float that are really integers. just to be safe
@@ -521,7 +521,7 @@ bool EventCalculator::isGoodElectron(const unsigned int k, const bool disableRel
   if ( fabs(pf_els_vz->at(k) - pv_z->at(0) ) >= 0.2 ) return false; 
   
   // keep same pt and eta cuts (except no explicit exclusion of gap region)
-  if (pf_els_pt->at(k) < 10) return false;
+  if (pf_els_pt->at(k) < ptthreshold) return false;
   if (fabs(pf_els_scEta->at(k)) >= 2.5 ) return false; 
   
   // now recommended isolation is PF relative isolation with cone = 0.3 with rho (effective area) corrections for PU
@@ -530,16 +530,16 @@ bool EventCalculator::isGoodElectron(const unsigned int k, const bool disableRel
   float rho = rho_kt6PFJetsForIsolation2011;
   // get effective area from delR=0.3 2011 data table for neutral+gamma based on supercluster eta pf_els_scEta->at(k)
   float AE = 0.10; 
-  if (use2012id) { //2012 id R=0.4
+  if (use2012id) { //2012 id R=0.3
     rho = rho_kt6PFJetsForIsolation2012;
     float abseta = fabs(pf_els_scEta->at(k) );
-    if      ( abseta < 1.0 ) AE = 0.19;
-    else if ( abseta >=1.0 && abseta <1.479) AE = 0.25;
-    else if ( abseta >=1.479&&abseta <2.0)   AE = 0.12;
-    else if ( abseta >=2.0 && abseta <2.2) AE = 0.21;
-    else if ( abseta >=2.2 && abseta <2.3) AE = 0.27;
-    else if ( abseta >=2.3 && abseta <2.4) AE = 0.44;
-    else if ( abseta >=2.4 ) AE = 0.52;
+    if      ( abseta < 1.0 ) AE = 0.13;
+    else if ( abseta >=1.0 && abseta <1.479) AE = 0.14;
+    else if ( abseta >=1.479&&abseta <2.0)   AE = 0.07;
+    else if ( abseta >=2.0 && abseta <2.2) AE = 0.09;
+    else if ( abseta >=2.2 && abseta <2.3) AE = 0.11;
+    else if ( abseta >=2.3 && abseta <2.4) AE = 0.11;
+    else if ( abseta >=2.4 ) AE = 0.14;
   }
   else { //2011 id R=0.3
     if ( fabs( pf_els_scEta->at(k) ) > 1.0 ) AE = 0.12;      
@@ -764,7 +764,48 @@ float EventCalculator::mostIsolatedTrackValue(const float minpt, const float max
 
 }
 
-int EventCalculator::countIsoTracks(const float minpt, const float miniso, const float maxdr,float & thept, float & theeta, float & thephi) {
+
+bool EventCalculator::trackIsGoodElectron(const unsigned int tkidx) {
+
+  // this looks to be way big. dr usually O(0.001) or less
+  //should be safe though
+  const float maxdr = 0.03; 
+
+  //loop over electrons
+  for (unsigned int i=0; i <pf_els_pt->size() ; i++) {
+    //careful -- pt cut hard-coded here
+    if (isGoodElectron(i,false,10)) {
+      if (jmt::deltaR(tracks_eta->at(tkidx),tracks_phi->at(tkidx),
+		      pf_els_eta->at(i),pf_els_phi->at(i)) < maxdr) return true;
+    }
+  }
+
+  return false;
+}
+
+
+bool EventCalculator::trackIsGoodMuon(const unsigned int tkidx) {
+
+
+  // this looks to be way big. dr usually O(0.001) or less
+  //should be safe though
+  const float maxdr = 0.03; 
+
+  //loop over electrons
+  for (unsigned int i=0; i <pf_mus_pt->size() ; i++) {
+    //careful -- pt cut hard-coded here
+    if (isGoodMuon(i,false,10)) {
+      if (jmt::deltaR(tracks_eta->at(tkidx),tracks_phi->at(tkidx),
+		      pf_mus_eta->at(i),pf_mus_phi->at(i)) < maxdr) return true;
+    }
+  }
+  
+  return false;
+
+}
+
+
+int EventCalculator::countIsoTracks(const float minpt, const float miniso, const float maxdr,float & thept, float & theeta, float & thephi,const bool leptondisambiguation) {
 
   thept = -1;
   theeta=99;
@@ -803,6 +844,11 @@ int EventCalculator::countIsoTracks(const float minpt, const float miniso, const
 	//now, if it is isolated, increment counter
 	if ( isosum / tracks_pt->at(iii) <= miniso) {
 	  if (verbose) cout<<" found iso track "<<tracks_pt->at(iii)<<" "<<isosum <<" "<<isosum/ tracks_pt->at(iii)<<endl;
+
+	  //if desired, disambiguate from *good* leptons
+	  if (leptondisambiguation && trackIsGoodElectron(iii)) continue;
+	  if (leptondisambiguation && trackIsGoodMuon(iii)) continue;
+
 	  ++nisotracks;
 	  if (tracks_pt->at(iii) > thept) { //store info about the highest pT isolated track
 	    thept = tracks_pt->at(iii);
@@ -5992,6 +6038,8 @@ void EventCalculator::reducedTree(TString outputpath) {
   float trackd0_10,trackd0_5,trackd0_15,trackd0_20;
   float trackpt_10,trackpt_5,trackpt_15,trackpt_20;
 
+  int nIsoTracks15_005_03_lepcleaned;
+
   float prob0,probge1,prob1,probge2,probge3,prob2;
   
   float prob0_HFplus,probge1_HFplus,prob1_HFplus,probge2_HFplus,probge3_HFplus,prob2_HFplus;
@@ -6641,6 +6689,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("nIsoTracks15_005_03",&nIsoTracks15_005_03,"nIsoTracks15_005_03/I");
   reducedTree.Branch("nIsoTracks10_005_03",&nIsoTracks10_005_03,"nIsoTracks10_005_03/I");
   reducedTree.Branch("nIsoTracks5_005_03",&nIsoTracks5_005_03,"nIsoTracks5_005_03/I");
+  reducedTree.Branch("nIsoTracks15_005_03_lepcleaned",&nIsoTracks15_005_03_lepcleaned,"nIsoTracks15_005_03_lepcleaned/I");
 
   reducedTree.Branch("minTrackIso10", &minTrackIso10, "minTrackIso10/F");
   reducedTree.Branch("minTrackIso5", &minTrackIso5, "minTrackIso5/F");
@@ -7403,6 +7452,8 @@ Also the pdfWeightSum* histograms that are used for LM9.
       nIsoTracks5_005_03=countIsoTracks(5,0.05,0.3,isotrackpt1,isotracketa1,isotrackphi1);
       nIsoTracks15_005_03=countIsoTracks(15,0.05,0.3,dummyval1,dummyval2,dummyval3);
       nIsoTracks20_005_03=countIsoTracks(20,0.05,0.3,dummyval1,dummyval2,dummyval3);
+
+      nIsoTracks15_005_03_lepcleaned=countIsoTracks(15,0.05,0.3,dummyval1,dummyval2,dummyval3,true);
 
       minTrackIso10 = mostIsolatedTrackValue(10,0.3,trackd0_10,trackpt_10);
       minTrackIso5 = mostIsolatedTrackValue(5,0.3,trackd0_5,trackpt_5);
