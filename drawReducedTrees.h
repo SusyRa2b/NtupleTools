@@ -11,6 +11,8 @@
 
 #include "TGraphAsymmErrors.h"
 
+#include <utility>
+
 //useful for playing around with plots in interactive ROOT
 TH1D* hinteractive=0;
 TH2D* h2d=0;
@@ -26,7 +28,7 @@ std::vector<TString> samples_;
 std::set<TString> samplesAll_;
 //config descriptions defined below
 //these maps use the sample names as keys
-std::map<TString, std::map<TString, TFile*> > files_;
+std::map<TString, std::map<TString, std::pair<TFile*,TChain*> > > files_;
 std::map<TString, TH1D*> histos_;
 std::map<TString, UInt_t> sampleColor_;
 std::map<TString, TString> sampleOwenName_;
@@ -900,10 +902,71 @@ TGraphAsymmErrors* effgraph=0;
 bool loaded_=false; //bookkeeping
 bool loadedSusyHistos_=false;//bookkeeping
 
-TTree* getTree(const TString & samplename) {
-  TTree* t=(TTree*) files_[currentConfig_][samplename]->Get(reducedTreeName_);
+void resetChains() {
+
+  cout<<"[resetting chains]"<<endl;
+
+  //loop over files and set the TChain to point to the reducedTree in that files
+  for ( std::map<TString, std::map<TString, std::pair<TFile*,TChain*> > >::iterator ifile = files_.begin();
+	ifile != files_.end(); ++ifile) {
+    cout<<"\t"<<ifile->first<<endl;
+
+    std::map<TString, std::pair<TFile*,TChain*> > thisguy = ifile->second;
+
+    for ( std::map<TString, std::pair<TFile*,TChain*> >::iterator icfg = thisguy.begin(); icfg!= thisguy.end(); ++icfg) {
+      if (icfg->second.first !=0 && (!icfg->second.first->IsZombie())) {
+	cout<<"\t"<<icfg->first<<"   "<<icfg->second.first->GetName()<<endl ;
+	//now we've got the std::pair
+	//	files_[ifile->first][icfg->first].second = (TChain*) icfg->second.first->Get(reducedTreeName_);
+	if (files_[ifile->first][icfg->first].second != 0) delete files_[ifile->first][icfg->first].second;
+	files_[ifile->first][icfg->first].second = new TChain(reducedTreeName_);
+	files_[ifile->first][icfg->first].second->Add( files_[ifile->first][icfg->first].first->GetName() );
+      }
+      else files_[ifile->first][icfg->first].second =0;
+    }
+  }
+
+}
+
+
+TChain* getTree(const TString & samplename) {
+
+  // cout<<files_[currentConfig_][samplename].first<<"\t"<<files_[currentConfig_][samplename].second<<endl;
+
+  //  TTree* t=(TTree*) files_[currentConfig_][samplename]->Get(reducedTreeName_);
+  TChain* t = (TChain*) files_[currentConfig_][samplename].second;
   return t;
 }
+
+
+void chainSamples(const TString & parent, const TString & child) {
+
+  //first enforce some sanity
+  //the parent must be plotted, and the child must not be plotted
+  //the might be a bit overzealous, especially the first part. we'll see
+
+  bool foundit=false;
+  for (unsigned int isample = 0; isample<samples_.size(); isample++) {
+    if (samples_[isample] == parent) { foundit=true;}
+    if (samples_[isample] == child) {
+      cout<<child<<" is already on the plotting list! Why do you want to plot it twice? quitting..."<<endl;
+      return;
+    }
+  }
+
+  if (!foundit) {
+    cout<<parent<<" is not on the plotting list! Not chaining samples...."<<endl;
+    return;
+  }
+
+
+  cout<<"Adding "<<child<<" to "<<parent<<". n entries goes from "<<getTree(parent)->GetEntries()<<" to ";
+
+  getTree(parent)->Add( getTree(child));
+  cout<<getTree(parent)->GetEntries()<<endl;
+
+}
+
 
 // == set configuration options ==
 void setQuiet(bool q) {
@@ -953,11 +1016,6 @@ void setLogY(bool dolog) {
   logy_=dolog;
   if (logy_) maxScaleFactor_=3;
   else maxScaleFactor_=1.05;
-}
-
-void setStackMode(bool dostack, bool normalized=false) {
-  dostack_=dostack;
-  normalized_=normalized;
 }
 
 void doData(bool dodata) {
@@ -1058,10 +1116,10 @@ int getSMSProdProcess(const TString & sample) {
 
 
 void loadScanSMSngen(const TString& sampleOfInterest) {
-  if (scanSMSngen==0) scanSMSngen = (TH2D*) files_[currentConfig_][sampleOfInterest]->Get("scanSMSngen");
+  if (scanSMSngen==0) scanSMSngen = (TH2D*) files_[currentConfig_][sampleOfInterest].first->Get("scanSMSngen");
   else {
     cout<<"Replacing scanSMSngen"<<endl;
-    scanSMSngen = (TH2D*) files_[currentConfig_][sampleOfInterest]->Get("scanSMSngen");
+    scanSMSngen = (TH2D*) files_[currentConfig_][sampleOfInterest].first->Get("scanSMSngen");
   }
 }
 
@@ -1069,12 +1127,12 @@ void loadReferenceCrossSections() {
 
   if ( CrossSectionTable_gluino_ == 0) {
     cout<<"Loading reference cross section file (g~g~)"<<endl;
-    CrossSectionTable_gluino_ = new  CrossSectionTable("gluglu_decoupled7TeV.txt",true);
+    CrossSectionTable_gluino_ = new  CrossSectionTable("/afs/hephy.at/user/w/walten/public/referenceXSecs.root","smsroot","gluino8TeV_NLONLL");
   }
 
   if (CrossSectionTable_stop_ == 0) {
     cout<<"Loading reference cross section file (t~t~)"<<endl;
-    CrossSectionTable_stop_ = new  CrossSectionTable("stst_decoupled7TeV.txt",true);
+    CrossSectionTable_stop_ = new  CrossSectionTable("/afs/hephy.at/user/w/walten/public/referenceXSecs.root","smsroot","stop8TeV_NLONLL");
   }
 
 }
@@ -1088,7 +1146,7 @@ void loadSusyScanHistograms() {
   TFile* susyfile = 0;
   for (unsigned int isample=0; isample<samples_.size(); isample++) {
     if ( !isSampleSM(samples_[isample])) {
-      susyfile =  files_[currentConfig_][samples_[isample]];
+      susyfile =  files_[currentConfig_][samples_[isample]].first;
       cout<<" Loading SUSY scan histograms from file: "<<susyfile->GetName()<<endl;
     }
   }
@@ -1170,7 +1228,7 @@ void drawPlotHeader(double xoffset = 0) {
       astring.Form("CMS, #sqrt{s} = 7 TeV, L_{int} = %.2f fb^{-1}",lumiScale_/1000.);
 
     }
-    else astring.Form("L_{int} = %.2f fb^{-1}, #sqrt{s} = 8 TeV",lumiScale_/1000.);
+    else astring.Form("CMS Preliminary, L_{int} = %.2f fb^{-1}, #sqrt{s} = 8 TeV",lumiScale_/1000.);
     if(lumiScale_>33. && lumiScale_<34.) astring.Form("L_{int} = %.2f fb^{-1}, #sqrt{s} = 7 TeV", 4982.91/1000.);//hardcoded, but don't know what else to do for this...
     if (text2 != 0 ) delete text2;
     text2 = new TLatex(3.570061,23.08044,astring);
@@ -1219,7 +1277,7 @@ void renewCanvas(const TString opt="") {
 
   thecanvas= new TCanvas("thecanvas","the canvas",canvasWidth,canvasHeight);
   thecanvas->cd()->SetRightMargin(0.04);
-  thecanvas->cd()->SetTopMargin(0.07); //test
+  thecanvas->cd()->SetTopMargin(0.08); //test
 
   if (opt.Contains("ratio")) {
     //thecanvas->Divide(1,2);
@@ -1339,10 +1397,10 @@ TString renormBins( TH1D* hp, int refbin ) {
 
 void fillFlavorHistoryScaling() {
 
-  TTree* tree=0;
+  TChain* tree=0;
   for (unsigned int isample=0; isample<samples_.size(); isample++) {
     if ( samples_[isample].Contains("WJets")) { //will pick out WJets or WJetsZ2
-      tree = (TTree*) files_[currentConfig_][samples_[isample]]->Get(reducedTreeName_);
+      tree = (TChain*) getTree(samples_[isample]);//files_[currentConfig_][samples_[isample]]->Get(reducedTreeName_);
     }
   }
   if (tree==0) {cout<<"Did not find a WJets sample!"<<endl; return;}
@@ -1741,6 +1799,8 @@ void setColorScheme(const TString & name) {
     sampleColor_["PythiaPUQCD"] = kYellow;
     sampleColor_["PythiaPUQCDFlat"] = kYellow;
     sampleColor_["TTbarJets"]=kAzure-3;
+    sampleColor_["TTbarJets0"]=kAzure-3;
+    sampleColor_["TTbarJetsPowheg"]=kAzure-3;
     sampleColor_["TTbarSingleTopWJetsCombined"]=kAzure-3;
     sampleColor_["ttbar"]=kAzure-3;
     sampleColor_["TTbarJets-semiMu"]=kViolet;
@@ -1835,7 +1895,9 @@ void setColorScheme(const TString & name) {
     sampleColor_["PythiaQCD"] = 2;
     sampleColor_["PythiaPUQCD"] =2;
     sampleColor_["PythiaPUQCDFlat"] =2;
-    sampleColor_["TTbarJets"]=4;
+    sampleColor_["TTbarJets"]=kBlue;
+    sampleColor_["TTbarJets0"]=kCyan;
+    sampleColor_["TTbarJetsPowheg"]=kCyan+4;
     sampleColor_["TTbarSingleTopWJetsCombined"]=4;
     sampleColor_["TTbarJets-semiMu"]=kGreen-3;
     sampleColor_["TTbarJets-semiMuGood"]=kGreen-3;
@@ -1918,6 +1980,14 @@ void setColorScheme(const TString & name) {
     cout<<"Sorry, color scheme "<<name<<" is not known!"<<endl;
   }
 
+}
+
+void setStackMode(bool dostack, bool normalized=false) {
+  dostack_=dostack;
+  normalized_=normalized;
+
+  if (dostack) setColorScheme("stack");
+  else setColorScheme("nostack");
 }
 
 void resetSamples(bool joinSingleTop=true) {
@@ -2095,11 +2165,43 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   //also note that there's no harm in failing to load one of these samples, 
   //as long as you don't actually try to draw it
 
-  //samplesAll_.insert("QCD");
+  samplesAll_.insert("QCD1000");
+  samplesAll_.insert("QCD120");
+  samplesAll_.insert("QCD1400");
+  samplesAll_.insert("QCD170");
+  samplesAll_.insert("QCD1800");
+  samplesAll_.insert("QCD300");
+  samplesAll_.insert("QCD470");
+  samplesAll_.insert("QCD600");
+  samplesAll_.insert("QCD800");
+  samplesAll_.insert("TTJets_MassiveBinDECAY_TuneZ2star_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1403ra2b_v65");
+  samplesAll_.insert("TT_CT10_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v2_AODSIM_UCSB1439ra2b_v65");
+  samplesAll_.insert("T_s-channel_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1421ra2b_v65");
+  samplesAll_.insert("T_t-channel_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v2_AODSIM_UCSB1470ra2b_v65");
+  samplesAll_.insert("T_tW-channel-DR_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1455ra2b_v65");
+  samplesAll_.insert("Tbar_s-channel_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1422ra2b_v65");
+  samplesAll_.insert("Tbar_t-channel_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1461ra2b_v65");
+  samplesAll_.insert("Tbar_tW-channel-DR_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1451ra2b_v65");
+
+  samplesAll_.insert("WJets_HT250To300");
+  samplesAll_.insert("WJets_HT300To400");
+  samplesAll_.insert("WJets_HT400ToInf");
+  samplesAll_.insert("WW");
+  samplesAll_.insert("WZ");
+  samplesAll_.insert("ZZ");
+  samplesAll_.insert("ZJets_HT200To400");
+  samplesAll_.insert("ZJets_HT400ToInf");
+  samplesAll_.insert("Zinvisible_HT100To200");
+  samplesAll_.insert("Zinvisible_HT200To400");
+  samplesAll_.insert("Zinvisible_HT400ToInf");
+
   //samplesAll_.insert("PythiaQCD");
   samplesAll_.insert("PythiaPUQCD");
   //samplesAll_.insert("PythiaPUQCDFlat");
   samplesAll_.insert("TTbarJets");
+  samplesAll_.insert("TTbarJets0");
+  samplesAll_.insert("TTbarJetsPowheg");
+  samplesAll_.insert("TTbarEmbedFlipReco");
   samplesAll_.insert("TTTo2L2Nu2B");
   samplesAll_.insert("TTbarJets8TeV");
   samplesAll_.insert("TTbarSingleTopWJetsCombined");
@@ -2178,6 +2280,7 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   //  samplesAll_.insert("WJetsZ2");
   //  samplesAll_.insert("ZJetsZ2");
   samplesAll_.insert("VV");
+  samplesAll_.insert("TTV");
 
 
   samplesAll_.insert("LM13");
@@ -2267,6 +2370,8 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   sampleLabel_["PythiaPUQCDFlat"] = "QCD"; 
   sampleLabel_["PythiaPUQCD"] = "QCD";
   sampleLabel_["TTbarJets"]="t#bar{t}";
+  sampleLabel_["TTbarJets0"]="t#bar{t} (0)";
+  sampleLabel_["TTbarJetsPowheg"]="t#bar{t} (powheg)";
   sampleLabel_["TTbarSingleTopWJetsCombined"]="t#bar{t}+Single-Top+W#rightarrowl#nu";
   sampleLabel_["ttbar"]="t#bar{t}+W+t"; //for DD ttwt
   sampleLabel_["TTbarJets-semiMu"]="t#bar{t}:semi-#mu";
@@ -2370,6 +2475,8 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   sampleMarkerStyle_["PythiaPUQCDFlat"] = kOpenCircle;  
   sampleMarkerStyle_["PythiaPUQCD"] = kOpenCircle;
   sampleMarkerStyle_["TTbarJets"]= kFullSquare;
+  sampleMarkerStyle_["TTbarJets0"]= kFullCircle;
+  sampleMarkerStyle_["TTbarJetsPowheg"]= kOpenCircle;
   sampleMarkerStyle_["TTbarSingleTopWJetsCombined"]= kFullSquare;
   sampleMarkerStyle_["ttbar"]= kFullSquare;
   sampleMarkerStyle_["TTbarJets-semiMu"]= kFullSquare;
@@ -2464,6 +2571,7 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   sampleOwenName_["PythiaPUQCDFlat"] = "qcd"; 
   sampleOwenName_["PythiaPUQCD"] = "qcd";
   sampleOwenName_["TTbarJets"]="ttbar";
+  sampleOwenName_["TTbarJetsPowheg"]="ttbar";
   sampleOwenName_["TTbarSingleTopWJetsCombined"]="ttbartw";
   sampleOwenName_["ttbar"]="ttbar";
   sampleOwenName_["SingleTop"] = "singletop";
@@ -2539,27 +2647,34 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
 
       fname.Prepend(inputPath);
 
-      files_[thisconfig][*isample] = new TFile(fname);
-      if (files_[thisconfig][*isample]->IsZombie() ) {cout<<"file error with "<<*isample<<endl; files_[thisconfig][*isample]=0;}
+      TFile* dummyp1=0;
+      TChain* dummyp2=0;
+
+      files_[thisconfig][*isample] = make_pair(dummyp1,dummyp2);
+      files_[thisconfig][*isample].first = new TFile(fname);
+      if (files_[thisconfig][*isample].first->IsZombie() ) {cout<<"file error with "<<*isample<<endl; files_[thisconfig][*isample].first=0;}
       else { if (!quiet_)    cout<<"Added sample: "<<thisconfig<<"\t"<<*isample<<endl;}
     }
   }
+  //now set the TChain pointers in files_
+  resetChains();
 
   //load data files too
   //use Run2012B names
   primaryDatasets_["HTMHT"]=0;
   primaryDatasets_["JetHT"]=0;
-  primaryDatasets_["SingleMu"]=0;
-  primaryDatasets_["SingleElectron"]=0;
-  primaryDatasets_["MuHad"]=0;
-  primaryDatasets_["ElectronHad"]=0;
-  primaryDatasets_["DoubleElectron"]=0;
-  primaryDatasets_["DoubleMu"]=0;
-  primaryDatasets_["MuEG"]=0;
-  primaryDatasets_["Photon"]=0;
+  //  primaryDatasets_["SingleMu"]=0;
+  //  primaryDatasets_["SingleElectron"]=0;
+  //  primaryDatasets_["MuHad"]=0;
+  //  primaryDatasets_["ElectronHad"]=0;
+  //  primaryDatasets_["DoubleElectron"]=0;
+  //  //  primaryDatasets_["DoubleMu"]=0;
+  //  primaryDatasets_["MuEG"]=0;
+  //  primaryDatasets_["Photon"]=0;
   primaryDatasets_["MET"]=0;
  
   primaryDatasets_["2012hybrid"] = 0;
+  primaryDatasets_["2012hybridplus"] = 0;
 
   //there are others, but this is what I have now
   //2011 names  
@@ -2575,6 +2690,7 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
       idataset->second = new TChain(reducedTreeName_);
       addDataToChain(idataset->second,"HT_Run2012A");
       addDataToChain(idataset->second,"HTMHT_Run2012B");
+      addDataToChain(idataset->second,"HTMHT_Run2012C");
     }
     else if (idataset->first == "2012hybrid") {
       //HTMHT + MET, to be used with care to avoid duplicate events
@@ -2583,11 +2699,27 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
       addDataToChain(idataset->second,"MET_Run2012A");
       addDataToChain(idataset->second,"HTMHT_Run2012B");
       addDataToChain(idataset->second,"MET_Run2012B");
+      addDataToChain(idataset->second,"HTMHT_Run2012C");
+      addDataToChain(idataset->second,"MET_Run2012C");
+    }
+    else if (idataset->first == "2012hybridplus") {
+      //HTMHT + MET, to be used with care to avoid duplicate events
+      idataset->second = new TChain(reducedTreeName_);
+      addDataToChain(idataset->second,"HT_Run2012A");
+      addDataToChain(idataset->second,"MET_Run2012A");
+      addDataToChain(idataset->second,"HTMHT_Run2012B");
+      addDataToChain(idataset->second,"MET_Run2012B");
+      addDataToChain(idataset->second,"HTMHT_Run2012C");
+      addDataToChain(idataset->second,"MET_Run2012C");
+      //for B+C, also use JetHT
+      addDataToChain(idataset->second,"JetHT_Run2012B");
+      addDataToChain(idataset->second,"JetHT_Run2012C");
     }
     else if (idataset->first == "JetHT") {
       idataset->second = new TChain(reducedTreeName_);
       addDataToChain(idataset->second,"HT_Run2012A");
       addDataToChain(idataset->second,"JetHT_Run2012B");
+      addDataToChain(idataset->second,"JetHT_Run2012C");
     }
     else if (idataset->first == "SingleMu") {
       idataset->second = new TChain(reducedTreeName_);
@@ -2608,6 +2740,7 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
       idataset->second = new TChain(reducedTreeName_);
       addDataToChain(idataset->second,"MET_Run2012A");
       addDataToChain(idataset->second,"MET_Run2012B");
+      addDataToChain(idataset->second,"MET_Run2012C");
     }
     else if (idataset->first == "MuHad") {
       idataset->second = new TChain(reducedTreeName_);
@@ -2721,7 +2854,7 @@ float drawSimple(const TString var, const int nbins, const double low, const dou
 //to just write something simple
 
 //no presentation, just fill the histogram and save
-  TTree* tree=0;
+  TChain* tree=0;
   if (samplename=="data") {
     tree = dtree;
   }
@@ -2729,7 +2862,8 @@ float drawSimple(const TString var, const int nbins, const double low, const dou
     for (unsigned int isample=0; isample<samples_.size(); isample++) {
       if ( samples_[isample] == samplename) {
 	if (!quiet_) cout <<samples_[isample]<<endl;
-	tree = (TTree*) files_[currentConfig_][stripSamplename(samples_[isample])]->Get(reducedTreeName_);
+	//	tree = (TChain*) files_[currentConfig_][stripSamplename(samples_[isample])]->Get(reducedTreeName_);
+	tree = getTree(stripSamplename(samples_[isample]));
       }
     }
   }
@@ -2808,7 +2942,8 @@ void draw2d(const TString var, const int nbins, const float low, const float hig
   for (unsigned int isample=0; isample<samples_.size() ; isample++) {
     if ( isSampleSM(samples_[isample]) ) {
       gROOT->cd();
-      TTree* tree = (TTree*) files_[currentConfig_][samples_[isample]]->Get(reducedTreeName_);
+      //      TChain* tree = (TChain*) files_[currentConfig_][samples_[isample]]->Get(reducedTreeName_);
+      TChain* tree = getTree(samples_[isample]);
       gROOT->cd();
       TString weightopt= useFlavorHistoryWeights_ && samples_[isample].Contains("WJets") ? "flavorHistoryWeight" : "";
       h2d_temp->Reset(); //just to be safe
@@ -2976,11 +3111,12 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
     TString hname = jmt::fortranize(var); hname += "_"; hname += jmt::fortranize(samples_[isample]);
     histos_[samples_[isample]] = (varbins==0) ? new TH1D(hname,"",nbins,low,high) : new TH1D(hname,"",nbins,varbins);
     histos_[samples_[isample]]->Sumw2();
-    if( !files_[currentConfig_][samplename] ){
+    if( !files_[currentConfig_][samplename].first ){
       cout << "ERROR: TFile for " << samples_[isample] << " is null.  Check that the file exists.  Exiting." << endl;
       assert(0);
     }
-    TTree* tree = (TTree*) files_[currentConfig_][samplename]->Get(reducedTreeName_);
+    //    TChain* tree = (TChain*) files_[currentConfig_][samplename]->Get(reducedTreeName_);
+    TChain* tree = getTree(samplename);
     if (tree==0) {
       cout<<"tree is null! Something must be wrong!"<<endl<<currentConfig_<<endl<<samplename<<endl;
     }
@@ -3739,7 +3875,8 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
   for (unsigned int isample=0; isample<samples_.size(); isample++) {
 
     if (!quiet_) cout <<samples_[isample]<<endl;
-    TTree* tree = (TTree*) files_[currentConfig_][samples_[isample]]->Get(reducedTreeName_);
+    //    TChain* tree = (TChain*) files_[currentConfig_][samples_[isample]]->Get(reducedTreeName_);
+    TChain* tree = getTree(samples_[isample]);
 
     gROOT->cd();
 
@@ -3958,7 +4095,8 @@ most of it is irrelevant for SMS, but we'll use it anyway
 
   TString drawstring = vary+":"+varx;
 
-  TTree* thetree = (TTree*) files_[currentConfig_][sampleOfInterest]->Get(reducedTreeName_);
+  //  TChain* thetree = (TChain*) files_[currentConfig_][sampleOfInterest]->Get(reducedTreeName_);
+  TChain* thetree = getTree(sampleOfInterest);
 
   const int nsubprocesses = sampleOfInterest.Contains("mSUGRA") ? 10 : 0;
   vector<TH2D*> raw0;
@@ -4067,7 +4205,7 @@ vector<susyScanYields> getSusyScanYields(const TString & sampleOfInterest,const 
   if (sampleOfInterest== "T1bbbb" || sampleOfInterest== "T2bb" || sampleOfInterest== "T2tt" || sampleOfInterest== "T1tttt") { //change binning
     //m0 -> mGl
     //m12 -> mLSP
-    if (scanSMSngen==0) scanSMSngen = (TH2D*) files_[currentConfig_][sampleOfInterest]->Get("scanSMSngen");
+    if (scanSMSngen==0) scanSMSngen = (TH2D*) files_[currentConfig_][sampleOfInterest].first->Get("scanSMSngen");
     nbinsx=60;//scanSMSngen->GetNbinsX();
     nbinsy=60;//scanSMSngen->GetNbinsY(); //take our histo def'n from the ngen histo
     lowx=0;//scanSMSngen->GetXaxis()->GetBinLowEdge(1);
@@ -4077,7 +4215,8 @@ vector<susyScanYields> getSusyScanYields(const TString & sampleOfInterest,const 
   }
   TString drawstring = vary+":"+varx;
 
-  TTree* thetree = (TTree*) files_[currentConfig_][sampleOfInterest]->Get(reducedTreeName_);
+  //  TChain* thetree = (TChain*) files_[currentConfig_][sampleOfInterest]->Get(reducedTreeName_);
+  TChain* thetree = getTree(sampleOfInterest);
   //key of the map is the susysubprocess. the vector is over the pdf weight indices
   map<int, vector<TH2F*> > raw0;
   int npdfset=0;
@@ -4617,7 +4756,8 @@ void cutflow(bool isTightSelection){
       histos_[samples_[isample]] = (varbins==0) ? new TH1D(hname,"",nbins,low,high) : new TH1D(hname,"",nbins,varbins);
       histos_[samples_[isample]]->Sumw2();
 
-      TTree* tree = (TTree*) files_[currentConfig_][samples_[isample]]->Get(reducedTreeName_);
+      //      TChain* tree = (TChain*) files_[currentConfig_][samples_[isample]]->Get(reducedTreeName_);
+      TChain* tree = getTree(samples_[isample]);
       gROOT->cd();
       TString weightopt= useFlavorHistoryWeights_ && samples_[isample].Contains("WJets") ? "flavorHistoryWeight" : "";
       tree->Project(hname,var,thisStageCut);
@@ -4757,7 +4897,7 @@ void drawEffVRej(const TString & h1, const TString h2,const TString & xtitle,con
 }
 
 void drawTrigEff(const TString & pd, const TCut & tag, const TCut & probe, const TString & var, int nbins, float low,float high) {
-  loadSamples();
+  loadSamples(true,"ra2b2012");
 
   //see ~/scratch0/analysis2/CMSSW_4_2_5/src/NtupleTools/BasicLoopCU/splitByTrigger.C
   renewCanvas();
