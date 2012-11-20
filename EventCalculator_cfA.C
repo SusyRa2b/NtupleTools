@@ -4858,6 +4858,7 @@ Long64_t EventCalculator::getNEventsGenerated( TString sample) {
   //`http://cms2.physics.ucsb.edu/cgi-bin/cfA.pl?Institute=ALL&process=ALL&version=v66
   if (sample.Contains("UCSB1489")) return 6923750 ; //TT madgraph
   if (sample.Contains("UCSB1558")) return 21675970; //TT powheg
+  if (sample.Contains("UCSB1599")) return 32852589; //TT MC@NLO
   if (sample.Contains("UCSB1488")) return 1634582 ; //W 250-300
   if (sample.Contains("UCSB1512")) return 1699486 ; //W 300-400
   if (sample.Contains("UCSB1487")) return 1647807 ; //W 400-
@@ -4970,6 +4971,7 @@ double EventCalculator::getCrossSection(){
   if (sampleName_.BeginsWith("TTJets_TuneZ2star_8TeV-madgraph-tauola") )                return 234;  //approx NNLO
   if (sampleName_.BeginsWith("TTJets_MassiveBinDECAY_TuneZ2star_8TeV-madgraph-tauola")) return 234;  //approx NNLO
   if (sampleName_.BeginsWith("TT_CT10_TuneZ2star_8TeV-powheg")) return 234;  //approx NNLO
+  if (sampleName_.BeginsWith("TT_8TeV-mcatnlo")) return 234; //approx NNLO
 
   if (sampleName_.BeginsWith("TTTo2L2Nu2B_8TeV-powheg-pythia6_Summer12")) return 22.14 *(234.0 / 136.3); //PREP corrected to NNLO
 
