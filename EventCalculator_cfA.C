@@ -4708,9 +4708,8 @@ Long64_t EventCalculator::getNEventsGeneratedExtended() {
   if ( sampleName_.Contains("UCSB1524") || sampleName_.Contains("UCSB1594"))   return getNEventsGenerated("UCSB1524")+getNEventsGenerated("UCSB1594"); //Znn200-400
   if ( sampleName_.Contains("UCSB1523") || sampleName_.Contains("UCSB1602"))   return getNEventsGenerated("UCSB1523")+getNEventsGenerated("UCSB1602"); //Znn400-inf
 
+  if ( sampleName_.Contains("UCSB1526") || sampleName_.Contains("UCSB1608"))   return getNEventsGenerated("UCSB1526")+getNEventsGenerated("UCSB1608"); //DY 200-400
   if ( sampleName_.Contains("UCSB1535") || sampleName_.Contains("UCSB1595"))   return getNEventsGenerated("UCSB1535")+getNEventsGenerated("UCSB1595"); //DY 400-inf
-
-  if ( sampleName_.Contains("UCSB1575") || sampleName_.Contains("UCSB1606"))   return getNEventsGenerated("UCSB1575")+getNEventsGenerated("UCSB1606"); //TT MG semi lep
 
   //if we make it here, then it is not an extended sample
   return getNEventsGenerated();
@@ -4860,7 +4859,9 @@ Long64_t EventCalculator::getNEventsGenerated( TString sample) {
   if (sample.Contains("UCSB1558")) return 21675970; //TT powheg
   if (sample.Contains("UCSB1599")) return 32852589; //TT MC@NLO
   if (sample.Contains("UCSB1488")) return 1634582 ; //W 250-300
+  if (sample.Contains("UCSB1611")) return 4940990 ; //W 250-300 v2
   if (sample.Contains("UCSB1512")) return 1699486 ; //W 300-400
+  if (sample.Contains("UCSB1610")) return 5141023 ; //W 300-400 v2
   if (sample.Contains("UCSB1487")) return 1647807 ; //W 400-
   if (sample.Contains("UCSB1587")) return 4971847 ; //W 400- (this is the larger v2 sample; cannot be used together with smaller '1487' sample)
   if (sample.Contains("UCSB1533")) return 139974 ;  //tbar s channel
@@ -4873,7 +4874,9 @@ Long64_t EventCalculator::getNEventsGenerated( TString sample) {
                                                         //QCD 80-120
   if (sample.Contains("UCSB1513")) return 5755732; //QCD120-170
   if (sample.Contains("UCSB1561")) return 5814398 ;//QCD170-300
+  if (sample.Contains("UCSB1603")) return 19970232 ;//QCD170-300
   if (sample.Contains("UCSB1560")) return 5927300 ; //QCD 300-470
+  if (sample.Contains("UCSB1609")) return 19894000 ; //QCD 300-470
   if (sample.Contains("UCSB1515")) return 3994848 ; //QCD 470-600
   if (sample.Contains("UCSB1516")) return 3992760 ; //QCD 600-800
   if (sample.Contains("UCSB1559")) return 3998563 ; //QCD 800-1000
@@ -4900,11 +4903,13 @@ Long64_t EventCalculator::getNEventsGenerated( TString sample) {
   if (sample.Contains("UCSB1563")) return 10000431; //WW
   if (sample.Contains("UCSB1552")) return 10000283 ; //WZ
 
-  if (sample.Contains("UCSB1571")) return 4246444 ; //TT MG full lep
-  if (sample.Contains("UCSB1575")) return 11229902 ; //TT MG semi lep
-  if (sample.Contains("UCSB1606")) return 25423514 ; //TT MG semi lep ext
-
-  if (sample.Contains("UCSB1586")) return 10537444;//TT MG hadronic
+  //for an explanation of the ttbar sample mess, see here:
+  //https://hypernews.cern.ch/HyperNews/CMS/get/susy/1351.html
+  if (sample.Contains("UCSB1596")) return 12119013 ; //TT MG full lep
+  if (sample.Contains("UCSB1606")) return 25423514 ; //TT MG semi lep (full)
+  if (sample.Contains("UCSB1613")) return 31223821;//TT MG hadronic v2
+  //  if (sample.Contains("UCSB1575")) return 11229902 ; //TT MG semi lep (retired)
+  //  if (sample.Contains("UCSB1586")) return 10537444;//TT MG hadronic (partial)
 
   if (sample.Contains("UCSB1605")) return 196046; // ttW
   if (sample.Contains("UCSB1604")) return 210160; // ttZ
