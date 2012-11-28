@@ -1801,6 +1801,7 @@ void setColorScheme(const TString & name) {
     sampleColor_["TTbarJets"]=kAzure-3;
     sampleColor_["TTbarJets0"]=kAzure-3;
     sampleColor_["TTbarJetsPowheg"]=kAzure-3;
+    sampleColor_["TTbarJetsMCNLO"]=kAzure-3;
     sampleColor_["TTbarSingleTopWJetsCombined"]=kAzure-3;
     sampleColor_["ttbar"]=kAzure-3;
     sampleColor_["TTbarJets-semiMu"]=kViolet;
@@ -1898,6 +1899,7 @@ void setColorScheme(const TString & name) {
     sampleColor_["TTbarJets"]=kBlue;
     sampleColor_["TTbarJets0"]=kCyan;
     sampleColor_["TTbarJetsPowheg"]=kCyan+4;
+    sampleColor_["TTbarJetsMCNLO"]=kViolet;
     sampleColor_["TTbarSingleTopWJetsCombined"]=4;
     sampleColor_["TTbarJets-semiMu"]=kGreen-3;
     sampleColor_["TTbarJets-semiMuGood"]=kGreen-3;
@@ -2174,15 +2176,6 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   samplesAll_.insert("QCD470");
   samplesAll_.insert("QCD600");
   samplesAll_.insert("QCD800");
-  samplesAll_.insert("TTJets_MassiveBinDECAY_TuneZ2star_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1403ra2b_v65");
-  samplesAll_.insert("TT_CT10_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v2_AODSIM_UCSB1439ra2b_v65");
-  samplesAll_.insert("T_s-channel_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1421ra2b_v65");
-  samplesAll_.insert("T_t-channel_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v2_AODSIM_UCSB1470ra2b_v65");
-  samplesAll_.insert("T_tW-channel-DR_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1455ra2b_v65");
-  samplesAll_.insert("Tbar_s-channel_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1422ra2b_v65");
-  samplesAll_.insert("Tbar_t-channel_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1461ra2b_v65");
-  samplesAll_.insert("Tbar_tW-channel-DR_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1451ra2b_v65");
-
   samplesAll_.insert("WJets_HT250To300");
   samplesAll_.insert("WJets_HT300To400");
   samplesAll_.insert("WJets_HT400ToInf");
@@ -2201,7 +2194,9 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   samplesAll_.insert("TTbarJets");
   samplesAll_.insert("TTbarJets0");
   samplesAll_.insert("TTbarJetsPowheg");
-  samplesAll_.insert("TTbarEmbedFlipReco");
+  samplesAll_.insert("TTbarJetsMCNLO");
+  samplesAll_.insert("TTbarEmbedFlipRecoMu");
+  samplesAll_.insert("TTbarEmbedFlipRecoEle");
   samplesAll_.insert("TTTo2L2Nu2B");
   samplesAll_.insert("TTbarJets8TeV");
   samplesAll_.insert("TTbarSingleTopWJetsCombined");
@@ -2370,8 +2365,9 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   sampleLabel_["PythiaPUQCDFlat"] = "QCD"; 
   sampleLabel_["PythiaPUQCD"] = "QCD";
   sampleLabel_["TTbarJets"]="t#bar{t}";
-  sampleLabel_["TTbarJets0"]="t#bar{t} (0)";
-  sampleLabel_["TTbarJetsPowheg"]="t#bar{t} (powheg)";
+  sampleLabel_["TTbarJets0"]="t#bar{t} (small MG)";
+  sampleLabel_["TTbarJetsPowheg"]="t#bar{t} (Powheg)";
+  sampleLabel_["TTbarJetsMCNLO"]="t#bar{t} (MC@NLO)";
   sampleLabel_["TTbarSingleTopWJetsCombined"]="t#bar{t}+Single-Top+W#rightarrowl#nu";
   sampleLabel_["ttbar"]="t#bar{t}+W+t"; //for DD ttwt
   sampleLabel_["TTbarJets-semiMu"]="t#bar{t}:semi-#mu";
@@ -2477,6 +2473,7 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   sampleMarkerStyle_["TTbarJets"]= kFullSquare;
   sampleMarkerStyle_["TTbarJets0"]= kFullCircle;
   sampleMarkerStyle_["TTbarJetsPowheg"]= kOpenCircle;
+  sampleMarkerStyle_["TTbarJetsMCNLO"]= kOpenCircle;
   sampleMarkerStyle_["TTbarSingleTopWJetsCombined"]= kFullSquare;
   sampleMarkerStyle_["ttbar"]= kFullSquare;
   sampleMarkerStyle_["TTbarJets-semiMu"]= kFullSquare;
