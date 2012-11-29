@@ -478,7 +478,7 @@ bool EventCalculator::isGoodElectron(const unsigned int k, const bool disableRel
   //sanity check
   if ( k >= pf_els_pt->size() ) return false;
 
-if ( (k >= pf_els_PFphotonIsoR03->size()) ||  (k >= pf_els_PFneutralHadronIsoR03->size()) || (k >= pf_els_PFchargedHadronIsoR03->size()) ) return false;
+  if ( (pf_els_pt->size() != pf_els_PFphotonIsoR03->size()) ||  (pf_els_pt->size() != pf_els_PFneutralHadronIsoR03->size()) || (pf_els_pt->size() != pf_els_PFchargedHadronIsoR03->size()) ) return false;
 
 
   if (!isGoodPV(0)) return false;
