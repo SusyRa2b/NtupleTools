@@ -478,6 +478,9 @@ bool EventCalculator::isGoodElectron(const unsigned int k, const bool disableRel
   //sanity check
   if ( k >= pf_els_pt->size() ) return false;
 
+if ( (k >= pf_els_PFphotonIsoR03->size()) ||  (k >= pf_els_PFneutralHadronIsoR03->size()) || (k >= pf_els_PFchargedHadronIsoR03->size()) ) return false;
+
+
   if (!isGoodPV(0)) return false;
 
   const float  beamx = beamSpot_x->at(0);
@@ -552,7 +555,7 @@ bool EventCalculator::isGoodElectron(const unsigned int k, const bool disableRel
   float eleIso = pf_els_PFphotonIsoR03->at(k) + pf_els_PFneutralHadronIsoR03->at(k) - rho*AE;
   float  elRelIso = ( pf_els_PFchargedHadronIsoR03->at(k) + ( eleIso > 0 ? eleIso : 0.0 ) )/pf_els_pt->at(k);
   if (elRelIso >= 0.15) return false; 
-  
+
   return true;
 }
 
@@ -6758,7 +6761,6 @@ Also the pdfWeightSum* histograms that are used for LM9.
       lastpoint=thispoint;
       if ( theScanType_==kmSugra && scanProcessTotalsMapCTEQ.count(thispoint)==0 )	cout<<"m0 m12 = "<<thispoint.first<<" "<<thispoint.second<<" does not exist in NLO map!"<<endl;
     }
-
     // ~~~~ special stuff that must be done on all events (whether it passes the skim cuts or not)
     //all of it is for MC. if it was needed for data, we'd want to put the lumi mask cut out here
     float susy_pt1=0,susy_phi1=0,susy_pt2=0,susy_phi2=0;
@@ -7142,7 +7144,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
       minDeltaPhiN_DJR_otherPt30                  = getMinDeltaPhiMETN(3,50,2.4,true, 30,2.4,true,true,false);
       minDeltaPhiN_DJR_otherPt40                  = getMinDeltaPhiMETN(3,50,2.4,true, 40,2.4,true,true,false);
       minDeltaPhiN_DJR_otherPt50                  = getMinDeltaPhiMETN(3,50,2.4,true, 50,2.4,true,true,false);
-            
+           
       minDeltaPhiN_withLepton = getMinDeltaPhiMETN(3,50,2.4,true,30,2.4,true,false,false,true);
       }
 
@@ -7164,7 +7166,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
       deltaPhiMETJetMaxMis = getDeltaPhiMETJetMaxMis(50);
       deltaPhiMETJetMaxMis30 = getDeltaPhiMETJetMaxMis(30);
       }
-
+ 
       maxJetMis_chosenJet=1;
       float maxJetMis2_tmp =getMaxJetMis(1,2,50); 
       if(maxJetMis2_tmp > getMaxJetMis(1,1,50)) maxJetMis_chosenJet=2;
@@ -7240,7 +7242,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
       deltaPhiN1_Luke = getDeltaPhiNMET(0);
       deltaPhiN2_Luke = getDeltaPhiNMET(1);
       deltaPhiN3_Luke = getDeltaPhiNMET(2);
-      
+    
       if (isSampleQCD() ) { //don't fill for non-qcd (save space)
       passBadECAL_METphi53_n10_s12 = passBadECALFilter("METphi",0.5,"deadCell",0.3,10,12);
       worstMisA_badECAL_METphi53_n10_s12 = passBadECALFilter_worstMis("METphi",0.5,"deadCell",0.3,10,12,"abs");
