@@ -6237,7 +6237,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
     //idea -- we should do a dataset-aware OR of the two groups of physics triggers here, to allow easy combination of the MET and HTMHT datasets
     bool passMETtriggers = triggerlist["DiCentralPFJet50_PFMET80"].pass || triggerlist["DiCentralPFNoPUJet50_PFMETORPFMETNoMu80"].pass;
     bool passHTMHTtriggers = triggerlist["PFHT350_PFMET100"].pass || triggerlist["PFNoPUHT350_PFMET100"].pass;
-    if (sampleName_.BeginsWith("HT_Run2012A") || sampleName_.BeginsWith("HTMHT_Run2012B")|| sampleName_.BeginsWith("HTMHT_Run2012C")) {
+    if (sampleName_.BeginsWith("HT_Run2012A") || sampleName_.BeginsWith("HTMHT_Run2012B")|| sampleName_.BeginsWith("HTMHT_Run2012C")|| sampleName_.BeginsWith("HTMHT_Run2012D")) {
       //from MHT dataset, use only events that don't pass the MET triggers
       cutTrigger =   	passHTMHTtriggers && 	(!passMETtriggers);
     }
@@ -6255,24 +6255,14 @@ Also the pdfWeightSum* histograms that are used for LM9.
     //    for those that don't pass either of the above, look in HTMHT
     //with an additional complication from the fact that the dataset breakdown is a bit different in Run2012A
     bool passHTtriggers = triggerlist["PFHT650"].pass || triggerlist["PFNoPUHT650"].pass;
-    //if (sampleName_.BeginsWith("HT_Run2012A") ) { //contains both HTMHT and HT triggers
-    //  cutTrigger2 = (passHTMHTtriggers||passHTtriggers) && (!passMETtriggers);
-    //}
-    //else if ( sampleName_.BeginsWith("HTMHT_Run2012B")|| sampleName_.BeginsWith("HTMHT_Run2012C")) { //contains HTMHT
-    //  cutTrigger2 = passHTMHTtriggers && (!( passMETtriggers||passHTtriggers));
-    //}
-    //else if ( sampleName_.BeginsWith("JetHT_Run2012B")|| sampleName_.BeginsWith("JetHT_Run2012C")) { //contains HT
-    //  //pick up events here that have failed the MET triggers
-    //  cutTrigger2 = passHTtriggers && (!passMETtriggers);
-    //}
     if (sampleName_.BeginsWith("HT_Run2012A") ) { //contains both HTMHT and HT triggers
       cutTrigger2 = (passHTMHTtriggers||passHTtriggers) && (!passMETtriggers);
     }
-    else if ( sampleName_.BeginsWith("JetHT_Run2012B")|| sampleName_.BeginsWith("JetHT_Run2012C")) { //contains HT
+    else if ( sampleName_.BeginsWith("JetHT_Run2012B")|| sampleName_.BeginsWith("JetHT_Run2012C")|| sampleName_.BeginsWith("JetHT_Run2012D")) { //contains HT
       //pick up events here for HT that have failed the MET and HTMHT triggers
       cutTrigger2 = passHTtriggers && (!(passMETtriggers||passHTMHTtriggers));
     }
-    else if ( sampleName_.BeginsWith("HTMHT_Run2012B")|| sampleName_.BeginsWith("HTMHT_Run2012C")) { //contains HTMHT
+    else if ( sampleName_.BeginsWith("HTMHT_Run2012B")|| sampleName_.BeginsWith("HTMHT_Run2012C")|| sampleName_.BeginsWith("HTMHT_Run2012D")) { //contains HTMHT
       cutTrigger2 = passHTMHTtriggers && ( !passMETtriggers );
     }
     else if (sampleName_.BeginsWith("MET_Run2012")) { //MET triggers
