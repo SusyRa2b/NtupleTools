@@ -4230,6 +4230,9 @@ Long64_t EventCalculator::getNEventsGenerated( TString sample) {
   if (sample.Contains("UCSB1578")) return 2000062; //QCD 1400-1800
   if (sample.Contains("UCSB1517")) return 977586 ; // QCD 1800-
   if (sample.Contains("UCSB1585")) return 977586 ; // QCD 1800- (53X)
+  if (sample.Contains("UCSB1564")) return 13843863 ; // QCD MG >1000
+  if (sample.Contains("UCSB1612")) return 30599292 ; // QCD MG 500-1000
+  if (sample.Contains("UCSB1576")) return 27062078 ; // QCD MG 250-500
   if (sample.Contains("UCSB1579")) return 4040980; //Znn50-100
   if (sample.Contains("UCSB1600")) return 20023018 ;//Znn50-100 ext
   if (sample.Contains("UCSB1525")) return 4416646; //Znn100-200
@@ -5499,8 +5502,10 @@ Also the pdfWeightSum* histograms that are used for LM9.
   for( int i=0; i<60; ++i) {
     //1D reweighting -- all I have done for 2012 (not sure if 3D is used anymore)
     if (puReweightIs1D) {    
-      DataDist.push_back(pu::RunsThrough207469[i]);
-      DataDistSystVar.push_back(pu::RunsThrough207469systVar[i]);
+      DataDist.push_back(pu::RunsThrough203002[i]);
+      DataDistSystVar.push_back(pu::RunsThrough203002systVar[i]);
+      //DataDist.push_back(pu::RunsThrough207469[i]);
+      //DataDistSystVar.push_back(pu::RunsThrough207469systVar[i]);
     }
     //for 3dPU reweighting 
     //    else DataDist2011.push_back(pu::TrueDist2011_f[i]);
@@ -6733,6 +6738,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
       trackingfailureFilter = trackingfailurefilter_decision ==1 ? true:false;
 
       bool hcallaser = hcallaserfilter_decision == 1 ? true:false;
+      bool ecallaser = ecallaserfilter_decision == 1 ? true:false;
       bool eebadsc = eebadscfilter_decision == 1 ? true:false;
 
       badjetFilter = passBadJetFilter();
@@ -6745,7 +6751,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
 	//	&& eenoiseFilter 
 	&& greedymuonFilter && hbhenoiseFilter && inconsistentmuonFilter 
 	&& ra2ecaltpFilter && scrapingvetoFilter && trackingfailureFilter
-	&& hcallaser && eebadsc && (PBNRcode>0) && badjetFilter; //last line are new for 2012
+	&& hcallaser && ecallaser && eebadsc && (PBNRcode>0) && badjetFilter; //last line are new for 2012
 
       buggyEvent = inEventList(vrun, vlumi, vevent);
       
@@ -9057,6 +9063,7 @@ void EventCalculator::InitializeA(TChain *fChain)
    fChain->SetBranchAddress("greedymuonfilter_decision", &greedymuonfilter_decision, &b_greedymuonfilter_decision);
    fChain->SetBranchAddress("inconsistentPFmuonfilter_decision", &inconsistentPFmuonfilter_decision, &b_inconsistentPFmuonfilter_decision);
    fChain->SetBranchAddress("hcallaserfilter_decision", &hcallaserfilter_decision, &b_hcallaserfilter_decision);
+   fChain->SetBranchAddress("ecallaserfilter_decision", &ecallaserfilter_decision, &b_ecallaserfilter_decision);
    fChain->SetBranchAddress("eenoisefilter_decision", &eenoisefilter_decision, &b_eenoisefilter_decision);
    fChain->SetBranchAddress("eebadscfilter_decision", &eebadscfilter_decision, &b_eebadscfilter_decision);
    fChain->SetBranchAddress("passprescalePFHT350filter_decision", &passprescalePFHT350filter_decision, &b_passprescalePFHT350filter_decision);

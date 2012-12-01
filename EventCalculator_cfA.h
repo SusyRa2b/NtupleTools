@@ -509,6 +509,7 @@ private:
    Int_t           greedymuonfilter_decision;
    Int_t           inconsistentPFmuonfilter_decision;
    Int_t           hcallaserfilter_decision;
+   Int_t           ecallaserfilter_decision;
    Int_t           eenoisefilter_decision;
    Int_t           eebadscfilter_decision;
    Int_t           passprescalePFHT350filter_decision;
@@ -592,6 +593,7 @@ private:
    TBranch        *b_greedymuonfilter_decision;   //!
    TBranch        *b_inconsistentPFmuonfilter_decision;   //!
    TBranch        *b_hcallaserfilter_decision;   //!
+   TBranch        *b_ecallaserfilter_decision;   //!
    TBranch        *b_eenoisefilter_decision;   //!
    TBranch        *b_eebadscfilter_decision;   //!
    TBranch        *b_passprescalePFHT350filter_decision;   //!
