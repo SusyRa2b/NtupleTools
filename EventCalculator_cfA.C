@@ -4293,6 +4293,11 @@ double EventCalculator::getCrossSection(){
   if (sampleName_.BeginsWith("QCD_Pt-600to800_TuneZ2star_8TeV_pythia6")) return 26.9921;
   if (sampleName_.BeginsWith("QCD_Pt-800to1000_TuneZ2star_8TeV_pythia6")) return 3.550036;
   if (sampleName_.BeginsWith("QCD_Pt-80to120_TuneZ2star_8TeV_pythia6")) return 1033680.0;
+  
+  //Madgraph QCD - all LO PREP
+  if (sampleName_.BeginsWith("QCD_HT-1000ToInf_TuneZ2star_8TeV-madgraph-pythia6")) return 204.0;
+  if (sampleName_.BeginsWith("QCD_HT-500To1000_TuneZ2star_8TeV-madgraph-pythia6")) return 8426.0;
+  if (sampleName_.BeginsWith("QCD_HT-250To500_TuneZ2star_8TeV-madgraph-pythia6")) return 276000.0;
 
   //single top
   if (sampleName_.BeginsWith("Tbar_t-channel_TuneZ2star_8TeV-powheg")) return 30.7; //from AN //25;//LO PREP 
