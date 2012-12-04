@@ -8724,6 +8724,13 @@ TString EventCalculator::assembleBTagEffFilename(bool cutnametail) {
 //separate out the jettag efficiency code from sampleAnalyzer for ease of use
 void EventCalculator::plotBTagEffMC( ) {
 
+  //for speed
+  chainB->SetBranchStatus("*",0);  // disable all branches
+  chainA->SetBranchStatus("*",0);  // disable all branches
+
+  //we only need the jet branches
+  chainB->SetBranchStatus("jets_AK5PF_*",1);
+
   TString outfile = assembleBTagEffFilename();
 
   TFile fout(outfile,"RECREATE");
@@ -8767,7 +8774,8 @@ void EventCalculator::plotBTagEffMC( ) {
   startTimer();
   for(Long64_t entry=0; entry < nevents; ++entry){
     chainB->GetEntry(entry);
-    chainA->GetEntry(entry);
+    //we do not need chainA for this code
+    //    chainA->GetEntry(entry);
 
     if(entry%10000==0) cout << "entry: " << entry << ", percent done=" << (int)(entry/(double)nevents*100.)<<  endl;
     
