@@ -6073,6 +6073,13 @@ Also the pdfWeightSum* histograms that are used for LM9.
   const Long64_t neventsB = chainB->GetEntries();
   assert(nevents==neventsB);
 
+  //modest attempt to save time by disabling large unused branches (the RA4 jets and RA4 leptons)
+  /* remove for debugging
+  chainB->SetBranchStatus("jets_AK5PFclean_*",0);
+  chainB->SetBranchStatus("els_*",0);
+  chainB->SetBranchStatus("mus_*",0);
+  */
+
   //store some extra info just in case....
   skimCounter.SetBinContent(0,nevents);
   skimCounter.SetBinContent(nskimCounter+1,getNEventsGenerated());
@@ -6755,7 +6762,8 @@ Also the pdfWeightSum* histograms that are used for LM9.
       trackingfailureFilter = trackingfailurefilter_decision ==1 ? true:false;
 
       bool hcallaser = hcallaserfilter_decision == 1 ? true:false;
-      bool ecallaser = ecallaserfilter_decision == 1 ? true:false;
+      bool ecallaser = true;
+      if (isRealData) ecallaser = ecallaserfilter_decision == 1 ? true:false;
       bool eebadsc = eebadscfilter_decision == 1 ? true:false;
 
       badjetFilter = passBadJetFilter();
