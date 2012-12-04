@@ -6182,7 +6182,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
       int startat = 0;
       if (sampleName_.Contains("T1bbbb")) startat=1;
       for (int ipdf=startat ; ipdf<45; ipdf++) {
-	pdfWeightsCTEQ[ipdf] = checkPdfWeightSanity(pdfweights_cteq->at(ipdf-1));
+	pdfWeightsCTEQ[ipdf] = checkPdfWeightSanity(pdfweights_cteq->at(ipdf-startat));
 	av += pdfWeightsCTEQ[ipdf]; //v66 kludge
 	scanProcessTotalsMapCTEQ[thispoint]->SetBinContent( int(prodprocess),  ipdf,
 							      scanProcessTotalsMapCTEQ[thispoint]->GetBinContent( int(prodprocess),  ipdf) 
@@ -6199,7 +6199,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
 
       av=0;   //v66 kludge    
       for (int ipdf=startat ; ipdf<41; ipdf++) { 
-	pdfWeightsMSTW[ipdf] = checkPdfWeightSanity(pdfweights_mstw->at(ipdf-1));
+	pdfWeightsMSTW[ipdf] = checkPdfWeightSanity(pdfweights_mstw->at(ipdf-startat));
 	av += pdfWeightsMSTW[ipdf]; //v66 kludge
 	scanProcessTotalsMapMSTW[thispoint]->SetBinContent( int(prodprocess),  ipdf,
 							    scanProcessTotalsMapMSTW[thispoint]->GetBinContent( int(prodprocess),  ipdf) 
@@ -6215,7 +6215,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
 
       av=0; //v66 kludge
       for (int ipdf=startat ; ipdf<100; ipdf++) { 
-	pdfWeightsNNPDF[ipdf] = checkPdfWeightSanity(pdfweights_nnpdf->at(ipdf-1));
+	pdfWeightsNNPDF[ipdf] = checkPdfWeightSanity(pdfweights_nnpdf->at(ipdf-startat));
 	av += pdfWeightsNNPDF[ipdf]; //v66 kludge
 	scanProcessTotalsMapNNPDF[thispoint]->SetBinContent( int(prodprocess),  ipdf,
 							     scanProcessTotalsMapNNPDF[thispoint]->GetBinContent( int(prodprocess),  ipdf) 
