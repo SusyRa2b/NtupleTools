@@ -6160,12 +6160,16 @@ Also the pdfWeightSum* histograms that are used for LM9.
 	 access pdfweights arrays at ipdf-1 instead of ipdf
 	 calculate an average pdf weight
 	 after each loop, set the values for the [0] elements by hand
+
+	 This is fixed (I hope for T1tttt).
+
+	 Now use this sample-dependent hack to behave one way for T1bbbb and another for other samples
       */
 
-      /* temporary hack for v65 -- store 1 everywhere instead of a real number */
-
       double av=0; //v66 kludge
-      for (int ipdf=1 ; ipdf<45; ipdf++) {
+      int startat = 0;
+      if (sampleName_.Contains("T1bbbb")) startat=1;
+      for (int ipdf=startat ; ipdf<45; ipdf++) {
 	pdfWeightsCTEQ[ipdf] = checkPdfWeightSanity(pdfweights_cteq->at(ipdf-1));
 	av += pdfWeightsCTEQ[ipdf]; //v66 kludge
 	scanProcessTotalsMapCTEQ[thispoint]->SetBinContent( int(prodprocess),  ipdf,
@@ -6174,12 +6178,15 @@ Also the pdfWeightSum* histograms that are used for LM9.
       }
 
       av /= 44; //v66 kludge
-      pdfWeightsCTEQ[0] = av; //v66 kludge
-      scanProcessTotalsMapCTEQ[thispoint]->SetBinContent( int(prodprocess),  0, //v66 kludge
-							  scanProcessTotalsMapCTEQ[thispoint]->GetBinContent( int(prodprocess),  0) 
-							  + pdfWeightsCTEQ[0] );
+      if (startat==1) {
+	pdfWeightsCTEQ[0] = av; //v66 kludge
+	scanProcessTotalsMapCTEQ[thispoint]->SetBinContent( int(prodprocess),  0, //v66 kludge
+							    scanProcessTotalsMapCTEQ[thispoint]->GetBinContent( int(prodprocess),  0) 
+							    + pdfWeightsCTEQ[0] );
+      }
+
       av=0;   //v66 kludge    
-      for (int ipdf=1 ; ipdf<41; ipdf++) { 
+      for (int ipdf=startat ; ipdf<41; ipdf++) { 
 	pdfWeightsMSTW[ipdf] = checkPdfWeightSanity(pdfweights_mstw->at(ipdf-1));
 	av += pdfWeightsMSTW[ipdf]; //v66 kludge
 	scanProcessTotalsMapMSTW[thispoint]->SetBinContent( int(prodprocess),  ipdf,
@@ -6187,12 +6194,15 @@ Also the pdfWeightSum* histograms that are used for LM9.
 							    + pdfWeightsMSTW[ipdf] );
       }
       av/=40; //v66 kludge
-      pdfWeightsMSTW[0] = av; //v66 kludge
-      scanProcessTotalsMapMSTW[thispoint]->SetBinContent( int(prodprocess),  0, //v66 kludge
-							  scanProcessTotalsMapMSTW[thispoint]->GetBinContent( int(prodprocess),  0) 
-							  + pdfWeightsMSTW[0] );
+      if (startat==1) {
+	pdfWeightsMSTW[0] = av; //v66 kludge
+	scanProcessTotalsMapMSTW[thispoint]->SetBinContent( int(prodprocess),  0, //v66 kludge
+							    scanProcessTotalsMapMSTW[thispoint]->GetBinContent( int(prodprocess),  0) 
+							    + pdfWeightsMSTW[0] );
+      }
+
       av=0; //v66 kludge
-      for (int ipdf=1 ; ipdf<100; ipdf++) { 
+      for (int ipdf=startat ; ipdf<100; ipdf++) { 
 	pdfWeightsNNPDF[ipdf] = checkPdfWeightSanity(pdfweights_nnpdf->at(ipdf-1));
 	av += pdfWeightsNNPDF[ipdf]; //v66 kludge
 	scanProcessTotalsMapNNPDF[thispoint]->SetBinContent( int(prodprocess),  ipdf,
@@ -6200,10 +6210,12 @@ Also the pdfWeightSum* histograms that are used for LM9.
 							     + pdfWeightsNNPDF[ipdf] );
       }
       av/=100; //v66 kludge
-      pdfWeightsNNPDF[0] = av; //v66 kludge
-      scanProcessTotalsMapNNPDF[thispoint]->SetBinContent( int(prodprocess),  0, //v66 kludge
-							  scanProcessTotalsMapNNPDF[thispoint]->GetBinContent( int(prodprocess),  0) 
-							  + pdfWeightsNNPDF[0] );
+      if (startat==1) {
+	pdfWeightsNNPDF[0] = av; //v66 kludge
+	scanProcessTotalsMapNNPDF[thispoint]->SetBinContent( int(prodprocess),  0, //v66 kludge
+							     scanProcessTotalsMapNNPDF[thispoint]->GetBinContent( int(prodprocess),  0) 
+							     + pdfWeightsNNPDF[0] );
+      }
 
     }
     else if (theScanType_==kNotScan && sampleIsSignal_) {
@@ -6301,9 +6313,9 @@ Also the pdfWeightSum* histograms that are used for LM9.
     //keep some tallies of why we failed the skim
     if (passAnyTrigger)  skimCounter.Fill(2); else skimCounter.Fill(3);
     if (passJSON)  skimCounter.Fill(4); else skimCounter.Fill(5);
-    if ( true ) skimCounter.Fill(6); else skimCounter.Fill(7); //used to look at the STeff skim cut here
+    if ( MET>100 ) skimCounter.Fill(6); else skimCounter.Fill(7); //add a MET skim back in...should cut no events from ra2b skims
 
-    if (passJSON && passAnyTrigger ) { //very loose skim cut
+    if (passJSON && passAnyTrigger && MET>100) { //very loose skim cut
       //begin main block of filling reducedTree variables
       skimCounter.Fill(1); //nselected
 
