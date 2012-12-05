@@ -55,8 +55,8 @@ The input files are the reducedTrees.
 #include <map>
 #include <set>
 	
-TString inputPath = "/cu4/ra2b/reducedTrees/v66_6/"; //2012
-TString dataInputPath =  "/cu4/ra2b/reducedTrees/v66_6/ORIGINALS/";
+TString inputPath = "/cu4/ra2b/reducedTrees/v66_7/"; //2012
+TString dataInputPath =  "/cu4/ra2b/reducedTrees/v66_7/ORIGINALS/";
 //TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35u/Fall11/";//7 TeV
 
 double lumiScale_ = 4301;//2012 lumi ????
@@ -65,6 +65,195 @@ double preLumiScale_ = 30;//god only knows for 2012
 //make a symlink that point from this name to drawReducedTree.h
 //this is to make the ROOT dictionary generation work correctly
 #include "drawReducedTrees2012.h"
+
+void dataABCD() {
+  nameOfEventWeight_="weight3"; //for 2012 cfA skimmed ntuples
+
+  //must be done before loadSamples()
+  addToSamplesAll("HTRun2012A");
+  addToSamplesAll("HTMHTRun2012B");
+  addToSamplesAll("HTMHTRun2012C1");
+  addToSamplesAll("HTMHTRun2012C2");
+  addToSamplesAll("HTMHTRun2012D");
+
+  addToSamplesAll("JetHTRun2012B");
+  addToSamplesAll("JetHTRun2012C1");
+  addToSamplesAll("JetHTRun2012C2");
+  addToSamplesAll("JetHTRun2012D");
+
+  addToSamplesAll("METRun2012A");
+  addToSamplesAll("METRun2012B");
+  addToSamplesAll("METRun2012C1");
+  addToSamplesAll("METRun2012C2");
+  addToSamplesAll("METRun2012D");
+
+  loadSamples(true,"ra2b2012");
+
+  usePUweight_=false;
+  dodata_=false;
+
+  clearSamples();
+  addSample("HTRun2012A",kBlue,"2012 A+B+C");
+  chainSamples("HTRun2012A","HTMHTRun2012B");
+  chainSamples("HTRun2012A","HTMHTRun2012C1");
+  chainSamples("HTRun2012A","HTMHTRun2012C2");
+
+  chainSamples("HTRun2012A","JetHTRun2012B");
+  chainSamples("HTRun2012A","JetHTRun2012C1");
+  chainSamples("HTRun2012A","JetHTRun2012C2");
+
+  chainSamples("HTRun2012A","METRun2012A");
+  chainSamples("HTRun2012A","METRun2012B");
+  chainSamples("HTRun2012A","METRun2012C1");
+  chainSamples("HTRun2012A","METRun2012C2");
+
+  setSampleScaleFactor("HTRun2012A",5580./12034.14);
+
+  addSample("METRun2012D",kRed,"2012 D");
+  chainSamples("METRun2012D","HTMHTRun2012D");
+  chainSamples("METRun2012D","JetHTRun2012D");
+
+  drawFilenameOnPlot_=true;
+
+  doOverflowAddition(true);
+  setStackMode(true);//no stack
+
+  lumiScale_ = 1;
+  savePlots_=true;
+
+  doRatio_=true; ratioMin=0; ratioMax=2;
+
+  TCut baseline = "cutPV==1 && cutTrigger2==1 && njets>=3 && jetpt2>=70";
+  TCut cleaning="passCleaning==1&&buggyEvent==0&&MET/caloMET<2&&maxTOBTECjetDeltaMult<40";
+  TCut htloose = "HT>=400";
+  TCut httight = "HT>=800";
+  TCut metloose = "MET>=125";
+  TCut metmedium = "MET>=200";
+  TCut mdp = "minDeltaPhiN_asin>=4";
+  TCut ldp = "minDeltaPhiN_asin<4";
+  TCut btag = "nbjets>=1";
+  TCut bveto = "nbjets==0";
+  TCut sl = getSingleLeptonCut();
+  TCut zl = getLeptonVetoCut()&&TCut("nIsoTracks15_005_03==0");
+  TCut withisotk = TCut("nIsoTracks15_005_03>=1");
+
+  TString desc,var,xtitle;
+  int nbins; float low; float high;
+  setStackMode(false);
+
+  TCut met = metmedium;
+  TCut ht = htloose;
+  desc = "_met200_ht400";
+  TString sampledesc;
+  TCut thisselection;
+  for (int ii = 0; ii<2; ii++) {
+    if (ii==0) {
+      sampledesc = "_sl";
+      thisselection = sl&&mdp;
+    }
+    else if (ii==1) {
+      sampledesc="_ldp";
+      thisselection = zl && ldp;
+    }
+
+  selection_=baseline && cleaning && ht && btag && thisselection && met;
+  var="njets"; xtitle="jet multiplicity";
+  nbins=10; low=0;high=10;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "ra2b_ABCvD_njets"+sampledesc+desc,0);
+
+  selection_=baseline && cleaning && ht  && btag && thisselection && met;
+  var="nGoodPV"; xtitle="n good PV";
+  nbins=25; low=0;high=50;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "ra2b_ABCvD_npv"+sampledesc+desc,0);
+
+  selection_=baseline && cleaning && ht  && btag && thisselection && met;
+  var = "jetchargedhadronmult1"; xtitle="lead jet ch had mult";
+  nbins = 20; low = 0; high = 100;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "ra2b_ABCvD_chhadmult1"+sampledesc+desc,0);
+
+  selection_=baseline && cleaning && ht  && btag && thisselection && met;
+  var = "jetpt1"; xtitle="lead jet pT [GeV]";
+  nbins = 30; low = 0; high = 1000;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "ra2b_ABCvD_jetpt1"+sampledesc+desc,0);
+
+  selection_=baseline && cleaning && ht  && btag && thisselection && met;
+  var = "MET/rawPFMET"; xtitle="Type I PF MET / raw PF MET";
+  nbins = 25; low = 0.6; high = 1.6;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "ra2b_ABCvD_METoverRawMET"+sampledesc+desc,0);
+
+  selection_=baseline && cleaning && ht  && btag && thisselection ;
+  var = "MET"; xtitle="MET";
+  setLogY(true);
+  nbins = 40; low = 100; high = 500;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "ra2b_ABCvD_met"+sampledesc+desc,0);
+  setLogY(false);
+
+  selection_=baseline && cleaning  && btag && thisselection &&met ;
+  var = "HT"; xtitle="HT";
+  setLogY(true);
+  nbins = 40; low = 400; high = 1400;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "ra2b_ABCvD_ht"+sampledesc+desc,0);
+  setLogY(false);
+  }
+
+}
+
+void checkttwt() {
+  nameOfEventWeight_="weight3"; //for 2012 cfA skimmed ntuples
+ loadSamples(true,"ra2b2012");
+
+  usePUweight_=true;
+  dodata_=false;
+
+  clearSamples();
+  //  addSample("TTbarJetsPowheg");
+  addSample("TTbarJets0");
+  //  addSample("WJets");
+  //  addSample("SingleTop");
+
+  doOverflowAddition(true);
+  setStackMode(true);//no stack
+
+  lumiScale_ = 12000;
+  savePlots_=false;
+
+
+  int nbins;
+  float low,high;
+  TString var,xtitle;
+  
+  TCut baseline = "cutPV==1 && cutTrigger2==1 && njets>=3 && jetpt2>=70";
+  TCut cleaning="passCleaning==1&&buggyEvent==0&&MET/caloMET<2";//&&maxTOBTECjetDeltaMult<40";
+
+  //  TCut ht = "HT>=500 && HT<800";
+  TCut ht = "HT>=400";
+  //  TCut met = "MET>=350";
+  TCut met = "MET>=125";
+  TCut mdp = "minDeltaPhiN_asin>=4";
+  //  TCut mdp = "minDeltaPhiN>=4";
+  TCut ldp = "minDeltaPhiN_asin<4";
+
+  TCut btag = "nbjets==1";
+
+  //  TCut sl = getSingleLeptonCut();
+  TCut zl = getLeptonVetoCut();//&&TCut("nIsoTracks15_005_03==0");
+  //  TCut withisotk = TCut("nIsoTracks15_005_03>=1");
+
+
+  nbins=5;
+  low = 3; high=8;
+  var="njets"; xtitle=var;
+
+  selection_ =baseline&&cleaning&&ht&&met&&mdp&&btag&&zl;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "dummy1",0,"GeV");
+
+  selection_ =baseline&&cleaning&&ht&&met&&mdp&&zl;
+  btagSFweight_="prob1";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "dummy1",0,"GeV");
+ 
+
+
+}
 
 void v66_comparettbar() {
   nameOfEventWeight_="weight3"; //for 2012 cfA skimmed ntuples
@@ -77,7 +266,8 @@ void v66_comparettbar() {
   addSample("TTbarJets");
   addSample("TTbarJets0");
   addSample("TTbarJetsPowheg");
-
+  addSample("TTbarJetsMCNLO");
+    
   doOverflowAddition(true);
   setStackMode(false);//no stack
 
@@ -87,6 +277,7 @@ void v66_comparettbar() {
   float low,high;
   TString var,xtitle;
   
+
   nbins=30;
   low = 125; high=425;
   var="MET"; xtitle=var;
@@ -100,6 +291,7 @@ void v66_comparettbar() {
   setStackMode(false,true);//no stack
   drawPlots(var,nbins,low,high,xtitle,"Events", "ttbarcomp_njets",0);
   
+
 }
 
 void v65_chaincheck() {
@@ -324,6 +516,66 @@ void RA2bJESshape2012() {
   leg->AddEntry(hjesdown," JES-");
   leg->AddEntry(hjesup," JES+");
   leg->Draw();
+
+}
+
+void RA2b_sl_byMt() {
+
+  nameOfEventWeight_="weight3"; //for 2012 cfA skimmed ntuples
+  loadSamples(true,"ra2b2012");
+  usePUweight_=true;
+
+  useHTeff_=false;
+  useMHTeff_=false;    
+  thebnnMHTeffMode_ = kOff;
+  currentConfig_=configDescriptions_.getDefault();
+
+  int nbins;
+  float low,high;
+  TString var,xtitle;
+  
+  doOverflowAddition(true);
+
+  dodata_=false;
+
+  setStackMode(false,true);//normalized
+
+  clearSamples();
+  selection_ =TCut("MET>=125 && cutPV==1 && njets>=3  && minDeltaPhiN_asin >= 4 && passCleaning==1 && nbjets>=1 && HT>=400");
+  addSample("TTbarJets:(((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && MT_Wlep>=0&&MT_Wlep<100)",kBlue,"MT<100 GeV");
+  addSample("TTbarJets:(((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && MT_Wlep>=100)",kRed,"MT>100 GeV");
+
+  var="MET"; xtitle="E_{T}^{miss} [GeV]";
+  nbins = 30; low=125; high=425;
+  setLogY(true);
+  drawPlots(var,nbins,low,high,xtitle,"au", "ra2b_metshapes_bymt",0,"GeV");
+
+  selection_ =TCut("MET>=125 && cutPV==1 && njets>=3  && minDeltaPhiN_asin >= 4 && passCleaning==1  && HT>=400 && jetpt2>=70");
+  var="nbjets"; xtitle=var;
+  nbins = 4; low=0; high=4;
+  setLogY(false);
+  drawPlots(var,nbins,low,high,xtitle,"au", "ra2b_bshapes_bymt",0,"GeV");
+
+  selection_ =TCut("MET>=125 && cutPV==1 && njets>=3  && minDeltaPhiN_asin >= 4 && passCleaning==1  && HT>=500 &&HT<800&& jetpt2>=70 &&nbjets>=1");
+  var="MET"; xtitle="E_{T}^{miss} [GeV]";
+  nbins = 30; low=125; high=425;
+  setLogY(true);
+  drawPlots(var,nbins,low,high,xtitle,"au", "ra2b_metshapes_ht500_bymt",0,"GeV");
+
+
+  //nIsoTracks15_005_03_lepcleaned
+  setStackMode(true);
+  clearSamples();
+  selection_ =TCut("MET>=125 && cutPV==1 && njets>=3&&jetpt2>=70  && minDeltaPhiN_asin >= 4 && passCleaning==1 && nbjets>=1 && HT>=400 && (nElectrons+nMuons)==1 && MET/caloMET<2");
+  addSample("TTbarJets:ttbarDecayCode==7",kRed,"#tau #rightarrow h");
+  //addSample("TTbarJets:nElectrons==0&&nMuons==0&&ttbarDecayCode==2",kYellow,"all had");
+  addSample("TTbarJets:ttbarDecayCode==1||ttbarDecayCode==9||ttbarDecayCode==8",kOrange,"dilepton (incl #tau)");
+  addSample("TTbarJets:ttbarDecayCode==3||ttbarDecayCode==4||ttbarDecayCode==5||ttbarDecayCode==6",kMagenta,"e / #mu (incl #tau)");
+  //  addSample("TTbarJets:ttbarDecayCode==5||ttbarDecayCode==6",kBlue,"#tau #rightarrow e / #mu");
+  var = "nIsoTracks15_005_03_lepcleaned"; xtitle ="number of isolated tracks after lepton";
+  nbins = 3; low=0; high=3;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "ra2b_isotracksl",0,"GeV");
+
 
 }
 
@@ -1051,7 +1303,7 @@ void RA2b_investigation_noise() {
 
 void RA2bSignalRegion() {
 
-  nameOfEventWeight_="weight2"; //for 2012 cfA skimmed ntuples
+  nameOfEventWeight_="weight3"; //for 2012 cfA skimmed ntuples
 
   loadSamples(true,"ra2b2012");
   usePUweight_=true;
@@ -1064,41 +1316,44 @@ void RA2bSignalRegion() {
   resetSamples();
   removeSample("LM9");
 
-  //  removeSample("VV");
+  removeSample("VV");
   removeSample("ZJets");
 
-  //  addSample("T1bbbb$1300$100");
+  addSample("VV",kCyan+1,"rare");
+  chainSamples("VV","TTV");
+  chainSamples("VV","ZJets");
 
+  addSample("T1bbbb$1300$100");
+  useMassInLegend_=false;
+
+  //use the 'owen factors' verbatim
   setSampleScaleFactor("TTbarJets",0.9);
-  setSampleScaleFactor("WJets",0.84);
+  setSampleScaleFactor("WJets",0.9);
   setSampleScaleFactor("PythiaPUQCD",1.8);
 
   int nbins;
   float low,high;
   TString var,xtitle;
 
-  drawFilenameOnPlot_=true;
+  drawFilenameOnPlot_=false;
   drawMCErrors_=true;
 
   doOverflowAddition(true);
-  doRatio_=true; ratioMin = 0; ratioMax = 2;
+  doRatio_=false; ratioMin = 0; ratioMax = 2;
   dodata_=true;
 
   TCut baseline = "cutPV==1 && cutTrigger2==1 && njets>=3 && jetpt2>=70";
-  TCut cleaning="passCleaning==1&&buggyEvent==0&&MET/caloMET<2";
+  TCut cleaning="passCleaning==1&&buggyEvent==0&&MET/caloMET<2&&maxTOBTECjetDeltaMult<40";
   TCut ht = "HT>=1000";
-  TCut met = "MET>=250";
-  TCut mdp = "minDeltaPhiN>=4";
-  //  TCut ldp = "minDeltaPhiN<4";
-  //  TCut sl = getSingleLeptonCut();
-  TCut zl = getLeptonVetoCut();
-
+  TCut met = "MET>=150";
+  TCut mdp = "minDeltaPhiN_asin>=4";
+  TCut zl = getLeptonVetoCut()&&TCut("nIsoTracks15_005_03==0");
 
   setDatasetToDraw("2012hybridplus");
-  lumiScale_=12034.14; //Run 2012 A+B+C, i think
+  lumiScale_=12034.14 + 5580; //Run 2012 ABC+D
 
   //  const  TString btagselection = "probge3";
-  const  TString btagselection = "probge2";
+  const  TString btagselection = "probge3";
 
   btagSFweight_=btagselection; //use btag sf
 
@@ -1106,12 +1361,12 @@ void RA2bSignalRegion() {
   if (btagselection =="probge3") desc+="3b";
   if (btagselection =="probge2") desc+="ge2b";
   if (btagselection =="prob1") desc+="eq1b";
-  desc+="_met250_ht1000";
+  desc+="_met150_ht1000";
 
   //MET
   selection_ = baseline&&cleaning && mdp && zl &&ht;
   var="MET"; xtitle="MET [GeV]";
-  nbins = 4; low=250; high=500;
+  nbins = 7; low=150; high=500;
   setLogY(false);
   drawPlots(var,nbins,low,high,xtitle,"Events", "ra2b_met_"+desc,0,"GeV");
 //   setLogY(true);
@@ -1120,7 +1375,7 @@ void RA2bSignalRegion() {
   //met significance (after MET cut)
   selection_ = baseline&&cleaning  && mdp && zl &&ht &&met;
   var="METsig"; xtitle="E_{T}^{miss} significance";
-  nbins = 10; low=0; high=400;
+  nbins = 5; low=0; high=400;
   setLogY(false);
   drawPlots(var,nbins,low,high,xtitle,"Events", "ra2b_metsig_"+desc,0,"GeV");
   //  setLogY(true);
@@ -1129,7 +1384,7 @@ void RA2bSignalRegion() {
   //HT
   selection_ = baseline&&cleaning && met && mdp && zl ;
   var="HT"; xtitle="H_{T} [GeV]";
-  nbins = 10; low=800; high=2000;
+  nbins = 12; low=800; high=2000;
   setLogY(false);
   drawPlots(var,nbins,low,high,xtitle,"Events", "ra2b_ht_"+desc,0,"GeV");
 //   setLogY(true);
@@ -1138,7 +1393,7 @@ void RA2bSignalRegion() {
   //meff
   selection_ = baseline&&cleaning && met && mdp && zl && ht;
   var="HT+MET"; xtitle="m_{eff} [GeV]";
-  nbins = 10; low=1250; high=2450;
+  nbins = 6; low=1150; high=2350;
   setLogY(false);
   drawPlots(var,nbins,low,high,xtitle,"Events", "ra2b_meff_"+desc,0,"GeV");
 //   setLogY(true);
@@ -1148,38 +1403,38 @@ void RA2bSignalRegion() {
   //nPV -- just as a check
   selection_ = baseline&&cleaning && met && mdp && zl && ht;
   var="nGoodPV"; xtitle="num of good PV";
-  nbins = 10; low=0; high=40;
+  nbins = 5; low=0; high=40;
   setLogY(false);
   drawPlots(var,nbins,low,high,xtitle,"Events", "ra2b_npv_"+desc,0);
 
   //njets
   selection_ = TCut("cutPV==1 && cutTrigger2==1 && jetpt2>=70") && met && mdp && zl && ht &&cleaning;
-  var="njets"; xtitle="n jets (pT>50 GeV)";
-  nbins = 5; low=0; high=10;
+  var="njets"; xtitle="n jets (p_{T} > 50 GeV)";
+  nbins = 6; low=3; high=9;
   drawPlots(var,nbins,low,high,xtitle,"Events", "ra2b_njets_"+desc,0);
 
   //njets30
   selection_ = TCut("cutPV==1 && cutTrigger2==1  && jetpt2>=70") && met && mdp && zl && ht &&cleaning;
-  var="njets30"; xtitle="n jets (pT>30 GeV)";
-  nbins = 10; low=0; high=10;
+  var="njets30"; xtitle="n jets (p_{T} > 30 GeV)";
+  nbins = 6; low=0; high=12;
   drawPlots(var,nbins,low,high,xtitle,"Events", "ra2b_njets30_"+desc,0);
 
   //nbjets BLIND
-  btagSFweight_="";
-  selection_ = baseline&&cleaning && met && mdp && zl && ht;
-  var="nbjets"; xtitle="n CSVM b jets (pT>50 GeV)";
-  nbins = 5; low=0; high=5;
-  drawPlots(var,nbins,low,high,xtitle,"Events", "ra2b_nbjets_"+desc,0);
-  setLogY(true);
-  drawPlots(var,nbins,low,high,xtitle,"Events", "ra2b_nbjets_"+desc,0);
-  setLogY(false);
+//   btagSFweight_="";
+//   selection_ = baseline&&cleaning && met && mdp && zl && ht;
+//   var="nbjets"; xtitle="n CSVM b jets (pT>50 GeV)";
+//   nbins = 5; low=0; high=5;
+//   drawPlots(var,nbins,low,high,xtitle,"Events", "ra2b_nbjets_"+desc,0);
+//   setLogY(true);
+//   drawPlots(var,nbins,low,high,xtitle,"Events", "ra2b_nbjets_"+desc,0);
+//   setLogY(false);
 
-  btagSFweight_=btagselection;
+//   btagSFweight_=btagselection;
 
   //minDeltaPhiN
-  selection_ = baseline&&cleaning && met && zl && ht;
-  var="minDeltaPhiN"; xtitle="minDeltaPhiN";
-  nbins = 5; low=0; high=40;
+  selection_ = baseline&&cleaning  && zl &&ht &&met;
+  var="minDeltaPhiN_asin"; xtitle="#Delta #phi_{N}^{min}";
+  nbins = 10; low=0; high=40;
   drawPlots(var,nbins,low,high,xtitle,"Events", "ra2b_minDeltaPhiN_"+desc,0);
 
   //now the fun stuff
@@ -1187,31 +1442,31 @@ void RA2bSignalRegion() {
   //jet pt1
   selection_ = baseline&&cleaning && met && zl && ht && mdp ;
   var = "jetpt1"; xtitle="lead jet pT [GeV]";
-  nbins = 5; low = 50; high = 800;
+  nbins = 10; low = 50; high = 1050;
   drawPlots(var,nbins,low,high,xtitle,"Events", "ra2b_jetpt1_"+desc,0,"GeV");
 
   maxScaleFactor_=1.3;
   //jet phi1
   selection_ = baseline&&cleaning && met && zl && ht && mdp ;
   var = "jetphi1"; xtitle="lead jet phi";
-  nbins = 5; low = -TMath::Pi(); high = TMath::Pi();
+  nbins = 10; low = -TMath::Pi(); high = TMath::Pi();
   drawPlots(var,nbins,low,high,xtitle,"Events", "ra2b_jetphi1_"+desc,0);
   //jet eta1
   selection_ = baseline&&cleaning && met && zl && ht && mdp ;
   var = "jeteta1"; xtitle="lead jet eta";
-  nbins = 5; low = -3; high = 3;
+  nbins = 10; low = -3; high = 3;
   drawPlots(var,nbins,low,high,xtitle,"Events", "ra2b_jeteta1_"+desc,0);
   maxScaleFactor_=1;
 
   //jet pt2
   selection_ = baseline&&cleaning && met && zl && ht && mdp ;
   var = "jetpt2"; xtitle="2nd jet pT [GeV]";
-  nbins = 5; low = 50; high = 600;
+  nbins = 7; low = 50; high = 750;
   drawPlots(var,nbins,low,high,xtitle,"Events", "ra2b_jetpt2_"+desc,0,"GeV");
   //jet eta2
   selection_ = baseline&&cleaning && met && zl && ht && mdp ;
   var = "jeteta2"; xtitle="2nd jet eta";
-  nbins = 5; low = -3; high = 3;
+  nbins = 10; low = -3; high = 3;
   drawPlots(var,nbins,low,high,xtitle,"Events", "ra2b_jeteta2_"+desc,0);
   maxScaleFactor_=1;
 
@@ -1219,34 +1474,34 @@ void RA2bSignalRegion() {
   //jet pt3
   selection_ = baseline&&cleaning && met && zl && ht && mdp ;
   var = "jetpt3"; xtitle="3rd jet pT [GeV]";
-  nbins = 5; low = 50; high = 500;
+  nbins = 5; low = 50; high = 550;
   drawPlots(var,nbins,low,high,xtitle,"Events", "ra2b_jetpt3_"+desc,0,"GeV");
 
   //met phi
   maxScaleFactor_=1.3;
   selection_ = baseline&&cleaning && met && zl && ht && mdp ;
   var = "METphi"; xtitle="phi of MET";
-  nbins = 5; low =-TMath::Pi(); high = TMath::Pi();
+  nbins = 10; low =-TMath::Pi(); high = TMath::Pi();
   drawPlots(var,nbins,low,high,xtitle,"Events", "ra2b_metphi_"+desc,0);
   maxScaleFactor_=1.05;
 
   //calo met check
   selection_ = baseline&&cleaning && met && zl && ht && mdp ;
   var = "MET/caloMET"; xtitle="TypeIPFMET/caloMET";
-  nbins = 5; low =0; high = 2;
+  nbins = 10; low =0; high = 2;
   drawPlots(var,nbins,low,high,xtitle,"Events", "ra2b_metOverCalomet_"+desc,0);
 
   maxScaleFactor_=2;
   //DeltaPhi(j1,MET)
   selection_ = baseline&&cleaning && met && zl && ht && mdp ;
   var = "deltaPhi1"; xtitle="DeltaPhi(j1,MET)";
-  nbins = 5; low =0; high = TMath::Pi();
+  nbins = 10; low =0; high = TMath::Pi();
   drawPlots(var,nbins,low,high,xtitle,"Events", "ra2b_deltaphi1_"+desc,0);
 
   //DeltaPhi(j2,MET)
   selection_ = baseline&&cleaning && met && zl && ht && mdp ;
   var = "deltaPhi2"; xtitle="DeltaPhi(j2,MET)";
-  nbins = 5; low =0; high = TMath::Pi();
+  nbins = 10; low =0; high = TMath::Pi();
   drawPlots(var,nbins,low,high,xtitle,"Events", "ra2b_deltaphi2_"+desc,0);
 
   maxScaleFactor_=1.05;
@@ -1254,55 +1509,168 @@ void RA2bSignalRegion() {
   //raw met check
   selection_ = baseline&&cleaning && met && zl && ht && mdp ;
   var = "MET/rawPFMET"; xtitle="TypeIPFMET/rawPFMET";
-  nbins = 5; low =0.5; high = 1.5;
+  nbins = 10; low =0.5; high = 1.5;
   drawPlots(var,nbins,low,high,xtitle,"Events", "ra2b_metOverRawmet_"+desc,0);
 
   //jet properties
   selection_ = baseline&&cleaning && met && zl && ht && mdp ;
   var = "jetchargedhadronfrac1"; xtitle="lead jet ch had frac";
-  nbins = 5; low = 0; high = 1;
+  nbins = 10; low = 0; high = 1;
   maxScaleFactor_=1.3;
   drawPlots(var,nbins,low,high,xtitle,"Events", "ra2b_jet1chhadfrac_"+desc,0);
   maxScaleFactor_=1.05;
 
   selection_ = baseline&&cleaning && met && zl && ht && mdp;
   var = "jetchargedhadronmult1"; xtitle="lead jet ch had mult";
-  nbins = 5; low = 0; high = 60;
+  nbins = 10; low = 0; high = 60;
   drawPlots(var,nbins,low,high,xtitle,"Events", "ra2b_jet1chhadmult_"+desc,0);
 
  //jet properties
   selection_ = baseline&&cleaning && met && zl && ht && mdp ;
   var = "jetchargedhadronfrac2"; xtitle="2nd jet ch had frac";
-  nbins = 5; low = 0; high = 1;
+  nbins = 10; low = 0; high = 1;
   maxScaleFactor_=1.3;
   drawPlots(var,nbins,low,high,xtitle,"Events", "ra2b_jet2chhadfrac_"+desc,0);
   maxScaleFactor_=1.05;
 
   selection_ = baseline&&cleaning && met && zl && ht && mdp;
   var = "jetchargedhadronmult2"; xtitle="2nd jet ch had mult";
-  nbins = 7; low = 0; high = 90;
+  nbins = 10; low = 0; high = 90;
   drawPlots(var,nbins,low,high,xtitle,"Events", "ra2b_jet2chhadmult_"+desc,0);
 
    //minDeltaPhi
   selection_ = baseline&&cleaning && met && zl && ht && mdp ;
   var = "minDeltaPhi"; xtitle="minDeltaPhi";
-  nbins = 5; low = 0; high = TMath::Pi();
+  nbins = 10; low = 0; high = TMath::Pi();
   setLogY(true);
   drawPlots(var,nbins,low,high,xtitle,"Events", "ra2b_minDeltaPhi_"+desc,0);
   setLogY(false);
 
   selection_ = baseline&&cleaning && met && zl && ht ;
   var = "minDeltaPhi"; xtitle="minDeltaPhi (no mdpN cut)";
-  nbins = 5; low = 0; high = TMath::Pi();
+  nbins = 10; low = 0; high = TMath::Pi();
   drawPlots(var,nbins,low,high,xtitle,"Events", "ra2b_minDeltaPhi_nominDeltaPhiNcut_"+desc,0);
 
   //deltaphi*
   selection_ = baseline&&cleaning && met && zl && ht && mdp;
   var = "deltaPhiStar"; xtitle="#Delta#phi *";
-  nbins = 5; low = 0; high =1;
+  nbins = 10; low = 0; high =1;
   setLogY(true);
   drawPlots(var,nbins,low,high,xtitle,"Events", "ra2b_deltaPhiStar_"+desc,0);
   setLogY(false);
+
+}
+
+void ra2bControlttbarcomp() {
+
+  nameOfEventWeight_="weight3"; //for 2012 cfA skimmed ntuples
+
+  loadSamples(true,"ra2b2012");
+  usePUweight_=true;
+
+  useHTeff_=false;
+  useMHTeff_=false;    
+  thebnnMHTeffMode_ = kOff;
+  currentConfig_=configDescriptions_.getDefault();
+
+  resetSamples();
+  removeSample("LM9");
+
+  addSample("TTV",kGreen-9,"TTV");
+
+  setSampleScaleFactor("WJets",0.9); //use the owen factor instead of the LO factor (which would be 0.84)
+  setSampleScaleFactor("PythiaPUQCD",1.8);
+
+  int nbins;
+  float low,high;
+  TString var,xtitle;
+
+  drawFilenameOnPlot_=false;
+  drawMCErrors_=true;
+
+  doOverflowAddition(true);
+  doRatio_=true; ratioMin = 0.7; ratioMax = 1.3;
+  dodata_=true;
+
+  TCut baseline = "cutPV==1 && cutTrigger2==1 && njets>=3 && jetpt2>=70";
+  TCut cleaning="passCleaning==1&&buggyEvent==0&&MET/caloMET<2&&maxTOBTECjetDeltaMult<40";
+  TCut ht = "HT>=400";
+  TCut met = "MET>=175";
+  TCut mdp = "minDeltaPhiN>=4";
+  TCut sl = getSingleLeptonCut();
+  TCut zl = getLeptonVetoCut()&&TCut("nIsoTracks15_005_03==0");
+  //  TCut withisotk = TCut("nIsoTracks15_005_03>=1");
+
+  TString desc;
+
+  setDatasetToDraw("2012hybridplus");
+  lumiScale_=12034.14; //Run 2012 A+B+C, i think
+
+  //njets
+ 
+  //do this so that ttbar will be last in the stack
+  desc = "madgraph";
+  removeSample("TTbarJets");
+  addSample("TTbarJets");
+  setSampleScaleFactor("TTbarJets",0.9); //use the 'owen factor'
+
+  selection_ = TCut("cutPV==1 && cutTrigger2==1 && jetpt2>=70") && met && mdp && sl && ht && cleaning;
+  btagSFweight_="probge1"; //use btag sf
+  var="njets"; xtitle="n jets (pT>50 GeV)";
+  nbins = 10; low=0; high=10;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "ra2b_njets_"+desc,0);
+
+  selection_ = baseline && met && mdp && sl && ht && cleaning &&TCut("nMuons==1");
+  btagSFweight_="probge1"; //use btag sf
+  var="muonpt1"; xtitle="muon pT";
+  setLogY(true);
+  nbins = 20; low=0; high=200;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "ra2b_mupt_"+desc,0);
+  setLogY(false);
+
+  // -- now powheg --
+  desc = "powheg";
+  removeSample("TTbarJets");
+  addSample("TTbarJetsPowheg");
+  //  setSampleScaleFactor("TTbarJets",0.9); //use the 'owen factor'
+
+  selection_ = TCut("cutPV==1 && cutTrigger2==1 && jetpt2>=70") && met && mdp && sl && ht && cleaning;
+  btagSFweight_="probge1"; //use btag sf
+  var="njets"; xtitle="n jets (pT>50 GeV)";
+  nbins = 10; low=0; high=10;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "ra2b_njets_"+desc,0);
+
+
+  selection_ = baseline && met && mdp && sl && ht && cleaning &&TCut("nMuons==1");
+  btagSFweight_="probge1"; //use btag sf
+  var="muonpt1"; xtitle="muon pT";
+  setLogY(true);
+  nbins = 20; low=0; high=200;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "ra2b_mupt_"+desc,0);
+  setLogY(false);
+
+
+  // -- now mc@nlo --
+  desc = "mcnlo";
+  removeSample("TTbarJetsPowheg");
+  addSample("TTbarJetsMCNLO");
+  //  setSampleScaleFactor("TTbarJets",0.9); //use the 'owen factor'
+
+  selection_ = TCut("cutPV==1 && cutTrigger2==1 && jetpt2>=70") && met && mdp && sl && ht && cleaning;
+  btagSFweight_="probge1"; //use btag sf
+  var="njets"; xtitle="n jets (pT>50 GeV)";
+  nbins = 10; low=0; high=10;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "ra2b_njets_"+desc,0);
+
+
+  selection_ = baseline && met && mdp && sl && ht && cleaning &&TCut("nMuons==1");
+  btagSFweight_="probge1"; //use btag sf
+  var="muonpt1"; xtitle="muon pT";
+  setLogY(true);
+  nbins = 20; low=0; high=200;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "ra2b_mupt_"+desc,0);
+  setLogY(false);
+
 
 }
 
@@ -1326,8 +1694,8 @@ void RA2bControlPlots2012(bool tightmet, bool tightht) {
   //  removeSample("ZJets");
   addSample("TTV",kGreen-9,"TTV");
 
-  setSampleScaleFactor("TTbarJets",0.9);
-  setSampleScaleFactor("WJets",0.9); //use the owen factor instead of the LO factor (which would be 0.84)
+  setSampleScaleFactor("TTbarJets",0.85); //made-up factor
+  setSampleScaleFactor("WJets",0.84); //remove the k-factor
   setSampleScaleFactor("PythiaPUQCD",1.8);
 
   int nbins;
@@ -1347,8 +1715,8 @@ void RA2bControlPlots2012(bool tightmet, bool tightht) {
   TCut httight = "HT>=800";
   TCut metloose = "MET>=125";
   TCut mettight = "MET>=250";
-  TCut mdp = "minDeltaPhiN>=4";
-  TCut ldp = "minDeltaPhiN<4";
+  TCut mdp = "minDeltaPhiN_asin>=4";
+  TCut ldp = "minDeltaPhiN_asin<4";
   TCut btag = "nbjets>=1";
   TCut bveto = "nbjets==0";
   TCut sl = getSingleLeptonCut();
@@ -1379,7 +1747,7 @@ void RA2bControlPlots2012(bool tightmet, bool tightht) {
   TString desc = "ge1b_SL"+desc2;
 
   setDatasetToDraw("2012hybridplus");
-  lumiScale_=12034.14; //Run 2012 A+B+C, i think
+  lumiScale_=12034.14 + 5580; //Run 2012 ABC+D
 
   //compare triggers
 //   setDatasetToDraw("HTMHT");
@@ -1482,7 +1850,7 @@ void RA2bControlPlots2012(bool tightmet, bool tightht) {
 
   //minDeltaPhiN
   selection_ = baseline&&cleaning && met && sl && ht;
-  var="minDeltaPhiN"; xtitle="minDeltaPhiN";
+  var="minDeltaPhiN_asin"; xtitle="minDeltaPhiN (asin)";
   nbins = 20; low=0; high=40;
   drawPlots(var,nbins,low,high,xtitle,"Events", "ra2b_minDeltaPhiN_"+desc,0);
 
@@ -1645,7 +2013,7 @@ void RA2bControlPlots2012(bool tightmet, bool tightht) {
 
   //minDeltaPhi
   selection_ = baseline&&cleaning && met && sl && ht && mdp ;
-  var = "minDeltaPhi"; xtitle="minDeltaPhi";
+  var="minDeltaPhiN_asin"; xtitle="minDeltaPhiN (asin)";
   nbins = 20; low = 0; high = TMath::Pi();
   drawPlots(var,nbins,low,high,xtitle,"Events", "ra2b_minDeltaPhi_"+desc,0);
 
@@ -1686,13 +2054,6 @@ void RA2bControlPlots2012(bool tightmet, bool tightht) {
   var="isotrackphi1"; xtitle="iso track phi";
   nbins = 30; low=-TMath::Pi(); high=TMath::Pi();
   drawPlots(var,nbins,low,high,xtitle,"Events", "ra2b_isotkphi_"+desc,0);
-
-    maxScaleFactor_=1.3;
-  selection_ = baseline&&cleaning && met && withisotk && ht &&mdp && TCut("isotracketa1>1");
-  var="isotrackphi1"; xtitle="iso track phi";
-  nbins = 20; low=-TMath::Pi(); high=TMath::Pi();
-  drawPlots(var,nbins,low,high,xtitle,"Events", "ra2b_isotkphiFwdEta_"+desc,0);
-    maxScaleFactor_=1.05;
 
 
   // == W control sample --> nb == 0, 1 lepton
@@ -1760,7 +2121,7 @@ void RA2bControlPlots2012(bool tightmet, bool tightht) {
 
   //minDeltaPhiN
   selection_ = baseline&&cleaning && met && sl && ht;
-  var="minDeltaPhiN"; xtitle="minDeltaPhiN";
+  var="minDeltaPhiN_asin"; xtitle="minDeltaPhiN (asin)";
   nbins = 20; low=0; high=40;
   drawPlots(var,nbins,low,high,xtitle,"Events", "ra2b_minDeltaPhiN_"+desc,0);
 
@@ -2314,7 +2675,7 @@ void RA2bControlPlots2012(bool tightmet, bool tightht) {
 
   //minDeltaPhiN
   selection_ = baseline&&cleaning && met && zl && ht;
-  var="minDeltaPhiN"; xtitle="minDeltaPhiN";
+  var="minDeltaPhiN_asin"; xtitle="minDeltaPhiN (asin)";
   nbins = 20; low=0; high=40;
   drawPlots(var,nbins,low,high,xtitle,"Events", "ra2b_minDeltaPhiN_"+desc,0);
 
@@ -2409,7 +2770,7 @@ void RA2bControlPlots2012(bool tightmet, bool tightht) {
   nbins = 25; low = 0; high = 50;
   drawPlots(var,nbins,low,high,xtitle,"Events", "ra2b_jet1chhadmult_"+desc,0);
 
-  if (true) {//special plots for investigation...
+  if (false) {//special plots for investigation...
 
     selection_ = baseline&&TCut("passCleaning==1&&buggyEvent==0") && met && zl && ht && mdp &&TCut("MET/caloMET>2");
     var = "jetchargedhadronmult1"; xtitle="lead jet ch had mult";
