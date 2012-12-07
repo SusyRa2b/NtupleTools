@@ -14,7 +14,7 @@ void signalEff2012::Loop()
 
 //   In a ROOT session, you can do:
 //      Root > .L signalEff2012.C++
-//      Root > signalEff2012 t(path, stub, joinbtagbins,usebtagsf,dopdfs);
+//      Root > signalEff2012 t(path, stub, joinbtagbins,usebtagsf,dopdfs,doPUsyst);
 //everything between reducedTree. and .root is the stub
 //      Root > t.Loop();       // Loop on all entries
 
@@ -33,9 +33,13 @@ void signalEff2012::Loop()
     pdfsets.push_back("CTEQ");
     pdfsets.push_back("MSTW");
     pdfsets.push_back("NNPDF");
+    pdfsets.push_back("CTEQMSTW");
+    pdfsets.push_back("CTEQNNPDF");
     pdfsetsize["CTEQ"]=45;
     pdfsetsize["MSTW"]=41;
     pdfsetsize["NNPDF"]=100;
+    pdfsetsize["CTEQMSTW"]=1;
+    pdfsetsize["CTEQNNPDF"]=1;
   }
 
   vector<SearchRegion> searchregions;
@@ -66,19 +70,21 @@ void signalEff2012::Loop()
   TString outfilename = "eventcounts.";
   if (joinbtagbins_) outfilename+="mergebbins.";
   if (dopdfs_) outfilename+="withpdfs.";
+  if (pusyst_) outfilename+="pusyst.";
   outfilename += filestub_;
   outfilename += ".root";
   TFile fout(outfilename,"RECREATE");
 
 
   //same indexing as searchregions
-  //this ignores that we have to do multiples for things like PDF uncertainties
-  //it should work for JES
   vector<TH2D*> eventcounts; 
+  vector<TH2D*> eventcountsTotal; 
   for ( size_t ii = 0; ii<searchregions.size(); ii++) {
     TString hname = TString("events_")+searchregions[ii].id();
+    TString hnameall = TString("eventstotal_")+searchregions[ii].id();
     //    searchregions[ii].Print();
     eventcounts.push_back( (TH2D*) scanSMSngen_->Clone(hname));
+    eventcountsTotal.push_back( (TH2D*) scanSMSngen_->Clone(hnameall));
     cout<<searchregions[ii].id()<<endl;
   }
 
@@ -86,6 +92,10 @@ void signalEff2012::Loop()
     eventcounts[ii]->Reset();
     eventcounts[ii]->SetTitle(searchregions[ii].id());
     eventcounts[ii]->Sumw2();
+
+    eventcountsTotal[ii]->Reset();
+    eventcountsTotal[ii]->SetTitle(searchregions[ii].id()); //i think this is ok (name will still be unique)
+    eventcountsTotal[ii]->Sumw2();
   }
   
 
@@ -98,8 +108,37 @@ void signalEff2012::Loop()
 //
 //       To read only selected branches, Insert statements like:
 // METHOD1:
-//    fChain->SetBranchStatus("*",0);  // disable all branches
-//    fChain->SetBranchStatus("branchname",1);  // activate branchname
+//jmt -- trying to speed things up -- be careful. 
+//failure to include a needed variable here leads to bogus results
+  fChain->SetBranchStatus("*",0);  // disable all branches
+  //activate branches
+  fChain->SetBranchStatus("m0",1);
+  fChain->SetBranchStatus("m12",1);
+  fChain->SetBranchStatus("PUweight",1); 
+  fChain->SetBranchStatus("PUweightSystVar",1);
+  fChain->SetBranchStatus("prob1",1);
+  fChain->SetBranchStatus("prob2",1);
+  fChain->SetBranchStatus("probge3",1);
+  if (dopdfs_) {
+    fChain->SetBranchStatus("pdfWeightsCTEQ",1);
+    fChain->SetBranchStatus("pdfWeightsMSTW",1);
+    fChain->SetBranchStatus("pdfWeightsNNPDF",1);
+  }
+  fChain->SetBranchStatus("njets",1);
+  fChain->SetBranchStatus("jetpt2",1);
+  fChain->SetBranchStatus("cutPV",1);
+  fChain->SetBranchStatus("passCleaning",1);
+  fChain->SetBranchStatus("MET",1);
+  fChain->SetBranchStatus("HT",1);
+  fChain->SetBranchStatus("caloMET",1);
+  fChain->SetBranchStatus("maxTOBTECjetDeltaMult",1);
+  fChain->SetBranchStatus("nMuons",1);
+  fChain->SetBranchStatus("nElectrons",1);
+  fChain->SetBranchStatus("MT_Wlep",1);
+  fChain->SetBranchStatus("nIsoTracks15_005_03",1);
+  fChain->SetBranchStatus("minDeltaPhiN_asin",1);
+  fChain->SetBranchStatus("nbjets",1);
+
 // METHOD2: replace line
 //    fChain->GetEntry(jentry);       //read all branches
 //by  b_branchname->GetEntry(ientry); //read only this branch
@@ -116,37 +155,87 @@ void signalEff2012::Loop()
       if (ientry < 0) assert(0); //jmt mod to increase the severity of this (be sure to notice)
       nb = fChain->GetEntry(jentry);   nbytes += nb;
       
-      if (jentry%300000==0) cout<<100*double(jentry)/double(nentries)<<" % done"<<endl;
-
-      // first apply baseline selection
-      //njets, jet pT
-      if (!( njets>=3 && jetpt2>=70)) continue;
-
-      //cleaning and PV; for MC I will just not even bother to cut on trigger
-      if (! ( cutPV && passCleaning)) continue;
-
-      //the buggyEvent cut only matters on data
-
-      //new cleanup cut
-      if (! (MET/caloMET<2)) continue;
+      if (jentry%500000==0) cout<<100*double(jentry)/double(nentries)<<" % done"<<endl;
 
       //loop over search regions and check whether the event falls into one
       for ( size_t ii = 0; ii<searchregions.size(); ii++) {
 
+	// == get event weight ==
+	
+	//for SMS do not use regular weights
+	//Use PU weight
+	double thisweight = pusyst_ ? PUweightSystVar : PUweight;
+	double pdfweight=1;
+	//use b tag SF if desired
+	if (usebtagsf_) { //support only =1,=2,>=3 b bins for now
+	  if ( (searchregions[ii].minb_ == searchregions[ii].maxb_) && (searchregions[ii].minb_ == 1) ) 
+	    thisweight *= prob1;
+	  else  if ( (searchregions[ii].minb_ == searchregions[ii].maxb_) && (searchregions[ii].minb_ == 2) ) 
+	    thisweight *= prob2;
+	  else  if ( (searchregions[ii].maxb_>10) && (searchregions[ii].minb_ == 3) ) 
+	    thisweight *= probge3;
+	  else assert(0);
+	}
+	//if this search region is a pdf variation then use pdf weight
+	if ( searchregions[ii].pdfset_ == "CTEQ" ) { //for speed reasons i am scared of doing all of these string comparisons. still outweighed by i/o speed?
+	  pdfweight = pdfWeightsCTEQ[searchregions[ii].pdfindex_];
+	}
+	else if (searchregions[ii].pdfset_ == "MSTW" ) {
+	  pdfweight = pdfWeightsMSTW[searchregions[ii].pdfindex_];
+	}
+	else if (searchregions[ii].pdfset_ == "NNPDF" ) {
+	  pdfweight = pdfWeightsNNPDF[searchregions[ii].pdfindex_];
+	}
+	else if (searchregions[ii].pdfset_ == "CTEQMSTW" ) {
+	  assert(searchregions[ii].pdfindex_==0);
+	  pdfweight = pdfWeightsMSTW[searchregions[ii].pdfindex_]/pdfWeightsCTEQ[searchregions[ii].pdfindex_];
+	}
+	else if (searchregions[ii].pdfset_ == "CTEQNNPDF" ) {
+	  assert(searchregions[ii].pdfindex_==0);
+	  pdfweight = pdfWeightsNNPDF[searchregions[ii].pdfindex_]/pdfWeightsCTEQ[searchregions[ii].pdfindex_];
+	}
+	
+	
+	//Fill the "total number of events" histogram, but ignore the PU and btag weights
+	eventcountsTotal[ii]->Fill(m0,m12,pdfweight);
+	
+	thisweight *= pdfweight;
+	
+	// == now apply cuts ==
+	
+	// first apply baseline selection
+	//njets, jet pT
+	if (!( njets>=3 && jetpt2>=70)) continue;
+	
+	//cleaning and PV; for MC I will just not even bother to cut on trigger
+	if (!cutPV) continue;	
+
+	//HACK -- there is a bug in some of my trees. Disable cleaning as a work-around, except for the nominal case
+	if (!joinbtagbins_ && !passCleaning) continue;
+
+	//the buggyEvent cut only matters on data
+
+	//new cleanup cut
+	if (! (MET/caloMET<2)) continue;
+	
+	//yet another new cleanup cut
+	if (maxTOBTECjetDeltaMult>=40) continue;
+	
 	//lepton veto or SL
 	if (searchregions[ii].isSL_) {
 	  if (! ( ( nMuons+nElectrons==1) && (MT_Wlep<100 && MT_Wlep>0) )) continue;
 	}
 	else {
 	  if (!( nMuons==0 && nElectrons==0 ) ) continue;
+	  if ( nIsoTracks15_005_03>0) continue; //isolated track veto for any region that is not SL
 	}
 
 	//minDeltaPhiN
 	if (searchregions[ii].isLDP_) {
-	  if (!( minDeltaPhiN<4)) continue;
+	  if (!( minDeltaPhiN_asin<4)) continue;
 	}
 	else {
-	  if (!( minDeltaPhiN>=4)) continue;
+	  if (!( minDeltaPhiN_asin>=4)) continue;
 	}
 
 	//note differing use of < versus <=. this is intentional
@@ -156,33 +245,8 @@ void signalEff2012::Loop()
 	bool passmet = MET >= searchregions[ii].minMET_ &&  MET < searchregions[ii].maxMET_;
 	bool passht = HT >= searchregions[ii].minHT_ &&  HT < searchregions[ii].maxHT_;
 
-	if (passb && passmet && passht) {
-	  //for SMS do not use regular weights
-	  //Use PU weight
-	  double thisweight = PUweight;
-	  //use b tag SF if desired
-	  if (usebtagsf_) { //support only =1,=2,>=3 b bins for now
-	    if ( (searchregions[ii].minb_ == searchregions[ii].maxb_) && (searchregions[ii].minb_ == 1) ) 
-	      thisweight *= prob1;
-	    else  if ( (searchregions[ii].minb_ == searchregions[ii].maxb_) && (searchregions[ii].minb_ == 2) ) 
-	      thisweight *= prob2;
-	    else  if ( (searchregions[ii].maxb_>10) && (searchregions[ii].minb_ == 3) ) 
-	      thisweight *= probge3;
-	    else assert(0);
-	  }
-	  //if this search region is a pdf variation then use pdf weight
-	  if ( searchregions[ii].pdfset_ == "CTEQ" ) { //for speed reasons i am scared of doing all of these string comparisons. still outweighed by i/o speed?
-	    thisweight *= pdfWeightsCTEQ[searchregions[ii].pdfindex_];
-	  }
-	  else if (searchregions[ii].pdfset_ == "MSTW" ) {
-	    thisweight *= pdfWeightsMSTW[searchregions[ii].pdfindex_];
-	  }
-	  else if (searchregions[ii].pdfset_ == "NNPDF" ) {
-	    thisweight *= pdfWeightsNNPDF[searchregions[ii].pdfindex_];
-	  }
-
-	  eventcounts[ii]->Fill(m0,m12,thisweight);
-	}
+	if (passb && passmet && passht) eventcounts[ii]->Fill(m0,m12,thisweight);
+	
       }
 
 

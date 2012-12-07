@@ -47,7 +47,7 @@ SearchRegion::SearchRegion(int minb, int maxb,float minHT, float maxHT,float min
   minb_(minb), maxb_(maxb),minHT_(minHT),maxHT_(maxHT),minMET_(minMET),maxMET_(maxMET),isLDP_(isLDP),isSL_(isSL)
   ,pdfset_(pdfset),pdfindex_(pdfindex)
 {
-  assert( pdfset=="none" || pdfset=="CTEQ" || pdfset=="MSTW" ||pdfset=="NNPDF");
+
 }
 
 SearchRegion::~SearchRegion() {}
@@ -112,6 +112,9 @@ public :
    Int_t           m12;
    Int_t           ttbarDecayCode;
    Float_t         PUweight;
+   Float_t PUweightSystVar;
+   Int_t maxTOBTECjetDeltaMult;
+   Int_t nIsoTracks15_005_03;
    Float_t         hltHTeff;
    Float_t         hltMHTeff;
    Float_t         pdfWeightsCTEQ[45];
@@ -433,8 +436,11 @@ public :
    TBranch        *b_eventNumber;   //!
    TBranch        *b_m0;   //!
    TBranch        *b_m12;   //!
+   TBranch* b_maxTOBTECjetDeltaMult;
+   TBranch *b_nIsoTracks15_005_03;
    TBranch        *b_ttbarDecayCode;   //!
    TBranch        *b_PUweight;   //!
+   TBranch *b_PUweightSystVar;
    TBranch        *b_hltHTeff;   //!
    TBranch        *b_hltMHTeff;   //!
    TBranch        *b_pdfWeightsCTEQ;   //!
@@ -745,7 +751,7 @@ public :
    TBranch        *b_transverseMETSignificance3_lostJet;   //!
    TBranch        *b_nLostJet;   //!
 
-   signalEff2012(TString path, TString filestub, bool joinbtagbins, bool usebtagsf, bool dopdfs); //BEGIN END jmt
+   signalEff2012(TString path, TString filestub, bool joinbtagbins, bool usebtagsf, bool dopdfs, bool pusyst); //BEGIN END jmt
    virtual ~signalEff2012();
    virtual Int_t    Cut(Long64_t entry);
    virtual Int_t    GetEntry(Long64_t entry);
@@ -762,6 +768,7 @@ public :
    bool joinbtagbins_;
    bool usebtagsf_;
    bool dopdfs_;
+   bool pusyst_;
    //END jmt
 };
 
@@ -769,12 +776,13 @@ public :
 
 #ifdef signalEff2012_cxx
 //BEGIN jmt mod
-signalEff2012::signalEff2012(TString path, TString filestub,bool joinbtagbins, bool usebtagsf, bool dopdfs) : fChain(0) 
+signalEff2012::signalEff2012(TString path, TString filestub,bool joinbtagbins, bool usebtagsf, bool dopdfs, bool pusyst) : fChain(0) 
 													    , scanSMSngen_(0)
 													    ,filestub_(filestub)
 													    ,joinbtagbins_(joinbtagbins)
 													    ,usebtagsf_(usebtagsf)
 													    ,dopdfs_(dopdfs)
+															 ,pusyst_(pusyst)
 			    //END jmt mod
 {
  //BEGIN jmt
@@ -858,8 +866,11 @@ void signalEff2012::Init(TTree *tree)
    fChain->SetBranchAddress("eventNumber", &eventNumber, &b_eventNumber);
    fChain->SetBranchAddress("m0", &m0, &b_m0);
    fChain->SetBranchAddress("m12", &m12, &b_m12);
+   fChain->SetBranchAddress("nIsoTracks15_005_03", &nIsoTracks15_005_03, &b_nIsoTracks15_005_03);
+   fChain->SetBranchAddress("maxTOBTECjetDeltaMult", &maxTOBTECjetDeltaMult, &b_maxTOBTECjetDeltaMult);
    fChain->SetBranchAddress("ttbarDecayCode", &ttbarDecayCode, &b_ttbarDecayCode);
    fChain->SetBranchAddress("PUweight", &PUweight, &b_PUweight);
+   fChain->SetBranchAddress("PUweightSystVar", &PUweightSystVar, &b_PUweightSystVar);
    fChain->SetBranchAddress("hltHTeff", &hltHTeff, &b_hltHTeff);
    fChain->SetBranchAddress("hltMHTeff", &hltMHTeff, &b_hltMHTeff);
    fChain->SetBranchAddress("pdfWeightsCTEQ", pdfWeightsCTEQ, &b_pdfWeightsCTEQ);
@@ -921,7 +932,7 @@ void signalEff2012::Init(TTree *tree)
    fChain->SetBranchAddress("ntruebjets", &ntruebjets, &b_ntruebjets);
    fChain->SetBranchAddress("nElectrons", &nElectrons, &b_nElectrons);
    fChain->SetBranchAddress("nMuons", &nMuons, &b_nMuons);
-   fChain->SetBranchAddress("nTaus", &nTaus, &b_nTaus);
+   //   fChain->SetBranchAddress("nTaus", &nTaus, &b_nTaus);
    fChain->SetBranchAddress("nElectrons5", &nElectrons5, &b_nElectrons5);
    fChain->SetBranchAddress("nMuons5", &nMuons5, &b_nMuons5);
    fChain->SetBranchAddress("nElectrons15", &nElectrons15, &b_nElectrons15);
@@ -1126,6 +1137,7 @@ void signalEff2012::Init(TTree *tree)
    fChain->SetBranchAddress("taueta1", &taueta1, &b_taueta1);
    fChain->SetBranchAddress("eleRelIso", &eleRelIso, &b_eleRelIso);
    fChain->SetBranchAddress("muonRelIso", &muonRelIso, &b_muonRelIso);
+   /*
    fChain->SetBranchAddress("recomuonpt1", &recomuonpt1, &b_recomuonpt1);
    fChain->SetBranchAddress("recomuonphi1", &recomuonphi1, &b_recomuonphi1);
    fChain->SetBranchAddress("recomuoneta1", &recomuoneta1, &b_recomuoneta1);
@@ -1136,6 +1148,7 @@ void signalEff2012::Init(TTree *tree)
    fChain->SetBranchAddress("recomuoneta2", &recomuoneta2, &b_recomuoneta2);
    fChain->SetBranchAddress("recomuoniso2", &recomuoniso2, &b_recomuoniso2);
    fChain->SetBranchAddress("recomuonmindphijet2", &recomuonmindphijet2, &b_recomuonmindphijet2);
+   */
    fChain->SetBranchAddress("rl", &rl, &b_rl);
    fChain->SetBranchAddress("rMET", &rMET, &b_rMET);
    fChain->SetBranchAddress("transverseSphericity_jets", &transverseSphericity_jets, &b_transverseSphericity_jets);
