@@ -18,7 +18,7 @@
 // Header file for the classes stored in the TTree if any.
 class SearchRegion { //a DIFFERENT class than my other SearchRegion class...oh well
 public:
-  SearchRegion(int minb, int maxb,float minHT, float maxHT,float minMET,float maxMET,bool isLDP,bool isSL,TString pdfset,int pdfindex);
+  SearchRegion(int minb, int maxb,float minHT, float maxHT,float minMET,float maxMET,bool isLDP,bool isSL,bool isSLsig,int minnjets,TString pdfset,int pdfindex);
   ~SearchRegion();
   //  void Print() const;
 
@@ -30,6 +30,8 @@ public:
   float maxMET_;
   bool isLDP_;
   bool isSL_;
+  bool isSLsig_;
+  int minnjets_;
 
   TString pdfset_;
   int pdfindex_;
@@ -42,11 +44,13 @@ public:
 };
 
 
-SearchRegion::SearchRegion(int minb, int maxb,float minHT, float maxHT,float minMET,float maxMET,bool isLDP,bool isSL,
+SearchRegion::SearchRegion(int minb, int maxb,float minHT, float maxHT,float minMET,float maxMET,bool isLDP,bool isSL,bool isSLsig,int minnjets,
 			   TString pdfset,int pdfindex) :
-  minb_(minb), maxb_(maxb),minHT_(minHT),maxHT_(maxHT),minMET_(minMET),maxMET_(maxMET),isLDP_(isLDP),isSL_(isSL)
+  minb_(minb), maxb_(maxb),minHT_(minHT),maxHT_(maxHT),minMET_(minMET),maxMET_(maxMET),isLDP_(isLDP),isSL_(isSL),isSLsig_(isSLsig),minnjets_(minnjets)
   ,pdfset_(pdfset),pdfindex_(pdfindex)
 {
+
+  assert( !(isSL_ && isSLsig));
 
 }
 
@@ -74,13 +78,14 @@ TString SearchRegion::id() const {
 
   TString ldpstring = isLDP_ ? "_LDP" : "";
   TString slstring = isSL_ ? "_SL" : "";
-
+  TString slsigstring = isSLsig_ ? "_SLsig" : "";
+  TString njetsstring = (minnjets_==3) ? "" : "_minnjets"+minnjets_;
 
   TString theid;
   if ((minb_==maxb_) || (maxb_>10))
-    theid.Form("b%d_HT%.0fto%.0f_MET%.0fto%.0f%s%s",minb_,minHT_,maxHT_,minMET_,maxMET_,ldpstring.Data(),slstring.Data());
+    theid.Form("b%d_HT%.0fto%.0f_MET%.0fto%.0f%s%s%s%s",minb_,minHT_,maxHT_,minMET_,maxMET_,njetsstring.Data(),ldpstring.Data(),slstring.Data(),slsigstring.Data());
   else
-    theid.Form("b%dto%d_HT%.0fto%.0f_MET%.0fto%.0f%s%s",minb_,maxb_,minHT_,maxHT_,minMET_,maxMET_,ldpstring.Data(),slstring.Data());
+    theid.Form("b%dto%d_HT%.0fto%.0f_MET%.0fto%.0f%s%s%s%s",minb_,maxb_,minHT_,maxHT_,minMET_,maxMET_,njetsstring.Data(),ldpstring.Data(),slstring.Data(),slsigstring.Data());
 
   if (pdfset_ != "none") {
     TString suffix;
@@ -751,7 +756,7 @@ public :
    TBranch        *b_transverseMETSignificance3_lostJet;   //!
    TBranch        *b_nLostJet;   //!
 
-   signalEff2012(TString path, TString filestub, bool joinbtagbins, bool usebtagsf, bool dopdfs, bool pusyst); //BEGIN END jmt
+   signalEff2012(TString path, TString filestub, bool joinbtagbins, bool usebtagsf, bool dopdfs, bool pusyst, int minnjets); //BEGIN END jmt
    virtual ~signalEff2012();
    virtual Int_t    Cut(Long64_t entry);
    virtual Int_t    GetEntry(Long64_t entry);
@@ -769,6 +774,7 @@ public :
    bool usebtagsf_;
    bool dopdfs_;
    bool pusyst_;
+   int minnjets_;
    //END jmt
 };
 
@@ -776,13 +782,14 @@ public :
 
 #ifdef signalEff2012_cxx
 //BEGIN jmt mod
-signalEff2012::signalEff2012(TString path, TString filestub,bool joinbtagbins, bool usebtagsf, bool dopdfs, bool pusyst) : fChain(0) 
+signalEff2012::signalEff2012(TString path, TString filestub,bool joinbtagbins, bool usebtagsf, bool dopdfs, bool pusyst, int minnjets) : fChain(0) 
 													    , scanSMSngen_(0)
 													    ,filestub_(filestub)
 													    ,joinbtagbins_(joinbtagbins)
 													    ,usebtagsf_(usebtagsf)
 													    ,dopdfs_(dopdfs)
-															 ,pusyst_(pusyst)
+													    ,pusyst_(pusyst)
+													    ,minnjets_(minnjets)
 			    //END jmt mod
 {
  //BEGIN jmt

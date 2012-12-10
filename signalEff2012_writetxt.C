@@ -45,7 +45,7 @@ void combineScanBins(TString infilename) {
   vector<TH2D*> vh0;
   for (int ih = 0; ih<infile.GetListOfKeys()->GetEntries(); ih++) {
     TString histname = infile.GetListOfKeys()->At(ih)->GetName();
-    if (!histname.BeginsWith("events_")) continue;
+    if (! (histname.BeginsWith("events_") ||histname.BeginsWith("eventstotal_")) ) continue;
     TH2D* h0 = (TH2D*) infile.Get(histname);
     vh0.push_back(h0);
   }
@@ -100,15 +100,17 @@ void combineScanBins(TString infilename) {
 
 }
 
-void writetxt(TString which, const TString prefix="eventcounts.") {
+void writetxt(TString which, const TString sample, const TString prefix="eventcounts.") {
 
   assert( which=="counts" || which=="JES"||which=="MET" ||which=="JER");
 
   //this should be the 'unvaried' (eg JES0) stub.
   //this differentiation between JER0 and JERbias here is a stopgap measure
-  TString stub0 = "CSVM_PF2PATjets_JES0_JER0_PFMETTypeI_METunc0_PUunc0_BTagEff04_HLTEff0.T1bbbb" ;
+  TString stub0 = "CSVM_PF2PATjets_JES0_JER0_PFMETTypeI_METunc0_PUunc0_BTagEff04_HLTEff0." ;
   //for JER, need to compare variations with JERbias
-  if (which=="JER") stub0= "CSVM_PF2PATjets_JES0_JERbias_PFMETTypeI_METunc0_PUunc0_BTagEff04_HLTEff0.T1bbbb";
+  if (which=="JER") stub0= "CSVM_PF2PATjets_JES0_JERbias_PFMETTypeI_METunc0_PUunc0_BTagEff04_HLTEff0.";
+
+  stub0+=sample;
 
   TString stub_up = stub0;
   TString stub_down = stub0;
@@ -128,10 +130,16 @@ void writetxt(TString which, const TString prefix="eventcounts.") {
 
   TString outfilename = (which=="counts") ? "sigcounts." : "sigsystematics.";
   outfilename += stub0.Tokenize(".")->At(1)->GetName();
+
+  if (prefix.Contains("minnjets5")) {
+    outfilename+=".minnjets5";
+  }
+
   if (which=="counts")   outfilename+=".txt";
   else if (which=="JES") outfilename += ".JES.txt";
   else if (which=="JER") outfilename += ".JER.txt";
   else if (which=="MET") outfilename += ".MET.txt";
+
 
   ofstream txtfile( outfilename.Data());
 
@@ -270,12 +278,13 @@ TH1D* hJES_down;
 TH1D* hJES_sym;
 TH1D* hJES_pretty;
 TText* text;
-void drawstuff(TString pointstring = "1100_700", TString what="JES") {
+void drawstuff(TString pointstring = "1100_700", TString what="JES",const TString sample="T1bbbb") {
 
   TString outfilename = what;
-  outfilename += "syst_T1bbbb_";outfilename+=pointstring; outfilename+=".pdf";
+  outfilename += "syst_"; outfilename+=sample; outfilename+="_";
+  outfilename+=pointstring; outfilename+=".pdf";
 
-  TFile f("sigsystematics.T1bbbb."+what+".root");
+  TFile f("sigsystematics."+sample+"."+what+".root");
 
   TString histonamebase ="h"+what+"_";
   histonamebase+=pointstring;
@@ -356,7 +365,7 @@ void drawstuff(TString pointstring = "1100_700", TString what="JES") {
 
   hJES_pretty->DrawCopy();
   pointstring.ReplaceAll("_",",");
-  text = new TText(1,0.83*1.4*max,what+" for T1bbbb "+pointstring);
+  text = new TText(1,0.83*1.4*max,what+" for "+sample+" "+pointstring);
   text->Draw();
 
   thecanvas->SaveAs(outfilename);

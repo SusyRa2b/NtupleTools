@@ -30,33 +30,48 @@ void signalEff2012::Loop()
   pdfsets.push_back("none");
   pdfsetsize["none"]=1;
   if ( dopdfs_) {
-    pdfsets.push_back("CTEQ");
-    pdfsets.push_back("MSTW");
-    pdfsets.push_back("NNPDF");
+//     pdfsets.push_back("CTEQ");
+//     pdfsets.push_back("MSTW");
+//     pdfsets.push_back("NNPDF");
     pdfsets.push_back("CTEQMSTW");
     pdfsets.push_back("CTEQNNPDF");
-    pdfsetsize["CTEQ"]=45;
-    pdfsetsize["MSTW"]=41;
-    pdfsetsize["NNPDF"]=100;
+//     pdfsetsize["CTEQ"]=45;
+//     pdfsetsize["MSTW"]=41;
+//     pdfsetsize["NNPDF"]=100;
     pdfsetsize["CTEQMSTW"]=1;
     pdfsetsize["CTEQNNPDF"]=1;
   }
 
   vector<SearchRegion> searchregions;
 
-  for (int ildp=0;ildp<2;ildp++) {
+  //not incredibly elegant, but it will do
+  const int nvariations = filestub_.Contains("T1tttt") ? 4 : 2;
+  for (int ivariation=0;ivariation<nvariations;ivariation++) {
+
+    bool thesl=false,theslsig=false,theldp=false;
+
+    if (filestub_.Contains("T1tttt") ) {
+      thesl = ivariation==1 ? true:false;
+      theslsig = ivariation==2 ? true:false;
+      theldp = ivariation==3 ? true:false;
+    }
+    else if (filestub_.Contains("T1bbbb")) {
+      theldp = ivariation==1 ? true:false;
+    }
+    else assert(0);
+
     for (int imet = 0;imet<4; imet++) {
       for (int iht = 0;iht<4; iht++) {
-	bool theldp = ildp==1 ? true:false;
+
 	for (unsigned int ipdfset = 0; ipdfset<pdfsets.size();ipdfset++) {
 	  for (int ipdfindex=0; ipdfindex<pdfsetsize[pdfsets.at(ipdfset)]; ipdfindex++) {
 
 	    if (joinbtagbins_) 
-	      searchregions.push_back( SearchRegion(1,99,htedges[iht],htedges[iht+1],metedges[imet],metedges[imet+1],theldp,false,pdfsets[ipdfset],ipdfindex));
+	      searchregions.push_back( SearchRegion(1,99,htedges[iht],htedges[iht+1],metedges[imet],metedges[imet+1],theldp,thesl,theslsig,minnjets_,pdfsets[ipdfset],ipdfindex));
 	    else {
-	      searchregions.push_back( SearchRegion(1,1,htedges[iht],htedges[iht+1],metedges[imet],metedges[imet+1],theldp,false,pdfsets[ipdfset],ipdfindex));
-	      searchregions.push_back( SearchRegion(2,2,htedges[iht],htedges[iht+1],metedges[imet],metedges[imet+1],theldp,false,pdfsets[ipdfset],ipdfindex));
-	      searchregions.push_back( SearchRegion(3,99,htedges[iht],htedges[iht+1],metedges[imet],metedges[imet+1],theldp,false,pdfsets[ipdfset],ipdfindex));
+	      searchregions.push_back( SearchRegion(1,1,htedges[iht],htedges[iht+1],metedges[imet],metedges[imet+1],theldp,thesl,theslsig,minnjets_,pdfsets[ipdfset],ipdfindex));
+	      searchregions.push_back( SearchRegion(2,2,htedges[iht],htedges[iht+1],metedges[imet],metedges[imet+1],theldp,thesl,theslsig,minnjets_,pdfsets[ipdfset],ipdfindex));
+	      searchregions.push_back( SearchRegion(3,99,htedges[iht],htedges[iht+1],metedges[imet],metedges[imet+1],theldp,thesl,theslsig,minnjets_,pdfsets[ipdfset],ipdfindex));
 	    }
 
 	  }
@@ -71,6 +86,11 @@ void signalEff2012::Loop()
   if (joinbtagbins_) outfilename+="mergebbins.";
   if (dopdfs_) outfilename+="withpdfs.";
   if (pusyst_) outfilename+="pusyst.";
+  if (minnjets_ !=3) {
+    outfilename += "minnjets";
+    outfilename += minnjets_;
+    outfilename +=".";
+  }
   outfilename += filestub_;
   outfilename += ".root";
   TFile fout(outfilename,"RECREATE");
@@ -110,34 +130,37 @@ void signalEff2012::Loop()
 // METHOD1:
 //jmt -- trying to speed things up -- be careful. 
 //failure to include a needed variable here leads to bogus results
-  fChain->SetBranchStatus("*",0);  // disable all branches
-  //activate branches
-  fChain->SetBranchStatus("m0",1);
-  fChain->SetBranchStatus("m12",1);
-  fChain->SetBranchStatus("PUweight",1); 
-  fChain->SetBranchStatus("PUweightSystVar",1);
-  fChain->SetBranchStatus("prob1",1);
-  fChain->SetBranchStatus("prob2",1);
-  fChain->SetBranchStatus("probge3",1);
-  if (dopdfs_) {
-    fChain->SetBranchStatus("pdfWeightsCTEQ",1);
-    fChain->SetBranchStatus("pdfWeightsMSTW",1);
-    fChain->SetBranchStatus("pdfWeightsNNPDF",1);
+  if (dopdfs_)  fChain->SetBranchStatus("*",1);  //paranoia
+  else {
+    fChain->SetBranchStatus("*",0);  // disable all branches
+    //activate branches
+    fChain->SetBranchStatus("m0",1);
+    fChain->SetBranchStatus("m12",1);
+    fChain->SetBranchStatus("PUweight",1); 
+    fChain->SetBranchStatus("PUweightSystVar",1);
+    fChain->SetBranchStatus("prob1",1);
+    fChain->SetBranchStatus("prob2",1);
+    fChain->SetBranchStatus("probge3",1);
+    //   if (dopdfs_) {
+    //     fChain->SetBranchStatus("pdfWeightsCTEQ",1);
+    //     fChain->SetBranchStatus("pdfWeightsMSTW",1);
+    //     fChain->SetBranchStatus("pdfWeightsNNPDF",1);
+    //   }
+    fChain->SetBranchStatus("njets",1);
+    fChain->SetBranchStatus("jetpt2",1);
+    fChain->SetBranchStatus("cutPV",1);
+    fChain->SetBranchStatus("passCleaning",1);
+    fChain->SetBranchStatus("MET",1);
+    fChain->SetBranchStatus("HT",1);
+    fChain->SetBranchStatus("caloMET",1);
+    fChain->SetBranchStatus("maxTOBTECjetDeltaMult",1);
+    fChain->SetBranchStatus("nMuons",1);
+    fChain->SetBranchStatus("nElectrons",1);
+    fChain->SetBranchStatus("MT_Wlep",1);
+    fChain->SetBranchStatus("nIsoTracks15_005_03",1);
+    fChain->SetBranchStatus("minDeltaPhiN_asin",1);
+    fChain->SetBranchStatus("nbjets",1);
   }
-  fChain->SetBranchStatus("njets",1);
-  fChain->SetBranchStatus("jetpt2",1);
-  fChain->SetBranchStatus("cutPV",1);
-  fChain->SetBranchStatus("passCleaning",1);
-  fChain->SetBranchStatus("MET",1);
-  fChain->SetBranchStatus("HT",1);
-  fChain->SetBranchStatus("caloMET",1);
-  fChain->SetBranchStatus("maxTOBTECjetDeltaMult",1);
-  fChain->SetBranchStatus("nMuons",1);
-  fChain->SetBranchStatus("nElectrons",1);
-  fChain->SetBranchStatus("MT_Wlep",1);
-  fChain->SetBranchStatus("nIsoTracks15_005_03",1);
-  fChain->SetBranchStatus("minDeltaPhiN_asin",1);
-  fChain->SetBranchStatus("nbjets",1);
 
 // METHOD2: replace line
 //    fChain->GetEntry(jentry);       //read all branches
@@ -148,14 +171,17 @@ void signalEff2012::Loop()
 
    TStopwatch watch;
    watch.Start();
-
+   Long64_t nok=0,nbad=0;
    Long64_t nbytes = 0, nb = 0;
    for (Long64_t jentry=0; jentry<nentries;jentry++) {
       Long64_t ientry = LoadTree(jentry);
       if (ientry < 0) assert(0); //jmt mod to increase the severity of this (be sure to notice)
       nb = fChain->GetEntry(jentry);   nbytes += nb;
       
-      if (jentry%500000==0) cout<<100*double(jentry)/double(nentries)<<" % done"<<endl;
+      if (jentry%500000==0) {
+	cout<<100*double(jentry)/double(nentries)<<" % done"<<endl;
+	 if (dopdfs_) cout<<" bad fraction = "<<double(nbad)/ double (nbad+nok)<<endl;
+      }
 
       //loop over search regions and check whether the event falls into one
       for ( size_t ii = 0; ii<searchregions.size(); ii++) {
@@ -188,11 +214,27 @@ void signalEff2012::Loop()
 	}
 	else if (searchregions[ii].pdfset_ == "CTEQMSTW" ) {
 	  assert(searchregions[ii].pdfindex_==0);
-	  pdfweight = pdfWeightsMSTW[searchregions[ii].pdfindex_]/pdfWeightsCTEQ[searchregions[ii].pdfindex_];
+	  double w1 = pdfWeightsMSTW[0];
+	  double w2 = pdfWeightsCTEQ[0];
+	  //	  pdfweight = pdfWeightsMSTW[searchregions[ii].pdfindex_]/pdfWeightsCTEQ[searchregions[ii].pdfindex_];
+	  if (w1<=0 || w2<=0) {
+	    //	    cout<<w1<<" "<<w2<<endl;
+	    nbad++;
+	    continue;//skip the event!
+	  }
+	  else ++nok;
+	  pdfweight = w1/w2;
 	}
 	else if (searchregions[ii].pdfset_ == "CTEQNNPDF" ) {
 	  assert(searchregions[ii].pdfindex_==0);
-	  pdfweight = pdfWeightsNNPDF[searchregions[ii].pdfindex_]/pdfWeightsCTEQ[searchregions[ii].pdfindex_];
+	  double w1 = pdfWeightsNNPDF[0];
+	  double w2 = pdfWeightsCTEQ[0];
+	  if (w1<=0 || w2<=0) {
+	    nbad++;
+	    continue;//skip the event!
+	  }
+	  else ++nok;
+	  pdfweight = w1/w2;
 	}
 	
 	
@@ -205,7 +247,7 @@ void signalEff2012::Loop()
 	
 	// first apply baseline selection
 	//njets, jet pT
-	if (!( njets>=3 && jetpt2>=70)) continue;
+	if (!( njets>= minnjets_ && jetpt2>=70)) continue;
 	
 	//cleaning and PV; for MC I will just not even bother to cut on trigger
 	if (!cutPV) continue;	
@@ -225,7 +267,10 @@ void signalEff2012::Loop()
 	if (searchregions[ii].isSL_) {
 	  if (! ( ( nMuons+nElectrons==1) && (MT_Wlep<100 && MT_Wlep>0) )) continue;
 	}
-	else {
+	else if (searchregions[ii].isSLsig_) {
+	  if (! ( ( nMuons+nElectrons==1) && (MT_Wlep>=100 ) )) continue;
+	}
+	else { //ldp or signal region
 	  if (!( nMuons==0 && nElectrons==0 ) ) continue;
 	  if ( nIsoTracks15_005_03>0) continue; //isolated track veto for any region that is not SL
 	}
@@ -256,6 +301,7 @@ void signalEff2012::Loop()
    for (unsigned int ih=0;ih<scanProcessTotals_.size();ih++)   scanProcessTotals_[ih]->Write();
    fout.Write();
    fout.Close();
+   cout<<" bad / good "<<nbad<<" "<<nok<<endl;
 
    cout<<" done. Wall clock rate = "<<nentries<<" / "<<watch.RealTime()<<" = "<< nentries /watch.RealTime()<<" Hz"<<endl;
 
