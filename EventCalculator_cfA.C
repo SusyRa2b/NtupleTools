@@ -4293,6 +4293,11 @@ double EventCalculator::getCrossSection(){
   if (sampleName_.BeginsWith("QCD_Pt-600to800_TuneZ2star_8TeV_pythia6")) return 26.9921;
   if (sampleName_.BeginsWith("QCD_Pt-800to1000_TuneZ2star_8TeV_pythia6")) return 3.550036;
   if (sampleName_.BeginsWith("QCD_Pt-80to120_TuneZ2star_8TeV_pythia6")) return 1033680.0;
+  
+  //Madgraph QCD - all LO PREP
+  if (sampleName_.BeginsWith("QCD_HT-1000ToInf_TuneZ2star_8TeV-madgraph-pythia6")) return 204.0;
+  if (sampleName_.BeginsWith("QCD_HT-500To1000_TuneZ2star_8TeV-madgraph-pythia6")) return 8426.0;
+  if (sampleName_.BeginsWith("QCD_HT-250To500_TuneZ2star_8TeV-madgraph-pythia6")) return 276000.0;
 
   //single top
   if (sampleName_.BeginsWith("Tbar_t-channel_TuneZ2star_8TeV-powheg")) return 30.7; //from AN //25;//LO PREP 
@@ -4633,6 +4638,7 @@ void EventCalculator::loadJetTagEffMaps() {
   f_tageff_ = new TFile(filename,"READ");
   if (f_tageff_->IsZombie()) {
     cout<<"Failed to load the b-tag eff map for sample "<<sampleName_<<endl;
+    assert(0); //it's just too frustrating to let jobs continue in this state
     delete f_tageff_;
     f_tageff_=0;
   }
@@ -6068,6 +6074,13 @@ Also the pdfWeightSum* histograms that are used for LM9.
   const Long64_t neventsB = chainB->GetEntries();
   assert(nevents==neventsB);
 
+  //modest attempt to save time by disabling large unused branches (the RA4 jets and RA4 leptons)
+  /* remove for debugging
+  chainB->SetBranchStatus("jets_AK5PFclean_*",0);
+  chainB->SetBranchStatus("els_*",0);
+  chainB->SetBranchStatus("mus_*",0);
+  */
+
   //store some extra info just in case....
   skimCounter.SetBinContent(0,nevents);
   skimCounter.SetBinContent(nskimCounter+1,getNEventsGenerated());
@@ -6170,7 +6183,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
       int startat = 0;
       if (sampleName_.Contains("T1bbbb")) startat=1;
       for (int ipdf=startat ; ipdf<45; ipdf++) {
-	pdfWeightsCTEQ[ipdf] = checkPdfWeightSanity(pdfweights_cteq->at(ipdf-1));
+	pdfWeightsCTEQ[ipdf] = checkPdfWeightSanity(pdfweights_cteq->at(ipdf-startat));
 	av += pdfWeightsCTEQ[ipdf]; //v66 kludge
 	scanProcessTotalsMapCTEQ[thispoint]->SetBinContent( int(prodprocess),  ipdf,
 							      scanProcessTotalsMapCTEQ[thispoint]->GetBinContent( int(prodprocess),  ipdf) 
@@ -6187,7 +6200,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
 
       av=0;   //v66 kludge    
       for (int ipdf=startat ; ipdf<41; ipdf++) { 
-	pdfWeightsMSTW[ipdf] = checkPdfWeightSanity(pdfweights_mstw->at(ipdf-1));
+	pdfWeightsMSTW[ipdf] = checkPdfWeightSanity(pdfweights_mstw->at(ipdf-startat));
 	av += pdfWeightsMSTW[ipdf]; //v66 kludge
 	scanProcessTotalsMapMSTW[thispoint]->SetBinContent( int(prodprocess),  ipdf,
 							    scanProcessTotalsMapMSTW[thispoint]->GetBinContent( int(prodprocess),  ipdf) 
@@ -6203,7 +6216,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
 
       av=0; //v66 kludge
       for (int ipdf=startat ; ipdf<100; ipdf++) { 
-	pdfWeightsNNPDF[ipdf] = checkPdfWeightSanity(pdfweights_nnpdf->at(ipdf-1));
+	pdfWeightsNNPDF[ipdf] = checkPdfWeightSanity(pdfweights_nnpdf->at(ipdf-startat));
 	av += pdfWeightsNNPDF[ipdf]; //v66 kludge
 	scanProcessTotalsMapNNPDF[thispoint]->SetBinContent( int(prodprocess),  ipdf,
 							     scanProcessTotalsMapNNPDF[thispoint]->GetBinContent( int(prodprocess),  ipdf) 
@@ -6313,9 +6326,9 @@ Also the pdfWeightSum* histograms that are used for LM9.
     //keep some tallies of why we failed the skim
     if (passAnyTrigger)  skimCounter.Fill(2); else skimCounter.Fill(3);
     if (passJSON)  skimCounter.Fill(4); else skimCounter.Fill(5);
-    if ( MET>100 ) skimCounter.Fill(6); else skimCounter.Fill(7); //add a MET skim back in...should cut no events from ra2b skims
+    if ( true ) skimCounter.Fill(6); else skimCounter.Fill(7);//no more skim
 
-    if (passJSON && passAnyTrigger && MET>100) { //very loose skim cut
+    if (passJSON && passAnyTrigger ) { //very loose skim cut
       //begin main block of filling reducedTree variables
       skimCounter.Fill(1); //nselected
 
@@ -6750,7 +6763,8 @@ Also the pdfWeightSum* histograms that are used for LM9.
       trackingfailureFilter = trackingfailurefilter_decision ==1 ? true:false;
 
       bool hcallaser = hcallaserfilter_decision == 1 ? true:false;
-      bool ecallaser = ecallaserfilter_decision == 1 ? true:false;
+      bool ecallaser = true;
+      if (isRealData) ecallaser = ecallaserfilter_decision == 1 ? true:false;
       bool eebadsc = eebadscfilter_decision == 1 ? true:false;
 
       badjetFilter = passBadJetFilter();
