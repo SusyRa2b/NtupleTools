@@ -4638,6 +4638,7 @@ void EventCalculator::loadJetTagEffMaps() {
   f_tageff_ = new TFile(filename,"READ");
   if (f_tageff_->IsZombie()) {
     cout<<"Failed to load the b-tag eff map for sample "<<sampleName_<<endl;
+    assert(0); //it's just too frustrating to let jobs continue in this state
     delete f_tageff_;
     f_tageff_=0;
   }
@@ -6325,9 +6326,9 @@ Also the pdfWeightSum* histograms that are used for LM9.
     //keep some tallies of why we failed the skim
     if (passAnyTrigger)  skimCounter.Fill(2); else skimCounter.Fill(3);
     if (passJSON)  skimCounter.Fill(4); else skimCounter.Fill(5);
-    if ( MET>100 ) skimCounter.Fill(6); else skimCounter.Fill(7); //add a MET skim back in...should cut no events from ra2b skims
+    if ( true ) skimCounter.Fill(6); else skimCounter.Fill(7);//no more skim
 
-    if (passJSON && passAnyTrigger && MET>100) { //very loose skim cut
+    if (passJSON && passAnyTrigger ) { //very loose skim cut
       //begin main block of filling reducedTree variables
       skimCounter.Fill(1); //nselected
 
