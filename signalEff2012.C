@@ -51,8 +51,8 @@ void signalEff2012::Loop()
     bool thesl=false,theslsig=false,theldp=false;
 
     if (filestub_.Contains("T1tttt") ) {
-      thesl = ivariation==1 ? true:false;
-      theslsig = ivariation==2 ? true:false;
+      theslsig = ivariation==1 ? true:false;
+      thesl = ivariation==2 ? true:false;
       theldp = ivariation==3 ? true:false;
     }
     else if (filestub_.Contains("T1bbbb")) {
