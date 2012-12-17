@@ -6,9 +6,9 @@ must have symlink to MiscUtil.cxx in the working directory.
 gSystem->Load("TSelectorMultiDraw_C.so");
 gSystem->Load("CrossSectionTable_cxx.so");
 gSystem->Load("ConfigurationDescriptions_cxx.so");
-gSystem->Load("SearchRegion_cxx.so");
-gSystem->Load("SystInfo_cxx.so");
-gSystem->Load("SignalEffData_cxx.so");
+//gSystem->Load("SearchRegion_cxx.so"); //no longer needed
+//gSystem->Load("SystInfo_cxx.so");     //no longer needed
+//gSystem->Load("SignalEffData_cxx.so");//no longer needed
 .L drawReducedTrees2012.C++
 
 ====== this is the nominal code for drawing RA2b data/MC comparison plots =======
@@ -583,8 +583,9 @@ void RA2b_ttbarstudies() {
 
   //goal: compare HT (and MET and nb) shapes for different 0-lepton sample versus 1 lepton
 
+  //? can i combine tt+W+t (HERE)
 
-  nameOfEventWeight_="weight2"; //for 2012 cfA skimmed ntuples
+  nameOfEventWeight_="weight3"; //for 2012 cfA skimmed ntuples
 
   loadSamples(true,"ra2b2012");
   usePUweight_=true;
@@ -601,19 +602,24 @@ void RA2b_ttbarstudies() {
   doOverflowAddition(true);
 
   dodata_=false;
+  doRatioPlot(true);
 
   setStackMode(false,true);//normalized
 
   clearSamples();
-  addSample("TTbarJets:nElectrons==0&&nMuons==0",kRed,"0 lep");
+  addSample("TTbarJets:nElectrons==0&&nMuons==0&&nIsoTracks15_005_03==0",kRed,"0 lep");
   addSample("TTbarJets:(((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && MT_Wlep>=0&&MT_Wlep<100)",kBlue,"1 lep");
    
-  selection_ =TCut("HT>=400 && cutPV==1 && njets>=3  && minDeltaPhiN >= 4 && passCleaning==1 && nbjets>=1");
+  chainSamples("TTbarJets","WJets")
+  chainSamples("TTbarJets","SingleTop")
+
+  selection_ =TCut("HT>=400 && cutPV==1 && njets>=3 &&jetpt2>=70 && minDeltaPhiN_asin >= 4 && passCleaning==1 && nbjets>=1 &&buggyEvent==0&&MET/caloMET<2&&maxTOBTECjetDeltaMult<40");
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
   nbins = 30; low=150; high=450;
   setLogY(true);
   drawPlots(var,nbins,low,high,xtitle,"au", "ra2b_metshapes_0l_1l",0,"GeV");
 
+  //would need to update cuts down here....
 
   selection_ =TCut("MET>=150 && cutPV==1 && njets>=3  && minDeltaPhiN >= 4 && passCleaning==1 && nbjets>=1");
   var="HT"; xtitle="H_{T} [GeV]";
