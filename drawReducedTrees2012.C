@@ -608,22 +608,25 @@ void RA2b_ttbarstudies() {
   addSample("TTbarJets:nElectrons==0&&nMuons==0&&nIsoTracks15_005_03==0",kRed,"0 lep");
   addSample("TTbarJets:(((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && MT_Wlep>=0&&MT_Wlep<100)",kBlue,"1 lep");
    
-  chainSamples("TTbarJets","WJets")
-  chainSamples("TTbarJets","SingleTop")
+  chainSamples("TTbarJets","WJets");
+  chainSamples("TTbarJets","SingleTop");
 
-  selection_ =TCut("HT>=400 && cutPV==1 && njets>=3 &&jetpt2>=70 && minDeltaPhiN_asin >= 4 && passCleaning==1 && nbjets>=1 &&buggyEvent==0&&MET/caloMET<2&&maxTOBTECjetDeltaMult<40");
+  selection_ =TCut("HT>=400 &&MET>=125&& cutPV==1 && njets>=3 &&jetpt2>=70 && minDeltaPhiN_asin >= 4 && passCleaning==1 && nbjets>=1 &&buggyEvent==0&&MET/caloMET<2&&maxTOBTECjetDeltaMult<40");
   var="MET"; xtitle="E_{T}^{miss} [GeV]";
-  nbins = 30; low=150; high=450;
+  nbins = 30; low=125; high=425;
   setLogY(true);
   drawPlots(var,nbins,low,high,xtitle,"au", "ra2b_metshapes_0l_1l",0,"GeV");
 
-  //would need to update cuts down here....
-
-  selection_ =TCut("MET>=150 && cutPV==1 && njets>=3  && minDeltaPhiN >= 4 && passCleaning==1 && nbjets>=1");
   var="HT"; xtitle="H_{T} [GeV]";
-  nbins = 35; low=300; high=1000;
+  nbins = 40; low=400; high=1200;
   setLogY(true);
   drawPlots(var,nbins,low,high,xtitle,"au", "ra2b_htshapes_0l_1l",0,"GeV");
+
+  //njets
+  var="nbjets-0.5"; xtitle="n b jets (p_{T}>50 GeV)";
+  nbins = 3; low=0.5; high=3.5;
+  setLogY(false);
+  drawPlots(var,nbins,low,high,xtitle,"au", "ra2b_nbjetsshapes_0l_1l",0);
 
   //try ST, out of curiosity
 
