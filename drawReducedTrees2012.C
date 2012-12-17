@@ -583,8 +583,6 @@ void RA2b_ttbarstudies() {
 
   //goal: compare HT (and MET and nb) shapes for different 0-lepton sample versus 1 lepton
 
-  //? can i combine tt+W+t (HERE)
-
   nameOfEventWeight_="weight3"; //for 2012 cfA skimmed ntuples
 
   loadSamples(true,"ra2b2012");
