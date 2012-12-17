@@ -6,12 +6,164 @@
 
 //classes now split into their own files
 #include "ConfigurationDescriptions.h"
-#include "SignalEffData.h"
-#include "SearchRegion.h"
+// #include "SignalEffData.h" //deprecated
+//#include "SearchRegion.h" //deprecated
 
 #include "TGraphAsymmErrors.h"
 
 #include <utility>
+
+//CMS style
+TStyle *theStyle =0;
+void initStyle() {
+
+  //check if the style is already defined
+  if (theStyle==0 && gROOT->GetStyle("CMS")==0) {
+    TStyle *theStyle = new TStyle("CMS","Style for P-TDR");
+
+
+    // For the canvas:
+    theStyle->SetCanvasBorderMode(0);
+    theStyle->SetCanvasColor(kWhite);
+    theStyle->SetCanvasDefH(600); //Height of canvas
+    theStyle->SetCanvasDefW(600); //Width of canvas
+    theStyle->SetCanvasDefX(0);   //POsition on screen
+    theStyle->SetCanvasDefY(0);
+    
+    // For the Pad:
+    theStyle->SetPadBorderMode(0);
+    // theStyle->SetPadBorderSize(Width_t size = 1);
+    theStyle->SetPadColor(kWhite);
+    theStyle->SetPadGridX(false);
+    theStyle->SetPadGridY(false);
+    theStyle->SetGridColor(0);
+    theStyle->SetGridStyle(3);
+    theStyle->SetGridWidth(1);
+    
+    // For the frame:
+    theStyle->SetFrameBorderMode(0);
+    theStyle->SetFrameBorderSize(1);
+    theStyle->SetFrameFillColor(0);
+    theStyle->SetFrameFillStyle(0);
+    theStyle->SetFrameLineColor(1);
+    theStyle->SetFrameLineStyle(1);
+    theStyle->SetFrameLineWidth(1);
+    
+    // For the histo:
+    // theStyle->SetHistFillColor(1);
+    // theStyle->SetHistFillStyle(0);
+    theStyle->SetHistLineColor(1);
+    theStyle->SetHistLineStyle(0);
+    theStyle->SetHistLineWidth(1);
+    // theStyle->SetLegoInnerR(Float_t rad = 0.5);
+  // theStyle->SetNumberContours(Int_t number = 20);
+    
+    theStyle->SetEndErrorSize(2);
+    //  theStyle->SetErrorMarker(20);
+    theStyle->SetErrorX(0.);
+    
+    theStyle->SetMarkerStyle(20);
+    
+    //For the fit/function:
+    theStyle->SetOptFit(1);
+    theStyle->SetFitFormat("5.4g");
+    theStyle->SetFuncColor(2);
+    theStyle->SetFuncStyle(1);
+    theStyle->SetFuncWidth(1);
+    
+    //For the date:
+    theStyle->SetOptDate(0);
+    // theStyle->SetDateX(Float_t x = 0.01);
+    // theStyle->SetDateY(Float_t y = 0.01);
+    
+    // For the statistics box:
+    theStyle->SetOptFile(0);
+    theStyle->SetOptStat(0); // To display the mean and RMS:   SetOptStat("mr");
+    theStyle->SetStatColor(kWhite);
+    theStyle->SetStatFont(42);
+    theStyle->SetStatFontSize(0.025);
+    theStyle->SetStatTextColor(1);
+    theStyle->SetStatFormat("6.4g");
+    theStyle->SetStatBorderSize(1);
+    theStyle->SetStatH(0.1);
+    theStyle->SetStatW(0.15);
+    // theStyle->SetStatStyle(Style_t style = 1001);
+    // theStyle->SetStatX(Float_t x = 0);
+    // theStyle->SetStatY(Float_t y = 0);
+    
+    // Margins:
+    theStyle->SetPadTopMargin(0.05);
+    theStyle->SetPadBottomMargin(0.13);
+    theStyle->SetPadLeftMargin(0.16);
+    theStyle->SetPadRightMargin(0.02);
+    
+    // For the Global title:
+    
+    theStyle->SetOptTitle(0);
+    theStyle->SetTitleFont(42);
+    theStyle->SetTitleColor(1);
+    theStyle->SetTitleTextColor(1);
+    theStyle->SetTitleFillColor(10);
+    theStyle->SetTitleFontSize(0.05);
+    // theStyle->SetTitleH(0); // Set the height of the title box
+    // theStyle->SetTitleW(0); // Set the width of the title box
+    // theStyle->SetTitleX(0); // Set the position of the title box
+    // theStyle->SetTitleY(0.985); // Set the position of the title box
+    // theStyle->SetTitleStyle(Style_t style = 1001);
+    // theStyle->SetTitleBorderSize(2);
+    
+    // For the axis titles:
+    
+    theStyle->SetTitleColor(1, "XYZ");
+    theStyle->SetTitleFont(42, "XYZ");
+    theStyle->SetTitleSize(0.06, "XYZ");
+    // theStyle->SetTitleXSize(Float_t size = 0.02); // Another way to set the size?
+    // theStyle->SetTitleYSize(Float_t size = 0.02);
+    theStyle->SetTitleXOffset(0.9);
+    theStyle->SetTitleYOffset(1.25);
+    // theStyle->SetTitleOffset(1.1, "Y"); // Another way to set the Offset
+    
+    // For the axis labels:
+    
+    theStyle->SetLabelColor(1, "XYZ");
+    theStyle->SetLabelFont(42, "XYZ");
+    theStyle->SetLabelOffset(0.007, "XYZ");
+    theStyle->SetLabelSize(0.05, "XYZ");
+    
+    // For the axis:
+    
+    theStyle->SetAxisColor(1, "XYZ");
+    theStyle->SetStripDecimals(kTRUE);
+    theStyle->SetTickLength(0.03, "XYZ");
+    theStyle->SetNdivisions(510, "XYZ");
+    theStyle->SetPadTickX(1);  // To get tick marks on the opposite side of the frame
+    theStyle->SetPadTickY(1);
+    
+    // Change for log plots:
+    theStyle->SetOptLogx(0);
+    theStyle->SetOptLogy(0);
+    theStyle->SetOptLogz(0);
+    
+    // Postscript options:
+    theStyle->SetPaperSize(20.,20.);
+    // theStyle->SetLineScalePS(Float_t scale = 3);
+    // theStyle->SetLineStyleString(Int_t i, const char* text);
+    // theStyle->SetHeaderPS(const char* header);
+    // theStyle->SetTitlePS(const char* pstitle);
+    
+    // theStyle->SetBarOffset(Float_t baroff = 0.5);
+    // theStyle->SetBarWidth(Float_t barwidth = 0.5);
+    // theStyle->SetPaintTextFormat(const char* format = "g");
+    // theStyle->SetPalette(Int_t ncolors = 0, Int_t* colors = 0);
+    // theStyle->SetTimeOffset(Double_t toffset);
+    // theStyle->SetHistMinimumZero(kTRUE);
+    
+    theStyle->cd(); //what does this do?
+    //end CMS style
+    
+  }
+
+}
 
 //useful for playing around with plots in interactive ROOT
 TH1D* hinteractive=0;
@@ -54,201 +206,6 @@ TString selection_ ="cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cut
 TString nameOfEventWeight_="weight";
 TString reducedTreeName_="reducedTree";
 
-//intentionally bogus values
-float eff_SB_MHT_             = 0.1;
-float eff_SB_MHT_err_[2]      = {0.1, 0.1};
-float eff_SB_ldp_MHT_         = 0.1;   
-float eff_SB_ldp_MHT_err_[2]  = {0.1, 0.1};
-float eff_SIG_MHT_            = 0.1; 
-float eff_SIG_MHT_err_[2]     = {0.1, 0.1};
-float eff_SIG_ldp_MHT_        = 0.1;
-float eff_SIG_ldp_MHT_err_[2] = {0.1, 0.1};
-float eff_SIG_SL_MHT_         = 0.1; 
-float eff_SIG_SL_MHT_err_[2]  = {0.1, 0.1};
-float eff_SB_1m_MHT_          = 0.1;
-float eff_SB_1m_MHT_err_[2]   = {0.1, 0.1};
-float eff_SB_1e_MHT_          = 0.1; 
-float eff_SB_1e_MHT_err_[2]   = {0.1, 0.1};
-
-void setTrigEff(const TString which) {
-
-
-  if (which=="WideSB") {
-    cout<<"Using efficiencies for 150-250 GeV SB"<<endl;
-    //150-250 GeV SB (with FINAL lumi weighting -April 5) 
-    eff_SB_MHT_             = 0.850;
-    eff_SB_MHT_err_[0]      = jmt::addInQuad( 0.034, eff_SB_MHT_*0.056); //ADD THE SYSTEMATIC ERROR DUE TO SAMPLE COMPOSITION
-    eff_SB_MHT_err_[1]      = jmt::addInQuad( 0.046, eff_SB_MHT_*0.056); //ADD THE SYSTEMATIC ERROR DUE TO SAMPLE COMPOSITION
-    eff_SB_ldp_MHT_         = 0.912;   
-    eff_SB_ldp_MHT_err_[0]  = jmt::addInQuad( 0.024, eff_SB_ldp_MHT_*0.015); //ADD THE SYSTEMATIC ERROR DUE TO SAMPLE COMPOSITION
-    eff_SB_ldp_MHT_err_[1]  = jmt::addInQuad( 0.057, eff_SB_ldp_MHT_*0.015); //ADD THE SYSTEMATIC ERROR DUE TO SAMPLE COMPOSITION
-    eff_SIG_MHT_            = 0.981; 
-    eff_SIG_MHT_err_[0]     = 0.012;
-    eff_SIG_MHT_err_[1]     = 0.036;
-    eff_SIG_ldp_MHT_        = eff_SIG_MHT_; 
-    eff_SIG_ldp_MHT_err_[0] = eff_SIG_MHT_err_[0]; //due to low stats in SIG-LDP, use the SIG numbers
-    eff_SIG_ldp_MHT_err_[1] = eff_SIG_MHT_err_[1];
-    eff_SIG_SL_MHT_         = 1.000;//SL,1m,1e numbers updated May15 - Keith added all offline 1BL cuts (except SL req. and ==0b) 
-    eff_SIG_SL_MHT_err_[0]  = 0.000;
-    eff_SIG_SL_MHT_err_[1]  = 0.02;
-    eff_SB_1m_MHT_          = 0.991;
-    eff_SB_1m_MHT_err_[0]   = 0.003;
-    eff_SB_1m_MHT_err_[1]   = 0.005;
-    eff_SB_1e_MHT_          = 0.954; 
-    eff_SB_1e_MHT_err_[0]   = 0.007;
-    eff_SB_1e_MHT_err_[1]   = 0.009;
-  }
-  else if (which=="LowSB") {
-    //150-200 GeV SB
-    // CAREFUL -- if we really move to this region this we have to split e and mu in the SL SB
-    eff_SB_MHT_             = 0.832;
-    eff_SB_MHT_err_[0]      = 0.042;
-    eff_SB_MHT_err_[1]      = 0.054;
-    eff_SB_ldp_MHT_         = 0.91;   
-    eff_SB_ldp_MHT_err_[0]  = 0.026;
-    eff_SB_ldp_MHT_err_[1]  = 0.059;
-    eff_SIG_MHT_            = 0.982; 
-    eff_SIG_MHT_err_[0]     = 0.012;
-    eff_SIG_MHT_err_[1]     = 0.036;
-    eff_SIG_ldp_MHT_        = eff_SIG_MHT_; 
-    eff_SIG_ldp_MHT_err_[0] = eff_SIG_MHT_err_[0];
-    eff_SIG_ldp_MHT_err_[1] = eff_SIG_MHT_err_[1];
-    eff_SIG_SL_MHT_         = 0.999; 
-    eff_SIG_SL_MHT_err_[0]  = 0.001;
-    eff_SIG_SL_MHT_err_[1]  = 0.001;
-
-    //bullshit numbers! (copied from wide SB)
-    eff_SB_1m_MHT_          = 0.990;
-    eff_SB_1m_MHT_err_[0]   = 0.002;
-    eff_SB_1m_MHT_err_[1]   = 0.002;
-    eff_SB_1e_MHT_          = 0.955; 
-    eff_SB_1e_MHT_err_[0]   = 0.004;
-    eff_SB_1e_MHT_err_[1]   = 0.004;
-
-    //old numbers?
-//     eff_SB_SL_MHT_          = 0.996;  //not really true but need new numbers
-//     eff_SB_SL_MHT_err_[0]   = 0.002;
-//     eff_SB_SL_MHT_err_[1]   = 0.003;
-  }
-  else if (which=="LowSBSpecialTest1") {
-    //150-200 GeV SB
-    eff_SB_MHT_             = 0.832;
-    eff_SB_MHT_err_[0]      = 0.042;
-    eff_SB_MHT_err_[1]      = 0.054;
-    eff_SB_ldp_MHT_         = 0.91;   
-    eff_SB_ldp_MHT_err_[0]  = 0.026;
-    eff_SB_ldp_MHT_err_[1]  = 0.059;
-    eff_SIG_MHT_            = 0.841;  //use 200-250 SB number
-    eff_SIG_MHT_err_[0]     = 0.059;
-    eff_SIG_MHT_err_[1]     = 0.090;
-    eff_SIG_ldp_MHT_        = 0.936; 
-    eff_SIG_ldp_MHT_err_[0] = 0.034;
-    eff_SIG_ldp_MHT_err_[1] = 0.118;
-    eff_SIG_SL_MHT_         = 0.996; 
-    eff_SIG_SL_MHT_err_[0]  = 0.002;
-    eff_SIG_SL_MHT_err_[1]  = 0.003;
-
-
-    //bullshit numbers! (copied from wide SB)
-    eff_SB_1m_MHT_          = 0.990;
-    eff_SB_1m_MHT_err_[0]   = 0.002;
-    eff_SB_1m_MHT_err_[1]   = 0.002;
-    eff_SB_1e_MHT_          = 0.955; 
-    eff_SB_1e_MHT_err_[0]   = 0.004;
-    eff_SB_1e_MHT_err_[1]   = 0.004;
-  }
-  else if (which=="NominalSB") {
-    cout<<"Using efficiencies for 200-250 GeV SB"<<endl;
-    //nominal numbers used for frozen AN etc. SB corresponds to 200-250 GeV
-    eff_SB_MHT_             = 0.838;
-    eff_SB_MHT_err_[0]      = 0.060;
-    eff_SB_MHT_err_[1]      = 0.090;
-    eff_SB_ldp_MHT_         = 0.937;   
-    eff_SB_ldp_MHT_err_[0]  = 0.034;
-    eff_SB_ldp_MHT_err_[1]  = 0.120;
-    eff_SIG_MHT_            = 0.981; 
-    eff_SIG_MHT_err_[0]     = 0.012;
-    eff_SIG_MHT_err_[1]     = 0.036;
-    eff_SIG_ldp_MHT_        = eff_SIG_MHT_; 
-    eff_SIG_ldp_MHT_err_[0] = eff_SIG_MHT_err_[0];
-    eff_SIG_ldp_MHT_err_[1] = eff_SIG_MHT_err_[1]; //due to low stats in SIG-LDP, use the SIG numbers for now.
-    eff_SIG_SL_MHT_         = 0.999; 
-    eff_SIG_SL_MHT_err_[0]  = 0.001;
-    eff_SIG_SL_MHT_err_[1]  = 0.003;
-    eff_SB_1m_MHT_          = 1.000; 
-    eff_SB_1m_MHT_err_[0]   = 0.000;    
-    eff_SB_1m_MHT_err_[1]   = 0.004;
-    eff_SB_1e_MHT_          = 0.994; 
-    eff_SB_1e_MHT_err_[0]   = 0.003;
-    eff_SB_1e_MHT_err_[1]   = 0.006;
-  }
-  else if (which == "NominalSBTypeI") {
-    //200-250 GeV type I MET
-    cout<<"Using efficiencies for 200-250 GeV SB (Type I MET)"<<endl;
-    eff_SB_MHT_             = 0.857;
-    eff_SB_MHT_err_[0]      = 0.043; //plus
-    eff_SB_MHT_err_[1]      = 0.085; //minus
-    eff_SB_ldp_MHT_         = 0.858;   
-    eff_SB_ldp_MHT_err_[0]  = 0.053;
-    eff_SB_ldp_MHT_err_[1]  = 0.082;
-    eff_SIG_MHT_            = 0.982; 
-    eff_SIG_MHT_err_[0]     = 0.012;
-    eff_SIG_MHT_err_[1]     = 0.036;
-    eff_SIG_ldp_MHT_        = eff_SIG_MHT_; 
-    eff_SIG_ldp_MHT_err_[0] = eff_SIG_MHT_err_[0];
-    eff_SIG_ldp_MHT_err_[1] = eff_SIG_MHT_err_[1]; //due to low stats in SIG-LDP, use the SIG numbers for now.
-    //numbers below here are not done yet
-    cout<<" WARNING ---- SL trig eff not done yet!"<<endl;
-    eff_SIG_SL_MHT_         = 0.999; 
-    eff_SIG_SL_MHT_err_[0]  = 0.001;
-    eff_SIG_SL_MHT_err_[1]  = 0.001;
-    eff_SB_1m_MHT_          = 0.996; 
-    eff_SB_1m_MHT_err_[0]   = 0.002;    
-    eff_SB_1m_MHT_err_[1]   = 0.003;
-    eff_SB_1e_MHT_          = 0.996; 
-    eff_SB_1e_MHT_err_[0]   = 0.002;
-    eff_SB_1e_MHT_err_[1]   = 0.003;
-  }
-  else assert(0);
-
-}
-
-void printEff() {
-
-  cout<<"eff_SB_MHT                "<<eff_SB_MHT_<<endl;
-  cout<<"eff_SB_MHT_err_plus       "<<eff_SB_MHT_err_[0]<<endl;
-  cout<<"eff_SB_MHT_err_minus      "<<eff_SB_MHT_err_[1]<<endl;
-
-  cout<<"eff_SB_ldp_MHT            "<<eff_SB_ldp_MHT_<<endl;
-  cout<<"eff_SB_ldp_MHT_err_plus   "<<eff_SB_ldp_MHT_err_[0]<<endl;
-  cout<<"eff_SB_ldp_MHT_err_minus  "<<eff_SB_ldp_MHT_err_[1]<<endl;
-
-  //assert(eff_SB_1e_MHT_ == eff_SB_1m_MHT_);
-//   cout<<"eff_SB_sl_MHT             "<<eff_SB_1e_MHT_<<endl;
-//   cout<<"eff_SB_sl_MHT_err_plus    "<<eff_SB_1e_MHT_err_[0]<<endl;
-//   cout<<"eff_SB_sl_MHT_err_minus   "<<eff_SB_1e_MHT_err_[1]<<endl;
-
-  cout<<"eff_SB_1e_MHT             "<<eff_SB_1e_MHT_<<endl;
-  cout<<"eff_SB_1e_MHT_err_plus    "<<eff_SB_1e_MHT_err_[0]<<endl;
-  cout<<"eff_SB_1e_MHT_err_minus   "<<eff_SB_1e_MHT_err_[1]<<endl;
-  cout<<"eff_SB_1m_MHT             "<<eff_SB_1m_MHT_<<endl;
-  cout<<"eff_SB_1m_MHT_err_plus    "<<eff_SB_1m_MHT_err_[0]<<endl;
-  cout<<"eff_SB_1m_MHT_err_minus   "<<eff_SB_1m_MHT_err_[1]<<endl;
-
-  cout<<"eff_SIG_MHT               "<<eff_SIG_MHT_<<endl;
-  cout<<"eff_SIG_MHT_err_plus      "<<eff_SIG_MHT_err_[0]<<endl;
-  cout<<"eff_SIG_MHT_err_minus     "<<eff_SIG_MHT_err_[1]<<endl;
-
-  cout<<"eff_SIG_ldp_MHT           "<<eff_SIG_ldp_MHT_<<endl;
-  cout<<"eff_SIG_ldp_MHT_err_plus  "<<eff_SIG_ldp_MHT_err_[0]<<endl;
-  cout<<"eff_SIG_ldp_MHT_err_minus "<<eff_SIG_ldp_MHT_err_[1]<<endl;
-
-  cout<<"eff_SIG_sl_MHT            "<<eff_SIG_SL_MHT_<<endl;
-  cout<<"eff_SIG_sl_MHT_err_plus   "<<eff_SIG_SL_MHT_err_[0]<<endl;
-  cout<<"eff_SIG_sl_MHT_err_minus  "<<eff_SIG_SL_MHT_err_[1]<<endl;
-
-}
-
 float leg_x1 , leg_x2, leg_y1, leg_y2;
 void resetLegendPosition() {
   leg_x1 = 0.696;
@@ -266,520 +223,9 @@ void resetLegendPositionR() {
 
 ConfigurationDescriptions configDescriptions_;
 
-std::vector<SearchRegion > searchRegions_;
-std::vector<SearchRegion > sbRegions_;
-bool searchRegionsSet_=false;
 
-void setSearchRegions( TString  which="") {
-  //note that the search regions can be set exactly once per session. after that they will not be overridden by
-  //further calls to this function
-  //this is intentional...since this code is ill-designed and there are zillions of calls to setSearchRegions()
-  //scattered throughout the code. This way the user is ensured that the first call has primacy
-  if (searchRegionsSet_) return;
-  
-  //nb: some of the code *depends* on the fact that for there are equal numbers of corresponding
-  //sbRegions and searchRegions, with the only difference being the MET selection!
 
-  //also, for style reasons the 'owenId' should not contain the number of b tags.
-  //everywhere that we use the owenId as an identifier, we combine with the number of b tags
 
-  // i honestly can't remember if the 'owenId' must match between SB and SIG regions
-
-  if (which=="") {cout<<"Setting default 'Moriond Wide SB 2012' search regions"<<endl; which="MoriondWideSB";}
-  else    cout<<"Setting search regions to set: "<<which<<endl;
-
-
-  //27 Jan 2012 -- (preliminary) regions for testing shapes of background....
-  if (which=="METbins3B") {
-    setTrigEff("WideSB"); //set trigger efficiency
-    sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=150&&MET<250","METBin1",false));
-    searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=250 &&MET<300","METBin1"));
-    
-    sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=150&&MET<250","METBin2",false));
-    searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=300 &&MET<350","METBin2"));
-    
-    sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=150&&MET<250","METBin3",false));
-    searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=350","METBin3"));
-  }
-  else if (which=="METfinebins1BL") {
-    setTrigEff("WideSB"); //set trigger efficiency
-    sbRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=150&&MET<250","METFineBin1",false));
-    searchRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=250 &&MET<300","METFineBin1"));
-    
-    sbRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=150&&MET<250","METFineBin2",false));
-    searchRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=300 &&MET<350","METFineBin2"));
-    
-    sbRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=150&&MET<250","METFineBin3",false));
-    searchRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=350 &&MET<400","METFineBin3"));
-
-    sbRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=150&&MET<250","METFineBin4",false));
-    searchRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=400 &&MET<450","METFineBin4"));
-
-    sbRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=150&&MET<250","METFineBin5",false));
-    searchRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=450 &&MET<500","METFineBin5"));
-
-    sbRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=150&&MET<250","METFineBin6",false));
-    searchRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=500","METFineBin6"));
-  }
-  else if (which=="METfinebins2BL") {
-    setTrigEff("WideSB"); //set trigger efficiency
-    sbRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=150&&MET<250","METFineBin1",false));
-    searchRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=250 &&MET<300","METFineBin1"));
-    
-    sbRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=150&&MET<250","METFineBin2",false));
-    searchRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=300 &&MET<350","METFineBin2"));
-    
-    sbRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=150&&MET<250","METFineBin3",false));
-    searchRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=350 &&MET<400","METFineBin3"));
-
-    sbRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=150&&MET<250","METFineBin4",false));
-    searchRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=400 &&MET<450","METFineBin4"));
-
-    sbRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=150&&MET<250","METFineBin5",false));
-    searchRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=450 &&MET<500","METFineBin5"));
-
-    sbRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=150&&MET<250","METFineBin6",false));
-    searchRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=500","METFineBin6"));
-  }
-  else if (which=="METfinebins2BT") {
-    setTrigEff("WideSB"); //set trigger efficiency
-    
-    sbRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=150&&MET<250","METFineBin1",false));
-    searchRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=300 &&MET<350","METFineBin1"));
-    
-    sbRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=150&&MET<250","METFineBin2",false));
-    searchRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=350 &&MET<400","METFineBin2"));
-
-    sbRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=150&&MET<250","METFineBin3",false));
-    searchRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=400 &&MET<450","METFineBin3"));
-
-    sbRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=150&&MET<250","METFineBin4",false));
-    searchRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=450 &&MET<500","METFineBin4"));
-
-    sbRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=150&&MET<250","METFineBin5",false));
-    searchRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=500","METFineBin5"));
-  }
-  else if (which=="METfinebins3B") {
-    setTrigEff("WideSB"); //set trigger efficiency
-    sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=150&&MET<250","METFineBin1",false));
-    searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=250 &&MET<300","METFineBin1"));
-    
-    sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=150&&MET<250","METFineBin2",false));
-    searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=300 &&MET<350","METFineBin2"));
-    
-    sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=150&&MET<250","METFineBin3",false));
-    searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=350 &&MET<400","METFineBin3"));
-
-    sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=150&&MET<250","METFineBin4",false));
-    searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=400 &&MET<450","METFineBin4"));
-
-    sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=150&&MET<250","METFineBin5",false));
-    searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=450 &&MET<500","METFineBin5"));
-
-    sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=150&&MET<250","METFineBin6",false));
-    searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=500","METFineBin6"));
-  }
-  else if (which=="testHTbins") {
-    setTrigEff("WideSB"); //set trigger efficiency
-
-    sbRegions_.push_back( SearchRegion( "ge1b","HT>=400 && HT<500","MET>=200&&MET<250","HTBin1",false));
-    searchRegions_.push_back( SearchRegion( "ge1b","HT>=400 && HT<500","MET>=250","HTBin1"));
-
-    sbRegions_.push_back( SearchRegion( "ge1b","HT>=500 && HT<600","MET>=200&&MET<250","HTBin2",false));
-    searchRegions_.push_back( SearchRegion( "ge1b","HT>=500 && HT<600","MET>=250","HTBin2"));
-
-    sbRegions_.push_back( SearchRegion( "ge1b","HT>=600","MET>=200&&MET<250","HTBin3",false));
-    searchRegions_.push_back( SearchRegion( "ge1b","HT>=600","MET>=250","HTBin3"));
-
-    
-  }
-//These are the nominal search regions for the "Moriond 2012" analysis
-  else if (which=="Moriond") {
-  //oct25
-    setTrigEff("NominalSB"); //set trigger efficiency
-    
-    sbRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=200&&MET<250","Loose",false));
-    searchRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=250","Loose")); //1BL
-    
-    sbRegions_.push_back( SearchRegion( "ge1b","HT>=500","MET>=200&&MET<250","Tight",false));
-    searchRegions_.push_back( SearchRegion( "ge1b","HT>=500","MET>=500","Tight")); //1BT
-    
-    sbRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=200&&MET<250","Loose",false));
-    searchRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=250","Loose")); //2BL
-  
-    sbRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=200&&MET<250","Tight",false));
-    searchRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=300","Tight")); //2BT
-    
-    sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=200&&MET<250","Loose",false));
-    searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=250","Loose")); //3B
-  }
-  else if (which=="MoriondLowSB") {
-    setTrigEff("LowSB"); //set trigger efficiency
-    //move SB down to 150-200
-    sbRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=150&&MET<200","LooseLowSB",false));
-    searchRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=250","LooseLowSB")); //1BL
-    
-    sbRegions_.push_back( SearchRegion( "ge1b","HT>=500","MET>=150&&MET<200","TightLowSB",false));
-    searchRegions_.push_back( SearchRegion( "ge1b","HT>=500","MET>=500","TightLowSB")); //1BT
-    
-    sbRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=150&&MET<200","LooseLowSB",false));
-    searchRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=250","LooseLowSB")); //2BL
-    
-    sbRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=150&&MET<200","TightLowSB",false));
-    searchRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=300","TightLowSB")); //2BT
-    
-    sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=150&&MET<200","LooseLowSB",false));
-    searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=250","LooseLowSB")); //3B
-  }
-  else if (which=="MoriondWideSB") {
-    setTrigEff("WideSB"); //set trigger efficiency
-    //SB is 150-250
-    sbRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=150&&MET<250","LooseWideSB",false));
-    searchRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=250","LooseWideSB")); //1BL
-        
-    sbRegions_.push_back( SearchRegion( "ge1b","HT>=500","MET>=150&&MET<250","TightWideSB",false));
-    searchRegions_.push_back( SearchRegion( "ge1b","HT>=500","MET>=500","TightWideSB")); //1BT
-    
-    sbRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=150&&MET<250","LooseWideSB",false));
-    searchRegions_.push_back( SearchRegion( "ge2b","HT>=400","MET>=250","LooseWideSB")); //2BL
-    
-    sbRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=150&&MET<250","TightWideSB",false));
-    searchRegions_.push_back( SearchRegion( "ge2b","HT>=600","MET>=300","TightWideSB")); //2BT
-    
-    sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=150&&MET<250","LooseWideSB",false));
-    searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=250","LooseWideSB")); //3B
-    
-  }
-  else if (which=="eq2BT") {
-    //work in progress
-    setTrigEff("WideSB"); //set trigger efficiency
-    sbRegions_.push_back( SearchRegion( "eq2b","HT>=600","MET>=150&&MET<250","TightHTWideSB",false));
-    searchRegions_.push_back( SearchRegion( "eq2b","HT>=600","MET>=300","TightHTWideSB")); //2BT
-  }
-  else if (which=="SpecialTest1") {
-    setTrigEff("LowSBSpecialTest1"); //set trigger efficiency
-    sbRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=150&&MET<200","LooseLowSB",false));
-    searchRegions_.push_back( SearchRegion( "ge1b","HT>=400","MET>=210 && MET<230","LooseLowSB")); //1BL
-
-  }
-  //important note -- i am writing the signal systematics code to _assume_  that the SB region is shared for the shape analysis.
-  //so don't try to combine the different sets of HT cuts into one set of regions
-  else if (which=="bShapeLoose") {
-    setTrigEff("NominalSB"); //set trigger efficiency
-    //Tentative search regions for the b-shape analysis
-    //Loose exclusive regions
-    sbRegions_.push_back( SearchRegion( "eq1b","HT>=400","MET>=200&&MET<250","Loose",false));
-    searchRegions_.push_back( SearchRegion( "eq1b","HT>=400","MET>=250","Loose")); //1BL
-    
-    sbRegions_.push_back( SearchRegion( "eq2b","HT>=400","MET>=200&&MET<250","Loose",false));
-    searchRegions_.push_back( SearchRegion( "eq2b","HT>=400","MET>=250","Loose")); //2BL
-    
-    sbRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=200&&MET<250","Loose",false));
-    searchRegions_.push_back( SearchRegion( "ge3b","HT>=400","MET>=250","Loose")); //3B
-  }
-  else if (which=="bShapeTightHT") {
-    setTrigEff("NominalSB"); //set trigger efficiency
-    //2BT exclusive regions
-    sbRegions_.push_back( SearchRegion( "eq1b","HT>=600","MET>=200&&MET<250","TightHT",false));
-    searchRegions_.push_back( SearchRegion( "eq1b","HT>=600","MET>=300","TightHT")); //2BT
-    
-    sbRegions_.push_back( SearchRegion( "eq2b","HT>=600","MET>=200&&MET<250","TightHT",false));
-    searchRegions_.push_back( SearchRegion( "eq2b","HT>=600","MET>=300","TightHT")); //2BT
-    
-    sbRegions_.push_back( SearchRegion( "ge3b","HT>=600","MET>=200&&MET<250","TightHT",false));
-    searchRegions_.push_back( SearchRegion( "ge3b","HT>=600","MET>=300","TightHT")); //2BT
-  }
-  else if (which=="bShapeTightMET") {
-    setTrigEff("NominalSB"); //set trigger efficiency
-    //1BT exclusive regions
-    sbRegions_.push_back( SearchRegion( "eq1b","HT>=500","MET>=200&&MET<250","TightMET",false));
-    searchRegions_.push_back( SearchRegion( "eq1b","HT>=500","MET>=500","TightMET")); //1BT
-    
-    sbRegions_.push_back( SearchRegion( "eq2b","HT>=500","MET>=200&&MET<250","TightMET",false));
-    searchRegions_.push_back( SearchRegion( "eq2b","HT>=500","MET>=500","TightMET")); //1BT
-    
-    sbRegions_.push_back( SearchRegion( "ge3b","HT>=500","MET>=200&&MET<250","TightMET",false));
-    searchRegions_.push_back( SearchRegion( "ge3b","HT>=500","MET>=500","TightMET")); //1BT
-  }
-  else if (which=="Summer2011") {
-    setTrigEff("LowSB"); //set trigger efficiency
-    //2011 Summer result
-    sbRegions_.push_back( SearchRegion( "ge1b","HT>=350","MET>=150&&MET<200","Loose",false)); //loose SB
-    searchRegions_.push_back( SearchRegion( "ge1b","HT>=350","MET>=200","Loose")); //loose Sig
-    
-    sbRegions_.push_back( SearchRegion( "ge1b","HT>=500","MET>=150&&MET<200","Tight",false)); //tight SB
-    searchRegions_.push_back( SearchRegion( "ge1b","HT>=500","MET>=300","Tight")); //tight Sig
-    
-    sbRegions_.push_back( SearchRegion( "ge2b","HT>=350","MET>=150&&MET<200","Loose",false)); //loose SB
-    searchRegions_.push_back( SearchRegion( "ge2b","HT>=350","MET>=200","Loose")); //loose Sig
-    
-    sbRegions_.push_back( SearchRegion( "ge2b","HT>=500","MET>=150&&MET<200","Tight",false)); //tight SB
-    searchRegions_.push_back( SearchRegion( "ge2b","HT>=500","MET>=300","Tight")); //tight Sig
-  }
-  else assert(0);
-
-  searchRegionsSet_=true;
-}
-
-
-
-struct OwenData {
-  double Nsig; //number in signal region , data //done
-  double Nsb; // number in SB, data             //done
-  //  double Nsig_sl; //number in SL SIG, data  //done
-  //  double Nsb_sl; // number in SL SB, data   //done
-
-  double Nsig_sl; //number in SL SIG, data  //done
-  double Nsb_1e; // number in SL SB, data   //done
-  double Nsb_1m; // number in SL SB, data   //done
-
-  double Nsig_ldp; //number in SIG, fail DP //done
-  double Nsb_ldp;   // number in SB, fail DP //done
-
-  //owen didn't ask for these
-  //  double  Nlsb ;
-  //  double  Nlsb_ldp;
-
-  //deprecated
-  //  double  Nlsb_0b ;      // done
-  //  double  Nlsb_0b_ldp;   // done
-  double Rlsb_passfail;
-  double Rlsb_passfail_err;
-
-
-  double Nttbarmc_sig_ldp; //done
-  double Nttbarmc_sb_ldp; //done
-  //  double lsf_WJmc; //done
-  double NWJmc_sig_ldp; //done
-  double NWJmc_sb_ldp; //done
-  //  double lsf_Znnmc; //done
-  double NZnnmc_sig_ldp; //done
-  double NZnnmc_sb_ldp; //done
-  //  double lsf_Zjmc;
-  double NZjmc_sig_ldp;
-  double NZjmc_sb_ldp;
-  double Nsingletopmc_sig_ldp;
-  double Nsingletopmc_sb_ldp;
-
-  //don't need DataLumi...that's just lumiScale_
-} ;
-
-
-
-struct texData {
-
-  double value;
-  double statError;
-  double systError;
-  double trigErrorPlus;
-  double trigErrorMinus;
-
-};
-
-//  btag+owenId  background cat
-map<TString, map<TString, texData> > resultsMap_;
-
-//again, this should be C++ style rather than C style, but let's just do it like this for now
-//in other words, resultsMap_ should be an instance of a class that has a ::writeToText() function...
-void writeResultsMapToText(TString filename) {
-
-  ofstream outfile(filename.Data());
-
-  for (map<TString, map<TString, texData> >::iterator ibin = resultsMap_.begin() ; ibin!=resultsMap_.end() ; ++ibin) {
-    map<TString, texData> thisbin = ibin->second;
-    for ( map<TString, texData> ::iterator ibackground = thisbin.begin(); ibackground!= thisbin.end(); ++ibackground) {
-      outfile<<ibin->first<<" "<<ibackground->first<<" "
-	     <<ibackground->second.value<<" "
-	     <<ibackground->second.statError<<" "
-	     <<ibackground->second.systError<<" "
-	     <<ibackground->second.trigErrorPlus<<" "
-	     <<ibackground->second.trigErrorMinus<<" "
-	     <<endl;
-    }
-  }
-
-}
-
-void addResults(TString id, TString addcat1, TString addcat2, TString newcat) {
-
-  resultsMap_[id][newcat].value = resultsMap_[id][addcat1].value  + resultsMap_[id][addcat2].value ;
-  resultsMap_[id][newcat].statError = sqrt(pow(resultsMap_[id][addcat1].statError,2)  + pow(resultsMap_[id][addcat2].statError,2));
-  resultsMap_[id][newcat].systError = sqrt(pow(resultsMap_[id][addcat1].systError,2)  + pow(resultsMap_[id][addcat2].systError,2));
-
-  const float tol=0.001;
-
-  bool hastrig1= resultsMap_[id][addcat1].trigErrorPlus >tol || resultsMap_[id][addcat1].trigErrorMinus >tol;
-  bool hastrig2= resultsMap_[id][addcat2].trigErrorPlus >tol || resultsMap_[id][addcat2].trigErrorMinus >tol;
-  //it's not ok to add trigger errors because they will be correlated
-  assert( !(hastrig1 && hastrig2));
-
-  if (hastrig1) {
-    resultsMap_[id][newcat].trigErrorPlus = resultsMap_[id][addcat1].trigErrorPlus;
-    resultsMap_[id][newcat].trigErrorMinus = resultsMap_[id][addcat1].trigErrorMinus;
-  }
-  else if (hastrig2) {
-    resultsMap_[id][newcat].trigErrorPlus = resultsMap_[id][addcat2].trigErrorPlus;
-    resultsMap_[id][newcat].trigErrorMinus = resultsMap_[id][addcat2].trigErrorMinus;
-  }
-  else {
-    resultsMap_[id][newcat].trigErrorPlus = 0;
-    resultsMap_[id][newcat].trigErrorMinus = 0;
-  }
-
-}
-
-TString formatLatex(const texData & data) {
-  //in principle we should adapt format_nevents() but for now do this
-
-  const float tol=0.001;
-
-
-  char out[50];
-  if (data.trigErrorPlus <tol && data.trigErrorMinus<tol)  sprintf(out,"$%.1f \\pm %.1f \\pm %.1f$",data.value,data.statError,data.systError);
-  else {
-    sprintf(out,"$%.1f \\pm %.1f^{+%.1f}_{-%.1f}$",data.value,data.statError,
-	    sqrt(data.systError*data.systError + data.trigErrorPlus*data.trigErrorPlus),
-	    sqrt(data.systError*data.systError + data.trigErrorMinus*data.trigErrorMinus));
-  }
-
-  return TString(out);
-}
-
-
-
-//ok, i would rather implement this as a C++ style class instead of a C style function, but for now I'll do the easiest thing
-void writeSignalEffDataMapToFiles(const  map<pair<int,int>, SignalEffData> & thedata, const TString & id ) {
-
-  //goal -- write thedata to a set of files
-  //SignalEffData already has a method to write its contents to a file
-
-  for ( map<pair<int,int>, SignalEffData>::const_iterator iscan = thedata.begin(); iscan!= thedata.end(); ++iscan) {
-
-    TString fileid;
-    fileid.Form("%s_%d_%d",id.Data(), iscan->first.first, iscan->first.second);
-
-    iscan->second.write(fileid);
-  }
-}
-map<pair<int,int>, SignalEffData> loadSignalEffDataMapFromFiles( const TString & id ) {
-
-  map<pair<int,int>, SignalEffData> datamap;
-
-  //this is more tricky. we have to loop over all files that contain (not begin with) id
-  TChain dummychain("dummychain");
-  TString searchfor ="*.";
-  searchfor += SignalEffDataSuffix_;
-  searchfor.Prepend(sedfPath);
-  dummychain.Add(searchfor);
-  TObjArray* dir1list = dummychain.GetListOfFiles();
-  int nfiles1=dir1list->GetEntries();
-  
-  for (int ifile1=0; ifile1<nfiles1; ifile1++) {
-    TString fullname=dir1list->At(ifile1)->GetTitle();
-    if (fullname.Contains(id)) {
-      TString justMasses = fullname(fullname.Index(id)+id.Length()+1,fullname.Length());
-      //now extract the mass values
-      int m1=TString(justMasses(0,justMasses.Index("_"))).Atoi();
-      int m2=TString(justMasses(justMasses.Index("_")+1,justMasses.Length() )).Atoi();
-      justMasses.Prepend("_");
-      justMasses.Prepend(id);
-      SignalEffData data(justMasses);
-      datamap[make_pair(m1,m2)] = data;
-    }
-  }
-
-  return datamap;
-}
-
-
-std::map<TString, OwenData> owenMap_;
-
-void printOwen(const TString& owenKey) {
-
-  cout<< " === "<<owenKey<<" === "<<endl;
-
-  cout<<"Nsig              "<<  owenMap_[owenKey].Nsig<<endl;
-  cout<<"Nsb               "<<  owenMap_[owenKey].Nsb<<endl;
-
-  cout<<"Nsig_sl           "<<  owenMap_[owenKey].Nsig_sl<<endl;
-  //  cout<<"Nsb_sl            "<<  owenMap_[owenKey].Nsb_sl<<endl;
-  cout<<"Nsb_1e            "<<  owenMap_[owenKey].Nsb_1e<<endl;
-  cout<<"Nsb_1m            "<<  owenMap_[owenKey].Nsb_1m<<endl;
-
-  cout<<"Nsig_ldp          "<<  owenMap_[owenKey].Nsig_ldp<<endl;
-  cout<<"Nsb_ldp           "<<  owenMap_[owenKey].Nsb_ldp<<endl;
-
-  //  cout<<"Nlsb_0b           "<<  owenMap_[owenKey].Nlsb_0b<<endl;
-  //  cout<<"Nlsb_0b_ldp       "<<  owenMap_[owenKey].Nlsb_0b_ldp<<endl;
-  cout<<"Rlsb_passfail     "<<owenMap_[owenKey].Rlsb_passfail<<endl;
-  cout<<"Rlsb_passfail_err "<<owenMap_[owenKey].Rlsb_passfail_err<<endl;
-
-  cout<<"Nttbarmc_sig_ldp  "<<  owenMap_[owenKey].Nttbarmc_sig_ldp<<endl;
-  cout<<"Nttbarmc_sb_ldp   "<<  owenMap_[owenKey].Nttbarmc_sb_ldp<<endl;
-
-  cout<<"Nsingletopmc_sig_ldp  "<<  owenMap_[owenKey].Nsingletopmc_sig_ldp<<endl;
-  cout<<"Nsingletopmc_sb_ldp   "<<  owenMap_[owenKey].Nsingletopmc_sb_ldp<<endl;
-
-  //  cout<<"lsf_WJmc          "<<  owenMap_[owenKey].lsf_WJmc<<endl;
-  cout<<"NWJmc_sig_ldp     "<<  owenMap_[owenKey].NWJmc_sig_ldp<<endl;
-  cout<<"NWJmc_sb_ldp      "<<  owenMap_[owenKey].NWJmc_sb_ldp<<endl;
-
-  //  cout<<"lsf_Znnmc         "<<  owenMap_[owenKey].lsf_Znnmc<<endl;
-  cout<<"NZnnmc_sig_ldp    "<<  owenMap_[owenKey].NZnnmc_sig_ldp<<endl;
-  cout<<"NZnnmc_sb_ldp     "<<  owenMap_[owenKey].NZnnmc_sb_ldp<<endl;
-
-  //  cout<<"lsf_Zjmc         "<<  owenMap_[owenKey].lsf_Zjmc<<endl;
-  cout<<"NZjmc_sig_ldp    "<<  owenMap_[owenKey].NZjmc_sig_ldp<<endl;
-  cout<<"NZjmc_sb_ldp     "<<  owenMap_[owenKey].NZjmc_sb_ldp<<endl;
-
-}
-void printOwenShape(const TString& owenKey) {
-
-  //  cout<< " === "<<owenKey<<" === "<<endl;
-
-  TString bstr="";
-  if (owenKey.BeginsWith("eq1b")) bstr="_1b";
-  else  if (owenKey.BeginsWith("eq2b")) bstr="_2b";
-  else  if (owenKey.BeginsWith("ge3b")) bstr="_3b";
-  else assert(0);
-
-  cout<<"Nsig"<<bstr<<"              "<<  owenMap_[owenKey].Nsig<<endl;
-  cout<<"Nsb"<<bstr<<"               "<<  owenMap_[owenKey].Nsb<<endl;
-
-  cout<<"Nsig_sl"<<bstr<<"           "<<  owenMap_[owenKey].Nsig_sl<<endl;
-   cout<<"Nsb_1e"<<bstr<<"            "<<  owenMap_[owenKey].Nsb_1e<<endl;
-   cout<<"Nsb_1m"<<bstr<<"            "<<  owenMap_[owenKey].Nsb_1m<<endl;
-
-  cout<<"Nsb_sl"<<bstr<<"            "<<  owenMap_[owenKey].Nsb_1e+owenMap_[owenKey].Nsb_1m<<endl;
-
-
-  cout<<"Nsig_ldp"<<bstr<<"          "<<  owenMap_[owenKey].Nsig_ldp<<endl;
-  cout<<"Nsb_ldp"<<bstr<<"           "<<  owenMap_[owenKey].Nsb_ldp<<endl;
-
-  if (owenKey.BeginsWith("eq1b")) {
-    cout<<"Rlsb_passfail     "<<owenMap_[owenKey].Rlsb_passfail<<endl;
-    cout<<"Rlsb_passfail_err "<<owenMap_[owenKey].Rlsb_passfail_err<<endl;
-  }
-
-  cout<<"Nttbarsingletopzjetsmc_sig_ldp"<<bstr<<"  "<<  owenMap_[owenKey].Nttbarmc_sig_ldp+owenMap_[owenKey].Nsingletopmc_sig_ldp+owenMap_[owenKey].NZjmc_sig_ldp<<endl;
-  cout<<"Nttbarsingletopzjetsmc_sb_ldp"<<bstr<<"  "<<  owenMap_[owenKey].Nttbarmc_sb_ldp+owenMap_[owenKey].Nsingletopmc_sb_ldp+owenMap_[owenKey].NZjmc_sb_ldp<<endl;
-
-//   cout<<"Nttbarmc_sig_ldp"<<bstr<<"  "<<  owenMap_[owenKey].Nttbarmc_sig_ldp<<endl;
-//   cout<<"Nttbarmc_sb_ldp"<<bstr<<"   "<<  owenMap_[owenKey].Nttbarmc_sb_ldp<<endl;
-
-//   cout<<"Nsingletopmc_sig_ldp"<<bstr<<"  "<<  owenMap_[owenKey].Nsingletopmc_sig_ldp<<endl;
-//   cout<<"Nsingletopmc_sb_ldp"<<bstr<<"   "<<  owenMap_[owenKey].Nsingletopmc_sb_ldp<<endl;
-
-  cout<<"NWJmc_sig_ldp"<<bstr<<"     "<<  owenMap_[owenKey].NWJmc_sig_ldp<<endl;
-  cout<<"NWJmc_sb_ldp"<<bstr<<"      "<<  owenMap_[owenKey].NWJmc_sb_ldp<<endl;
-
-  cout<<"NZnnmc_sig_ldp"<<bstr<<"    "<<  owenMap_[owenKey].NZnnmc_sig_ldp<<endl;
-  cout<<"NZnnmc_sb_ldp"<<bstr<<"     "<<  owenMap_[owenKey].NZnnmc_sb_ldp<<endl;
-
-//   cout<<"NZjmc_sig_ldp"<<bstr<<"    "<<  owenMap_[owenKey].NZjmc_sig_ldp<<endl;
-//   cout<<"NZjmc_sb_ldp"<<bstr<<"     "<<  owenMap_[owenKey].NZjmc_sb_ldp<<endl;
-
-}
 
 
 // class for holding inputs to drawSimple (could be expanded)
@@ -902,6 +348,7 @@ TGraphAsymmErrors* effgraph=0;
 bool loaded_=false; //bookkeeping
 bool loadedSusyHistos_=false;//bookkeeping
 
+//initialized tchains that point to MC samples
 void resetChains() {
 
   cout<<"[resetting chains]"<<endl;
@@ -928,18 +375,33 @@ void resetChains() {
 
 }
 
+TString stripSamplename(TString fullname) {
+
+  //actually, this is ok
+  //  if ( fullname.Contains("$") && fullname.Contains(":") )   cout<<"Simultaneous use of $ and : syntax not currently allowed!"<<endl;
+
+  //eg for samplename T1tttt$900$100, return T1tttt
+  TString name = fullname.Tokenize("$")->At(0)->GetName();
+  //also allow the TTbarJets:cutstring syntax
+  name = name.Tokenize(":")->At(0)->GetName();
+
+  return name;
+}
+
 
 TChain* getTree(const TString & samplename) {
 
-  // cout<<files_[currentConfig_][samplename].first<<"\t"<<files_[currentConfig_][samplename].second<<endl;
-
-  //  TTree* t=(TTree*) files_[currentConfig_][samplename]->Get(reducedTreeName_);
   TChain* t = (TChain*) files_[currentConfig_][samplename].second;
   return t;
 }
 
-
+//plot multiple "samples" as one
 void chainSamples(const TString & parent, const TString & child) {
+
+  if (parent.Contains("$") || parent.Contains(":") ) {
+    cout<<" cannot chain subsamples defined with $ or :"<<endl;
+    return;
+  }
 
   //first enforce some sanity
   //the parent must be plotted, and the child must not be plotted
@@ -947,7 +409,7 @@ void chainSamples(const TString & parent, const TString & child) {
 
   bool foundit=false;
   for (unsigned int isample = 0; isample<samples_.size(); isample++) {
-    if (samples_[isample] == parent) { foundit=true;}
+    if (samples_[isample] == parent || stripSamplename(samples_[isample])==parent) { foundit=true;}
     if (samples_[isample] == child) {
       cout<<child<<" is already on the plotting list! Why do you want to plot it twice? quitting..."<<endl;
       return;
@@ -1030,7 +492,7 @@ void setLumiScale(double lumiscale){
   lumiScale_ = lumiscale;
 }
 
-
+//CMSSM/mSugra stuff is definitely not up-to-date -- may not work anymore
 CrossSectionTable * CrossSectionTable_mSUGRAtanb40_=0;
 void loadSusyCrossSections() {
   if (CrossSectionTable_mSUGRAtanb40_==0) {
@@ -1080,19 +542,6 @@ TString extractExtraCut(TString fullname) {
   return cuts;
 }
 
-TString stripSamplename(TString fullname) {
-
-  //actually, this is ok
-  //  if ( fullname.Contains("$") && fullname.Contains(":") )   cout<<"Simultaneous use of $ and : syntax not currently allowed!"<<endl;
-
-  //eg for samplename T1tttt$900$100, return T1tttt
-  TString name = fullname.Tokenize("$")->At(0)->GetName();
-  //also allow the TTbarJets:cutstring syntax
-  name = name.Tokenize(":")->At(0)->GetName();
-
-  return name;
-}
-
 void setScanPoint(const TString & name) {
 
   // format is e.g. T1bbbb$m0$m12
@@ -1124,7 +573,7 @@ void loadScanSMSngen(const TString& sampleOfInterest) {
 }
 
 void loadReferenceCrossSections() {
-
+  //bad idea to hard-code to this remote afs?
   if ( CrossSectionTable_gluino_ == 0) {
     cout<<"Loading reference cross section file (g~g~)"<<endl;
     CrossSectionTable_gluino_ = new  CrossSectionTable("/afs/hephy.at/user/w/walten/public/referenceXSecs.root","smsroot","gluino8TeV_NLONLL");
@@ -1137,6 +586,7 @@ void loadReferenceCrossSections() {
 
 }
 
+// jmt Dec 2012 -- honestly not sure if this is needed anymore. leave it for now.
 //m0, m12            //pdf set
 map<pair<int,int>, map<TString, TH2D*> >  scanProcessTotalsMap;
 void loadSusyScanHistograms() {
@@ -1395,6 +845,7 @@ TString renormBins( TH1D* hp, int refbin ) {
   return ytitle;
 }
 
+// jmt -- the flavor history stuff has not been used in years. certaintly not to be considered functional at the moment
 void fillFlavorHistoryScaling() {
 
   TChain* tree=0;
@@ -1416,6 +867,7 @@ void fillFlavorHistoryScaling() {
 
 }
 
+//jmt Dec 2012 -- clearly this function is stylistically awful, but it does the job and I don't want to mess with it right now
 //try to bring some rationality to the options passed to getcutstring....
 enum sampleType {kData, kMC, kmSugraPoint, kmSugraPlane, kSMSPointGlGl, kSMSPointStopStop, kSMSPointSbottomSbottom, kSMSPlane};
 //for more rationality, should make a data struct (or class) to hold the options, so that fewer arguments need to be passed
@@ -1433,6 +885,7 @@ kSMSPlane treats the MC like data -- no weighting at all. Good for making effici
 normalize properly by Ngenerated)
 
 for legacy purposes I am keeping all of the weight and selection TStrings, although I wonder if they are really needed....
+
   */
   double lumiscale = 0;
 
@@ -1812,78 +1265,10 @@ void setColorScheme(const TString & name) {
     sampleColor_["TTbarJetsMCNLO"]=kAzure-3;
     sampleColor_["TTbarSingleTopWJetsCombined"]=kAzure-3;
     sampleColor_["ttbar"]=kAzure-3;
-    sampleColor_["TTbarJets-semiMu"]=kViolet;
-    sampleColor_["TTbarJets-semiMuGood"]=kViolet;
-    sampleColor_["TTbarJets-semiMuFailEta"]=kViolet;
-    sampleColor_["TTbarJets-semiMuFailPt"]=kViolet;
-    sampleColor_["TTbarJets-semiMuFailRecoIso"]=kViolet;
-    sampleColor_["TTbarJets-semiMuFailOther"]=kViolet;
-    sampleColor_["TTbarJets-semiEle"]=kViolet-9;
-    sampleColor_["TTbarJets-semiEleGood"]=kViolet-9;
-    sampleColor_["TTbarJets-semiEleFailEta"]=kViolet-9;
-    sampleColor_["TTbarJets-semiEleFailPt"]=kViolet-9;
-    sampleColor_["TTbarJets-semiEleFailRecoIso"]=kViolet-9;
-    sampleColor_["TTbarJets-semiEleFailOther"]=kViolet-9;
-    sampleColor_["TTbarJets-semiTauHad"]=kViolet-7;
-    sampleColor_["TTbarJets-dilep"]=kMagenta-10;
-    sampleColor_["TTbarJets-had"]=kRed-5;
-    sampleColor_["TTbarJets-other"]=kPink-9;
     sampleColor_["SingleTop"] = kMagenta;
     sampleColor_["WJets"] = kGreen-3;
-    sampleColor_["WJetsInc"] = kGreen+3;
-    sampleColor_["WJets-mu"]=kSpring+9;
-    sampleColor_["WJets-muGood"]=kSpring+9;
-    sampleColor_["WJets-muFailEta"]=kSpring+9;
-    sampleColor_["WJets-muFailPt"]=kSpring+9;
-    sampleColor_["WJets-muFailRecoIso"]=kSpring+9;
-    sampleColor_["WJets-muFailOther"]=kSpring+9;
-    sampleColor_["WJets-ele"]=kCyan;
-    sampleColor_["WJets-eleGood"]=kCyan;
-    sampleColor_["WJets-eleFailEta"]=kCyan;
-    sampleColor_["WJets-eleFailPt"]=kCyan;
-    sampleColor_["WJets-eleFailRecoIso"]=kCyan;
-    sampleColor_["WJets-eleFailOther"]=kCyan;
-    sampleColor_["WJets-tauHad"]=kGreen-10;
-    sampleColor_["WJetsZ2"] = kGreen-3;
     sampleColor_["ZJets"] = kViolet-3;
-    sampleColor_["ZJetsInc"] = kOrange+3;
     sampleColor_["Zinvisible"] = kOrange-3;
-    sampleColor_["Zinvisible-2vAcc"] = kOrange-3;
-    sampleColor_["Zinvisible-1vAcc"] = kSpring+4;
-    sampleColor_["Zinvisible-0vAcc"] = kGray+3;
-    sampleColor_["SingleTop-sChannel"] = kMagenta+1; //for special cases
-    sampleColor_["SingleTop-tChannel"] = kMagenta+2; //for special cases
-    sampleColor_["SingleTop-tWChannel"] = kMagenta+3; //for special cases
-    sampleColor_["SingleTopBar-sChannel"] = kMagenta+4; //for special cases
-    sampleColor_["SingleTopBar-tChannel"] = kMagenta+5; //for special cases
-    sampleColor_["SingleTopBar-tWChannel"] = kMagenta+6; //for special cases
-    //sampleColor_["SingleTop-sandtCombined"] = kMagenta+1; //for special cases
-    //sampleColor_["SingleTop-tWCombined"] = kMagenta+3; //for special cases
-    sampleColor_["SingleTop-sandtCombined-muGood"] = kMagenta+1;
-    sampleColor_["SingleTop-sandtCombined-muFailEta"] = kMagenta+1;
-    sampleColor_["SingleTop-sandtCombined-muFailPt"] = kMagenta+1;
-    sampleColor_["SingleTop-sandtCombined-muFailRecoIso"] = kMagenta+1;
-    sampleColor_["SingleTop-sandtCombined-muFailOther"] = kMagenta+1;
-    sampleColor_["SingleTop-sandtCombined-eleGood"] = kMagenta+1;
-    sampleColor_["SingleTop-sandtCombined-eleFailEta"] = kMagenta+1;
-    sampleColor_["SingleTop-sandtCombined-eleFailPt"] = kMagenta+1;
-    sampleColor_["SingleTop-sandtCombined-eleFailRecoIso"] = kMagenta+1;
-    sampleColor_["SingleTop-sandtCombined-eleFailOther"] = kMagenta+1;
-    sampleColor_["SingleTop-sandtCombined-tauHad"] = kMagenta+1;
-    sampleColor_["SingleTop-tWCombined-semiMuGood"] = kMagenta+3;
-    sampleColor_["SingleTop-tWCombined-semiMuFailEta"] = kMagenta+3;
-    sampleColor_["SingleTop-tWCombined-semiMuFailPt"] = kMagenta+3;
-    sampleColor_["SingleTop-tWCombined-semiMuFailRecoIso"] = kMagenta+3;
-    sampleColor_["SingleTop-tWCombined-semiMuFailOther"] = kMagenta+3;
-    sampleColor_["SingleTop-tWCombined-semiEleGood"] = kMagenta+3;
-    sampleColor_["SingleTop-tWCombined-semiEleFailEta"] = kMagenta+3;
-    sampleColor_["SingleTop-tWCombined-semiEleFailPt"] = kMagenta+3;
-    sampleColor_["SingleTop-tWCombined-semiEleFailRecoIso"] = kMagenta+3;
-    sampleColor_["SingleTop-tWCombined-semiEleFailOther"] = kMagenta+3;
-    sampleColor_["SingleTop-tWCombined-semiTauHad"] = kMagenta+3;
-    sampleColor_["SingleTop-tWCombined-dilep"] = kMagenta+3;
-    sampleColor_["SingleTop-tWCombined-had"] = kMagenta+3;
-    sampleColor_["SingleTop-tWCombined-other"] = kMagenta+3;
     sampleColor_["TotalSM"] = kBlue+2;
     sampleColor_["Total"] = kGreen+3;
     sampleColor_["VV"] = kCyan+1;
@@ -1908,79 +1293,10 @@ void setColorScheme(const TString & name) {
     sampleColor_["TTbarJets0"]=kCyan;
     sampleColor_["TTbarJetsPowheg"]=kCyan+4;
     sampleColor_["TTbarJetsMCNLO"]=kViolet;
-    sampleColor_["TTbarSingleTopWJetsCombined"]=4;
-    sampleColor_["TTbarJets-semiMu"]=kGreen-3;
-    sampleColor_["TTbarJets-semiMuGood"]=kGreen-3;
-    sampleColor_["TTbarJets-semiMuFailEta"]=kGreen-3;
-    sampleColor_["TTbarJets-semiMuFailPt"]=kGreen-3;
-    sampleColor_["TTbarJets-semiMuFailRecoIso"]=kGreen-3;
-    sampleColor_["TTbarJets-semiMuFailOther"]=kGreen-3;
-    sampleColor_["TTbarJets-semiEle"]=kAzure-2;
-    sampleColor_["TTbarJets-semiEleGood"]=kAzure-2;
-    sampleColor_["TTbarJets-semiEleFailEta"]=kAzure-2;
-    sampleColor_["TTbarJets-semiEleFailPt"]=kAzure-2;
-    sampleColor_["TTbarJets-semiEleFailRecoIso"]=kAzure-2;
-    sampleColor_["TTbarJets-semiEleFailOther"]=kAzure-2;
-    sampleColor_["TTbarJets-semiTauHad"]=kBlack;
-    sampleColor_["TTbarJets-dilep"]=kYellow;
-    sampleColor_["TTbarJets-had"]=kRed-5;
-    sampleColor_["TTbarJets-other"]=kPink-9;
     sampleColor_["SingleTop"] = kMagenta;
     sampleColor_["WJets"] = kOrange;
-    sampleColor_["WJetsInc"] = kOrange+3;
-    sampleColor_["WJets-mu"]=kSpring+9;
-    sampleColor_["WJets-muGood"]=kSpring+9;
-    sampleColor_["WJets-muFailEta"]=kSpring+9;
-    sampleColor_["WJets-muFailPt"]=kSpring+9;
-    sampleColor_["WJets-muFailRecoIso"]=kSpring+9;
-    sampleColor_["WJets-muFailOther"]=kSpring+9;
-    sampleColor_["WJets-ele"]=kCyan;
-    sampleColor_["WJets-eleGood"]=kCyan;
-    sampleColor_["WJets-eleFailEta"]=kCyan;
-    sampleColor_["WJets-eleFailPt"]=kCyan;
-    sampleColor_["WJets-eleFailRecoIso"]=kCyan;
-    sampleColor_["WJets-eleFailOther"]=kCyan;
-    sampleColor_["WJets-tauHad"]=kGreen-10;
-    sampleColor_["WJetsZ2"] = kOrange;
     sampleColor_["ZJets"] = 7;
-    sampleColor_["ZJetsInc"] = kOrange+3;
     sampleColor_["Zinvisible"] = kOrange+7;
-    sampleColor_["Zinvisible-2vAcc"] = kOrange-3;
-    sampleColor_["Zinvisible-1vAcc"] = kSpring+4;
-    sampleColor_["Zinvisible-0vAcc"] = kGray+3;
-    sampleColor_["SingleTop-sChannel"] = kMagenta+1; //for special cases
-    sampleColor_["SingleTop-tChannel"] = kMagenta+2; //for special cases
-    sampleColor_["SingleTop-tWChannel"] = kMagenta+3; //for special cases
-    sampleColor_["SingleTopBar-sChannel"] = kMagenta+4; //for special cases
-    sampleColor_["SingleTopBar-tChannel"] = kMagenta+5; //for special cases
-    sampleColor_["SingleTopBar-tWChannel"] = kMagenta+6; //for special cases
-    //sampleColor_["SingleTop-sandtCombined"] = kMagenta+1; //for special cases
-    //sampleColor_["SingleTop-tWCombined"] = kMagenta+3; //for special cases
-    sampleColor_["SingleTop-sandtCombined-muGood"] = kMagenta+1;
-    sampleColor_["SingleTop-sandtCombined-muFailEta"] = kMagenta+1;
-    sampleColor_["SingleTop-sandtCombined-muFailPt"] = kMagenta+1;
-    sampleColor_["SingleTop-sandtCombined-muFailRecoIso"] = kMagenta+1;
-    sampleColor_["SingleTop-sandtCombined-muFailOther"] = kMagenta+1;
-    sampleColor_["SingleTop-sandtCombined-eleGood"] = kMagenta+1;
-    sampleColor_["SingleTop-sandtCombined-eleFailEta"] = kMagenta+1;
-    sampleColor_["SingleTop-sandtCombined-eleFailPt"] = kMagenta+1;
-    sampleColor_["SingleTop-sandtCombined-eleFailRecoIso"] = kMagenta+1;
-    sampleColor_["SingleTop-sandtCombined-eleFailOther"] = kMagenta+1;
-    sampleColor_["SingleTop-sandtCombined-tauHad"] = kMagenta+1;
-    sampleColor_["SingleTop-tWCombined-semiMuGood"] = kMagenta+3;
-    sampleColor_["SingleTop-tWCombined-semiMuFailEta"] = kMagenta+3;
-    sampleColor_["SingleTop-tWCombined-semiMuFailPt"] = kMagenta+3;
-    sampleColor_["SingleTop-tWCombined-semiMuFailRecoIso"] = kMagenta+3;
-    sampleColor_["SingleTop-tWCombined-semiMuFailOther"] = kMagenta+3;
-    sampleColor_["SingleTop-tWCombined-semiEleGood"] = kMagenta+3;
-    sampleColor_["SingleTop-tWCombined-semiEleFailEta"] = kMagenta+3;
-    sampleColor_["SingleTop-tWCombined-semiEleFailPt"] = kMagenta+3;
-    sampleColor_["SingleTop-tWCombined-semiEleFailRecoIso"] = kMagenta+3;
-    sampleColor_["SingleTop-tWCombined-semiEleFailOther"] = kMagenta+3;
-    sampleColor_["SingleTop-tWCombined-semiTauHad"] = kMagenta+3;
-    sampleColor_["SingleTop-tWCombined-dilep"] = kMagenta+3;
-    sampleColor_["SingleTop-tWCombined-had"] = kMagenta+3;
-    sampleColor_["SingleTop-tWCombined-other"] = kMagenta+3;
     sampleColor_["TotalSM"] =kGreen+1; //owen requested 3
     sampleColor_["Total"] = 6;
     sampleColor_["VV"] = kOrange-3;
@@ -2002,6 +1318,8 @@ void setStackMode(bool dostack, bool normalized=false) {
 
 void resetSamples(bool joinSingleTop=true) {
 
+  assert(joinSingleTop); //no longer support any other option
+
   samples_.clear();
   //this block controls what samples will enter your plot
   //order of this vector controls order of samples in stack
@@ -2012,105 +1330,15 @@ void resetSamples(bool joinSingleTop=true) {
   samples_.push_back("PythiaPUQCD"); 
   //samples_.push_back("PythiaPUQCDFlat");
 
-  if(splitTTbarForClosureTest_){
-    samples_.push_back("TTbarJets-semiMuGood");
-    samples_.push_back("TTbarJets-semiMuFailEta");
-    samples_.push_back("TTbarJets-semiMuFailPt");
-    samples_.push_back("TTbarJets-semiMuFailRecoIso");
-    samples_.push_back("TTbarJets-semiMuFailOther");
-    samples_.push_back("TTbarJets-semiEleGood");
-    samples_.push_back("TTbarJets-semiEleFailEta");
-    samples_.push_back("TTbarJets-semiEleFailPt");
-    samples_.push_back("TTbarJets-semiEleFailRecoIso");
-    samples_.push_back("TTbarJets-semiEleFailOther");
-    samples_.push_back("TTbarJets-semiTauHad");
-    samples_.push_back("TTbarJets-dilep");
-    samples_.push_back("TTbarJets-had");
-    samples_.push_back("TTbarJets-other");
-  }
-  else if(splitTTbar_){// "load" the decay modes separately
-    samples_.push_back("TTbarJets-semiMu");
-    samples_.push_back("TTbarJets-semiEle");
-    samples_.push_back("TTbarJets-semiTauHad");
-    samples_.push_back("TTbarJets-dilep");
-    samples_.push_back("TTbarJets-had");
-    samples_.push_back("TTbarJets-other");
-  }
-  else{
-    samples_.push_back("TTbarJets");
-  }
-  if(splitWJetsForClosureTest_){// "load" the decay modes separately
-    samples_.push_back("WJets-muGood");
-    samples_.push_back("WJets-muFailEta");
-    samples_.push_back("WJets-muFailPt");
-    samples_.push_back("WJets-muFailRecoIso");
-    samples_.push_back("WJets-muFailOther");
-    samples_.push_back("WJets-eleGood");
-    samples_.push_back("WJets-eleFailEta");
-    samples_.push_back("WJets-eleFailPt");
-    samples_.push_back("WJets-eleFailRecoIso");
-    samples_.push_back("WJets-eleFailOther");
-    samples_.push_back("WJets-tauHad");
-  }
-  else if(splitWJets_){// "load" the decay modes separately
-    samples_.push_back("WJets-mu");
-    samples_.push_back("WJets-ele");
-    samples_.push_back("WJets-tauHad");
-  }
-  else{
-    samples_.push_back("WJets");
-  }
-  //flip this bool to control whether SingleTop is loaded as one piece or 3
-  //or two pieces for the tt+W+t enhanced closure test
-  if(splitSingleTopForClosureTest_){
-    //samples_.push_back("SingleTop-sandtCombined");
-    samples_.push_back("SingleTop-sandtCombined-muGood");
-    samples_.push_back("SingleTop-sandtCombined-muFailEta");
-    samples_.push_back("SingleTop-sandtCombined-muFailPt");
-    samples_.push_back("SingleTop-sandtCombined-muFailRecoIso");
-    samples_.push_back("SingleTop-sandtCombined-muFailOther");
-    samples_.push_back("SingleTop-sandtCombined-eleGood");
-    samples_.push_back("SingleTop-sandtCombined-eleFailEta");
-    samples_.push_back("SingleTop-sandtCombined-eleFailPt");
-    samples_.push_back("SingleTop-sandtCombined-eleFailRecoIso");
-    samples_.push_back("SingleTop-sandtCombined-eleFailOther");
-    samples_.push_back("SingleTop-sandtCombined-tauHad");
+  samples_.push_back("TTbarJets");
 
-    //samples_.push_back("SingleTop-tWCombined");
-    samples_.push_back("SingleTop-tWCombined-semiMuGood");
-    samples_.push_back("SingleTop-tWCombined-semiMuFailEta");
-    samples_.push_back("SingleTop-tWCombined-semiMuFailPt");
-    samples_.push_back("SingleTop-tWCombined-semiMuFailRecoIso");
-    samples_.push_back("SingleTop-tWCombined-semiMuFailOther");
-    samples_.push_back("SingleTop-tWCombined-semiEleGood");
-    samples_.push_back("SingleTop-tWCombined-semiEleFailEta");
-    samples_.push_back("SingleTop-tWCombined-semiEleFailPt");
-    samples_.push_back("SingleTop-tWCombined-semiEleFailRecoIso");
-    samples_.push_back("SingleTop-tWCombined-semiEleFailOther");
-    samples_.push_back("SingleTop-tWCombined-semiTauHad");
-    samples_.push_back("SingleTop-tWCombined-dilep");
-    samples_.push_back("SingleTop-tWCombined-had");
-    samples_.push_back("SingleTop-tWCombined-other");
-  }
-  else if (joinSingleTop) samples_.push_back("SingleTop");
-  else {
-    samples_.push_back("SingleTop-sChannel");
-    samples_.push_back("SingleTop-tChannel");
-    samples_.push_back("SingleTop-tWChannel");
-    samples_.push_back("SingleTopBar-sChannel");
-    samples_.push_back("SingleTopBar-tChannel");
-    samples_.push_back("SingleTopBar-tWChannel");
-  }
+  samples_.push_back("WJets");
+  samples_.push_back("SingleTop");
   samples_.push_back("ZJets");
   samples_.push_back("VV");
-  if(splitZinvisible_){// "load" the decay modes separately
-    samples_.push_back("Zinvisible-2vAcc");
-    samples_.push_back("Zinvisible-1vAcc");
-    samples_.push_back("Zinvisible-0vAcc");
-  }
   samples_.push_back("Zinvisible");
   //samples_.push_back("HerwigQCDFlat");
-  samples_.push_back("LM9");
+  //  samples_.push_back("LM9");
 
 }
 
@@ -2169,13 +1397,15 @@ void addToSamplesAll(const TString & name) {
 
 void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   if (loaded_) return;
-  loaded_=true;
+  loaded_=true; //implies that loadSamples() can only be called once per session
 
+  initStyle();
   resetPadDimensions();
   resetLegendPosition();
 
   resetSamples(joinSingleTop);
   //samplesAll_ should have *every* available sample
+  //however we now have addToSamplesAll() to allow the user to add some stuff before calling loadSamples()
   //also note that there's no harm in failing to load one of these samples, 
   //as long as you don't actually try to draw it
 
@@ -2213,43 +1443,11 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   samplesAll_.insert("TTTo2L2Nu2B");
   samplesAll_.insert("TTbarJets8TeV");
   samplesAll_.insert("TTbarSingleTopWJetsCombined");
-  samplesAll_.insert("TTbarJets-semiMu");
-  samplesAll_.insert("TTbarJets-semiMuGood");
-  samplesAll_.insert("TTbarJets-semiMuFailEta");
-  samplesAll_.insert("TTbarJets-semiMuFailPt");
-  samplesAll_.insert("TTbarJets-semiMuFailRecoIso");
-  samplesAll_.insert("TTbarJets-semiMuFailOther");
-  samplesAll_.insert("TTbarJets-semiEle");
-  samplesAll_.insert("TTbarJets-semiEleGood");
-  samplesAll_.insert("TTbarJets-semiEleFailEta");
-  samplesAll_.insert("TTbarJets-semiEleFailPt");
-  samplesAll_.insert("TTbarJets-semiEleFailRecoIso");
-  samplesAll_.insert("TTbarJets-semiEleFailOther");
-  samplesAll_.insert("TTbarJets-semiTauHad");
-  samplesAll_.insert("TTbarJets-dilep");
-  samplesAll_.insert("TTbarJets-had");
-  samplesAll_.insert("TTbarJets-other");
   samplesAll_.insert("WJets");
   samplesAll_.insert("WJetsInc");
-  samplesAll_.insert("WJets-muGood");
-  samplesAll_.insert("WJets-muFailEta");
-  samplesAll_.insert("WJets-muFailPt");
-  samplesAll_.insert("WJets-muFailRecoIso");
-  samplesAll_.insert("WJets-muFailOther");
-  samplesAll_.insert("WJets-eleGood");
-  samplesAll_.insert("WJets-eleFailEta");
-  samplesAll_.insert("WJets-eleFailPt");
-  samplesAll_.insert("WJets-eleFailRecoIso");
-  samplesAll_.insert("WJets-eleFailOther");
-  samplesAll_.insert("WJets-mu");
-  samplesAll_.insert("WJets-ele");
-  samplesAll_.insert("WJets-tauHad");
   samplesAll_.insert("ZJets");
   samplesAll_.insert("ZJetsInc");
   samplesAll_.insert("Zinvisible");
-  samplesAll_.insert("Zinvisible-2vAcc");
-  samplesAll_.insert("Zinvisible-1vAcc");
-  samplesAll_.insert("Zinvisible-0vAcc");    
   samplesAll_.insert("SingleTop");
   samplesAll_.insert("SingleTop-sChannel");
   samplesAll_.insert("SingleTop-tChannel");
@@ -2259,31 +1457,6 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   samplesAll_.insert("SingleTopBar-tWChannel");
   //samplesAll_.insert("SingleTop-sandtCombined");
   //samplesAll_.insert("SingleTop-tWCombined");
-  samplesAll_.insert("SingleTop-sandtCombined-muGood");
-  samplesAll_.insert("SingleTop-sandtCombined-muFailEta");
-  samplesAll_.insert("SingleTop-sandtCombined-muFailPt");
-  samplesAll_.insert("SingleTop-sandtCombined-muFailRecoIso");
-  samplesAll_.insert("SingleTop-sandtCombined-muFailOther");
-  samplesAll_.insert("SingleTop-sandtCombined-eleGood");
-  samplesAll_.insert("SingleTop-sandtCombined-eleFailEta");
-  samplesAll_.insert("SingleTop-sandtCombined-eleFailPt");
-  samplesAll_.insert("SingleTop-sandtCombined-eleFailRecoIso");
-  samplesAll_.insert("SingleTop-sandtCombined-eleFailOther");
-  samplesAll_.insert("SingleTop-sandtCombined-tauHad");
-  samplesAll_.insert("SingleTop-tWCombined-semiMuGood");
-  samplesAll_.insert("SingleTop-tWCombined-semiMuFailEta");
-  samplesAll_.insert("SingleTop-tWCombined-semiMuFailPt");
-  samplesAll_.insert("SingleTop-tWCombined-semiMuFailRecoIso");
-  samplesAll_.insert("SingleTop-tWCombined-semiMuFailOther");
-  samplesAll_.insert("SingleTop-tWCombined-semiEleGood");
-  samplesAll_.insert("SingleTop-tWCombined-semiEleFailEta");
-  samplesAll_.insert("SingleTop-tWCombined-semiEleFailPt");
-  samplesAll_.insert("SingleTop-tWCombined-semiEleFailRecoIso");
-  samplesAll_.insert("SingleTop-tWCombined-semiEleFailOther");
-  samplesAll_.insert("SingleTop-tWCombined-semiTauHad");
-  samplesAll_.insert("SingleTop-tWCombined-dilep");
-  samplesAll_.insert("SingleTop-tWCombined-had");
-  samplesAll_.insert("SingleTop-tWCombined-other");
   samplesAll_.insert("HerwigQCDFlat");
   //  samplesAll_.insert("WJetsZ2");
   //  samplesAll_.insert("ZJetsZ2");
@@ -2304,7 +1477,7 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   samplesAll_.insert("sbottom-189-270"); 
   samplesAll_.insert("sbottom-217-300"); 
 
-  //FOR PLOTS
+  //since we don't use JERbias anymore this is basically irrelevant, but let's keep this framework
   ////////////
   if (signalEffMode=="") {
     configDescriptions_.setDefault("CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff04_HLTEff0");
@@ -2318,7 +1491,7 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
     configDescriptions_.setDefault("default");
     configDescriptions_.setCorrected("corrected");
   }
-  else if (signalEffMode=="scan" || signalEffMode=="complete") {  //Only for signal systematics
+  else if (signalEffMode=="scan" || signalEffMode=="complete") {  //Only for signal systematics [not used anymore in 2012]
       
     configDescriptions_.setDefault("CSVM_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff04_HLTEff0");
     configDescriptions_.setCorrected("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff04_HLTEff0");
@@ -2342,15 +1515,6 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
       configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncDown_BTagEff04_HLTEff0",
 				       "CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUuncUp_BTagEff04_HLTEff0");
     }
-    
-    //UPDATE -- with 'm' series reducedTrees, don't do this one anymore
-    //btag eff //LM9 and scans
-    //    configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffdown4_HLTEff0",
-    //				     "CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEffup4_HLTEff0");
-    
-    //HLT eff //never use this one
-    //    configDescriptions_.addVariation("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffdown",
-    //"CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff0_HLTEffup");
   }
   else assert(0);
   ///////////////
@@ -2566,6 +1730,7 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   sampleMarkerStyle_["TotalSM"] = kOpenCross; //FIXME?
   sampleMarkerStyle_["Total"] = kDot; //FIXME?
 
+  //jmt Dec 2012 -- do we use these for anything anymore?
   sampleOwenName_["mSUGRAtanb40"] = "msugra40";
   sampleOwenName_["T1bbbb"] = "t1bbbb";
   sampleOwenName_["T1tttt"] = "t1tttt";
@@ -2639,19 +1804,7 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
       TString thisconfig = configDescriptions_.at(iconfig);
       fname += thisconfig;
       fname+=".";
-
-      if((splitTTbarForClosureTest_ || splitTTbar_) && (*isample).Contains("TTbarJets") )
-	fname += "TTbarJets";
-      else if((splitWJetsForClosureTest_ || splitWJets_) && (*isample).Contains("WJets") )
-	fname += "WJets";
-      else if((splitSingleTopForClosureTest_) && (*isample).Contains("SingleTop-sandtCombined"))
-	fname += "SingleTop-sandtCombined";
-      else if((splitSingleTopForClosureTest_) && (*isample).Contains("SingleTop-tWCombined"))
-	fname += "SingleTop-tWCombined";
-      else if((splitZinvisible_) && (*isample).Contains("Zinvisible") )
-	fname += "Zinvisible";
-      else
-	fname += *isample;
+      fname += *isample;
 
       fname+=".root";
 
@@ -2901,7 +2054,11 @@ float drawSimple(const TString var, const int nbins, const double low, const dou
 
   TString optfh= useFlavorHistoryWeights_ && samplename.Contains("WJets") ? "flavorHistoryWeight" : "";
   if (samplename=="data") tree->Project(histname,var,getCutString(true).Data());
-  else tree->Project(histname,var,getCutString( getSampleType(samplename,"point"),optfh,selection_,"",0,"").Data());
+  else //tree->Project(histname,var,getCutString( getSampleType(samplename,"point"),optfh,selection_,"",0,"").Data());
+    tree->Project(histname,var,getCutString( getSampleType(samplename,"point"),optfh,selection_,extractExtraCut(samplename),0,"",-1,getSampleScaleFactor(samplename)).Data());
+
+  //  hh->Scale( getSampleScaleFactor(samplename));
+
   float theIntegral = hh->Integral(0,nbins+1);
 
   if (addOverflow_)  addOverflowBin( hh ); //manipulates the TH1D
@@ -3117,13 +2274,13 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
   vector<TString> signals;
   for (unsigned int isample=0; isample<samples_.size(); isample++) {
 
-    //new complication for scans -- we have both the complete samplename that includes the mass point and a shortened version that doesn't
+    //the full sample name can contain "extra" stuff like the mass point and a cut. Get the base sample name
     const    TString samplename= stripSamplename(samples_[isample]);
 
     if (!quiet_)   cout <<samples_[isample]<<endl;
 
     gROOT->cd();
-    //should each histo have a different name? maybe
+    //ive each histo have a different name
     TString hname = jmt::fortranize(var); hname += "_"; hname += jmt::fortranize(samples_[isample]);
     histos_[samples_[isample]] = (varbins==0) ? new TH1D(hname,"",nbins,low,high) : new TH1D(hname,"",nbins,varbins);
     histos_[samples_[isample]]->Sumw2();
@@ -3131,7 +2288,6 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
       cout << "ERROR: TFile for " << samples_[isample] << " is null.  Check that the file exists.  Exiting." << endl;
       assert(0);
     }
-    //    TChain* tree = (TChain*) files_[currentConfig_][samplename]->Get(reducedTreeName_);
     TChain* tree = getTree(samplename);
     if (tree==0) {
       cout<<"tree is null! Something must be wrong!"<<endl<<currentConfig_<<endl<<samplename<<endl;
@@ -3143,305 +2299,8 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
     if ( isSampleSMS(samplename)) loadScanSMSngen(samplename);
     if (isSampleScan(samplename)) setScanPoint(samples_[isample]);
 
-    //treat ttbar in a special way 
-    if(samples_[isample].Contains("TTbarJets-")){
-      if(splitTTbarForClosureTest_){
-	//tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,"",0,"",-1,sampleScaleFactor_[samples_[isample]]).Data());    
-	if(samples_[isample].Contains("TTbarJets-semiMuGood")){
-	  TString semiMuMode = "(((W1decayType==13 && W2decayType==112) || (W1decayType==112 && W2decayType==13) || (W1decayType==1513 && W2decayType==112) || (W1decayType==112 && W2decayType==1513) || (W1decayType==13 && W2decayType==134) || (W1decayType==134 && W2decayType==13) || (W1decayType==1513 && W2decayType==134) || (W1decayType==134 && W2decayType==1513))&&(decayType==101300))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiMuMode,0,"",-1,getSampleScaleFactor(samples_[isample]) ).Data());    
-	}
-	if(samples_[isample].Contains("TTbarJets-semiMuFailEta")){
-	  TString semiMuMode = "(((W1decayType==13 && W2decayType==112) || (W1decayType==112 && W2decayType==13) || (W1decayType==1513 && W2decayType==112) || (W1decayType==112 && W2decayType==1513) || (W1decayType==13 && W2decayType==134) || (W1decayType==134 && W2decayType==13) || (W1decayType==1513 && W2decayType==134) || (W1decayType==134 && W2decayType==1513))&&(decayType==101301 || decayType==201301))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiMuMode,0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-	}
-	if(samples_[isample].Contains("TTbarJets-semiMuFailPt")){
-	  TString semiMuMode = "(((W1decayType==13 && W2decayType==112) || (W1decayType==112 && W2decayType==13) || (W1decayType==1513 && W2decayType==112) || (W1decayType==112 && W2decayType==1513) || (W1decayType==13 && W2decayType==134) || (W1decayType==134 && W2decayType==13) || (W1decayType==1513 && W2decayType==134) || (W1decayType==134 && W2decayType==1513))&&(decayType==101302 || decayType==201302))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiMuMode,0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-	}
-	if(samples_[isample].Contains("TTbarJets-semiMuFailRecoIso")){
-	  TString semiMuMode = "(((W1decayType==13 && W2decayType==112) || (W1decayType==112 && W2decayType==13) || (W1decayType==1513 && W2decayType==112) || (W1decayType==112 && W2decayType==1513) || (W1decayType==13 && W2decayType==134) || (W1decayType==134 && W2decayType==13) || (W1decayType==1513 && W2decayType==134) || (W1decayType==134 && W2decayType==1513))&&(decayType==201303))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiMuMode,0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-	}
-	if(samples_[isample].Contains("TTbarJets-semiMuFailOther")){
-	  TString semiMuMode = "(((W1decayType==13 && W2decayType==112) || (W1decayType==112 && W2decayType==13) || (W1decayType==1513 && W2decayType==112) || (W1decayType==112 && W2decayType==1513) || (W1decayType==13 && W2decayType==134) || (W1decayType==134 && W2decayType==13) || (W1decayType==1513 && W2decayType==134) || (W1decayType==134 && W2decayType==1513))&&(decayType==101304))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiMuMode,0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-	}
-	if(samples_[isample].Contains("TTbarJets-semiEleGood")){
-	  TString semiEleMode = "(((W1decayType==11 && W2decayType==112) || (W1decayType==112 && W2decayType==11) || (W1decayType==1511 && W2decayType==112) || (W1decayType==112 && W2decayType==1511) || (W1decayType==11 && W2decayType==134) || (W1decayType==134 && W2decayType==11) || (W1decayType==1511 && W2decayType==134) || (W1decayType==134 && W2decayType==1511))&&(decayType==101100))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiEleMode,0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-	}
-	if(samples_[isample].Contains("TTbarJets-semiEleFailEta")){
-	  TString semiEleMode = "(((W1decayType==11 && W2decayType==112) || (W1decayType==112 && W2decayType==11) || (W1decayType==1511 && W2decayType==112) || (W1decayType==112 && W2decayType==1511) || (W1decayType==11 && W2decayType==134) || (W1decayType==134 && W2decayType==11) || (W1decayType==1511 && W2decayType==134) || (W1decayType==134 && W2decayType==1511))&&(decayType==101101 || decayType==201101))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiEleMode,0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-	}
-	if(samples_[isample].Contains("TTbarJets-semiEleFailPt")){
-	  TString semiEleMode = "(((W1decayType==11 && W2decayType==112) || (W1decayType==112 && W2decayType==11) || (W1decayType==1511 && W2decayType==112) || (W1decayType==112 && W2decayType==1511) || (W1decayType==11 && W2decayType==134) || (W1decayType==134 && W2decayType==11) || (W1decayType==1511 && W2decayType==134) || (W1decayType==134 && W2decayType==1511))&&(decayType==101102 || decayType==201102))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiEleMode,0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-	}
-	if(samples_[isample].Contains("TTbarJets-semiEleFailRecoIso")){
-	  TString semiEleMode = "(((W1decayType==11 && W2decayType==112) || (W1decayType==112 && W2decayType==11) || (W1decayType==1511 && W2decayType==112) || (W1decayType==112 && W2decayType==1511) || (W1decayType==11 && W2decayType==134) || (W1decayType==134 && W2decayType==11) || (W1decayType==1511 && W2decayType==134) || (W1decayType==134 && W2decayType==1511))&&(decayType==201103))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiEleMode,0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-	}
-	if(samples_[isample].Contains("TTbarJets-semiEleFailOther")){
-	  TString semiEleMode = "(((W1decayType==11 && W2decayType==112) || (W1decayType==112 && W2decayType==11) || (W1decayType==1511 && W2decayType==112) || (W1decayType==112 && W2decayType==1511) || (W1decayType==11 && W2decayType==134) || (W1decayType==134 && W2decayType==11) || (W1decayType==1511 && W2decayType==134) || (W1decayType==134 && W2decayType==1511))&&(decayType==101104))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiEleMode,0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-	}
-	if(samples_[isample].Contains("TTbarJets-semiTauHad")){
-	  TString semiTauHadMode = "((W1decayType==15 && W2decayType==112) || (W1decayType==112 && W2decayType==15) || (W1decayType==15 && W2decayType==134) || (W1decayType==134 && W2decayType==15))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiTauHadMode,0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-	}
-	if(samples_[isample].Contains("TTbarJets-dilep")){
-	  TString dilepMode = "((W1decayType==11 || W1decayType==13 || W1decayType==1511 || W1decayType==1513) && (W2decayType==11 || W2decayType==13 || W2decayType==1511 || W2decayType==1513))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,dilepMode,0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-	}
-	if(samples_[isample].Contains("TTbarJets-had")){
-	  TString hadMode = "(W1decayType==112 || W1decayType==134) && (W2decayType==112 || W2decayType==134)";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,hadMode,0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-	}
-	if(samples_[isample].Contains("TTbarJets-other")){
-	  //includes tautau(both had), etau(had), mutau(had), 
-	  TString otherMode = "((W1decayType==15 && W2decayType==15)||(W1decayType==11 && W2decayType==15)||(W1decayType==15 && W2decayType==11)||(W1decayType==1511 && W2decayType==15)||(W1decayType==15 && W2decayType==1511)||(W1decayType==13 && W2decayType==15)||(W1decayType==15 && W2decayType==13)||(W1decayType==15 && W2decayType==1513)||(W1decayType==1513 && W2decayType==15))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,otherMode,0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-	}
-      }
-      else if(splitTTbar_){
-	if(samples_[isample].Contains("TTbarJets-semiMu")){
-	  TString semiMuMode = "((W1decayType==13 && W2decayType==112) || (W1decayType==112 && W2decayType==13) || (W1decayType==1513 && W2decayType==112) || (W1decayType==112 && W2decayType==1513) || (W1decayType==13 && W2decayType==134) || (W1decayType==134 && W2decayType==13) || (W1decayType==1513 && W2decayType==134) || (W1decayType==134 && W2decayType==1513))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiMuMode,0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-	}
-	if(samples_[isample].Contains("TTbarJets-semiEle")){
-	  TString semiEleMode = "((W1decayType==11 && W2decayType==112) || (W1decayType==112 && W2decayType==11) || (W1decayType==1511 && W2decayType==112) || (W1decayType==112 && W2decayType==1511) || (W1decayType==11 && W2decayType==134) || (W1decayType==134 && W2decayType==11) || (W1decayType==1511 && W2decayType==134) || (W1decayType==134 && W2decayType==1511))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiEleMode,0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-	}
-	if(samples_[isample].Contains("TTbarJets-semiTauHad")){
-	  TString semiTauHadMode = "((W1decayType==15 && W2decayType==112) || (W1decayType==112 && W2decayType==15) || (W1decayType==15 && W2decayType==134) || (W1decayType==134 && W2decayType==15))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiTauHadMode,0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-	}
-	if(samples_[isample].Contains("TTbarJets-dilep")){
-	  TString dilepMode = "((W1decayType==11 || W1decayType==13 || W1decayType==1511 || W1decayType==1513) && (W2decayType==11 || W2decayType==13 || W2decayType==1511 || W2decayType==1513))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,dilepMode,0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-	}
-	if(samples_[isample].Contains("TTbarJets-had")){
-	  TString hadMode = "((W1decayType==112 || W1decayType==134) && (W2decayType==112 || W2decayType==134))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,hadMode,0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-	}
-	if(samples_[isample].Contains("TTbarJets-other")){
-	  //includes tautau(both had), etau(had), mutau(had), 
-	  TString otherMode = "((W1decayType==15 && W2decayType==15)||(W1decayType==11 && W2decayType==15)||(W1decayType==15 && W2decayType==11)||(W1decayType==1511 && W2decayType==15)||(W1decayType==15 && W2decayType==1511)||(W1decayType==13 && W2decayType==15)||(W1decayType==15 && W2decayType==13)||(W1decayType==15 && W2decayType==1513)||(W1decayType==1513 && W2decayType==15))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,otherMode,0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-	}
-
-      }
-      else tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,"",0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-    }
-    else if(samples_[isample].Contains("WJets-")){
-      if(splitWJetsForClosureTest_){
-	if(samples_[isample].Contains("WJets-muGood")){
-	  TString MuMode = "((W1decayType==13 || W1decayType==1513) && (decayType==101300))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,MuMode,0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-	}
-	if(samples_[isample].Contains("WJets-muFailEta")){
-	  TString MuMode = "((W1decayType==13 || W1decayType==1513) &&(decayType==101301 || decayType==201301))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,MuMode,0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-	}
-	if(samples_[isample].Contains("WJets-muFailPt")){
-	  TString MuMode = "((W1decayType==13 || W1decayType==1513) &&(decayType==101302 || decayType==201302))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,MuMode,0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-	}
-	if(samples_[isample].Contains("WJets-muFailRecoIso")){
-	  TString MuMode = "((W1decayType==13 || W1decayType==1513) &&(decayType==201303))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,MuMode,0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-	}
-	if(samples_[isample].Contains("WJets-muFailOther")){
-	  TString MuMode = "((W1decayType==13 || W1decayType==1513) && (decayType==101304))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,MuMode,0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-	}
-	if(samples_[isample].Contains("WJets-eleGood")){
-	  TString EleMode = "((W1decayType==11 || W1decayType==1511)&& (decayType==101100))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,EleMode,0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-	}
-	if(samples_[isample].Contains("WJets-eleFailEta")){
-	  TString EleMode = "((W1decayType==11 || W1decayType==1511)&&(decayType==101101 || decayType==201101))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,EleMode,0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-	}
-	if(samples_[isample].Contains("WJets-eleFailPt")){
-	  TString EleMode = "((W1decayType==11 || W1decayType==1511)&&(decayType==101102 || decayType==201102))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,EleMode,0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-	}
-	if(samples_[isample].Contains("WJets-eleFailRecoIso")){
-	  TString EleMode = "((W1decayType==11 || W1decayType==1511) &&(decayType==201103))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,EleMode,0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-	}
-	if(samples_[isample].Contains("WJets-eleFailOther")){
-	  TString EleMode = "((W1decayType==11 || W1decayType==1511) && (decayType==101104))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,EleMode,0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-	}
-	if(samples_[isample].Contains("WJets-tauHad")){
-	  TString TauHadMode = "(W1decayType==15)";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,TauHadMode,0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-	}
-      }
-      else if(splitWJets_){
-	if(samples_[isample].Contains("WJets-mu")){
-	  TString MuMode = "(W1decayType==13 || W1decayType==1513)";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,MuMode,0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-	}
-	if(samples_[isample].Contains("WJets-ele")){
-	  TString EleMode = "(W1decayType==11 || W1decayType==1511)";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,EleMode,0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-	}
-	if(samples_[isample].Contains("WJets-tauHad")){
-	  TString TauHadMode = "(W1decayType==15)";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,TauHadMode,0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-	}
-      }
-      else tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,"",0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-    }
-    else if(samples_[isample].Contains("SingleTop-sandtCombined")){
-      if(splitSingleTopForClosureTest_){
-	if(samples_[isample].Contains("SingleTop-sandtCombined-muGood")){
-	  TString MuMode = "((W1decayType==13 || W1decayType==1513) && (decayType==101300))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,MuMode,0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-	}
-	if(samples_[isample].Contains("SingleTop-sandtCombined-muFailEta")){
-	  TString MuMode = "((W1decayType==13 || W1decayType==1513) &&(decayType==101301 || decayType==201301))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,MuMode,0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-	}
-	if(samples_[isample].Contains("SingleTop-sandtCombined-muFailPt")){
-	  TString MuMode = "((W1decayType==13 || W1decayType==1513) &&(decayType==101302 || decayType==201302))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,MuMode,0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-	}
-	if(samples_[isample].Contains("SingleTop-sandtCombined-muFailRecoIso")){
-	  TString MuMode = "((W1decayType==13 || W1decayType==1513) &&(decayType==201303))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,MuMode,0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-	}
-	if(samples_[isample].Contains("SingleTop-sandtCombined-muFailOther")){
-	  TString MuMode = "((W1decayType==13 || W1decayType==1513) && (decayType==101304))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,MuMode,0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-	}
-	if(samples_[isample].Contains("SingleTop-sandtCombined-eleGood")){
-	  TString EleMode = "((W1decayType==11 || W1decayType==1511)&& (decayType==101100))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,EleMode,0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-	}
-	if(samples_[isample].Contains("SingleTop-sandtCombined-eleFailEta")){
-	  TString EleMode = "((W1decayType==11 || W1decayType==1511)&&(decayType==101101 || decayType==201101))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,EleMode,0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-	}
-	if(samples_[isample].Contains("SingleTop-sandtCombined-eleFailPt")){
-	  TString EleMode = "((W1decayType==11 || W1decayType==1511)&&(decayType==101102 || decayType==201102))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,EleMode,0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-	}
-	if(samples_[isample].Contains("SingleTop-sandtCombined-eleFailRecoIso")){
-	  TString EleMode = "((W1decayType==11 || W1decayType==1511) &&(decayType==201103))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,EleMode,0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-	}
-	if(samples_[isample].Contains("SingleTop-sandtCombined-eleFailOther")){
-	  TString EleMode = "((W1decayType==11 || W1decayType==1511) && (decayType==101104))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,EleMode,0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-	}
-	if(samples_[isample].Contains("SingleTop-sandtCombined-tauHad")){
-	  TString TauHadMode = "(W1decayType==15)";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,TauHadMode,0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-	}
-      }
-      else tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,"",0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-    }
-
-    else if(samples_[isample].Contains("SingleTop-tWCombined")){
-      if(splitSingleTopForClosureTest_){
-	if(samples_[isample].Contains("SingleTop-tWCombined-semiMuGood")){
-	  TString semiMuMode = "(((W1decayType==13 && W2decayType==112) || (W1decayType==112 && W2decayType==13) || (W1decayType==1513 && W2decayType==112) || (W1decayType==112 && W2decayType==1513) || (W1decayType==13 && W2decayType==134) || (W1decayType==134 && W2decayType==13) || (W1decayType==1513 && W2decayType==134) || (W1decayType==134 && W2decayType==1513))&&(decayType==101300))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiMuMode,0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-	}
-	if(samples_[isample].Contains("SingleTop-tWCombined-semiMuFailEta")){
-	  TString semiMuMode = "(((W1decayType==13 && W2decayType==112) || (W1decayType==112 && W2decayType==13) || (W1decayType==1513 && W2decayType==112) || (W1decayType==112 && W2decayType==1513) || (W1decayType==13 && W2decayType==134) || (W1decayType==134 && W2decayType==13) || (W1decayType==1513 && W2decayType==134) || (W1decayType==134 && W2decayType==1513))&&(decayType==101301 || decayType==201301))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiMuMode,0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-	}
-	if(samples_[isample].Contains("SingleTop-tWCombined-semiMuFailPt")){
-	  TString semiMuMode = "(((W1decayType==13 && W2decayType==112) || (W1decayType==112 && W2decayType==13) || (W1decayType==1513 && W2decayType==112) || (W1decayType==112 && W2decayType==1513) || (W1decayType==13 && W2decayType==134) || (W1decayType==134 && W2decayType==13) || (W1decayType==1513 && W2decayType==134) || (W1decayType==134 && W2decayType==1513))&&(decayType==101302 || decayType==201302))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiMuMode,0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-	}
-	if(samples_[isample].Contains("SingleTop-tWCombined-semiMuFailRecoIso")){
-	  TString semiMuMode = "(((W1decayType==13 && W2decayType==112) || (W1decayType==112 && W2decayType==13) || (W1decayType==1513 && W2decayType==112) || (W1decayType==112 && W2decayType==1513) || (W1decayType==13 && W2decayType==134) || (W1decayType==134 && W2decayType==13) || (W1decayType==1513 && W2decayType==134) || (W1decayType==134 && W2decayType==1513))&&(decayType==201303))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiMuMode,0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-	}
-	if(samples_[isample].Contains("SingleTop-tWCombined-semiMuFailOther")){
-	  TString semiMuMode = "(((W1decayType==13 && W2decayType==112) || (W1decayType==112 && W2decayType==13) || (W1decayType==1513 && W2decayType==112) || (W1decayType==112 && W2decayType==1513) || (W1decayType==13 && W2decayType==134) || (W1decayType==134 && W2decayType==13) || (W1decayType==1513 && W2decayType==134) || (W1decayType==134 && W2decayType==1513))&&(decayType==101304))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiMuMode,0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-	}
-	if(samples_[isample].Contains("SingleTop-tWCombined-semiEleGood")){
-	  TString semiEleMode = "(((W1decayType==11 && W2decayType==112) || (W1decayType==112 && W2decayType==11) || (W1decayType==1511 && W2decayType==112) || (W1decayType==112 && W2decayType==1511) || (W1decayType==11 && W2decayType==134) || (W1decayType==134 && W2decayType==11) || (W1decayType==1511 && W2decayType==134) || (W1decayType==134 && W2decayType==1511))&&(decayType==101100))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiEleMode,0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-	}
-	if(samples_[isample].Contains("SingleTop-tWCombined-semiEleFailEta")){
-	  TString semiEleMode = "(((W1decayType==11 && W2decayType==112) || (W1decayType==112 && W2decayType==11) || (W1decayType==1511 && W2decayType==112) || (W1decayType==112 && W2decayType==1511) || (W1decayType==11 && W2decayType==134) || (W1decayType==134 && W2decayType==11) || (W1decayType==1511 && W2decayType==134) || (W1decayType==134 && W2decayType==1511))&&(decayType==101101 || decayType==201101))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiEleMode,0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-	}
-	if(samples_[isample].Contains("SingleTop-tWCombined-semiEleFailPt")){
-	  TString semiEleMode = "(((W1decayType==11 && W2decayType==112) || (W1decayType==112 && W2decayType==11) || (W1decayType==1511 && W2decayType==112) || (W1decayType==112 && W2decayType==1511) || (W1decayType==11 && W2decayType==134) || (W1decayType==134 && W2decayType==11) || (W1decayType==1511 && W2decayType==134) || (W1decayType==134 && W2decayType==1511))&&(decayType==101102 || decayType==201102))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiEleMode,0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-	}
-	if(samples_[isample].Contains("SingleTop-tWCombined-semiEleFailRecoIso")){
-	  TString semiEleMode = "(((W1decayType==11 && W2decayType==112) || (W1decayType==112 && W2decayType==11) || (W1decayType==1511 && W2decayType==112) || (W1decayType==112 && W2decayType==1511) || (W1decayType==11 && W2decayType==134) || (W1decayType==134 && W2decayType==11) || (W1decayType==1511 && W2decayType==134) || (W1decayType==134 && W2decayType==1511))&&(decayType==201103))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiEleMode,0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-	}
-	if(samples_[isample].Contains("SingleTop-tWCombined-semiEleFailOther")){
-	  TString semiEleMode = "(((W1decayType==11 && W2decayType==112) || (W1decayType==112 && W2decayType==11) || (W1decayType==1511 && W2decayType==112) || (W1decayType==112 && W2decayType==1511) || (W1decayType==11 && W2decayType==134) || (W1decayType==134 && W2decayType==11) || (W1decayType==1511 && W2decayType==134) || (W1decayType==134 && W2decayType==1511))&&(decayType==101104))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiEleMode,0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-	}
-	if(samples_[isample].Contains("SingleTop-tWCombined-semiTauHad")){
-	  TString semiTauHadMode = "((W1decayType==15 && W2decayType==112) || (W1decayType==112 && W2decayType==15) || (W1decayType==15 && W2decayType==134) || (W1decayType==134 && W2decayType==15))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,semiTauHadMode,0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-	}
-	if(samples_[isample].Contains("SingleTop-tWCombined-dilep")){
-	  TString dilepMode = "((W1decayType==11 || W1decayType==13 || W1decayType==1511 || W1decayType==1513) && (W2decayType==11 || W2decayType==13 || W2decayType==1511 || W2decayType==1513))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,dilepMode,0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-	}
-	if(samples_[isample].Contains("SingleTop-tWCombined-had")){
-	  TString hadMode = "(W1decayType==112 || W1decayType==134) && (W2decayType==112 || W2decayType==134)";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,hadMode,0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-	}
-	if(samples_[isample].Contains("SingleTop-tWCombined-other")){
-	  //includes tautau(both had), etau(had), mutau(had), 
-	  TString otherMode = "((W1decayType==15 && W2decayType==15)||(W1decayType==11 && W2decayType==15)||(W1decayType==15 && W2decayType==11)||(W1decayType==1511 && W2decayType==15)||(W1decayType==15 && W2decayType==1511)||(W1decayType==13 && W2decayType==15)||(W1decayType==15 && W2decayType==13)||(W1decayType==15 && W2decayType==1513)||(W1decayType==1513 && W2decayType==15))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,otherMode,0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-	}
-      }
-      else tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,"",0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-    }
-    else if(samples_[isample].Contains("Zinvisible")){
-      if(splitZinvisible_){
-	if(samples_[isample].Contains("Zinvisible-2vAcc")){
-	  //both neutrinos are in pt,eta acceptance
-	  TString bothvAcc;
-	  if(vAccepMuon_) bothvAcc = "(zllMClepton1_pt>17 && TMath::Abs(zllMClepton1_eta)<2.4) && (zllMClepton2_pt>17 && TMath::Abs(zllMClepton2_eta)<2.4)";
-	  else bothvAcc = "(zllMClepton1_pt>17 && TMath::Abs(zllMClepton1_eta)<2.5 && !(TMath::Abs(zllMClepton1_eta) > 1.4442 && TMath::Abs(zllMClepton1_eta) < 1.566)) && (zllMClepton2_pt>17 && TMath::Abs(zllMClepton2_eta)<2.5 && !(TMath::Abs(zllMClepton2_eta) > 1.4442 && TMath::Abs(zllMClepton2_eta) < 1.566))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,bothvAcc,0,"",-1,getSampleScaleFactor(samples_[isample])).Data());  
-	}
-	if(samples_[isample].Contains("Zinvisible-1vAcc")){
-	  //one neutrino is out of pt,eta acceptance
-	  TString onevAcc;
-	  if(vAccepMuon_) onevAcc = "!((zllMClepton1_pt>17 && TMath::Abs(zllMClepton1_eta)<2.4) && (zllMClepton2_pt>17 && TMath::Abs(zllMClepton1_eta)<2.4)) && !((zllMClepton1_pt<17 || TMath::Abs(zllMClepton1_eta)>2.4) && (zllMClepton2_pt<17 || TMath::Abs(zllMClepton1_eta)>2.4))";
-	  else onevAcc = "!((zllMClepton1_pt>17 && TMath::Abs(zllMClepton1_eta)<2.5 && !(TMath::Abs(zllMClepton1_eta) > 1.4442 && TMath::Abs(zllMClepton1_eta) < 1.566)) && (zllMClepton2_pt>17 && TMath::Abs(zllMClepton2_eta)<2.5 && !(TMath::Abs(zllMClepton2_eta) > 1.4442 && TMath::Abs(zllMClepton2_eta) < 1.566))) && !((zllMClepton1_pt<17 || !(TMath::Abs(zllMClepton1_eta)<2.5 && !(TMath::Abs(zllMClepton1_eta) > 1.4442 && TMath::Abs(zllMClepton1_eta) < 1.566))) && (zllMClepton2_pt<17 || !(TMath::Abs(zllMClepton2_eta)<2.5 && !(TMath::Abs(zllMClepton2_eta) > 1.4442 && TMath::Abs(zllMClepton2_eta) < 1.566))))";
-
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,onevAcc,0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-	}
-	if(samples_[isample].Contains("Zinvisible-0vAcc")){
-	  //both neutrinos are out of pt,eta acceptance
-	  TString novAcc;
-	  if(vAccepMuon_) novAcc = "(zllMClepton1_pt<17 || TMath::Abs(zllMClepton1_eta)>2.4) && (zllMClepton2_pt<17 || TMath::Abs(zllMClepton2_eta)>2.4)";
-	  else novAcc = "(zllMClepton1_pt<17 || !(TMath::Abs(zllMClepton1_eta)<2.5 && !(TMath::Abs(zllMClepton1_eta) > 1.4442 && TMath::Abs(zllMClepton1_eta) < 1.566))) && (zllMClepton2_pt<17 || !(TMath::Abs(zllMClepton2_eta)<2.5 && !(TMath::Abs(zllMClepton2_eta) > 1.4442 && TMath::Abs(zllMClepton2_eta) < 1.566)))";
-	  tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,novAcc,0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-	}
-      }
-      else tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,"",0,"",-1,getSampleScaleFactor(samples_[isample])).Data());    
-    }
-
-
-
-    else
-      tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,extractExtraCut(samples_[isample]),0,"",-1,getSampleScaleFactor(samples_[isample])).Data());
+    //fill the histogram!
+    tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,extractExtraCut(samples_[isample]),0,"",-1,getSampleScaleFactor(samples_[isample])).Data());
 
     //now the histo is filled
     if (renormalizeBins_) ytitle=renormBins(histos_[samples_[isample]],2 ); //manipulates the TH1D //FIXME hard-coded "2"
@@ -3682,13 +2541,6 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
 
     
   }
-
-  if (!quiet_ && dostack_ && dodata_ && nbins<11 && doRatio_) {//BEN - 11 is an arbitrary number that isn't too big so we don't print out too much stuff.
-    for(int i=1; i<=nbins; i++){
-      cout << "data: " << hdata->GetBinContent(i) << " +- " << hdata->GetBinError(i) << ", totalsm: " << totalsm->GetBinContent(i) << " +- " << totalsm->GetBinError(i) << ", ratio: " << ratio->GetBinContent(i) << " +- " << ratio->GetBinError(i) << endl;
-    }
-  }
-  
 
   thecanvas->cd(mainPadIndex);
   if (doleg_)  leg->Draw();
@@ -4080,400 +2932,8 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
   drawR(vary, cutVal, var, nbins, 0, 1, savename, varbins);
 }
 
-
-
-//typedef map<pair<int,int>, pair<float,float> > susyScanYields;
-typedef map<pair<int,int>, float > susyScanYields;
-susyScanYields getSusyScanYields(const TString & sampleOfInterest,const int pdfindex=0, const TString & pdfset="CTEQ") {
-  cout<<" ~~ begin slow version of getSusyScanYields()"<<endl;
-
-  /*
-this function was written to draw mSugra. It can also draw T1bbbb with no problem.
-The pdfindex and pdfset can also be specified, but it is not good for checking the whole mSugra plane because it is too slow
-  */
-
-  if (sampleOfInterest.Contains("mSUGRA") ) assert( pdfindex==0); //just until i have time to think about it
-
-  TStopwatch timer;
-
-  /*
-this function was written for mSugra.
-most of it is irrelevant for SMS, but we'll use it anyway
-  */
-  susyScanYields theYields;
-
-  //sample is an argument
-  //other important things are defined by the usual global variables
-  if (!quiet_) cout<<sampleOfInterest<<" "<<currentConfig_<<endl;
-
-  //these are for mSugra
-  TString varx="m0"; TString xtitle=varx;
-  int  nbinsx=310; float lowx=-0.5; float highx=3100-0.5; //UPDATED for new scans
-
-  TString vary="m12"; TString ytitle=vary;
-  int  nbinsy=110; float lowy=-0.5; float highy=1100-0.5;
-
-  if (sampleOfInterest== "T1bbbb" || sampleOfInterest== "T2bb" || sampleOfInterest== "T2tt" || sampleOfInterest== "T1tttt") { //change binning
-    //m0 -> mGl
-    //m12 -> mLSP
-    nbinsx=60;//scanSMSngen->GetNbinsX();
-    nbinsy=60;//scanSMSngen->GetNbinsY(); //take our histo def'n from the ngen histo
-    lowx=0;//scanSMSngen->GetXaxis()->GetBinLowEdge(1);
-    lowy=0;//scanSMSngen->GetYaxis()->GetBinLowEdge(1);
-    highx=1500;//scanSMSngen->GetXaxis()->GetBinLowEdge(nbinsx+1);
-    highy=1500;//scanSMSngen->GetYaxis()->GetBinLowEdge(nbinsy+1);
-  }
-
-  TString drawstring = vary+":"+varx;
-
-  //  TChain* thetree = (TChain*) files_[currentConfig_][sampleOfInterest]->Get(reducedTreeName_);
-  TChain* thetree = getTree(sampleOfInterest);
-
-  const int nsubprocesses = sampleOfInterest.Contains("mSUGRA") ? 10 : 0;
-  vector<TH2D*> raw0;
-  for (int i=0; i<=nsubprocesses; i++) {
-    TString hname="raw0_";
-    hname += i;
-    raw0.push_back(new TH2D(hname,"raw event counts",nbinsx,lowx,highx,nbinsy,lowy,highy));
-    raw0[i]->Sumw2();
-    TString thecut = sampleOfInterest.Contains("mSUGRA") ? getCutString(kmSugraPlane,"",selection_,"",pdfindex,pdfset,i) : getCutString(kSMSPlane,"",selection_,"",pdfindex,pdfset);
-    thetree->Project(hname,drawstring,thecut.Data());
-  }
-
-
-  cout<<"[getSusyScanYields (slow)] done counting cross-section weighted events"<<endl;
-  //[for mSugra]
-  //at this point, each bin contains Npass_i * sigma_i for that (m0,m12)
-  //need to divide by N_i for each (m0,m12)
-
-  //[for SMS]
-  //each bin contains just raw Npass_i for that (mgl,mLSP)
-
-  if (sampleOfInterest.Contains("mSUGRA") ) {
-    //loop over i and histo bins
-    for (int i=0; i<=nsubprocesses; i++) {
-      for (map<pair<int,int>, map<TString,TH2D*> >::iterator iscanpoint = scanProcessTotalsMap.begin(); iscanpoint!=scanProcessTotalsMap.end(); ++iscanpoint) {
-	int m0=iscanpoint->first.first;
-	int m12=iscanpoint->first.second;
-	TH2D* thishist = scanProcessTotalsMap[make_pair(m0,m12)][pdfset];
-	//thisn does not have to be integer in the case of pdf weights
-	double thisn = thishist->GetBinContent(i,pdfindex); //bin 0 has the raw total events (no pdf weights)
-	int bin=  raw0[i]->FindBin(m0,m12);
-	double N_i_thispoint = raw0[i]->GetBinContent(bin);
-	double err_i_thispoint = raw0[i]->GetBinError(bin);
-	if (thisn < 0.0000001) {
-	  if (N_i_thispoint > 0.0000001) cout<<"Possible problem: "<<m0<<" "<<m12<<" "<<i<<" "<< N_i_thispoint<<" "<<thisn<<endl;
-	  thisn=1; //prevent divide by zero
-	  N_i_thispoint = 0; //need to come back to what is going wrong h
-	}
-	N_i_thispoint /= thisn;
-	err_i_thispoint /= thisn;
-	raw0[i]->SetBinContent(bin,N_i_thispoint);
-	raw0[i]->SetBinError(bin,err_i_thispoint);
-      }
-    }
-    
-    cout<<"[getSusyScanYields (slow)] done dividing by Ngen"<<endl;
-    //now we have Npass_i * sigma_i * lumi / Ngen_i 
-    //all that is left is to make the sum over i
-    
-    for (map<pair<int,int>, map<TString,TH2D*> >::iterator iscanpoint = scanProcessTotalsMap.begin(); iscanpoint!=scanProcessTotalsMap.end(); ++iscanpoint) {
-      double Nraw = 0, errraw=0;
-      
-      int bin=  raw0[0]->FindBin(iscanpoint->first.first , iscanpoint->first.second);
-      for (unsigned int i=0; i<raw0.size(); i++) {
-	Nraw += raw0[i]->GetBinContent(bin);
-	errraw += pow(raw0[i]->GetBinError(bin),2);
-      }
-      //cout<<iscanpoint->first.first<<" "<<iscanpoint->first.second<<" "<<Nraw<< " +/- "<<sqrt(errraw)<<endl;
-      theYields[iscanpoint->first] = Nraw;//make_pair(Nraw,sqrt(errraw));
-    }
-    cout<<"[getSusyScanYields (slow)] done summing over subprocesses"<<endl;
-  }
-  else { //not mSugra
-    //just copy the histogram into the data structure
-    //kinda stupid to do this instead of just returning a histogram, but such is life
-    for (int i=1; i<=nbinsx; i++) {
-      for (int j=1; j<=nbinsy; j++) {
-	int mgl=TMath::Nint(raw0[0]->GetXaxis()->GetBinLowEdge(i));
-	int mlsp=TMath::Nint(raw0[0]->GetYaxis()->GetBinLowEdge(j));
-	double nevents = raw0[0]->GetBinContent(raw0[0]->FindBin(mgl,mlsp));
-	//throw out points that have ngen too far from 10000
-	//note that scanSMSngen could be replaced by scanProcessTotalsMap, but it is easier and safer not to change this for now
-	if ( TMath::Nint(scanSMSngen->GetBinContent(scanSMSngen->FindBin(mgl,mlsp))) >= 1000 ) {
-	  theYields[make_pair(mgl,mlsp)] = nevents;//make_pair(nevents,0); //skip errors for now
-	}
-      }
-    }
-  }
-
-  //try to clean up
-  cout<<"[getSusyScanYields (slow)] cleaning up memory"<<endl;
-  for (unsigned int i=0; i<raw0.size(); i++) {
-    delete raw0[i];
-  }
-
-  timer.Stop();
-  cout<<"[getSusyScanYields() (slow)] CPU time = "<<timer.CpuTime()<<endl;
-
-  return theYields;
-}
-
-//sigh...looks like to use Luke's magic code i have to really go at this from scratch
-//this works for T1bbbb. Need to work on it to make it work for mSugra
-vector<susyScanYields> getSusyScanYields(const TString & sampleOfInterest,const TString & pdfset) {
-  cout<<" ~~ begin fast version of getSusyScanYields()"<<endl;
-  TStopwatch timer;
-
-  vector<susyScanYields> theYields;
-  if (!quiet_) cout<<sampleOfInterest<<" "<<currentConfig_<<endl;
-  //these are for mSugra
-  TString varx="m0"; TString xtitle=varx;
-  int  nbinsx=310; float lowx=-0.5; float highx=3100-0.5; //UPDATED for new scans
-
-  TString vary="m12"; TString ytitle=vary;
-  int  nbinsy=110; float lowy=-0.5; float highy=1100-0.5;
-  if (sampleOfInterest== "T1bbbb" || sampleOfInterest== "T2bb" || sampleOfInterest== "T2tt" || sampleOfInterest== "T1tttt") { //change binning
-    //m0 -> mGl
-    //m12 -> mLSP
-    if (scanSMSngen==0) scanSMSngen = (TH2D*) files_[currentConfig_][sampleOfInterest].first->Get("scanSMSngen");
-    nbinsx=60;//scanSMSngen->GetNbinsX();
-    nbinsy=60;//scanSMSngen->GetNbinsY(); //take our histo def'n from the ngen histo
-    lowx=0;//scanSMSngen->GetXaxis()->GetBinLowEdge(1);
-    lowy=0;//scanSMSngen->GetYaxis()->GetBinLowEdge(1);
-    highx=1500;//scanSMSngen->GetXaxis()->GetBinLowEdge(nbinsx+1);
-    highy=1500;//scanSMSngen->GetYaxis()->GetBinLowEdge(nbinsy+1);
-  }
-  TString drawstring = vary+":"+varx;
-
-  //  TChain* thetree = (TChain*) files_[currentConfig_][sampleOfInterest]->Get(reducedTreeName_);
-  TChain* thetree = getTree(sampleOfInterest);
-  //key of the map is the susysubprocess. the vector is over the pdf weight indices
-  map<int, vector<TH2F*> > raw0;
-  int npdfset=0;
-  if (pdfset=="CTEQ") npdfset=44;
-  else if (pdfset=="MSTW") npdfset =40;
-  else if (pdfset=="NNPDF") {npdfset =99; } //not implemented yet
-  else assert(0);
-
-  //work luke's magic
-  TSelectorMultiDraw* multiDraw = new TSelectorMultiDraw();
-
-  //for mSugra this is crazy. i need to loop over both pdf sets and subprocesses
-  const int nsubprocesses = sampleOfInterest.Contains("mSUGRA") ? 10 : 0;
-  for (int isusy=0; isusy<=nsubprocesses; isusy++) {
-    for (int ipdf=0; ipdf<=npdfset; ipdf++) { //start at 0 instead of 1...i think that's right
-      TString hname="raw0_";
-      hname += ipdf;
-      hname+="_";
-      hname+=isusy;
-      raw0[isusy].push_back(new TH2F(hname,"raw event counts",nbinsx,lowx,highx,nbinsy,lowy,highy));
-      raw0[isusy][ipdf]->Sumw2();
-      TString thecut = sampleOfInterest.Contains("mSUGRA") ? getCutString(kmSugraPlane,"",selection_,"",ipdf,pdfset,isusy) : getCutString(kSMSPlane,"",selection_,"",ipdf,pdfset);
-      multiDraw->LoadVariables( TString(drawstring+">>"+hname).Data(), thecut.Data());
-    }
-  }
-  Long64_t numberofentries = thetree->GetEntries();
-  thetree->Process(multiDraw,"goff",numberofentries,0);
-
-
-  //copy the histograms into the data structure
-  //kinda stupid to do this instead of just returning the histograms, but such is life
-  for (int ipdf=0; ipdf<=npdfset; ipdf++) { //start at 0 instead of 1...i think that's right
-    susyScanYields oneSetOfYields;
-
-    if (sampleOfInterest.Contains("mSUGRA")) {
-      //[for mSugra]
-      //at this point, each bin contains Npass_i * sigma_i * lumi for that (m0,m12)
-      //need to divide by N_i for each (m0,m12,ipdf)
-      for (int i=0; i<=nsubprocesses; i++) {
-	for (map<pair<int,int>, map<TString,TH2D*> >::iterator iscanpoint = scanProcessTotalsMap.begin(); iscanpoint!=scanProcessTotalsMap.end(); ++iscanpoint) {
-	  int m0=iscanpoint->first.first;
-	  int m12=iscanpoint->first.second;
-	  TH2D* thishist = scanProcessTotalsMap[make_pair(m0,m12)][pdfset];
-	  double thisn = thishist->GetBinContent(i,ipdf); //ngen is not necessarily an integer! 
-	  int bin=  raw0[i][ipdf]->FindBin(m0,m12);
-	  double N_i_thispoint = raw0[i][ipdf]->GetBinContent(bin);
-	  double err_i_thispoint = raw0[i][ipdf]->GetBinError(bin);
-	  if (thisn < 0.0000001) {
-	    if (N_i_thispoint > 0.0000001) cout<<"[new getSusyScanYields()] Possible problem: "<<m0<<" "<<m12<<" "<<i<<" "<<ipdf<<" "<< N_i_thispoint<<" "<<thisn<<endl;
-	    thisn=1; //prevent divide by zero
-	    N_i_thispoint = 0; 
-	  }
-	  N_i_thispoint /= thisn;
-	  err_i_thispoint /= thisn;
-	  raw0[i][ipdf]->SetBinContent(bin,N_i_thispoint);
-	  raw0[i][ipdf]->SetBinError(bin,err_i_thispoint);
-	}
-      }
-      //now we have Npass_i * sigma_i * lumi / Ngen_i 
-      //all that is left is to make the sum over i
-      for (map<pair<int,int>, map<TString,TH2D*> >::iterator iscanpoint = scanProcessTotalsMap.begin(); iscanpoint!=scanProcessTotalsMap.end(); ++iscanpoint) {
-	double Nraw = 0, errraw=0;
-	
-	int bin=  raw0[0][ipdf]->FindBin(iscanpoint->first.first , iscanpoint->first.second);
-	//since we're using a map, we could do an iterator loop here, but this works too
-	for (unsigned int i=0; i<raw0.size(); i++) { //we want the size of the *map* (number of susy subprocesses)
-	  Nraw += raw0[i][ipdf]->GetBinContent(bin);
-	  errraw += pow(raw0[i][ipdf]->GetBinError(bin),2);
-	}
-	//cout<<iscanpoint->first.first<<" "<<iscanpoint->first.second<<" "<<Nraw<< " +/- "<<sqrt(errraw)<<endl;
-	oneSetOfYields[iscanpoint->first] = Nraw;//make_pair(Nraw,sqrt(errraw));
-      }
-    }
-    else { //for T1bbbb and hopefully other samples that don't have the susy subprocesses 
-      for (int i=1; i<=nbinsx; i++) {
-	for (int j=1; j<=nbinsy; j++) {
-	  int mgl=TMath::Nint(raw0[0][ipdf]->GetXaxis()->GetBinLowEdge(i));
-	  int mlsp=TMath::Nint(raw0[0][ipdf]->GetYaxis()->GetBinLowEdge(j));
-	  double nevents = raw0[0][ipdf]->GetBinContent(raw0[0][ipdf]->FindBin(mgl,mlsp));
-	  if ( TMath::Nint(scanSMSngen->GetBinContent(scanSMSngen->FindBin(mgl,mlsp))) >= 1000 ) {
-	    //need to multiply by N_gen_nominal / N_gen_ipdf
-	    //N_gen_nominal should match between scanSMSngen and scanProcessTotals!
-	    TH2D* thishist = scanProcessTotalsMap[make_pair(mgl,mlsp)][pdfset];
-	    assert( thishist->GetBinContent( getSMSProdProcess(sampleOfInterest),0) == TMath::Nint(scanSMSngen->GetBinContent(scanSMSngen->FindBin(mgl,mlsp))) );
-	    //this cout was a useful check, but it's a *lot* of output
-	    //	    cout<<"   -- Rescaling PDF weights by "<< thishist->GetBinContent(10,0)<<" / "<< thishist->GetBinContent(10,ipdf)<<endl;
-	    nevents *= thishist->GetBinContent(getSMSProdProcess(sampleOfInterest),0) / thishist->GetBinContent(getSMSProdProcess(sampleOfInterest),ipdf);
-
-	    oneSetOfYields[make_pair(mgl,mlsp)] = nevents;//make_pair(nevents,0); //skip errors for now
-	  }
-	}
-      }
-    }
-
-    theYields.push_back(oneSetOfYields);
-  } //end loop over pdf index
-  timer.Stop();
-  cout<<"[getSusyScanYields() (fast)] CPU time ("<<pdfset<<") = "<<timer.CpuTime()<<endl;
-
-  //try to clean up
-  for ( map<int, vector<TH2F*> >::iterator im = raw0.begin(); im!=raw0.end() ; ++im) {
-    for (unsigned int i=0; i<im->second.size(); i++) {
-      delete im->second[i];
-    }
-  }
-  delete multiDraw;
-  cout<<"[getSusyScanYields() (fast)] done with cleanup"<<endl;
-
-  return theYields;
-
-}
-
-//   XplusMax          XminusMax
-pair<susyScanYields,susyScanYields> doScanPDFUncertainties(const TString & sample, const TString & pdfset,  susyScanYields & nominal) {
-  //can't make nominal const because of the use of [] . should fix it
-
-  int npdfset=0;
-  if (pdfset=="CTEQ") npdfset=44;
-  else if (pdfset=="MSTW") npdfset =40;
-  else if (pdfset=="NNPDF") {npdfset =99; }
-  else assert(0);
-
-  vector<susyScanYields> theYields;
-  theYields=getSusyScanYields(sample,pdfset);
-
-  //  pair<int,int> apoint=make_pair(375,100);
-//   for (unsigned int i=0; i<theYields.size(); i++) {
-//     cout<<"DEBUG: "<<nominal[apoint].first<<"\t"<<theYields[i][apoint].first<<endl;
-//   }
-  
-  //in the current implementation, for T1bbbb we do all the calculations above and then
-  //just shuffle the results into two vectors below
-
-  //in mSugra we get all the results below
-
-  vector<susyScanYields> cteqXplus;
-  vector<susyScanYields> cteqXminus;
-  for (int i=1; i<=npdfset; i++) {
-    //for the scans, the pdfWeight in the ntuple is already normalized properly
-    //i filled element 0 of theYields on purpose so that I could skip it here
-
-    //this is old logic, which assumed that sometimes we would need to do the calculation one pdf index at a time
-    //no need to change it though
-    susyScanYields cteq= theYields.empty() ?  getSusyScanYields(sample,i,pdfset) : theYields.at(i);
-    if (pdfset=="NNPDF") { //for nnpdf, no need to split things up
-      cteqXplus.push_back(cteq); 
-    }
-    else {
-      if (i%2==0) {
-	//	cout<<" "<<cteq[apoint].first<<endl;
-	cteqXminus.push_back(cteq);
-      }
-      else {
-	//	cout<<"DEBUG "<<cteq[apoint].first;
-	cteqXplus.push_back(cteq);
-      }
-    }
-  }
-  assert((cteqXplus.size() == cteqXminus.size()) || pdfset=="NNPDF");
-  susyScanYields XplusMax ;
-  susyScanYields XminusMax;
-  if (pdfset=="NNPDF" ) {
-
-    int nn=0;
-    for (unsigned int i=0; i<cteqXplus.size(); i++) { //only xplus is filled
-      for (susyScanYields::iterator ipoint=cteqXplus[i].begin(); ipoint!=cteqXplus[i].end(); ++ipoint) {
-	//if this scan point doesn't exist, create it with 0
-	if ( XplusMax.count(ipoint->first) ==0) XplusMax[ipoint->first]=0;//make_pair(0,0);
-	if ( XminusMax.count(ipoint->first) ==0) XminusMax[ipoint->first]=0;//make_pair(0,0);
-	double val = cteqXplus[i][ipoint->first];//.first;
-	XplusMax[ipoint->first] += val; //sum up the values for pdf i and this scan point
-	XminusMax[ipoint->first] += val*val; //sum up the values for pdf i and this scan point
-      }
-      nn++;
-    }
-    for (susyScanYields::iterator ipoint=XplusMax.begin() ; ipoint!=XplusMax.end(); ++ipoint) {
-      XplusMax[ipoint->first] = XplusMax[ipoint->first] / double(nn);
-      XminusMax[ipoint->first] = XminusMax[ipoint->first] / double(nn);
-    }
-
-  }
-  else {
-    //loop over pdfs and over scan points
-    for (unsigned int i=0; i<cteqXplus.size(); i++) {
-      for (susyScanYields::iterator ipoint=cteqXplus[i].begin(); ipoint!=cteqXplus[i].end(); ++ipoint) {
-	//	if (ipoint->first ==apoint) cout<<ipoint->first.first<<" "<<ipoint->first.second<<" -- "<<nominal[ipoint->first].first<<" " <<cteqXplus[i][ipoint->first].first<<" "<<cteqXminus[i][ipoint->first].first<<endl;
-	double diff1 =  cteqXplus[i][ipoint->first] - nominal[ipoint->first] ;
-	double diff2 =  cteqXminus[i][ipoint->first] - nominal[ipoint->first] ;
-	double larger = diff1>diff2 ? diff1 : diff2;
-	if ( 0 > larger ) larger = 0;
-	if ( XplusMax.count(ipoint->first) ==0) {
-	  XplusMax[ipoint->first]=0;//make_pair(0,0);
-	  //  if (ipoint->first ==apoint) cout<<" ***** CREATING XplusMax"<<endl;
-	}
-	XplusMax[ipoint->first] += larger*larger;
-	//	if (ipoint->first ==apoint) cout<<"       XplusMax = "<<XplusMax[ipoint->first].first<<endl;
-      }
-    }
-    for (unsigned int i=0; i<cteqXplus.size(); i++) {
-      for (susyScanYields::iterator ipoint=cteqXplus[i].begin(); ipoint!=cteqXplus[i].end(); ++ipoint) {
-	double diff1 =  nominal[ipoint->first]  - cteqXplus[i][ipoint->first];
-	double diff2 =  nominal[ipoint->first] - cteqXminus[i][ipoint->first] ;
-	double larger = diff1>diff2 ? diff1 : diff2;
-	if ( 0 > larger ) larger = 0;
-	if ( XminusMax.count(ipoint->first) ==0) XminusMax[ipoint->first]=0;//make_pair(0,0);
-	XminusMax[ipoint->first] += larger*larger;
-      }
-    }
-
-    const double scale = (pdfset=="CTEQ") ? 1.645 : 1;
-    for (susyScanYields::iterator ipoint=XplusMax.begin() ; ipoint!=XplusMax.end() ; ++ipoint) {
-      ipoint->second = sqrt(ipoint->second);
-      ipoint->second = ipoint->second / scale;
-    }
-    for (susyScanYields::iterator ipoint=XminusMax.begin() ; ipoint!=XminusMax.end() ; ++ipoint) {
-      ipoint->second = sqrt(ipoint->second);
-      ipoint->second = ipoint->second / scale;
-    }
-  }
-
-
-
-  return make_pair(XplusMax,XminusMax);
-
-}
-
+//code from gala (I think) to make cut flow tables.
+//I will not remove it for now, but I think it is quite outdated
 void getCutStringForCutflow(vector<TString> &vectorOfCuts, vector<TString> &stageCut, bool isTightSelection, bool btagSF=false) {
 
   //careful -- doesn't support mSUGRA right now
