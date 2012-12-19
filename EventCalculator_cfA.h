@@ -119,11 +119,8 @@ public:
   bool passHLT(std::map<TString,triggerData> & triggerlist, bool alwaysPassMc);
   //  bool passUtilityHLT(int &version, int &prescale); //deprecated
   bool passUtilityPrescaleModuleHLT();
-  float getHLTHTeff(float offHT);
-  float getHLTMHTeff(float offMET, float offHT, uint nElectrons, uint nMuons, double mindphin);
-  //  double getPFMHTWeight(); //TODO
-  double getHLTMHTeffBNN(float offMET, float offHT, uint nElectrons, uint nMuons, double mindphin, 
-			 double& effUp, double& effDown);
+  float getHLTeff(const float ht,const float met,const int nleptons) ;
+
 
   int countGoodPV();
   bool isGoodPV(unsigned int ipv);
@@ -132,7 +129,7 @@ public:
   float getHT(float ptthreshold=50);
   float getST(float jetthreshold=50,float leptonthreshold=10);
 
-  float getMET();
+  float getMET();   ULong64_t lastevent_;
   float getMETphi();
 
   float getMHT();
@@ -392,8 +389,6 @@ private:
   TString assembleBTagEffFilename(bool cutnametail=false);
   void loadJetTagEffMaps();
 
-  void loadHLTHTeff();
-  void loadHLTMHTeff();
 
   void loadDataJetRes();
   float getDataJetRes(float pt, float eta);
@@ -1072,6 +1067,9 @@ private:
    std::vector<float>   *mc_taus_vertex_z;
    std::vector<float>   *mc_taus_mass;
    std::vector<float>   *mc_taus_numOfDaughters;
+  //v67 only
+  std::vector<float>   *metsHO_et;
+  std::vector<float>   *metsHO_phi;
    UInt_t          Nmets_AK5;
    std::vector<float>   *mets_AK5_et;
    std::vector<float>   *mets_AK5_phi;
@@ -2349,6 +2347,8 @@ private:
    TBranch        *b_mc_taus_vertex_z;   //!
    TBranch        *b_mc_taus_mass;   //!
    TBranch        *b_mc_taus_numOfDaughters;   //!
+   TBranch        *b_metsHO_et;   //!
+   TBranch        *b_metsHO_phi;   //!
    TBranch        *b_Nmets_AK5;   //!
    TBranch        *b_mets_AK5_et;   //!
    TBranch        *b_mets_AK5_phi;   //!

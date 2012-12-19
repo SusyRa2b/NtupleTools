@@ -99,8 +99,8 @@ EventCalculator::EventCalculator(const TString & sampleName, const vector<string
 
   //  checkConsistency();
 
-  //loadHLTMHTeff();
-  loadHLTHTeff();
+
+
   loadDataJetRes();
 
   loadECALStatus();//could also be in reducedTree
@@ -1010,211 +1010,33 @@ bool EventCalculator::passUtilityPrescaleModuleHLT() {
 }
 
 
-void EventCalculator::loadHLTMHTeff() {
-  if (f_eff_mht_==0) {
+float EventCalculator::getHLTeff(const float ht,const float met,const int nleptons) {
+//2012 trigger efficiencies from frozen pre-approval AN
 
-    //there are four curves
-    //not sure what the best way to combine them are
-    f_eff_mht_ = new TFile("mht_eff_uptojul6.root","READ");
-    //mhtgraph  = (TGraphAsymmErrors *) f_eff_mht->Get("eff_MHT60");
-    //mhtgraph  = (TGraphAsymmErrors *) f_eff_mht->Get("eff_MHT70");
-    //mhtgraph  = (TGraphAsymmErrors *) f_eff_mht->Get("eff_MHT75");
-    mhtgraph_  = (TGraphAsymmErrors *) f_eff_mht_->Get("eff_MHT80");
 
-    //fill the graphs with plus and minus variations
-    mhtgraphPlus_ = new TGraphAsymmErrors(mhtgraph_->GetN());
-    mhtgraphMinus_ = new TGraphAsymmErrors(mhtgraph_->GetN());
-    for (int i=0; i<mhtgraph_->GetN(); i++) {
-      double x,y;
-      mhtgraph_->GetPoint(i,x,y);
-      double exl= mhtgraph_->GetErrorXlow(i);
-      double exh= mhtgraph_->GetErrorXhigh(i);
-      double eyl= mhtgraph_->GetErrorYlow(i);
-      double eyh= mhtgraph_->GetErrorYhigh(i);
-      //shift y
-      double yup = y+eyh > 1? 1: y+eyh;
-      double ydown = y-eyl < 0 ? 0: y-eyl;
-      mhtgraphPlus_->SetPoint(i,x,yup);
-      mhtgraphMinus_->SetPoint(i,x,ydown);
-      mhtgraphPlus_->SetPointError(i,exl,exh,eyl,eyh); //the errors don't matter
-      mhtgraphMinus_->SetPointError(i,exl,exh,eyl,eyh);
-    }
-  }
+  float zl[4][4] = { { 0.61, 0.76, 1, 1 }, { 0.69, 0.84, 1, 1 }, { 1, 1, 1, 1 }, { 1, 1, 1, 1 } };
+  float sl[4][4] =  { { 0.91, 0.96, 1, 1 }, { 0.99, 0.99, 1, 1 }, { 1, 1, 0.99, 1 }, { 1, 1, 1, 1 } };
+
+  int htedges[5] = {400,500,800,1000,100000};
+  int metedges[5] = {125,150,250,350,100000};
+
+
+  //should modularize!
+  if (ht<htedges[0] || ht>htedges[4]) return 1; //bail
+  if (met<metedges[0] || met>metedges[4]) return 1; //bail
+
+  int iht,imet;
+  iht=0; 
+  for ( ; iht<4; ++iht)     if (ht >= htedges[iht] && ht<htedges[iht+1]) break;
+  imet=0;
+  for ( ; imet<4; ++imet)     if (met >= metedges[imet] && met<metedges[imet+1]) break;
+
+  if (nleptons==1) return sl[imet][iht];
+  if (nleptons==0) return zl[imet][iht];
+
+  return 1;
 }
 
-float EventCalculator::getHLTMHTeff(float offMET, float offHT, uint nElectrons, uint nMuons, double mindphin) {
-
-  float eff=1;
-
-  bool isSingleE = (nElectrons==1 && nMuons==0);
-  bool isSingleMu = (nElectrons==0 && nMuons==1);
-  bool is0L = (nElectrons==0 && nMuons==0);
-
-  //TGraphAsymmErrors * gr=mhtgraph_;
-  //if ( theHLTEffType_ ==kHLTEffup) gr=htgraphPlus;
-  //else if ( theHLTEffType_ ==kHLTEffdown) gr=htgraphMinus;
-
-  //for prelim summer result
-  //eff = gr->Eval(offMET);
-
-  //for 2011 full result
-  //updated with pixelLumiCalc numbers
-  if(offHT>400 && offMET>=150 && offMET<250){
-    if( is0L && mindphin > 4 ){
-      eff =  0.850;
-    }
-    else if( isSingleE && mindphin > 4){
-      eff = 0.955;
-    }
-    else if( isSingleMu && mindphin > 4){
-      eff = 0.990;
-    }
-    else if ( is0L && mindphin <= 4){
-      eff = 0.912;
-    }
-  }
-  //if(offHT>400 && offMET>=200 && offMET<250){
-  //  //    eff = 0.94;
-  //  //eff = 0.859362; //after HT cut
-  //
-  //  //errors are wrong!
-  //
-  //  ////assign a 3% error in the SB region
-  //  //if ( theHLTEffType_ ==kHLTEffup){
-  //  //  eff = eff*1.03; assert(0);
-  //  //}
-  //  //else if ( theHLTEffType_ ==kHLTEffdown){
-  //  //  eff = eff*0.97; assert(0);
-  //  //}
-  //
-  //  //after HT>400, ==0b
-  //  if( is0L && mindphin > 4 ){
-  //    eff = 0.841;
-  //  }
-  //  else if( isSingleE && mindphin > 4){
-  //    eff = 0.991;
-  //  }
-  //  else if( isSingleMu && mindphin > 4){
-  //    eff = 1.0;
-  //  }
-  //  else if ( is0L && mindphin <= 4){
-  //    eff = 0.936;
-  //  }
-  //}
-  else if(offHT>400 && offMET>250){
-    //    eff = 0.998;
-    //eff = 0.975299; //after HT cut
-
-    ////assign a +0.1%(-0.5%) error in the SIG region
-    //if ( theHLTEffType_ ==kHLTEffup){
-    //  eff = eff*1.001; assert(0);
-    //}
-    //else if ( theHLTEffType_ ==kHLTEffdown){
-    //  eff = eff*0.995; assert(0);
-    //}
-
-    //after HT>400, ==0b
-    //updated with pixelLumiCalc numbers
-    if( is0L && mindphin > 4 ){
-      eff = 0.981;
-    }
-    else if( isSingleE && mindphin > 4){
-      eff = 1.0;
-    }
-    else if( isSingleMu && mindphin > 4){
-      eff = 0.999;
-    }
-
-    else if ( is0L && mindphin <= 4){
-      eff = 0.981; // same as nominal for now
-    }
-
-
-  }
-
-
-  return eff;
-}
-
-void EventCalculator::loadHLTHTeff() {
-  if (f_eff_ht300_==0 && f_eff_ht350_==0) {
-
-    /*
-there is a horrible hack here where i have manually set the error on the trigger eff to 1.5% at high HT
-    */
-
-  //get this file from ~/public/wteo/
-    f_eff_ht300_ = new TFile("ht300_out_166864_eff_histogram.root","READ");
-    f_eff_ht350_ = new TFile("ht350_out_178866_eff_histogram.root","READ");
-
-    htgraph_ht300_  = (TGraphAsymmErrors *) f_eff_ht300_->Get("myeff");
-    htgraph_ht350_  = (TGraphAsymmErrors *) f_eff_ht350_->Get("ht350eff");
-
-    //fill the graphs with plus and minus variations
-    htgraphPlus_ht300_ = new TGraphAsymmErrors(htgraph_ht300_->GetN());
-    htgraphMinus_ht300_ = new TGraphAsymmErrors(htgraph_ht300_->GetN());
-    htgraphPlus_ht350_ = new TGraphAsymmErrors(htgraph_ht350_->GetN());
-    htgraphMinus_ht350_ = new TGraphAsymmErrors(htgraph_ht350_->GetN());
-    for (int i=0; i<htgraph_ht300_->GetN(); i++) {
-      double x,y;
-      htgraph_ht300_->GetPoint(i,x,y);
-      double exl= htgraph_ht300_->GetErrorXlow(i);
-      double exh= htgraph_ht300_->GetErrorXhigh(i);
-      double eyl= htgraph_ht300_->GetErrorYlow(i);
-      double eyh= htgraph_ht300_->GetErrorYhigh(i);
-      //shift y
-      double yup = y+eyh > 1? 1: y+eyh;
-      double ydown = y-eyl < 0 ? 0: y-eyl;
-      //if (x>500) ydown=0.985; //Horrible hack!
-      htgraphPlus_ht300_->SetPoint(i,x,yup);
-      htgraphMinus_ht300_->SetPoint(i,x,ydown);
-      htgraphPlus_ht300_->SetPointError(i,exl,exh,eyl,eyh); //the errors don't matter
-      htgraphMinus_ht300_->SetPointError(i,exl,exh,eyl,eyh);
-
-      double x2,y2;
-      htgraph_ht350_->GetPoint(i,x2,y2);
-      double ex2l= htgraph_ht350_->GetErrorXlow(i);
-      double ex2h= htgraph_ht350_->GetErrorXhigh(i);
-      double ey2l= htgraph_ht350_->GetErrorYlow(i);
-      double ey2h= htgraph_ht350_->GetErrorYhigh(i);
-      //shift y
-      double y2up = y2+ey2h > 1? 1: y2+ey2h;
-      double y2down = y2-ey2l < 0 ? 0: y2-ey2l;
-      //if (x>500) ydown=0.985; //Horrible hack!
-      htgraphPlus_ht350_->SetPoint(i,x2,y2up);
-      htgraphMinus_ht350_->SetPoint(i,x2,y2down);
-      htgraphPlus_ht350_->SetPointError(i,ex2l,ex2h,ey2l,ey2h); //the errors don't matter
-      htgraphMinus_ht350_->SetPointError(i,ex2l,ex2h,ey2l,ey2h);
-
-
-    }
-  }
-
-}
-
-float EventCalculator::getHLTHTeff(float offHT) {
-
-  float eff=100;
-
-  TGraphAsymmErrors * gr1=htgraph_ht300_;
-  TGraphAsymmErrors * gr2=htgraph_ht350_;
-  if ( theHLTEffType_ ==kHLTEffup){
-    gr1=htgraphPlus_ht300_;
-    gr2=htgraphPlus_ht350_;
-  }
-  else if ( theHLTEffType_ ==kHLTEffdown){
-    gr1=htgraphMinus_ht300_;
-    gr2=htgraphMinus_ht350_;
-  }
-
-  //2011 dataset - weighted average of HT efficiencies
-  double frac_HT2XX = 0.071;
-  double frac_HT300 = 0.462;
-  double frac_HT350 = 0.467;
-  eff = frac_HT2XX*1.0 + frac_HT300*gr1->Eval(offHT) + frac_HT350*gr2->Eval(offHT);
-
-  return eff;
-}
 
 void EventCalculator::loadDataJetRes(){
   if(fDataJetRes_ ==0){
@@ -1976,6 +1798,30 @@ void EventCalculator::getCorrectedMET(float& correctedMET, float& correctedMETPh
   correctedMET=pfTypeImets_et->at(0);
   correctedMETPhi = pfTypeImets_phi->at(0);
 
+  const bool specialDebug=false;
+  if (specialDebug &&     (lastevent_!=getEventNumber())) {
+    cout<<"   raw       MET, METphi = "<<pfmets_et->at(0)<<" "<<pfmets_phi->at(0)<<endl;
+    cout<<"   typeI     MET, METphi = "<<correctedMET<<" "<<correctedMETPhi<<endl;
+    
+    //goal calculate type I met, given uncorrected MET.
+    float hrMETx = pfmets_et->at(0) * cos(pfmets_phi->at(0));
+    float hrMETy = pfmets_et->at(0) * sin(pfmets_phi->at(0));
+
+    for(unsigned int thisJet = 0; thisJet < jets_AK5PF_pt->size(); thisJet++)   {
+      if (isCleanJet(thisJet) ){//this only has an effect for recopfjets
+	double emEnergyFraction = (jets_AK5PF_neutralEmE->at(thisJet) + jets_AK5PF_chgEmE->at(thisJet))/getUncorrectedJetPt(thisJet) ;//rawJet.chargedEmEnergyFraction() + rawJet.neutralEmEnergyFraction();
+	if ( jets_AK5PF_pt->at(thisJet) >10 &&emEnergyFraction<0.9) {
+	  hrMETx += getUncorrectedJetPt(thisJet) * cos(jets_AK5PF_phi->at(thisJet));
+	  hrMETx -= getJetPt(thisJet,false) * cos(jets_AK5PF_phi->at(thisJet));
+	  hrMETy += getUncorrectedJetPt(thisJet) * sin(jets_AK5PF_phi->at(thisJet));
+	  hrMETy -= getJetPt(thisJet,false) * sin(jets_AK5PF_phi->at(thisJet));
+	}
+      }
+    }
+    cout<<" my typeI    MET, METphi = "<<sqrt(hrMETx*hrMETx+hrMETy*hrMETy)<<" "<<atan2(hrMETy,hrMETx)<<endl;
+    //cout<<" METxy = "<<hrMETx<<" "<<hrMETy<<endl;
+  }
+
   if (theJESType_==kJES0 && theJERType_==kJER0) return;
 
   double METx = correctedMET * cos(correctedMETPhi);
@@ -2474,6 +2320,7 @@ float EventCalculator::getJESUncertainty( unsigned int ijet, bool addL2L3toJES )
     jecUnc_->setJetEta( jets_AK5PF_eta->at(ijet));
     jecUnc_->setJetPt( jets_AK5PF_pt->at(ijet)); // here you must use the CORRECTED jet pt
     uncertainty = jecUnc_->getUncertainty(uncarg);
+
     
     //      cout<<"[EventCalculator::getJESUncertainty] "<<myJetsPFhelper->at(ijet).jetUncPlus<<"\t"<<uncertainty<<endl;
     //      if ( fabs(  myJetsPFhelper->at(ijet).jetUncPlus - uncertainty) >0.01) cout<<"[EventCalculator::getJESUncertainty] something Bad!"<<endl;
@@ -2550,6 +2397,9 @@ end of kJESFLY block  */
   
   //  cout<<endl<< " == computing jet pT "<<endl; //JMT DEBUG
   //then JES
+  //  cout<<" jet pt "<<pt;
+  //  float pt0 = pt;
+
   if ( theJESType_ == kJESup ) {
     //sanity check on unc is now moved inside of getJESUncertainty
     const    float unc = getJESUncertainty(ijet,addL2L3toJES);
@@ -2559,7 +2409,8 @@ end of kJESFLY block  */
     const    float unc = getJESUncertainty(ijet,addL2L3toJES);
     pt *= (1- unc);
   }
-  
+  //  cout<< " -> "<<pt<<"\t"<< pt/pt0<<endl;  
+
   return pt;
   
 }
@@ -4028,17 +3879,6 @@ double EventCalculator::checkPdfWeightSanity( double a) {
 }
 
 
-double EventCalculator::getHLTMHTeffBNN(float offMET, float offHT, uint nElectrons, uint nMuons, double mindphin,
-					double& effUp, double& effDown) {
-  //THIS FUCNTION IS COMPLETELY DEPRECATED...
-  //(was used to get the "BNN" paramterized trigger eff
-  //should be removed
-  float eff=1;
-  effUp =1; effDown =1;
-  return eff;
-
-
-}
 
 Long64_t EventCalculator::getNEventsGeneratedExtended() {
 
@@ -5165,9 +5005,8 @@ void EventCalculator::reducedTree(TString outputpath) {
   //  float btagIPweight;//, pfmhtweight; //
   float PUweight;
   float PUweightSystVar;
-  float hltHTeff;
-  float hltMHTeff;
-  //  float hltMHTeffBNN,hltMHTeffBNNUp,hltMHTeffBNNDown;
+  float hlteff;
+
 
   double scanCrossSection,scanCrossSectionPlus,scanCrossSectionMinus;
   int m0,m12;
@@ -5182,6 +5021,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   //  float correctedMET, correctedMETphi
   float caloMET,caloMETphi;
   float rawPFMET,rawPFMETphi;
+  float caloMETwithHO,caloMETwithHOphi;
   float unclusteredMET,unclusteredMETphi;
   float maxDeltaPhi, maxDeltaPhiAll, maxDeltaPhiAll30, maxDeltaPhi30_eta5_noIdAll;
   float deltaPhi1, deltaPhi2, deltaPhi3;
@@ -5420,6 +5260,7 @@ void EventCalculator::reducedTree(TString outputpath) {
 
   // bookkeeping for screen output only
   pair<int,int> lastpoint = make_pair(0,0);
+  lastevent_=0;
 
   /*
 scanProcessTotalsMap has been extended to handle PDF weight sums.
@@ -5569,8 +5410,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
   //  reducedTree.Branch("pfmhtweight",&pfmhtweight,"pfmhtweight/F");
   reducedTree.Branch("PUweight",&PUweight,"PUweight/F");
   reducedTree.Branch("PUweightSystVar",&PUweightSystVar,"PUweightSystVar/F");
-  reducedTree.Branch("hltHTeff",&hltHTeff,"hltHTeff/F");
-  reducedTree.Branch("hltMHTeff",&hltMHTeff,"hltMHTeff/F");
+  reducedTree.Branch("hlteff",&hlteff,"hlteff/F");
 
   //got to store the whole vector. very big, unfortunately
   reducedTree.Branch("pdfWeightsCTEQ",&pdfWeightsCTEQ,"pdfWeightsCTEQ[45]/F");
@@ -5724,6 +5564,9 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("rawPFMET",&rawPFMET, "rawPFMET/F");
   reducedTree.Branch("rawPFMETphi",&rawPFMETphi, "rawPFMETphi/F");
   
+  reducedTree.Branch("caloMETwithHO",&caloMETwithHO,"caloMETwithHO/F");
+  reducedTree.Branch("caloMETwithHOphi",&caloMETwithHOphi,"caloMETwithHOphi/F");
+
   reducedTree.Branch("unclusteredMET",&unclusteredMET,"unclusteredMET/F");
   reducedTree.Branch("unclusteredMETphi",&unclusteredMETphi,"unclusteredMETphi/F");
 
@@ -6075,11 +5918,9 @@ Also the pdfWeightSum* histograms that are used for LM9.
   assert(nevents==neventsB);
 
   //modest attempt to save time by disabling large unused branches (the RA4 jets and RA4 leptons)
-  /* remove for debugging
   chainB->SetBranchStatus("jets_AK5PFclean_*",0);
   chainB->SetBranchStatus("els_*",0);
   chainB->SetBranchStatus("mus_*",0);
-  */
 
   //store some extra info just in case....
   skimCounter.SetBinContent(0,nevents);
@@ -6258,6 +6099,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
     //now that we have a skim in cfA with a fairly hard MET cut, I will remove all kinematic skims here
     ST = getST(30,10); //ST is always bigger than HT; reducing the jet cut to 30 will only make it larger
     MET=getMET();
+    lastevent_=getEventNumber();
     STeff = ST + MET; //obviously STeff is always bigger than ST
     HT=getHT();
 
@@ -6386,7 +6228,6 @@ Also the pdfWeightSum* histograms that are used for LM9.
 */
 
       HT30=getHT(30);
-      hltHTeff = getHLTHTeff(HT);
       PUweight =  puReweightIs1D ? getPUWeight(*LumiWeights) : 1;// FIXME CFA getPUWeight(*LumiWeights3D);
       PUweightSystVar =  puReweightIs1D ? getPUWeight(*LumiWeightsSystVar) : 1;// FIXME CFA getPUWeight(*LumiWeights3D);
       //      pfmhtweight = getPFMHTWeight();
@@ -6456,6 +6297,8 @@ Also the pdfWeightSum* histograms that are used for LM9.
       nElectrons20 = countEle(20);
       nMuons20 = countMu(20);
 
+      hlteff = getHLTeff(HT,MET,nElectrons+nMuons);
+
       bestZmass=getBestZCandidate(20,10);
 
       nTausVLoose = countTau("VLoose");
@@ -6476,8 +6319,14 @@ Also the pdfWeightSum* histograms that are used for LM9.
       caloMET = mets_AK5_et->at(0);
       caloMETphi = mets_AK5_phi->at(0);
       getUncorrectedMET(rawPFMET, rawPFMETphi);
-
-
+      if (metsHO_et != 0) {
+	caloMETwithHO = metsHO_et->at(0);
+	caloMETwithHOphi = metsHO_phi->at(0);
+      }
+      else {
+	caloMETwithHO = -1;
+	caloMETwithHOphi = -1;
+      }
       minDeltaPhi = getMinDeltaPhiMET(3);
       minDeltaPhiAll = getMinDeltaPhiMET(99);
       minDeltaPhiAll30 = getMinDeltaPhiMET30(99);
@@ -6565,7 +6414,6 @@ Also the pdfWeightSum* histograms that are used for LM9.
       deltaT3 = getDeltaPhiMETN_deltaT( getNthGoodJet(2,50,2.4,true) );
       minDeltaPhiN_deltaT = getDeltaPhiMETN_deltaT( getNthGoodJet((unsigned int)(minDeltaPhiN_chosenJet-1),50,2.4,true) );//
 
-      hltMHTeff = getHLTMHTeff(MET, HT, nElectrons, nMuons, minDeltaPhiN);
 
       //alternatives for testing of qcd methods
       if (isSampleQCD() ) {
@@ -6764,7 +6612,8 @@ Also the pdfWeightSum* histograms that are used for LM9.
 
       bool hcallaser = hcallaserfilter_decision == 1 ? true:false;
       bool ecallaser = true;
-      if (isRealData) ecallaser = ecallaserfilter_decision == 1 ? true:false;
+      //does this work? trying to protect v66 where this variable does not exist
+      if (isRealData && sampleName_.Contains("v67")) ecallaser = ecallaserfilter_decision == 1 ? true:false;
       bool eebadsc = eebadscfilter_decision == 1 ? true:false;
 
       badjetFilter = passBadJetFilter();
@@ -9827,6 +9676,8 @@ void EventCalculator::InitializeB(TChain *fChain)
    mus_tpfms_numvalPixelhits = 0;
    mus_dB = 0;
    mus_numberOfMatchedStations = 0;
+   metsHO_et = 0;
+   metsHO_phi = 0;
    pfTypeINoXYCorrmets_et = 0;
    pfTypeINoXYCorrmets_phi = 0;
    pfTypeINoXYCorrmets_ex = 0;
@@ -11084,6 +10935,8 @@ void EventCalculator::InitializeB(TChain *fChain)
    fChain->SetBranchAddress("mus_tpfms_numvalPixelhits", &mus_tpfms_numvalPixelhits, &b_mus_tpfms_numvalPixelhits);
    fChain->SetBranchAddress("mus_dB", &mus_dB, &b_mus_dB);
    fChain->SetBranchAddress("mus_numberOfMatchedStations", &mus_numberOfMatchedStations, &b_mus_numberOfMatchedStations);
+   fChain->SetBranchAddress("metsHO_et", &metsHO_et, &b_metsHO_et);
+   fChain->SetBranchAddress("metsHO_phi", &metsHO_phi, &b_metsHO_phi);
    fChain->SetBranchAddress("NpfTypeINoXYCorrmets", &NpfTypeINoXYCorrmets, &b_NpfTypeINoXYCorrmets);
    fChain->SetBranchAddress("pfTypeINoXYCorrmets_et", &pfTypeINoXYCorrmets_et, &b_pfTypeINoXYCorrmets_et);
    fChain->SetBranchAddress("pfTypeINoXYCorrmets_phi", &pfTypeINoXYCorrmets_phi, &b_pfTypeINoXYCorrmets_phi);
