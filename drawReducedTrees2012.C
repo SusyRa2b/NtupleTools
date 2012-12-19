@@ -579,6 +579,137 @@ void RA2b_sl_byMt() {
 
 }
 
+void RA2b_ttbar_njets() {
+
+  nameOfEventWeight_="weight3"; //for 2012 cfA skimmed ntuples
+
+  loadSamples(true,"ra2b2012");
+  usePUweight_=true;
+
+  int nbins;
+  float low,high;
+  TString var,xtitle;
+  
+  doOverflowAddition(true);
+
+  dodata_=false;
+  doRatioPlot(true);
+
+  setStackMode(false,true);//normalized
+
+  clearSamples();
+  addSample("TTbarJets:nElectrons==0&&nMuons==0&&nIsoTracks15_005_03==0",kRed,"0 lep");
+  addSample("TTbarJets:(((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && MT_Wlep>=0&&MT_Wlep<100)",kBlue,"1 lep");
+   
+  chainSamples("TTbarJets","WJets");
+  chainSamples("TTbarJets","SingleTop");
+
+  setStackMode(false,false);
+
+  TCut base = "HT>=400 &&HT<500&& MET>=125&& cutPV==1 && njets>=3 &&jetpt2>=70 && minDeltaPhiN_asin >= 4 && passCleaning==1 &&buggyEvent==0&&MET/caloMET<2&&maxTOBTECjetDeltaMult<40 && ttbarDecayCode!=2";
+
+  selection_ =base&&TCut("nbjets==2");
+  ratioMin=0.4;
+  ratioMax=1.6;
+
+  var="njets"; xtitle="jet multiplicity";
+  nbins = 4; low=3; high=7;
+  setLogY(false);
+  drawPlots(var,nbins,low,high,xtitle,"au", "ra2b_njetsshapes_0l_1l_nb2");
+
+  TH1D* ratio_2b_mg = (TH1D*)ratio->Clone("ratio_2b_mg");
+
+  selection_ =base&&TCut("nbjets>=3");
+  drawPlots(var,nbins,low,high,xtitle,"au", "ra2b_njetsshapes_0l_1l_nb3");
+
+  TH1D* ratio_3b_mg = (TH1D*)ratio->Clone("ratio_3b_mg");
+
+  //-- powheg --
+
+  clearSamples();
+  addSample("TTbarJetsPowheg:nElectrons==0&&nMuons==0&&nIsoTracks15_005_03==0",kRed,"0 lep");
+  addSample("TTbarJetsPowheg:(((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && MT_Wlep>=0&&MT_Wlep<100)",kBlue,"1 lep");
+   
+  chainSamples("TTbarJetsPowheg","WJets");
+  chainSamples("TTbarJetsPowheg","SingleTop");
+
+  selection_ =base&&TCut("nbjets==2");
+  drawPlots(var,nbins,low,high,xtitle,"au", "ra2b_njetsshapes_0l_1l_nb2_powheg");
+  TH1D* ratio_2b_ph = (TH1D*)ratio->Clone("ratio_2b_ph");
+
+  selection_ =base&&TCut("nbjets>=3");
+  drawPlots(var,nbins,low,high,xtitle,"au", "ra2b_njetsshapes_0l_1l_nb3_powheg");
+  TH1D* ratio_3b_ph = (TH1D*)ratio->Clone("ratio_3b_ph");
+
+  //-mc@nlo
+
+  clearSamples();
+  addSample("TTbarJetsMCNLO:nElectrons==0&&nMuons==0&&nIsoTracks15_005_03==0",kRed,"0 lep");
+  addSample("TTbarJetsMCNLO:(((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && MT_Wlep>=0&&MT_Wlep<100)",kBlue,"1 lep");
+   
+  chainSamples("TTbarJetsMCNLO","WJets");
+  chainSamples("TTbarJetsMCNLO","SingleTop");
+  selection_ =base&&TCut("nbjets==2");
+  drawPlots(var,nbins,low,high,xtitle,"au", "ra2b_njetsshapes_0l_1l_nb2_mcnlo");
+  TH1D* ratio_2b_nlo = (TH1D*)ratio->Clone("ratio_2b_nlo");
+
+  selection_ =base&&TCut("nbjets>=3");
+  drawPlots(var,nbins,low,high,xtitle,"au", "ra2b_njetshapes_0l_1l_nb3_mcnlo");
+  TH1D* ratio_3b_nlo = (TH1D*)ratio->Clone("ratio_3b_nlo");
+
+
+  ratio_2b_mg->SetMarkerColor(kRed);
+  ratio_3b_mg->SetMarkerColor(kRed-7);
+
+  ratio_2b_ph->SetMarkerColor(kBlue);
+  ratio_3b_ph->SetMarkerColor(kBlue-7);
+
+  ratio_2b_nlo->SetMarkerColor(kGreen+4);
+  ratio_3b_nlo->SetMarkerColor(kGreen-6);
+
+  ratio_2b_mg->SetLineColor(kRed);
+  ratio_3b_mg->SetLineColor(kRed-7);
+
+  ratio_2b_ph->SetLineColor(kBlue);
+  ratio_3b_ph->SetLineColor(kBlue-7);
+
+  ratio_2b_nlo->SetLineColor(kGreen+4);
+  ratio_3b_nlo->SetLineColor(kGreen-6);
+
+  setLogY(false);
+  renewCanvas();
+
+  ratio_2b_mg->GetYaxis()->SetLabelSize(0.05); //make y label bigger
+  ratio_2b_mg->GetXaxis()->SetLabelSize(0.05); //make x label bigger
+
+  ratio_2b_mg->SetMaximum(2.5);
+  ratio_2b_mg->SetMinimum(0.5);
+
+  ratio_2b_mg->GetYaxis()->SetTitle("0l / 1l");
+  ratio_2b_mg->GetYaxis()->SetTitleSize(0.07);
+
+  ratio_2b_mg->Draw();
+  ratio_3b_mg->Draw("same");
+
+  ratio_2b_ph->Draw("same");
+  ratio_3b_ph->Draw("same");
+
+  ratio_2b_nlo->Draw("same");
+  ratio_3b_nlo->Draw("same");
+
+  leg_x1 = 0.2; leg_x2=0.5;
+  leg_y1=0.5; leg_y2=0.8;
+  renewLegend();
+  leg->AddEntry(ratio_2b_mg,"2b MG");
+  leg->AddEntry(ratio_3b_mg,"3b MG");
+  leg->AddEntry(ratio_2b_ph,"2b Powheg");
+  leg->AddEntry(ratio_3b_ph,"3b Powheg");
+  leg->AddEntry(ratio_2b_nlo,"2b MC@NLO");
+  leg->AddEntry(ratio_3b_nlo,"3b MC@NLO");
+  leg->Draw();
+
+}
+
 void RA2b_ttbarstudies() {
 
   //goal: compare HT (and MET and nb) shapes for different 0-lepton sample versus 1 lepton
@@ -587,11 +718,6 @@ void RA2b_ttbarstudies() {
 
   loadSamples(true,"ra2b2012");
   usePUweight_=true;
-
-  useHTeff_=false;
-  useMHTeff_=false;    
-  thebnnMHTeffMode_ = kOff;
-  currentConfig_=configDescriptions_.getDefault();
 
   int nbins;
   float low,high;
@@ -627,6 +753,112 @@ void RA2b_ttbarstudies() {
   nbins = 3; low=0.5; high=3.5;
   setLogY(false);
   drawPlots(var,nbins,low,high,xtitle,"au", "ra2b_nbjetsshapes_0l_1l",0);
+
+  //--compare 2b and 3b
+
+  setStackMode(false,false);
+  selection_ =TCut("HT>=400 &&MET>=125&& cutPV==1 && njets>=3 &&jetpt2>=70 && minDeltaPhiN_asin >= 4 && passCleaning==1 && nbjets==2 &&buggyEvent==0&&MET/caloMET<2&&maxTOBTECjetDeltaMult<40 && ttbarDecayCode!=2");
+  ratioMin=0.4;
+  ratioMax=1.6;
+
+  float nhtbins=4;
+  float htbins[] = {400,500,800,1000,1200};
+  var="HT"; xtitle="H_{T} [GeV]";
+  nbins = nhtbins; low=400; high=1200;
+  setLogY(true);
+  drawPlots(var,nbins,low,high,xtitle,"au", "ra2b_htshapes_0l_1l_nb2",htbins,"GeV");
+
+  TH1D* ratio_2b_mg = (TH1D*)ratio->Clone("ratio_2b_mg");
+
+  selection_ =TCut("HT>=400 &&MET>=125&& cutPV==1 && njets>=3 &&jetpt2>=70 && minDeltaPhiN_asin >= 4 && passCleaning==1 && nbjets>=3 &&buggyEvent==0&&MET/caloMET<2&&maxTOBTECjetDeltaMult<40 && ttbarDecayCode!=2");
+  drawPlots(var,nbins,low,high,xtitle,"au", "ra2b_htshapes_0l_1l_nb3",htbins,"GeV");
+
+  TH1D* ratio_3b_mg = (TH1D*)ratio->Clone("ratio_3b_mg");
+
+  //-- powheg --
+
+  clearSamples();
+  addSample("TTbarJetsPowheg:nElectrons==0&&nMuons==0&&nIsoTracks15_005_03==0",kRed,"0 lep");
+  addSample("TTbarJetsPowheg:(((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && MT_Wlep>=0&&MT_Wlep<100)",kBlue,"1 lep");
+   
+  chainSamples("TTbarJetsPowheg","WJets");
+  chainSamples("TTbarJetsPowheg","SingleTop");
+  selection_ =TCut("HT>=400 &&MET>=125&& cutPV==1 && njets>=3 &&jetpt2>=70 && minDeltaPhiN_asin >= 4 && passCleaning==1 && nbjets==2 &&buggyEvent==0&&MET/caloMET<2&&maxTOBTECjetDeltaMult<40 && ttbarDecayCode!=2");
+  drawPlots(var,nbins,low,high,xtitle,"au", "ra2b_htshapes_0l_1l_nb2_powheg",htbins,"GeV");
+  TH1D* ratio_2b_ph = (TH1D*)ratio->Clone("ratio_2b_ph");
+
+  selection_ =TCut("HT>=400 &&MET>=125&& cutPV==1 && njets>=3 &&jetpt2>=70 && minDeltaPhiN_asin >= 4 && passCleaning==1 && nbjets>=3 &&buggyEvent==0&&MET/caloMET<2&&maxTOBTECjetDeltaMult<40 && ttbarDecayCode!=2");
+  drawPlots(var,nbins,low,high,xtitle,"au", "ra2b_htshapes_0l_1l_nb3_powheg",htbins,"GeV");
+  TH1D* ratio_3b_ph = (TH1D*)ratio->Clone("ratio_3b_ph");
+
+  //-mc@nlo
+
+  clearSamples();
+  addSample("TTbarJetsMCNLO:nElectrons==0&&nMuons==0&&nIsoTracks15_005_03==0",kRed,"0 lep");
+  addSample("TTbarJetsMCNLO:(((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && MT_Wlep>=0&&MT_Wlep<100)",kBlue,"1 lep");
+   
+  chainSamples("TTbarJetsMCNLO","WJets");
+  chainSamples("TTbarJetsMCNLO","SingleTop");
+  selection_ =TCut("HT>=400 &&MET>=125&& cutPV==1 && njets>=3 &&jetpt2>=70 && minDeltaPhiN_asin >= 4 && passCleaning==1 && nbjets==2 &&buggyEvent==0&&MET/caloMET<2&&maxTOBTECjetDeltaMult<40 && ttbarDecayCode!=2");
+  drawPlots(var,nbins,low,high,xtitle,"au", "ra2b_htshapes_0l_1l_nb2_mcnlo",htbins,"GeV");
+  TH1D* ratio_2b_nlo = (TH1D*)ratio->Clone("ratio_2b_nlo");
+
+  selection_ =TCut("HT>=400 &&MET>=125&& cutPV==1 && njets>=3 &&jetpt2>=70 && minDeltaPhiN_asin >= 4 && passCleaning==1 && nbjets>=3 &&buggyEvent==0&&MET/caloMET<2&&maxTOBTECjetDeltaMult<40 && ttbarDecayCode!=2");
+  drawPlots(var,nbins,low,high,xtitle,"au", "ra2b_htshapes_0l_1l_nb3_mcnlo",htbins,"GeV");
+  TH1D* ratio_3b_nlo = (TH1D*)ratio->Clone("ratio_3b_nlo");
+
+
+  ratio_2b_mg->SetMarkerColor(kRed);
+  ratio_3b_mg->SetMarkerColor(kRed-7);
+
+  ratio_2b_ph->SetMarkerColor(kBlue);
+  ratio_3b_ph->SetMarkerColor(kBlue-7);
+
+  ratio_2b_nlo->SetMarkerColor(kGreen+4);
+  ratio_3b_nlo->SetMarkerColor(kGreen-6);
+
+  ratio_2b_mg->SetLineColor(kRed);
+  ratio_3b_mg->SetLineColor(kRed-7);
+
+  ratio_2b_ph->SetLineColor(kBlue);
+  ratio_3b_ph->SetLineColor(kBlue-7);
+
+  ratio_2b_nlo->SetLineColor(kGreen+4);
+  ratio_3b_nlo->SetLineColor(kGreen-6);
+
+  setLogY(false);
+  renewCanvas();
+
+  ratio_2b_mg->GetYaxis()->SetLabelSize(0.05); //make y label bigger
+  ratio_2b_mg->GetXaxis()->SetLabelSize(0.05); //make x label bigger
+
+  ratio_2b_mg->SetMaximum(2.1);
+  ratio_2b_mg->SetMinimum(0.6);
+
+  ratio_2b_mg->GetYaxis()->SetTitle("0l / 1l");
+  ratio_2b_mg->GetYaxis()->SetTitleSize(0.07);
+
+  ratio_2b_mg->Draw();
+  ratio_3b_mg->Draw("same");
+
+  ratio_2b_ph->Draw("same");
+  ratio_3b_ph->Draw("same");
+
+  ratio_2b_nlo->Draw("same");
+  ratio_3b_nlo->Draw("same");
+
+  leg_x1 = 0.2; leg_x2=0.5;
+  leg_y1=0.5; leg_y2=0.8;
+  renewLegend();
+  leg->AddEntry(ratio_2b_mg,"2b MG");
+  leg->AddEntry(ratio_3b_mg,"3b MG");
+  leg->AddEntry(ratio_2b_ph,"2b Powheg");
+  leg->AddEntry(ratio_3b_ph,"3b Powheg");
+  leg->AddEntry(ratio_2b_nlo,"2b MC@NLO");
+  leg->AddEntry(ratio_3b_nlo,"3b MC@NLO");
+  leg->Draw();
+
+  // == old stuff ==
 
   //try ST, out of curiosity
 
@@ -725,14 +957,17 @@ void RA2b_ttbarstudies() {
 
   //HT distribution for only 3 jet events
 
+  //Dec 2012 -- update to modern cuts
+
   clearSamples();
   addSample("TTbarJets:nElectrons==0&&nMuons==0",kRed,"0 lep");
   addSample("TTbarJets:(((nElectrons==0 && nMuons==1)||(nElectrons==1 && nMuons==0)) && MT_Wlep>=0&&MT_Wlep<100)",kBlue,"1 lep");
 
-  selection_ =TCut("MET>=150 && cutPV==1 && njets>=3  && minDeltaPhiN >= 4 && passCleaning==1 && nbjets>=1 &&njets==3");
+  selection_ =TCut("HT>=400 &&MET>=125&& cutPV==1 && njets>=3 &&jetpt2>=70 && minDeltaPhiN_asin >= 4 && passCleaning==1 && nbjets>=1 &&buggyEvent==0&&MET/caloMET<2&&maxTOBTECjetDeltaMult<40 && njets==3");
   var="HT"; xtitle="H_{T} [GeV]";
-  nbins = 35; low=300; high=1000;
+  nbins = 40; low=400; high=1200;
   setLogY(true);
+  doRatioPlot(true);
   drawPlots(var,nbins,low,high,xtitle,"au", "ra2b_htshapes_0l_1l_3jets",0,"GeV");
 
   selection_ =TCut("MET>=150 && cutPV==1 && njets>=3  && minDeltaPhiN >= 4 && passCleaning==1 && nbjets>=1 &&njets==4");
