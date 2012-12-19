@@ -19,7 +19,7 @@ void initStyle() {
 
   //check if the style is already defined
   if (theStyle==0 && gROOT->GetStyle("CMS")==0) {
-    TStyle *theStyle = new TStyle("CMS","Style for P-TDR");
+    theStyle = new TStyle("CMS","Style for P-TDR");
 
 
     // For the canvas:
@@ -187,6 +187,7 @@ std::map<TString, TString> sampleOwenName_;
 std::map<TString, TString> sampleLabel_;
 std::map<TString, UInt_t> sampleMarkerStyle_;
 std::map<TString, UInt_t> sampleLineStyle_;
+std::map<TString, TString> sampleWeightFactor_;//an arbitary string for weighting individual samples
 std::map<TString, float> sampleScaleFactor_; //1 by default //implemented only for drawPlots!
 std::map<TString, TChain*> primaryDatasets_;
 TChain* dtree=0;
@@ -257,6 +258,7 @@ bool quiet_=false;
 //bool quiet_=true;
 bool doRatio_=false;
 bool logy_=false;
+bool logx_=false;
 bool dostack_=true;
 bool doleg_=true;
 bool dodata_=true;
@@ -272,9 +274,6 @@ int m12_=0;
 TString susyCrossSectionVariation_="";
 
 bool normalized_=false;
-
-bool useFlavorHistoryWeights_=false;//no setter function
-float flavorHistoryScaling_=-1;
 
 bool usePUweight_=false;
 bool useHTeff_ = false;
@@ -756,8 +755,12 @@ void renewCanvas(const TString opt="") {
 		      << thecanvas->GetPad(1)->GetYlowNDC() <<"\t"
 		      << thecanvas->GetPad(1)->GetHNDC() <<endl;
     if (logy_) thecanvas->GetPad(1)->SetLogy();
+    if (logx_) thecanvas->GetPad(1)->SetLogx();
   }
-  else { if (logy_) thecanvas->SetLogy(); }
+  else { 
+    if (logy_) thecanvas->SetLogy(); 
+    if (logx_) thecanvas->SetLogx();
+}
 
 
   int cdarg = opt.Contains("ratio") ? 1 : 0;
@@ -845,27 +848,6 @@ TString renormBins( TH1D* hp, int refbin ) {
   return ytitle;
 }
 
-// jmt -- the flavor history stuff has not been used in years. certaintly not to be considered functional at the moment
-void fillFlavorHistoryScaling() {
-
-  TChain* tree=0;
-  for (unsigned int isample=0; isample<samples_.size(); isample++) {
-    if ( samples_[isample].Contains("WJets")) { //will pick out WJets or WJetsZ2
-      tree = (TChain*) getTree(samples_[isample]);//files_[currentConfig_][samples_[isample]]->Get(reducedTreeName_);
-    }
-  }
-  if (tree==0) {cout<<"Did not find a WJets sample!"<<endl; return;}
-
-  gROOT->cd();
-  TH1D dummyU("dummyU","",1,0,1e9);
-  TH1D dummyk("dummyk","",1,0,1e9);
-  assert(0);//please check that the following cuts have the weights and cuts handled correctly
-  tree->Draw("HT>>dummyU","1","goff");
-  tree->Draw("HT>>dummyk","flavorHistoryWeight","goff");
-  flavorHistoryScaling_ = dummyU.Integral() / dummyk.Integral();
-  if (!quiet_) cout<<"flavor history scaling factor = "<<flavorHistoryScaling_<<endl;
-
-}
 
 //jmt Dec 2012 -- clearly this function is stylistically awful, but it does the job and I don't want to mess with it right now
 //try to bring some rationality to the options passed to getcutstring....
@@ -917,13 +899,6 @@ for legacy purposes I am keeping all of the weight and selection TStrings, altho
   }
   */
 
-  //this flavorHistoryWeight business is too kludgey...someday should fix it
-  if (extraWeight=="flavorHistoryWeight" && type!=kData) {
-    if (flavorHistoryScaling_ <0) {
-      fillFlavorHistoryScaling();
-    }
-    extraWeight.Form("flavorHistoryWeight*%f",flavorHistoryScaling_);
-  }
   if (extraWeight!="") {
     weightedcut += "*(";
     weightedcut +=extraWeight;
@@ -1208,6 +1183,13 @@ void resetSampleScaleFactors() {
   }
 }
 
+void resetSampleWeightFactors() {
+
+  for (std::set<TString>::iterator isample=samplesAll_.begin(); isample!=samplesAll_.end(); ++isample) {
+    sampleWeightFactor_[*isample] = "";
+  }
+}
+
 void setSampleScaleFactor(const TString & sample, const float sf) {
   bool done=false;
   for (std::vector<TString>::iterator isample=samples_.begin(); isample!=samples_.end(); ++isample) {
@@ -1222,6 +1204,22 @@ float getSampleScaleFactor(const TString & sample) {
   else if ( sampleScaleFactor_.count( stripSamplename(sample))>0) return sampleScaleFactor_[stripSamplename(sample)];
 
   return 1;
+}
+
+void setSampleWeightFactor(const TString & sample, const TString & factor) {
+  bool done=false;
+  for (std::vector<TString>::iterator isample=samples_.begin(); isample!=samples_.end(); ++isample) {
+    if (*isample == sample) {sampleWeightFactor_[*isample] = factor; done=true;}
+  }
+  if (!done) cout<<"Failed to find the sample "<<sample<<endl;
+}
+
+TString getSampleWeightFactor(const TString & sample) {
+
+  if (  sampleScaleFactor_.count(sample)>0)    return sampleWeightFactor_[sample];
+  else if ( sampleScaleFactor_.count( stripSamplename(sample))>0) return sampleWeightFactor_[stripSamplename(sample)];
+
+  return "";
 }
 
 void clearSamples() {
@@ -1796,6 +1794,7 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
 
   //set all scale factors to 1 to start with.
   resetSampleScaleFactors();
+  resetSampleWeightFactors();
 
   //  for (std::vector<TString>::iterator iconfig=configDescriptions_.begin(); iconfig!=configDescriptions_.end(); ++iconfig) {
   for (unsigned int iconfig=0; iconfig<configDescriptions_.size(); ++iconfig) {
@@ -2052,10 +2051,9 @@ float drawSimple(const TString var, const int nbins, const double low, const dou
   hh->SetXTitle(xtitle);
   hh->GetYaxis()->SetTitle(ytitle);
 
-  TString optfh= useFlavorHistoryWeights_ && samplename.Contains("WJets") ? "flavorHistoryWeight" : "";
   if (samplename=="data") tree->Project(histname,var,getCutString(true).Data());
   else //tree->Project(histname,var,getCutString( getSampleType(samplename,"point"),optfh,selection_,"",0,"").Data());
-    tree->Project(histname,var,getCutString( getSampleType(samplename,"point"),optfh,selection_,extractExtraCut(samplename),0,"",-1,getSampleScaleFactor(samplename)).Data());
+    tree->Project(histname,var,getCutString( getSampleType(samplename,"point"),getSampleWeightFactor(samplename),selection_,extractExtraCut(samplename),0,"",-1,getSampleScaleFactor(samplename)).Data());
 
   //  hh->Scale( getSampleScaleFactor(samplename));
 
@@ -2119,9 +2117,10 @@ void draw2d(const TString var, const int nbins, const float low, const float hig
       //      TChain* tree = (TChain*) files_[currentConfig_][samples_[isample]]->Get(reducedTreeName_);
       TChain* tree = getTree(samples_[isample]);
       gROOT->cd();
-      TString weightopt= useFlavorHistoryWeights_ && samples_[isample].Contains("WJets") ? "flavorHistoryWeight" : "";
+      
       h2d_temp->Reset(); //just to be safe
-      tree->Project("h2d_temp",drawstring,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,"",0,""));
+      tree->Project("h2d_temp",drawstring,getCutString( getSampleType(samples_[isample],"point"),getSampleWeightFactor(samples_[isample]),selection_,extractExtraCut(samples_[isample]),0,"",-1,getSampleScaleFactor(samples_[isample])).Data());
+
       h2d->Add(h2d_temp);
     }
   }
@@ -2293,14 +2292,13 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
       cout<<"tree is null! Something must be wrong!"<<endl<<currentConfig_<<endl<<samplename<<endl;
     }
     gROOT->cd();
-    TString weightopt= useFlavorHistoryWeights_ && samples_[isample].Contains("WJets") ? "flavorHistoryWeight" : "";
 
     //replace the scanSMSngen with the appropriate one for this sample
     if ( isSampleSMS(samplename)) loadScanSMSngen(samplename);
     if (isSampleScan(samplename)) setScanPoint(samples_[isample]);
 
     //fill the histogram!
-    tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),weightopt,selection_,extractExtraCut(samples_[isample]),0,"",-1,getSampleScaleFactor(samples_[isample])).Data());
+    tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),getSampleWeightFactor(samplename),selection_,extractExtraCut(samples_[isample]),0,"",-1,getSampleScaleFactor(samples_[isample])).Data());
 
     //now the histo is filled
     if (renormalizeBins_) ytitle=renormBins(histos_[samples_[isample]],2 ); //manipulates the TH1D //FIXME hard-coded "2"
@@ -2781,9 +2779,8 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
 
     
     //Fill histos
-    if (useFlavorHistoryWeights_) assert(0); // this needs to be implemented
-    tree->Project(hnameP,var,getCutString(getSampleType(samples_[isample],"point"),"",selection_,cstring1).Data());
-    tree->Project(hnameF,var,getCutString(getSampleType(samples_[isample],"point"),"",selection_,cstring2).Data());
+    tree->Project(hnameP,var,getCutString(getSampleType(samples_[isample],"point"),getSampleWeightFactor(samples_[isample]),selection_,cstring1).Data());
+    tree->Project(hnameF,var,getCutString(getSampleType(samples_[isample],"point"),getSampleWeightFactor(samples_[isample]),selection_,cstring2).Data());
 
     if (addOverflow_)  addOverflowBin( histos_[hnameP] );
     if (addOverflow_)  addOverflowBin( histos_[hnameF] );
@@ -3250,7 +3247,7 @@ void cutflow(bool isTightSelection){
       //      TChain* tree = (TChain*) files_[currentConfig_][samples_[isample]]->Get(reducedTreeName_);
       TChain* tree = getTree(samples_[isample]);
       gROOT->cd();
-      TString weightopt= useFlavorHistoryWeights_ && samples_[isample].Contains("WJets") ? "flavorHistoryWeight" : "";
+      TString weightopt= "";
       tree->Project(hname,var,thisStageCut);
       //now the histo is filled
 
