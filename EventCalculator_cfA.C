@@ -1013,6 +1013,10 @@ bool EventCalculator::passUtilityPrescaleModuleHLT() {
 float EventCalculator::getHLTeff(const float ht,const float met,const int nleptons) {
 //2012 trigger efficiencies from frozen pre-approval AN
 
+//nope, this is the wrong logic.
+//need to steal it from here instead
+//http://cmssw.cvs.cern.ch/cgi-bin/cmssw.cgi/UserCode/SusyAnalysis/RA2b/Statistics/3Dcode/reducedTree.C?revision=1.3&view=markup
+//or maybe just forget about it and draw plots from their trees!
 
   float zl[4][4] = { { 0.61, 0.76, 1, 1 }, { 0.69, 0.84, 1, 1 }, { 1, 1, 1, 1 }, { 1, 1, 1, 1 } };
   float sl[4][4] =  { { 0.91, 0.96, 1, 1 }, { 0.99, 0.99, 1, 1 }, { 1, 1, 0.99, 1 }, { 1, 1, 1, 1 } };
