@@ -4482,7 +4482,7 @@ void EventCalculator::loadJetTagEffMaps() {
   f_tageff_ = new TFile(filename,"READ");
   if (f_tageff_->IsZombie()) {
     cout<<"Failed to load the b-tag eff map for sample "<<sampleName_<<endl;
-    assert(0); //it's just too frustrating to let jobs continue in this state
+    if (!isSampleRealData())    assert(0); //it's just too frustrating to let jobs continue in this state
     delete f_tageff_;
     f_tageff_=0;
   }
