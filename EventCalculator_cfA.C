@@ -112,8 +112,6 @@ EventCalculator::EventCalculator(const TString & sampleName, const vector<string
   vPar_.push_back(*ResJetPar_);
   JetCorrector_ =  new FactorizedJetCorrector(vPar_);
 
-  loadJetTagEffMaps();  
-
   //finally, initialize the TBraches for cfA
   for (unsigned int ii = 0; ii<inputFiles.size(); ++ii) {
     chainB->Add(inputFiles.at(ii).c_str());
@@ -4965,6 +4963,9 @@ void EventCalculator::tauStudy(TString outputpath) {
 */
 
 void EventCalculator::reducedTree(TString outputpath) {
+
+  // Move opening of btag eff histos to here to enforce existence for producing reducedTrees
+  loadJetTagEffMaps();
 
   //JSON file reading. For now the JSON file must be called GoldenJSON.txt
   //our procedure is to copy the JSON from the official afs space to the names coded here, and put the JSON into our CVS repo
