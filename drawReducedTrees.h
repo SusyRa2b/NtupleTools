@@ -647,7 +647,7 @@ void drawPlotHeader(double xoffset = 0) {
 
   //  return;
   float ypos = 0.97;
-  if(doRatio_) ypos=ypos+0.012;
+  //  if(doRatio_) ypos=ypos+0.012;
   // i'm gonna leave this out for now
   if (text1 != 0 ) delete text1;
   if(isPreliminary_){
@@ -740,7 +740,7 @@ void renewCanvas(const TString opt="") {
     const float padding=1e-5; const float ydivide=0.3;
     thecanvas->GetPad(1)->SetPad( padding, ydivide + padding, 1-padding, 1-padding);
     thecanvas->GetPad(2)->SetPad( padding, padding, 1-padding, ydivide-padding);
-    thecanvas->GetPad(1)->SetTopMargin(0.06);
+    thecanvas->GetPad(1)->SetTopMargin(0.07); //0.06
     thecanvas->GetPad(1)->SetRightMargin(.05);
     thecanvas->GetPad(2)->SetRightMargin(.05);
     thecanvas->GetPad(2)->SetBottomMargin(.4);
