@@ -190,6 +190,8 @@ std::map<TString, UInt_t> sampleLineStyle_;
 std::map<TString, TString> sampleWeightFactor_;//an arbitary string for weighting individual samples
 std::map<TString, float> sampleScaleFactor_; //1 by default //implemented only for drawPlots!
 std::map<TString, TChain*> primaryDatasets_;
+std::vector<TLine*> verticalLines_; //for decorating plots with a set of vertical lines
+std::vector<float> verticalLinePositions_; //for decorating plots with a set of vertical lines
 TChain* dtree=0;
 TH1D* hdata=0;
 TH2D* hdata2d=0;
@@ -290,9 +292,6 @@ bool drawSusyOnly_=false;//no setter function
 bool drawMarkers_=true;//no setter function
 
 bool useMassInLegend_=true;
-
-bool doVerticalLine_=false;
-double verticalLinePosition_=0;
 
 bool doCustomPlotMax_=false;
 double customPlotMax_=0;
@@ -456,17 +455,23 @@ void resetPlotMinimum() {
   doCustomPlotMin_=false;
 }
 
-void enableVerticalLine(double position) {
-  doVerticalLine_=true;
-  verticalLinePosition_ =position;
+TLine* getVerticalLine(unsigned int index) {  return verticalLines_[index];}
+void addVerticalLine(float position) {
+  verticalLinePositions_.push_back(position);
 }
 
 // void showDataMinusMC(bool dosub) {
 //   doSubtraction_=dosub;
 // }
 
+void deleteVerticalLines() {
+  for (unsigned int il=0; il<verticalLines_.size(); il++)     delete verticalLines_.at(il);
+}
+
 void resetVerticalLine() {
-  doVerticalLine_=false;
+  deleteVerticalLines();
+  verticalLines_.clear();
+  verticalLinePositions_.clear();
 }
 
 void doOverflowAddition(bool doOv) {
@@ -1127,22 +1132,33 @@ void addOverflowBin(TH1F* theHist) {
 }
 
 void drawVerticalLine() {
-  if (thecanvas==0) return;
+  if (thecanvas==0 || verticalLinePositions_.size()==0) return;
 
-  //this is a fine example of ROOT idiocy
-  TVirtualPad* thePad = thecanvas->GetPad(0); //needs fixing for ratio plots
-  double xmin,ymin,xmax,ymax;
-  thePad->GetRangeAxis(xmin,ymin,xmax,ymax);
+  deleteVerticalLines(); //clean up old lines
+
+  thecanvas->Update(); //important!
+
+  int padindex = doRatio_ ? 1 : 0;
+  TVirtualPad* thePad = thecanvas->GetPad(padindex);
+  thecanvas->cd(padindex);
+  //  double xmin,ymin,xmax,ymax;
+  //  thePad->GetRangeAxis(xmin,ymin,xmax,ymax);
+  double ymax=  thePad->GetUymax();
+  double ymin=  thePad->GetUymin();
   //for academic interest, can get the same numbers using e.g. thePad->GetUymax()
   if (logy_) {
     ymax = pow(10, ymax);
     ymin = pow(10, ymin);
   }
-  TLine theLine(verticalLinePosition_,ymin,verticalLinePosition_,ymax);
-  theLine.SetLineColor(kBlue);
-  theLine.SetLineWidth(3);
 
-  theLine.DrawClone();
+  for (unsigned int il = 0; il<verticalLinePositions_.size(); il++) {
+    TLine* theLine = new TLine(verticalLinePositions_.at(il),ymin,verticalLinePositions_.at(il),ymax);
+    theLine->SetLineColor(kBlack); //hard-coded for now...
+    theLine->SetLineWidth(2);
+    theLine->Draw();
+    verticalLines_.push_back(theLine);
+  }
+
 
 }
 
@@ -2411,7 +2427,7 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
     thestack->GetHistogram()->GetYaxis()->SetTitle(ytitle);
     thestack->GetHistogram()->GetXaxis()->SetTitleOffset(0.93);
 
-    if (doVerticalLine_) drawVerticalLine(); //i want to draw the data last
+    //drawverticalline used to be called here but i've now moved it lower
 
     if (drawMCErrors_) {
       if (mcerrors!=0) delete mcerrors;
@@ -2554,6 +2570,8 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
     text3->SetTextSize(0.03);
     text3->Draw();
   }
+
+  drawVerticalLine();
 
   //  if (doSubtraction_) savename+="-MCSub";
   TString savename = filename;
