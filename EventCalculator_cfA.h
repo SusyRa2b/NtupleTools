@@ -119,7 +119,7 @@ public:
   bool passHLT(std::map<TString,triggerData> & triggerlist, bool alwaysPassMc);
   //  bool passUtilityHLT(int &version, int &prescale); //deprecated
   bool passUtilityPrescaleModuleHLT();
-  float getHLTeff(const float ht,const float met,const int nleptons) ;
+  float getHLTeff(const float ht,const float met,const int nelectrons,const int nmuons) ;
 
 
   int countGoodPV();
@@ -284,6 +284,8 @@ public:
 
   float getMT_Wlep(const float pttreshold=10);
   float getMT_bMET();
+  float getMT_jetMET();
+  float getMT_bMET_bestCSV();
   void calcTopDecayVariables(float & wmass, float & tmass, float & wcoshel, float & tcoshel);
   void calcCosHel(unsigned int j1i, unsigned int j2i, unsigned int j3i, float & wcoshel,float &tcoshel);
 
@@ -348,6 +350,11 @@ protected:
   float get_AN_12_175_Table2_Error(const float pt);
   int getPtBinIndex(const float pt) ;
 
+  void loadTriggerHistos() ;
+  float getTrigWeightMu(const float HT,const float MET);
+  float getTrigWeightEl(const float HT,const float MET) ;
+  float getTrigWeight0L(const float HT,const float MET) ;
+
 private:
   TString sampleName_;
   bool sampleIsSignal_;
@@ -370,19 +377,34 @@ private:
   CrossSectionTable * crossSectionTanb40_20_;
 
   TFile *smsCrossSectionFile_;
-  //stuff for the HT turn-on
-  TFile *f_eff_ht300_;
-  TFile *f_eff_ht350_;
-  TGraphAsymmErrors *htgraph_ht300_;
-  TGraphAsymmErrors *htgraphPlus_ht300_;
-  TGraphAsymmErrors *htgraphMinus_ht300_;
-  TGraphAsymmErrors *htgraph_ht350_;
-  TGraphAsymmErrors *htgraphPlus_ht350_;
-  TGraphAsymmErrors *htgraphMinus_ht350_;
-  TFile *f_eff_mht_;
-  TGraphAsymmErrors *mhtgraph_;
-  TGraphAsymmErrors *mhtgraphPlus_;
-  TGraphAsymmErrors *mhtgraphMinus_;
+
+  //2012 trig eff
+  TFile *f_trigeff_;
+  //http://cmssw.cvs.cern.ch/cgi-bin/cmssw.cgi/UserCode/SusyAnalysis/RA2b/Statistics/3Dcode/reducedTree.h?revision=1.1&view=markup
+   TH1F           *hnum_ht400to500_0L;
+   TH1F           *hnum_ht500to800_0L;
+   TH1F           *hnum_ht800to1000_0L;
+   TH1F           *hnum_ht1000toInf_0L;
+   TH1F           *hnum_ht400to500_ele; 
+   TH1F           *hnum_ht500to800_ele;  
+   TH1F           *hnum_ht800to1000_ele;    
+   TH1F           *hnum_ht1000toInf_ele;   
+   TH1F           *hnum_ht400to500_mu;  
+   TH1F           *hnum_ht500to800_mu;	
+   TH1F           *hnum_ht800to1000_mu;    
+   TH1F           *hnum_ht1000toInf_mu;
+   TH1F           *hden_ht400to500_0L;
+   TH1F           *hden_ht500to800_0L;
+   TH1F           *hden_ht800to1000_0L;
+   TH1F           *hden_ht1000toInf_0L;
+   TH1F           *hden_ht400to500_ele; 
+   TH1F           *hden_ht500to800_ele;  
+   TH1F           *hden_ht800to1000_ele;    
+   TH1F           *hden_ht1000toInf_ele;   
+   TH1F           *hden_ht400to500_mu;  
+   TH1F           *hden_ht500to800_mu;	
+   TH1F           *hden_ht800to1000_mu;    
+   TH1F           *hden_ht1000toInf_mu;
 
   //stuff for the btag probability 
   TFile *f_tageff_;

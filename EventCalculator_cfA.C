@@ -47,18 +47,31 @@ EventCalculator::EventCalculator(const TString & sampleName, const vector<string
   crossSectionTanb40_05_(0),
   crossSectionTanb40_20_(0),
   smsCrossSectionFile_(0),
-  f_eff_ht300_(0),
-  f_eff_ht350_(0),
-  htgraph_ht300_(0),
-  htgraphPlus_ht300_(0),
-  htgraphMinus_ht300_(0),
-  htgraph_ht350_(0),
-  htgraphPlus_ht350_(0),
-  htgraphMinus_ht350_(0),
-  f_eff_mht_(0),
-  mhtgraph_(0),
-  mhtgraphPlus_(0),
-  mhtgraphMinus_(0),
+  f_trigeff_(0),
+              hnum_ht400to500_0L(0),
+              hnum_ht500to800_0L(0),
+              hnum_ht800to1000_0L(0),
+              hnum_ht1000toInf_0L(0),
+              hnum_ht400to500_ele(0), 
+              hnum_ht500to800_ele(0),  
+              hnum_ht800to1000_ele(0),    
+              hnum_ht1000toInf_ele(0),   
+              hnum_ht400to500_mu(0),  
+              hnum_ht500to800_mu(0),	
+              hnum_ht800to1000_mu(0),    
+              hnum_ht1000toInf_mu(0),
+              hden_ht400to500_0L(0),
+              hden_ht500to800_0L(0),
+              hden_ht800to1000_0L(0),
+              hden_ht1000toInf_0L(0),
+              hden_ht400to500_ele(0), 
+              hden_ht500to800_ele(0),  
+              hden_ht800to1000_ele(0),    
+              hden_ht1000toInf_ele(0),   
+              hden_ht400to500_mu(0),  
+              hden_ht500to800_mu(0),	
+              hden_ht800to1000_mu(0),    
+              hden_ht1000toInf_mu(0),
   f_tageff_(0),
   fDataJetRes_(0),
   //2011 values, to be used for code validation only
@@ -99,7 +112,7 @@ EventCalculator::EventCalculator(const TString & sampleName, const vector<string
 
   //  checkConsistency();
 
-
+  loadTriggerHistos();
 
   loadDataJetRes();
 
@@ -1007,36 +1020,145 @@ bool EventCalculator::passUtilityPrescaleModuleHLT() {
 
 }
 
+void EventCalculator::loadTriggerHistos() {
 
-float EventCalculator::getHLTeff(const float ht,const float met,const int nleptons) {
-//2012 trigger efficiencies from frozen pre-approval AN
+  if (f_trigeff_==0)  {
+    cout<<"Loading trigger efficiency histograms (2012)"<<endl;
 
-//nope, this is the wrong logic.
-//need to steal it from here instead
+    f_trigeff_ = new TFile("trigEff_coarse_bin_newTriggerScheme_ecalLaserFilter_v4.root");
+    f_trigeff_->GetObject("hnum_ht400to500_ele_abc", hnum_ht400to500_ele);
+    f_trigeff_->GetObject("hnum_ht500to800_ele_abc", hnum_ht500to800_ele);
+    f_trigeff_->GetObject("hnum_ht800to1000_ele_abc", hnum_ht800to1000_ele);
+    f_trigeff_->GetObject("hnum_ht1000toInf_ele_abc", hnum_ht1000toInf_ele);
+    f_trigeff_->GetObject("hnum_ht400to500_mu_abc", hnum_ht400to500_mu);
+    f_trigeff_->GetObject("hnum_ht500to800_mu_abc", hnum_ht500to800_mu);
+    f_trigeff_->GetObject("hnum_ht800to1000_mu_abc", hnum_ht800to1000_mu);
+    f_trigeff_->GetObject("hnum_ht1000toInf_mu_abc", hnum_ht1000toInf_mu);
+    f_trigeff_->GetObject("hden_ht400to500_ele_abc", hden_ht400to500_ele);
+    f_trigeff_->GetObject("hden_ht500to800_ele_abc", hden_ht500to800_ele);
+    f_trigeff_->GetObject("hden_ht800to1000_ele_abc", hden_ht800to1000_ele);
+    f_trigeff_->GetObject("hden_ht1000toInf_ele_abc", hden_ht1000toInf_ele);
+    f_trigeff_->GetObject("hden_ht400to500_mu_abc", hden_ht400to500_mu);
+    f_trigeff_->GetObject("hden_ht500to800_mu_abc", hden_ht500to800_mu);
+    f_trigeff_->GetObject("hden_ht800to1000_mu_abc", hden_ht800to1000_mu);
+    f_trigeff_->GetObject("hden_ht1000toInf_mu_abc", hden_ht1000toInf_mu);
+    // now 0L efficiency is fake met efficiency for QCD
+    f_trigeff_->GetObject("hnum_ht400to500_0L_abc_qcd", hnum_ht400to500_0L);
+    f_trigeff_->GetObject("hnum_ht500to800_0L_abc_qcd", hnum_ht500to800_0L);
+    f_trigeff_->GetObject("hnum_ht800to1000_0L_abc_qcd", hnum_ht800to1000_0L);
+    f_trigeff_->GetObject("hnum_ht1000toInf_0L_abc_qcd", hnum_ht1000toInf_0L);
+    f_trigeff_->GetObject("hden_ht400to500_0L_abc_qcd", hden_ht400to500_0L);
+    f_trigeff_->GetObject("hden_ht500to800_0L_abc_qcd", hden_ht500to800_0L);
+    f_trigeff_->GetObject("hden_ht800to1000_0L_abc_qcd", hden_ht800to1000_0L);
+    f_trigeff_->GetObject("hden_ht1000toInf_0L_abc_qcd", hden_ht1000toInf_0L);
+    hnum_ht400to500_mu->Divide(hden_ht400to500_mu);
+    hnum_ht500to800_mu->Divide(hden_ht500to800_mu);
+    hnum_ht800to1000_mu->Divide(hden_ht800to1000_mu);
+    hnum_ht1000toInf_mu->Divide(hden_ht1000toInf_mu);
+    hnum_ht400to500_ele->Divide(hden_ht400to500_ele);
+    hnum_ht500to800_ele->Divide(hden_ht500to800_ele);
+    hnum_ht800to1000_ele->Divide(hden_ht800to1000_ele);
+    hnum_ht1000toInf_ele->Divide(hden_ht1000toInf_ele);
+    hnum_ht400to500_0L->Divide(hden_ht400to500_0L);
+    hnum_ht500to800_0L->Divide(hden_ht500to800_0L);
+    hnum_ht800to1000_0L->Divide(hden_ht800to1000_0L);
+    hnum_ht1000toInf_0L->Divide(hden_ht1000toInf_0L);
+    cout<<"Done loading trigger efficiency histograms (2012)"<<endl;
+
+  }
+
+}
+
+float EventCalculator::getTrigWeightMu(const float HT,const float MET) {
+
+//not ideal solution ... just copy/paste the implementation from
 //http://cmssw.cvs.cern.ch/cgi-bin/cmssw.cgi/UserCode/SusyAnalysis/RA2b/Statistics/3Dcode/reducedTree.C?revision=1.3&view=markup
-//or maybe just forget about it and draw plots from their trees!
 
-  float zl[4][4] = { { 0.61, 0.76, 1, 1 }, { 0.69, 0.84, 1, 1 }, { 1, 1, 1, 1 }, { 1, 1, 1, 1 } };
-  float sl[4][4] =  { { 0.91, 0.96, 1, 1 }, { 0.99, 0.99, 1, 1 }, { 1, 1, 0.99, 1 }, { 1, 1, 1, 1 } };
+//  float Mbins[5] = {125.,150.,250.,350.,99999.};    
+  float Hbins[5] = {400.,500.,800.,1000.,99999.};    
 
-  int htedges[5] = {400,500,800,1000,100000};
-  int metedges[5] = {125,150,250,350,100000};
+  float toreturnnew = -1;
+
+  if (MET>125 && HT>400) {
+    if ( (HT>Hbins[0]) && (HT<=Hbins[1]) ) toreturnnew = hnum_ht400to500_mu->GetBinContent( hnum_ht400to500_mu->GetXaxis()->FindBin(MET) );    
+    if ( (HT>Hbins[1]) && (HT<=Hbins[2]) ) toreturnnew =  hnum_ht500to800_mu->GetBinContent( hnum_ht500to800_mu->GetXaxis()->FindBin(MET) );    
+    if ( (HT>Hbins[2]) && (HT<=Hbins[3]) ) toreturnnew =  hnum_ht800to1000_mu->GetBinContent( hnum_ht800to1000_mu->GetXaxis()->FindBin(MET) );  
+    if ( (HT>Hbins[3]) && (HT<=Hbins[4]) ) toreturnnew =  hnum_ht1000toInf_mu->GetBinContent( hnum_ht1000toInf_mu->GetXaxis()->FindBin(MET) );	 
+  }
+  return toreturnnew;
+
+}
 
 
-  //should modularize!
-  if (ht<htedges[0] || ht>htedges[4]) return 1; //bail
-  if (met<metedges[0] || met>metedges[4]) return 1; //bail
+float EventCalculator::getTrigWeightEl(const float HT,const float MET) {
 
-  int iht,imet;
-  iht=0; 
-  for ( ; iht<4; ++iht)     if (ht >= htedges[iht] && ht<htedges[iht+1]) break;
-  imet=0;
-  for ( ; imet<4; ++imet)     if (met >= metedges[imet] && met<metedges[imet+1]) break;
+//not ideal solution ... just copy/paste the implementation from
+//http://cmssw.cvs.cern.ch/cgi-bin/cmssw.cgi/UserCode/SusyAnalysis/RA2b/Statistics/3Dcode/reducedTree.C?revision=1.3&view=markup
+//  float Mbins[5] = {125.,150.,250.,350.,99999.};    
+  float Hbins[5] = {400.,500.,800.,1000.,99999.};    
 
-  if (nleptons==1) return sl[imet][iht];
-  if (nleptons==0) return zl[imet][iht];
+  float toreturnnew = -1;
 
-  return 1;
+  if (MET>125 && HT>400) {
+    if ( (HT>Hbins[0]) && (HT<Hbins[1]) ) toreturnnew =  hnum_ht400to500_ele->GetBinContent( hnum_ht400to500_ele->GetXaxis()->FindBin(MET) );    
+    if ( (HT>Hbins[1]) && (HT<Hbins[2]) ) toreturnnew =  hnum_ht500to800_ele->GetBinContent( hnum_ht500to800_ele->GetXaxis()->FindBin(MET) );    
+    if ( (HT>Hbins[2]) && (HT<Hbins[3]) ) toreturnnew =  hnum_ht800to1000_ele->GetBinContent( hnum_ht800to1000_ele->GetXaxis()->FindBin(MET) );  
+    if ( (HT>Hbins[3]) && (HT<Hbins[4]) ) toreturnnew =  hnum_ht1000toInf_ele->GetBinContent( hnum_ht1000toInf_ele->GetXaxis()->FindBin(MET) );	 
+  }
+  return toreturnnew;
+}
+
+
+float EventCalculator::getTrigWeight0L(const float HT,const float MET) {
+
+//not ideal solution ... just copy/paste the implementation from
+//http://cmssw.cvs.cern.ch/cgi-bin/cmssw.cgi/UserCode/SusyAnalysis/RA2b/Statistics/3Dcode/reducedTree.C?revision=1.3&view=markup
+  float Mbins[5] = {125.,150.,250.,350.,99999.};    
+  float Hbins[5] = {400.,500.,800.,1000.,99999.};    
+  //  float toreturnold = -1;
+  //  float toreturnnew = -1;
+  float toreturnfakemet = -1;
+
+  if (MET>Mbins[0] && MET<=Mbins[2] && HT>400) {
+    if ( (HT>Hbins[0]) && (HT<Hbins[1]) ) toreturnfakemet =  hnum_ht400to500_0L->GetBinContent( hnum_ht400to500_0L->GetXaxis()->FindBin(MET) );    
+    if ( (HT>Hbins[1]) && (HT<Hbins[2]) ) toreturnfakemet =  hnum_ht500to800_0L->GetBinContent( hnum_ht500to800_0L->GetXaxis()->FindBin(MET) );    
+    if ( (HT>Hbins[2]) && (HT<Hbins[3]) ) toreturnfakemet =  hnum_ht800to1000_0L->GetBinContent( hnum_ht800to1000_0L->GetXaxis()->FindBin(MET) );  
+    if ( (HT>Hbins[3]) && (HT<Hbins[4]) ) toreturnfakemet =  hnum_ht1000toInf_0L->GetBinContent( hnum_ht1000toInf_0L->GetXaxis()->FindBin(MET) );	 
+  }
+  if ( (MET>Mbins[2]) && (MET<=Mbins[3]) ){
+    if ( (HT>Hbins[0]) && (HT<=Hbins[1]) ) toreturnfakemet =  1.0;
+    if ( (HT>Hbins[1]) && (HT<=Hbins[2]) ) toreturnfakemet =  1.0;
+    if ( (HT>Hbins[2]) && (HT<=Hbins[3]) ) toreturnfakemet =  1.0;
+    if ( (HT>Hbins[3]) && (HT<=Hbins[4]) ) toreturnfakemet =  1.0;
+  }
+  if ( (MET>Mbins[3]) && (MET<=Mbins[4]) ){
+    if ( (HT>Hbins[0]) && (HT<=Hbins[1]) ) toreturnfakemet =  1.0;
+    if ( (HT>Hbins[1]) && (HT<=Hbins[2]) ) toreturnfakemet =  1.0;
+    if ( (HT>Hbins[2]) && (HT<=Hbins[3]) ) toreturnfakemet =  1.0;
+    if ( (HT>Hbins[3]) && (HT<=Hbins[4]) ) toreturnfakemet =  1.0;
+  }
+
+  return toreturnfakemet;
+}
+
+float EventCalculator::getHLTeff(const float ht,const float met,const int nelectrons, const int nmuons) {
+//2012 trigger efficiencies
+
+//not ideal solution ... just copy/paste the implementation from
+//http://cmssw.cvs.cern.ch/cgi-bin/cmssw.cgi/UserCode/SusyAnalysis/RA2b/Statistics/3Dcode/reducedTree.C?revision=1.3&view=markup
+
+  const  bool doQCD = isSampleQCD();
+
+  float trigWeight=1;
+
+  if (nmuons==1&&nelectrons==0) trigWeight = getTrigWeightMu(ht,met);
+  if (nmuons==0&&nelectrons==1) trigWeight = getTrigWeightEl(ht,met);
+  if (nmuons==0&&nelectrons==0 &&!doQCD) trigWeight = getTrigWeightMu(ht,met);
+  if (nmuons==0&&nelectrons==0 && doQCD) trigWeight = getTrigWeight0L(ht,met);
+  
+
+
+  return trigWeight;
 }
 
 
@@ -3409,9 +3531,93 @@ float EventCalculator::getMT_bMET() {
     if (mt>0) mt = sqrt(mt);
     else cout<<"MT_b is negative"<<endl;
   }
-
+  //  cout<<"MT_b    = "<<mt<<endl;
   return mt;
 
+}
+
+float EventCalculator::getMT_bMET_bestCSV() {
+  // like getMT_bMET() but choose the closest b to the met based on the two best CSV values in the event
+  const float ptThreshold = 30;
+
+  float csvval[2] = {-1e9,-1e9};
+  int bindex[2] = {-1,-1};
+  //  cout<<" == event =="<<endl;
+  //find the 2 best b jets
+ //find b jet closest to MET
+  for (unsigned int i=0; i<jets_AK5PF_pt->size(); i++) {
+    
+    if (isGoodJet(i,ptThreshold)) {
+      double thiscsv =jets_AK5PF_btag_secVertexCombined->at(i);
+      //      cout<<thiscsv<<endl;
+
+      //mini sort. put the largest csv in [0]
+      if (thiscsv> csvval[0]) {
+	csvval[1] = csvval[0];
+	csvval[0]=thiscsv;
+
+	bindex[1]=bindex[0];
+	bindex[0] = i;
+      }
+      else if (thiscsv >csvval[1]) {
+	csvval[1]=thiscsv;
+
+	bindex[1] = i;
+      }
+    }
+  }
+
+  //now we still have to choose which jet to use
+  const  float metphi = getMETphi();
+  float dp[2]={1e9,1e9};
+  for (int j=0; j<2; j++) {
+    if ( bindex[j] >=0 ) dp[j] = getDeltaPhi(metphi,jets_AK5PF_phi->at(bindex[j]));
+  }
+
+  //use lower deltaPhi between b-like jet and MET
+  int thejet= dp[0] < dp[1]  ? 0 : 1;
+  float mt = -1;
+  if (bindex[thejet]>=0) {
+    mt  = 2*getJetPt(bindex[thejet] )*getMET()*(1 - cos( dp[thejet] ));
+    if (mt>0) mt = sqrt(mt);
+    else cout<<"MT_b_bestCSV is negative"<<endl;
+  }
+  //  cout<<"MT_bCSV = "<<mt<<endl;
+  return mt;
+
+}
+
+float EventCalculator::getMT_jetMET() {
+  //in case of JES uncertainties, it is plausible that the ordering of the jet list will change.
+  //we will need to fix this if we actually use this variable
+  assert(  theJESType_==kJES0);
+  assert(  theJERType_==kJER0);
+
+  //from Jim Smith: For 1b, I do what ATLAS does - find the min MT of the 4 highest pt jets,  
+
+  //this code will calculate the min MT of the 4 highest pt jets
+  const float ptThreshold = 30;
+
+  const float themetphi = getMETphi();
+  const float themet = getMET();
+
+  //jets are sorted by pT
+  unsigned int loopmax = jets_AK5PF_pt->size() ;
+  if (loopmax>4) loopmax=4;
+
+  float minmt = 1e9;
+  for (unsigned int ijet=0; ijet<loopmax; ijet++) {
+    if (isGoodJet(ijet,ptThreshold)) {
+      float    mt  = 2*getJetPt(ijet)*themet*(1 - cos( getDeltaPhi( jets_AK5PF_phi->at(ijet) , themetphi)));
+      if (mt>0) {
+	mt = sqrt(mt);
+	if (mt<minmt) minmt=mt;
+      }
+      else cout<<"MTjetMET is negative"<<endl;
+    }
+  }
+
+  return minmt;
 }
 
 //the ignored jet will be left out of the MHT calculation
@@ -3943,7 +4149,7 @@ Long64_t EventCalculator::getNEventsGenerated( TString sample) {
     ideas for the future.
     Instead of string matching, we should extract the integer UCSB code from the string, then compare look it up in 
     a std::map that holds the number of events. The map can be initialized once per job in a dedicated function.
-    The init routine should check for duplicates, to catch humor error in updating this database.
+    The init routine should check for duplicates, to catch human error in updating this database.
   */
 
   // ============= v63 samples ============
@@ -5183,7 +5389,7 @@ void EventCalculator::reducedTree(TString outputpath) {
 
   float METsig,METsig00,METsig10,METsig11;
 
-  float MT_b;
+  float MT_b,MT_bestCSV,MT_jim,minMT_jetMET;
   float MT_Wlep;
   float MT_Wlep5,MT_Wlep15;
   float wMass, topMass, wCosHel, topCosHel;
@@ -5583,6 +5789,11 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("MT_Wlep",&MT_Wlep, "MT_Wlep/F");
   reducedTree.Branch("MT_Wlep5",&MT_Wlep5, "MT_Wlep5/F");
   reducedTree.Branch("MT_Wlep15",&MT_Wlep15, "MT_Wlep15/F");
+
+  reducedTree.Branch("MT_bestCSV",&MT_bestCSV, "MT_bestCSV/F");
+  reducedTree.Branch("MT_jim",&MT_jim, "MT_jim/F");
+  reducedTree.Branch("minMT_jetMET",&minMT_jetMET, "minMT_jetMET/F");
+
 
   reducedTree.Branch("deltaR_bestTwoCSV",&deltaR_bestTwoCSV,"deltaR_bestTwoCSV/F");
   reducedTree.Branch("mjj_bestTwoCSV",&mjj_bestTwoCSV,"mjj_bestTwoCSV/F");
@@ -6302,7 +6513,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
       nElectrons20 = countEle(20);
       nMuons20 = countMu(20);
 
-      hlteff = getHLTeff(HT,MET,nElectrons+nMuons);
+      hlteff = getHLTeff(HT,MET,nElectrons,nMuons);
 
       bestZmass=getBestZCandidate(20,10);
 
@@ -6492,6 +6703,9 @@ Also the pdfWeightSum* histograms that are used for LM9.
       MT_Wlep15 = getMT_Wlep(15);
       
       MT_b = getMT_bMET();
+      MT_bestCSV = getMT_bMET_bestCSV();
+      minMT_jetMET = getMT_jetMET();
+      MT_jim = nbjets30>=2 ? MT_b : minMT_jetMET;
 
       calcTopDecayVariables(  wMass, topMass, wCosHel, topCosHel);
       
