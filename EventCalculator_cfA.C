@@ -3580,6 +3580,7 @@ float EventCalculator::getMT_bMET_bestCSV() {
   if (bindex[thejet]>=0) {
     mt  = 2*getJetPt(bindex[thejet] )*getMET()*(1 - cos( dp[thejet] ));
     if (mt>0) mt = sqrt(mt);
+    else if (mt> -1) mt=0; //catches rounding error where mt is ~0
     else cout<<"MT_b_bestCSV is negative"<<endl;
   }
   //  cout<<"MT_bCSV = "<<mt<<endl;
@@ -5461,8 +5462,11 @@ void EventCalculator::reducedTree(TString outputpath) {
   float prob0_LFplus,probge1_LFplus,prob1_LFplus,probge2_LFplus,probge3_LFplus,prob2_LFplus;
   float prob0_LFminus,probge1_LFminus,prob1_LFminus,probge2_LFminus,probge3_LFminus,prob2_LFminus;
 
-  std::vector<int> vrun,vlumi,vevent;
-  loadEventList(vrun, vlumi, vevent);
+  std::set<jmt::eventID> vetolist;
+  loadEventList(vetolist,"ecalLaser");
+  cout<<"bad  ECAL events loaded = "<<vetolist.size()<<endl;
+  loadEventList(vetolist,"hcalLaser");
+  cout<<"ECAL+HCAL events loaded = "<<vetolist.size()<<endl;
 
 
   Float_t pdfWeightsCTEQ[45];
@@ -6847,8 +6851,8 @@ Also the pdfWeightSum* histograms that are used for LM9.
 	&& ra2ecaltpFilter && scrapingvetoFilter && trackingfailureFilter
 	&& hcallaser && ecallaser && eebadsc && (PBNRcode>0) && badjetFilter; //last line are new for 2012
 
-      buggyEvent = inEventList(vrun, vlumi, vevent);
-      
+      buggyEvent = inEventList(vetolist);
+
       //jet info for the lead jet, no matter where it is
       if (jets_AK5PF_pt->size() >0) {
 	alletajetpt1 = jets_AK5PF_pt->at(0);
@@ -7421,31 +7425,36 @@ void EventCalculator::cutflow(itreestream& stream, int maxevents=-1){
 */
 
 
-void EventCalculator::loadEventList(std::vector<int> &vrun, std::vector<int> &vlumi, std::vector<int> &vevent){
+void EventCalculator::loadEventList( std::set<jmt::eventID> & veid, const TString & what) {
+  
+  //apparently an unordered_set is faster than set http://stackoverflow.com/questions/6985572/which-is-the-fastest-stl-container-for-find
+  //set is clearly better than vector
+  //use set for now
+  
+  int ndup=0;
 
   std::ifstream inFile;
-  //inFile.open("pfmht100_ormht150_eventlist_full.txt");        
-  //inFile.open("premht25_pfmht100_ormht150_eventlist_full.txt");        
-  //inFile.open("premht50_pfmht100_ormht150_eventlist_full.txt");        
-  //inFile.open("premht100_pfmht100_ormht150_eventlist_full.txt");        
-  //inFile.open("premht25_pfmht100_ormet150_eventlist_full.txt");        
-  //inFile.open("premht25_pfmht100_ormet125_eventlist_full.txt");        
-  //inFile.open("premht25_pfmht100_ormet100_eventlist_full.txt");        
-  //inFile.open("eventlist_ht350_r178866_SUM.txt");        
-  //inFile.open("eventlist_ht350l1fastjet_r178866_SUM.txt");        
-  //inFile.open("eventlist_pfht350_r178866_SUM.txt"); 
-  if (sampleName_.Contains("HT_Run2012A") )
-    inFile.open("eventFilterLists/ecalLaserFilter_HT_Run2012A.txt");
-  else  if (sampleName_.Contains("HTMHT_Run2012B") )
-    inFile.open("eventFilterLists/ecalLaserFilter_HTMHT_Run2012B.txt");
-  else  if (sampleName_.Contains("MET_Run2012A") )
-    inFile.open("eventFilterLists/ecalLaserFilter_MET_Run2012A.txt");
-  else  if (sampleName_.Contains("MET_Run2012B") )
-    inFile.open("eventFilterLists/ecalLaserFilter_MET_Run2012B.txt");
-  else  if (sampleName_.Contains("JetHT_Run2012B") )
-    inFile.open("eventFilterLists/ecalLaserFilter_JetHT_Run2012B.txt");
-
-  else return;
+   if (what == "ecalLaser") {
+     if (sampleName_.Contains("HT_Run2012A") )
+       inFile.open("eventFilterLists/ecalLaserFilter_HT_Run2012A.txt");
+     else  if (sampleName_.Contains("HTMHT_Run2012B") )
+       inFile.open("eventFilterLists/ecalLaserFilter_HTMHT_Run2012B.txt");
+     else  if (sampleName_.Contains("MET_Run2012A") )
+       inFile.open("eventFilterLists/ecalLaserFilter_MET_Run2012A.txt");
+     else  if (sampleName_.Contains("MET_Run2012B") )
+       inFile.open("eventFilterLists/ecalLaserFilter_MET_Run2012B.txt");
+     else  if (sampleName_.Contains("JetHT_Run2012B") )
+       inFile.open("eventFilterLists/ecalLaserFilter_JetHT_Run2012B.txt");
+     else return;
+   }
+   else if (what=="hcalLaser") {
+     if (isSampleRealData() ) {
+       inFile.open("eventFilterLists/hcal_totalList.RAW.list.txt");
+     }
+     else return;
+     
+   }
+   else assert(0);
 
   if(!inFile || !inFile.good()) {std::cout << "ERROR: can't open event list" << std::endl;  assert(0);}
   while(!inFile.eof()) {
@@ -7457,45 +7466,41 @@ void EventCalculator::loadEventList(std::vector<int> &vrun, std::vector<int> &vl
 
     int value;
     uint i = 0;
+    ULong64_t thisrun=0,thisls=0,thisev=0;
     while (getline( ss, field, ':')){
       std::stringstream fs(field);
       value = 0;
       fs >> value;
       //fs >> array[i] ;                                                                       
 
-      if(i==0)vrun.push_back(value);
-      else if (i==1) vlumi.push_back(value);
-      else vevent.push_back(value);
+
+      if(i==0) thisrun = value;
+      else if (i==1) thisls=value;
+      else thisev=value;
+
       i++;
     }
-    //std::cout << array[0] << ":" << array[1] << ":" << array[2] << std::endl; 
-    //if(event.id().run() == array[0] && event.id().luminosityBlock() == array[1] && event.id().event() == array[2]){ 
-    //  eventPassTrigger = true; break;
-    //}                                                                        
+    if (thisrun>0) {
+      std::pair<std::set<jmt::eventID>::iterator,bool> ret;
+      ret=    veid.insert( jmt::eventID(thisrun,thisls,thisev));
+      if (ret.second == false) ndup++;
+    }
   }
   inFile.close();
 
+  cout<<"Found this many duplicates when loading event list: "<<ndup<<endl;
 
 }
 
-bool EventCalculator::inEventList(std::vector<int> &vrun, std::vector<int> &vlumi, std::vector<int> &vevent){
-  int lumi =  getLumiSection();
-  int run = getRunNumber();
-  int event = getEventNumber();
-  
-  bool onList = false;
-  for(uint i = 0; i< vevent.size(); ++i){
-    if( event == vevent.at(i)){
-      if( lumi == vlumi.at(i)){
-	if( run == vrun.at(i)){
-	  onList = true;
-	  break;
-	}
-      }
-    }
-  }
-  return onList; 
+bool EventCalculator::inEventList(const std::set<jmt::eventID> & thelist) {
+
+  jmt::eventID thisevent(getRunNumber(),getLumiSection(),getEventNumber());
+
+  if ( thelist.count(thisevent)==1 ) return true;
+  return false;
+
 }
+
 
 //return the number of tops found (and the indices of the two top quarks)
 int EventCalculator::findTop(int& top1, int& top2)

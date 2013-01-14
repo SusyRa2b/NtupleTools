@@ -23,6 +23,9 @@
 #include <set>
 //#include "BasicLoopCU.h" //get all of the tree-related variables
 
+namespace jmt { //hack since I don't have a header file for MiscUtil.cxx
+  class eventID;
+}
 
 
 class TRandom3;
@@ -81,8 +84,8 @@ public:
   void plotBTagEffMC();
 
   //load external list of event ID's
-  void loadEventList(std::vector<int> &vrun, std::vector<int> &vlumi, std::vector<int> &vevent);
-  bool inEventList(std::vector<int> &vrun, std::vector<int> &vlumi, std::vector<int> &vevent);
+  void loadEventList( std::set<jmt::eventID> & veid, const TString & what);
+  bool inEventList(const std::set<jmt::eventID> & thelist);
 
   // functions that calculate stuff
   double getWeight(Long64_t nentries);
