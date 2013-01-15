@@ -1322,12 +1322,14 @@ void setColorScheme(const TString & name) {
 
 }
 
-void setStackMode(bool dostack, bool normalized=false) {
+void setStackMode(bool dostack, bool normalized=false,bool adjustcolors=true) {
   dostack_=dostack;
   normalized_=normalized;
 
+  if (adjustcolors) { //sometimes I don't want the code to be this clever!
   if (dostack) setColorScheme("stack");
   else setColorScheme("nostack");
+  }
 }
 
 void resetSamples(bool joinSingleTop=true) {
@@ -2404,6 +2406,9 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
   if (!dostack_) {
     //this is all a re-implemenataion of stuff done is HistHolder. Oh well.
 
+    //also unit normalize the totalsm
+    if (normalized_ && totalsm->Integral()>0) totalsm->Scale(1.0/totalsm->Integral()); //15 Jan 2013
+
     if (drawTotalSM_) histMax = totalsm->GetMaximum();
     for (unsigned int isample=0; isample<samples_.size(); isample++) {
       double pmx= doCustomPlotMax_ ? customPlotMax_ : histMax*maxScaleFactor_;
@@ -3366,32 +3371,48 @@ void drawEffVRej(const TString & h1, const TString h2,const TString & xtitle,con
   //step over the bins in histos_[h1] and histos_[h2]
 
   //first find h1, h2
-  if ( histos_.count(h1) ==0 ||histos_.count(h2) ==0 ) {
+  if ( histos_.count(h1) ==0 || (histos_.count(h2) ==0 && h2!="totalsm") ) {
     cout<<" Problem! "<<histos_.count(h1)<<" "<<histos_.count(h2)<<endl;
     return;
   }
 
-  const  int nbins=  histos_[h1]->GetNbinsX();
+  TH1D* hist1=histos_[h1];
+  TH1D* hist2= (h2=="totalsm") ? totalsm : histos_[h2];
+
+  const  int nbins=  hist1->GetNbinsX();
 
   if (effgraph!=0) delete effgraph;
   effgraph = new TGraphAsymmErrors(nbins );
 
+  //silly little code to find best S/root(B)
+  double  bestSrootB = 0; //depends on S being on x axis
+  double bestCutVal=-99;  double bestX=-99;  double bestY=-99;
+  int bestBin=-1;
   for ( int ibin=1; ibin<=nbins; ibin++) {
 
     double x,y;
     if (flip) {
-      x=  histos_[h1]->Integral(ibin,nbins) / histos_[h1]->Integral();
-      y=  histos_[h2]->Integral(ibin,nbins) / histos_[h2]->Integral();
+      x=  hist1->Integral(ibin,nbins) / hist1->Integral();
+      y=  hist2->Integral(ibin,nbins) / hist2->Integral();
     }
     else {
-      x=  histos_[h1]->Integral(1,ibin) / histos_[h1]->Integral();
-      y=  histos_[h2]->Integral(1,ibin) / histos_[h2]->Integral();
+      x=  hist1->Integral(1,ibin) / hist1->Integral();
+      y=  hist2->Integral(1,ibin) / hist2->Integral();
     }
     //alternate
     effgraph->SetPoint(ibin, x,y);
 
-    if (!quiet_)   cout<<ibin<<" "<<histos_[h1]->GetBinLowEdge(ibin)<<" \t "<<x<<" "<<y<<endl;
+    if ( y>0 && (x / sqrt(y) > bestSrootB)) {
+      bestSrootB = x/sqrt(y);
+      bestCutVal = hist1->GetBinLowEdge(ibin);
+      bestX=x; bestY=y; bestBin=ibin;
+    }
+
+    //    if (!quiet_)   cout<<ibin<<" "<<histos_[h1]->GetBinLowEdge(ibin)<<" \t "<<x<<" "<<y<<endl;
   }
+
+  cout<<"Assuming S is on the x axis, B is on the y axis, best S/root(B) is "<<bestSrootB
+      <<" "<<bestBin<<" "<<bestCutVal<<" \t "<<bestX<<" "<<bestY<<endl;
 
   renewCanvas();
   effgraph->Draw("Apl");
