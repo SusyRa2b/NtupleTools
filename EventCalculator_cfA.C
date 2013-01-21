@@ -3591,8 +3591,7 @@ float EventCalculator::getMT_bMET_bestCSV() {
 float EventCalculator::getMT_jetMET() {
   //in case of JES uncertainties, it is plausible that the ordering of the jet list will change.
   //we will need to fix this if we actually use this variable
-  assert(  theJESType_==kJES0);
-  assert(  theJERType_==kJER0);
+  if(  theJESType_!=kJES0 ||  theJERType_!=kJER0) return 0;
 
   //from Jim Smith: For 1b, I do what ATLAS does - find the min MT of the 4 highest pt jets,  
 
