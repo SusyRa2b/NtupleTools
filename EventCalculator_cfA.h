@@ -63,7 +63,7 @@ public:
   enum JERType {kJER0=0,kJERbias,kJERup,kJERdown,kJERra2};
   enum METuncType {kMETunc0=0,kMETuncDown,kMETuncUp};
   enum PUuncType {kPUunc0=0,kPUuncDown,kPUuncUp};
-  enum BTagEffType {kBTagEff0=0,kBTagEffup,kBTagEffdown,kBTagEff02,kBTagEffup2,kBTagEffdown2,kBTagEff03,kBTagEffup3,kBTagEffdown3,kBTagEff04,kBTagEffup4,kBTagEffdown4};
+  enum BTagEffType {kBTagEff0=0,kBTagEffup,kBTagEffdown,kBTagEff02,kBTagEffup2,kBTagEffdown2,kBTagEff03,kBTagEffup3,kBTagEffdown3,kBTagEff05,kBTagEffup5,kBTagEffdown5};
   enum HLTEffType {kHLTEff0=0,kHLTEffup,kHLTEffdown};
   enum BTaggerType {kSSVM=0, kTCHET, kSSVHPT, kTCHPT, kTCHPM, kCSVM, kCSVL,Nbtaggers};
 
@@ -288,7 +288,7 @@ public:
   float getMT_Wlep(const float pttreshold=10);
   float getMT_bMET();
   float getMT_jetMET();
-  float getMT_bMET_bestCSV();
+  float getMT_bMET_bestCSV(int& jetId,int & topId);
   void calcTopDecayVariables(float & wmass, float & tmass, float & wcoshel, float & tcoshel);
   void calcCosHel(unsigned int j1i, unsigned int j2i, unsigned int j3i, float & wcoshel,float &tcoshel);
 
@@ -308,7 +308,7 @@ public:
   int electronMatch(const int trueElectron);
   int tauMatch(const int trueTau);
   int daughterMatch(const int Wdaughter, const int WdecayType);
-  int getTTbarDecayType();
+  int getTTbarDecayType(int & leptonicTop);
   int getTauDecayType(int tauid);
   int findJetMatchGenTau();
 

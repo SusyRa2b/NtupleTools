@@ -40,7 +40,7 @@ EventCalculator::EventCalculator(const TString & sampleName, const vector<string
   theJERType_(kJER0),
   theMETuncType_(kMETunc0),
   thePUuncType_(kPUunc0),
-  theBTagEffType_(kBTagEff04),
+  theBTagEffType_(kBTagEff05),
   theHLTEffType_(kHLTEff0),
   theBTaggerType_(kCSVM),
   crossSectionTanb40_10_(0),
@@ -183,9 +183,9 @@ void EventCalculator::initEnumNames() {
   theBTagEffNames_[kBTagEff03]="BTagEff03";
   theBTagEffNames_[kBTagEffup3]="BTagEffup3";
   theBTagEffNames_[kBTagEffdown3]="BTagEffdown3";
-  theBTagEffNames_[kBTagEff04]="BTagEff04";
-  theBTagEffNames_[kBTagEffup4]="BTagEffup4";
-  theBTagEffNames_[kBTagEffdown4]="BTagEffdown4";
+  theBTagEffNames_[kBTagEff05]="BTagEff05";
+  theBTagEffNames_[kBTagEffup5]="BTagEffup5";
+  theBTagEffNames_[kBTagEffdown5]="BTagEffdown5";
 
 
   theHLTEffNames_[kHLTEff0]="HLTEff0";
@@ -289,9 +289,9 @@ void EventCalculator::setOptions( const TString & opt) {
   else  if ( getOptPiece("BTag",opt)== theBTagEffNames_[kBTagEff03]) theBTagEffType_ = kBTagEff03;
   else  if ( getOptPiece("BTag",opt)== theBTagEffNames_[kBTagEffup3]) theBTagEffType_ = kBTagEffup3;
   else  if ( getOptPiece("BTag",opt)== theBTagEffNames_[kBTagEffdown3]) theBTagEffType_ = kBTagEffdown3;
-  else  if ( getOptPiece("BTag",opt)== theBTagEffNames_[kBTagEff04]) theBTagEffType_ = kBTagEff04;
-  else  if ( getOptPiece("BTag",opt)== theBTagEffNames_[kBTagEffup4]) theBTagEffType_ = kBTagEffup4;
-  else  if ( getOptPiece("BTag",opt)== theBTagEffNames_[kBTagEffdown4]) theBTagEffType_ = kBTagEffdown4;
+  else  if ( getOptPiece("BTag",opt)== theBTagEffNames_[kBTagEff05]) theBTagEffType_ = kBTagEff05;
+  else  if ( getOptPiece("BTag",opt)== theBTagEffNames_[kBTagEffup5]) theBTagEffType_ = kBTagEffup5;
+  else  if ( getOptPiece("BTag",opt)== theBTagEffNames_[kBTagEffdown5]) theBTagEffType_ = kBTagEffdown5;
   else {cout<<"problem with opt in btag"<<endl; assert(0) ;} //enforce a complete set of options!
 
   if ( getOptPiece("HLT",opt)== theHLTEffNames_[kHLTEff0]) theHLTEffType_ = kHLTEff0;
@@ -3536,7 +3536,8 @@ float EventCalculator::getMT_bMET() {
 
 }
 
-float EventCalculator::getMT_bMET_bestCSV() {
+
+float EventCalculator::getMT_bMET_bestCSV(int& jetId,int & topId) {
   // like getMT_bMET() but choose the closest b to the met based on the two best CSV values in the event
   const float ptThreshold = 30;
 
@@ -3577,13 +3578,19 @@ float EventCalculator::getMT_bMET_bestCSV() {
   //use lower deltaPhi between b-like jet and MET
   int thejet= dp[0] < dp[1]  ? 0 : 1;
   float mt = -1;
+  topId=99; jetId=99;
   if (bindex[thejet]>=0) {
+    topId=jets_AK5PF_parton_motherId->at(bindex[thejet]);
+    jetId=jets_AK5PF_parton_Id->at(bindex[thejet]);
     mt  = 2*getJetPt(bindex[thejet] )*getMET()*(1 - cos( dp[thejet] ));
     if (mt>0) mt = sqrt(mt);
     else if (mt> -1) mt=0; //catches rounding error where mt is ~0
     else cout<<"MT_b_bestCSV is negative"<<endl;
   }
   //  cout<<"MT_bCSV = "<<mt<<endl;
+
+  
+
   return mt;
 
 }
@@ -4690,6 +4697,14 @@ void EventCalculator::loadJetTagEffMaps() {
     delete f_tageff_;
     f_tageff_=0;
   }
+  else {
+    TH1F * h_btageff  = (TH1F *)f_tageff_->Get("h_btageff"); 
+    int nbins=h_btageff->GetNbinsX();
+    if (nbins != 17) {
+      cout<<" b tag eff map has the wrong number of bins! "<<nbins<<endl;
+      assert(0);
+    } 
+  }
 
 }
 
@@ -4907,50 +4922,61 @@ float EventCalculator::jetTagEff(unsigned int ijet, TH1F* h_btageff, TH1F* h_cta
 
   float tageff=0;
   const float pt = getJetPt(ijet);
-  const float x = pt>670 ? 670 : pt;
   const float eta = fabs(jets_AK5PF_eta->at(ijet));
   int flavor = jets_AK5PF_partonFlavour->at(ijet);
 
-  float noEfficiencyThreshold=350; //threshold for the highest SF bin, which we sometimes set to 0 efficiency
+  //x is the pt value that will be used to evaluate the SF
+  //the max pt depends on flavor, and, for LF jets, eta
+  const float cutoff1=800; const float cutoff2=700;
+  float x;
+  //HF or central LF, max is 800
+  if ( abs(flavor)==5 || abs(flavor)==4 || eta<1.5) x = pt > cutoff1 ? cutoff1 : pt;
+  //high eta LF, max is 700
+  else x = pt > cutoff2 ? cutoff2 : pt;
 
   if(isGoodJet(ijet,50)) {
 
-    if (theBTagEffType_ == kBTagEff04 || theBTagEffType_ == kBTagEffup4 || theBTagEffType_ == kBTagEffdown4) { //new  BTV-11-004 prescription 
+    if (theBTagEffType_ == kBTagEff05 || theBTagEffType_ == kBTagEffup5 || theBTagEffType_ == kBTagEffdown5) { //new  BTV-11-004 prescription 
 
       if (abs(flavor) ==4 || abs(flavor)==5) { //heavy flavor
 	float errFactor = 1;
 
-	// Tagger: CSVM within 30 < pt < 670 GeV, abs(eta) < 2.4, x = pt
-	if (pt >670) { //use SF for 670 with twice the errors
+	if (pt >cutoff1) { //use twice the errors
 	  errFactor=2;
 	}
 	if (abs(flavor) == 4)  errFactor=2; //charm has double the errors   "SFc = SFb with twice the quoted uncertainty"
+	//not clear to me what to do for charm with pT> cutoff. errFactor of 2 or 4? must be small effect though
 
-	//calculate sf using 'x' which is copy of pT with upper limit of 670
-	float  SFb = 0.6981*((1.+(0.414063*x))/(1.+(0.300155*x)));
+	// Tagger: CSVM within 20 < pt < 800 GeV, abs(eta) < 2.4, x = pt
+	float  SFb = 0.726981*((1.+(0.253238*x))/(1.+(0.188389*x)));
 
 	//apply FASTSTIM correction where needed
 	SFb *= bJetFastsimSF("value",flavor,pt);
 
-	if (theBTagEffType_ == kBTagEffup4 || theBTagEffType_ == kBTagEffdown4 || modifier==kHFup || modifier == kHFdown) {
-	  const int nbins=14;
-	  float ptmin[] = {30, 40, 50, 60, 70, 80, 100, 120, 160, 210, 260, 320, 400, 500};
-	  float ptmax[] = {40, 50, 60, 70, 80,100, 120, 160, 210, 260, 320, 400, 500, 670};
-	  float  SFb_error[] = {
-	    0.0295675, //1
-	    0.0295095,
-	    0.0210867,
-	    0.0219349,
-	    0.0227033,
-	    0.0204062,
-	    0.0185857,
-	    0.0256242,
-	    0.0383341,
-	    0.0409675,
-	    0.0420284,
-	    0.0541299,
-	    0.0578761,
-	    0.0655432 }; //14
+	if (theBTagEffType_ == kBTagEffup5 || theBTagEffType_ == kBTagEffdown5 || modifier==kHFup || modifier == kHFdown) {
+	  const int nbins=16;
+	  //	  float ptmin[] = {30, 40, 50, 60, 70, 80, 100, 120, 160, 210, 260, 320, 400, 500};
+	  //	  float ptmax[] = {40, 50, 60, 70, 80,100, 120, 160, 210, 260, 320, 400, 500, 670};
+	  float ptmin[] = {20, 30, 40, 50, 60, 70, 80, 100, 120, 160, 210, 260, 320, 400, 500, 600};
+	  float ptmax[] = {30, 40, 50, 60, 70, 80,100, 120, 160, 210, 260, 320, 400, 500, 600, 800};
+	  float SFb_error[] = {
+	    0.0554504,
+	    0.0209663,
+	    0.0207019,
+	    0.0230073,
+	    0.0208719,
+	    0.0200453,
+	    0.0264232,
+	    0.0240102,
+	    0.0229375,
+	    0.0184615,
+	    0.0216242,
+	    0.0248119,
+	    0.0465748,
+	    0.0474666,
+	    0.0718173,
+	    0.0717567 };
+
 	//need to figure out which bin i'm in
 	  float myErr = SFb_error[nbins-1]; //put the high pT guys in the last bin
 	  for (int i=0; i<nbins; i++) {
@@ -4970,10 +4996,10 @@ float EventCalculator::jetTagEff(unsigned int ijet, TH1F* h_btageff, TH1F* h_cta
 
 	  // preliminary 2012 correction to the SFb and SFb uncertainty 
 	  // https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagPOG#2012_Data_and_MC
-	  myErr *= 1.5;
+	  //myErr *= 1.5;
 
-	  if ((theBTagEffType_ == kBTagEffup4) || (modifier==kHFup)) SFb += myErr;
-	  else if ((theBTagEffType_ == kBTagEffdown4) || (modifier==kHFdown)) SFb -= myErr;
+	  if ((theBTagEffType_ == kBTagEffup5) || (modifier==kHFup)) SFb += myErr;
+	  else if ((theBTagEffType_ == kBTagEffdown5) || (modifier==kHFdown)) SFb -= myErr;
 	  else assert(0);
 	} //if syst variation
 
@@ -4982,38 +5008,37 @@ float EventCalculator::jetTagEff(unsigned int ijet, TH1F* h_btageff, TH1F* h_cta
 	else if (abs(flavor) == 4) tageff = extraSFc * SFb * h_ctageff->GetBinContent( h_ctageff->FindBin( pt ) );
 	else assert(0);
       } // if heavy flavor
-      else { //light flavor [ see https://twiki.cern.ch/twiki/pub/CMS/BtagPOG/SFlightFuncs.C ]
-	//note that these are valid only to 670 GeV, so use 'x' and not 'pt'
+      else { //light flavor [ see https://twiki.cern.ch/twiki/pub/CMS/BtagPOG/SFlightFuncs_Moriond2013.C ]
+	//note that these are valid only to a cutoff value, so use 'x' and not 'pt'
 	float SF=0;
 	float nominalSF=0;
-
 	if ( eta < 0.8 ) {
-	  nominalSF =  ((1.06182+(0.000617034*x))+(-1.5732e-06*(x*x)))+(3.02909e-10*(x*(x*x))); // SF without + or - variation in mistag rate
-	  if       (theBTagEffType_ == kBTagEff04 && (modifier==kBTagModifier0 || modifier==kHFdown||modifier==kHFup))    SF = nominalSF;
-	  else  if (theBTagEffType_ == kBTagEffdown4 || (modifier==kLFdown)) SF = ((0.972455+(7.51396e-06*x))+(4.91857e-07*(x*x)))+(-1.47661e-09*(x*(x*x)));
-	  else  if (theBTagEffType_ == kBTagEffup4 || (modifier==kLFup))   SF = ((1.15116+(0.00122657*x))+(-3.63826e-06*(x*x)))+(2.08242e-09*(x*(x*x)));
+	  nominalSF =  ((1.06238+(0.00198635*x))+(-4.89082e-06*(x*x)))+(3.29312e-09*(x*(x*x))); // SF without + or - variation in mistag rate
+	  if       (theBTagEffType_ == kBTagEff05 && (modifier==kBTagModifier0 || modifier==kHFdown||modifier==kHFup))    SF = nominalSF;
+	  else  if (theBTagEffType_ == kBTagEffdown5 || (modifier==kLFdown)) SF = ((0.972746+(0.00104424*x))+(-2.36081e-06*(x*x)))+(1.53438e-09*(x*(x*x)));
+	  else  if (theBTagEffType_ == kBTagEffup5 || (modifier==kLFup))   SF = ((1.15201+(0.00292575*x))+(-7.41497e-06*(x*x)))+(5.0512e-09*(x*(x*x)));
 	}
 	else if (eta>=0.8 && eta<1.6) {
-	  nominalSF = ((1.111+(-9.64191e-06*x))+(1.80811e-07*(x*x)))+(-5.44868e-10*(x*(x*x)));
-	  if       (theBTagEffType_ == kBTagEff04 && (modifier==kBTagModifier0 || modifier==kHFdown||modifier==kHFup))    SF = nominalSF;
-	  else  if (theBTagEffType_ == kBTagEffdown4 || (modifier==kLFdown)) SF = ((1.02055+(-0.000378856*x))+(1.49029e-06*(x*x)))+(-1.74966e-09*(x*(x*x)));
-	  else  if (theBTagEffType_ == kBTagEffup4 || (modifier==kLFup))   SF = ((1.20146+(0.000359543*x))+(-1.12866e-06*(x*x)))+(6.59918e-10*(x*(x*x)));
+	  nominalSF = ((1.08048+(0.00110831*x))+(-2.96189e-06*(x*x)))+(2.16266e-09*(x*(x*x)));
+	  if       (theBTagEffType_ == kBTagEff05 && (modifier==kBTagModifier0 || modifier==kHFdown||modifier==kHFup))    SF = nominalSF;
+	  else  if (theBTagEffType_ == kBTagEffdown5 || (modifier==kLFdown)) SF = ((0.9836+(0.000649761*x))+(-1.59773e-06*(x*x)))+(1.14324e-09*(x*(x*x)));
+	  else  if (theBTagEffType_ == kBTagEffup5 || (modifier==kLFup))   SF = ((1.17735+(0.00156533*x))+(-4.32257e-06*(x*x)))+(3.18197e-09*(x*(x*x)));
 	}
 	else if (eta>=1.6 && eta<=2.4) {
-	  nominalSF = ((1.08498+(-0.000701422*x))+(3.43612e-06*(x*x)))+(-4.11794e-09*(x*(x*x)));
-	  if       (theBTagEffType_ == kBTagEff04 && (modifier==kBTagModifier0 || modifier==kHFdown||modifier==kHFup))    SF = nominalSF;
-	  else  if (theBTagEffType_ == kBTagEffdown4 || (modifier==kLFdown)) SF = ((0.983476+(-0.000607242*x))+(3.17997e-06*(x*x)))+(-4.01242e-09*(x*(x*x)));
-	  else  if (theBTagEffType_ == kBTagEffup4 || (modifier==kLFup))   SF = ((1.18654+(-0.000795808*x))+(3.69226e-06*(x*x)))+(-4.22347e-09*(x*(x*x)));
+	  nominalSF = ((1.09145+(0.000687171*x))+(-2.45054e-06*(x*x)))+(1.7844e-09*(x*(x*x)));
+	  if       (theBTagEffType_ == kBTagEff05 && (modifier==kBTagModifier0 || modifier==kHFdown||modifier==kHFup))    SF = nominalSF;
+	  else  if (theBTagEffType_ == kBTagEffdown5 || (modifier==kLFdown)) SF = ((1.00616+(0.000358884*x))+(-1.23768e-06*(x*x)))+(6.86678e-10*(x*(x*x)));
+	  else  if (theBTagEffType_ == kBTagEffup5 || (modifier==kLFup))   SF = ((1.17671+(0.0010147*x))+(-3.66269e-06*(x*x)))+(2.88425e-09*(x*(x*x)));
 	}
 	//design question -- what do to for jets at eta>2.4? assert? or return tageff=0?
 	//i guess tageff 0 makes the most sense, so leave SF = 0
 
 	//2012 -- modify the SF by a 2012/2011 factor given here: https://twiki.cern.ch/twiki/pub/CMS/BtagPOG/SFlighCorrFunc_2012_06_06.txt
-	SF *= (1.10422 + (-0.000523856)*x + (1.14251e-06)*x*x);
-	nominalSF *=  (1.10422 + (-0.000523856)*x + (1.14251e-06)*x*x);
+	//SF *= (1.10422 + (-0.000523856)*x + (1.14251e-06)*x*x);
+	//nominalSF *=  (1.10422 + (-0.000523856)*x + (1.14251e-06)*x*x);
 
-	//for pT > 670, need to double the uncertainty
-	if (pt>670) {
+	//for high pT, need to double the uncertainty
+	if ((eta<1.5 && pt>cutoff1) || (eta>1.5 && pt>cutoff2)) {
 	  float deltaSF = SF - nominalSF; //here is the nominal uncertainty
 	  deltaSF *= 2; //double it
 	  SF = nominalSF + deltaSF;
@@ -5025,78 +5050,8 @@ float EventCalculator::jetTagEff(unsigned int ijet, TH1F* h_btageff, TH1F* h_cta
       } // if light flavor
 
     } //if BTV-11-004 prescription
-    else {
-
-      assert(modifier==kBTagModifier0);// not implementing this for the old options
-
-    //CSVM
-    float SF[3] = {0.96,0.96,0.96}; //3 bins of pT (<240, 240 to 350, and >350)
-    float SFU[3] = {1,1,1};
-
-    if (theBTagEffType_ == kBTagEffup) {
-      SFU[0] = 1.10; // 10% uncertainty on SF from BTV-11-001
-      SFU[1] = 1.20; // double the uncertainty for jets>240 GeV (need to check with B-POG)
-      SFU[2] = 1.20; // double the uncertainty for jets>240 GeV (need to check with B-POG)
-    }
-    else if (theBTagEffType_ == kBTagEffdown) {
-      SFU[0] = 0.9;
-      SFU[1] = 0.8;
-      SFU[2] = 0.8;
-    }
-
-    //Prescription used for Summer 2011 result (PAS)
-    if (theBTagEffType_ == kBTagEff02 || theBTagEffType_ == kBTagEffup2 || theBTagEffType_ == kBTagEffdown2) {
-      SF[2]=0; // assume no efficiency for pt>350 GeV
-    }
-    if (theBTagEffType_ == kBTagEffup2) {
-      SFU[0] = 1.10; // 10% uncertainty on SF from BTV-11-001
-      SFU[1] = 1.32; // 32% from UCSB's studies
-      SFU[2] = 1.32; // this number is irrelevant
-    }
-    else if (theBTagEffType_ == kBTagEffdown2) {
-      SFU[0] = 0.9;
-      SFU[1] = 0.68;
-      SFU[2] = 0.68;
-    }
-
-    //Fall 2011 preliminary prescription
-    if (theBTagEffType_ == kBTagEff03 || theBTagEffType_ == kBTagEffup3 || theBTagEffType_ == kBTagEffdown3) {
-      noEfficiencyThreshold=500;
-      SF[2]=0; // assume no efficiency for pt>500 GeV
-    }
-    if (theBTagEffType_ == kBTagEffup3) {
-      SFU[0] = 1.10; // 10% uncertainty on SF from BTV-11-001
-      SFU[1] = 1.36; // 36% choice made on 25 Nov 2011
-      SFU[2] = 1.36; // this number is irrelevant
-    }
-    else if (theBTagEffType_ == kBTagEffdown3) {
-      SFU[0] = 0.9;
-      SFU[1] = 0.64; 
-      SFU[2] = 0.64;
-    }
-
-   
-    //check the MC efficiencies from Summer11 TTbar
-    //this histogram has bin edges {30,50,75,100,150,200,240,500,1000}
-    
-    if( abs(flavor) == 5){
-      tageff = h_btageff->GetBinContent( h_btageff->FindBin( pt ) );
-      
-      if(pt<240) tageff *= SF[0]*SFU[0]*extraSFb;
-      else if (pt>240 && pt<noEfficiencyThreshold) tageff *= SF[1]*SFU[1]*extraSFb;
-      else tageff *= SF[2]*SFU[2]*extraSFb;
-
-      //std::cout << "b: tag eff = " << tageff << std::endl;
-    }
-    else if (abs(flavor) == 4){
-      tageff = extraSFc*h_ctageff->GetBinContent( h_ctageff->FindBin( pt ) );
-      //std::cout << "c: tag eff = " << tageff << std::endl;
-    }
-    else if (abs(flavor) == 1 || abs(flavor) == 2
-	     || abs(flavor) == 3 || abs(flavor) == 21){
-      tageff = extraSFl*h_ltageff->GetBinContent( h_ltageff->FindBin( pt ) );
-      //std::cout << "l: tag eff = " << tageff << std::endl;
-    }
+    else {      //no longer support old prescriptions
+      assert(0);
     }
     
   }
@@ -5389,6 +5344,7 @@ void EventCalculator::reducedTree(TString outputpath) {
 
   float METsig,METsig00,METsig10,METsig11;
 
+  int MT_bestCSV_gencode;
   float MT_b,MT_bestCSV,MT_jim,minMT_jetMET;
   float MT_Wlep;
   float MT_Wlep5,MT_Wlep15;
@@ -5793,6 +5749,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("MT_Wlep5",&MT_Wlep5, "MT_Wlep5/F");
   reducedTree.Branch("MT_Wlep15",&MT_Wlep15, "MT_Wlep15/F");
 
+  reducedTree.Branch("MT_bestCSV_gencode",&MT_bestCSV_gencode, "MT_bestCSV_gencode/I");
   reducedTree.Branch("MT_bestCSV",&MT_bestCSV, "MT_bestCSV/F");
   reducedTree.Branch("MT_jim",&MT_jim, "MT_jim/F");
   reducedTree.Branch("minMT_jetMET",&minMT_jetMET, "minMT_jetMET/F");
@@ -6409,8 +6366,9 @@ Also the pdfWeightSum* histograms that are used for LM9.
       }
 
       //if we are running over ttbar, fill info on decay mode
+      int leptonicTop=-99;
       if (sampleName_.Contains("TTJets")) { //revived for cfA, using the old jmt-ntuples coding scheme
-	ttbarDecayCode = getTTbarDecayType();
+	ttbarDecayCode = getTTbarDecayType(leptonicTop);
 	  
       }
       //somewhat experimental code; maybe this is a backwards way to do it (look for tau match then store stuff)
@@ -6706,9 +6664,20 @@ Also the pdfWeightSum* histograms that are used for LM9.
       MT_Wlep15 = getMT_Wlep(15);
       
       MT_b = getMT_bMET();
-      MT_bestCSV = getMT_bMET_bestCSV();
+      int chosenTop,chosenJet; //leptonicTop
+      MT_bestCSV = getMT_bMET_bestCSV(chosenJet,chosenTop);
       minMT_jetMET = getMT_jetMET();
       MT_jim = nbjets30>=2 ? MT_b : minMT_jetMET;
+
+      //now compare the chosenTop to the leptonic Top
+      if ( abs(chosenJet)==5 && abs(chosenTop)==6 && (chosenTop==leptonicTop)) MT_bestCSV_gencode = 1; //chose b in leptonically-decaying top
+      else if ( abs(chosenJet)==5 && abs(chosenTop)==6 && (chosenTop == -leptonicTop)) MT_bestCSV_gencode = 2; //chose b in the wrong top
+      else if ( abs(chosenJet)==5 && abs(chosenTop)==6 ) MT_bestCSV_gencode =3; //chose b and top, but something weird with gen-top id (2l or 0l event)
+      else if ( abs(chosenJet)!=5 && abs(chosenTop)==6&& (chosenTop==leptonicTop))  MT_bestCSV_gencode =4; // not a b but chose the right top
+      else if ( abs(chosenJet)!=5 && abs(chosenTop)==6&& (chosenTop== -leptonicTop))  MT_bestCSV_gencode =5; //not a b but chose the wrong top
+      else if ( abs(chosenJet)!=5 && abs(chosenTop)==24)  MT_bestCSV_gencode =6; //chose a jet coming from a W
+      else if (  abs(chosenTop)==21)  MT_bestCSV_gencode =7; //chose a jet coming from a gluon
+      else  MT_bestCSV_gencode =8; //everything else
 
       calcTopDecayVariables(  wMass, topMass, wCosHel, topCosHel);
       
@@ -7772,7 +7741,7 @@ int EventCalculator::getTauDecayType( int tauid) {
 }
 
  //trying to rewrite from scratch for cfA
-int EventCalculator::getTTbarDecayType() {
+int EventCalculator::getTTbarDecayType(int & leptonicTop) {
    
   //use my old encoding scheme instead of don's
 
@@ -7780,6 +7749,8 @@ int EventCalculator::getTTbarDecayType() {
   int foundmu=0;
   int foundhad=0;
   int foundtau=0;
+
+  leptonicTop=0;
 
   int taudecay[2]={-1,-1};
 
@@ -7811,6 +7782,9 @@ int EventCalculator::getTTbarDecayType() {
       else {
 	cout<<" Wdau = "<<wdau<<endl;
       }
+      //jmt test
+      //if (wdau==11 ||wdau==13||wdau==15) cout<<" top with leptonic daughter = "<<TMath::Nint(mc_doc_grandmother_id->at(jj))<<" "<<TMath::Nint(mc_doc_id->at(jj))<<endl;
+      if (wdau==11 ||wdau==13||wdau==15) leptonicTop += TMath::Nint(mc_doc_grandmother_id->at(jj));
 
     }
   }
@@ -8821,13 +8795,15 @@ void EventCalculator::plotBTagEffMC( ) {
 
   TFile fout(outfile,"RECREATE");
   
-  double bins[16] = {30, 40, 50, 60, 70, 80, 100, 120, 160, 210, 260, 320, 400, 500, 670, 2000};
-  TH1F * h_bjet = new TH1F("h_bjet","bjet",15,bins);
-  TH1F * h_cjet = new TH1F("h_cjet","cjet",15,bins);
-  TH1F * h_ljet = new TH1F("h_ljet","ljet",15,bins);
-  TH1F * h_btag = new TH1F("h_btag","btag",15,bins);
-  TH1F * h_ctag = new TH1F("h_ctag","ctag",15,bins);
-  TH1F * h_ltag = new TH1F("h_ltag","ltag",15,bins);
+  const float jetptthreshold = 20;
+  double bins[18] = {20, 30, 40, 50, 60, 70, 80, 100, 120, 160, 210, 260, 320, 400, 500, 600, 800, 99999};
+  const int nbins = 17; //must be the number above - 1
+  TH1F * h_bjet = new TH1F("h_bjet","bjet",nbins,bins);
+  TH1F * h_cjet = new TH1F("h_cjet","cjet",nbins,bins);
+  TH1F * h_ljet = new TH1F("h_ljet","ljet",nbins,bins);
+  TH1F * h_btag = new TH1F("h_btag","btag",nbins,bins);
+  TH1F * h_ctag = new TH1F("h_ctag","ctag",nbins,bins);
+  TH1F * h_ltag = new TH1F("h_ltag","ltag",nbins,bins);
   h_bjet->Sumw2();
   h_cjet->Sumw2();
   h_ljet->Sumw2();
@@ -8854,8 +8830,6 @@ void EventCalculator::plotBTagEffMC( ) {
   int ntaggedjets_c = 0;
   int ntaggedjets_l = 0;
 
-  //this threshold does not need to be synced with the global b-tag pt threshold, because this histogram is binned in pT
-  const float jetptthreshold = 30;
 
   startTimer();
   for(Long64_t entry=0; entry < nevents; ++entry){
@@ -8917,13 +8891,13 @@ void EventCalculator::plotBTagEffMC( ) {
   std::cout << "ntaggedjets_l = " << ntaggedjets_l << std::endl;
     
   //TH1F *h_btageff = (TH1F*) h_btag->Clone();
-  TH1F * h_btageff = new TH1F("h_btageff","btageff",15,bins);
+  TH1F * h_btageff = new TH1F("h_btageff","btageff",nbins,bins);
   h_btageff->Divide(h_btag,h_bjet,1,1,"B");
   //TH1F *h_ctageff = (TH1F*) h_ctag->Clone();
-  TH1F * h_ctageff = new TH1F("h_ctageff","ctageff",15,bins);
+  TH1F * h_ctageff = new TH1F("h_ctageff","ctageff",nbins,bins);
   h_ctageff->Divide(h_ctag,h_cjet,1,1,"B");
   //TH1F *h_ltageff = (TH1F*) h_ltag->Clone();
-  TH1F * h_ltageff = new TH1F("h_ltageff","ltageff",15,bins);
+  TH1F * h_ltageff = new TH1F("h_ltageff","ltageff",nbins,bins);
   h_ltageff->Divide(h_ltag,h_ljet,1,1,"B");
   
   
