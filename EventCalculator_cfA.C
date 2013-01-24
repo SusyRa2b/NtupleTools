@@ -4370,7 +4370,7 @@ double EventCalculator::getCrossSection(){
   //diboson
   if (sampleName_.BeginsWith("WZ_TuneZ2star_8TeV_pythia6_tauola")) return 32.3;// from AN //12.63; //LO PREP
   if (sampleName_.BeginsWith("WW_TuneZ2star_8TeV_pythia6_tauola")) return 55; //from AN //33.61; //LO PREP
-  if (sampleName_.BeginsWith("ZZ_TuneZ2star_8TeV_pythia6_tauola")) return 5.196; //LO PREP
+  if (sampleName_.BeginsWith("ZZ_TuneZ2star_8TeV_pythia6_tauola")) return 17.654;// NLO CTEQ //5.196; //LO PREP
 
   //Z -> nu nu  
   if (sampleName_.BeginsWith("ZJetsToNuNu_100_HT_200_TuneZ2Star_8TeV_madgraph")) return 160.3 *1.19 ; //LO PREP times DY k-factor
