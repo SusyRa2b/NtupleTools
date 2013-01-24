@@ -514,15 +514,15 @@ bool EventCalculator::isGoodElectron(const unsigned int k, const bool disableRel
 
   if ( TMath::Nint(pf_els_isEB->at(k)) == 1) {
     ++ndone;
-    if (pf_els_dEtaIn->at(k) > 0.007)  return false;
-    if (pf_els_dPhiIn->at(k) > 0.8)  return false;
+    if ( fabs(pf_els_dEtaIn->at(k)) > 0.007)  return false;
+    if ( fabs(pf_els_dPhiIn->at(k)) > 0.8)  return false;
     if (pf_els_sigmaIEtaIEta->at(k) > 0.01) return false;
     if (pf_els_hadOverEm->at(k) > 0.15) return false;
   }
   if (TMath::Nint(pf_els_isEE->at(k)) == 1) {
     ++ndone;
-    if (pf_els_dEtaIn->at(k) > 0.01)  return false;
-    if (pf_els_dPhiIn->at(k) > 0.7)  return false;
+    if ( fabs(pf_els_dEtaIn->at(k)) > 0.01)  return false;
+    if ( fabs(pf_els_dPhiIn->at(k)) > 0.7)  return false;
     if (pf_els_sigmaIEtaIEta->at(k) > 0.03) return false;
   }
   
