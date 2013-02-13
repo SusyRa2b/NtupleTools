@@ -27,6 +27,8 @@
 #include <fstream>
 #include <algorithm>
 
+#include <iomanip>
+
 using namespace std;
 
 
@@ -3794,6 +3796,104 @@ void EventCalculator::printDecay() {
 
 }
 
+void EventCalculator::SusyDalitz(  float * msq12, float * msq23, float * pgl, float * ptop,float * ptopbar,float * pchi) {
+
+
+
+  //hard-code for T1tttt at the moment
+  if (!sampleName_.Contains("T1tttt")) return;
+
+  //  cout<<"Dalitz code"<<endl;
+
+  int itop[2]={-99,-99};
+  int itopbar[2]={-99,-99};
+  int ichi[2]={-99,-99};
+  float glpt[2]={-99,-99};
+
+  int nfound=0;
+
+  for (unsigned int kk=0; kk<mc_doc_id->size(); kk++) {
+
+    //look for tops and neutralinos with gluinos as mom
+    if ( TMath::Nint(mc_doc_id->at(kk)) == 6 && std::abs(TMath::Nint(mc_doc_mother_id->at(kk)))==1000021) {
+      if (glpt[nfound] <0) {
+	glpt[nfound] = mc_doc_mother_pt->at(kk);
+	itop[nfound] = kk;
+      }
+      else if ( jmt::AreEqualAbs(mc_doc_mother_pt->at(kk),glpt[nfound] )) {
+	itop[nfound]=kk;
+      }
+      //   cout<<kk<< " found     top with gluino mom "<<TMath::Nint(mc_doc_mother_id->at(kk))<<" "<<mc_doc_mother_pt->at(kk)<<endl;
+    }
+    if ( TMath::Nint(mc_doc_id->at(kk)) == -6 && std::abs(TMath::Nint(mc_doc_mother_id->at(kk)))==1000021) {
+      //   cout<<kk<< " found antitop with gluino mom "<<TMath::Nint(mc_doc_mother_id->at(kk))<<" "<<mc_doc_mother_pt->at(kk)<<endl;
+      if (glpt[nfound] <0) {
+	glpt[nfound] = mc_doc_mother_pt->at(kk);
+	itopbar[nfound] = kk;
+      }
+      else if ( jmt::AreEqualAbs(mc_doc_mother_pt->at(kk),glpt[nfound] )) {
+	itopbar[nfound]=kk;
+      }
+    }
+    if ( std::abs(TMath::Nint(mc_doc_id->at(kk))) ==1000022 && std::abs(TMath::Nint(mc_doc_mother_id->at(kk)))==1000021) {
+      //  cout<<kk<< " found neutralino with gluino mom "<<TMath::Nint(mc_doc_id->at(kk)) <<" "<< TMath::Nint(mc_doc_mother_id->at(kk))<<" "<<mc_doc_mother_pt->at(kk)<<endl;
+      if (glpt[nfound] <0) {
+	glpt[nfound] = mc_doc_mother_pt->at(kk);
+	ichi[nfound] = kk;
+      }
+      else if ( jmt::AreEqualAbs(mc_doc_mother_pt->at(kk),glpt[nfound] )) {
+	ichi[nfound]=kk;
+      }
+
+    }
+ 
+    if ( ichi[nfound]>0 && itopbar[nfound]>0 && itop[nfound]>0) {nfound++; }//cout<<"Found a whole gluino"<<endl;}
+    
+    //don't do this because we want to check the sanity of the sample
+    //    if (nfound >=2) break;
+
+  }
+
+  if (nfound !=2) cout<<" Curious -- found ngluino = "<<nfound<<endl;
+
+  //copying these from one name to another
+  pgl[0]=glpt[0];
+  pgl[1]=glpt[1];
+
+  std::pair<int,int> masses=getSMSmasses();
+
+  for (int ii=0;ii<2;ii++) {
+    //    cout<<itop[ii]<<"\t"<<itopbar[ii]<<"\t"<<ichi[ii]<<endl;
+    //Use mc_doc_mass or use actual mass?
+    //david has pointed out a weird effect with the SUSY masses stored in the ntuple/sample (only for points with mLSP=0)
+    //is my top mass quite right in mtop?
+    //    cout<< masses.first<<" "<<masses.second<<" "<<mc_doc_mass->at(itop[ii])<<" "<<mc_doc_mass->at(itopbar[ii])<<" "<<mc_doc_mass->at(ichi[ii])<<endl;
+    TLorentzVector p1;
+    p1.SetXYZM( mc_doc_px->at(itop[ii]), mc_doc_py->at(itop[ii]), mc_doc_pz->at(itop[ii]), mtop_);//mc_doc_mass->at(itop[ii])); //was mtop_
+    TLorentzVector p2;
+    p2.SetXYZM( mc_doc_px->at(ichi[ii]), mc_doc_py->at(ichi[ii]), mc_doc_pz->at(ichi[ii]), masses.second);//mc_doc_mass->at(ichi[ii]));
+    TLorentzVector p3;
+    p3.SetXYZM( mc_doc_px->at(itopbar[ii]), mc_doc_py->at(itopbar[ii]), mc_doc_pz->at(itopbar[ii]), mtop_);//mc_doc_mass->at(itopbar[ii]));//was mtop_
+
+    TLorentzVector p12 = p1+p2;
+    TLorentzVector p23 = p2+p3;
+
+    //for a check
+    //    TLorentzVector p13 = p1+p3;
+    //    cout<<setprecision(9)<<" total mass     = "<<p12.M2() + p23.M2() + p13.M2()<<" = "<<pow(masses.first,2)+mtop_*mtop_+mtop_*mtop_+masses.second*masses.second<<endl;
+    //    cout<<setprecision(9)<<" total mass (') = "<<p12.M2() + p23.M2() + p13.M2()<<" = "<<pow(masses.first,2)+pow(mc_doc_mass->at(itopbar[ii]),2)+pow(mc_doc_mass->at(itop[ii]),2)+masses.second*masses.second<<endl;
+
+    msq12[ii] =  p12.M2();
+    msq23[ii] =  p23.M2();
+
+    //now lot's of other info..i guess i decided that transverse momenta are the most interesting
+    ptop[ii] = mc_doc_pt->at(itop[ii]);
+    pchi[ii] = mc_doc_pt->at(ichi[ii]);
+    ptopbar[ii] = mc_doc_pt->at(itopbar[ii]);
+  }
+
+}
+
 int EventCalculator::jjResonance_mcTruthCheck(int jj1, int jj2) {
 
   if (!sampleName_.Contains("sbottom8lnotaus")) return 0; //don't evaluate this for data or any MC except the RPV sbottom signal
@@ -3959,6 +4059,7 @@ http://svnweb.cern.ch/world/wsvn/icfsusy/trunk/AnalysisV2/SUSYSignalScan/src/com
 */
 SUSYProcess EventCalculator::getSUSYProcess(float & pt1, float & phi1, float & pt2, float & phi2) {
 
+  //these are additions to get the pt,phi of the produced susy particles
   int nfound=0;
   float pt[2],phi[2];
 
@@ -4016,6 +4117,7 @@ SUSYProcess EventCalculator::getSUSYProcess(float & pt1, float & phi1, float & p
       if ( abs(myid) == 1000024 || abs(myid) == 1000037  ) {charginos++; foundit=true;}
 
       if (foundit) {
+
 	if (nfound<2) {
 	  pt[nfound]=mc_doc_pt->at(k);
 	  phi[nfound]=mc_doc_phi->at(k);
@@ -4698,7 +4800,7 @@ void EventCalculator::loadJetTagEffMaps() {
     f_tageff_=0;
   }
   else {
-    TH1F * h_btageff  = (TH1F *)f_tageff_->Get("h_btageff"); 
+    TH1D * h_btageff  = (TH1D *)f_tageff_->Get("h_btageff"); 
     int nbins=h_btageff->GetNbinsX();
     if (nbins != 17) {
       cout<<" b tag eff map has the wrong number of bins! "<<nbins<<endl;
@@ -4730,9 +4832,9 @@ void EventCalculator::calculateTagProb(float &Prob0, float &ProbGEQ1, float &Pro
   sprintf(btageffname,"%s",sbtageff.c_str());   
   sprintf(ctageffname,"%s",sctageff.c_str());   
   sprintf(ltageffname,"%s",sltageff.c_str());   
-  TH1F * h_btageff  = (TH1F *)f_tageff_->Get(btageffname);
-  TH1F * h_ctageff  = (TH1F *)f_tageff_->Get(ctageffname);
-  TH1F * h_ltageff  = (TH1F *)f_tageff_->Get(ltageffname);
+  TH1D * h_btageff  = (TH1D *)f_tageff_->Get(btageffname);
+  TH1D * h_ctageff  = (TH1D *)f_tageff_->Get(ctageffname);
+  TH1D * h_ltageff  = (TH1D *)f_tageff_->Get(ltageffname);
 
   for (unsigned int ijet=0; ijet<jets_AK5PF_pt->size(); ++ijet) {
     float subprob1=0;
@@ -4916,7 +5018,7 @@ float EventCalculator::bJetFastsimSF(const TString & what, int flavor,float pt) 
 }
 
 //get MC btag efficiency
-float EventCalculator::jetTagEff(unsigned int ijet, TH1F* h_btageff, TH1F* h_ctageff, TH1F* h_ltageff,
+float EventCalculator::jetTagEff(unsigned int ijet, TH1D* h_btageff, TH1D* h_ctageff, TH1D* h_ltageff,
 				 const float extraSFb, const float extraSFc, const float extraSFl,//options that were added but aren't used much
 				 BTagEffModifier modifier ) { 
 
@@ -5587,6 +5689,19 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("pdfWeightsMSTW",&pdfWeightsMSTW,"pdfWeightsMSTW[41]/F");
   reducedTree.Branch("pdfWeightsNNPDF",&pdfWeightsNNPDF,"pdfWeightsNNPDF[100]/F");
 
+  float SUSY_msq12[2]={-1,-1};
+  float SUSY_msq23[2]={-1,-1};
+  float SUSY_gluino_pt[2]={-1,-1};
+  float SUSY_top_pt[2]={-1,-1};
+  float SUSY_topbar_pt[2]={-1,-1};
+  float SUSY_chi0_pt[2]={-1,-1};
+  reducedTree.Branch("SUSY_msq12",&SUSY_msq12,"SUSY_msq12[2]/F");
+  reducedTree.Branch("SUSY_msq23",&SUSY_msq23,"SUSY_msq23[2]/F");
+  reducedTree.Branch("SUSY_gluino_pt",&SUSY_gluino_pt,"SUSY_gluino_pt[2]/F");
+  reducedTree.Branch("SUSY_top_pt",&SUSY_top_pt,"SUSY_top_pt[2]/F");
+  reducedTree.Branch("SUSY_topbar_pt",&SUSY_topbar_pt,"SUSY_topbar_pt[2]/F");
+  reducedTree.Branch("SUSY_chi0_pt",&SUSY_chi0_pt,"SUSY_chi0_pt[2]/F");
+
   reducedTree.Branch("prob0",&prob0,"prob0/F");
   reducedTree.Branch("probge1",&probge1,"probge1/F");
   reducedTree.Branch("prob1",&prob1,"prob1/F");
@@ -6152,7 +6267,12 @@ Also the pdfWeightSum* histograms that are used for LM9.
     float susy_py = susy_py1 + susy_py2;
     SUSY_recoilPt = sqrt(susy_px*susy_px + susy_py*susy_py);
 
-    if (theScanType_==kmSugra) {
+    SusyDalitz(SUSY_msq12,SUSY_msq23,SUSY_gluino_pt,SUSY_top_pt,SUSY_topbar_pt,SUSY_chi0_pt);
+    //    for (int ik=0;ik<2;ik++) { //wow printf!
+    //      printf("%d %f %f %f %f %f %f\n",ik,SUSY_msq12[ik],SUSY_msq23[ik],SUSY_gluino_pt[ik],SUSY_top_pt[ik],SUSY_topbar_pt[ik],SUSY_chi0_pt[ik]);
+    //    }
+
+    if (theScanType_==kmSugra ) {
       assert(0); //FIXME CFA
       if ( scanProcessTotalsMapCTEQ.count(thispoint) ) {
 	//do the new 2D maps
@@ -6195,6 +6315,8 @@ Also the pdfWeightSum* histograms that are used for LM9.
 
 	 Now use this sample-dependent hack to behave one way for T1bbbb and another for other samples
       */
+
+      if (!sampleName_.Contains("SMS-MadGraph_T1tttt")) { //HACK to avoid storing pdf weights for 
 
       double av=0; //v66 kludge
       int startat = 0;
@@ -6246,7 +6368,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
 							     scanProcessTotalsMapNNPDF[thispoint]->GetBinContent( int(prodprocess),  0) 
 							     + pdfWeightsNNPDF[0] );
       }
-
+      }
     }
     else if (theScanType_==kNotScan && sampleIsSignal_) {
       //do the new 2D maps as well
@@ -8768,8 +8890,6 @@ TString EventCalculator::assembleBTagEffFilename(bool cutnametail) {
     //and chop off the end to produce "SMS-T1bbbb_Mgluino-100to2000_mLSP-0to2000_8TeV-Pythia6Z_Summer12-START52_V9_FSIM-v1_AODSIM_UCSB1548_v66"
     int npieces= basesamplename.Tokenize(".")->GetEntries();
     if (npieces>1) {
-      //make sure that this last piece is an index. otherwise we might be in a situation we did not expect
-      assert( TString(basesamplename.Tokenize(".")->At(npieces-1)->GetName()).IsDigit());
       //we want to chop off the end. how many digits are there?
       int sizetochop = TString(basesamplename.Tokenize(".")->At(npieces-1)->GetName()).Length();
       ++sizetochop; //include the length of the period
@@ -8798,12 +8918,12 @@ void EventCalculator::plotBTagEffMC( ) {
   const float jetptthreshold = 20;
   double bins[18] = {20, 30, 40, 50, 60, 70, 80, 100, 120, 160, 210, 260, 320, 400, 500, 600, 800, 99999};
   const int nbins = 17; //must be the number above - 1
-  TH1F * h_bjet = new TH1F("h_bjet","bjet",nbins,bins);
-  TH1F * h_cjet = new TH1F("h_cjet","cjet",nbins,bins);
-  TH1F * h_ljet = new TH1F("h_ljet","ljet",nbins,bins);
-  TH1F * h_btag = new TH1F("h_btag","btag",nbins,bins);
-  TH1F * h_ctag = new TH1F("h_ctag","ctag",nbins,bins);
-  TH1F * h_ltag = new TH1F("h_ltag","ltag",nbins,bins);
+  TH1D * h_bjet = new TH1D("h_bjet","bjet",nbins,bins);
+  TH1D * h_cjet = new TH1D("h_cjet","cjet",nbins,bins);
+  TH1D * h_ljet = new TH1D("h_ljet","ljet",nbins,bins);
+  TH1D * h_btag = new TH1D("h_btag","btag",nbins,bins);
+  TH1D * h_ctag = new TH1D("h_ctag","ctag",nbins,bins);
+  TH1D * h_ltag = new TH1D("h_ltag","ltag",nbins,bins);
   h_bjet->Sumw2();
   h_cjet->Sumw2();
   h_ljet->Sumw2();
@@ -8816,19 +8936,13 @@ void EventCalculator::plotBTagEffMC( ) {
   const Long64_t neventsB = chainB->GetEntries();
   assert(nevents==neventsB);
 
-
-//   setCutScheme();
-//   setIgnoredCut("cut1b");
-//   setIgnoredCut("cut2b");
-//   setIgnoredCut("cut3b");
-
   cout<<"Running..."<<endl;  
-  int npass = 0;
+  Long64_t npass = 0;
 
-  int ntaggedjets = 0;
-  int ntaggedjets_b = 0;
-  int ntaggedjets_c = 0;
-  int ntaggedjets_l = 0;
+  Long64_t ntaggedjets = 0;
+  Long64_t ntaggedjets_b = 0;
+  Long64_t ntaggedjets_c = 0;
+  Long64_t ntaggedjets_l = 0;
 
 
   startTimer();
@@ -8890,14 +9004,11 @@ void EventCalculator::plotBTagEffMC( ) {
   std::cout << "ntaggedjets_c = " << ntaggedjets_c << std::endl;
   std::cout << "ntaggedjets_l = " << ntaggedjets_l << std::endl;
     
-  //TH1F *h_btageff = (TH1F*) h_btag->Clone();
-  TH1F * h_btageff = new TH1F("h_btageff","btageff",nbins,bins);
+  TH1D * h_btageff = new TH1D("h_btageff","btageff",nbins,bins);
   h_btageff->Divide(h_btag,h_bjet,1,1,"B");
-  //TH1F *h_ctageff = (TH1F*) h_ctag->Clone();
-  TH1F * h_ctageff = new TH1F("h_ctageff","ctageff",nbins,bins);
+  TH1D * h_ctageff = new TH1D("h_ctageff","ctageff",nbins,bins);
   h_ctageff->Divide(h_ctag,h_cjet,1,1,"B");
-  //TH1F *h_ltageff = (TH1F*) h_ltag->Clone();
-  TH1F * h_ltageff = new TH1F("h_ltageff","ltageff",nbins,bins);
+  TH1D * h_ltageff = new TH1D("h_ltageff","ltageff",nbins,bins);
   h_ltageff->Divide(h_ltag,h_ljet,1,1,"B");
   
   

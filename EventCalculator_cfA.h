@@ -296,7 +296,8 @@ public:
 
   //MC tools
   unsigned int getSUSYnb();
-  SUSYProcess getSUSYProcess(float & pt1, float & phi1, float & pt2, float & phi2); //momenta of the SUSY mothers
+  SUSYProcess getSUSYProcess(float & pt1, float & phi1, float & pt2, float & phi2); //momenta  of the SUSY mothers
+  void SusyDalitz( float * msq12, float * msq23, float * pgl, float * ptop,float * ptopbar,float * pchi);
   std::pair<int,int> getSMSmasses();
   double checkPdfWeightSanity( double a) ;
   //  void getPdfWeights(const TString & pdfset, Float_t * pdfWeights, TH1D * sumofweights) ;
@@ -322,7 +323,7 @@ public:
   //  void averageBeff(double & bjetEffSum);// , Long64_t & bjetSum);
 
   //btag stuff
-  float jetTagEff(unsigned int ijet, TH1F* h_btageff, TH1F* h_ctageff, TH1F* h_ltageff,
+  float jetTagEff(unsigned int ijet, TH1D* h_btageff, TH1D* h_ctageff, TH1D* h_ltageff,
 		  const float extraSFb, const float extraSFc, const float extraSFl,const BTagEffModifier modifier=kBTagModifier0);
 
   //other stuff
