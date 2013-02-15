@@ -264,6 +264,7 @@ public :
    Float_t         topCosHel;
    Float_t         WCosHel;
    Float_t         MT_b;
+   Float_t MT_bestCSV;
    Float_t         MT_Wlep;
    Float_t         MT_Wlep5;
    Float_t         MT_Wlep15;
@@ -590,6 +591,7 @@ public :
    TBranch        *b_topCosHel;   //!
    TBranch        *b_WCosHel;   //!
    TBranch        *b_MT_b;   //!
+   TBranch *b_MT_bestCSV;
    TBranch        *b_MT_Wlep;   //!
    TBranch        *b_MT_Wlep5;   //!
    TBranch        *b_MT_Wlep15;   //!
@@ -1022,6 +1024,7 @@ void signalEff2012::Init(TTree *tree)
    fChain->SetBranchAddress("topCosHel", &topCosHel, &b_topCosHel);
    fChain->SetBranchAddress("WCosHel", &WCosHel, &b_WCosHel);
    fChain->SetBranchAddress("MT_b", &MT_b, &b_MT_b);
+   fChain->SetBranchAddress("MT_bestCSV", &MT_bestCSV, &b_MT_bestCSV);
    fChain->SetBranchAddress("MT_Wlep", &MT_Wlep, &b_MT_Wlep);
    fChain->SetBranchAddress("MT_Wlep5", &MT_Wlep5, &b_MT_Wlep5);
    fChain->SetBranchAddress("MT_Wlep15", &MT_Wlep15, &b_MT_Wlep15);
