@@ -45,20 +45,20 @@ void signalEff2012::Loop()
   vector<SearchRegion> searchregions;
 
   //not incredibly elegant, but it will do
-  const int nvariations = filestub_.Contains("T1tttt") ? 4 : 2;
+  const bool doLeptons =  filestub_.Contains("T1tttt") || filestub_.Contains("T2tt");
+  const int nvariations = doLeptons ? 4 : 2;
   for (int ivariation=0;ivariation<nvariations;ivariation++) {
 
     bool thesl=false,theslsig=false,theldp=false;
 
-    if (filestub_.Contains("T1tttt") ) {
+    if (doLeptons ) {
       theslsig = ivariation==1 ? true:false;
       thesl = ivariation==2 ? true:false;
       theldp = ivariation==3 ? true:false;
     }
-    else if (filestub_.Contains("T1bbbb")) {
+    else {
       theldp = ivariation==1 ? true:false;
     }
-    else assert(0);
 
     for (int imet = 0;imet<4; imet++) {
       for (int iht = 0;iht<4; iht++) {
@@ -160,6 +160,7 @@ void signalEff2012::Loop()
     fChain->SetBranchStatus("nIsoTracks15_005_03",1);
     fChain->SetBranchStatus("minDeltaPhiN_asin",1);
     fChain->SetBranchStatus("nbjets",1);
+    //    fChain->SetBranchStatus("MT_bestCSV",1);
   }
 
 // METHOD2: replace line
@@ -245,6 +246,9 @@ void signalEff2012::Loop()
 	
 	// == now apply cuts ==
 	
+	// ONLY FOR T2TT and only for tests!
+	//if ( ! (MT_bestCSV>150 )) continue;
+
 	// first apply baseline selection
 	//njets, jet pT
 	if (!( njets>= minnjets_ && jetpt2>=70)) continue;
