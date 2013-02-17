@@ -3800,11 +3800,21 @@ void EventCalculator::SusyDalitz(  float * msq12, float * msq23, float * pgl, fl
 
 
 
-  //hard-code for T1tttt at the moment
-  if (!sampleName_.Contains("T1tttt")) return;
+  int thequarkid=0;
+  float quarkmass=0;
+  if (sampleName_.Contains("T1tttt")) {
+    thequarkid=6;
+    quarkmass=mtop_;
+  }
+  else   if (sampleName_.Contains("T1bbbb")) {
+    thequarkid=5;
+    quarkmass=4.2;
+  }
+  else return; //do nothing for non-gluino mediated susy
 
   //  cout<<"Dalitz code"<<endl;
 
+  //variables are called 'top' but are really just the q decay product of g~
   int itop[2]={-99,-99};
   int itopbar[2]={-99,-99};
   int ichi[2]={-99,-99};
@@ -3815,7 +3825,7 @@ void EventCalculator::SusyDalitz(  float * msq12, float * msq23, float * pgl, fl
   for (unsigned int kk=0; kk<mc_doc_id->size(); kk++) {
 
     //look for tops and neutralinos with gluinos as mom
-    if ( TMath::Nint(mc_doc_id->at(kk)) == 6 && std::abs(TMath::Nint(mc_doc_mother_id->at(kk)))==1000021) {
+    if ( TMath::Nint(mc_doc_id->at(kk)) == thequarkid && std::abs(TMath::Nint(mc_doc_mother_id->at(kk)))==1000021) {
       if (glpt[nfound] <0) {
 	glpt[nfound] = mc_doc_mother_pt->at(kk);
 	itop[nfound] = kk;
@@ -3825,7 +3835,7 @@ void EventCalculator::SusyDalitz(  float * msq12, float * msq23, float * pgl, fl
       }
       //   cout<<kk<< " found     top with gluino mom "<<TMath::Nint(mc_doc_mother_id->at(kk))<<" "<<mc_doc_mother_pt->at(kk)<<endl;
     }
-    if ( TMath::Nint(mc_doc_id->at(kk)) == -6 && std::abs(TMath::Nint(mc_doc_mother_id->at(kk)))==1000021) {
+    if ( TMath::Nint(mc_doc_id->at(kk)) == -thequarkid && std::abs(TMath::Nint(mc_doc_mother_id->at(kk)))==1000021) {
       //   cout<<kk<< " found antitop with gluino mom "<<TMath::Nint(mc_doc_mother_id->at(kk))<<" "<<mc_doc_mother_pt->at(kk)<<endl;
       if (glpt[nfound] <0) {
 	glpt[nfound] = mc_doc_mother_pt->at(kk);
@@ -3869,11 +3879,11 @@ void EventCalculator::SusyDalitz(  float * msq12, float * msq23, float * pgl, fl
     //is my top mass quite right in mtop?
     //    cout<< masses.first<<" "<<masses.second<<" "<<mc_doc_mass->at(itop[ii])<<" "<<mc_doc_mass->at(itopbar[ii])<<" "<<mc_doc_mass->at(ichi[ii])<<endl;
     TLorentzVector p1;
-    p1.SetXYZM( mc_doc_px->at(itop[ii]), mc_doc_py->at(itop[ii]), mc_doc_pz->at(itop[ii]), mtop_);//mc_doc_mass->at(itop[ii])); //was mtop_
+    p1.SetXYZM( mc_doc_px->at(itop[ii]), mc_doc_py->at(itop[ii]), mc_doc_pz->at(itop[ii]), quarkmass);//mc_doc_mass->at(itop[ii])); //was mtop_
     TLorentzVector p2;
     p2.SetXYZM( mc_doc_px->at(ichi[ii]), mc_doc_py->at(ichi[ii]), mc_doc_pz->at(ichi[ii]), masses.second);//mc_doc_mass->at(ichi[ii]));
     TLorentzVector p3;
-    p3.SetXYZM( mc_doc_px->at(itopbar[ii]), mc_doc_py->at(itopbar[ii]), mc_doc_pz->at(itopbar[ii]), mtop_);//mc_doc_mass->at(itopbar[ii]));//was mtop_
+    p3.SetXYZM( mc_doc_px->at(itopbar[ii]), mc_doc_py->at(itopbar[ii]), mc_doc_pz->at(itopbar[ii]), quarkmass);//mc_doc_mass->at(itopbar[ii]));//was mtop_
 
     TLorentzVector p12 = p1+p2;
     TLorentzVector p23 = p2+p3;
