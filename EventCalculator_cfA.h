@@ -27,6 +27,20 @@ namespace jmt { //hack since I don't have a header file for MiscUtil.cxx
   class eventID;
 }
 
+//for PDFs
+//there's an include file that we should use instead but this is easier
+namespace LHAPDF {
+      void initPDFSet(int nset, const std::string& filename, int member=0);
+      int numberPDF(int nset);
+      void usePDFMember(int nset, int member);
+      double xfx(int nset, double x, double Q, int fl);
+      double getXmin(int nset, int member);
+      double getXmax(int nset, int member);
+      double getQ2min(int nset, int member);
+      double getQ2max(int nset, int member);
+      void extrapolate(bool extrapolate=true);
+}
+
 
 class TRandom3;
 
@@ -78,6 +92,9 @@ public:
 
   //loop over events
   void reducedTree(TString outputpath);
+
+  //PDFs
+  float getPDFweight(const int ipdfset, const int imember );
 
   //  void cutflow(itreestream& stream, int maxevents);
   void sampleAnalyzer();
@@ -158,16 +175,16 @@ public:
   double getMinDeltaPhiMET(unsigned int maxjets);
   double getTransverseMETError(unsigned int thisJet);
   double getDeltaPhiMET(unsigned int n, float ptThreshold = 50, bool bjetsonly = false);
-  double getDeltaPhiNMET(unsigned int thisJet); //Luke
+
   double getDeltaPhiMETN_deltaT(unsigned int ijet, float otherpt, float othereta, bool otherid, bool dataJetRes, bool keith);
   double getDeltaPhiMETN_deltaT(unsigned int ijet) { return getDeltaPhiMETN_deltaT(ijet,30,2.4,true,false,false);  } //overloaded
   double getDeltaPhiMETN( unsigned int goodJetN, float mainpt, float maineta, bool mainid, float otherpt, float othereta, bool otherid, bool dataJetRes, bool keith, bool useArcsin ); //Ben
   double getDeltaPhiMETN( unsigned int goodJetN ) {return getDeltaPhiMETN(goodJetN,50,2.4,true,30,2.4,true,false,false,false); }; //Ben, overloaded
-  double getMinDeltaPhiNMET(unsigned int maxjets); //Luke
+
   double getMinDeltaPhiMETN(unsigned int maxjets, float mainmt, float maineta, bool mainid, float otherpt, float othereta, bool otherid, bool dataJetRes, bool keith, bool includeLeptons=false, bool useArcsin=false ); //Ben
   double getMinDeltaPhiMETN(unsigned int maxjets) {return getMinDeltaPhiMETN(maxjets,50,2.4,true,30,2.4,true,false,false,false,false); }; //Ben, overloaded
 
-  double getMaxDeltaPhiNMET(unsigned int maxjets);
+
   double getTransverseMETSignificance(unsigned int thisJet);
   double getMaxTransverseMETSignificance(unsigned int maxjets);
   double getMinTransverseMETSignificance(unsigned int maxjets);
@@ -318,9 +335,16 @@ public:
   double getCrossSection();
 
   double getScanCrossSection( SUSYProcess p, const TString & variation );
+
+  float getBtagEffWeight(); //alternative b-tag weighting implementation
+  float getBtagWeight(); //yet another (from btv)
+  double getBtagSF(const int flavor, const float pt, int eta) ;//in development. not for production
+  float getBtagEffMC(const int flavor, const float pt) ;//currently used only in test code
+  int nGoodBJets_Tweaked() ;
+
+  //the standard jet-tag probability method that we have been using  
   void calculateTagProb(float &Prob0, float &ProbGEQ1, float &Prob1, float &ProbGEQ2, float & Prob2, float &ProbGEQ3, 
 			float extraSFb=1, float extraSFc=1, float extraSFl=1, BTagEffModifier modifier=kBTagModifier0);
-  //  void averageBeff(double & bjetEffSum);// , Long64_t & bjetSum);
 
   //btag stuff
   float jetTagEff(unsigned int ijet, TH1D* h_btageff, TH1D* h_ctageff, TH1D* h_ltageff,
@@ -3222,9 +3246,24 @@ private:
   std::vector<float> *pdfweights_cteq;
   std::vector<float> *pdfweights_mstw;
   std::vector<float> *pdfweights_nnpdf;
+
+
+  std::vector<float>   *mc_pdf_x1;
+  std::vector<float>   *mc_pdf_x2;
+  std::vector<float>   *mc_pdf_q;
+  std::vector<float>   *mc_pdf_id1;
+  std::vector<float>   *mc_pdf_id2;
+
   TBranch *b_pdfweights_cteq;
   TBranch *b_pdfweights_mstw;
   TBranch *b_pdfweights_nnpdf;
+
+  TBranch *b_mc_pdf_x1;
+  TBranch *b_mc_pdf_x2;
+
+  TBranch *b_mc_pdf_id1;
+  TBranch *b_mc_pdf_id2;
+  TBranch *b_mc_pdf_q;
   
 };
 

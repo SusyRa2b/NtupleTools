@@ -25,6 +25,9 @@ GLIBS          = $(filter-out -lNew -lz, $(NGLIBS))
 
 all: run_Analysis
 
+BTagWeight2.o: BTagWeight2.cpp BTagWeight2.h
+	$(CXX) $(CXXFLAGS) -c BTagWeight2.cpp
+
 CrossSectionTable.o: CrossSectionTable.cxx CrossSectionTable.h
 	$(CXX) $(CXXFLAGS) -c CrossSectionTable.cxx
 
@@ -49,8 +52,8 @@ EventCalculator_cfA.o: EventCalculator_cfA.C EventCalculator_cfA.h
 run_Analysis.o: run_Analysis.C
 	$(CXX) $(CXXFLAGS) -c run_Analysis.C
 
-run_Analysis: CrossSectionTable.o SimpleJetCorrector.o FactorizedJetCorrector.o JetCorrectorParameters.o SimpleJetCorrectionUncertainty.o JetCorrectionUncertainty.o EventCalculator_cfA.o run_Analysis.o 
-	$(LD) $(LDFLAGS) -o run_Analysis CrossSectionTable.o SimpleJetCorrector.o FactorizedJetCorrector.o JetCorrectorParameters.o SimpleJetCorrectionUncertainty.o JetCorrectionUncertainty.o EventCalculator_cfA.o run_Analysis.o $(GLIBS)
+run_Analysis: BTagWeight2.o CrossSectionTable.o SimpleJetCorrector.o FactorizedJetCorrector.o JetCorrectorParameters.o SimpleJetCorrectionUncertainty.o JetCorrectionUncertainty.o EventCalculator_cfA.o run_Analysis.o 
+	$(LD) $(LDFLAGS) -o run_Analysis BTagWeight2.o CrossSectionTable.o SimpleJetCorrector.o FactorizedJetCorrector.o JetCorrectorParameters.o SimpleJetCorrectionUncertainty.o JetCorrectionUncertainty.o EventCalculator_cfA.o run_Analysis.o $(GLIBS) -L./lib/ -lLHAPDF 
 
 clean:
 	rm -f *.o

@@ -27,7 +27,9 @@
 #include <fstream>
 #include <algorithm>
 
-#include <iomanip>
+//#include <iomanip>
+
+#include "BTagWeight2.h"
 
 using namespace std;
 
@@ -138,6 +140,11 @@ EventCalculator::EventCalculator(const TString & sampleName, const vector<string
 
   cout<<sampleName_<<endl;
 
+  cout<<" init PDFs"<<endl;
+  LHAPDF::initPDFSet(1, "cteq66.LHgrid");
+  LHAPDF::initPDFSet(2, "MSTW2008nlo68cl.LHgrid");
+  LHAPDF::initPDFSet(3, "NNPDF20_100.LHgrid");
+  cout<<" done with PDF init"<<endl;
 }
 
 EventCalculator::~EventCalculator() {
@@ -145,6 +152,21 @@ EventCalculator::~EventCalculator() {
   delete chainA;
   delete chainB;
   cout<<"EventCalculator dead"<<endl;
+}
+
+
+float EventCalculator::getPDFweight(const int ipdfset, const int imember ) {
+
+  assert(ipdfset>=1 && ipdfset<=3);
+
+  LHAPDF::usePDFMember(ipdfset, imember); // where ipdf=1,2 or 3 is the pdf set index and imember is the error member. 
+  double fx1 = LHAPDF::xfx(ipdfset, mc_pdf_x1->at(0), mc_pdf_q->at(0), TMath::Nint(mc_pdf_id1->at(0)))/mc_pdf_x1->at(0);
+  double fx2 = LHAPDF::xfx(ipdfset, mc_pdf_x2->at(0), mc_pdf_q->at(0), TMath::Nint(mc_pdf_id2->at(0)))/mc_pdf_x2->at(0);
+
+  if ( std::isnan(fx1) || std::isnan(fx2) ) {cout<<"Found PDF NaN! (LHAPDF)"<<endl; return 1;}
+
+  return  float(fx1*fx2);
+
 }
 
 
@@ -1448,15 +1470,6 @@ double EventCalculator::getTransverseMETError(unsigned int thisJet) {
   return 0.1*sqrt(deltaT);
 }
 
-double EventCalculator::getDeltaPhiNMET(unsigned int thisJet) {//Luke
-
-  if(!(thisJet<jets_AK5PF_pt->size())) return 1E12;
-
-  double dp =  getDeltaPhi( jets_AK5PF_phi->at(thisJet) , getMETphi() );
-  double deltaT = getTransverseMETError(thisJet);
-  return dp/atan2(deltaT,getMET());
-
-}
 
 unsigned int EventCalculator::getNthGoodJet(unsigned int goodJetN, float mainpt, float maineta, bool mainid) {
   //return nth good jet starting at 0, or 999999 if it doesn't exist
@@ -1647,45 +1660,6 @@ double EventCalculator::getMinDeltaPhiMETN(unsigned int maxjets, float mainpt, f
 
   return mdpN;
 }
-
-double EventCalculator::getMinDeltaPhiNMET(unsigned int maxjets) {//Luke
-  
-  double mindpn=1E12;
-
-  unsigned int ngood=0;
-  //get the minimum angle between the first n jets and MET
-  for (unsigned int i=0; i< jets_AK5PF_pt->size(); i++) {
-    
-    if (isGoodJet(i)) {
-      ++ngood;
-      double dpn =  getDeltaPhiNMET( i );
-      if (dpn<mindpn) mindpn=dpn;
-      if (ngood >= maxjets) break;
-    }
-  }
-  return mindpn;
-}
-
-
-
-double EventCalculator::getMaxDeltaPhiNMET(unsigned int maxjets){
-  
-  double maxdpn=-99.;
-
-  unsigned int ngood=0;
-  //get the maximum angle between the first n jets and MET
-  for (unsigned int i=0; i< jets_AK5PF_pt->size(); i++) {
-    
-    if (isGoodJet(i)) {
-      ++ngood;
-      double dpn =  getDeltaPhiNMET( i );
-      if (dpn>maxdpn) maxdpn=dpn;
-      if (ngood >= maxjets) break;
-    }
-  }
-  return maxdpn;
-}
-
 
 
 double EventCalculator::getTransverseMETSignificance(unsigned int thisJet){
@@ -3812,7 +3786,7 @@ void EventCalculator::SusyDalitz(  float * msq12, float * msq23, float * pgl, fl
   }
   else return; //do nothing for non-gluino mediated susy
 
-  //  cout<<"Dalitz code"<<endl;
+  //  cout<<"== event =="<<endl;
 
   //variables are called 'top' but are really just the q decay product of g~
   int itop[2]={-99,-99};
@@ -3833,8 +3807,10 @@ void EventCalculator::SusyDalitz(  float * msq12, float * msq23, float * pgl, fl
       else if ( jmt::AreEqualAbs(mc_doc_mother_pt->at(kk),glpt[nfound] )) {
 	itop[nfound]=kk;
       }
-      //   cout<<kk<< " found     top with gluino mom "<<TMath::Nint(mc_doc_mother_id->at(kk))<<" "<<mc_doc_mother_pt->at(kk)<<endl;
+      //       cout<<kk<< " found     top with gluino mom "<<TMath::Nint(mc_doc_mother_id->at(kk))<<" "<<mc_doc_mother_pt->at(kk)<<" "<<mc_doc_mass->at(kk)<<endl;
+      //cout<<kk<< " found     top    with mass "<<" "<<mc_doc_mass->at(kk)<<endl;
     }
+
     if ( TMath::Nint(mc_doc_id->at(kk)) == -thequarkid && std::abs(TMath::Nint(mc_doc_mother_id->at(kk)))==1000021) {
       //   cout<<kk<< " found antitop with gluino mom "<<TMath::Nint(mc_doc_mother_id->at(kk))<<" "<<mc_doc_mother_pt->at(kk)<<endl;
       if (glpt[nfound] <0) {
@@ -3846,7 +3822,8 @@ void EventCalculator::SusyDalitz(  float * msq12, float * msq23, float * pgl, fl
       }
     }
     if ( std::abs(TMath::Nint(mc_doc_id->at(kk))) ==1000022 && std::abs(TMath::Nint(mc_doc_mother_id->at(kk)))==1000021) {
-      //  cout<<kk<< " found neutralino with gluino mom "<<TMath::Nint(mc_doc_id->at(kk)) <<" "<< TMath::Nint(mc_doc_mother_id->at(kk))<<" "<<mc_doc_mother_pt->at(kk)<<endl;
+      //      cout<<kk<< " found neutralino with gluino mom "<<TMath::Nint(mc_doc_id->at(kk)) <<" "<< TMath::Nint(mc_doc_mother_id->at(kk))<<" "<<mc_doc_mother_pt->at(kk)<<" "<<mc_doc_mass->at(kk)<<endl;
+      //cout<<kk<< " found neutralino with mass "<<" "<<mc_doc_mass->at(kk)<<endl;
       if (glpt[nfound] <0) {
 	glpt[nfound] = mc_doc_mother_pt->at(kk);
 	ichi[nfound] = kk;
@@ -4188,7 +4165,7 @@ std::pair<int,int> EventCalculator::getSMSmasses() {
   int m0=  TString(thesubstring.Tokenize("_")->At(1)->GetName()).Atoi();
   int m12 = TString(thesubstring.Tokenize("_")->At(2)->GetName()).Atoi();
 
-  //  cout<<m0<<"\t"<<m12<<endl;
+  //  cout<<modelstring<<endl<<m0<<"\t"<<m12<<endl;
 
   return  make_pair(m0,m12);
 
@@ -4198,7 +4175,7 @@ double EventCalculator::checkPdfWeightSanity( double a) {
 
   //not sure what to do here now
 
-  if ( std::isnan(a) ) {cout<<"Found PDF NaN!"<<endl; return 0;}
+  if ( std::isnan(a) ) {cout<<"Found PDF NaN!"<<endl; return 1;}
   //  if ( a<0 ) return -1;
   //  if ( a>10) return 1; //i'm not sure if this is a good idea at all, nor do i know what threshold to set
 
@@ -4820,6 +4797,172 @@ void EventCalculator::loadJetTagEffMaps() {
 
 }
 
+double EventCalculator::getBtagSF(const int flavor, const float pt, const int signedeta) {
+
+  const int  eta = fabs(signedeta);
+
+  //this is largely redundant with the production code
+  //i don't want to touch that code at the moment
+  //i also don't care about implementing the uncertainties yet
+
+  //x is the pt value that will be used to evaluate the SF
+  //the max pt depends on flavor, and, for LF jets, eta
+  const float cutoff1=800; const float cutoff2=700;
+  float x;
+  //HF or central LF, max is 800
+  if ( abs(flavor)==5 || abs(flavor)==4 || eta<1.5) x = pt > cutoff1 ? cutoff1 : pt;
+  //high eta LF, max is 700
+  else x = pt > cutoff2 ? cutoff2 : pt;
+
+
+
+  if (abs(flavor) ==4 || abs(flavor)==5) { //heavy flavor
+    // Tagger: CSVM within 20 < pt < 800 GeV, abs(eta) < 2.4, x = pt
+    return 0.726981*((1.+(0.253238*x))/(1.+(0.188389*x)));
+  }
+  else { //light flavor
+    //note that these are valid only to a cutoff value, so use 'x' and not 'pt'
+    if ( eta < 0.8 ) {
+	  return  ((1.06238+(0.00198635*x))+(-4.89082e-06*(x*x)))+(3.29312e-09*(x*(x*x))); // SF without + or - variation in mistag rate
+    }
+    else if (eta>=0.8 && eta<1.6) {
+      return ((1.08048+(0.00110831*x))+(-2.96189e-06*(x*x)))+(2.16266e-09*(x*(x*x)));
+    }
+    else if (eta>=1.6 && eta<=2.4) {
+      return ((1.09145+(0.000687171*x))+(-2.45054e-06*(x*x)))+(1.7844e-09*(x*(x*x)));
+    }
+  }
+
+  return 1;
+
+}
+
+int EventCalculator::nGoodBJets_Tweaked() {
+
+  if ( isSampleRealData() ) return nGoodBJets();
+
+  //this is one of those classic things -- we need a random number but we want the code to be reproducible
+  //so construct a (more or less) unique, and completely reproducible seed for each event 
+  TRandom3 tweaking_rand(getRunNumber()+getLumiSection()+getEventNumber());
+
+  int ngoodbjets=0;
+  //loop over jets and count nbjets after tweaking
+  for (unsigned int ijet=0; ijet<jets_AK5PF_pt->size(); ++ijet) {
+   //only consider good jets (eta, quality, pT)
+    if(isGoodJet(ijet,50)){ //switch to 50 GeV threshold for b jets
+
+      //for each jet, what is the flavor and is it tagged, and what is the b-tag SF
+      int flavor = jets_AK5PF_partonFlavour->at(ijet);
+      bool istagged = passBTagger(ijet);
+      double SF = getBtagSF(flavor,getJetPt(ijet),jets_AK5PF_eta->at(ijet));
+
+      //now apply tweaking
+      if ( istagged) {
+	if (SF<1) {
+	  if ( tweaking_rand.Rndm() > SF) istagged = false; //reject this jet
+	  //otherwise keep istagged as true
+	}
+      }
+      else {
+	if (SF>1) {
+	  double effMC = getBtagEffMC(flavor,getJetPt(ijet));
+	  if ( tweaking_rand.Rndm() < (effMC*(SF-1) )/(1-effMC) ) istagged=true; //accept this jet
+	  //otherwise keep istagged as false
+	}
+      }
+
+      if (istagged) ngoodbjets++;
+
+    }
+  }
+  return ngoodbjets;
+}
+
+float EventCalculator::getBtagEffMC(const int flavor, const float pt) {
+
+  //i don't like this part, but for now i'll accept it....
+  char btageffname[200], ctageffname[200], ltageffname[200];
+  std::string sbtageff = "h_btageff";  std::string sctageff = "h_ctageff";  std::string sltageff = "h_ltageff";
+  sprintf(btageffname,"%s",sbtageff.c_str());   
+  sprintf(ctageffname,"%s",sctageff.c_str());   
+  sprintf(ltageffname,"%s",sltageff.c_str());   
+  TH1F * h_btageff  = (TH1F *)f_tageff_->Get(btageffname);
+  TH1F * h_ctageff  = (TH1F *)f_tageff_->Get(ctageffname);
+  TH1F * h_ltageff  = (TH1F *)f_tageff_->Get(ltageffname);
+
+
+  TH1F* hh;
+  if (abs(flavor)==5)      hh=h_btageff;
+  else if (abs(flavor)==4) hh=h_ctageff;
+  else                     hh=h_ltageff;
+
+  return hh->GetBinContent( hh->FindBin(pt));
+}
+
+float EventCalculator::getBtagWeight() {
+  if ( isSampleRealData() ) return 1;
+  //yet another procedure, this one with code written by the btv!
+
+  //put jets into the 'jetinfos' object
+  vector<BTagWeight::JetInfo> jetinfos;
+  int ntagged=0;
+  for (unsigned int ijet=0; ijet<jets_AK5PF_pt->size(); ++ijet) {
+    //only consider good jets (eta, quality, pT)
+    if(isGoodJet(ijet,50)){ //switch to 50 GeV threshold for b jets
+      //for each jet, what is the flavor and is it tagged
+
+      if ( passBTagger(ijet) ) ntagged++;
+
+      int flavor = jets_AK5PF_partonFlavour->at(ijet);
+      double SF = getBtagSF(flavor,getJetPt(ijet),jets_AK5PF_eta->at(ijet));
+      double effmc = getBtagEffMC(flavor,getJetPt(ijet));
+
+      jetinfos.push_back( BTagWeight::JetInfo(effmc,SF));
+    }
+  }
+
+  BTagWeight btvweq(ntagged,ntagged);
+  return btvweq.weight(jetinfos,ntagged);
+
+}
+
+float EventCalculator::getBtagEffWeight() {
+  if ( isSampleRealData() ) return 1;
+
+  /*
+alternative b-tag SF procedure. Akin to 'PIDweighting' in BaBar.
+Use the b-tag algorithm output and calculate a weight for the _event_ based on the jet parton content and the b-tag SFs
+  */
+
+  //careful because 'weight' is a global variable' :-(
+  double outputweight=1;
+
+  //loop over jets in the event
+  for (unsigned int ijet=0; ijet<jets_AK5PF_pt->size(); ++ijet) {
+    //only consider good jets (eta, quality, pT)
+    if(isGoodJet(ijet,50)){ //switch to 50 GeV threshold for b jets
+
+      //for each jet, what is the flavor and is it tagged
+      int flavor = jets_AK5PF_partonFlavour->at(ijet);
+      bool istagged = passBTagger(ijet);
+
+      double SF = getBtagSF(flavor,getJetPt(ijet),jets_AK5PF_eta->at(ijet));
+
+      if (istagged) {
+	outputweight *= SF;
+      }
+      else {
+	double effmc = getBtagEffMC(flavor,getJetPt(ijet));
+	outputweight *= (1.0 - effmc*SF)/(1.0-effmc);
+      }
+
+    }
+  }
+
+  return (float)outputweight;
+
+}
+
 void EventCalculator::calculateTagProb(float &Prob0, float &ProbGEQ1, float &Prob1, float &ProbGEQ2, float &Prob2, float &ProbGEQ3,
 				       const float extraSFb, const float extraSFc, const float extraSFl, BTagEffModifier modifier) {
 
@@ -5178,9 +5321,10 @@ void EventCalculator::dumpEvent () {
 
     cout<<" == jets"<<endl;
     for (unsigned int i=0; i<jets_AK5PF_pt->size(); i++) {
-      //    if (isCleanJet(i) ){//this only has an effect for recopfjets    
-      cout<<"\t"<<jets_AK5PF_pt->at(i)<<" "<<jets_AK5PF_eta->at(i)<<" "<<jets_AK5PF_phi->at(i)<<"\t"<<isCleanJet(i)<<endl;
+      if (  jets_AK5PF_pt->at(i)>50)    cout<<"\t"<<jets_AK5PF_pt->at(i)<<" "<<jets_AK5PF_eta->at(i)<<" "<<jets_AK5PF_phi->at(i)<<"\t"<<passBTagger(i)<<endl;
     }
+
+    if (false) {
     cout<<" == muons"<<endl;
     for ( unsigned int i = 0; i<pf_mus_et->size() ; i++) {
       cout<<"\t"<<pf_mus_pt->at(i)<<" "<<pf_mus_eta->at(i)<<" "<<pf_mus_phi->at(i)<<"\t"<<isCleanMuon(i)<<endl;
@@ -5189,6 +5333,7 @@ void EventCalculator::dumpEvent () {
     for ( unsigned int i = 0; i<pf_els_et->size() ; i++) {
       cout<<"\t"<<pf_els_et->at(i)<<" "<<pf_els_eta->at(i)<<" "<<pf_els_phi->at(i)<<"\t"<<isGoodElectron(i)<<endl;
     }
+}
     //  }
 
 }
@@ -5410,6 +5555,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   map<TString, triggerData > triggerlist_mc(triggerlist);
 
   int njets, njets30, nbjets, nbjets30,ntruebjets, nElectrons,nElectrons2011, nMuons;
+  int nbjetsTweaked;
   int nTausVLoose,nTausLoose,nTausMedium,nTausTight;
   //  int nIndirectTaus4,nIndirectTaus5,nIndirectTaus2,nIndirectTaus3;
   int nbjetsSSVM,nbjetsTCHET,nbjetsSSVHPT,nbjetsTCHPT,nbjetsTCHPM,nbjetsCSVM,nbjetsCSVL; 
@@ -5488,14 +5634,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   float transverseThrust,transverseThrustPhi;
   float transverseThrustWithMET,transverseThrustWithMETPhi;
 */
-  float minDeltaPhiN_Luke, maxDeltaPhiN_Luke, deltaPhiN1_Luke, deltaPhiN2_Luke, deltaPhiN3_Luke;
   float minTransverseMETSignificance, maxTransverseMETSignificance, transverseMETSignificance1, transverseMETSignificance2, transverseMETSignificance3;
-
-  int nLostJet;
-  int njets_lostJet, nbjets_lostJet;
-  float minDeltaPhiN_lostJet, deltaPhiN1_lostJet, deltaPhiN2_lostJet, deltaPhiN3_lostJet;
-  float minDeltaPhiN_Luke_lostJet, maxDeltaPhiN_Luke_lostJet, deltaPhiN1_Luke_lostJet, deltaPhiN2_Luke_lostJet, deltaPhiN3_Luke_lostJet;
-  float minTransverseMETSignificance_lostJet, maxTransverseMETSignificance_lostJet, transverseMETSignificance1_lostJet, transverseMETSignificance2_lostJet, transverseMETSignificance3_lostJet;
 
   bool passBadECAL_METphi53_n10_s12, passBadECAL_METphi33_n10_s12, passBadECAL_METphi52_n10_s12; 
   float worstMisA_badECAL_METphi53_n10_s12, worstMisF_badECAL_METphi53_n10_s12;
@@ -5524,6 +5663,9 @@ void EventCalculator::reducedTree(TString outputpath) {
 
   float prob0,probge1,prob1,probge2,probge3,prob2;
   
+  float PIDweight;
+  float BTagWeight;
+
   float prob0_HFplus,probge1_HFplus,prob1_HFplus,probge2_HFplus,probge3_HFplus,prob2_HFplus;
   float prob0_HFminus,probge1_HFminus,prob1_HFminus,probge2_HFminus,probge3_HFminus,prob2_HFminus;
   float prob0_LFplus,probge1_LFplus,prob1_LFplus,probge2_LFplus,probge3_LFplus,prob2_LFplus;
@@ -5699,6 +5841,9 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("pdfWeightsMSTW",&pdfWeightsMSTW,"pdfWeightsMSTW[41]/F");
   reducedTree.Branch("pdfWeightsNNPDF",&pdfWeightsNNPDF,"pdfWeightsNNPDF[100]/F");
 
+  reducedTree.Branch("PIDweight",&PIDweight,"PIDweight/F");
+  reducedTree.Branch("BTagWeight",&BTagWeight,"BTagWeight/F");
+
   float SUSY_msq12[2]={-1,-1};
   float SUSY_msq23[2]={-1,-1};
   float SUSY_gluino_pt[2]={-1,-1};
@@ -5774,11 +5919,11 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("SUSY_nb",&SUSY_nb,"SUSY_nb/I");
   reducedTree.Branch("SUSY_process",&SUSY_process,"SUSY_process/I");
   reducedTree.Branch("SUSY_recoilPt",&SUSY_recoilPt,"SUSY_recoilPt/F");
-  reducedTree.Branch("nCorrectRecoStop",&nCorrectRecoStop,"nCorrectRecoStop/I");
 
   reducedTree.Branch("njets",&njets,"njets/I");
   reducedTree.Branch("njets30",&njets30,"njets30/I");
   reducedTree.Branch("nbjets",&nbjets,"nbjets/I");
+  reducedTree.Branch("nbjetsTweaked",&nbjetsTweaked,"nbjetsTweaked/I");
   reducedTree.Branch("nbjets30",&nbjets30,"nbjets30/I");
   reducedTree.Branch("ntruebjets",&ntruebjets,"ntruebjets/I");
   reducedTree.Branch("nElectrons",&nElectrons,"nElectrons/I");
@@ -5798,6 +5943,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("nTausTight",&nTausTight,"nTausTight/I");
 
 
+  reducedTree.Branch("nCorrectRecoStop",&nCorrectRecoStop,"nCorrectRecoStop/I");
   reducedTree.Branch("bestZmass",&bestZmass,"bestZmass/F");
   reducedTree.Branch("mjj1",&mjj1,"mjj1/F");
   reducedTree.Branch("mjj2",&mjj2,"mjj2/F");
@@ -5980,10 +6126,6 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("deltaPhib3",&deltaPhib3,"deltaPhib3/F");
   reducedTree.Branch("minDeltaPhiMETMuonsAll",&minDeltaPhiMETMuonsAll,"minDeltaPhiMETMuonsAll/F");
 
-  reducedTree.Branch("minDeltaPhiN_lostJet", &minDeltaPhiN_lostJet, "minDeltaPhiN_lostJet/F");
-  reducedTree.Branch("deltaPhiN1_lostJet", &deltaPhiN1_lostJet, "deltaPhiN1_lostJet/F");
-  reducedTree.Branch("deltaPhiN2_lostJet", &deltaPhiN2_lostJet, "deltaPhiN2_lostJet/F");
-  reducedTree.Branch("deltaPhiN3_lostJet", &deltaPhiN3_lostJet, "deltaPhiN3_lostJet/F");
 
   if (isSampleQCD() ) {
   reducedTree.Branch("passBadECAL_METphi53_n10_s12", &passBadECAL_METphi53_n10_s12, "passBadECAL_METphi53_n10_s12/O");
@@ -6160,34 +6302,12 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("transverseThrustWithMET",&transverseThrustWithMET,"transverseThrustWithMET/F");
   reducedTree.Branch("transverseThrustWithMETPhi",&transverseThrustWithMETPhi,"transverseThrustWithMETPhi/F");
 */
-  reducedTree.Branch("minDeltaPhiN_Luke", &minDeltaPhiN_Luke, "minDeltaPhiN_Luke/F");
-  reducedTree.Branch("maxDeltaPhiN_Luke", &maxDeltaPhiN_Luke, "maxDeltaPhiN_Luke/F");
-  reducedTree.Branch("deltaPhiN1_Luke", &deltaPhiN1_Luke, "deltaPhiN1_Luke/F");
-  reducedTree.Branch("deltaPhiN2_Luke", &deltaPhiN2_Luke, "deltaPhiN2_Luke/F");
-  reducedTree.Branch("deltaPhiN3_Luke", &deltaPhiN3_Luke, "deltaPhiN3_Luke/F");
 
   reducedTree.Branch("minTransverseMETSignificance", &minTransverseMETSignificance, "minTransverseMETSignificance/F");
   reducedTree.Branch("maxTransverseMETSignificance", &maxTransverseMETSignificance, "maxTransverseMETSignificance/F");
   reducedTree.Branch("transverseMETSignificance1", &transverseMETSignificance1, "transverseMETSignificance1/F");
   reducedTree.Branch("transverseMETSignificance2", &transverseMETSignificance2, "transverseMETSignificance2/F");
   reducedTree.Branch("transverseMETSignificance3", &transverseMETSignificance3, "transverseMETSignificance3/F");
-
-  reducedTree.Branch("njets_lostJet",&njets_lostJet,"njets_lostJet/I");
-  reducedTree.Branch("nbjets_lostJet",&nbjets_lostJet,"nbjets_lostJet/I");
-
-  reducedTree.Branch("minDeltaPhiN_Luke_lostJet", &minDeltaPhiN_Luke_lostJet, "minDeltaPhiN_Luke_lostJet/F");
-  reducedTree.Branch("maxDeltaPhiN_Luke_lostJet", &maxDeltaPhiN_Luke_lostJet, "maxDeltaPhiN_Luke_lostJet/F");
-  reducedTree.Branch("deltaPhiN1_Luke_lostJet", &deltaPhiN1_Luke_lostJet, "deltaPhiN1_Luke_lostJet/F");
-  reducedTree.Branch("deltaPhiN2_Luke_lostJet", &deltaPhiN2_Luke_lostJet, "deltaPhiN2_Luke_lostJet/F");
-  reducedTree.Branch("deltaPhiN3_Luke_lostJet", &deltaPhiN3_Luke_lostJet, "deltaPhiN3_Luke_lostJet/F");
-
-  reducedTree.Branch("minTransverseMETSignificance_lostJet", &minTransverseMETSignificance_lostJet, "minTransverseMETSignificance_lostJet/F");
-  reducedTree.Branch("maxTransverseMETSignificance_lostJet", &maxTransverseMETSignificance_lostJet, "maxTransverseMETSignificance_lostJet/F");
-  reducedTree.Branch("transverseMETSignificance1_lostJet", &transverseMETSignificance1_lostJet, "transverseMETSignificance1_lostJet/F");
-  reducedTree.Branch("transverseMETSignificance2_lostJet", &transverseMETSignificance2_lostJet, "transverseMETSignificance2_lostJet/F");
-  reducedTree.Branch("transverseMETSignificance3_lostJet", &transverseMETSignificance3_lostJet, "transverseMETSignificance3_lostJet/F");
-
-  reducedTree.Branch("nLostJet", &nLostJet, "nLostJet/F");
 
 
   reducedTree.Branch("nIsoTracks20_005_03",&nIsoTracks20_005_03,"nIsoTracks20_005_03/I");
@@ -6284,50 +6404,47 @@ Also the pdfWeightSum* histograms that are used for LM9.
 
     if (theScanType_==kmSugra ) {
       assert(0); //FIXME CFA
-      if ( scanProcessTotalsMapCTEQ.count(thispoint) ) {
-	//do the new 2D maps
-	for (int ipdf=0 ; ipdf<45; ipdf++) {
-	  pdfWeightsCTEQ[ipdf] = checkPdfWeightSanity(1 /* geneventinfoproducthelper1.at(ipdf).pdfweight */ ); //FIXME CFA
+
+    }
+    else if (theScanType_==kSMS) {
+      //increment a 2d histogram of mGL, mLSP
+      // -- this scheme is not compatible with skimmed input
+      scanSMSngen->Fill(m0,m12);
+
+      if ( sampleName_.Contains("v68")) {
+	for (int ipdf=0;ipdf<45;ipdf++) {
+	  pdfWeightsCTEQ[ipdf] = getPDFweight(1,ipdf); //1==cteq
 	  scanProcessTotalsMapCTEQ[thispoint]->SetBinContent( int(prodprocess),  ipdf,
 							      scanProcessTotalsMapCTEQ[thispoint]->GetBinContent( int(prodprocess),  ipdf) 
 							      + pdfWeightsCTEQ[ipdf] );
 	}
-	for (int ipdf=0 ; ipdf<41; ipdf++) { 
-	  pdfWeightsMSTW[ipdf] = checkPdfWeightSanity(1 /*geneventinfoproducthelper2.at(ipdf).pdfweight*/); //FIXME CFA
+	for (int ipdf=0;ipdf<41;ipdf++) { 
+	  pdfWeightsMSTW[ipdf] = getPDFweight(2,ipdf); //2==mstw
 	  scanProcessTotalsMapMSTW[thispoint]->SetBinContent( int(prodprocess),  ipdf,
 							      scanProcessTotalsMapMSTW[thispoint]->GetBinContent( int(prodprocess),  ipdf) 
 							      + pdfWeightsMSTW[ipdf] );
 	}
-	for (int ipdf=0 ; ipdf<100; ipdf++) { 
-	  pdfWeightsNNPDF[ipdf] = checkPdfWeightSanity(1 /*geneventinfoproducthelper.at(ipdf).pdfweight*/); //FIXME CFA
+	for (int ipdf=0;ipdf<100;ipdf++) { 
+	  pdfWeightsNNPDF[ipdf] = getPDFweight(3,ipdf); //3==nnpdf
 	  scanProcessTotalsMapNNPDF[thispoint]->SetBinContent( int(prodprocess),  ipdf,
-							       scanProcessTotalsMapNNPDF[thispoint]->GetBinContent( int(prodprocess),  ipdf) 
-							       + pdfWeightsNNPDF[ipdf] );
+							      scanProcessTotalsMapNNPDF[thispoint]->GetBinContent( int(prodprocess),  ipdf) 
+							      + pdfWeightsNNPDF[ipdf] );
 	}
-      }
-      else 	continue; // skip this event
-    }
-    else if (theScanType_==kSMS) {
-      //increment a 2d histogram of mGL, mLSP
-      //we know 10k were generated everywhere, but what if we have failed jobs?
-      // -- this scheme is not compatible with skim, unfortunately
-      scanSMSngen->Fill(m0,m12);
 
-      //do the new 2D maps as well
-      //the v66 ntuples have a problem -- i didn't store the central pdf weight
+      }
+      else {
+      //the v66 T1bbbb ntuples have a problem -- i didn't store the central pdf weight
       /* 	 to handle this:
 	 make counters (ipdf) start from 1 instead of 0
 	 access pdfweights arrays at ipdf-1 instead of ipdf
 	 calculate an average pdf weight
 	 after each loop, set the values for the [0] elements by hand
 
-	 This is fixed (I hope for T1tttt).
+	 This is fixed for T1tttt
 
 	 Now use this sample-dependent hack to behave one way for T1bbbb and another for other samples
       */
-
-      if (!sampleName_.Contains("SMS-MadGraph_T1tttt")) { //HACK to avoid storing pdf weights for 
-
+ 
       double av=0; //v66 kludge
       int startat = 0;
       if (sampleName_.Contains("T1bbbb")) startat=1;
@@ -6378,7 +6495,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
 							     scanProcessTotalsMapNNPDF[thispoint]->GetBinContent( int(prodprocess),  0) 
 							     + pdfWeightsNNPDF[0] );
       }
-      }
+      }//if sample is not v68
     }
     else if (theScanType_==kNotScan && sampleIsSignal_) {
       //do the new 2D maps as well
@@ -6543,6 +6660,9 @@ Also the pdfWeightSum* histograms that are used for LM9.
 
       cutPV = passPV();
 
+      PIDweight=getBtagEffWeight();
+      BTagWeight = getBtagWeight();
+
       calculateTagProb(prob0,probge1,prob1,probge2,prob2,probge3);
 
       calculateTagProb(prob0_HFplus,probge1_HFplus,prob1_HFplus,probge2_HFplus,prob2_HFplus,probge3_HFplus,1,1,1,kHFup);
@@ -6572,6 +6692,8 @@ Also the pdfWeightSum* histograms that are used for LM9.
       //count b jets
       ntruebjets = nTrueBJets();
       nbjets = nGoodBJets();
+
+      nbjetsTweaked = nGoodBJets_Tweaked();
       nbjets30 = nGoodBJets(30);
       nbjetsSSVM = nGoodBJets( kSSVM);
       nbjetsSSVHPT = nGoodBJets( kSSVHPT);
@@ -6750,11 +6872,6 @@ Also the pdfWeightSum* histograms that are used for LM9.
       deltaPhiN_asin2 = getDeltaPhiMETN(1,50,2.4,true,30,2.4,true, false,false,true);
       deltaPhiN_asin3 = getDeltaPhiMETN(2,50,2.4,true,30,2.4,true, false,false,true);
 
-      minDeltaPhiN_Luke = getMinDeltaPhiNMET(3);
-      maxDeltaPhiN_Luke = getMaxDeltaPhiNMET(3);
-      deltaPhiN1_Luke = getDeltaPhiNMET(0);
-      deltaPhiN2_Luke = getDeltaPhiNMET(1);
-      deltaPhiN3_Luke = getDeltaPhiNMET(2);
     
       if (isSampleQCD() ) { //don't fill for non-qcd (save space)
       passBadECAL_METphi53_n10_s12 = passBadECALFilter("METphi",0.5,"deadCell",0.3,10,12);
@@ -7005,32 +7122,6 @@ Also the pdfWeightSum* histograms that are used for LM9.
       //getTransverseThrustVariables(transverseThrust, transverseThrustPhi, false);
       //getTransverseThrustVariables(transverseThrustWithMET, transverseThrustWithMETPhi, true);
 
-      //FIXME CFA
-      //      changeVariables(&random,0.05,nLostJet);
-
-      //changeVariablesGenSmearing(&random);
-/* FIXME CFA
-      njets_lostJet = nGoodJets();
-      nbjets_lostJet = nGoodBJets();
-
-      minDeltaPhiN_lostJet = getMinDeltaPhiMETN(3);
-      deltaPhiN1_lostJet = getDeltaPhiMETN(0);
-      deltaPhiN2_lostJet = getDeltaPhiMETN(1);
-      deltaPhiN3_lostJet = getDeltaPhiMETN(2);
-
-      minDeltaPhiN_Luke_lostJet = getMinDeltaPhiNMET(3);
-      maxDeltaPhiN_Luke_lostJet = getMaxDeltaPhiNMET(3);
-      deltaPhiN1_Luke_lostJet = getDeltaPhiNMET(0);
-      deltaPhiN2_Luke_lostJet = getDeltaPhiNMET(1);
-      deltaPhiN3_Luke_lostJet = getDeltaPhiNMET(2);
-
-      minTransverseMETSignificance_lostJet = getMinTransverseMETSignificance(3);
-      maxTransverseMETSignificance_lostJet = getMaxTransverseMETSignificance(3);
-      transverseMETSignificance1_lostJet = getTransverseMETSignificance(0);
-      transverseMETSignificance2_lostJet = getTransverseMETSignificance(1);
-      transverseMETSignificance3_lostJet = getTransverseMETSignificance(2);
-      resetVariables();
-      */
       //Fill the tree
       reducedTree.Fill();
       
@@ -7264,50 +7355,6 @@ double EventCalculator::calc_mNj( unsigned int j1i, unsigned int j2i, unsigned i
 }
 
 
-
-// void EventCalculator::changeVariables(TRandom3* random, double jetLossProbability, int& nLostJets)
-// {
-//   if(recalculatedVariables_) return;
-//   recalculatedVariables_=true;
-//   myJetsPF_temp                   = myJetsPF;		  
-//   myMETPF_temp		          = myMETPF;		  
-
-//   myJetsPF                = new std::vector<jet2_s>;	   //jmt -- switch to PF2PAT
-//   myMETPF		  = new std::vector<met1_s>(*myMETPF_temp);	  
-
-//   for(vector<jet2_s>::iterator thisJet = myJetsPF_temp->begin(); thisJet != myJetsPF_temp->end(); thisJet++)
-//     {
-//       if(random->Rndm() > jetLossProbability)
-// 	{
-// 	  myJetsPF->push_back(*thisJet);
-// 	}
-//       else
-// 	{
-// 	  double jetPx = thisJet->uncor_pt * cos(thisJet->uncor_phi);
-// 	  double jetPy = thisJet->uncor_pt * sin(thisJet->uncor_phi);
-// 	  double METx = myMETPF->at(0).pt * cos(myMETPF->at(0).phi) - jetPx;
-// 	  double METy = myMETPF->at(0).pt * sin(myMETPF->at(0).phi) - jetPy;
-// 	  myMETPF->at(0).pt = sqrt(METx*METx + METy*METy);
-// 	  myMETPF->at(0).phi = atan2(METy,METx);
-// 	}
-//     }
-//   nLostJets = myJetsPF_temp->size() - jets_AK5PF_pt->size();
-
-// }
-
-// void EventCalculator::resetVariables()
-// {
-//   if(!recalculatedVariables_) return;
-//   recalculatedVariables_ = false;
-//   if(myJetsPF != 0) delete myJetsPF;
-//   else cout << "you've done something wrong!" << endl;
-//   if(myMETPF != 0)delete myMETPF;		
-//   else cout << "you've done something wrong!" << endl;
-
-//   myJetsPF                = myJetsPF_temp;		  
-//   myMETPF		  = myMETPF_temp;		  
-    
-// }
 
 
 void EventCalculator::getSphericity(float & sph, bool addMET, bool addLeptons, const float jetthreshold) {
@@ -11839,6 +11886,21 @@ void EventCalculator::InitializeB(TChain *fChain)
    fChain->SetBranchAddress("orbitNumber", &orbitNumber, &b_orbitNumber);
    fChain->SetBranchAddress("weight", &weight, &b_weight);
    fChain->SetBranchAddress("model_params", &model_params, &b_model_params);
+
+   mc_pdf_x1=0;
+   mc_pdf_x2=0;
+   mc_pdf_id1=0;
+   mc_pdf_id2=0;
+   mc_pdf_q=0;
+
+   if ( sampleName_.Contains("v68")) {
+
+     fChain->SetBranchAddress("mc_pdf_x1", &mc_pdf_x1, &b_mc_pdf_x1);
+     fChain->SetBranchAddress("mc_pdf_x2", &mc_pdf_x2, &b_mc_pdf_x2);
+     fChain->SetBranchAddress("mc_pdf_q", &mc_pdf_q, &b_mc_pdf_q);
+     fChain->SetBranchAddress("mc_pdf_id1", &mc_pdf_id1, &b_mc_pdf_id1);
+     fChain->SetBranchAddress("mc_pdf_id2", &mc_pdf_id2, &b_mc_pdf_id2);
+   }
 
 }
 
