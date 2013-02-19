@@ -13,7 +13,7 @@
 #include <TFile.h>
 #include <TH2.h>
 
-//#include <iostream>
+#include <iostream>
 
 // Header file for the classes stored in the TTree if any.
 class SearchRegion { //a DIFFERENT class than my other SearchRegion class...oh well
@@ -107,6 +107,7 @@ public :
    // Declaration of leaf types
    Double_t        weight;
    Double_t        weight2;
+   Double_t        weight3;
    Double_t        scanCrossSection;
    Double_t        scanCrossSectionPlus;
    Double_t        scanCrossSectionMinus;
@@ -434,6 +435,7 @@ public :
    // List of branches
    TBranch        *b_weight;   //!
    TBranch        *b_weight2;   //!
+   TBranch        *b_weight3;   //!
    TBranch        *b_scanCrossSection;   //!
    TBranch        *b_scanCrossSectionPlus;   //!
    TBranch        *b_scanCrossSectionMinus;   //!
@@ -811,6 +813,10 @@ signalEff2012::signalEff2012(TString path, TString filestub,bool joinbtagbins, b
       }
       f->GetObject("reducedTree",tree);
       scanSMSngen_ = (TH2D*) f->Get("scanSMSngen"); //BEGIN  jmt mod
+      if (scanSMSngen_==0) {
+	std::cout<<" WARNING -- scanSMSngen not found (only ok for non-SMS)"<<std::endl;
+	scanSMSngen_ = new TH2D("scanSMSngen","scan sms ngen",1,-1,1,1,-1,1);
+      }
       //need to loop over the keys in the file and load all scan process totals histos
       for (int ih = 0; ih<f->GetListOfKeys()->GetEntries(); ih++) {
 	TString histname = f->GetListOfKeys()->At(ih)->GetName();
@@ -867,6 +873,7 @@ void signalEff2012::Init(TTree *tree)
 
    fChain->SetBranchAddress("weight", &weight, &b_weight);
    fChain->SetBranchAddress("weight2", &weight2, &b_weight2);
+   fChain->SetBranchAddress("weight3", &weight3, &b_weight3);
    fChain->SetBranchAddress("scanCrossSection", &scanCrossSection, &b_scanCrossSection);
    fChain->SetBranchAddress("scanCrossSectionPlus", &scanCrossSectionPlus, &b_scanCrossSectionPlus);
    fChain->SetBranchAddress("scanCrossSectionMinus", &scanCrossSectionMinus, &b_scanCrossSectionMinus);

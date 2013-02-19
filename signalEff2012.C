@@ -45,7 +45,7 @@ void signalEff2012::Loop()
   vector<SearchRegion> searchregions;
 
   //not incredibly elegant, but it will do
-  const bool doLeptons =  filestub_.Contains("T1tttt") || filestub_.Contains("T2tt");
+  const bool doLeptons =  !(filestub_.Contains("T1bbbb"));
   const int nvariations = doLeptons ? 4 : 2;
   for (int ivariation=0;ivariation<nvariations;ivariation++) {
 
@@ -136,6 +136,7 @@ void signalEff2012::Loop()
     //activate branches
     fChain->SetBranchStatus("m0",1);
     fChain->SetBranchStatus("m12",1);
+    fChain->SetBranchStatus("weight3",1); 
     fChain->SetBranchStatus("PUweight",1); 
     fChain->SetBranchStatus("PUweightSystVar",1);
     fChain->SetBranchStatus("prob1",1);
@@ -189,9 +190,9 @@ void signalEff2012::Loop()
 
 	// == get event weight ==
 	
-	//for SMS do not use regular weights
 	//Use PU weight
 	double thisweight = pusyst_ ? PUweightSystVar : PUweight;
+	thisweight*=weight3; //for SMS this is just 1; for other samples it is 1 pb-1 of data
 	double pdfweight=1;
 	//use b tag SF if desired
 	if (usebtagsf_) { //support only =1,=2,>=3 b bins for now
