@@ -278,10 +278,7 @@ TString susyCrossSectionVariation_="";
 bool normalized_=false;
 
 bool usePUweight_=false;
-bool useHTeff_ = false;
-bool useMHTeff_ = false;
-enum bnnMHTeffMode {kOff=0, kOn, kOnPlus, kOnMinus, kPlot, kPlotPlus, kPlotMinus};
-bnnMHTeffMode thebnnMHTeffMode_ = kOff;
+bool useTrigEff_ = false;
 
 TString btagSFweight_="1";
 
@@ -465,10 +462,14 @@ void addVerticalLine(float position) {
 // }
 
 void deleteVerticalLines() {
-  for (unsigned int il=0; il<verticalLines_.size(); il++)     delete verticalLines_.at(il);
+  for (unsigned int il=0; il<verticalLines_.size(); il++) {
+    cout<<" DEBUG deleting line "<<il<<" "<< verticalLines_.at(il)<<endl;
+    delete verticalLines_.at(il);
+  }
 }
 
 void resetVerticalLine() {
+  //this can crash the code if run at the wrong time. why?
   deleteVerticalLines();
   verticalLines_.clear();
   verticalLinePositions_.clear();
@@ -917,29 +918,8 @@ for legacy purposes I am keeping all of the weight and selection TStrings, altho
   if (usePUweight_ && type!=kData) {
     weightedcut +="*PUweight";
   }
-  if (useHTeff_ &&  type!=kData) {
-    weightedcut +="*hltHTeff";
-  }
-  if (useMHTeff_ &&  type!=kData) {
-    weightedcut +="*hltMHTeff";
-  }
-  if (thebnnMHTeffMode_==kOn &&  type==kData) {
-    weightedcut +="*(1/hltMHTeffBNN)"; 
-  }
-  if (thebnnMHTeffMode_==kPlot &&  type!=kData) {
-    weightedcut +="*hltMHTeffBNN"; 
-  }
-  if (thebnnMHTeffMode_==kPlotPlus &&  type!=kData) {
-    weightedcut +="*hltMHTeffBNNUp"; 
-  }
-  if (thebnnMHTeffMode_==kPlotMinus &&  type!=kData) {
-    weightedcut +="*hltMHTeffBNNDown"; 
-  }
-  if (thebnnMHTeffMode_==kOnPlus &&  type==kData) {
-    weightedcut +="*(1/hltMHTeffBNNUp)"; 
-  }
-  if (thebnnMHTeffMode_==kOnMinus &&  type==kData) {
-    weightedcut +="*(1/hltMHTeffBNNDown)"; 
+  if (useTrigEff_ &&  type!=kData) {
+    weightedcut +="*hlteff";
   }
   if (btagSFweight_=="") btagSFweight_="1";
   if ( type==kData) {
@@ -1280,6 +1260,7 @@ void setColorScheme(const TString & name) {
     sampleColor_["TTbarSingleTopWJetsCombined"]=kAzure-3;
     sampleColor_["ttbar"]=kAzure-3;
     sampleColor_["SingleTop"] = kMagenta;
+    sampleColor_["TTV"] =kBlue+3 ;
     sampleColor_["WJets"] = kGreen-3;
     sampleColor_["ZJets"] = kViolet-3;
     sampleColor_["Zinvisible"] = kOrange-3;
@@ -1304,6 +1285,7 @@ void setColorScheme(const TString & name) {
     sampleColor_["PythiaPUQCD"] =2;
     sampleColor_["PythiaPUQCDFlat"] =2;
     sampleColor_["TTbarJets"]=kBlue;
+    sampleColor_["TTV"] =kBlue+4 ;
     sampleColor_["TTbarJets0"]=kCyan;
     sampleColor_["TTbarJetsPowheg"]=kCyan+4;
     sampleColor_["TTbarJetsMCNLO"]=kViolet;
@@ -1500,8 +1482,8 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
     configDescriptions_.setCorrected("CSVM_PF2PATjets_JES0_JERbias_PFMET_METunc0_PUunc0_BTagEff04_HLTEff0");
   }
   else if (signalEffMode=="ra2b2012") {
-     configDescriptions_.setDefault("CSVM_PF2PATjets_JES0_JER0_PFMETTypeI_METunc0_PUunc0_BTagEff04_HLTEff0");
-     configDescriptions_.setCorrected("CSVM_PF2PATjets_JES0_JERbias_PFMETTypeI_METunc0_PUunc0_BTagEff04_HLTEff0");
+     configDescriptions_.setDefault("CSVM_PF2PATjets_JES0_JER0_PFMETTypeI_METunc0_PUunc0_BTagEff05_HLTEff0");
+     configDescriptions_.setCorrected("CSVM_PF2PATjets_JES0_JERbias_PFMETTypeI_METunc0_PUunc0_BTagEff05_HLTEff0");
   }
   else if (signalEffMode=="stop") {
     configDescriptions_.setDefault("default");
@@ -2600,9 +2582,9 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
     int ns=0;
     for (unsigned int isample=0; isample<samples_.size(); isample++) {
       if (!isSampleSM( samples_[isample])) ns++;
-      if ( isSampleSM( samples_[isample]) || ns<=1 ) 
+      if ( isSampleSM( samples_[isample]) || ns<=1 || !dostack_) 
 	cout<<samples_[isample]<<" =\t "<<histos_[samples_[isample]]->Integral()<<" +/- "<<jmt::errOnIntegral(histos_[samples_[isample]])<<endl;
-      else  //starting with the 2nd signal, the total sm will be included, so we need to get rid of it
+      else  //starting with the 2nd signal, the total sm will be included, so we need to get rid of it (only for dostack_ true)
 	cout<<samples_[isample]<<" =\t "<<histos_[samples_[isample]]->Integral()-totalsm->Integral()<<endl;
     }
     cout<<"total SM =\t "<<totalsm->Integral()<<" +/- "<<jmt::errOnIntegral(totalsm)<<endl;
@@ -3225,8 +3207,7 @@ void cutflow(bool isTightSelection){
 
   //jmt -- turn on weighting
   usePUweight_=true; 
-  useHTeff_=true;   
-  useMHTeff_=true;
+  useTrigEff_=true;   
   currentConfig_=configDescriptions_.getCorrected(); //use JERbias
 
   vector<TString> vectorOfCuts; //each element is a successive cut string for the cutflow table
