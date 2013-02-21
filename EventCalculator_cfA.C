@@ -4407,6 +4407,8 @@ Long64_t EventCalculator::getNEventsGenerated( TString sample) {
   if (sample.Contains("UCSB1605")) return 196046; // ttW
   if (sample.Contains("UCSB1604")) return 210160; // ttZ
 
+  if (sample.Contains("UCSB1708")) return 5415010;//tt MG matchingup
+
   cout<<"[getNEventsGenerated] unknown sample "<<sample<<endl;
   assert(0);
   return 1;
@@ -4481,6 +4483,8 @@ double EventCalculator::getCrossSection(){
   if (sampleName_.BeginsWith("TTJets_FullLeptMGDecays_8TeV-madgraph")) return 13.43*(234.0 / (13.43+53.4+53.2)); // PREP corrected to NNLO
   if (sampleName_.BeginsWith("TTJets_HadronicMGDecays_8TeV-madgraph")) return 53.4*(234.0 / (13.43+53.4+53.2)); // PREP corrected to NNLO
   if (sampleName_.BeginsWith("TTJets_SemiLeptMGDecays_8TeV-madgraph")) return 53.2*(234.0 / (13.43+53.4+53.2)); //PREP corrected to NNLO
+
+  if (sampleName_.BeginsWith("TTJets_matchingup_TuneZ2star_8TeV-madgraph")) return 234; //approx NNLO
 
   //ttV
   if (sampleName_.BeginsWith("TTWJets_8TeV-madgraph")) return 0.2149; // from PREP (LO)
@@ -5783,7 +5787,8 @@ Also the pdfWeightSum* histograms that are used for LM9.
     if (sampleName_.Contains("PU_S7"))  MCDist.push_back(pu::Summer2012[i]);
     else if (sampleName_.Contains("PU_S6")) MCDist.push_back(pu::Fall2011[i]);
     else if (sampleName_.Contains("PU_S10")) MCDist.push_back(pu::Summer2012_S10[i]);
-    else MCDist.push_back(pu::Summer2012[i]); //just a safety valve
+    else if (sampleName_.Contains("SMS-MadGraph") &&sampleName_.Contains("START52") ) MCDist.push_back(pu::Summer2012[i]);
+    else MCDist.push_back(pu::Summer2012[i]); //just a safety valve (but dangerous!)
   }
 
   reweight::LumiReWeighting * LumiWeights=0;
