@@ -4407,7 +4407,9 @@ Long64_t EventCalculator::getNEventsGenerated( TString sample) {
   if (sample.Contains("UCSB1605")) return 196046; // ttW
   if (sample.Contains("UCSB1604")) return 210160; // ttZ
 
-  if (sample.Contains("UCSB1708")) return 5415010;//tt MG matchingup
+  if (sample.Contains("UCSB1707")) return 5476728 ;//tt MG matching down
+  if (sample.Contains("UCSB1708")) return 5415010;//tt MG matching up
+  if (sample.Contains("UCSB1710")) return 5009488 ;//tt MG scale up
 
   cout<<"[getNEventsGenerated] unknown sample "<<sample<<endl;
   assert(0);
@@ -4485,6 +4487,9 @@ double EventCalculator::getCrossSection(){
   if (sampleName_.BeginsWith("TTJets_SemiLeptMGDecays_8TeV-madgraph")) return 53.2*(234.0 / (13.43+53.4+53.2)); //PREP corrected to NNLO
 
   if (sampleName_.BeginsWith("TTJets_matchingup_TuneZ2star_8TeV-madgraph")) return 234; //approx NNLO
+  if (sampleName_.BeginsWith("TTJets_matchingdown_TuneZ2star_8TeV-madgraph")) return 234; //approx NNLO
+  if (sampleName_.BeginsWith("TTJets_scaleup_TuneZ2star_8TeV-madgraph")) return 234; //approx NNLO
+  if (sampleName_.BeginsWith("TTJets_scaledown_TuneZ2star_8TeV-madgraph")) return 234; //approx NNLO
 
   //ttV
   if (sampleName_.BeginsWith("TTWJets_8TeV-madgraph")) return 0.2149; // from PREP (LO)
