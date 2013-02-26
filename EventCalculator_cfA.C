@@ -140,11 +140,15 @@ EventCalculator::EventCalculator(const TString & sampleName, const vector<string
 
   cout<<sampleName_<<endl;
 
-  cout<<" init PDFs"<<endl;
-  LHAPDF::initPDFSet(1, "cteq66.LHgrid");
-  LHAPDF::initPDFSet(2, "MSTW2008nlo68cl.LHgrid");
-  LHAPDF::initPDFSet(3, "NNPDF20_100.LHgrid");
-  cout<<" done with PDF init"<<endl;
+  if (sampleIsSignal_) {
+    cout<<" init PDFs"<<endl;
+    LHAPDF::initPDFSet(1, "cteq66.LHgrid");
+    LHAPDF::initPDFSet(2, "MSTW2008nlo68cl.LHgrid");
+    LHAPDF::initPDFSet(3, "NNPDF20_100.LHgrid");
+    cout<<" done with PDF init"<<endl;
+  }
+  else cout<<"Skipping PDF init"<<endl;
+
 }
 
 EventCalculator::~EventCalculator() {
@@ -156,6 +160,8 @@ EventCalculator::~EventCalculator() {
 
 
 float EventCalculator::getPDFweight(const int ipdfset, const int imember ) {
+
+  //  return 1; //for debugging
 
   assert(ipdfset>=1 && ipdfset<=3);
 
@@ -4415,6 +4421,7 @@ Long64_t EventCalculator::getNEventsGenerated( TString sample) {
   if (sample.Contains("UCSB1707")) return 5476728 ;//tt MG matching down
   if (sample.Contains("UCSB1708")) return 5415010;//tt MG matching up
   if (sample.Contains("UCSB1710")) return 5009488 ;//tt MG scale up
+  if (sample.Contains("UCSB1709")) return 5372181 ;//tt MG scale down 
 
   cout<<"[getNEventsGenerated] unknown sample "<<sample<<endl;
   assert(0);
