@@ -4519,63 +4519,31 @@ double EventCalculator::getCrossSection(){
 
 TString EventCalculator::getSampleNameOutputString(){
 
-  // update -- this code is just too dangerous now, with multiple samples having extensions
-  //got to keep the full name just in case
-  return sampleName_;
-
-  //strategy: as much as possible, give the name that drawReducedTrees expects,
-  //and return sampleName for samples that have to be 'hadd'ed afterwards anyway
-
-  //part of me likes this because it makes the filenames clean. but it can be dangerous if there are multiple samples with small differences (like only a difference in PU scenario)
-
-  //8TeV
-
-  //Drell Yan
-  if (sampleName_.BeginsWith("DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph")) return "ZJets";
-  if (sampleName_.BeginsWith("DYJetsToLL_HT-200To400_TuneZ2Star_8TeV-madgraph")) return "ZJets_HT200To400";
-  if (sampleName_.BeginsWith("DYJetsToLL_HT-400ToInf_TuneZ2Star_8TeV-madgraph")) return "ZJets_HT400ToInf";
+  TString outputstring="";
 
 
-  //Pythia QCD - all LO PREP
-  if (sampleName_.BeginsWith("QCD_Pt-1000to1400_TuneZ2star_8TeV_pythia6")) return "QCD1000";
-  if (sampleName_.BeginsWith("QCD_Pt-120to170_TuneZ2star_8TeV_pythia6")) return "QCD120";
-  if (sampleName_.BeginsWith("QCD_Pt-1400to1800_TuneZ2star_8TeV_pythia6")) return "QCD1400";
-  if (sampleName_.BeginsWith("QCD_Pt-170to300_TuneZ2star_8TeV_pythia6")) return "QCD170";
-  if (sampleName_.BeginsWith("QCD_Pt-1800_TuneZ2star_8TeV_pythia6")) return "QCD1800";
-  if (sampleName_.BeginsWith("QCD_Pt-300to470_TuneZ2star_8TeV_pythia6")) return "QCD300";
-  if (sampleName_.BeginsWith("QCD_Pt-30to50_TuneZ2star_8TeV_pythia6")) return "QCD30";
-  if (sampleName_.BeginsWith("QCD_Pt-470to600_TuneZ2star_8TeV_pythia6")) return "QCD470";
-  if (sampleName_.BeginsWith("QCD_Pt-600to800_TuneZ2star_8TeV_pythia6")) return "QCD600"; 
-  if (sampleName_.BeginsWith("QCD_Pt-800to1000_TuneZ2star_8TeV_pythia6")) return "QCD800";
-  if (sampleName_.BeginsWith("QCD_Pt-80to120_TuneZ2star_8TeV_pythia6")) return  "QCD80";
+  //for safety, revamp this using the UCSBxxxx names (certain to be unique)
+  //for the most part don't bother, but it can be useful in some cases
+  if (sampleName_.Contains("UCSB1691")) outputstring = "SMS-MadGraph_T1bbbb-1125to1400-900to1350_UCSB1691reshuf_v68";
+  else  if (sampleName_.Contains("UCSB1692")) outputstring = "SMS-MadGraph_T1bbbb-775to1100-875to1075_UCSB1692reshuf_v68";
+  else {
+    //if it isn't found, just use the full name
+    return sampleName_;
+  }
 
-  //single top (don't bother)
+  //need to be careful about samples that are split e.g.
+  //SMS-MadGraph_T1bbbb_2J_mGo-1125to1400_mLSP-900to1350_50GeVX50GeV_Binning_8TeV-Pythia6Zstar_Summer12-START52_V9_FSIM-v1_AODSIM_UCSB1691reshuf_v68.1225-900.txt
+  TObjArray* periodsplit = sampleName_.Tokenize(".");
+  TString subsamplestring="";
+  if (periodsplit->GetEntries() >= 2) subsamplestring = TString(periodsplit->At(periodsplit->GetEntries()-1)->GetName());
 
-  //W+Jets
-  if (sampleName_.BeginsWith("WJetsToLNu_HT-400ToInf_8TeV-madgraph")) return "WJets_HT400ToInf";
-  if (sampleName_.BeginsWith("WJetsToLNu_HT-250To300_8TeV-madgraph")) return "WJets_HT250To300";
-  if (sampleName_.BeginsWith("WJetsToLNu_HT-300To400_8TeV-madgraph")) return "WJets_HT300To400";
-  if (sampleName_.BeginsWith("WJetsToLNu_TuneZ2Star_8TeV-madgraph")) return "WJets";
-  //diboson
-  if (sampleName_.BeginsWith("WZ_TuneZ2star_8TeV_pythia6_tauola")) return "WZ";
-  if (sampleName_.BeginsWith("WW_TuneZ2star_8TeV_pythia6_tauola")) return "WW";
-  if (sampleName_.BeginsWith("ZZ_TuneZ2star_8TeV_pythia6_tauola")) return "ZZ";
+  if (subsamplestring != "") {
+    outputstring.Append(".");
+    outputstring.Append(subsamplestring);
+  }
+  delete periodsplit;
 
-  //Z -> nu nu  
-  if (sampleName_.BeginsWith("ZJetsToNuNu_100_HT_200_TuneZ2Star_8TeV_madgraph")) return "Zinvisible_HT100To200";
-  if (sampleName_.BeginsWith("ZJetsToNuNu_200_HT_400_TuneZ2Star_8TeV_madgraph")) return "Zinvisible_HT200To400";
-  if (sampleName_.BeginsWith("ZJetsToNuNu_400_HT_inf_TuneZ2Star_8TeV_madgraph")) return "Zinvisible_HT400ToInf";
-  if (sampleName_.BeginsWith("ZJetsToNuNu_50_HT_100_TuneZ2Star_8TeV_madgraph")) return "Zinvisible_HT50To100";
-
-  //LM
-  if (sampleName_.BeginsWith("SUSY_LM9_sftsht_8TeV"))          return "LM9";
-
-  //ttbar
-  //don't do this -- there are already 2 ttbar samples with very similar names
-
-
-  //if it isn't found, just use the full name 
-  return sampleName_;
+  return outputstring;
 
 }
 
@@ -5369,32 +5337,6 @@ TString EventCalculator::getOptPiece(const TString &key, const TString & opt) {
   return "";
 }
 
-/* an idea to really study taus that I don't have time to execute
-void EventCalculator::tauStudy(TString outputpath) {
-
-
-  //open output file
-  TString outfilename="tauTree";
-  outfilename += ".";
-  outfilename += getCutDescriptionString();
-  outfilename += ".";
-
-  outfilename += getSampleNameOutputString();
-  outfilename+=".root";
-  if (outputpath[outputpath.Length()-1] != '/') outputpath += "/";
-  outfilename.Prepend(outputpath);
-  TFile fout(outfilename,"RECREATE");
-
-  // define the TTree
-  TTree tauTree("tauTree","tree with minimal cuts");
-  tauTree.SetMaxTreeSize(30000000000LL); //increase maximum tree size to 30GB
-
-  //variables for tree
-  double jetpt; //vector, actually
-
-
-}
-*/
 
 void EventCalculator::reducedTree(TString outputpath) {
 
@@ -8962,13 +8904,15 @@ TString EventCalculator::assembleBTagEffFilename(bool cutnametail) {
   if (cutnametail) {
     //goal: take e.g. "SMS-T1bbbb_Mgluino-100to2000_mLSP-0to2000_8TeV-Pythia6Z_Summer12-START52_V9_FSIM-v1_AODSIM_UCSB1548_v66.9"
     //and chop off the end to produce "SMS-T1bbbb_Mgluino-100to2000_mLSP-0to2000_8TeV-Pythia6Z_Summer12-START52_V9_FSIM-v1_AODSIM_UCSB1548_v66"
-    int npieces= basesamplename.Tokenize(".")->GetEntries(); //this leaks memory in tokenize, but ok for something that is called only once or twice
+    TObjArray * basesamplenameSplit = basesamplename.Tokenize(".");
+    int npieces= basesamplenameSplit->GetEntries();
     if (npieces>1) {
       //we want to chop off the end. how many digits are there?
-      int sizetochop = TString(basesamplename.Tokenize(".")->At(npieces-1)->GetName()).Length();
+      int sizetochop = TString(basesamplenameSplit->At(npieces-1)->GetName()).Length();
       ++sizetochop; //include the length of the period
       for ( int ii=0;ii<sizetochop;ii++) basesamplename.Chop(); //chop off the end
     }
+    delete basesamplenameSplit; //cleanup after tokenize
   }
   outfile+=basesamplename;
   outfile+=".root";
