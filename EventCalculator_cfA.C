@@ -4160,12 +4160,17 @@ std::pair<int,int> EventCalculator::getSMSmasses() {
   //# model T1tttt_1100_50  3.782E-12 
 
   TString modelstring = (*model_params).c_str();
-  TString thesubstring=  modelstring.Tokenize(" ")->At(2)->GetName();
+  TObjArray* thesubstrings = modelstring.Tokenize(" ");
+  TString thesubstring=  thesubstrings->At(2)->GetName();
 
-  int m0=  TString(thesubstring.Tokenize("_")->At(1)->GetName()).Atoi();
-  int m12 = TString(thesubstring.Tokenize("_")->At(2)->GetName()).Atoi();
+  TObjArray* themasses = thesubstring.Tokenize("_");
+  int m0=  TString(themasses->At(1)->GetName()).Atoi();
+  int m12 = TString(themasses->At(2)->GetName()).Atoi();
 
   //  cout<<modelstring<<endl<<m0<<"\t"<<m12<<endl;
+  //must clean up!
+  delete thesubstrings;
+  delete themasses;
 
   return  make_pair(m0,m12);
 
@@ -5358,6 +5363,8 @@ TString EventCalculator::getOptPiece(const TString &key, const TString & opt) {
       return thispiece;
     }
   }
+
+  delete pieces; //tokenize needs cleanup
 
   return "";
 }
@@ -8955,7 +8962,7 @@ TString EventCalculator::assembleBTagEffFilename(bool cutnametail) {
   if (cutnametail) {
     //goal: take e.g. "SMS-T1bbbb_Mgluino-100to2000_mLSP-0to2000_8TeV-Pythia6Z_Summer12-START52_V9_FSIM-v1_AODSIM_UCSB1548_v66.9"
     //and chop off the end to produce "SMS-T1bbbb_Mgluino-100to2000_mLSP-0to2000_8TeV-Pythia6Z_Summer12-START52_V9_FSIM-v1_AODSIM_UCSB1548_v66"
-    int npieces= basesamplename.Tokenize(".")->GetEntries();
+    int npieces= basesamplename.Tokenize(".")->GetEntries(); //this leaks memory in tokenize, but ok for something that is called only once or twice
     if (npieces>1) {
       //we want to chop off the end. how many digits are there?
       int sizetochop = TString(basesamplename.Tokenize(".")->At(npieces-1)->GetName()).Length();
