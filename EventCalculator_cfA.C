@@ -6582,9 +6582,9 @@ Also the pdfWeightSum* histograms that are used for LM9.
 
       //if we are running over ttbar, fill info on decay mode
       int leptonicTop=-99;
-      if (sampleName_.Contains("TTJets")) { //revived for cfA, using the old jmt-ntuples coding scheme
+      if (sampleName_.Contains("TTJets") || sampleName_.Contains("T1tttt")) { //revived for cfA, using the old jmt-ntuples coding scheme
 	ttbarDecayCode = getTTbarDecayType(leptonicTop);
-	  
+	//	cout<< " code = "<<ttbarDecayCode<<endl;
       }
       //somewhat experimental code; maybe this is a backwards way to do it (look for tau match then store stuff)
       //anyway this will give me a first look
@@ -7898,13 +7898,14 @@ int EventCalculator::getTTbarDecayType(int & leptonicTop) {
   leptonicTop=0;
 
   int taudecay[2]={-1,-1};
-
-  //  cout<< "----"<<endl;
+  //  cout<<" ======"<<endl;
   for (size_t jj=0; jj<  mc_doc_id->size(); ++jj) {
     //    cout<<jj <<"\t"<<mc_doc_id->at(jj)<<" "<<mc_doc_mother_id->at(jj)<<" "<<mc_doc_grandmother_id->at(jj)<<endl;
 
     //go looking for particle who have the top as ~grandmother~
     if ( abs(TMath::Nint(mc_doc_grandmother_id->at(jj))) == 6 ) {
+
+      //      cout<<"found top granddaughter "<<TMath::Nint(mc_doc_id->at(jj))<<endl;
 
       //these should be the W decay products: q,l,nu
       int wdau=    abs(TMath::Nint(mc_doc_id->at(jj)));
@@ -7915,13 +7916,13 @@ int EventCalculator::getTTbarDecayType(int & leptonicTop) {
 	foundmu++;
       }
       else if (wdau == 15) { //tau
-	taudecay[foundtau]=getTauDecayType(TMath::Nint(mc_doc_id->at(jj)) );
+	if (foundtau<2)  taudecay[foundtau]=getTauDecayType(TMath::Nint(mc_doc_id->at(jj)) );
 	foundtau++;
       }
       else if (wdau == 12 || wdau ==14 || wdau==16) {
 	//neutrinos
       }
-      else if (wdau>=1 && wdau<=4) { //quarks
+      else if (wdau>=1 && wdau<=5) { //quarks //adding b here because W->bc does happen sometimes...
 	foundhad++;
       }
       else {
@@ -7936,10 +7937,19 @@ int EventCalculator::getTTbarDecayType(int & leptonicTop) {
 
   //  enum TopDecayCategory {kTTbarUnknown=0,kAllLeptons=1,kAllHadronic=2,kOneElectron=3,kOneMuon=4,kOneTauE=5,kOneTauMu=6,kOneTauHadronic=7,kAllTau=8,kTauPlusLepton=9, nTopCategories=10};
 
-  if (!(foundhad%2==0)) cout<<"PROBLEM: foundhad = "<<foundhad<<endl; //W->qq' should always generate an even number!
+  bool problem=false;
+  if (!(foundhad%2==0)) {
+    problem=true; cout<<"PROBLEM: foundhad = "<<foundhad<<endl; //W->qq' should always generate an even number!
+  }
+  
+  if (problem) {
+    for (size_t jj=0; jj<  mc_doc_id->size(); ++jj) 
+      cout<<jj <<"\t"<<mc_doc_id->at(jj)<<" "<<mc_doc_mother_id->at(jj)<<" "<<mc_doc_grandmother_id->at(jj)<<endl;
+  }
 
   foundhad /=2;
 
+  if (sampleName_.Contains("TT")) { //for ttbar; not tested for T2tt but it would probably work
   if ( founde+foundmu == 2) return 1;
   else if ( foundhad == 2) return 2;
   else if ( founde==1 && foundhad==1 ) return 3;
@@ -7953,6 +7963,18 @@ int EventCalculator::getTTbarDecayType(int & leptonicTop) {
 
   else {
     cout<<"PROBLEM -- "<<founde<<" "<<foundmu<<" "<<foundtau<<" "<<foundhad<<" tau info -- "<<taudecay[0]<<" "<<taudecay[1]<<endl;
+  }
+  }
+  else if (sampleName_.Contains("T1tttt")) {
+    if (problem)   cout<<" e m tau had = "<<founde<<" "<<foundmu<<" "<<foundtau<<" "<<foundhad<<endl<<" ---end---"<<endl;
+    //new set of codes for T1tttt ; basically it is the number of leptons, but then special treatment of taus
+    if ( founde+foundmu+foundtau == 0) return 0; //genuine all hadronic
+    else if (founde+foundmu==1 &&foundtau==0) return 1; //genuine "single lepton"
+    else if (founde+foundmu==2 &&foundtau==0) return 2; //genuine dileptonic
+    else if (founde+foundmu==3 &&foundtau==0) return 3; //genuine trileptonic
+    else if (founde+foundmu==4 &&foundtau==0) return 4; //genuine 4leptons
+    else if (founde+foundmu==0 && foundtau>=1) return 5; //no e or mu but there are taus (could be tau->e/mu or had)
+    else return 6; //any non-zero number of e+mu combined with taus
   }
 
   return 0;
