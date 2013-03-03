@@ -5303,6 +5303,18 @@ float EventCalculator::jetTagEff(unsigned int ijet, TH1D* h_btageff, TH1D* h_cta
   return tageff;
 }
 
+float EventCalculator::getISRweight(float isrpt,int sigmavar) {
+
+  if (sampleIsSignal_) {
+    
+    if (isrpt<=150)     return 1.0 + 0.05*sigmavar;
+    else   if (isrpt<=250)     return 0.9+ 0.1*sigmavar;
+    else     return 0.8+ 0.2*sigmavar;
+  }
+
+  return 1;
+}
+
 void EventCalculator::dumpEvent () {
 
   //  if (!calledThisEvent_) {
@@ -5578,6 +5590,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   int SUSY_nb;
   int SUSY_process;
   float SUSY_recoilPt;
+  float SUSY_ISRweight,SUSY_ISRweightSystUp,SUSY_ISRweightSystDown;
 
   //sphericity variables (updated)
   float transverseSphericity_jets;
@@ -5885,6 +5898,9 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("SUSY_nb",&SUSY_nb,"SUSY_nb/I");
   reducedTree.Branch("SUSY_process",&SUSY_process,"SUSY_process/I");
   reducedTree.Branch("SUSY_recoilPt",&SUSY_recoilPt,"SUSY_recoilPt/F");
+  reducedTree.Branch("SUSY_ISRweight",&SUSY_ISRweight,"SUSY_ISRweight/F");
+  reducedTree.Branch("SUSY_ISRweightSystUp",&SUSY_ISRweightSystUp,"SUSY_ISRweightSystUp/F");
+  reducedTree.Branch("SUSY_ISRweightSystDown",&SUSY_ISRweightSystDown,"SUSY_ISRweightSystDown/F");
 
   reducedTree.Branch("njets",&njets,"njets/I");
   reducedTree.Branch("njets30",&njets30,"njets30/I");
@@ -6362,6 +6378,10 @@ Also the pdfWeightSum* histograms that are used for LM9.
     float susy_px = susy_px1 + susy_px2;
     float susy_py = susy_py1 + susy_py2;
     SUSY_recoilPt = sqrt(susy_px*susy_px + susy_py*susy_py);
+
+    SUSY_ISRweight = getISRweight(SUSY_recoilPt,0);
+    SUSY_ISRweightSystUp = getISRweight(SUSY_recoilPt,1);
+    SUSY_ISRweightSystDown = getISRweight(SUSY_recoilPt,-1);
 
     SusyDalitz(SUSY_msq12,SUSY_msq23,SUSY_gluino_pt,SUSY_top_pt,SUSY_topbar_pt,SUSY_chi0_pt);
     //    for (int ik=0;ik<2;ik++) { //wow printf!

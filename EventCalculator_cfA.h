@@ -315,6 +315,7 @@ public:
   unsigned int getSUSYnb();
   SUSYProcess getSUSYProcess(float & pt1, float & phi1, float & pt2, float & phi2); //momenta  of the SUSY mothers
   void SusyDalitz( float * msq12, float * msq23, float * pgl, float * ptop,float * ptopbar,float * pchi);
+  float getISRweight(float isrpt,int sigmavar);
   std::pair<int,int> getSMSmasses();
   double checkPdfWeightSanity( double a) ;
   //  void getPdfWeights(const TString & pdfset, Float_t * pdfWeights, TH1D * sumofweights) ;
