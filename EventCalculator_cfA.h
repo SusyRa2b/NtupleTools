@@ -344,7 +344,8 @@ public:
   int nGoodBJets_Tweaked() ;
 
   //the standard jet-tag probability method that we have been using  
-  void calculateTagProb(float &Prob0, float &ProbGEQ1, float &Prob1, float &ProbGEQ2, float & Prob2, float &ProbGEQ3, 
+  void calculateTagProb(float &Prob0, float &ProbGEQ1, float &Prob1, float &ProbGEQ2, float & Prob2, float &ProbGEQ3,
+                        float & Prob3, float &ProbGEQ4, 
 			float extraSFb=1, float extraSFc=1, float extraSFl=1, BTagEffModifier modifier=kBTagModifier0);
 
   //btag stuff
