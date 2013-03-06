@@ -4531,8 +4531,13 @@ TString EventCalculator::getSampleNameOutputString(){
 
   //for safety, revamp this using the UCSBxxxx names (certain to be unique)
   //for the most part don't bother, but it can be useful in some cases
-  if (sampleName_.Contains("UCSB1691")) outputstring = "SMS-MadGraph_T1bbbb-1125to1400-900to1350_UCSB1691reshuf_v68";
-  else  if (sampleName_.Contains("UCSB1692")) outputstring = "SMS-MadGraph_T1bbbb-775to1100-875to1075_UCSB1692reshuf_v68";
+  if (sampleName_.Contains("UCSB1691reshuf")) outputstring = "SMS-MadGraph_T1bbbb-1125to1400-900to1350_UCSB1691reshuf_v68";
+  else  if (sampleName_.Contains("UCSB1692reshuf")) outputstring = "SMS-MadGraph_T1bbbb-775to1100-875to1075_UCSB1692reshuf_v68";
+  else  if (sampleName_.Contains("UCSB1712reshuf")) outputstring = "SMS-MadGraph_T1bbbb-1125to1400-0to500_UCSB1712reshuf_v68";
+  else  if (sampleName_.Contains("UCSB1711reshuf")) outputstring = "SMS-MadGraph_T1bbbb-400to750-0to700_UCSB1711reshuf_v68";
+  else  if (sampleName_.Contains("UCSB1704reshuf")) outputstring = "SMS-MadGraph_T1bbbb-775to1100-0to500_UCSB1704reshuf_v68";
+  else  if (sampleName_.Contains("UCSB1703reshuf")) outputstring = "SMS-MadGraph_T1bbbb-775to1100-525to850_UCSB1703reshuf_v68";
+  else  if (sampleName_.Contains("UCSB1713reshuf")) outputstring = "SMS-MadGraph_T1bbbb-1125to1400-525to850_UCSB1713reshuf_v68";
   else {
     //if it isn't found, just use the full name
     return sampleName_;
