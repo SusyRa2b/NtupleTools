@@ -10,6 +10,7 @@
 #include "TMath.h"
 
 #include "TCanvas.h"
+#include "TLegend.h"
 
 #include "MiscUtil.cxx"
 
@@ -25,7 +26,7 @@ writetxt() -- takes eventcounts files and writes out text files
 /* concrete example:
 root [0] .L signalEff2012_writetxt.C+
 Info in <TUnixSystem::ACLiC>: creating shared library /afs/cern.ch/work/j/joshmt/private/cfaAnalysis/CMSSW_5_2_5/src/NtupleTools/BasicLoopCU/./signalEff2012_writetxt_C.so
-root [1] combineScanBins("eventcounts.CSVM_PF2PATjets_JES0_JERbias_PFMETTypeI_METunc0_PUunc0_BTagEff04_HLTEff0.T1bbbb.root")
+root [1] combineScanBins("eventcounts.CSVM_PF2PATjets_JES0_JERbias_PFMETTypeI_METunc0_PUunc0_BTagEff05_HLTEff0.T1bbbb.root")
 
 -- quit root to be safe, then repeat for JESup and JESdown --
 -- then do the writetxt() step --
@@ -106,9 +107,9 @@ void writetxt(TString which, const TString sample, const TString prefix="eventco
 
   //this should be the 'unvaried' (eg JES0) stub.
   //this differentiation between JER0 and JERbias here is a stopgap measure
-  TString stub0 = "CSVM_PF2PATjets_JES0_JER0_PFMETTypeI_METunc0_PUunc0_BTagEff04_HLTEff0." ;
+  TString stub0 = "CSVM_PF2PATjets_JES0_JER0_PFMETTypeI_METunc0_PUunc0_BTagEff05_HLTEff0." ;
   //for JER, need to compare variations with JERbias
-  if (which=="JER") stub0= "CSVM_PF2PATjets_JES0_JERbias_PFMETTypeI_METunc0_PUunc0_BTagEff04_HLTEff0.";
+  if (which=="JER") stub0= "CSVM_PF2PATjets_JES0_JERbias_PFMETTypeI_METunc0_PUunc0_BTagEff05_HLTEff0.";
 
   stub0+=sample;
 
@@ -187,7 +188,8 @@ void writetxt(TString which, const TString sample, const TString prefix="eventco
   outfilename.ReplaceAll(".txt",".root");
   TFile fout(outfilename,"RECREATE");
 
-  vector<TH1D*> vjes0;
+  vector<TH1D*> vjes0; //raw event counts
+  vector<TH1D*> vjes0eff; //ev counts / total gen
   vector<TH1D*> vjesU;
   vector<TH1D*> vjesD;
 
@@ -213,8 +215,11 @@ void writetxt(TString which, const TString sample, const TString prefix="eventco
       TString hname; 
       hname.Form("h%s_%d_%d",which.Data(),TMath::Nint(vh0[0]->GetXaxis()->GetBinLowEdge(ix)),TMath::Nint(vh0[0]->GetYaxis()->GetBinLowEdge(iy)));
       TH1D* hjes0 = new TH1D(hname+"_0",hname,nhist,0,nhist);
+      TH1D* hjes0eff = new TH1D(hname+"_0_eff",hname,nhist,0,nhist);
       hjes0->Sumw2();
+      hjes0eff->Sumw2();
       vjes0.push_back(hjes0);
+      vjes0eff.push_back(hjes0eff);
       TH1D* hjesU=0;      TH1D* hjesD=0;
       if (fu!=0) {
 	hjesU = new TH1D(hname+"_Up",hname,nhist,0,nhist); 
@@ -254,6 +259,8 @@ void writetxt(TString which, const TString sample, const TString prefix="eventco
 	hjes0->SetBinContent(ih+1,vh0[ih]->GetBinContent(ix,iy));
 	hjes0->SetBinError(ih+1,vh0[ih]->GetBinError(ix,iy));
 
+	hjes0eff->SetBinContent(ih+1,vh0[ih]->GetBinContent(ix,iy)/scanSMSngen->GetBinContent(ix,iy) );
+	hjes0eff->SetBinError(ih+1,vh0[ih]->GetBinError(ix,iy)/scanSMSngen->GetBinContent(ix,iy) );//assumes no error on scanSMSngen
       }
 
       if (which=="counts") { //need to also print the stat errors
@@ -369,5 +376,101 @@ void drawstuff(TString pointstring = "1100_700", TString what="JES",const TStrin
   text->Draw();
 
   thecanvas->SaveAs(outfilename);
+
+}
+
+TH1D* removeExtraBins(TH1D* h0) {
+
+  TString hnamenew = h0->GetName();
+  hnamenew += "_pretty";
+  const  int nbins = 48; //hard code!
+  TH1D*  hp = new TH1D(hnamenew,h0->GetTitle(), nbins , 0,nbins );
+  hp->Sumw2();
+  for ( int ibin = 1; ibin <= nbins ; ibin++ ) {
+
+    double val = h0->GetBinContent(ibin);
+    double err = h0->GetBinError(ibin);
+    hp->SetBinContent(ibin , val);
+    hp->SetBinError(ibin,err);
+    TString binlabel;
+    binlabel.Form("%db M%d H%d",(ibin-1)/16+1,((ibin-1)%16)/4 +1,(ibin-1)%4 +1);
+    hp->GetXaxis()->SetBinLabel(ibin,binlabel);
+    //    if ((ibin-1)%4==0) extrabin++;
+  }
+  hp->GetXaxis()->LabelsOption("v");
+
+  hp->SetMarkerStyle(2);
+  //  hp->SetMaximum(1);
+  //  hp->SetMinimum(0);
+
+  return hp;
+}
+
+
+void compEff(int mgl,int mlsp,TString sample1,TString sample2) {
+
+  gROOT->SetStyle("CMS");
+  gROOT->ForceStyle();
+
+  TString infile1;
+  TString infile2;
+  infile1.Form("sigcounts.%s.root",sample1.Data());
+  infile2.Form("sigcounts.%s.root",sample2.Data());
+
+  TFile f1(infile1);
+  TFile f2(infile2);
+
+
+  TString hname;
+  hname.Form("hcounts_%d_%d_0_eff",mgl,mlsp);
+
+  TH1D* heff1 = (TH1D*) f1.Get(hname);
+  TH1D* heff2 = (TH1D*) f2.Get(hname);
+
+  if (heff1==0 ||heff2==0) return;
+
+  heff1->SetName( TString(heff1->GetName())+"1");
+  heff2->SetName( TString(heff2->GetName())+"2");
+
+  TCanvas *  effcomp = new TCanvas("effcomp","effcomp",800,600);
+
+  TH1D* heff1p = removeExtraBins(heff1);
+  TH1D* heff2p = removeExtraBins(heff2);
+
+  heff1p->SetLineColor(kRed);
+  heff2p->SetLineColor(kBlue);
+
+  heff1p->SetMarkerColor(kRed);
+  heff2p->SetMarkerColor(kBlue);
+
+  TLegend * theleg= new TLegend(0.2,0.65,0.5,0.85);
+  theleg->AddEntry(heff1p,sample1);
+  theleg->AddEntry(heff2p,sample2);
+  theleg->SetBorderSize(0);
+  theleg->SetLineStyle(0);
+  theleg->SetTextFont(42);
+  theleg->SetFillStyle(0);
+
+  heff1p->Draw();
+  effcomp->SetBottomMargin(0.17);
+  heff2p->Draw("same");
+  theleg->Draw();
+
+  TString thetitle;
+  thetitle.Form("%d, %d GeV",mgl,mlsp);
+
+  text = new TText();
+  text->DrawTextNDC(0.2,0.85,thetitle);
+
+  TString savename;
+  savename.Form("effcomparison_%d_%d_%s_%s.eps",mgl,mlsp,sample1.Data(),sample2.Data());
+
+  effcomp->SaveAs(savename);
+
+  delete heff1p;
+  delete heff2p;
+  delete theleg;
+  delete text;
+  delete effcomp;
 
 }
