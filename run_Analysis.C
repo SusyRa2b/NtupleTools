@@ -141,6 +141,9 @@ int main(int argc, char* argv[])
   if (options=="btageff") {
     ec.plotBTagEffMC();
   }
+  else if (options=="scanSMSngen") {
+    ec.fillSMShist();
+  }
   else {
     ec.setOptions(options);
     ec.reducedTree(outputDir);

@@ -67,6 +67,22 @@ public:
   int version;
 };
 
+class smsMasses {
+public:
+
+  smsMasses(int m0=0,int m12=0,int mthird=0);
+  smsMasses(const smsMasses & other);
+  int first() {return mparent;}
+  int second() {return mlsp;}
+
+  bool operator== (const smsMasses & other) const;
+  bool operator!= (const smsMasses & other) const;
+
+  int mparent; //aka mgluino
+  int mlsp; //aka mlsp
+  int mintermediate; //aka chargino
+} ;
+
 class EventCalculator {
 public:
   //enums for configuration
@@ -99,6 +115,7 @@ public:
   //  void cutflow(itreestream& stream, int maxevents);
   void sampleAnalyzer();
   void plotBTagEffMC();
+  void fillSMShist();
 
   //load external list of event ID's
   void loadEventList( std::set<jmt::eventID> & veid, const TString & what);
@@ -316,7 +333,8 @@ public:
   SUSYProcess getSUSYProcess(float & pt1, float & phi1, float & pt2, float & phi2); //momenta  of the SUSY mothers
   void SusyDalitz( float * msq12, float * msq23, float * pgl, float * ptop,float * ptopbar,float * pchi);
   float getISRweight(float isrpt,int sigmavar);
-  std::pair<int,int> getSMSmasses();
+  //  std::pair<int,int> getSMSmasses();
+  smsMasses getSMSmasses();
   double checkPdfWeightSanity( double a) ;
   //  void getPdfWeights(const TString & pdfset, Float_t * pdfWeights, TH1D * sumofweights) ;
   int findTop(int& top1, int& top2);

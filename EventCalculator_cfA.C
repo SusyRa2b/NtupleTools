@@ -4,6 +4,7 @@
 
 #include "TH1.h"
 #include "TH2.h"
+#include "TH3.h"
 #include "TLorentzVector.h"
 #include "TRandom3.h"
 #include "TTree.h"
@@ -3853,7 +3854,8 @@ void EventCalculator::SusyDalitz(  float * msq12, float * msq23, float * pgl, fl
   pgl[0]=glpt[0];
   pgl[1]=glpt[1];
 
-  std::pair<int,int> masses=getSMSmasses();
+  //  std::pair<int,int> masses=getSMSmasses();
+  smsMasses masses=getSMSmasses();
 
   for (int ii=0;ii<2;ii++) {
     //    cout<<itop[ii]<<"\t"<<itopbar[ii]<<"\t"<<ichi[ii]<<endl;
@@ -3864,7 +3866,7 @@ void EventCalculator::SusyDalitz(  float * msq12, float * msq23, float * pgl, fl
     TLorentzVector p1;
     p1.SetXYZM( mc_doc_px->at(itop[ii]), mc_doc_py->at(itop[ii]), mc_doc_pz->at(itop[ii]), quarkmass);//mc_doc_mass->at(itop[ii])); //was mtop_
     TLorentzVector p2;
-    p2.SetXYZM( mc_doc_px->at(ichi[ii]), mc_doc_py->at(ichi[ii]), mc_doc_pz->at(ichi[ii]), masses.second);//mc_doc_mass->at(ichi[ii]));
+    p2.SetXYZM( mc_doc_px->at(ichi[ii]), mc_doc_py->at(ichi[ii]), mc_doc_pz->at(ichi[ii]), masses.second());//mc_doc_mass->at(ichi[ii]));
     TLorentzVector p3;
     p3.SetXYZM( mc_doc_px->at(itopbar[ii]), mc_doc_py->at(itopbar[ii]), mc_doc_pz->at(itopbar[ii]), quarkmass);//mc_doc_mass->at(itopbar[ii]));//was mtop_
 
@@ -4159,26 +4161,40 @@ SUSYProcess EventCalculator::getSUSYProcess(float & pt1, float & phi1, float & p
 }
 
 
-std::pair<int,int> EventCalculator::getSMSmasses() {
+//std::pair<int,int> EventCalculator::getSMSmasses() {
+smsMasses EventCalculator::getSMSmasses() {
   assert(theScanType_==kSMS);
 
   //the string looks like this:
   //# model T1tttt_1100_50  3.782E-12 
+
+  //or in the case of T4tW
+  //# model T2bb_sb_700_ch_150_lsp_50  0.0081141
 
   TString modelstring = (*model_params).c_str();
   TObjArray* thesubstrings = modelstring.Tokenize(" ");
   TString thesubstring=  thesubstrings->At(2)->GetName();
 
   TObjArray* themasses = thesubstring.Tokenize("_");
-  int m0=  TString(themasses->At(1)->GetName()).Atoi();
-  int m12 = TString(themasses->At(2)->GetName()).Atoi();
+  int index0=1;
+  int index1=2;
+  int m3=0;
+  if (sampleName_.Contains("T4tW")) {
+    index0 = 2;
+    index1 = 6;
+    m3 =  TString(themasses->At(4)->GetName()).Atoi();
+  }
+  int m0=  TString(themasses->At(index0)->GetName()).Atoi();
+  int m12 = TString(themasses->At(index1)->GetName()).Atoi();
+
 
   //  cout<<modelstring<<endl<<m0<<"\t"<<m12<<endl;
   //must clean up!
   delete thesubstrings;
   delete themasses;
 
-  return  make_pair(m0,m12);
+  //  return  make_pair(m0,m12);
+  return smsMasses(m0,m12,m3);
 
 }
 
@@ -5400,9 +5416,15 @@ float EventCalculator::getISRweight(float isrpt,int sigmavar) {
 
   if (sampleIsSignal_) {
     
-    if (isrpt<=150)     return 1.0 + 0.05*sigmavar;
-    else   if (isrpt<=250)     return 0.9+ 0.1*sigmavar;
-    else     return 0.8+ 0.2*sigmavar;
+    TString thissample = sampleName_;
+    thissample.ToLower();
+    if (thissample.Contains("madgraph")) { //arguably i should increase speed by getting rid of string operations like this
+
+      if (isrpt<=120)     return 1.0;
+      else if (isrpt<=150)     return 0.95 + 0.05*sigmavar;
+      else   if (isrpt<=250)     return 0.9+ 0.1*sigmavar;
+      else     return 0.8+ 0.2*sigmavar;
+    }
   }
 
   return 1;
@@ -5502,7 +5524,7 @@ void EventCalculator::reducedTree(TString outputpath) {
 
 
   double scanCrossSection,scanCrossSectionPlus,scanCrossSectionMinus;
-  int m0,m12;
+  int m0,m12,mIntermediate;
 
 //   int W1decayType = -1, W2decayType = -1;
 //   int decayType = -1;;
@@ -5683,7 +5705,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   int SUSY_nb;
   int SUSY_process;
   float SUSY_recoilPt;
-  float SUSY_ISRweight,SUSY_ISRweightSystUp,SUSY_ISRweightSystDown;
+  float SUSY_ISRweight,SUSY_ISRweightSystDown;
 
   //sphericity variables (updated)
   float transverseSphericity_jets;
@@ -5754,86 +5776,18 @@ void EventCalculator::reducedTree(TString outputpath) {
   Float_t pdfWeightsNNPDF[100];
 
   // bookkeeping for screen output only
-  pair<int,int> lastpoint = make_pair(0,0);
+  //  pair<int,int> lastpoint = make_pair(0,0);
+  smsMasses lastpoint = smsMasses();
   lastevent_=0;
 
-  /*
-scanProcessTotalsMap has been extended to handle PDF weight sums.
+  //initialization of scanProcessTotalsMap used to be here. I'm killing this for now
 
-TH1[process] -> TH2[process, pdf index]
-
-3 scanProcessTotalsMaps (one per pdf set)
-
-should make a scanProcessTotalsMap for any kind of scan (mSugra or SMS)
-
-~~~ things to deal with later ~~~
-This scheme makes scanSMSngen redundant. But it is so convenient that i leave it in
-Also the pdfWeightSum* histograms that are used for LM9.
-  */
-
-  //for scans, I want to keep track of how many of each susy process are generated at each point
-  map<pair<int,int>, TH2D* >  scanProcessTotalsMapCTEQ;
-  map<pair<int,int>, TH2D* >  scanProcessTotalsMapMSTW;
-  map<pair<int,int>, TH2D* >  scanProcessTotalsMapNNPDF;
-  if (!sampleIsSignal_) {} //don't create any of these histograms
-  else if (theScanType_ == kmSugra) {// should be equiv to below
-    //  if (crossSectionTanb40_10_ != 0) {
-    for (map<pair<int, int>, map<SUSYProcess, double> >::iterator iscanpoint=crossSectionTanb40_10_->begin(); iscanpoint!=crossSectionTanb40_10_->end(); ++iscanpoint) {
-      TString histoname = "scanProcessTotals"; 
-      histoname += "_";
-      histoname +=iscanpoint->first.first; // m0
-      histoname += "_";
-      histoname +=iscanpoint->first.second; // m12
-      //      scanProcessTotalsMap[iscanpoint->first] = new TH1D(histoname,histoname,int(NotFound),int(ng),int(NotFound));
-
-      //new 2D variations
-      histoname.ReplaceAll("scanProcessTotals","scanProcessTotalsCTEQ");
-      scanProcessTotalsMapCTEQ[iscanpoint->first] = new TH2D(histoname,histoname,int(NotFound),int(ng),int(NotFound),45,0,45);
-      histoname.ReplaceAll("scanProcessTotalsCTEQ","scanProcessTotalsMSTW");
-      scanProcessTotalsMapMSTW[iscanpoint->first] = new TH2D(histoname,histoname,int(NotFound),int(ng),int(NotFound),41,0,41);
-      histoname.ReplaceAll("scanProcessTotalsMSTW","scanProcessTotalsNNPDF");
-      scanProcessTotalsMapNNPDF[iscanpoint->first] = new TH2D(histoname,histoname,int(NotFound),int(ng),int(NotFound),100,0,100);
-    }
+  TH2D* scanSMSngen=0; //legacy
+  TH3D* scanSMSngen3D=0;
+  if (theScanType_==kSMS) {
+    scanSMSngen = new TH2D("scanSMSngen","number of generated events",80,0,2000,80,0,2000); //mgluino,mLSP
+    scanSMSngen3D = new TH3D("scanSMSngen3D","number of generated events",80,0,2000,80,0,2000,80,0,2000); //mgluino,mLSP,mintermediate
   }
-  else if (theScanType_==kSMS) {
-    //will need a loop over scan points. probably i need to do the loop by hand.
-    //for each scan point generate a histogram, as above
-    for (int im0= 0; im0<= 2000; im0+=25) {
-      for (int im12= 0; im12<= 2000; im12+=25) {
-	TString histoname = "scanProcessTotals"; 
-	histoname += "_";
-	histoname +=im0;
-	histoname += "_";
-	histoname +=im12;
-
-	pair<int,int> iscanpoint = make_pair(im0,im12);
-
-	//new 2D variations
-	//for SMS we have a choice -- do we leave the histo with 10 bins in x and only just bin NotFound? or do we just make it 1 bin? TODO
-	histoname.ReplaceAll("scanProcessTotals","scanProcessTotalsCTEQ");
-	scanProcessTotalsMapCTEQ[iscanpoint] = new TH2D(histoname,histoname,int(NotFound),int(ng),int(NotFound),45,0,45);
-	histoname.ReplaceAll("scanProcessTotalsCTEQ","scanProcessTotalsMSTW");
-	scanProcessTotalsMapMSTW[iscanpoint] = new TH2D(histoname,histoname,int(NotFound),int(ng),int(NotFound),41,0,41);
-	histoname.ReplaceAll("scanProcessTotalsMSTW","scanProcessTotalsNNPDF");
-	scanProcessTotalsMapNNPDF[iscanpoint] = new TH2D(histoname,histoname,int(NotFound),int(ng),int(NotFound),100,0,100);
-      }
-    }
-  }
-  else if (theScanType_==kNotScan) {
-    pair<int,int> iscanpoint = make_pair(0,0);
-    TString histoname = "scanProcessTotals"; 
-    //same question here -- do we leave the histo with 10 bins in x and only just bin NotFound? or do we just make it 1 bin? TODO
-    histoname.ReplaceAll("scanProcessTotals","scanProcessTotalsCTEQ");
-    scanProcessTotalsMapCTEQ[iscanpoint] = new TH2D(histoname,histoname,int(NotFound),int(ng),int(NotFound),45,0,45);
-    histoname.ReplaceAll("scanProcessTotalsCTEQ","scanProcessTotalsMSTW");
-    scanProcessTotalsMapMSTW[iscanpoint] = new TH2D(histoname,histoname,int(NotFound),int(ng),int(NotFound),41,0,41);
-    histoname.ReplaceAll("scanProcessTotalsMSTW","scanProcessTotalsNNPDF");
-    scanProcessTotalsMapNNPDF[iscanpoint] = new TH2D(histoname,histoname,int(NotFound),int(ng),int(NotFound),100,0,100);
-  }
-  else assert(0);
-
-  TH2D* scanSMSngen=0; //should be redundant to the scanProcessTotals histograms, but let's keep it for now
-  if (theScanType_==kSMS) scanSMSngen = new TH2D("scanSMSngen","number of generated events",80,0,2000,80,0,2000); //mgluino,mLSP
 
   const  bool puReweightIs1D = true;//((theScanType_!=kNotScan) || sampleName_.Contains("QCD")); //CFA -- no 3D for now
 
@@ -5896,6 +5850,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
 
   reducedTree.Branch("m0",&m0,"m0/I");
   reducedTree.Branch("m12",&m12,"m12/I");
+  reducedTree.Branch("mIntermediate",&mIntermediate,"mIntermediate/I");
 
 //   reducedTree.Branch("W1decayType",&W1decayType,"W1decayType/I");
 //   reducedTree.Branch("W2decayType",&W2decayType,"W2decayType/I");
@@ -6002,7 +5957,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
   reducedTree.Branch("SUSY_process",&SUSY_process,"SUSY_process/I");
   reducedTree.Branch("SUSY_recoilPt",&SUSY_recoilPt,"SUSY_recoilPt/F");
   reducedTree.Branch("SUSY_ISRweight",&SUSY_ISRweight,"SUSY_ISRweight/F");
-  reducedTree.Branch("SUSY_ISRweightSystUp",&SUSY_ISRweightSystUp,"SUSY_ISRweightSystUp/F");
+  //  reducedTree.Branch("SUSY_ISRweightSystUp",&SUSY_ISRweightSystUp,"SUSY_ISRweightSystUp/F");
   reducedTree.Branch("SUSY_ISRweightSystDown",&SUSY_ISRweightSystDown,"SUSY_ISRweightSystDown/F");
 
   reducedTree.Branch("njets",&njets,"njets/I");
@@ -6455,24 +6410,26 @@ Also the pdfWeightSum* histograms that are used for LM9.
 
     //    printDecay();
 
-    pair<int,int> thispoint;
+    //    pair<int,int> thispoint;
+    smsMasses thispoint;
     if (theScanType_==kmSugra) assert(0);// FIXME CFA // thispoint=make_pair(TMath::Nint(eventlhehelperextra_m0),TMath::Nint(eventlhehelperextra_m12)) ;
     else if (theScanType_==kSMS) thispoint=getSMSmasses();
-    else thispoint=make_pair(0,0);
+    else thispoint=smsMasses();//make_pair(0,0);
     
     if (thispoint != lastpoint) {
-      if (theScanType_==kmSugra)    cout<<"At mSugra point m0  = "<<thispoint.first<<" m12 = "<<thispoint.second<<endl;
-      else  if (theScanType_==kSMS) cout<<"At SMS point m_gluino = "<<thispoint.first<<" m_LSP = "<<thispoint.second<<endl;
+      if (theScanType_==kmSugra)    cout<<"At mSugra point m0  = "<<thispoint.first()<<" m12 = "<<thispoint.second()<<endl;
+      else  if (theScanType_==kSMS) cout<<"At SMS point m_gluino = "<<thispoint.first()<<" m_LSP = "<<thispoint.second()<<" "<<thispoint.mintermediate<<endl;
       lastpoint=thispoint;
-      if ( theScanType_==kmSugra && scanProcessTotalsMapCTEQ.count(thispoint)==0 )	cout<<"m0 m12 = "<<thispoint.first<<" "<<thispoint.second<<" does not exist in NLO map!"<<endl;
+      //      if ( theScanType_==kmSugra && scanProcessTotalsMapCTEQ.count(thispoint)==0 )	cout<<"m0 m12 = "<<thispoint.first<<" "<<thispoint.second<<" does not exist in NLO map!"<<endl;
     }
     // ~~~~ special stuff that must be done on all events (whether it passes the skim cuts or not)
     //all of it is for MC. if it was needed for data, we'd want to put the lumi mask cut out here
     float susy_pt1=0,susy_phi1=0,susy_pt2=0,susy_phi2=0;
     SUSYProcess prodprocess= (theScanType_==kmSugra ||theScanType_==kSMS) ? getSUSYProcess(susy_pt1,susy_phi1,susy_pt2,susy_phi2) : NotFound; //don't do LM here, at least not for now
     SUSY_process = int(prodprocess);
-    m0 = thispoint.first;
-    m12=thispoint.second;
+    m0 = thispoint.first();
+    m12=thispoint.second();
+    mIntermediate= thispoint.mintermediate;
 
     float susy_px1 = susy_pt1 * cos(susy_phi1);
     float susy_py1 = susy_pt1 * sin(susy_phi1);
@@ -6483,7 +6440,7 @@ Also the pdfWeightSum* histograms that are used for LM9.
     SUSY_recoilPt = sqrt(susy_px*susy_px + susy_py*susy_py);
 
     SUSY_ISRweight = getISRweight(SUSY_recoilPt,0);
-    SUSY_ISRweightSystUp = getISRweight(SUSY_recoilPt,1);
+    //    SUSY_ISRweightSystUp = getISRweight(SUSY_recoilPt,1); //this will always be 1
     SUSY_ISRweightSystDown = getISRweight(SUSY_recoilPt,-1);
 
     SusyDalitz(SUSY_msq12,SUSY_msq23,SUSY_gluino_pt,SUSY_top_pt,SUSY_topbar_pt,SUSY_chi0_pt);
@@ -6499,25 +6456,18 @@ Also the pdfWeightSum* histograms that are used for LM9.
       //increment a 2d histogram of mGL, mLSP
       // -- this scheme is not compatible with skimmed input
       scanSMSngen->Fill(m0,m12);
+      scanSMSngen3D->Fill(m0,m12,mIntermediate);
 
       if ( sampleName_.Contains("v68")) {
 	for (int ipdf=0;ipdf<45;ipdf++) {
 	  pdfWeightsCTEQ[ipdf] = getPDFweight(1,ipdf); //1==cteq
-	  scanProcessTotalsMapCTEQ[thispoint]->SetBinContent( int(prodprocess),  ipdf,
-							      scanProcessTotalsMapCTEQ[thispoint]->GetBinContent( int(prodprocess),  ipdf) 
-							      + pdfWeightsCTEQ[ipdf] );
+	  //remove scanprocesstotalsmap
 	}
 	for (int ipdf=0;ipdf<41;ipdf++) { 
 	  pdfWeightsMSTW[ipdf] = getPDFweight(2,ipdf); //2==mstw
-	  scanProcessTotalsMapMSTW[thispoint]->SetBinContent( int(prodprocess),  ipdf,
-							      scanProcessTotalsMapMSTW[thispoint]->GetBinContent( int(prodprocess),  ipdf) 
-							      + pdfWeightsMSTW[ipdf] );
 	}
 	for (int ipdf=0;ipdf<100;ipdf++) { 
 	  pdfWeightsNNPDF[ipdf] = getPDFweight(3,ipdf); //3==nnpdf
-	  scanProcessTotalsMapNNPDF[thispoint]->SetBinContent( int(prodprocess),  ipdf,
-							      scanProcessTotalsMapNNPDF[thispoint]->GetBinContent( int(prodprocess),  ipdf) 
-							      + pdfWeightsNNPDF[ipdf] );
 	}
 
       }
@@ -6540,49 +6490,37 @@ Also the pdfWeightSum* histograms that are used for LM9.
       for (int ipdf=startat ; ipdf<45; ipdf++) {
 	pdfWeightsCTEQ[ipdf] = checkPdfWeightSanity(pdfweights_cteq->at(ipdf-startat));
 	av += pdfWeightsCTEQ[ipdf]; //v66 kludge
-	scanProcessTotalsMapCTEQ[thispoint]->SetBinContent( int(prodprocess),  ipdf,
-							      scanProcessTotalsMapCTEQ[thispoint]->GetBinContent( int(prodprocess),  ipdf) 
-							    + pdfWeightsCTEQ[ipdf] );
+
       }
 
       av /= 44; //v66 kludge
       if (startat==1) {
 	pdfWeightsCTEQ[0] = av; //v66 kludge
-	scanProcessTotalsMapCTEQ[thispoint]->SetBinContent( int(prodprocess),  0, //v66 kludge
-							    scanProcessTotalsMapCTEQ[thispoint]->GetBinContent( int(prodprocess),  0) 
-							    + pdfWeightsCTEQ[0] );
+
       }
 
       av=0;   //v66 kludge    
       for (int ipdf=startat ; ipdf<41; ipdf++) { 
 	pdfWeightsMSTW[ipdf] = checkPdfWeightSanity(pdfweights_mstw->at(ipdf-startat));
 	av += pdfWeightsMSTW[ipdf]; //v66 kludge
-	scanProcessTotalsMapMSTW[thispoint]->SetBinContent( int(prodprocess),  ipdf,
-							    scanProcessTotalsMapMSTW[thispoint]->GetBinContent( int(prodprocess),  ipdf) 
-							    + pdfWeightsMSTW[ipdf] );
+
       }
       av/=40; //v66 kludge
       if (startat==1) {
 	pdfWeightsMSTW[0] = av; //v66 kludge
-	scanProcessTotalsMapMSTW[thispoint]->SetBinContent( int(prodprocess),  0, //v66 kludge
-							    scanProcessTotalsMapMSTW[thispoint]->GetBinContent( int(prodprocess),  0) 
-							    + pdfWeightsMSTW[0] );
+
       }
 
       av=0; //v66 kludge
       for (int ipdf=startat ; ipdf<100; ipdf++) { 
 	pdfWeightsNNPDF[ipdf] = checkPdfWeightSanity(pdfweights_nnpdf->at(ipdf-startat));
 	av += pdfWeightsNNPDF[ipdf]; //v66 kludge
-	scanProcessTotalsMapNNPDF[thispoint]->SetBinContent( int(prodprocess),  ipdf,
-							     scanProcessTotalsMapNNPDF[thispoint]->GetBinContent( int(prodprocess),  ipdf) 
-							     + pdfWeightsNNPDF[ipdf] );
+
       }
       av/=100; //v66 kludge
       if (startat==1) {
 	pdfWeightsNNPDF[0] = av; //v66 kludge
-	scanProcessTotalsMapNNPDF[thispoint]->SetBinContent( int(prodprocess),  0, //v66 kludge
-							     scanProcessTotalsMapNNPDF[thispoint]->GetBinContent( int(prodprocess),  0) 
-							     + pdfWeightsNNPDF[0] );
+
       }
       }//if sample is not v68
     }
@@ -6590,21 +6528,15 @@ Also the pdfWeightSum* histograms that are used for LM9.
       //do the new 2D maps as well
       for (int ipdf=0 ; ipdf<45; ipdf++) {
 	pdfWeightsCTEQ[ipdf] = checkPdfWeightSanity(1 /*geneventinfoproducthelper1.at(ipdf).pdfweight*/); //FIXME CFA
-	  scanProcessTotalsMapCTEQ[thispoint]->SetBinContent( int(prodprocess),  ipdf,
-							      scanProcessTotalsMapCTEQ[thispoint]->GetBinContent( int(prodprocess),  ipdf) 
-							      + pdfWeightsCTEQ[ipdf] );
+
       }
       for (int ipdf=0 ; ipdf<41; ipdf++) { 
 	pdfWeightsMSTW[ipdf] = checkPdfWeightSanity(1 /*geneventinfoproducthelper2.at(ipdf).pdfweight*/); //FIXME CFA
-	scanProcessTotalsMapMSTW[thispoint]->SetBinContent( int(prodprocess),  ipdf,
-							    scanProcessTotalsMapMSTW[thispoint]->GetBinContent( int(prodprocess),  ipdf) 
-							    + pdfWeightsMSTW[ipdf] );
+
       }
       for (int ipdf=0 ; ipdf<100; ipdf++) { 
 	pdfWeightsNNPDF[ipdf] = checkPdfWeightSanity(1 /*geneventinfoproducthelper.at(ipdf).pdfweight*/); //FIXME CFA
-	scanProcessTotalsMapNNPDF[thispoint]->SetBinContent( int(prodprocess),  ipdf,
-							     scanProcessTotalsMapNNPDF[thispoint]->GetBinContent( int(prodprocess),  ipdf) 
-							     + pdfWeightsNNPDF[ipdf] );
+
       }
     }
 
@@ -9069,6 +9001,49 @@ TString EventCalculator::assembleBTagEffFilename(bool cutnametail) {
   outfile+=basesamplename;
   outfile+=".root";
   return outfile;
+}
+
+void EventCalculator::fillSMShist() {
+  //fill scanSMSngen and nothing else
+
+
+  //for speed
+  chainB->SetBranchStatus("*",0);  // disable all branches
+  chainA->SetBranchStatus("*",0);  // disable all branches
+
+  //we only need the jet branches
+  chainB->SetBranchStatus("model_params",1);
+
+  TString outfile = "smshist_T4Wt.root";//kludge
+
+  TFile fout(outfile,"recreate");
+  TH2D* scanSMSngen=0; //legacy
+  TH3D* scanSMSngen3D=0;
+  scanSMSngen = new TH2D("scanSMSngen","number of generated events",80,0,2000,80,0,2000); //mgluino,mLSP
+  scanSMSngen3D = new TH3D("scanSMSngen3D","number of generated events",80,0,2000,80,0,2000,80,0,2000); //mgluino,mLSP,mintermediate
+
+  const Long64_t nevents = chainA->GetEntries();
+  const Long64_t neventsB = chainB->GetEntries();
+  assert(nevents==neventsB);
+
+  startTimer();
+  for(Long64_t entry=0; entry < nevents; ++entry){
+    chainB->GetEntry(entry);
+    //we do not need chainA for this code
+    //    chainA->GetEntry(entry);
+
+    if(entry%10000==0) cout << "entry: " << entry << ", percent done=" << (int)(entry/(double)nevents*100.)<<  endl;
+    
+    smsMasses masses=getSMSmasses();
+    scanSMSngen->Fill(masses.mparent,masses.mintermediate);
+    scanSMSngen3D->Fill(masses.mparent,masses.mintermediate,masses.mlsp);
+
+  }
+  stopTimer(nevents);
+
+  fout.Write();
+  fout.Close();
+
 }
 
 //separate out the jettag efficiency code from sampleAnalyzer for ease of use
@@ -12030,4 +12005,20 @@ cellECAL::cellECAL(double a, double b, int c) {
 
 triggerData::triggerData() : pass(false), prescale(0), version(0) 
 {
+}
+
+smsMasses::smsMasses(int m0,int m12,int mthird) : 
+  mparent(m0),mlsp(m12),mintermediate(mthird)
+{ }
+
+smsMasses::smsMasses(const smsMasses & other) : 
+  mparent(other.mparent),mlsp(other.mlsp),mintermediate(other.mintermediate)
+{ }
+
+bool smsMasses::operator== (const smsMasses & other) const {
+  return ((mparent == other.mparent) && (mlsp==other.mlsp) && (mintermediate==other.mintermediate));
+}
+
+bool smsMasses::operator!= (const smsMasses & other) const {
+  return !(*this == other);
 }
