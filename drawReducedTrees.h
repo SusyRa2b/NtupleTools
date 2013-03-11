@@ -1210,10 +1210,18 @@ void setSampleWeightFactor(const TString & sample, const TString & factor) {
   if (!done) cout<<"Failed to find the sample "<<sample<<endl;
 }
 
+void printSampleWeightFactors() {
+  for (std::map<TString, TString>::iterator thisfactor = sampleWeightFactor_.begin(); thisfactor!=sampleWeightFactor_.end(); ++thisfactor) {
+    cout<<thisfactor->first <<" "<<thisfactor->second<<endl;
+  }
+
+}
+
 TString getSampleWeightFactor(const TString & sample) {
 
-  if (  sampleScaleFactor_.count(sample)>0)    return sampleWeightFactor_[sample];
-  else if ( sampleScaleFactor_.count( stripSamplename(sample))>0) return sampleWeightFactor_[stripSamplename(sample)];
+  if (  sampleWeightFactor_.count(sample)>0)      return sampleWeightFactor_[sample];
+  else if ( sampleWeightFactor_.count( stripSamplename(sample))>0)   return sampleWeightFactor_[stripSamplename(sample)];
+
 
   return "";
 }
@@ -2298,7 +2306,7 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
     if (isSampleScan(samplename)) setScanPoint(samples_[isample]);
 
     //fill the histogram!
-    tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),getSampleWeightFactor(samplename),selection_,extractExtraCut(samples_[isample]),0,"",-1,getSampleScaleFactor(samples_[isample])).Data());
+    tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),getSampleWeightFactor(samples_[isample]),selection_,extractExtraCut(samples_[isample]),0,"",-1,getSampleScaleFactor(samples_[isample])).Data());
 
     //now the histo is filled
     if (renormalizeBins_) ytitle=renormBins(histos_[samples_[isample]],2 ); //manipulates the TH1D //FIXME hard-coded "2"
