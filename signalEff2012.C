@@ -44,6 +44,9 @@ void signalEff2012::Loop()
 
   vector<SearchRegion> searchregions;
 
+  if (filestub_.Contains("SMS-MadGraph"))  assert(theIsrMode_ != kNoIsrWeight);
+  if (!filestub_.Contains("SMS-MadGraph"))  assert(theIsrMode_ == kNoIsrWeight);
+
   //not incredibly elegant, but it will do
   const bool doLeptons =  !(filestub_.Contains("T1bbbb"));
   const int nvariations = doLeptons ? 4 : 2;
@@ -86,6 +89,9 @@ void signalEff2012::Loop()
   if (joinbtagbins_) outfilename+="mergebbins.";
   if (dopdfs_) outfilename+="withpdfs.";
   if (pusyst_) outfilename+="pusyst.";
+  if (theIsrMode_==kIsr0) outfilename+="Isr0.";
+  else  if (theIsrMode_==kIsrUp) outfilename+="IsrUp.";
+  else  if (theIsrMode_==kIsrDown) outfilename+="IsrDown.";
   if (minnjets_ !=3) {
     outfilename += "minnjets";
     outfilename += minnjets_;
@@ -162,6 +168,11 @@ void signalEff2012::Loop()
     fChain->SetBranchStatus("minDeltaPhiN_asin",1);
     fChain->SetBranchStatus("nbjets",1);
     //    fChain->SetBranchStatus("MT_bestCSV",1);
+
+  }
+
+  if (theIsrMode_ !=kNoIsrWeight ) {
+    fChain->SetBranchStatus("SUSY_recoilPt",1);
   }
 
 // METHOD2: replace line
@@ -193,6 +204,22 @@ void signalEff2012::Loop()
 	//Use PU weight
 	double thisweight = pusyst_ ? PUweightSystVar : PUweight;
 	thisweight*=weight3; //for SMS this is just 1; for other samples it is 1 pb-1 of data
+
+	if (theIsrMode_!=kNoIsrWeight) {
+	  float theisrweight=1;
+	  int sigmavar=0;
+	  if (theIsrMode_==kIsrDown) sigmavar=-1;
+	  else if (theIsrMode_==kIsrUp) sigmavar=1;
+
+	  if (SUSY_recoilPt<=120)      theisrweight = 1;
+	  else if (SUSY_recoilPt<=150) theisrweight = 0.95 + 0.05*sigmavar;
+	  else if (SUSY_recoilPt<=250) theisrweight = 0.9  + 0.1*sigmavar;
+	  else                         theisrweight = 0.8  + 0.2*sigmavar;
+
+	  thisweight *= theisrweight;
+	}
+
+
 	double pdfweight=1;
 	//use b tag SF if desired
 	if (usebtagsf_) { //support only =1,=2,>=3 b bins for now

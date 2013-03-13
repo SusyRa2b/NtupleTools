@@ -15,6 +15,8 @@
 
 #include <iostream>
 
+enum IsrMode { kNoIsrWeight, kIsr0, kIsrUp,kIsrDown };
+
 // Header file for the classes stored in the TTree if any.
 class SearchRegion { //a DIFFERENT class than my other SearchRegion class...oh well
 public:
@@ -174,6 +176,9 @@ public :
    Int_t           SUSY_nb;
    Int_t           SUSY_process;
    Float_t         SUSY_recoilPt;
+   Float_t SUSY_ISRweight;
+   Float_t SUSY_ISRweightSystUp;
+   Float_t SUSY_ISRweightSystDown;
    Int_t           nCorrectRecoStop;
    Int_t           njets;
    Int_t           njets30;
@@ -502,6 +507,7 @@ public :
    TBranch        *b_SUSY_nb;   //!
    TBranch        *b_SUSY_process;   //!
    TBranch        *b_SUSY_recoilPt;   //!
+   TBranch        *b_SUSY_ISRweight;   //!
    TBranch        *b_nCorrectRecoStop;   //!
    TBranch        *b_njets;   //!
    TBranch        *b_njets30;   //!
@@ -760,7 +766,7 @@ public :
    TBranch        *b_transverseMETSignificance3_lostJet;   //!
    TBranch        *b_nLostJet;   //!
 
-   signalEff2012(TString path, TString filestub, bool joinbtagbins, bool usebtagsf, bool dopdfs, bool pusyst, int minnjets); //BEGIN END jmt
+   signalEff2012(TString path, TString filestub, bool joinbtagbins, bool usebtagsf, bool dopdfs, bool pusyst, int minnjets, int isrmode=99); //BEGIN END jmt
    virtual ~signalEff2012();
    virtual Int_t    Cut(Long64_t entry);
    virtual Int_t    GetEntry(Long64_t entry);
@@ -779,6 +785,7 @@ public :
    bool dopdfs_;
    bool pusyst_;
    int minnjets_;
+   IsrMode theIsrMode_;
    //END jmt
 };
 
@@ -786,7 +793,7 @@ public :
 
 #ifdef signalEff2012_cxx
 //BEGIN jmt mod
-signalEff2012::signalEff2012(TString path, TString filestub,bool joinbtagbins, bool usebtagsf, bool dopdfs, bool pusyst, int minnjets) : fChain(0) 
+signalEff2012::signalEff2012(TString path, TString filestub,bool joinbtagbins, bool usebtagsf, bool dopdfs, bool pusyst, int minnjets, int isrmode) : fChain(0) 
 													    , scanSMSngen_(0)
 													    ,filestub_(filestub)
 													    ,joinbtagbins_(joinbtagbins)
@@ -794,15 +801,29 @@ signalEff2012::signalEff2012(TString path, TString filestub,bool joinbtagbins, b
 													    ,dopdfs_(dopdfs)
 													    ,pusyst_(pusyst)
 													    ,minnjets_(minnjets)
+													    ,theIsrMode_(kNoIsrWeight)
 			    //END jmt mod
 {
  //BEGIN jmt
+  if (isrmode == -1)      theIsrMode_=kIsrDown;
+  else if (isrmode ==  1) theIsrMode_=kIsrUp;
+  else if (isrmode ==  0) theIsrMode_=kIsr0;
+  else theIsrMode_=kNoIsrWeight;
+
   TTree* tree=0;
   TString filename = path;
   filename+="reducedTree.";
   filename+=filestub;
   filename+=".root";
+
+  std::cout<<filename<<std::endl;
+  std::cout<<" join b = "<<joinbtagbins<<std::endl;
+  std::cout<<" b tag sf = "<<usebtagsf<<std::endl;
+  std::cout<<" pdfs = "<<dopdfs<<std::endl;
+  std::cout<<" minnjets = "<<minnjets<<std::endl;
+  std::cout<<" isrmode = "<<int(theIsrMode_)<<std::endl;
   //END jmt
+
 
 // if parameter tree is not specified (or zero), connect the file
 // used to generate this class and read the Tree.
@@ -940,6 +961,7 @@ void signalEff2012::Init(TTree *tree)
    fChain->SetBranchAddress("SUSY_nb", &SUSY_nb, &b_SUSY_nb);
    fChain->SetBranchAddress("SUSY_process", &SUSY_process, &b_SUSY_process);
    fChain->SetBranchAddress("SUSY_recoilPt", &SUSY_recoilPt, &b_SUSY_recoilPt);
+   fChain->SetBranchAddress("SUSY_ISRweight", &SUSY_ISRweight, &b_SUSY_ISRweight);
    fChain->SetBranchAddress("nCorrectRecoStop", &nCorrectRecoStop, &b_nCorrectRecoStop);
    fChain->SetBranchAddress("njets", &njets, &b_njets);
    fChain->SetBranchAddress("njets30", &njets30, &b_njets30);
