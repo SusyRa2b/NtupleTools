@@ -101,9 +101,11 @@ void combineScanBins(TString infilename) {
 
 }
 
-void writetxt(TString which, const TString sample, const TString prefix="eventcounts.") {
+void writetxt(TString which, const TString sample, const TString prefix="eventcounts.",const bool useISR=false) {
 
-  assert( which=="counts" || which=="JES"||which=="MET" ||which=="JER");
+  assert( which=="counts" || which=="JES"||which=="MET" ||which=="JER" ||which=="ISR");
+
+  if (which=="ISR") assert(useISR);
 
   //this should be the 'unvaried' (eg JES0) stub.
   //this differentiation between JER0 and JERbias here is a stopgap measure
@@ -128,9 +130,11 @@ void writetxt(TString which, const TString sample, const TString prefix="eventco
     stub_up.ReplaceAll("JERbias","JERup");
     stub_down.ReplaceAll("JERbias","JERdown");
   }
+  //for ISR, the 'stub's do not change; the 'prefix' needs to be tweaked (see below)
+
 
   TString outfilename = (which=="counts") ? "sigcounts." : "sigsystematics.";
-  outfilename += stub0.Tokenize(".")->At(1)->GetName();
+  outfilename += stub0.Tokenize(".")->At(1)->GetName(); //fyi -- this leaks memory (no big deal here)
 
   if (prefix.Contains("minnjets5")) {
     outfilename+=".minnjets5";
@@ -140,13 +144,26 @@ void writetxt(TString which, const TString sample, const TString prefix="eventco
   else if (which=="JES") outfilename += ".JES.txt";
   else if (which=="JER") outfilename += ".JER.txt";
   else if (which=="MET") outfilename += ".MET.txt";
+  else if (which=="ISR") outfilename += ".ISR.txt";
 
 
   ofstream txtfile( outfilename.Data());
 
+  //assemble the input file names
+ //prefix is 'eventcounts.' plus extra stuff like 'mergebbins.'
   TString fn0 = prefix;
   TString fnu = prefix;
   TString fnd = prefix;
+  if (which=="ISR") { //we're doing the isr variation systematic
+    fn0+="Isr0.";
+    fnu+="IsrUp.";
+    fnd+="IsrDown.";
+  }
+  else if (useISR) { //we're using isr but we're not doing the ISR variation systematic
+    fn0+="Isr0.";
+    fnu+="Isr0.";
+    fnd+="Isr0.";
+  } //else we're not doing isr at all. do nothing
   fn0 += stub0;
   fnu += stub_up;
   fnd += stub_down;
@@ -168,7 +185,7 @@ void writetxt(TString which, const TString sample, const TString prefix="eventco
 
   TH2D* scanSMSngen = (TH2D*) f0->Get("scanSMSngen");
 
-
+  //load histograms from the input files
   int nhist=0;
   for (int ih = 0; ih<f0->GetListOfKeys()->GetEntries(); ih++) {
     TString histname = f0->GetListOfKeys()->At(ih)->GetName();
@@ -184,7 +201,7 @@ void writetxt(TString which, const TString sample, const TString prefix="eventco
     }
   }
 
-  //open a file for output
+  //open a ROOT file for output
   outfilename.ReplaceAll(".txt",".root");
   TFile fout(outfilename,"RECREATE");
 
@@ -199,8 +216,6 @@ void writetxt(TString which, const TString sample, const TString prefix="eventco
     for (int iy=1; iy<=vh0[0]->GetNbinsY(); iy++) {
       
       //zero suppression
-      //might want a better check here (use scanSMSngen?)
-      //      if (vh0[0]->GetBinContent(ix,iy) ==0) continue;
       if (scanSMSngen->GetBinContent(ix,iy) ==0) continue;
 
       txtfile<<vh0[0]->GetXaxis()->GetBinLowEdge(ix)<<" "
@@ -297,8 +312,11 @@ void drawstuff(TString pointstring = "1100_700", TString what="JES",const TStrin
   histonamebase+=pointstring;
 
   TH1D* hJES_0=(TH1D*) f.Get(histonamebase+"_0");
+  if (hJES_0==0) return;
+
   TH1D* hJES_Up=(TH1D*) f.Get(histonamebase+"_Up");
   TH1D* hJES_Down=(TH1D*) f.Get(histonamebase+"_Down");
+
 
 //   hJES_0->Draw();
 
@@ -406,7 +424,7 @@ TH1D* removeExtraBins(TH1D* h0) {
   return hp;
 }
 
-
+//compare the efficiency of two samples. depends on the sigcounts files.
 void compEff(int mgl,int mlsp,TString sample1,TString sample2) {
 
   gROOT->SetStyle("CMS");
@@ -427,7 +445,11 @@ void compEff(int mgl,int mlsp,TString sample1,TString sample2) {
   TH1D* heff1 = (TH1D*) f1.Get(hname);
   TH1D* heff2 = (TH1D*) f2.Get(hname);
 
-  if (heff1==0 ||heff2==0) return;
+  if (heff1==0 ||heff2==0) {
+    cout<<heff1<<endl;
+    cout<<heff2<<endl;
+    return;
+  }
 
   heff1->SetName( TString(heff1->GetName())+"1");
   heff2->SetName( TString(heff2->GetName())+"2");
