@@ -53,7 +53,7 @@ run_Analysis.o: run_Analysis.C
 	$(CXX) $(CXXFLAGS) -c run_Analysis.C
 
 run_Analysis: BTagWeight2.o CrossSectionTable.o SimpleJetCorrector.o FactorizedJetCorrector.o JetCorrectorParameters.o SimpleJetCorrectionUncertainty.o JetCorrectionUncertainty.o EventCalculator_cfA.o run_Analysis.o 
-	$(LD) $(LDFLAGS) -o run_Analysis BTagWeight2.o CrossSectionTable.o SimpleJetCorrector.o FactorizedJetCorrector.o JetCorrectorParameters.o SimpleJetCorrectionUncertainty.o JetCorrectionUncertainty.o EventCalculator_cfA.o run_Analysis.o $(GLIBS) -L./lib/ -lLHAPDF 
+	$(LD) $(LDFLAGS) -o run_Analysis BTagWeight2.o CrossSectionTable.o SimpleJetCorrector.o FactorizedJetCorrector.o JetCorrectorParameters.o SimpleJetCorrectionUncertainty.o JetCorrectionUncertainty.o EventCalculator_cfA.o run_Analysis.o $(GLIBS) -L./lib/ -lLHAPDF -lGenVector
 
 clean:
 	rm -f *.o

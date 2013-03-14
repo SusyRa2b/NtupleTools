@@ -15,6 +15,8 @@
 #include "TRegexp.h"
 
 #include "TVector3.h"
+#include "Math/Vector4D.h"
+#include "Math/Boost.h"
 
 #include "inJSON2012.h"
 
@@ -33,7 +35,6 @@
 #include "BTagWeight2.h"
 
 using namespace std;
-
 
 EventCalculator::EventCalculator(const TString & sampleName, const vector<string> inputFiles, jetType theJetType, METType theMETType) :
   sampleName_(sampleName),
@@ -471,6 +472,45 @@ bool EventCalculator::isGoodMuon(const unsigned int k, const bool disableRelIso,
   return true;
 }
 
+
+bool EventCalculator::isGoodTightMuon(const unsigned int k, const bool disableRelIso, const float ptthreshold) {
+
+  //For MET-Reweighting
+
+  //sanity check
+  if ( k >= pf_mus_pt->size() ) return false;
+
+  if (!isGoodPV(0)) return false;
+
+  if (pf_mus_pt->at(k) < ptthreshold) return false;
+  if (fabs(pf_mus_eta->at(k)) >= 2.1 ) return false; //DIFFERENT FROM isGoodMuon!
+  
+  //i like to use TMath::Nint for quantities stored as float that are really integers. just to be safe
+
+  if ( TMath::Nint(pf_mus_id_GlobalMuonPromptTight->at(k)) == 0) return false; 
+  // GlobalMuonPromptTight includes: isGlobal, globalTrack()->normalizedChi2() < 10, numberOfValidMuonHits() > 0
+
+  if ( TMath::Nint(pf_mus_numberOfMatchedStations->at(k)) <= 1 ) return false;
+  // At least one matched station includes requirement of arbitrated tracker muon, so no need for that explicitly
+
+  const float beamx = beamSpot_x->at(0);   
+  const float beamy = beamSpot_y->at(0);   
+  float d0 = pf_mus_tk_d0dum->at(k) - beamx*sin(pf_mus_tk_phi->at(k)) + beamy*cos(pf_mus_tk_phi->at(k));
+  if ( fabs(d0) >= 0.2 ) return false;
+  if ( fabs(pf_mus_tk_vz->at(k) - pv_z->at(0) ) >= 0.5 ) return false;
+  if ( TMath::Nint(pf_mus_tk_numvalPixelhits->at(k)) == 0 ) return false;
+
+  if ( TMath::Nint(pf_mus_tk_LayersWithMeasurement->at(k)) <= 5 ) return false;
+  // now isolation with delta beta corrections are recommended with DelR cone of 0.4
+  float isoNeutral = pf_mus_pfIsolationR04_sumNeutralHadronEt->at(k) + pf_mus_pfIsolationR04_sumPhotonEt->at(k) - 0.5*pf_mus_pfIsolationR04_sumPUPt->at(k);
+  isoNeutral = ( isoNeutral > 0) ? isoNeutral : 0;
+  float  muRelIso = (pf_mus_pfIsolationR04_sumChargedHadronPt->at(k) + isoNeutral) / pf_mus_pt->at(k);
+  if (muRelIso >= 0.1) return false; //DIFFERENT FROM isGoodMuon!
+
+  //if we haven't failed anything yet...then it's good
+  return true;
+}
+
 bool EventCalculator::isGoodRecoMuon(const unsigned int imuon, const bool disableRelIso, const float ptthreshold) {
 
   assert(disableRelIso); //the iso calculation below is completely worthless. it uses PF quantities on RECO muons.
@@ -512,6 +552,17 @@ bool EventCalculator::isCleanMuon(const unsigned int imuon, const float ptthresh
 
   return true;
 
+}
+
+bool EventCalculator::isCleanTightMuon(const unsigned int imuon, const float ptthreshold) {
+  
+  if (!isGoodTightMuon(imuon,false,ptthreshold)) return false;
+  
+  //clean muons if using reco-pfjets
+  assert(theJetType_ != kRECOPF);
+  
+  return true;
+  
 }
 
 //this bool could be turned into a more powerful selector for N-1 studies. keep it simple for now
@@ -617,6 +668,22 @@ unsigned int EventCalculator::countMu(const float ptthreshold) {
   unsigned int nmu = pf_mus_pt->size();
   for ( unsigned int i = 0; i< nmu; i++) {
     if (isCleanMuon(i,ptthreshold)) {
+      //once we reach here we've got a good muon in hand
+      ++ngoodmu;   
+    }
+  }
+  
+  return ngoodmu;
+}
+
+unsigned int EventCalculator::countTightMu(const float ptthreshold) {
+
+  //pT>25, rel iso<0.1, and |eta|<2.1. -- MET-Reweighting
+  
+  unsigned int ngoodmu=0;
+  unsigned int nmu = pf_mus_pt->size();
+  for ( unsigned int i = 0; i< nmu; i++) {
+    if (isCleanTightMuon(i,ptthreshold)) {
       //once we reach here we've got a good muon in hand
       ++ngoodmu;   
     }
@@ -3439,6 +3506,73 @@ void EventCalculator::calcTopDecayVariables(float & wmass, float & tmass, float 
   tmass = bestM3j;
 }
 
+float EventCalculator::getDeltaThetaT() {
+  
+  float deltaThetaT = -1.0;
+  int nE = countEle();
+  int nM = countMu();
+
+  bool newDeltaThetaT = false;
+
+  float lep_reco_pt = 0;
+  float lep_reco_px = 0;
+  float lep_reco_py = 0;
+  
+  if(nE==1 && nM==0){
+    newDeltaThetaT = true;
+    lep_reco_pt = elePtOfN(1);
+    float myPphi = elePhiOfN(1);
+    lep_reco_px = lep_reco_pt * cos(myPphi);
+    lep_reco_py = lep_reco_pt * sin(myPphi);
+  }
+  else if(nE==0 && nM==1){
+    newDeltaThetaT=true;
+    lep_reco_pt = muonPtOfN(1);
+    float myPphi = muonPhiOfN(1);
+    lep_reco_px = lep_reco_pt * cos(myPphi);
+    lep_reco_py = lep_reco_pt * sin(myPphi);
+  }
+
+  if( newDeltaThetaT ) {
+
+    //Get MET variables
+    float pfmet_0 = getMET();
+    float myMETphi = getMETphi();
+    float pfmet_x = pfmet_0 * cos(myMETphi);
+    float pfmet_y = pfmet_0 * sin(myMETphi);
+    
+    //Code from an email from Kristen
+    ROOT::Math::XYZTVector WInLab(0.,0.,0.,0.);
+    ROOT::Math::XYZTVector LeptonInLab(0.,0.,0.,0.);
+    ROOT::Math::XYZTVector LeptonInWCM(0.,0.,0.,0.);
+    
+    double mtw = TMath::Sqrt( 2*( lep_reco_pt*pfmet_0 - lep_reco_px*pfmet_x - lep_reco_py*pfmet_y ) );
+    double energyw = TMath::Sqrt( mtw*mtw + (lep_reco_px+pfmet_x)*(lep_reco_px+pfmet_x)
+				  + (lep_reco_py+pfmet_y)*(lep_reco_py+pfmet_y) );
+    
+    WInLab.SetXYZT( lep_reco_px+pfmet_x, lep_reco_py+pfmet_y, 0, energyw+0.0001 );
+    LeptonInLab.SetXYZT( lep_reco_px, lep_reco_py, 0, lep_reco_pt+0.0001 );
+
+    ROOT::Math::Boost bstToW( WInLab.BoostToCM() );
+    LeptonInWCM = bstToW(LeptonInLab);
+    
+    float mu_px_wframe = LeptonInWCM.px();
+    float mu_py_wframe = LeptonInWCM.py();
+    
+    float w_phi_labframe = TMath::ATan2( (lep_reco_py+pfmet_y),(lep_reco_px+pfmet_x) );
+    
+    float mu_phi_wframe = TMath::ATan2( mu_py_wframe,mu_px_wframe );
+    
+    double dphi = fabs( mu_phi_wframe - w_phi_labframe );
+    if( dphi>TMath::Pi() ) dphi = 2*TMath::Pi() - dphi;
+    //end of Kristen's code
+    
+    deltaThetaT = dphi;
+  }
+  
+  return deltaThetaT;
+}
+
 float EventCalculator::getMT_Wlep(const float ptthreshold) {
 
   float MT = -1.;
@@ -5647,7 +5781,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   //want a copy of triggerlist, for storing mc trigger results
   map<TString, triggerData > triggerlist_mc(triggerlist);
 
-  int njets, njets30, nbjets, nbjets30,ntruebjets, nElectrons,nElectrons2011, nMuons;
+  int njets, njets30, nbjets, nbjets30,ntruebjets, nElectrons,nElectrons2011, nMuons, nTightMuons;
   int nbjetsTweaked;
   int nTausVLoose,nTausLoose,nTausMedium,nTausTight;
   //  int nIndirectTaus4,nIndirectTaus5,nIndirectTaus2,nIndirectTaus3;
@@ -5700,6 +5834,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   float MT_Wlep;
   float MT_Wlep5,MT_Wlep15;
   float wMass, topMass, wCosHel, topCosHel;
+  float deltaThetaT;
 
   int nGoodPV;
 
@@ -5974,6 +6109,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("nMuons5",&nMuons5,"nMuons5/I");
   reducedTree.Branch("nElectrons15",&nElectrons15,"nElectrons15/I");
   reducedTree.Branch("nMuons15",&nMuons15,"nMuons15/I");
+  reducedTree.Branch("nTightMuons",&nTightMuons,"nTightMuons/I");
 
   reducedTree.Branch("nElectrons20",&nElectrons20,"nElectrons20/I"); //jmt
   reducedTree.Branch("nMuons20",&nMuons20,"nMuons20/I");
@@ -6066,6 +6202,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("MT_jim",&MT_jim, "MT_jim/F");
   reducedTree.Branch("minMT_jetMET",&minMT_jetMET, "minMT_jetMET/F");
 
+  reducedTree.Branch("deltaThetaT",&deltaThetaT, "deltaThetaT/F");
 
   reducedTree.Branch("deltaR_bestTwoCSV",&deltaR_bestTwoCSV,"deltaR_bestTwoCSV/F");
   reducedTree.Branch("mjj_bestTwoCSV",&mjj_bestTwoCSV,"mjj_bestTwoCSV/F");
@@ -6749,6 +6886,7 @@ void EventCalculator::reducedTree(TString outputpath) {
       nMuons15 = countMu(15);
       nElectrons20 = countEle(20);
       nMuons20 = countMu(20);
+      nTightMuons = countTightMu();
 
       hlteff = getHLTeff(HT,MET,nElectrons,nMuons);
 
@@ -6952,6 +7090,7 @@ void EventCalculator::reducedTree(TString outputpath) {
 
       calcTopDecayVariables(  wMass, topMass, wCosHel, topCosHel);
       
+      deltaThetaT = getDeltaThetaT();
 
       jetpt1 = jetPtOfN(1);
       jetgenpt1 = jetGenPtOfN(1);
