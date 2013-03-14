@@ -4387,6 +4387,7 @@ Long64_t EventCalculator::getNEventsGenerated( TString sample) {
   if (sample.Contains("UCSB1532")) return 497658 ;  //t tW channel
   if (sample.Contains("UCSB1562")) return 1935072;	//tbar t channel
   if (sample.Contains("UCSB1531")) return 23777; //t t channel
+  if (sample.Contains("UCSB1668")) return 3758227; //t t channel
 //  if (sample.Contains("UCSB1438")) return 5995944; // QCD 50-80
                                                         //QCD 80-120
   if (sample.Contains("UCSB1513")) return 5755732; //QCD120-170
