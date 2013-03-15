@@ -135,6 +135,11 @@ public:
   bool isCleanMuon(const unsigned int imuon, const float ptthreshold=10);
   unsigned int countMu(const float ptthreshold=10);
 
+  //for MET-Reweighting
+  bool isGoodTightMuon(const unsigned int imuon, const bool disableRelIso=false, const float ptthreshold=25);
+  bool isCleanTightMuon(const unsigned int imuon, const float ptthreshold=25);
+  unsigned int countTightMu(const float ptthreshold=25);
+
   bool isIndirectTau( unsigned int ijet, const int maxmult) ;
   int countIndirectTau( const int maxmult );
 
@@ -318,6 +323,8 @@ public:
 
   float getRelIsoForIsolationStudyEle();
   float getRelIsoForIsolationStudyMuon();
+
+  float getDeltaThetaT();
 
   float getMT_Wlep(const float pttreshold=10);
   float getMT_bMET();
