@@ -22,9 +22,12 @@
 
 #include "MiscUtil.cxx"
 
-//#include <RooRealVar.h>
-//#include <RooMinuit.h>
-//#include <RooTransverseThrustVar.h>
+//needed only for thrust calculations
+/*
+#include <RooRealVar.h>
+#include <RooMinuit.h>
+#include "RooTransverseThrustVar.h"
+*/
 
 #include <cassert>
 #include <fstream>
@@ -105,6 +108,7 @@ EventCalculator::EventCalculator(const TString & sampleName, const vector<string
 	   sampleName_.Contains("T2bb") || 
 	   sampleName_.Contains("T2tt") || 
 	   sampleName_.Contains("T1tttt")|| 
+	   sampleName_.Contains("T5tttt")|| 
 	   sampleName_.Contains("T4tW")
 	   ) {
     theScanType_ = kSMS;
@@ -4256,18 +4260,27 @@ smsMasses EventCalculator::getSMSmasses() {
   //or in the case of T4tW
   //# model T2bb_sb_700_ch_150_lsp_50  0.0081141
 
+  //for T5tttt
+  //# model T5tttt_800_525_50  0.00289588
+  // mgluino_mstop_mlsp 
+
   TString modelstring = (*model_params).c_str();
   TObjArray* thesubstrings = modelstring.Tokenize(" ");
   TString thesubstring=  thesubstrings->At(2)->GetName();
 
   TObjArray* themasses = thesubstring.Tokenize("_");
-  int index0=1;
-  int index1=2;
+  int index0=1; //index of mParent (gluino, etc)
+  int index1=2; //index of mLSP
   int m3=0;
   if (sampleName_.Contains("T4tW")) {
     index0 = 2;
     index1 = 6;
     m3 =  TString(themasses->At(4)->GetName()).Atoi();
+  }
+  else if (sampleName_.Contains("T5tttt")) {
+    index0 = 1;
+    index1 = 3; //mLSP index    
+    m3 =  TString(themasses->At(2)->GetName()).Atoi(); //intermediate particle mass
   }
   int m0=  TString(themasses->At(index0)->GetName()).Atoi();
   int m12 = TString(themasses->At(index1)->GetName()).Atoi();
@@ -4640,6 +4653,10 @@ TString EventCalculator::getSampleNameOutputString(){
   else  if (sampleName_.Contains("UCSB1731reshuf")) outputstring = "SMS-MadGraph_T1tttt-400to750-1to50_UCSB1731reshuf_v68";
   else  if (sampleName_.Contains("UCSB1733reshuf")) outputstring = "SMS-MadGraph_T1tttt-400to750-25to550_UCSB1733reshuf_v68";
   else  if (sampleName_.Contains("UCSB1730reshuf")) outputstring = "SMS-MadGraph_T1tttt-800to1400-1to50_UCSB1730reshuf_v68";
+  //T4tW
+  else if  (sampleName_.Contains("UCSB1723reshuf")) outputstring = "SMS-MadGraph_T4tW-325to700-150to625_UCSB1723reshuf_v68";
+  //T5tttt
+  else if  (sampleName_.Contains("UCSB1738reshuf")) outputstring = "SMS-MadGraph_T5tttt-800to1200-225to1025-50_UCSB1738reshuf_v68";
   else {
     //if it isn't found, just use the full name
     return sampleName_;
@@ -5331,7 +5348,8 @@ float EventCalculator::bJetFastsimSF(const TString & what, int flavor,float pt) 
       //now the model-dependent part
       float model_value = 1;
       if (sampleName_.Contains("T1bbbb")) 	model_value = get_AN_12_175_Table4_Value(pt);
-      else if (sampleName_.Contains("T1tttt")) 	model_value = get_AN_12_175_Table5_Value(pt);
+      //decided that for our purposes I will use T1tttt values for T4tW and T5tttt
+      else if (sampleName_.Contains("T1tttt") || sampleName_.Contains("T4tW") || sampleName_.Contains("T5tttt")) model_value = get_AN_12_175_Table5_Value(pt);
       else if (sampleName_.Contains("T2bb")) 	model_value = get_AN_12_175_Table6_Value(pt);
       else if (sampleName_.Contains("T2tt")) 	model_value = get_AN_12_175_Table8_Value(pt);
       else assert(0);
@@ -5810,10 +5828,10 @@ void EventCalculator::reducedTree(TString outputpath) {
   float deltaR_closestB;
   float mjj_closestB;
 
-/*
-  float transverseThrust,transverseThrustPhi;
-  float transverseThrustWithMET,transverseThrustWithMETPhi;
-*/
+
+  //  float transverseThrust,transverseThrustPhi;
+  //  float transverseThrustWithMET,transverseThrustWithMETPhi;
+
   float minTransverseMETSignificance, maxTransverseMETSignificance, transverseMETSignificance1, transverseMETSignificance2, transverseMETSignificance3;
 
   bool passBadECAL_METphi53_n10_s12, passBadECAL_METphi33_n10_s12, passBadECAL_METphi52_n10_s12; 
@@ -6422,15 +6440,12 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("transverseSphericity_jets30Leptons",&transverseSphericity_jets30Leptons,"transverseSphericity_jets30Leptons/F");
 
 
+//   reducedTree.Branch("transverseThrust",&transverseThrust,"transverseThrust/F");
+//   reducedTree.Branch("transverseThrustPhi",&transverseThrustPhi,"transverseThrustPhi/F");
+  
+//   reducedTree.Branch("transverseThrustWithMET",&transverseThrustWithMET,"transverseThrustWithMET/F");
+//   reducedTree.Branch("transverseThrustWithMETPhi",&transverseThrustWithMETPhi,"transverseThrustWithMETPhi/F");
 
-
-/*
-  reducedTree.Branch("transverseThrust",&transverseThrust,"transverseThrust/F");
-  reducedTree.Branch("transverseThrustPhi",&transverseThrustPhi,"transverseThrustPhi/F");
-
-  reducedTree.Branch("transverseThrustWithMET",&transverseThrustWithMET,"transverseThrustWithMET/F");
-  reducedTree.Branch("transverseThrustWithMETPhi",&transverseThrustWithMETPhi,"transverseThrustWithMETPhi/F");
-*/
 
   reducedTree.Branch("minTransverseMETSignificance", &minTransverseMETSignificance, "minTransverseMETSignificance/F");
   reducedTree.Branch("maxTransverseMETSignificance", &maxTransverseMETSignificance, "maxTransverseMETSignificance/F");
@@ -6527,6 +6542,13 @@ void EventCalculator::reducedTree(TString outputpath) {
     float susy_px = susy_px1 + susy_px2;
     float susy_py = susy_py1 + susy_py2;
     SUSY_recoilPt = sqrt(susy_px*susy_px + susy_py*susy_py);
+
+//     TLorentzVector gp1,gp2;
+//     TRandom3 arand(getRunNumber()+getLumiSection()+getEventNumber()+1);
+//     gp1.SetPtEtaPhiM(susy_pt1,arand.Uniform(-2,2),susy_phi1,m0);
+//     gp2.SetPtEtaPhiM(susy_pt2,arand.Uniform(-2,2),susy_phi2,m0);
+//     TLorentzVector gptot=gp1+gp2;
+//     cout<<" susy pt "<<SUSY_recoilPt<<" "<<gptot.Pt()<<endl;
 
     SUSY_ISRweight = getISRweight(SUSY_recoilPt,0);
     //    SUSY_ISRweightSystUp = getISRweight(SUSY_recoilPt,1); //this will always be 1
@@ -7231,8 +7253,10 @@ void EventCalculator::reducedTree(TString outputpath) {
 
 
       //Uncomment next two lines to do thrust calculations
-      //getTransverseThrustVariables(transverseThrust, transverseThrustPhi, false);
-      //getTransverseThrustVariables(transverseThrustWithMET, transverseThrustWithMETPhi, true);
+//       getTransverseThrustVariables(transverseThrust, transverseThrustPhi, false);
+//       getTransverseThrustVariables(transverseThrustWithMET, transverseThrustWithMETPhi, true);
+//       cout<<"Thrust output \t"<<transverseThrust<<" "<<transverseThrustPhi<<endl;
+//       cout<<"\t\t\t"<<endl<<transverseThrustWithMET<<" "<<transverseThrustWithMETPhi<<endl;
 
       //Fill the tree
       reducedTree.Fill();
@@ -7534,8 +7558,7 @@ void EventCalculator::getSphericity(float & sph, bool addMET, bool addLeptons, c
 }
 
 
-
-/* FIXME CFA
+/*
 void EventCalculator::getTransverseThrustVariables(float & thrust, float & thrustPhi, bool addMET)
 {
     //Begin Thrust Calculations
@@ -7545,12 +7568,12 @@ void EventCalculator::getTransverseThrustVariables(float & thrust, float & thrus
      
     vector<double> goodJetPx;
     vector<double> goodJetPy;
-
-
+    double phiGuess =0;
     for (unsigned int i = 0; i<njets; i++) {
       if ( !isGoodJet(i) ) continue;
       //ngoodjets++;
       double phi = jets_AK5PF_phi->at(i);
+      if (i==0) phiGuess=phi;
       double pT = getJetPt(i);
       double pX = pT*cos(phi);
       double pY = pT*sin(phi);
@@ -7568,7 +7591,6 @@ void EventCalculator::getTransverseThrustVariables(float & thrust, float & thrus
 	goodJetPy.push_back(eY);
       }
 
-    double phiGuess = jets_AK5PF_phi->at(0);
     RooRealVar phi("phi","phi",phiGuess,-1.0*TMath::Pi(),TMath::Pi());
     RooTransverseThrustVar negThrustValue("negThrustValue","negThrustValue",phi,goodJetPx,goodJetPy);
     RooMinuit rm(negThrustValue);
@@ -7577,6 +7599,7 @@ void EventCalculator::getTransverseThrustVariables(float & thrust, float & thrus
     thrustPhi = (phi.getVal()>0) ? phi.getVal()-TMath::Pi() : phi.getVal()+TMath::Pi();
 }
 */
+
 
 /* FIXME CFA
 void EventCalculator::cutflow(itreestream& stream, int maxevents=-1){
