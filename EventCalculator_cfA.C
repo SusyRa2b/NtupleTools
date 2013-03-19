@@ -115,6 +115,11 @@ EventCalculator::EventCalculator(const TString & sampleName, const vector<string
     std::cout<<"\tDetected that I'm running over an SMS scan!"<<std::endl;
     sampleIsSignal_=true;
   }
+  else if (sampleName_.Contains("pMSSM")) {
+    theScanType_ = kpmssm;
+    std::cout<<"\tDetected that I'm running over a pMSSM scan!"<<std::endl;
+    sampleIsSignal_=true;
+  }
   else if (sampleName_.Contains("LM")) {
     sampleIsSignal_=true;
     std::cout<<"\tDetected that I'm running over a SUSY sample!"<<std::endl;
@@ -286,6 +291,10 @@ void  EventCalculator::loadSusyScanCrossSections() {
     crossSectionTanb40_05_ = new CrossSectionTable("NLOxsec_tanb40_05.txt");
     crossSectionTanb40_20_ = new CrossSectionTable("NLOxsec_tanb40_20.txt");
   }
+  else if (theScanType_==kpmssm) {
+    //to do
+    cout<<" FIXME!"<<endl;
+  }
 
 }
 
@@ -356,6 +365,7 @@ double EventCalculator::getWeight(Long64_t nentries) {
 
   if (theScanType_==kmSugra) return 1;//special weighting in effect
   else  if (theScanType_==kSMS) return 1;//special weighting in effect
+  else  if (theScanType_==kpmssm) return 1;//special weighting in effect
 
   double sigma = getCrossSection();
   double w = lumi_ * sigma / double(nentries);
@@ -4338,6 +4348,7 @@ Long64_t EventCalculator::getNEventsGenerated( TString sample) {
   
   //normalization is handled in a special way for scans
   if (theScanType_ == kSMS) return 1;
+  if (theScanType_ == kpmssm) return 1;
 
   //the argument let's you override the default. by default, we return the current sample
   if(sample=="") sample = sampleName_;
@@ -4730,6 +4741,9 @@ double EventCalculator::getScanCrossSection( SUSYProcess p, const TString & vari
   }
   else if (theScanType_==kSMS) {
     assert(0);
+  }
+  else if (theScanType_==kpmssm) {
+    //FIXME
   }
 
 
@@ -5336,7 +5350,10 @@ float EventCalculator::bJetFastsimSF(const TString & what, int flavor,float pt) 
   if (what == "value") returnVal=1;
 
   //first check if we're in a FASTSIM model
-  if (theScanType_ != kNotScan ) {
+  if (theScanType_==kpmssm) {
+    //DO NOTHING FOR NOW...this is rather dangerous!
+  }
+  else  if (theScanType_ != kNotScan ) {
     if ( abs(flavor) != 5) return returnVal; //no correction (for now) for non-b
     
     if (what == "syst") {//syst errors (fractional)
@@ -5887,14 +5904,18 @@ void EventCalculator::reducedTree(TString outputpath) {
 
   //initialization of scanProcessTotalsMap used to be here. I'm killing this for now
 
+  TH1D* scanpMSSMngen=0;    const int npmssmpoints=20000;//there are actually only 10000, but extra bins won't hurt
   TH2D* scanSMSngen=0; //legacy
   TH3D* scanSMSngen3D=0;
   if (theScanType_==kSMS) {
     scanSMSngen = new TH2D("scanSMSngen","number of generated events",80,0,2000,80,0,2000); //mgluino,mLSP
     scanSMSngen3D = new TH3D("scanSMSngen3D","number of generated events",80,0,2000,80,0,2000,80,0,2000); //mgluino,mLSP,mintermediate
   }
+  else if (theScanType_==kpmssm) {
+    scanpMSSMngen = new TH1D("scanpMSSMngen","number of generated events",npmssmpoints,1,npmssmpoints+1);
+  }
 
-  const  bool puReweightIs1D = true;//((theScanType_!=kNotScan) || sampleName_.Contains("QCD")); //CFA -- no 3D for now
+  const  bool puReweightIs1D = true;
 
   //initialize PU things
   std::vector< float > DataDist;
@@ -6518,18 +6539,20 @@ void EventCalculator::reducedTree(TString outputpath) {
     smsMasses thispoint;
     if (theScanType_==kmSugra) assert(0);// FIXME CFA // thispoint=make_pair(TMath::Nint(eventlhehelperextra_m0),TMath::Nint(eventlhehelperextra_m12)) ;
     else if (theScanType_==kSMS) thispoint=getSMSmasses();
+    else if (theScanType_==kpmssm) thispoint=smsMasses(getRunNumber() );
     else thispoint=smsMasses();//make_pair(0,0);
     
     if (thispoint != lastpoint) {
       if (theScanType_==kmSugra)    cout<<"At mSugra point m0  = "<<thispoint.first()<<" m12 = "<<thispoint.second()<<endl;
       else  if (theScanType_==kSMS) cout<<"At SMS point m_gluino = "<<thispoint.first()<<" m_LSP = "<<thispoint.second()<<" "<<thispoint.mintermediate<<endl;
+      else  if (theScanType_==kpmssm) cout<<"At pMSSM point "<<thispoint.first()<<endl;
       lastpoint=thispoint;
       //      if ( theScanType_==kmSugra && scanProcessTotalsMapCTEQ.count(thispoint)==0 )	cout<<"m0 m12 = "<<thispoint.first<<" "<<thispoint.second<<" does not exist in NLO map!"<<endl;
     }
     // ~~~~ special stuff that must be done on all events (whether it passes the skim cuts or not)
     //all of it is for MC. if it was needed for data, we'd want to put the lumi mask cut out here
     float susy_pt1=0,susy_phi1=0,susy_pt2=0,susy_phi2=0;
-    SUSYProcess prodprocess= (theScanType_==kmSugra ||theScanType_==kSMS) ? getSUSYProcess(susy_pt1,susy_phi1,susy_pt2,susy_phi2) : NotFound; //don't do LM here, at least not for now
+    SUSYProcess prodprocess= (theScanType_==kmSugra ||theScanType_==kSMS||theScanType_==kpmssm) ? getSUSYProcess(susy_pt1,susy_phi1,susy_pt2,susy_phi2) : NotFound; //don't do LM here, at least not for now
     SUSY_process = int(prodprocess);
     m0 = thispoint.first();
     m12=thispoint.second();
@@ -6542,13 +6565,6 @@ void EventCalculator::reducedTree(TString outputpath) {
     float susy_px = susy_px1 + susy_px2;
     float susy_py = susy_py1 + susy_py2;
     SUSY_recoilPt = sqrt(susy_px*susy_px + susy_py*susy_py);
-
-//     TLorentzVector gp1,gp2;
-//     TRandom3 arand(getRunNumber()+getLumiSection()+getEventNumber()+1);
-//     gp1.SetPtEtaPhiM(susy_pt1,arand.Uniform(-2,2),susy_phi1,m0);
-//     gp2.SetPtEtaPhiM(susy_pt2,arand.Uniform(-2,2),susy_phi2,m0);
-//     TLorentzVector gptot=gp1+gp2;
-//     cout<<" susy pt "<<SUSY_recoilPt<<" "<<gptot.Pt()<<endl;
 
     SUSY_ISRweight = getISRweight(SUSY_recoilPt,0);
     //    SUSY_ISRweightSystUp = getISRweight(SUSY_recoilPt,1); //this will always be 1
@@ -6563,11 +6579,14 @@ void EventCalculator::reducedTree(TString outputpath) {
       assert(0); //FIXME CFA
 
     }
-    else if (theScanType_==kSMS) {
+    else if (theScanType_==kSMS ||theScanType_==kpmssm) {
       //increment a 2d histogram of mGL, mLSP
       // -- this scheme is not compatible with skimmed input
-      scanSMSngen->Fill(m0,m12);
-      scanSMSngen3D->Fill(m0,m12,mIntermediate);
+      if ( theScanType_==kSMS) {
+	scanSMSngen->Fill(m0,m12);
+	scanSMSngen3D->Fill(m0,m12,mIntermediate);
+      }
+      else if (theScanType_==kpmssm)  scanpMSSMngen->Fill(getRunNumber() );
 
       if ( sampleName_.Contains("v68")) {
 	for (int ipdf=0;ipdf<45;ipdf++) {

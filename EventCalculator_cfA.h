@@ -86,7 +86,7 @@ public:
 class EventCalculator {
 public:
   //enums for configuration
-  enum scanType {kNotScan=0, kmSugra, kSMS};
+  enum scanType {kNotScan=0, kmSugra, kSMS, kpmssm};
   enum METType {kPFMET=0,kPFMETTypeI};
   enum jetType {kPF2PAT=0, kRECOPF};
   enum JESType {kJES0=0,kJESup,kJESdown,kJESFLY};
