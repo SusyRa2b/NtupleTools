@@ -4664,10 +4664,15 @@ TString EventCalculator::getSampleNameOutputString(){
   else  if (sampleName_.Contains("UCSB1731reshuf")) outputstring = "SMS-MadGraph_T1tttt-400to750-1to50_UCSB1731reshuf_v68";
   else  if (sampleName_.Contains("UCSB1733reshuf")) outputstring = "SMS-MadGraph_T1tttt-400to750-25to550_UCSB1733reshuf_v68";
   else  if (sampleName_.Contains("UCSB1730reshuf")) outputstring = "SMS-MadGraph_T1tttt-800to1400-1to50_UCSB1730reshuf_v68";
+  else  if (sampleName_.Contains("UCSB1740reshuf")) outputstring = "SMS-MadGraph_T1tttt-1100to1400-1025to1200_UCSB1740reshuf_v68";  
+  else  if (sampleName_.Contains("UCSB1741reshuf")) outputstring = "SMS-MadGraph_T1tttt-775to1075-25to500_UCSB1741reshuf_v68";  
+  else  if (sampleName_.Contains("UCSB1734reshuf")) outputstring = "SMS-MadGraph_T1tttt-775to1075-525to875_UCSB1734reshuf_v68";
+  else  if (sampleName_.Contains("UCSB1739reshuf")) outputstring = "SMS-MadGraph_T1tttt-1100to1400-525to1000_UCSB1739reshuf_v68";
   //T4tW
   else if  (sampleName_.Contains("UCSB1723reshuf")) outputstring = "SMS-MadGraph_T4tW-325to700-150to625_UCSB1723reshuf_v68";
   //T5tttt
   else if  (sampleName_.Contains("UCSB1738reshuf")) outputstring = "SMS-MadGraph_T5tttt-800to1200-225to1025-50_UCSB1738reshuf_v68";
+  else if  (sampleName_.Contains("UCSB1745reshuf")) outputstring = "SMS-MadGraph_T5tttt-900to1000-225to1025-50_UCSB1745reshuf_v68";
   else {
     //if it isn't found, just use the full name
     return sampleName_;
