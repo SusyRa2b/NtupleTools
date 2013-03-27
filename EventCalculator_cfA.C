@@ -9137,6 +9137,9 @@ void EventCalculator::debugSMS() {
   map <TString, Long64_t> modelstrings;
   map <TString, set<smsMasses> > pointsAtModelstring;
 
+  //keep track of gluino/lsp masses actually found in the event
+  map <TString, set<smsMasses> > mcdocAtModelstring;
+
   startTimer();
   for(Long64_t entry=0; entry < nevents; ++entry){
     chainB->GetEntry(entry);
@@ -9163,6 +9166,23 @@ void EventCalculator::debugSMS() {
 
     delete thesubstrings;
 
+    smsMasses mcdocMasses;
+    //now for something different -- look at gen particle mass
+    for (unsigned int kk=0; kk<mc_doc_id->size(); kk++) {
+      if (TMath::Nint(mc_doc_id->at(kk))==1000021) {
+	if (mcdocMasses.mparent ==0) mcdocMasses.mparent=TMath::Nint(mc_doc_mass->at(kk));
+	else if (mcdocMasses.mparent!=0 ) assert( mcdocMasses.mparent == TMath::Nint(mc_doc_mass->at(kk)));
+      }
+
+      if (TMath::Nint(mc_doc_id->at(kk))==1000022) {
+	if (mcdocMasses.mlsp ==0) mcdocMasses.mlsp=TMath::Nint(mc_doc_mass->at(kk));
+	else if (mcdocMasses.mlsp!=0 ) assert( mcdocMasses.mlsp == TMath::Nint(mc_doc_mass->at(kk)));
+      }
+
+
+    }
+    mcdocAtModelstring[thesubstring].insert(mcdocMasses);  
+
   }
   stopTimer(nevents);
 
@@ -9176,6 +9196,14 @@ void EventCalculator::debugSMS() {
   for ( map<TString, set<smsMasses> >::iterator tms = pointsAtModelstring.begin(); tms!=pointsAtModelstring.end(); ++tms) {
     cout<<tms->first<<endl;
     for ( set<smsMasses>::iterator thisone=   tms->second.begin(); thisone!=tms->second.end(); ++thisone) {
+      thisone->print();
+    }
+  }
+
+  cout<<"~~~~~~~ now printing the masses at each model string"<<endl;
+  for ( map<TString, set<smsMasses> >::iterator tmms = mcdocAtModelstring.begin(); tmms!=mcdocAtModelstring.end(); ++tmms) {
+    cout<<tmms->first<<endl;
+    for ( set<smsMasses>::iterator thisone=   tmms->second.begin(); thisone!=tmms->second.end(); ++thisone) {
       thisone->print();
     }
   }
