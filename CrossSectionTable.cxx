@@ -14,6 +14,9 @@ https://twiki.cern.ch/twiki/pub/LHCPhysics/SUSYCrossSections/stst_decoupled7TeV.
 
 also handle SMS cross sections in a ROOT input file
 
+-- another addition: handle pMSSM cross sections in the format seen here:
+http://cmssw.cvs.cern.ch/cgi-bin/cmssw.cgi/UserCode/pMSSMInterpretation2013/parameters/
+
 */
 
 #include "TObjArray.h"
@@ -22,6 +25,8 @@ also handle SMS cross sections in a ROOT input file
 
 #include <string>
 
+#include "TString.h"
+
 CrossSectionTable::CrossSectionTable(const TString & inputFile, const TString & format,const TString & histoname) //:
 //  filename_(inputFile) {
 {
@@ -29,6 +34,7 @@ CrossSectionTable::CrossSectionTable(const TString & inputFile, const TString & 
   if (format=="smstext") loadFileToDatabaseSMS(inputFile);
   else if (format=="smsroot") loadFileToDatabaseSMSRoot(inputFile,histoname);
   else if (format=="CMSSM") loadFileToDatabase(inputFile);
+  else if (format=="pMSSM") loadFileToDatabasePMSSM(inputFile,false);
   else assert(0);
 
 }
@@ -57,6 +63,47 @@ double CrossSectionTable::getSMSCrossSection(const int m0) const {
 
   std::map<SUSYProcess,double> forThisPoint = (*this)[std::make_pair(m0,0)];
   return forThisPoint[NotFound];
+
+}
+
+void CrossSectionTable::loadFileToDatabasePMSSM(const TString & filename,const bool append) {
+  using namespace std;
+
+  cout<<"Loading file "<<filename<<" into CrossSectionTable"<<endl;
+  int idnumber;
+  string pointname;
+  double xsec; TString xsecin;
+  string dummy1,dummy2;
+
+  ifstream file10(filename.Data());
+  if (!file10.good() ) {
+    cout<<"Problem with file! Terminating..."<<endl;
+    assert(0);
+  }
+
+  if (!append)  database_.clear();
+
+  //load the header row
+  file10>>dummy1>>pointname>>dummy2;
+  int nloaded=0;
+  while (file10>>idnumber>>pointname>>xsecin ) {
+
+    if (xsecin.IsFloat() ) xsec=xsecin.Atof();
+    else {
+      cout<<" invalid cross-section "<<xsecin<<" for point "<<idnumber<<" "<<pointname<<endl;
+      xsec=0;
+    }
+
+    //this class was built for mass pairs; here we just have an index
+    pair<int,int> thispoint = make_pair(idnumber,0);
+    map<SUSYProcess, double> theseCrossSections;
+    //use NotFound 
+    theseCrossSections[NotFound] = xsec;
+    database_[thispoint] = theseCrossSections;
+    nloaded++;
+  }
+  file10.close();
+  cout<<"Loaded cross sections for "<<nloaded<<" scan points. Table size = "<<database_.size()<<endl;
 
 }
 
@@ -104,7 +151,7 @@ void CrossSectionTable::loadFileToDatabaseSMSRoot(const TString & filename,const
   if (h!=0) {
 
     for (int ibin=1; ibin<=h->GetNbinsX(); ibin++) {
-      int m0 = h->GetBinLowEdge(ibin);
+      int m0 = h->GetBinCenter(ibin); //careful that this choice matches what is used in the source histogram
       double xs = h->GetBinContent(ibin);
 
       pair<int, int> scanpoint = make_pair(m0,m12);

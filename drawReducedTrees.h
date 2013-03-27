@@ -581,12 +581,12 @@ void loadReferenceCrossSections() {
   //bad idea to hard-code to this remote afs?
   if ( CrossSectionTable_gluino_ == 0) {
     cout<<"Loading reference cross section file (g~g~)"<<endl;
-    CrossSectionTable_gluino_ = new  CrossSectionTable("/afs/hephy.at/user/w/walten/public/referenceXSecs.root","smsroot","gluino8TeV_NLONLL");
+    CrossSectionTable_gluino_ = new  CrossSectionTable("gluino.root","smsroot","gluino");
   }
 
   if (CrossSectionTable_stop_ == 0) {
     cout<<"Loading reference cross section file (t~t~)"<<endl;
-    CrossSectionTable_stop_ = new  CrossSectionTable("/afs/hephy.at/user/w/walten/public/referenceXSecs.root","smsroot","stop8TeV_NLONLL");
+    CrossSectionTable_stop_ = new  CrossSectionTable("stop.root","smsroot","stop");
   }
 
 }

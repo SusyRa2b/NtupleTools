@@ -36,6 +36,9 @@ public:
   void loadFileToDatabase(const TString & filename); //CMSSM
   void loadFileToDatabaseSMS(const TString & filename); //SMS
   void loadFileToDatabaseSMSRoot(const TString & filename,const TString & histoname); //SMS from root file
+  void loadFileToDatabasePMSSM(const TString & filename,const bool append); //pMSSM
+
+  void appendFileToDatabasePMSSM(const TString & filename) {loadFileToDatabasePMSSM(filename,true);}
 
   //allow const-safe direct access to the database
   std::map<SUSYProcess,double>  operator[] (const std::pair<int,int> & scanpoint) const;
@@ -43,6 +46,7 @@ public:
   //for interactive ROOT
   double getCrossSection(const int m0, const int m12, const SUSYProcess process) const;
   double getSMSCrossSection(const int m0) const;
+  double getPMSSMCrossSection(const int pointindex) const {return getSMSCrossSection(pointindex);}
 
   std::map<std::pair<int, int>, std::map<SUSYProcess, double> >::iterator begin() { return database_.begin();}
   std::map<std::pair<int, int>, std::map<SUSYProcess, double> >::iterator end()   { return database_.end();}
