@@ -77,6 +77,9 @@ public:
 
   bool operator== (const smsMasses & other) const;
   bool operator!= (const smsMasses & other) const;
+  bool operator< (const smsMasses & other) const;
+
+  void print() const;
 
   int mparent; //aka mgluino
   int mlsp; //aka mlsp
@@ -116,6 +119,7 @@ public:
   void sampleAnalyzer();
   void plotBTagEffMC();
   void fillSMShist();
+  void debugSMS();
 
   //load external list of event ID's
   void loadEventList( std::set<jmt::eventID> & veid, const TString & what);

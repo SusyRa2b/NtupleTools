@@ -9119,6 +9119,69 @@ TString EventCalculator::assembleBTagEffFilename(bool cutnametail) {
   return outfile;
 }
 
+void EventCalculator::debugSMS() {
+
+
+  //for speed
+  chainB->SetBranchStatus("*",0);  // disable all branches
+  chainA->SetBranchStatus("*",0);  // disable all branches
+
+  //we only need some branches
+  chainB->SetBranchStatus("model_params",1);
+  chainB->SetBranchStatus("mc_doc*",1);
+  const Long64_t nevents = chainA->GetEntries();
+  const Long64_t neventsB = chainB->GetEntries();
+  assert(nevents==neventsB);
+
+  //keep track of model strings
+  map <TString, Long64_t> modelstrings;
+  map <TString, set<smsMasses> > pointsAtModelstring;
+
+  startTimer();
+  for(Long64_t entry=0; entry < nevents; ++entry){
+    chainB->GetEntry(entry);
+    //we do not need chainA for this code
+    //    chainA->GetEntry(entry);
+
+    if(entry%10000==0) cout << "entry: " << entry << ", percent done=" << (int)(entry/(double)nevents*100.)<<  endl;
+
+    smsMasses    thisSmsMass = getSMSmasses();
+
+    //copy and paste from getSMSmasses()
+    TString modelstring = (*model_params).c_str();
+    TObjArray* thesubstrings = modelstring.Tokenize(" ");
+    TString thesubstring=  thesubstrings->At(2)->GetName();
+
+    if (modelstrings.count(thesubstring)==0) {
+      modelstrings[thesubstring]=1;
+    }
+    else {
+      modelstrings[thesubstring] = modelstrings[thesubstring]+1;
+    }
+
+    pointsAtModelstring[thesubstring].insert(thisSmsMass);
+
+    delete thesubstrings;
+
+  }
+  stopTimer(nevents);
+
+  //now print info
+  cout<<"N events = "<<nevents<<endl;
+
+  for ( map<TString, Long64_t>::iterator ams = modelstrings.begin(); ams!=modelstrings.end(); ++ams) {
+    cout<<ams->first<<endl<<ams->second<<endl;
+  }
+  cout<<"~~~~~~~ now printing the points at each model string"<<endl;
+  for ( map<TString, set<smsMasses> >::iterator tms = pointsAtModelstring.begin(); tms!=pointsAtModelstring.end(); ++tms) {
+    cout<<tms->first<<endl;
+    for ( set<smsMasses>::iterator thisone=   tms->second.begin(); thisone!=tms->second.end(); ++thisone) {
+      thisone->print();
+    }
+  }
+
+}
+
 void EventCalculator::fillSMShist() {
   //fill scanSMSngen and nothing else
 
@@ -12137,4 +12200,27 @@ bool smsMasses::operator== (const smsMasses & other) const {
 
 bool smsMasses::operator!= (const smsMasses & other) const {
   return !(*this == other);
+}
+
+bool smsMasses::operator< (const smsMasses & other) const {
+  if (mparent<other.mparent) return true;
+  else if (mparent>other.mparent) return false;
+  else { //they are equal
+
+    if (mintermediate<other.mintermediate) return true;
+    else if (mintermediate>other.mintermediate) return false;
+    else { //they are equal
+      
+      if (mlsp<other.mlsp) return true;
+      else if (mlsp>other.mlsp) return false;
+    }
+  }
+
+  return false; //at this point, they must be completely equal
+}
+
+void smsMasses::print () const {
+
+  cout<<mparent<<"\t"<<mintermediate<<"\t"<<mlsp<<endl;
+
 }
