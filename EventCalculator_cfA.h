@@ -360,7 +360,7 @@ public:
 
   double getCrossSection();
 
-  double getScanCrossSection( SUSYProcess p, const TString & variation );
+  double getScanCrossSection( SUSYProcess p);
 
   float getBtagEffWeight(); //alternative b-tag weighting implementation
   float getBtagWeight(); //yet another (from btv)
@@ -430,6 +430,7 @@ private:
   CrossSectionTable * crossSectionTanb40_10_;
   CrossSectionTable * crossSectionTanb40_05_;
   CrossSectionTable * crossSectionTanb40_20_;
+  CrossSectionTable * crossSectionpMSSM_;
 
   TFile *smsCrossSectionFile_;
 

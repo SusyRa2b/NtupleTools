@@ -55,6 +55,7 @@ EventCalculator::EventCalculator(const TString & sampleName, const vector<string
   crossSectionTanb40_10_(0),
   crossSectionTanb40_05_(0),
   crossSectionTanb40_20_(0),
+  crossSectionpMSSM_(0),
   smsCrossSectionFile_(0),
   f_trigeff_(0),
               hnum_ht400to500_0L(0),
@@ -292,8 +293,10 @@ void  EventCalculator::loadSusyScanCrossSections() {
     crossSectionTanb40_20_ = new CrossSectionTable("NLOxsec_tanb40_20.txt");
   }
   else if (theScanType_==kpmssm) {
-    //to do
-    cout<<" FIXME!"<<endl;
+    crossSectionpMSSM_ = new CrossSectionTable("xsect_batch1.txt","pMSSM");
+    crossSectionpMSSM_->appendFileToDatabasePMSSM("xsect_batch2.txt");
+    crossSectionpMSSM_->appendFileToDatabasePMSSM("xsect_batch3.txt");
+    crossSectionpMSSM_->appendFileToDatabasePMSSM("xsect_batch4.txt");
   }
 
 }
@@ -4727,14 +4730,11 @@ TString EventCalculator::getCutDescriptionString(){
 }
 
 
-double EventCalculator::getScanCrossSection( SUSYProcess p, const TString & variation ) {
+double EventCalculator::getScanCrossSection( SUSYProcess p ) {
   
   //will need to code for tan beta changes too.
   //but for now we only care about tan beta of 40
-  if (p==NotFound) return 0;
 
-
-  //FIXME CFA    
   if (theScanType_==kmSugra) {
     /*
     std::pair<int,int> thispoint = make_pair(TMath::Nint(eventlhehelperextra_m0),TMath::Nint(eventlhehelperextra_m12));
@@ -4748,7 +4748,7 @@ double EventCalculator::getScanCrossSection( SUSYProcess p, const TString & vari
     assert(0);
   }
   else if (theScanType_==kpmssm) {
-    //FIXME
+    return    crossSectionpMSSM_->getPMSSMCrossSection( getRunNumber());
   }
 
 
@@ -5649,7 +5649,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   float hlteff;
 
 
-  double scanCrossSection,scanCrossSectionPlus,scanCrossSectionMinus;
+  double scanCrossSection;
   int m0,m12,mIntermediate;
 
 //   int W1decayType = -1, W2decayType = -1;
@@ -5945,36 +5945,18 @@ void EventCalculator::reducedTree(TString outputpath) {
 
   reweight::LumiReWeighting * LumiWeights=0;
   reweight::LumiReWeighting * LumiWeightsSystVar=0;
-  // FIXME CFA
-  //Lumi3DReWeighting * LumiWeights3D=0;
   if (puReweightIs1D)  {
     LumiWeights = new reweight::LumiReWeighting( MCDist, DataDist );
     LumiWeightsSystVar = new reweight::LumiReWeighting( MCDist, DataDistSystVar );
   }
   else                 assert(0); //LumiWeights3D = new Lumi3DReWeighting( MCDist2011, DataDist2011);
 
-  //FIXME CFA...this is for PU systematics
-//   if (!puReweightIs1D) {
-//     if(thePUuncType_ == kPUunc0) {
-//       LumiWeights3D->weight3D_init(1);    
-//     }
-//     //8% uncertainty in total inelastic cross-section (68 mb vs 73.5 mb)
-//     //see https://hypernews.cern.ch/HyperNews/CMS/get/physics-validation/1479/3/1/1.html
-//     else if(thePUuncType_ == kPUuncDown) {
-//       LumiWeights3D->weight3D_init(0.92);    
-//     }
-//     else if(thePUuncType_ == kPUuncUp) {
-//       LumiWeights3D->weight3D_init(1.08);    
-//     }
-//   }
 
   // ~~~~~~~ define tree branches ~~~~~~~
   reducedTree.Branch("weight",&eventweight,"weight/D"); //special case; 'weight' is already taken here but I want the reducedTree to use it
   reducedTree.Branch("weight2",&eventweight2,"weight2/D");
   reducedTree.Branch("weight3",&eventweight3,"weight3/D");
   reducedTree.Branch("scanCrossSection",&scanCrossSection,"scanCrossSection/D");
-  reducedTree.Branch("scanCrossSectionPlus",&scanCrossSectionPlus,"scanCrossSectionPlus/D");
-  reducedTree.Branch("scanCrossSectionMinus",&scanCrossSectionMinus,"scanCrossSectionMinus/D");
   reducedTree.Branch("runNumber",&runNumber,"runNumber/l");
   reducedTree.Branch("lumiSection",&lumiSection,"lumiSection/l");
   reducedTree.Branch("eventNumber",&eventNumber,"eventNumber/l");
@@ -6760,14 +6742,10 @@ void EventCalculator::reducedTree(TString outputpath) {
       eventweight3 = getWeight( getNEventsGeneratedExtended());
       
       if (theScanType_!=kSMS) {
-	scanCrossSection = getScanCrossSection(prodprocess,"");
-	scanCrossSectionPlus = getScanCrossSection(prodprocess,"Plus");
-	scanCrossSectionMinus = getScanCrossSection(prodprocess,"Minus");
+	scanCrossSection = getScanCrossSection(prodprocess);
       }
       else {
 	scanCrossSection = 1;
-	scanCrossSectionPlus = scanCrossSection;
-	scanCrossSectionMinus = scanCrossSection; //there are no cross section errors for SMS
       }
 
       //if we are running over ttbar, fill info on decay mode
