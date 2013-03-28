@@ -144,6 +144,9 @@ int main(int argc, char* argv[])
   else if (options=="scanSMSngen") {
     ec.fillSMShist();
   }
+  else if (options=="debug1") {
+    ec.debugSMS();
+  }
   else {
     ec.setOptions(options);
     ec.reducedTree(outputDir);
