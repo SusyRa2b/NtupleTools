@@ -15,6 +15,8 @@
 #include "FactorizedJetCorrector.h"
 #include "JetCorrectionUncertainty.h"
 
+#include "TLorentzVector.h"
+
 #include "TMath.h"
 #include "TGraphAsymmErrors.h"
 #include "TBranch.h"
@@ -359,6 +361,9 @@ public:
   int getTTbarDecayType(int & leptonicTop);
   int getTauDecayType(int tauid);
   int findJetMatchGenTau();
+
+
+  void genLevelHiggs(TLorentzVector (&bbbb)[2][2] ) ;
 
   //  int getWDecayType(int& WdecayType, int& W, int& Wdaughter, bool fromtop);
 

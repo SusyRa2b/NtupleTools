@@ -5,7 +5,6 @@
 #include "TH1.h"
 #include "TH2.h"
 #include "TH3.h"
-#include "TLorentzVector.h"
 #include "TRandom3.h"
 #include "TTree.h"
 #include "TFile.h"
@@ -110,7 +109,8 @@ EventCalculator::EventCalculator(const TString & sampleName, const vector<string
 	   sampleName_.Contains("T2tt") || 
 	   sampleName_.Contains("T1tttt")|| 
 	   sampleName_.Contains("T5tttt")|| 
-	   sampleName_.Contains("T4tW")
+	   sampleName_.Contains("T4tW") ||
+	   sampleName_.Contains("TChihh")
 	   ) {
     theScanType_ = kSMS;
     std::cout<<"\tDetected that I'm running over an SMS scan!"<<std::endl;
@@ -4076,6 +4076,55 @@ return either 0,1,2
 
 }
 
+void EventCalculator::genLevelHiggs(TLorentzVector (&bbbb)[2][2] ) {
+
+   int ihiggs=0;
+   int ib=0;
+
+  float higgspt[2] = {-1,-1}; //kludge
+
+  //  TLorentzVector bbbb[2][2] ;
+
+  //  cout<<" == event"<<endl;
+  for (unsigned int k = 0; k<mc_doc_id->size(); k++) {
+   //important to require status 3
+    if ( abs(TMath::Nint(mc_doc_id->at(k)))==5 && TMath::Nint(mc_doc_status->at(k))) {
+       unsigned int id_mom  = abs(TMath::Nint(mc_doc_mother_id->at(k)));
+       if (id_mom == 25) {
+	 //found a b from a higgs.
+	 //what was the pt of the higgs?
+	 float mompt = mc_doc_mother_pt->at(k);
+	 //	 cout<< " found b "<<mompt<<"\t"<<mc_doc_pt->at(k)<<endl;
+	 bbbb[ihiggs][ib] = TLorentzVector();
+	 bbbb[ihiggs][ib].SetPtEtaPhiE(mc_doc_pt->at(k),mc_doc_eta->at(k),mc_doc_phi->at(k),mc_doc_energy->at(k));
+	 if (ib == 1) {
+	   assert(mompt == higgspt[ihiggs]);
+	   ib=0; 
+	   ihiggs++;
+	 }
+	 else {
+	   higgspt[ihiggs]=mompt;
+	   ib++;
+	 }
+
+       }
+    }
+  }
+
+  //  TLorentzVector h1 = bbbb[0][0] + bbbb[0][1];
+  //  TLorentzVector h2 = bbbb[1][0] + bbbb[1][1];
+
+//   for (int i=0;i<2;i++) {
+//     for (int j=0;j<2;j++) {
+//       cout<<bbbb[i][j].Pt()<<endl; 
+//     }
+//   }
+
+//   cout<<h1.M()<<endl;
+//   cout<<h2.M()<<endl;
+
+}
+
 unsigned int EventCalculator::getSUSYnb() {
 
   unsigned int SUSY_nb=0;
@@ -4269,6 +4318,8 @@ smsMasses EventCalculator::getSMSmasses() {
 
   //the string looks like this:
   //# model T1tttt_1100_50  3.782E-12 
+  //Tchihh (private)
+  //# model TChihh_250_1 //so just like T1tttt and T1bbbb
 
   //or in the case of T4tW
   //# model T2bb_sb_700_ch_150_lsp_50  0.0081141
@@ -4276,6 +4327,8 @@ smsMasses EventCalculator::getSMSmasses() {
   //for T5tttt
   //# model T5tttt_800_525_50  0.00289588
   // mgluino_mstop_mlsp 
+
+
 
   TString modelstring = (*model_params).c_str();
   TObjArray* thesubstrings = modelstring.Tokenize(" ");
@@ -5355,7 +5408,7 @@ float EventCalculator::bJetFastsimSF(const TString & what, int flavor,float pt) 
   if (what == "value") returnVal=1;
 
   //first check if we're in a FASTSIM model
-  if (theScanType_==kpmssm) {
+  if (theScanType_==kpmssm || sampleName_.Contains("TChihh")) {
     //DO NOTHING FOR NOW...this is rather dangerous!
   }
   else  if (theScanType_ != kNotScan ) {
@@ -5723,6 +5776,8 @@ void EventCalculator::reducedTree(TString outputpath) {
 
   //defines the list of triggers to store info about
   map<TString, triggerData > triggerlist;
+  //BJetPlusX
+  triggerlist["DiPFJet80_DiPFJet30_BTagCSVd07d05"]=triggerData();
   //HTMHT
   triggerlist["PFHT350_PFMET100"]=triggerData();
   triggerlist["PFNoPUHT350_PFMET100"]=triggerData();
@@ -5737,6 +5792,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   triggerlist["PFNoPUHT350"]=triggerData();
   triggerlist["PFNoPUHT650"]=triggerData();
   //MET
+  triggerlist["DiCentralJetSumpT100_dPhi05_DiCentralPFJet60_25_PFMET100_HBHENoiseCleaned"]=triggerData();
   triggerlist["DiCentralPFJet50_PFMET80"]=triggerData();
   triggerlist["DiCentralPFJet30_PFMET80"]=triggerData();
   triggerlist["DiCentralPFJet30_PFMET80_BTagCSV07"]=triggerData();
@@ -5996,6 +6052,26 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("SUSY_top_pt",&SUSY_top_pt,"SUSY_top_pt[2]/F");
   reducedTree.Branch("SUSY_topbar_pt",&SUSY_topbar_pt,"SUSY_topbar_pt[2]/F");
   reducedTree.Branch("SUSY_chi0_pt",&SUSY_chi0_pt,"SUSY_chi0_pt[2]/F");
+
+
+  float higgs1b1pt=0, higgs1b1phi=0, higgs1b1eta=0;
+  float higgs1b2pt=0, higgs1b2phi=0, higgs1b2eta=0;
+  float higgs2b1pt=0, higgs2b1phi=0, higgs2b1eta=0;
+  float higgs2b2pt=0, higgs2b2phi=0, higgs2b2eta=0;
+  reducedTree.Branch("higgs1b1pt",&higgs1b1pt,"higgs1b1pt/F");
+  reducedTree.Branch("higgs1b1phi",&higgs1b1phi,"higgs1b1phi/F");
+  reducedTree.Branch("higgs1b1eta",&higgs1b1eta,"higgs1b1eta/F");
+  reducedTree.Branch("higgs1b2pt",&higgs1b2pt,"higgs1b2pt/F");
+  reducedTree.Branch("higgs1b2phi",&higgs1b2phi,"higgs1b2phi/F");
+  reducedTree.Branch("higgs1b2eta",&higgs1b2eta,"higgs1b2eta/F");
+
+  reducedTree.Branch("higgs2b1pt",&higgs2b1pt,"higgs2b1pt/F");
+  reducedTree.Branch("higgs2b1phi",&higgs2b1phi,"higgs2b1phi/F");
+  reducedTree.Branch("higgs2b1eta",&higgs2b1eta,"higgs2b1eta/F");
+  reducedTree.Branch("higgs2b2pt",&higgs2b2pt,"higgs2b2pt/F");
+  reducedTree.Branch("higgs2b2phi",&higgs2b2phi,"higgs2b2phi/F");
+  reducedTree.Branch("higgs2b2eta",&higgs2b2eta,"higgs2b2eta/F");
+
 
   reducedTree.Branch("prob0",&prob0,"prob0/F");
   reducedTree.Branch("probge1",&probge1,"probge1/F");
@@ -6822,6 +6898,16 @@ void EventCalculator::reducedTree(TString outputpath) {
       mjjdiff=fabs(mjj1-mjj2);
       jjResonanceFinder5(mjj1_5,mjj2_5);
       mjjdiff_5=fabs(mjj1_5-mjj2_5);
+
+      //MC truth for higgs
+      if (sampleName_.Contains("TChihh")) {
+      TLorentzVector hbbbb[2][2];
+      genLevelHiggs(hbbbb);
+      higgs1b1pt=hbbbb[0][0].Pt(); higgs1b1phi=hbbbb[0][0].Phi(); higgs1b1eta=hbbbb[0][0].Eta();
+      higgs1b2pt=hbbbb[0][1].Pt(); higgs1b2phi=hbbbb[0][1].Phi(); higgs1b2eta=hbbbb[0][1].Eta();
+      higgs2b1pt=hbbbb[1][0].Pt(); higgs2b1phi=hbbbb[1][0].Phi(); higgs2b1eta=hbbbb[1][0].Eta();
+      higgs2b2pt=hbbbb[1][1].Pt(); higgs2b2phi=hbbbb[1][1].Phi(); higgs2b2eta=hbbbb[1][1].Eta();
+      }
 
       //count b jets
       ntruebjets = nTrueBJets();
