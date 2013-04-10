@@ -2184,11 +2184,11 @@ float EventCalculator::getJetCSV(unsigned int ijet){
   return jets_AK5PF_btag_secVertexCombined->at(ijet);
 }
 
-unsigned int EventCalculator::nGoodJets() {
+unsigned int EventCalculator::nGoodJets(const float ptthreshold) {
   
   unsigned int njets=0;
   for (unsigned int i=0; i < jets_AK5PF_pt->size(); ++i) {
-    if (isGoodJet(i) )   njets++;
+    if (isGoodJet(i,ptthreshold) )   njets++;
   }
   return njets;
 }
@@ -4077,6 +4077,7 @@ return either 0,1,2
 
 }
 
+
 void EventCalculator::genLevelHiggs(TLorentzVector (&bbbb)[2][2] ) {
 
    int ihiggs=0;
@@ -4808,6 +4809,109 @@ double EventCalculator::getScanCrossSection( SUSYProcess p ) {
 
   return 0;
 }
+
+std::vector< std::pair<int,int> > EventCalculator::matchRecoJetsToHiggses(TLorentzVector (&bbbb)[2][2]) {
+  vector< pair<int,int> > truehiggs;
+
+  //eta phi match between the true 2xh(bb) in bbbb and the reco jets
+
+  int jetindex[2][2];
+  //paranoia -- init the array
+  for (int ii=0; ii<2; ii++) {  for (int jj=0; jj<2; jj++) { jetindex[ii][jj]=-1; } }
+
+  int nmatch=0;
+  for (unsigned int kk=0; kk<jets_AK5PF_pt->size(); kk++) {
+    for (int ii=0; ii<2; ii++) {
+      for (int jj=0; jj<2; jj++) {
+	//DeltaR = 0.3 matching
+	if ( jmt::deltaR(jets_AK5PF_eta->at(kk),jets_AK5PF_phi->at(kk),bbbb[ii][jj].Eta(),bbbb[ii][jj].Phi()) < 0.3) { 
+	  jetindex[ii][jj]=kk;
+	  nmatch++;
+	}
+	
+      }
+    }
+    if (nmatch==4) break;
+  }
+
+/* jmt higgs debug
+  cout<<" true higgs jet indices "<<endl;
+  cout<<  jetindex[0][0]<<" "<<jetindex[0][1];
+  cout<<"\t"<<  jetindex[1][0]<<" "<<jetindex[1][1]<<endl;
+*/
+  truehiggs.push_back( make_pair( jetindex[0][0],jetindex[0][1]));
+  truehiggs.push_back( make_pair( jetindex[1][0],jetindex[1][1]));
+
+  return truehiggs;
+}
+
+void EventCalculator::higgs125massPairs(float & higgsMbb1,float & higgsMbb2,const std::vector< std::pair<int,int> > & truehiggs) {
+
+  //find the 4 most b-like good jets
+  set<pair< float, int> > jets_sorted_by_bdisc;
+  for (unsigned int kk=0; kk<jets_AK5PF_pt->size(); kk++) {
+    if (isGoodJet(kk,20) ) { 
+      float bdiscval = jets_AK5PF_btag_secVertexCombined->at(kk);
+      jets_sorted_by_bdisc.insert(make_pair(bdiscval,kk));
+    }
+  }
+
+  if ( jets_sorted_by_bdisc.size() <4 ) return;
+
+  int jetindices[4];
+  int iii=0;
+  for (set<pair< float, int> >::reverse_iterator ib=jets_sorted_by_bdisc.rbegin(); ib!=jets_sorted_by_bdisc.rend(); ++ib) {
+    //    cout<<ib->first<<endl; //jmt higgs debug
+    if (iii<4) {
+      jetindices[iii] = ib->second;
+      ++iii;
+    }
+  }
+
+
+  //now calculate all possible invariant mass pairs
+  vector<pair<float,float> > higgsMassPairs;
+
+  int jet1index=0;
+  for (int jet2index=1; jet2index<4; jet2index++ ) {
+
+    float mbb1=calc_mNj(jetindices[jet1index],jetindices[jet2index]);
+    int jetindex2[2];
+    int nj=0;
+    for (int ijetindex=0; ijetindex<4; ijetindex++) {
+      if ( ijetindex!= jet1index && ijetindex!=jet2index) {
+	jetindex2[nj]=ijetindex;
+	nj++;
+      }
+    }
+    float mbb2=calc_mNj(jetindices[jetindex2[0]],jetindices[jetindex2[1]]);
+    
+/* jmt higgs debug
+    cout<<jetindices[jet1index]<<" "<<jetindices[jet2index]<<"\t";
+    cout<<jetindices[jetindex2[0]]<<" "<<jetindices[jetindex2[1]]<<endl;
+*/
+
+    higgsMassPairs.push_back(make_pair(mbb1,mbb2));
+  }
+
+  float mindiff=1e9;
+  int minind=-1;
+  const float higgsmass=125;
+  for (unsigned int ih=0; ih<higgsMassPairs.size(); ih++) {
+    //    cout<<" mh = "<<higgsMassPairs[ih].first<<" "<<higgsMassPairs[ih].second<<endl;
+    //invent a dumb metric for now
+    float thisdiff=   std::abs(higgsMassPairs[ih].first - higgsmass) + std::abs(higgsMassPairs[ih].second - higgsmass);
+    if (thisdiff< mindiff) {
+      mindiff=thisdiff;
+      minind = ih;
+    }
+  }
+
+  higgsMbb1 = higgsMassPairs[minind].first;
+  higgsMbb2 = higgsMassPairs[minind].second;
+
+}
+
 
 void EventCalculator::jjResonanceFinder(float & mjj1, float & mjj2, int & ngoodMC) {//simple first try
   mjj1=0;
@@ -5829,7 +5933,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   //want a copy of triggerlist, for storing mc trigger results
   map<TString, triggerData > triggerlist_mc(triggerlist);
 
-  int njets, njets30, nbjets, nbjets30,ntruebjets, nElectrons,nElectrons2011, nMuons, nTightMuons;
+  int njets, njets30, nbjets, nbjets30,ntruebjets, nElectrons,nElectrons2011, nMuons, nTightMuons,njets20;
   int nbjetsTweaked;
   int nTausVLoose,nTausLoose,nTausMedium,nTausTight;
   //  int nIndirectTaus4,nIndirectTaus5,nIndirectTaus2,nIndirectTaus3;
@@ -5907,6 +6011,9 @@ void EventCalculator::reducedTree(TString outputpath) {
   float deltaR_closestB;
   float mjj_closestB;
 
+  //optimized for higgs(125) pairs
+  //first the "dumb" variables. find the pairs of b-like jets with minimum mass difference from 125 GeV
+  float higgsMbb1=-1,higgsMbb2=-1;
 
   //  float transverseThrust,transverseThrustPhi;
   //  float transverseThrustWithMET,transverseThrustWithMETPhi;
@@ -6054,12 +6161,28 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("SUSY_topbar_pt",&SUSY_topbar_pt,"SUSY_topbar_pt[2]/F");
   reducedTree.Branch("SUSY_chi0_pt",&SUSY_chi0_pt,"SUSY_chi0_pt[2]/F");
 
-
+  //Higgs related variables
   float higgs1b1pt=0, higgs1b1phi=0, higgs1b1eta=0;
   float higgs1b2pt=0, higgs1b2phi=0, higgs1b2eta=0;
   float higgs2b1pt=0, higgs2b1phi=0, higgs2b1eta=0;
   float higgs2b2pt=0, higgs2b2phi=0, higgs2b2eta=0;
   float higgsb1pt=0, higgsb2pt=0, higgsb3pt=0, higgsb4pt=0;
+
+  //useless?
+  float higgsDeltaRminCorrect=0;
+  float higgsDeltaRminWrong1=0;
+  float higgsDeltaRminWrong2=0;
+
+  float higgsDeltaRmaxCorrect=0;
+  float higgsDeltaRmaxWrong1=0;
+  float higgsDeltaRmaxWrong2=0;
+
+  //inv mass and sum pT of every combination
+  float higgsMass[6];
+  float higgsSumpt[6];
+
+  reducedTree.Branch("higgsMass",&higgsMass,"higgsMass[6]/F");
+  reducedTree.Branch("higgsSumpt",&higgsSumpt,"higgsSumpt[6]/F");
 
   reducedTree.Branch("higgs1b1pt",&higgs1b1pt,"higgs1b1pt/F");
   reducedTree.Branch("higgs1b1phi",&higgs1b1phi,"higgs1b1phi/F");
@@ -6079,6 +6202,14 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("higgsb2pt",&higgsb2pt,"higgsb2pt/F");
   reducedTree.Branch("higgsb3pt",&higgsb3pt,"higgsb3pt/F");
   reducedTree.Branch("higgsb4pt",&higgsb4pt,"higgsb4pt/F");
+
+  reducedTree.Branch("higgsDeltaRminCorrect",&higgsDeltaRminCorrect,"higgsDeltaRminCorrect/F");
+  reducedTree.Branch("higgsDeltaRminWrong1",&higgsDeltaRminWrong1,"higgsDeltaRminWrong1/F");
+  reducedTree.Branch("higgsDeltaRminWrong2",&higgsDeltaRminWrong2,"higgsDeltaRminWrong2/F");
+
+  reducedTree.Branch("higgsDeltaRmaxCorrect",&higgsDeltaRmaxCorrect,"higgsDeltaRmaxCorrect/F");
+  reducedTree.Branch("higgsDeltaRmaxWrong1",&higgsDeltaRmaxWrong1,"higgsDeltaRmaxWrong1/F");
+  reducedTree.Branch("higgsDeltaRmaxWrong2",&higgsDeltaRmaxWrong2,"higgsDeltaRmaxWrong2/F");
 
 
   reducedTree.Branch("prob0",&prob0,"prob0/F");
@@ -6159,6 +6290,7 @@ void EventCalculator::reducedTree(TString outputpath) {
 
   reducedTree.Branch("njets",&njets,"njets/I");
   reducedTree.Branch("njets30",&njets30,"njets30/I");
+  reducedTree.Branch("njets20",&njets20,"njets20/I");
   reducedTree.Branch("nbjets",&nbjets,"nbjets/I");
   reducedTree.Branch("nbjetsTweaked",&nbjetsTweaked,"nbjetsTweaked/I");
   reducedTree.Branch("nbjets30",&nbjets30,"nbjets30/I");
@@ -6189,6 +6321,10 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("mjj1_5",&mjj1_5,"mjj1_5/F");
   reducedTree.Branch("mjj2_5",&mjj2_5,"mjj2_5/F");
   reducedTree.Branch("mjjdiff_5",&mjjdiff_5,"mjjdiff_5/F");
+
+  reducedTree.Branch("higgsMbb1",&higgsMbb1,"higgsMbb1/F");
+  reducedTree.Branch("higgsMbb2",&higgsMbb2,"higgsMbb2/F");
+
 
   reducedTree.Branch("mjjb1",&mjjb1,"mjjb1/F");
   reducedTree.Branch("mjjb2",&mjjb2,"mjjb2/F");
@@ -6901,6 +7037,7 @@ void EventCalculator::reducedTree(TString outputpath) {
       //count jets
       njets = nGoodJets();
       njets30 = nGoodJets30();
+      njets20 = nGoodJets(20);
 
       //look for jj resonances
       jjResonanceFinder(mjj1,mjj2, nCorrectRecoStop);
@@ -6908,14 +7045,54 @@ void EventCalculator::reducedTree(TString outputpath) {
       jjResonanceFinder5(mjj1_5,mjj2_5);
       mjjdiff_5=fabs(mjj1_5-mjj2_5);
 
+
       //MC truth for higgs
       if (sampleName_.Contains("TChihh")) {
       	TLorentzVector hbbbb[2][2];
       	genLevelHiggs(hbbbb);
+	vector< pair<int,int> > genHiggsIndices = matchRecoJetsToHiggses(hbbbb);
       	higgs1b1pt=hbbbb[0][0].Pt(); higgs1b1phi=hbbbb[0][0].Phi(); higgs1b1eta=hbbbb[0][0].Eta();
       	higgs1b2pt=hbbbb[0][1].Pt(); higgs1b2phi=hbbbb[0][1].Phi(); higgs1b2eta=hbbbb[0][1].Eta();
       	higgs2b1pt=hbbbb[1][0].Pt(); higgs2b1phi=hbbbb[1][0].Phi(); higgs2b1eta=hbbbb[1][0].Eta();
       	higgs2b2pt=hbbbb[1][1].Pt(); higgs2b2phi=hbbbb[1][1].Phi(); higgs2b2eta=hbbbb[1][1].Eta();
+
+	float	higgsDeltaR1 = jmt::deltaR(higgs1b1eta,higgs1b1phi,higgs1b2eta,higgs1b2phi); //12
+	float	higgsDeltaR2 = jmt::deltaR(higgs2b1eta,higgs2b1phi,higgs2b2eta,higgs2b2phi); //34
+	higgsDeltaRminCorrect = higgsDeltaR1<higgsDeltaR2 ? higgsDeltaR1 : higgsDeltaR2;
+	higgsDeltaRmaxCorrect = higgsDeltaR1>higgsDeltaR2 ? higgsDeltaR1 : higgsDeltaR2;
+
+	float higgsDeltaRcomb[4];
+       	higgsDeltaRcomb[0] = jmt::deltaR(higgs1b1eta,higgs1b1phi,higgs2b1eta,higgs2b1phi); // 13
+	higgsDeltaRcomb[1] = jmt::deltaR(higgs1b1eta,higgs1b1phi,higgs2b2eta,higgs2b2phi); // 14
+	higgsDeltaRcomb[2] = jmt::deltaR(higgs1b2eta,higgs1b2phi,higgs2b1eta,higgs2b1phi); // 23
+	higgsDeltaRcomb[3] = jmt::deltaR(higgs1b2eta,higgs1b2phi,higgs2b2eta,higgs2b2phi); // 24
+	
+	higgsDeltaRminWrong1 = higgsDeltaRcomb[0] <higgsDeltaRcomb[3]?  higgsDeltaRcomb[0] :higgsDeltaRcomb[3];
+	higgsDeltaRmaxWrong1 = higgsDeltaRcomb[0] >higgsDeltaRcomb[3]?  higgsDeltaRcomb[0] :higgsDeltaRcomb[3];
+	higgsDeltaRminWrong2 = higgsDeltaRcomb[1] <higgsDeltaRcomb[2]?  higgsDeltaRcomb[1] :higgsDeltaRcomb[2];
+	higgsDeltaRmaxWrong2 = higgsDeltaRcomb[1] >higgsDeltaRcomb[2]?  higgsDeltaRcomb[1] :higgsDeltaRcomb[2];
+
+	int kk=0;
+	for (int ii=1; ii<=4; ii++) {
+	  for (int jj=ii+1; jj<=4; jj++) {
+	    
+	    int ii1 = (ii-1)/2;
+	    int ii2 = (ii-1)%2;
+
+	    int jj1 = (jj-1)/2;
+	    int jj2 = (jj-1)%2;
+
+	    higgsMass[kk] = TLorentzVector(hbbbb[ii1][ii2] + hbbbb[jj1][jj2]).M();
+	    higgsSumpt[kk] = hbbbb[ii1][ii2].Pt() + hbbbb[jj1][jj2].Pt();
+	    kk++;
+	  }
+	}
+
+	higgsMbb1=-1;
+	higgsMbb2=-1;
+	//calculate the most naive invariant masses
+	higgs125massPairs(higgsMbb1,higgsMbb2,genHiggsIndices);
+
               // sort by pt (I'm sure this could be done much more efficiently... (ku) )
         float higgsbpt[4] = {higgs1b1pt, higgs1b2pt, higgs2b1pt, higgs2b2pt};
 	for (int ii=0; ii<3; ii++){

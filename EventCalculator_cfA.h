@@ -255,7 +255,7 @@ public:
   bool isGoodJetMHT(unsigned int ijet);
   bool passBTagger(int ijet, BTaggerType btagger=Nbtaggers );
 
-  unsigned int nGoodJets();
+  unsigned int nGoodJets(const float ptthreshold=50);
   //  unsigned int nGoodJets(TH2D* count,TH2D* unc,TH2D* l2l3); //for a test
   unsigned int nGoodJets30();
   unsigned int nGoodBJets(float ptthreshold=50, BTaggerType btagger=Nbtaggers);
@@ -364,6 +364,8 @@ public:
 
 
   void genLevelHiggs(TLorentzVector (&bbbb)[2][2] ) ;
+  void higgs125massPairs(float & higgsMbb1,float & higgsMbb2,const std::vector< std::pair<int,int> > & truehiggs  ) ;
+  std::vector< std::pair<int,int> > matchRecoJetsToHiggses(TLorentzVector (&bbbb)[2][2]);
 
   //  int getWDecayType(int& WdecayType, int& W, int& Wdaughter, bool fromtop);
 
