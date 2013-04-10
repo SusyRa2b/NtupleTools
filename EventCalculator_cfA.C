@@ -2170,6 +2170,7 @@ bool EventCalculator::passBTagger(int ijet, BTaggerType btagger ) {
   else if (btagger==kSSVHPT) return jets_AK5PF_btag_secVertexHighPur->at(ijet) >= 2;
   else if (btagger==kTCHPT ) return jets_AK5PF_btag_TC_highPur->at(ijet) >= 3.41;
   else if (btagger==kTCHPM ) return jets_AK5PF_btag_TC_highPur->at(ijet) >= 1.93;
+  else if (btagger==kCSVT  ) return jets_AK5PF_btag_secVertexCombined->at(ijet) >=0.898;
   else if (btagger==kCSVM  ) return jets_AK5PF_btag_secVertexCombined->at(ijet) >=0.679;
   else if (btagger==kCSVL  ) return jets_AK5PF_btag_secVertexCombined->at(ijet) >=0.244;
   else{
@@ -5832,7 +5833,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   int nbjetsTweaked;
   int nTausVLoose,nTausLoose,nTausMedium,nTausTight;
   //  int nIndirectTaus4,nIndirectTaus5,nIndirectTaus2,nIndirectTaus3;
-  int nbjetsSSVM,nbjetsTCHET,nbjetsSSVHPT,nbjetsTCHPT,nbjetsTCHPM,nbjetsCSVM,nbjetsCSVL; 
+  int nbjetsSSVM,nbjetsTCHET,nbjetsSSVHPT,nbjetsTCHPT,nbjetsTCHPM,nbjetsCSVT,nbjetsCSVM,nbjetsCSVL; 
   int nElectrons5, nElectrons15,nElectrons20;
   int nMuons5, nMuons15,nMuons20;
 
@@ -6058,6 +6059,8 @@ void EventCalculator::reducedTree(TString outputpath) {
   float higgs1b2pt=0, higgs1b2phi=0, higgs1b2eta=0;
   float higgs2b1pt=0, higgs2b1phi=0, higgs2b1eta=0;
   float higgs2b2pt=0, higgs2b2phi=0, higgs2b2eta=0;
+  float higgsb1pt=0, higgsb2pt=0, higgsb3pt=0, higgsb4pt=0;
+
   reducedTree.Branch("higgs1b1pt",&higgs1b1pt,"higgs1b1pt/F");
   reducedTree.Branch("higgs1b1phi",&higgs1b1phi,"higgs1b1phi/F");
   reducedTree.Branch("higgs1b1eta",&higgs1b1eta,"higgs1b1eta/F");
@@ -6071,6 +6074,11 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("higgs2b2pt",&higgs2b2pt,"higgs2b2pt/F");
   reducedTree.Branch("higgs2b2phi",&higgs2b2phi,"higgs2b2phi/F");
   reducedTree.Branch("higgs2b2eta",&higgs2b2eta,"higgs2b2eta/F");
+
+  reducedTree.Branch("higgsb1pt",&higgsb1pt,"higgsb1pt/F");
+  reducedTree.Branch("higgsb2pt",&higgsb2pt,"higgsb2pt/F");
+  reducedTree.Branch("higgsb3pt",&higgsb3pt,"higgsb3pt/F");
+  reducedTree.Branch("higgsb4pt",&higgsb4pt,"higgsb4pt/F");
 
 
   reducedTree.Branch("prob0",&prob0,"prob0/F");
@@ -6192,6 +6200,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("nbjetsTCHPT",&nbjetsTCHPT,"nbjetsTCHPT/I");
   reducedTree.Branch("nbjetsTCHET",&nbjetsTCHET,"nbjetsTCHET/I");
   reducedTree.Branch("nbjetsTCHPM",&nbjetsTCHPM,"nbjetsTCHPM/I");
+  reducedTree.Branch("nbjetsCSVT",&nbjetsCSVT,"nbjetsCSVT/I");
   reducedTree.Branch("nbjetsCSVM",&nbjetsCSVM,"nbjetsCSVM/I");
   reducedTree.Branch("nbjetsCSVL",&nbjetsCSVL,"nbjetsCSVL/I");
 
@@ -6901,12 +6910,29 @@ void EventCalculator::reducedTree(TString outputpath) {
 
       //MC truth for higgs
       if (sampleName_.Contains("TChihh")) {
-      TLorentzVector hbbbb[2][2];
-      genLevelHiggs(hbbbb);
-      higgs1b1pt=hbbbb[0][0].Pt(); higgs1b1phi=hbbbb[0][0].Phi(); higgs1b1eta=hbbbb[0][0].Eta();
-      higgs1b2pt=hbbbb[0][1].Pt(); higgs1b2phi=hbbbb[0][1].Phi(); higgs1b2eta=hbbbb[0][1].Eta();
-      higgs2b1pt=hbbbb[1][0].Pt(); higgs2b1phi=hbbbb[1][0].Phi(); higgs2b1eta=hbbbb[1][0].Eta();
-      higgs2b2pt=hbbbb[1][1].Pt(); higgs2b2phi=hbbbb[1][1].Phi(); higgs2b2eta=hbbbb[1][1].Eta();
+      	TLorentzVector hbbbb[2][2];
+      	genLevelHiggs(hbbbb);
+      	higgs1b1pt=hbbbb[0][0].Pt(); higgs1b1phi=hbbbb[0][0].Phi(); higgs1b1eta=hbbbb[0][0].Eta();
+      	higgs1b2pt=hbbbb[0][1].Pt(); higgs1b2phi=hbbbb[0][1].Phi(); higgs1b2eta=hbbbb[0][1].Eta();
+      	higgs2b1pt=hbbbb[1][0].Pt(); higgs2b1phi=hbbbb[1][0].Phi(); higgs2b1eta=hbbbb[1][0].Eta();
+      	higgs2b2pt=hbbbb[1][1].Pt(); higgs2b2phi=hbbbb[1][1].Phi(); higgs2b2eta=hbbbb[1][1].Eta();
+              // sort by pt (I'm sure this could be done much more efficiently... (ku) )
+        float higgsbpt[4] = {higgs1b1pt, higgs1b2pt, higgs2b1pt, higgs2b2pt};
+	for (int ii=0; ii<3; ii++){
+	  if (higgsbpt[ii]<higgsbpt[ii+1]) { float temp = higgsbpt[ii]; higgsbpt[ii]=higgsbpt[ii+1]; higgsbpt[ii+1]=temp;}
+	}
+	for (int ii=0; ii<3; ii++){
+	  if (higgsbpt[ii]<higgsbpt[ii+1]) { float temp = higgsbpt[ii]; higgsbpt[ii]=higgsbpt[ii+1]; higgsbpt[ii+1]=temp;}
+	}
+	for (int ii=0; ii<3; ii++){
+	  if (higgsbpt[ii]<higgsbpt[ii+1]) { float temp = higgsbpt[ii]; higgsbpt[ii]=higgsbpt[ii+1]; higgsbpt[ii+1]=temp;}
+	}
+	  
+	higgsb1pt = higgsbpt[0];
+	higgsb2pt = higgsbpt[1];
+	higgsb3pt = higgsbpt[2];
+	higgsb4pt = higgsbpt[3];
+
       }
 
       //count b jets
@@ -6920,6 +6946,7 @@ void EventCalculator::reducedTree(TString outputpath) {
       nbjetsTCHET = nGoodBJets( kTCHET);
       nbjetsTCHPT = nGoodBJets( kTCHPT);
       nbjetsTCHPM = nGoodBJets( kTCHPM);
+      nbjetsCSVT = nGoodBJets( kCSVT);
       nbjetsCSVM = nGoodBJets( kCSVM);
       nbjetsCSVL = nGoodBJets( kCSVL);
 
