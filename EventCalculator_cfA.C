@@ -7118,14 +7118,14 @@ void EventCalculator::reducedTree(TString outputpath) {
 
       nbjetsTweaked = nGoodBJets_Tweaked();
       nbjets30 = nGoodBJets(30);
-      nbjetsSSVM = nGoodBJets( kSSVM);
-      nbjetsSSVHPT = nGoodBJets( kSSVHPT);
-      nbjetsTCHET = nGoodBJets( kTCHET);
-      nbjetsTCHPT = nGoodBJets( kTCHPT);
-      nbjetsTCHPM = nGoodBJets( kTCHPM);
-      nbjetsCSVT = nGoodBJets( kCSVT);
-      nbjetsCSVM = nGoodBJets( kCSVM);
-      nbjetsCSVL = nGoodBJets( kCSVL);
+      nbjetsSSVM = nGoodBJets( 50, kSSVM);
+      nbjetsSSVHPT = nGoodBJets( 50, kSSVHPT);
+      nbjetsTCHET = nGoodBJets( 50, kTCHET);
+      nbjetsTCHPT = nGoodBJets( 50, kTCHPT);
+      nbjetsTCHPM = nGoodBJets( 50, kTCHPM);
+      nbjetsCSVT = nGoodBJets( 30, kCSVT);
+      nbjetsCSVM = nGoodBJets( 50, kCSVM);
+      nbjetsCSVL = nGoodBJets( 50, kCSVL);
 
       hadronicTopFinder_DeltaR(mjjb1,mjjb2,topPT1,topPT2);
 
