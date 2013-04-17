@@ -778,6 +778,7 @@ public :
 
    //BEGIN jmt
    TH2D* scanSMSngen_;
+   bool isPMSSM_;
    vector<TH2D*> scanProcessTotals_;
    TString filestub_;
    bool joinbtagbins_;
@@ -795,6 +796,7 @@ public :
 //BEGIN jmt mod
 signalEff2012::signalEff2012(TString path, TString filestub,bool joinbtagbins, bool usebtagsf, bool dopdfs, bool pusyst, int minnjets, int isrmode) : fChain(0) 
 													    , scanSMSngen_(0)
+													    ,isPMSSM_(false)
 													    ,filestub_(filestub)
 													    ,joinbtagbins_(joinbtagbins)
 													    ,usebtagsf_(usebtagsf)
@@ -834,11 +836,24 @@ signalEff2012::signalEff2012(TString path, TString filestub,bool joinbtagbins, b
       }
       f->GetObject("reducedTree",tree);
       scanSMSngen_ = (TH2D*) f->Get("scanSMSngen"); //BEGIN  jmt mod
+      TH1D*   scanpMSSMngen = (TH1D*) f->Get("scanpMSSMngen");
+
+      if (scanpMSSMngen!=0) {
+	assert(scanSMSngen_==0); //only one of these should exist.
+	//the coding is more generic if we treat pMSSM as a 1d SMS.
+	scanSMSngen_ = new TH2D("scanSMSngen","scan sms ngen",scanpMSSMngen->GetNbinsX(),scanpMSSMngen->GetXaxis()->GetXmin(),scanpMSSMngen->GetXaxis()->GetXmax(),1,-1,1);
+	//now copy the contents of the pMSSM histo into this new histo
+	for ( int ix = 1; ix<= scanpMSSMngen->GetNbinsX(); ix++) {
+	  scanSMSngen_->SetBinContent(ix, 1, scanpMSSMngen->GetBinContent(ix));
+	}
+	isPMSSM_=true;
+      }
       if (scanSMSngen_==0) {
 	std::cout<<" WARNING -- scanSMSngen not found (only ok for non-SMS)"<<std::endl;
 	scanSMSngen_ = new TH2D("scanSMSngen","scan sms ngen",1,-1,1,1,-1,1);
       }
       //need to loop over the keys in the file and load all scan process totals histos
+      //(this is now deprecated...but leave it in place just in case)
       for (int ih = 0; ih<f->GetListOfKeys()->GetEntries(); ih++) {
 	TString histname = f->GetListOfKeys()->At(ih)->GetName();
 	if (!histname.BeginsWith("scanProcessTotals")) continue;

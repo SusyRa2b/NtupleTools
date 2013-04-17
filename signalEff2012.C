@@ -44,8 +44,13 @@ void signalEff2012::Loop()
 
   vector<SearchRegion> searchregions;
 
-  if (filestub_.Contains("SMS-MadGraph"))  assert(theIsrMode_ != kNoIsrWeight);
-  if (!filestub_.Contains("SMS-MadGraph"))  assert(theIsrMode_ == kNoIsrWeight);
+  bool madgraphIsr=false;
+  if (filestub_.Contains("SMS-MadGraph")) {
+    assert(theIsrMode_ != kNoIsrWeight);
+    madgraphIsr=true;
+  }
+  //the T1tttt part is a hack
+  //  if (!filestub_.Contains("SMS-MadGraph") )  assert(theIsrMode_ == kNoIsrWeight);
 
   //not incredibly elegant, but it will do
   const bool doLeptons =  !(filestub_.Contains("T1bbbb"));
@@ -104,7 +109,7 @@ void signalEff2012::Loop()
 
   //same indexing as searchregions
   vector<TH2D*> eventcounts; 
-  vector<TH2D*> eventcountsTotal; 
+  vector<TH2D*> eventcountsTotal;  //actually stupid to make N copies of this....
   for ( size_t ii = 0; ii<searchregions.size(); ii++) {
     TString hname = TString("events_")+searchregions[ii].id();
     TString hnameall = TString("eventstotal_")+searchregions[ii].id();
@@ -123,7 +128,12 @@ void signalEff2012::Loop()
     eventcountsTotal[ii]->SetTitle(searchregions[ii].id()); //i think this is ok (name will still be unique)
     eventcountsTotal[ii]->Sumw2();
   }
-  
+
+  TString hnameallisr = "eventstotalisr";
+  TH2D*  eventcountsTotalISR = (TH2D*) scanSMSngen_->Clone(hnameallisr);
+  eventcountsTotalISR->Reset();
+  eventcountsTotalISR->SetTitle("eventstotal after isr weight");
+  eventcountsTotalISR->Sumw2();  
 
 //     This is the loop skeleton where:
 //    jentry is the global entry number in the chain
@@ -140,8 +150,11 @@ void signalEff2012::Loop()
   else {
     fChain->SetBranchStatus("*",0);  // disable all branches
     //activate branches
-    fChain->SetBranchStatus("m0",1);
-    fChain->SetBranchStatus("m12",1);
+    if (isPMSSM_)    fChain->SetBranchStatus("runNumber",1);
+    else {
+      fChain->SetBranchStatus("m0",1);
+      fChain->SetBranchStatus("m12",1);
+    }
     fChain->SetBranchStatus("weight3",1); 
     fChain->SetBranchStatus("PUweight",1); 
     fChain->SetBranchStatus("PUweightSystVar",1);
@@ -190,6 +203,12 @@ void signalEff2012::Loop()
       Long64_t ientry = LoadTree(jentry);
       if (ientry < 0) assert(0); //jmt mod to increase the severity of this (be sure to notice)
       nb = fChain->GetEntry(jentry);   nbytes += nb;
+
+      //after loading the event, set m0 and m12 for pMSSM
+      if (isPMSSM_) {
+	m0 = runNumber;
+	m12=0;
+      }
       
       if (jentry%500000==0) {
 	cout<<100*double(jentry)/double(nentries)<<" % done"<<endl;
@@ -211,14 +230,23 @@ void signalEff2012::Loop()
 	  if (theIsrMode_==kIsrDown) sigmavar=-1;
 	  else if (theIsrMode_==kIsrUp) sigmavar=1;
 
-	  if (SUSY_recoilPt<=120)      theisrweight = 1;
-	  else if (SUSY_recoilPt<=150) theisrweight = 0.95 + 0.05*sigmavar;
-	  else if (SUSY_recoilPt<=250) theisrweight = 0.9  + 0.1*sigmavar;
-	  else                         theisrweight = 0.8  + 0.2*sigmavar;
+	  if (madgraphIsr ) {
+	    if (SUSY_recoilPt<=120)      theisrweight = 1;
+	    else if (SUSY_recoilPt<=150) theisrweight = 0.95 + 0.05*sigmavar;
+	    else if (SUSY_recoilPt<=250) theisrweight = 0.9  + 0.1*sigmavar;
+	    else                         theisrweight = 0.8  + 0.2*sigmavar;
+	  }
+	  // Dominick prescription with conservative central value
+	  else {//pythia Isr
+	    if (SUSY_recoilPt<=40)      theisrweight = 1;
+	    else if (SUSY_recoilPt<=100) theisrweight = 1 + 0.06*sigmavar;
+	    else if (SUSY_recoilPt<=150) theisrweight = 1  + 0.1*sigmavar;
+	    else                         theisrweight = 1  + 0.15*sigmavar;
+	  }
 
 	  thisweight *= theisrweight;
+	  if (ii==0)  eventcountsTotalISR->Fill(m0,m12,theisrweight); //only fill once per event!
 	}
-
 
 	double pdfweight=1;
 	//use b tag SF if desired
