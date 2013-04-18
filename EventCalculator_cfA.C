@@ -192,6 +192,36 @@ float EventCalculator::getPDFweight(const int ipdfset, const int imember ) {
 
 }
 
+float EventCalculator::getTopPtWeight(float & topPt) {
+  topPt=-1;
+
+  //only for use with ttbar 
+  //(2 string comparisons for every event is not so good for performance, but oh well)
+  if (sampleName_.BeginsWith("TTJets") || sampleName_.BeginsWith("TT_")) {
+
+    //code from Darren converted to cfA
+    for ( unsigned int i=0; i< mc_doc_id->size(); i++ ) {
+      // look for the *top* (not antitop) pT
+      if ( mc_doc_id->at(i)==6 ) { topPt = mc_doc_pt->at(i); break; }
+    }
+
+    if (topPt<0) return 1;
+    if ( sampleName_.Contains("madgraph")) { //only return weight for madgraph
+      
+      const  double p0 = 1.18246e+00;
+      const  double p1 = 4.63312e+02;
+      const  double p2 = 2.10061e-06;
+      
+      double x=topPt;
+      if ( x>p1 ) x = p1; //use flat factor above 463 GeV
+      double result = p0 + p2 * x * ( x - 2 * p1 );
+      return float(result);
+    }
+  }
+
+  return 1;
+}
+
 
 void EventCalculator::initEnumNames() {
 
@@ -402,41 +432,42 @@ float EventCalculator::getPUWeight( reweight::LumiReWeighting lumiWeights ) {
 
 //3d pu reweighting deprecated for 2012
 
-bool EventCalculator::isGoodMuon(const unsigned int k, const bool disableRelIso, const float ptthreshold) {
+bool EventCalculator::isGoodMuon(const unsigned int k, const bool disableRelIso, const float ptthreshold,int & lossCode) {
 
   // updated for 2012...basically just copying keith's code
 
   //sanity check
-  if ( k >= pf_mus_pt->size() ) return false;
+  if ( k >= pf_mus_pt->size() ) {lossCode=5; return false;}
 
-  if (!isGoodPV(0)) return false;
+  if (!isGoodPV(0))  {lossCode=5; return false;}
 
-  if (pf_mus_pt->at(k) < ptthreshold) return false;
-  if (fabs(pf_mus_eta->at(k)) >= 2.4 ) return false; 
+  if (fabs(pf_mus_eta->at(k)) >= 2.4 ) {lossCode=1; return false; }
+  if (pf_mus_pt->at(k) < ptthreshold) {lossCode=2; return false;}
   
   //i like to use TMath::Nint for quantities stored as float that are really integers. just to be safe
 
-  if ( TMath::Nint(pf_mus_id_GlobalMuonPromptTight->at(k)) == 0) return false; 
+  if ( TMath::Nint(pf_mus_id_GlobalMuonPromptTight->at(k)) == 0) {lossCode=3; return false; }
   // GlobalMuonPromptTight includes: isGlobal, globalTrack()->normalizedChi2() < 10, numberOfValidMuonHits() > 0
 
-  if ( TMath::Nint(pf_mus_numberOfMatchedStations->at(k)) <= 1 ) return false;
+  if ( TMath::Nint(pf_mus_numberOfMatchedStations->at(k)) <= 1 ) {lossCode=3; return false; }
   // At least one matched station includes requirement of arbitrated tracker muon, so no need for that explicitly
 
   const float beamx = beamSpot_x->at(0);   
   const float beamy = beamSpot_y->at(0);   
   float d0 = pf_mus_tk_d0dum->at(k) - beamx*sin(pf_mus_tk_phi->at(k)) + beamy*cos(pf_mus_tk_phi->at(k));
-  if ( fabs(d0) >= 0.2 ) return false;
-  if ( fabs(pf_mus_tk_vz->at(k) - pv_z->at(0) ) >= 0.5 ) return false;
-  if ( TMath::Nint(pf_mus_tk_numvalPixelhits->at(k)) == 0 ) return false;
+  if ( fabs(d0) >= 0.2 ) {lossCode=3; return false; }
+  if ( fabs(pf_mus_tk_vz->at(k) - pv_z->at(0) ) >= 0.5 ) {lossCode=3; return false; }
+  if ( TMath::Nint(pf_mus_tk_numvalPixelhits->at(k)) == 0 ) {lossCode=3; return false; }
 
-  if ( TMath::Nint(pf_mus_tk_LayersWithMeasurement->at(k)) <= 5 ) return false;
+  if ( TMath::Nint(pf_mus_tk_LayersWithMeasurement->at(k)) <= 5 ) {lossCode=3; return false; }
   // now isolation with delta beta corrections are recommended with DelR cone of 0.4
   float isoNeutral = pf_mus_pfIsolationR04_sumNeutralHadronEt->at(k) + pf_mus_pfIsolationR04_sumPhotonEt->at(k) - 0.5*pf_mus_pfIsolationR04_sumPUPt->at(k);
   isoNeutral = ( isoNeutral > 0) ? isoNeutral : 0;
   float  muRelIso = (pf_mus_pfIsolationR04_sumChargedHadronPt->at(k) + isoNeutral) / pf_mus_pt->at(k);
-  if (muRelIso >= 0.2) return false; 
+  if (muRelIso >= 0.2) {lossCode=4; return false;}
 
   //if we haven't failed anything yet...then it's good
+  lossCode=0;
   return true;
 }
 
@@ -479,6 +510,63 @@ bool EventCalculator::isGoodTightMuon(const unsigned int k, const bool disableRe
   return true;
 }
 
+void EventCalculator::fillGenTopInfo(const int ttbarDecayCode, const int leptonicTop, float &genTopPtLep,float & genWPtLep,float & genTopPtHad,float & genWPtHad) {
+  genTopPtLep=-1;
+  genWPtLep=-1;
+  genTopPtHad=-1;
+  genWPtHad=-1;
+
+  //only consider 1lepton decays of ttbar
+  if (ttbarDecayCode<=2 || ttbarDecayCode>=8) return;
+
+  //loop over gen particles
+  for (unsigned int kk=0; kk<mc_doc_id->size(); kk++) {
+    if (  TMath::Nint(mc_doc_status->at(kk))!=3) continue;
+
+    if (abs(TMath::Nint(mc_doc_id->at(kk))) ==6) { //found a top
+      if (TMath::Nint(mc_doc_id->at(kk))==leptonicTop) {
+	genTopPtLep = mc_doc_pt->at(kk);
+      }
+      else { //must be the hadronic top
+	genTopPtHad = mc_doc_pt->at(kk);
+      }
+    }
+    else    if (abs(TMath::Nint(mc_doc_id->at(kk))) ==24) { //found a W
+      if ( jmt::signOf(mc_doc_id->at(kk)) == jmt::signOf(leptonicTop)) genWPtLep = mc_doc_pt->at(kk);
+      else genWPtHad = mc_doc_pt->at(kk);
+    }
+
+
+  }
+
+}
+
+float EventCalculator::getMinDeltaRToJet(const float eta, const float phi,int &jetflavor) {
+  //this is for finding the closest *gen level* parton to the input lepton direction
+
+  jetflavor=-99;
+  float mindr = 1e9;
+  int minindex=-1;
+  //loop over gen particles
+  for (unsigned int kk=0; kk<mc_doc_id->size(); kk++) {
+
+    int absid =  abs(TMath::Nint(mc_doc_id->at(kk)));
+    bool isqg = (absid>=1 && absid<=5) || (absid==21); //not top quark! ie partons that will end up as jets
+    if ( isqg && TMath::Nint(mc_doc_status->at(kk))==3) { //is status 3 and udscb / g
+      if ( mc_doc_pt->at(kk)< 30) continue; //pt cut is something of a guess, but i think we're interested in really hard jets here
+      float thisdr = jmt::deltaR(eta,phi,mc_doc_eta->at(kk),mc_doc_phi->at(kk));
+      if (thisdr<mindr) {
+	mindr=thisdr;
+	minindex=kk;
+      }
+    }
+
+  }
+  if (minindex>=0)  jetflavor = std::abs(mc_doc_id->at(minindex));
+  return mindr;
+
+}
+
 bool EventCalculator::isGoodRecoMuon(const unsigned int imuon, const bool disableRelIso, const float ptthreshold) {
 
   assert(disableRelIso); //the iso calculation below is completely worthless. it uses PF quantities on RECO muons.
@@ -503,9 +591,9 @@ bool EventCalculator::isGoodRecoMuon(const unsigned int imuon, const bool disabl
   return false;
 }
 
-bool EventCalculator::isCleanMuon(const unsigned int imuon, const float ptthreshold) {
+bool EventCalculator::isCleanMuon(const unsigned int imuon, const float ptthreshold,int & lossCode) {
 
-  if (!isGoodMuon(imuon,false,ptthreshold)) return false;
+  if (!isGoodMuon(imuon,false,ptthreshold,lossCode)) return false;
 
   //clean muons if using reco-pfjets
   if(theJetType_ == kRECOPF) {    
@@ -534,16 +622,21 @@ bool EventCalculator::isCleanTightMuon(const unsigned int imuon, const float ptt
 }
 
 //this bool could be turned into a more powerful selector for N-1 studies. keep it simple for now
-bool EventCalculator::isGoodElectron(const unsigned int k, const bool disableRelIso, const float ptthreshold, const bool use2012id) {
+bool EventCalculator::isGoodElectron(const unsigned int k, const bool disableRelIso, const float ptthreshold, const bool use2012id,int &lossCode) {
 
   //sanity check
-  if ( k >= pf_els_pt->size() ) return false;
+  if ( k >= pf_els_pt->size() ) {lossCode=5; return false;}
 
-  if ( (pf_els_pt->size() != pf_els_PFphotonIsoR03->size()) ||  (pf_els_pt->size() != pf_els_PFneutralHadronIsoR03->size()) || (pf_els_pt->size() != pf_els_PFchargedHadronIsoR03->size()) ) return false;
+  if ( (pf_els_pt->size() != pf_els_PFphotonIsoR03->size()) ||  (pf_els_pt->size() != pf_els_PFneutralHadronIsoR03->size()) || (pf_els_pt->size() != pf_els_PFchargedHadronIsoR03->size()) ) {lossCode=5; return false;}
 
 
-  if (!isGoodPV(0)) return false;
+  if (!isGoodPV(0)) {lossCode=5; return false;}
 
+  // keep same pt and eta cuts (except no explicit exclusion of gap region)
+  //move the Eta and Pt cuts up here in the cut flow so that we preserve the logic when tabulating why leptons are lost (first eta, then pT, then quality and iso)
+  if (fabs(pf_els_scEta->at(k)) >= 2.5 ) {lossCode=1; return false;}
+  if (pf_els_pt->at(k) < ptthreshold) {lossCode=2; return false;}
+  
   const float  beamx = beamSpot_x->at(0);
   const float  beamy = beamSpot_y->at(0); 
 
@@ -564,16 +657,16 @@ bool EventCalculator::isGoodElectron(const unsigned int k, const bool disableRel
 
   if ( TMath::Nint(pf_els_isEB->at(k)) == 1) {
     ++ndone;
-    if ( fabs(pf_els_dEtaIn->at(k)) > 0.007)  return false;
-    if ( fabs(pf_els_dPhiIn->at(k)) > 0.8)  return false;
-    if (pf_els_sigmaIEtaIEta->at(k) > 0.01) return false;
-    if (pf_els_hadOverEm->at(k) > 0.15) return false;
+    if ( fabs(pf_els_dEtaIn->at(k)) > 0.007)  { lossCode=3; return false; }
+    if ( fabs(pf_els_dPhiIn->at(k)) > 0.8)  { lossCode=3; return false; }
+    if (pf_els_sigmaIEtaIEta->at(k) > 0.01) { lossCode=3; return false; }
+    if (pf_els_hadOverEm->at(k) > 0.15) { lossCode=3; return false; }
   }
   if (TMath::Nint(pf_els_isEE->at(k)) == 1) {
     ++ndone;
-    if ( fabs(pf_els_dEtaIn->at(k)) > 0.01)  return false;
-    if ( fabs(pf_els_dPhiIn->at(k)) > 0.7)  return false;
-    if (pf_els_sigmaIEtaIEta->at(k) > 0.03) return false;
+    if ( fabs(pf_els_dEtaIn->at(k)) > 0.01)  { lossCode=3; return false; }
+    if ( fabs(pf_els_dPhiIn->at(k)) > 0.7)  { lossCode=3; return false; }
+    if (pf_els_sigmaIEtaIEta->at(k) > 0.03) { lossCode=3; return false; }
   }
   
   if (ndone != 1) { //sanity
@@ -581,12 +674,8 @@ bool EventCalculator::isGoodElectron(const unsigned int k, const bool disableRel
   }
 
   float d0 = pf_els_d0dum->at(k) - beamx*sin(pf_els_phi->at(k)) + beamy*cos(pf_els_phi->at(k));
-  if ( fabs(d0) >= 0.04 ) return false; 
-  if ( fabs(pf_els_vz->at(k) - pv_z->at(0) ) >= 0.2 ) return false; 
-  
-  // keep same pt and eta cuts (except no explicit exclusion of gap region)
-  if (pf_els_pt->at(k) < ptthreshold) return false;
-  if (fabs(pf_els_scEta->at(k)) >= 2.5 ) return false; 
+  if ( fabs(d0) >= 0.04 ) { lossCode=3; return false; }
+  if ( fabs(pf_els_vz->at(k) - pv_z->at(0) ) >= 0.2 )  { lossCode=3; return false; }
   
   // now recommended isolation is PF relative isolation with cone = 0.3 with rho (effective area) corrections for PU
     
@@ -615,29 +704,43 @@ bool EventCalculator::isGoodElectron(const unsigned int k, const bool disableRel
   }
   float eleIso = pf_els_PFphotonIsoR03->at(k) + pf_els_PFneutralHadronIsoR03->at(k) - rho*AE;
   float  elRelIso = ( pf_els_PFchargedHadronIsoR03->at(k) + ( eleIso > 0 ? eleIso : 0.0 ) )/pf_els_pt->at(k);
-  if (elRelIso >= 0.15) return false; 
+  if (elRelIso >= 0.15)  {lossCode=4; return false;}
 
+  lossCode=0;
   return true;
 }
 
 
-unsigned int EventCalculator::countEle(const float ptthreshold,const bool use2012id) {
+unsigned int EventCalculator::countEle(const float ptthreshold,const bool use2012id,const int ttbarDecayCode,int & lostLeptonCode,const float genEta,const float genPhi) {
+
+  //count good electrons.
 
   unsigned int ngoodele=0;
   for (unsigned int i=0; i <pf_els_pt->size() ; i++) {
-    if(isGoodElectron(i,false,ptthreshold,use2012id))      ++ngoodele;
+    int whyLeptonLost=-1;
+    if (isGoodElectron(i,false,ptthreshold,use2012id,whyLeptonLost))      ++ngoodele;
+    //if ttbarDecayCode is 3 (single e at gen level), then also return lostLeptonCode information
+    if (ttbarDecayCode==3&& lostLeptonCode==5) {
+      //check that this reco lepton is a loose DR match to the gen one
+      if ( jmt::deltaR(genEta,genPhi, pf_els_eta->at(i),pf_els_phi->at(i))<0.5)      lostLeptonCode = whyLeptonLost;
+    }
   }
   return ngoodele;
 }
 
-unsigned int EventCalculator::countMu(const float ptthreshold) {
+unsigned int EventCalculator::countMu(const float ptthreshold,const int ttbarDecayCode, int & lostLeptonCode,const float genEta,const float genPhi) {
 
   unsigned int ngoodmu=0;
   unsigned int nmu = pf_mus_pt->size();
   for ( unsigned int i = 0; i< nmu; i++) {
-    if (isCleanMuon(i,ptthreshold)) {
+    int whyLost=-1;
+    if (isCleanMuon(i,ptthreshold,whyLost)) {
       //once we reach here we've got a good muon in hand
       ++ngoodmu;   
+    }
+    if (ttbarDecayCode==4 && lostLeptonCode==5) {    //if single mu at gen level, then also return lostLeptonCode information
+      //loose DR match between gen and reco -- ie only store the "why lost" info for a reco lepton that actually matches the gen
+      if ( jmt::deltaR(genEta,genPhi, pf_mus_eta->at(i),pf_mus_phi->at(i))<0.5)      lostLeptonCode=whyLost;
     }
   }
   
@@ -3013,14 +3116,16 @@ float  EventCalculator::jetGenPtOfN(unsigned int n) {
   return 0;
 }
 
-
+//Apr 2013 -- update these to use lower jet pT threshold.
+//since we're (by def) looking for the Nth jet it shouldn't change anything except when there are fewer
+//jets above the pT threshold
 float  EventCalculator::jetPtOfN(unsigned int n) {
 
   unsigned int ngood=0;
   for (unsigned int i=0; i<jets_AK5PF_pt->size(); i++) {
 
     bool pass=false;
-    pass = isGoodJet(i);
+    pass = isGoodJet(i,20);
 
     if (pass ) {
       ngood++;
@@ -3038,7 +3143,7 @@ float  EventCalculator::jetGenPhiOfN(unsigned int n) {
     if( isSampleRealData() ) return 0;
 
     bool pass=false;
-    pass = isGoodJet(i);
+    pass = isGoodJet(i,20);
 
     if (pass ) {
       ngood++;
@@ -3055,7 +3160,7 @@ float  EventCalculator::jetPhiOfN(unsigned int n) {
   for (unsigned int i=0; i<jets_AK5PF_pt->size(); i++) {
 
     bool pass=false;
-    pass = isGoodJet(i);
+    pass = isGoodJet(i,20);
 
     if (pass ) {
       ngood++;
@@ -3073,7 +3178,7 @@ float  EventCalculator::jetGenEtaOfN(unsigned int n) {
     if( isSampleRealData() ) return 0;
 
     bool pass=false;
-    pass = isGoodJet(i);
+    pass = isGoodJet(i,20);
 
     if (pass ) {
       ngood++;
@@ -3090,7 +3195,7 @@ float  EventCalculator::jetEtaOfN(unsigned int n) {
   for (unsigned int i=0; i<jets_AK5PF_pt->size(); i++) {
 
     bool pass=false;
-    pass = isGoodJet(i);
+    pass = isGoodJet(i,20);
 
     if (pass ) {
       ngood++;
@@ -3106,7 +3211,7 @@ float  EventCalculator::jetEnergyOfN(unsigned int n) {
   for (unsigned int i=0; i<jets_AK5PF_pt->size(); i++) {
 
     bool pass=false;
-    pass = isGoodJet(i);
+    pass = isGoodJet(i,20);
 
     if (pass ) {
       ngood++;
@@ -3122,7 +3227,7 @@ int  EventCalculator::jetFlavorOfN(unsigned int n) {
   for (unsigned int i=0; i<jets_AK5PF_pt->size(); i++) {
 
     bool pass=false;
-    pass = isGoodJet(i);
+    pass = isGoodJet(i,20);
 
     if (pass ) {
       ngood++;
@@ -3137,7 +3242,7 @@ float  EventCalculator::jetChargedHadronFracOfN(unsigned int n) {
   unsigned int ngood=0;
   for (unsigned int i=0; i<jets_AK5PF_pt->size(); i++) {
     bool pass=false;
-    pass = isGoodJet(i);
+    pass = isGoodJet(i,20);
 
     if (pass ) {
       ++ngood;
@@ -3152,7 +3257,7 @@ int  EventCalculator::jetChargedHadronMultOfN(unsigned int n) {
   unsigned int ngood=0;
   for (unsigned int i=0; i<jets_AK5PF_pt->size(); i++) {
     bool pass=false;
-    pass = isGoodJet(i);
+    pass = isGoodJet(i,20);
     if (pass ) {
       ++ngood;
       if (ngood==n) return  TMath::Nint(jets_AK5PF_chg_Mult->at(i));
@@ -3167,7 +3272,7 @@ int  EventCalculator::jetMuMultOfN(unsigned int n) {
   unsigned int ngood=0;
   for (unsigned int i=0; i<jets_AK5PF_pt->size(); i++) {
     bool pass=false;
-    pass = isGoodJet(i);
+    pass = isGoodJet(i,20);
     if (pass ) {
       ++ngood;
       if (ngood==n) return  TMath::Nint(jets_AK5PF_mu_Mult->at(i));
@@ -3181,7 +3286,7 @@ int  EventCalculator::jetNeutralHadronMultOfN(unsigned int n) {
   unsigned int ngood=0;
   for (unsigned int i=0; i<jets_AK5PF_pt->size(); i++) {
     bool pass=false;
-    pass = isGoodJet(i);
+    pass = isGoodJet(i,20);
     if (pass ) {
       ++ngood;
       if (ngood==n) return  TMath::Nint(jets_AK5PF_neutral_Mult->at(i));
@@ -3214,7 +3319,7 @@ float EventCalculator::bjetPtOfN(unsigned int n) {
   for (unsigned int i=0; i<jets_AK5PF_pt->size(); i++) {
 
     bool pass=false;
-    pass = (isGoodJet30(i) && passBTagger(i));
+    pass = (isGoodJet(i,20) && passBTagger(i));
 
     if (pass ) {
       ngood++;
@@ -3230,7 +3335,7 @@ float EventCalculator::bjetPhiOfN(unsigned int n) {
   for (unsigned int i=0; i<jets_AK5PF_pt->size(); i++) {
 
     bool pass=false;
-    pass = (isGoodJet30(i) && passBTagger(i));
+    pass = (isGoodJet(i,20) && passBTagger(i));
 
     if (pass ) {
       ngood++;
@@ -3246,7 +3351,7 @@ float EventCalculator::bjetEtaOfN(unsigned int n) {
   for (unsigned int i=0; i<jets_AK5PF_pt->size(); i++) {
 
     bool pass=false;
-    pass = (isGoodJet30(i) && passBTagger(i));
+    pass = (isGoodJet(i,20) && passBTagger(i));
 
     if (pass ) {
       ngood++;
@@ -3262,7 +3367,7 @@ float EventCalculator::bjetEnergyOfN(unsigned int n) {
   for (unsigned int i=0; i<jets_AK5PF_pt->size(); i++) {
 
     bool pass=false;
-    pass = (isGoodJet30(i) && passBTagger(i));
+    pass = (isGoodJet(i,20) && passBTagger(i));
 
     if (pass ) {
       ngood++;
@@ -3280,7 +3385,7 @@ int  EventCalculator::bjetFlavorOfN(unsigned int n) {
   for (unsigned int i=0; i<jets_AK5PF_pt->size(); i++) {
 
     bool pass=false;
-    pass = (isGoodJet30(i) && passBTagger(i));
+    pass = (isGoodJet(i,20) && passBTagger(i));
 
     if (pass ) {
       ngood++;
@@ -3296,7 +3401,7 @@ float  EventCalculator::bjetChargedHadronFracOfN(unsigned int n) {
   unsigned int ngood=0;
   for (unsigned int i=0; i<jets_AK5PF_pt->size(); i++) {
     bool pass=false;
-    pass = isGoodJet(i) && passBTagger(i);
+    pass = isGoodJet(i,20) && passBTagger(i);
 
     if (pass ) {
       ++ngood;
@@ -3311,7 +3416,7 @@ int  EventCalculator::bjetChargedHadronMultOfN(unsigned int n) {
   unsigned int ngood=0;
   for (unsigned int i=0; i<jets_AK5PF_pt->size(); i++) {
     bool pass=false;
-    pass = isGoodJet(i) && passBTagger(i);
+    pass = isGoodJet(i,20) && passBTagger(i);
 
     if (pass ) {
       ++ngood;
@@ -4080,17 +4185,24 @@ return either 0,1,2
 
 void EventCalculator::genLevelHiggs(TLorentzVector (&bbbb)[2][2] ) {
 
+  if (!sampleName_.Contains("TChihh")) {
+    for (int i=0;i<2;i++) {
+      for (int j=0;j<2;j++) {
+	 bbbb[i][j] = TLorentzVector();
+      }
+    }
+    return;
+  }
+
    int ihiggs=0;
    int ib=0;
 
   float higgspt[2] = {-1,-1}; //kludge
 
-  //  TLorentzVector bbbb[2][2] ;
-
   //  cout<<" == event"<<endl;
   for (unsigned int k = 0; k<mc_doc_id->size(); k++) {
-   //important to require status 3
-    if ( abs(TMath::Nint(mc_doc_id->at(k)))==5 && TMath::Nint(mc_doc_status->at(k))) {
+   //important to require status 3 (is it?)
+    if ( abs(TMath::Nint(mc_doc_id->at(k)))==5 && TMath::Nint(mc_doc_status->at(k))==3 ) {
        unsigned int id_mom  = abs(TMath::Nint(mc_doc_mother_id->at(k)));
        if (id_mom == 25) {
 	 //found a b from a higgs.
@@ -4812,6 +4924,7 @@ double EventCalculator::getScanCrossSection( SUSYProcess p ) {
 
 std::vector< std::pair<int,int> > EventCalculator::matchRecoJetsToHiggses(TLorentzVector (&bbbb)[2][2]) {
   vector< pair<int,int> > truehiggs;
+  if (!sampleName_.Contains("TChihh")) return truehiggs;
 
   //eta phi match between the true 2xh(bb) in bbbb and the reco jets
 
@@ -4845,7 +4958,178 @@ std::vector< std::pair<int,int> > EventCalculator::matchRecoJetsToHiggses(TLoren
   return truehiggs;
 }
 
+
+float EventCalculator::getBestH125() { //return jet invariant mass pair closest to 125 GeV
+
+  //could also cut down on combinatorics using b-tagging
+
+  vector<int> goodJetIndex;
+  for (unsigned int kk=0; kk<jets_AK5PF_pt->size(); kk++) {
+    if (isGoodJet(kk,20) )       goodJetIndex.push_back(kk);
+  }
+
+  float hbbmass=-1;
+  float mindiff=1e9;
+
+  //make every possible jj' combination
+  for ( unsigned int ijet1 = 0; ijet1<goodJetIndex.size(); ijet1++) {
+    for ( unsigned int jjet1 = ijet1+1; jjet1<goodJetIndex.size(); jjet1++) {
+  
+      //calculate delta
+      float mbb = calc_mNj(ijet1,jjet1);
+      float delta = std::abs(mbb-125);
+      if (delta<mindiff) {
+	mindiff=delta;
+	hbbmass = mbb;
+      }
+
+    }
+  }
+  return hbbmass;
+
+}
+
+void EventCalculator::higgs125massPairsAllJets(float & higgsMbb1,float & higgsMbb2) {
+  //yet another way to form a pair of higgs masses
+  higgsMbb1=-1;
+  higgsMbb2=-1;
+  //this looks at all pairs of jets pT>20 GeV and picks using a chi2 metric using 125 as the true mass
+
+  vector<int> goodJetIndex;
+  for (unsigned int kk=0; kk<jets_AK5PF_pt->size(); kk++) {
+    if (isGoodJet(kk,20) )       goodJetIndex.push_back(kk);
+  }
+
+  if (goodJetIndex.size()<4) return;
+
+  float minchi2 = 9e9;
+  //make every possible jj' combination
+  for ( unsigned int ijet1 = 0; ijet1<goodJetIndex.size(); ijet1++) {
+    for ( unsigned int jjet1 = ijet1+1; jjet1<goodJetIndex.size(); jjet1++) {
+      //for that pair, look at every possible other pair, where the jets are not reused
+      for ( unsigned int ijet2 = ijet1+1; ijet2<goodJetIndex.size(); ijet2++) {
+	for ( unsigned int jjet2 = ijet2+1; jjet2<goodJetIndex.size(); jjet2++) {
+
+	  if (ijet1==ijet2 || jjet1==ijet2 || ijet1==jjet2 || jjet1==jjet2) continue;
+
+	  //ok, now for this set of jets, calculate the quantity of interest
+	  float mjj1 = calc_mNj(ijet1,jjet1);
+	  float mjj2 = calc_mNj(ijet2,jjet2);
+	  //maybe shouldn't be hard-coding the higgs mass?
+	  float chi2 = pow(mjj1-125,2) + pow(mjj2-125,2);
+
+	  if (chi2<minchi2) {
+	    minchi2= chi2;
+	    higgsMbb1 = mjj1;
+	    higgsMbb2 = mjj2;
+	  }
+
+	}
+      }
+
+    }
+  }
+
+
+
+}
+
+void EventCalculator::massPairsDeltaSort(float & higgsMbb1,float & higgsMbb2) {
+  //another h(bb) h(bb) algorithm, loosely based on what is used in the tri-jet pair-resonance search in EXO
+
+  higgsMbb1=-1;
+  higgsMbb2=-1;
+
+  //for now use all jet pT>20 GeV.
+  //future -- try only "best 4 b jets", fiddle with pT threshold
+
+  vector<int> goodJetIndex;
+  for (unsigned int kk=0; kk<jets_AK5PF_pt->size(); kk++) {
+    if (isGoodJet(kk,20) )       goodJetIndex.push_back(kk);
+  }
+
+  float maxDelta[2]={-1e9,-1e9};
+  //make every possible jj' combination
+  for ( unsigned int ijet1 = 0; ijet1<goodJetIndex.size(); ijet1++) {
+    for ( unsigned int jjet1 = ijet1+1; jjet1<goodJetIndex.size(); jjet1++) {
+  
+      //calculate delta
+      float mbb = calc_mNj(ijet1,jjet1);
+      float delta = getJetPt( ijet1)+getJetPt(jjet1) - mbb;
+      if (delta > maxDelta[0]) {
+	maxDelta[1]=maxDelta[0];
+	higgsMbb2 = higgsMbb1;
+	maxDelta[0]=delta;
+	higgsMbb1 = mbb;
+      }
+      else if (delta>maxDelta[1]) {
+	maxDelta[1] = delta;
+	higgsMbb2=mbb;
+      }
+
+    }
+  }
+
+}
+
+  /*
+shit...this is not what i meant to do!
+there are two ideas:
+(1) look only at every jet pair, pick the one with highest (Sum pT bb - mbb)
+Then from the remaining jets, pick the pair with the highest (Sum pT bb - mbb)
+
+(2) pick the jet "quadruplet" that has the highest Sum(Sum PT bb - mbb)
+
+(1) is probably the better idea but that's not what I did here!
+  */ 
+/*
+void EventCalculator::higgs125massPairsDeltaSort(float & higgsMbb1,float & higgsMbb2) {
+  //another h(bb) h(bb) algorithm, loosely based on what is used in the tri-jet pair-resonance search in EXO
+
+//this is idea (2) shown in the comment above. nice enough algorithm but not what i meant to do!
+
+  //for now use all jet pT>20 GeV.
+  //future -- try only "best 4 b jets", fiddle with pT threshold
+
+  vector<int> goodJetIndex;
+  for (unsigned int kk=0; kk<jets_AK5PF_pt->size(); kk++) {
+    if (isGoodJet(kk,20) )       goodJetIndex.push_back(kk);
+  }
+
+  vector< pair< pair<int,int>,pair<int,int> > > hhCandidates;
+  set< pair<float,unsigned int> > hhCandidatesDelta; //Delta is the float, int is an index on the vector
+  //make every possible jj' combination
+  for ( unsigned int ijet1 = 0; ijet1<goodJetIndex.size(); ijet1++) {
+    for ( unsigned int jjet1 = ijet1+1; jjet1<goodJetIndex.size(); jjet1++) {
+      //for that pair, look at every possible other pair, where the jets are not reused
+      for ( unsigned int ijet2 = ijet1+1; ijet2<goodJetIndex.size(); ijet2++) {
+	for ( unsigned int jjet2 = ijet2+1; jjet2<goodJetIndex.size(); jjet2++) {
+
+	  if (ijet1==ijet2 || jjet1==ijet2 || ijet1==jjet2 || jjet1==jjet2) continue;
+
+	  //ok, now for this set of jets, calculate the quantity of interest
+	  //Sum of (Sum pT bb - mbb)
+	  float d1 = (getJetPt(ijet1)+getJetPt(jjet1)) - calc_mNj(ijet1,jjet1);
+	  float d2 = (getJetPt(ijet2)+getJetPt(jjet2)) - calc_mNj(ijet2,jjet2);
+	  hhCandidatesDelta.insert(make_pair(d1+d2,hhCandidates.size()));
+	  hhCandidates.push_back( make_pair( make_pair(ijet1,jjet1),make_pair(ijet2,jjet2)  ));
+
+	}
+      }
+
+    }
+  }
+
+  //now loop over the set from highest d1+d2 to lowest
+  //or really we only care about the absolute highest
+}
+*/
+
+//in the higgsMbb1/2 variables, return the best pair (combined closest to 125)
 void EventCalculator::higgs125massPairs(float & higgsMbb1,float & higgsMbb2,const std::vector< std::pair<int,int> > & truehiggs) {
+
+  higgsMbb1=-1;
+  higgsMbb2=-1;
 
   //find the 4 most b-like good jets
   set<pair< float, int> > jets_sorted_by_bdisc;
@@ -4856,7 +5140,7 @@ void EventCalculator::higgs125massPairs(float & higgsMbb1,float & higgsMbb2,cons
     }
   }
 
-  if ( jets_sorted_by_bdisc.size() <4 ) return;
+  if ( jets_sorted_by_bdisc.size() <4 ) return ;
 
   int jetindices[4];
   int iii=0;
@@ -4894,22 +5178,35 @@ void EventCalculator::higgs125massPairs(float & higgsMbb1,float & higgsMbb2,cons
     higgsMassPairs.push_back(make_pair(mbb1,mbb2));
   }
 
-  float mindiff=1e9;
+  float minchi2=1e9;
   int minind=-1;
+
+  //  float mindiffOneHiggs=1e9; float OneHiggsMass=-99;
+
   const float higgsmass=125;
   for (unsigned int ih=0; ih<higgsMassPairs.size(); ih++) {
     //    cout<<" mh = "<<higgsMassPairs[ih].first<<" "<<higgsMassPairs[ih].second<<endl;
-    //invent a dumb metric for now
-    float thisdiff=   std::abs(higgsMassPairs[ih].first - higgsmass) + std::abs(higgsMassPairs[ih].second - higgsmass);
-    if (thisdiff< mindiff) {
-      mindiff=thisdiff;
+    //this is the standard chi^2 metric, where the sigma for both pairs is the same because both are the same resonance
+    float thischi2=   pow(higgsMassPairs[ih].first - higgsmass,2) + pow(higgsMassPairs[ih].second - higgsmass,2);
+    if (thischi2< minchi2) {
+      minchi2=thischi2;
       minind = ih;
     }
+
+//     if ( std::abs(higgsMassPairs[ih].first - higgsmass) < mindiffOneHiggs) {
+//       mindiffOneHiggs=std::abs(higgsMassPairs[ih].first - higgsmass);
+//       OneHiggsMass = higgsMassPairs[ih].first;
+//     }
+//     if ( std::abs(higgsMassPairs[ih].second - higgsmass) < mindiffOneHiggs) {
+//       mindiffOneHiggs=std::abs(higgsMassPairs[ih].second - higgsmass);
+//       OneHiggsMass = higgsMassPairs[ih].second;
+//     }
+
   }
 
   higgsMbb1 = higgsMassPairs[minind].first;
   higgsMbb2 = higgsMassPairs[minind].second;
-
+  //  return OneHiggsMass;
 }
 
 
@@ -5949,7 +6246,8 @@ void EventCalculator::reducedTree(TString outputpath) {
   float jetpt1, jetgenpt1, jetphi1, jetgenphi1, jeteta1, jetgeneta1, jetenergy1, bjetpt1, bjetphi1, bjeteta1, bjetenergy1;
   float jetpt2, jetgenpt2, jetphi2, jetgenphi2, jeteta2, jetgeneta2, jetenergy2, bjetpt2, bjetphi2, bjeteta2, bjetenergy2;
   float jetpt3, jetgenpt3, jetphi3, jetgenphi3, jeteta3, jetgeneta3, jetenergy3, bjetpt3, bjetphi3, bjeteta3, bjetenergy3;
-  int jetflavor1, jetflavor2, jetflavor3, bjetflavor1, bjetflavor2, bjetflavor3;
+  float jetpt4, jetgenpt4, jetphi4, jetgenphi4, jeteta4, jetgeneta4, jetenergy4, bjetpt4, bjetphi4, bjeteta4, bjetenergy4;
+  int jetflavor1, jetflavor2, jetflavor3, jetflavor4,bjetflavor1, bjetflavor2, bjetflavor3, bjetflavor4;
 
   //lead jet quality info
   float alletajetpt1,alletajetphi1,alletajeteta1;
@@ -6007,13 +6305,20 @@ void EventCalculator::reducedTree(TString outputpath) {
   float transverseSphericity_jets30Leptons;
 
   float deltaR_bestTwoCSV;
+  float deltaPhi_bestTwoCSV;
+
   float mjj_bestTwoCSV;
   float deltaR_closestB;
   float mjj_closestB;
+  float mjj_h125;
 
   //optimized for higgs(125) pairs
   //first the "dumb" variables. find the pairs of b-like jets with minimum mass difference from 125 GeV
   float higgsMbb1=-1,higgsMbb2=-1;
+  //or forget b-tagging and use any jets
+  float higgsMjj1=-1,higgsMjj2=-1;
+  //this is the EXO-like technique -- does not use 125 GeV as input
+  float higgsMbb1delta=-1,higgsMbb2delta=-1;
 
   //  float transverseThrust,transverseThrustPhi;
   //  float transverseThrustWithMET,transverseThrustWithMETPhi;
@@ -6129,10 +6434,25 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("m12",&m12,"m12/I");
   reducedTree.Branch("mIntermediate",&mIntermediate,"mIntermediate/I");
 
+  int lostLeptonCode; // key: 0==not lost, 1 == out of acceptance (eta), 2 == pT<10, 3==fails quality cuts, 4==fails iso, 5==other
+
 //   reducedTree.Branch("W1decayType",&W1decayType,"W1decayType/I");
 //   reducedTree.Branch("W2decayType",&W2decayType,"W2decayType/I");
 //   reducedTree.Branch("decayType",&decayType,"decayType/I");
   reducedTree.Branch("ttbarDecayCode",&ttbarDecayCode,"ttbarDecayCode/I");
+  reducedTree.Branch("lostLeptonCode",&lostLeptonCode,"lostLeptonCode/I");
+
+  float genTopPtLep=-1,genTopPtHad=-1;
+  float genWPtLep=-1,genWPtHad=-1;
+  reducedTree.Branch("genTopPtLep",&genTopPtLep,"genTopPtLep/F");
+  reducedTree.Branch("genTopPtHad",&genTopPtHad,"genTopPtHad/F");
+  reducedTree.Branch("genWPtLep",&genWPtLep,"genWPtLep/F");
+  reducedTree.Branch("genWPtHad",&genWPtHad,"genWPtHad/F");
+
+  float minDeltaRLeptonJet=-1;
+  reducedTree.Branch("minDeltaRLeptonJet",&minDeltaRLeptonJet,"minDeltaRLeptonJet/F");
+  int minDeltaRJetFlavor=-99;
+  reducedTree.Branch("minDeltaRJetFlavor",&minDeltaRJetFlavor,"minDeltaRJetFlavor/I");
 
   //  reducedTree.Branch("btagIPweight",&btagIPweight,"btagIPweight/F");
   //  reducedTree.Branch("pfmhtweight",&pfmhtweight,"pfmhtweight/F");
@@ -6161,6 +6481,10 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("SUSY_topbar_pt",&SUSY_topbar_pt,"SUSY_topbar_pt[2]/F");
   reducedTree.Branch("SUSY_chi0_pt",&SUSY_chi0_pt,"SUSY_chi0_pt[2]/F");
 
+  float topPtWeight,topPt;
+  reducedTree.Branch("topPtWeight",&topPtWeight,"topPtWeight/F");
+  reducedTree.Branch("topPt",&topPt,"topPt/F");
+
   //Higgs related variables
   float higgs1b1pt=0, higgs1b1phi=0, higgs1b1eta=0;
   float higgs1b2pt=0, higgs1b2phi=0, higgs1b2eta=0;
@@ -6181,8 +6505,14 @@ void EventCalculator::reducedTree(TString outputpath) {
   float higgsMass[6];
   float higgsSumpt[6];
 
+  float hhDeltaR=99,hhDeltaEta=99,hhDeltaPhi=99;
+
   reducedTree.Branch("higgsMass",&higgsMass,"higgsMass[6]/F");
   reducedTree.Branch("higgsSumpt",&higgsSumpt,"higgsSumpt[6]/F");
+
+  reducedTree.Branch("hhDeltaR",&hhDeltaR,"hhDeltaR/F");
+  reducedTree.Branch("hhDeltaEta",&hhDeltaEta,"hhDeltaEta/F");
+  reducedTree.Branch("hhDeltaPhi",&hhDeltaPhi,"hhDeltaPhi/F");
 
   reducedTree.Branch("higgs1b1pt",&higgs1b1pt,"higgs1b1pt/F");
   reducedTree.Branch("higgs1b1phi",&higgs1b1phi,"higgs1b1phi/F");
@@ -6324,6 +6654,10 @@ void EventCalculator::reducedTree(TString outputpath) {
 
   reducedTree.Branch("higgsMbb1",&higgsMbb1,"higgsMbb1/F");
   reducedTree.Branch("higgsMbb2",&higgsMbb2,"higgsMbb2/F");
+  reducedTree.Branch("higgsMjj1",&higgsMjj1,"higgsMjj1/F");
+  reducedTree.Branch("higgsMjj2",&higgsMjj2,"higgsMjj2/F");
+  reducedTree.Branch("higgsMbb1delta",&higgsMbb1delta,"higgsMbb1delta/F");
+  reducedTree.Branch("higgsMbb2delta",&higgsMbb2delta,"higgsMbb2delta/F");
 
 
   reducedTree.Branch("mjjb1",&mjjb1,"mjjb1/F");
@@ -6403,9 +6737,12 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("deltaThetaT",&deltaThetaT, "deltaThetaT/F");
 
   reducedTree.Branch("deltaR_bestTwoCSV",&deltaR_bestTwoCSV,"deltaR_bestTwoCSV/F");
+  reducedTree.Branch("deltaPhi_bestTwoCSV",&deltaPhi_bestTwoCSV,"deltaPhi_bestTwoCSV/F");
   reducedTree.Branch("mjj_bestTwoCSV",&mjj_bestTwoCSV,"mjj_bestTwoCSV/F");
   reducedTree.Branch("deltaR_closestB",&deltaR_closestB,"deltaR_closestB/F");
   reducedTree.Branch("mjj_closestB",&mjj_closestB,"mjj_closestB/F");
+
+  reducedTree.Branch("mjj_h125",&mjj_h125,"mjj_h125/F");
 
   reducedTree.Branch("minDeltaPhi",&minDeltaPhi,"minDeltaPhi/F");
   reducedTree.Branch("minDeltaPhiAll",&minDeltaPhiAll,"minDeltaPhiAll/F");
@@ -6579,6 +6916,15 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("jetneutralhadronmult3",&jetneutralhadronmult3,"jetneutralhadronmult3/I");
   reducedTree.Branch("jetmumult3",&jetmumult3,"jetmumult3/I");
 
+  reducedTree.Branch("jetpt4",&jetpt4,"jetpt4/F");
+  reducedTree.Branch("jetgenpt4",&jetgenpt4,"jetgenpt4/F");
+  reducedTree.Branch("jeteta4",&jeteta4,"jeteta4/F");
+  reducedTree.Branch("jetgeneta4",&jetgeneta4,"jetgeneta4/F");
+  reducedTree.Branch("jetphi4",&jetphi4,"jetphi4/F");
+  reducedTree.Branch("jetgenphi4",&jetgenphi4,"jetgenphi4/F");
+  reducedTree.Branch("jetenergy4",&jetenergy4,"jetenergy4/F");
+  reducedTree.Branch("jetflavor4",&jetflavor4,"jetflavor4/I");
+
   reducedTree.Branch("bjetpt1",&bjetpt1,"bjetpt1/F");
   reducedTree.Branch("bjeteta1",&bjeteta1,"bjeteta1/F");
   reducedTree.Branch("bjetphi1",&bjetphi1,"bjetphi1/F");
@@ -6602,6 +6948,12 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("bjetflavor3",&bjetflavor3,"bjetflavor3/I");
   reducedTree.Branch("bjetchargedhadronfrac3",&bjetchargedhadronfrac3,"bjetchargedhadronfrac3/F");
   reducedTree.Branch("bjetchargedhadronmult3",&bjetchargedhadronmult3,"bjetchargedhadronmult3/I");
+
+  reducedTree.Branch("bjetpt4",&bjetpt4,"bjetpt4/F");
+  reducedTree.Branch("bjeteta4",&bjeteta4,"bjeteta4/F");
+  reducedTree.Branch("bjetphi4",&bjetphi4,"bjetphi4/F");
+  reducedTree.Branch("bjetenergy4",&bjetenergy4,"bjetenergy4/F");  
+  reducedTree.Branch("bjetflavor4",&bjetflavor4,"bjetflavor4/I");
 
   float tauMatch_jetpt,tauMatch_chhadmult,tauMatch_jetcsv,tauMatch_MT;
   reducedTree.Branch("tauMatch_jetpt",&tauMatch_jetpt,"tauMatch_jetpt/F");
@@ -6969,10 +7321,23 @@ void EventCalculator::reducedTree(TString outputpath) {
 	scanCrossSection = 1;
       }
 
+      topPtWeight = getTopPtWeight(topPt); //topPt is the pT of the top quark (not antitop) in ttbar sample
+
       //if we are running over ttbar, fill info on decay mode
       int leptonicTop=-99;
-      if (sampleName_.Contains("TTJets") || sampleName_.Contains("T1tttt")) { //revived for cfA, using the old jmt-ntuples coding scheme
-	ttbarDecayCode = getTTbarDecayType(leptonicTop);
+      float leptonEta=99, leptonPt=-1,leptonPhi=99;
+      if (sampleName_.Contains("TTJets")||sampleName_.BeginsWith("TT_") || sampleName_.Contains("T1tttt")) { //revived for cfA, using the old jmt-ntuples coding scheme
+	ttbarDecayCode = getTTbarDecayType(leptonicTop,leptonEta,leptonPhi,leptonPt);
+	fillGenTopInfo(ttbarDecayCode,leptonicTop,genTopPtLep,genWPtLep,genTopPtHad,genWPtHad);
+
+	minDeltaRLeptonJet = getMinDeltaRToJet(leptonEta,leptonPhi,minDeltaRJetFlavor);
+	float etamax=2.5; //electrons
+	if (ttbarDecayCode==4) {//muons
+	  etamax=2.4;
+	}
+	if (fabs(leptonEta)>etamax) lostLeptonCode=1;
+	else if (leptonPt< 10) lostLeptonCode=2; //we're ignoring the isotrack veto
+	else lostLeptonCode=5; //we'll adjust this further when we look for reco leptons
 	//	cout<< " code = "<<ttbarDecayCode<<endl;
       }
       //somewhat experimental code; maybe this is a backwards way to do it (look for tau match then store stuff)
@@ -7046,11 +7411,19 @@ void EventCalculator::reducedTree(TString outputpath) {
       mjjdiff_5=fabs(mjj1_5-mjj2_5);
 
 
-      //MC truth for higgs
-      if (sampleName_.Contains("TChihh")) {
+      // higgs code -- most (not all) of it is MC truth and irrelevant for most samples
+      //  if (sampleName_.Contains("TChihh")) {
       	TLorentzVector hbbbb[2][2];
       	genLevelHiggs(hbbbb);
-	vector< pair<int,int> > genHiggsIndices = matchRecoJetsToHiggses(hbbbb);
+	vector< pair<int,int> > genHiggsIndices = matchRecoJetsToHiggses(hbbbb);//match to reco jtes
+
+	TLorentzVector h1 = hbbbb[0][0] + hbbbb[0][1]; //reconstruct the true higgses
+	TLorentzVector h2 = hbbbb[1][0] + hbbbb[1][1];
+	if (sampleName_.Contains("TChihh")) {
+	  hhDeltaR = jmt::deltaR(h1.Eta(),h1.Phi(),h2.Eta(),h2.Phi());
+	  hhDeltaEta = std::abs( h1.Eta() - h2.Eta());
+	  hhDeltaPhi = jmt::deltaPhi(h1.Phi(),h2.Phi());
+	//store stuff about the b quarks
       	higgs1b1pt=hbbbb[0][0].Pt(); higgs1b1phi=hbbbb[0][0].Phi(); higgs1b1eta=hbbbb[0][0].Eta();
       	higgs1b2pt=hbbbb[0][1].Pt(); higgs1b2phi=hbbbb[0][1].Phi(); higgs1b2eta=hbbbb[0][1].Eta();
       	higgs2b1pt=hbbbb[1][0].Pt(); higgs2b1phi=hbbbb[1][0].Phi(); higgs2b1eta=hbbbb[1][0].Eta();
@@ -7071,7 +7444,7 @@ void EventCalculator::reducedTree(TString outputpath) {
 	higgsDeltaRmaxWrong1 = higgsDeltaRcomb[0] >higgsDeltaRcomb[3]?  higgsDeltaRcomb[0] :higgsDeltaRcomb[3];
 	higgsDeltaRminWrong2 = higgsDeltaRcomb[1] <higgsDeltaRcomb[2]?  higgsDeltaRcomb[1] :higgsDeltaRcomb[2];
 	higgsDeltaRmaxWrong2 = higgsDeltaRcomb[1] >higgsDeltaRcomb[2]?  higgsDeltaRcomb[1] :higgsDeltaRcomb[2];
-
+	
 	int kk=0;
 	for (int ii=1; ii<=4; ii++) {
 	  for (int jj=ii+1; jj<=4; jj++) {
@@ -7087,12 +7460,8 @@ void EventCalculator::reducedTree(TString outputpath) {
 	    kk++;
 	  }
 	}
-
-	higgsMbb1=-1;
-	higgsMbb2=-1;
-	//calculate the most naive invariant masses
-	higgs125massPairs(higgsMbb1,higgsMbb2,genHiggsIndices);
-
+	
+	
               // sort by pt (I'm sure this could be done much more efficiently... (ku) )
         float higgsbpt[4] = {higgs1b1pt, higgs1b2pt, higgs2b1pt, higgs2b2pt};
 	for (int ii=0; ii<3; ii++){
@@ -7109,8 +7478,14 @@ void EventCalculator::reducedTree(TString outputpath) {
 	higgsb2pt = higgsbpt[1];
 	higgsb3pt = higgsbpt[2];
 	higgsb4pt = higgsbpt[3];
+	}
+	//calculate the most naive invariant masses (reco level)
+	higgs125massPairs(higgsMbb1,higgsMbb2,genHiggsIndices);
+	higgs125massPairsAllJets(higgsMjj1,higgsMjj2);
+	mjj_h125 = getBestH125(); 
 
-      }
+	massPairsDeltaSort(higgsMbb1delta,higgsMbb2delta);
+      
 
       //count b jets
       ntruebjets = nTrueBJets();
@@ -7142,9 +7517,9 @@ void EventCalculator::reducedTree(TString outputpath) {
 
 
       //count leptons
-      nElectrons = countEle();
+      nElectrons = countEle(10,true,ttbarDecayCode,lostLeptonCode,leptonEta,leptonPhi);
       nElectrons2011 = countEle(10,false);
-      nMuons = countMu();
+      nMuons = countMu(10,ttbarDecayCode,lostLeptonCode,leptonEta,leptonPhi);
       nElectrons5 = countEle(5);
       nMuons5 = countMu(5);
       nElectrons15 = countEle(15);
@@ -7152,6 +7527,8 @@ void EventCalculator::reducedTree(TString outputpath) {
       nElectrons20 = countEle(20);
       nMuons20 = countMu(20);
       nTightMuons = countTightMu();
+
+      //cout<<" ttbarDecayCode leptonEta leptonPt nE nMu lostLeptonCode "<<ttbarDecayCode<<" "<<leptonEta<<" "<<leptonPt<<" "<<nElectrons<<" "<<nMuons<<" "<<lostLeptonCode<<endl;
 
       hlteff = getHLTeff(HT,MET,nElectrons,nMuons);
 
@@ -7194,6 +7571,7 @@ void EventCalculator::reducedTree(TString outputpath) {
       
       int j_index_1,j_index_2;
       deltaR_bestTwoCSV = deltaRBestTwoBjets(j_index_1,j_index_2);
+      deltaPhi_bestTwoCSV = (j_index_1>=0 && j_index_2>=0) ? jmt::deltaPhi( jets_AK5PF_phi->at(j_index_1),jets_AK5PF_phi->at(j_index_2)) : -1;
       mjj_bestTwoCSV = (j_index_1>=0 && j_index_2>=0) ? calc_mNj(j_index_1,j_index_2) : -1;
       deltaR_closestB=deltaRClosestTwoBjets(j_index_1,j_index_2);
       mjj_closestB= (j_index_1>=0 && j_index_2>=0) ? calc_mNj(j_index_1,j_index_2) : -1;
@@ -7396,6 +7774,15 @@ void EventCalculator::reducedTree(TString outputpath) {
       jetneutralhadronmult3 = jetNeutralHadronMultOfN(3);
       jetmumult3 = jetMuMultOfN(3);
 
+      jetpt4 = jetPtOfN(4);
+      jetgenpt4 = jetGenPtOfN(4);
+      jetphi4 = jetPhiOfN(4);
+      jetgenphi4 = jetGenPhiOfN(4);
+      jeteta4 = jetEtaOfN(4);
+      jetgeneta4 = jetGenEtaOfN(4);
+      jetenergy4 = jetEnergyOfN(4);
+      jetflavor4 = jetFlavorOfN(4);
+
       bjetpt1 = bjetPtOfN(1);
       bjetphi1 = bjetPhiOfN(1);
       bjeteta1 = bjetEtaOfN(1);
@@ -7419,6 +7806,12 @@ void EventCalculator::reducedTree(TString outputpath) {
       bjetflavor3 = bjetFlavorOfN(3);
       bjetchargedhadronfrac3 = bjetChargedHadronFracOfN(3);
       bjetchargedhadronmult3 = bjetChargedHadronMultOfN(3);
+
+      bjetpt4 = bjetPtOfN(4);
+      bjetphi4 = bjetPhiOfN(4);
+      bjeteta4 = bjetEtaOfN(4);
+      bjetenergy4 = bjetEnergyOfN(4); 
+      bjetflavor4 = bjetFlavorOfN(4);
 
       eleet1 = elePtOfN(1,5);
       elephi1 = elePhiOfN(1,5);
@@ -8347,7 +8740,11 @@ int EventCalculator::getTauDecayType( int tauid) {
 }
 
  //trying to rewrite from scratch for cfA
-int EventCalculator::getTTbarDecayType(int & leptonicTop) {
+int EventCalculator::getTTbarDecayType(int & leptonicTop, float & leptonEta, float & leptonPhi,float & leptonPt) {
+
+  //the 'leptonic Top ' info is used to ID, in single lepton events, which top quark decayed leptonically
+
+  //similarly, the leptonEta, Phi,Pt info is only for single lepton events
    
   //use my old encoding scheme instead of don's
 
@@ -8357,14 +8754,22 @@ int EventCalculator::getTTbarDecayType(int & leptonicTop) {
   int foundtau=0;
 
   leptonicTop=0;
+  leptonEta=99;//choose clearly unphysical defaults
+  leptonPt=-1;
+  leptonPhi=99;
+
+  const int leptongmom = sampleName_.BeginsWith("TT_8TeV-mcatnlo") ? 24 : 6;
+  //MC@NLO has weird behavior where the lepton gmom and ggmom are both 24 and not the top
 
   int taudecay[2]={-1,-1};
-  //  cout<<" ======"<<endl;
+  const bool debug = false;
+  if (debug)    cout<<" ======"<<endl;
   for (size_t jj=0; jj<  mc_doc_id->size(); ++jj) {
-    //    cout<<jj <<"\t"<<mc_doc_id->at(jj)<<" "<<mc_doc_mother_id->at(jj)<<" "<<mc_doc_grandmother_id->at(jj)<<endl;
+    if (debug)   cout<<jj <<"\t"<<mc_doc_id->at(jj)<<" "<<mc_doc_mother_id->at(jj)<<" "<<mc_doc_grandmother_id->at(jj)
+		     <<" "<<mc_doc_ggrandmother_id->at(jj)<<endl;
 
-    //go looking for particle who have the top as ~grandmother~
-    if ( abs(TMath::Nint(mc_doc_grandmother_id->at(jj))) == 6 ) {
+    //go looking for particle who have the top (or W for mc@nlo) as ~grandmother~
+    if ( abs(TMath::Nint(mc_doc_grandmother_id->at(jj))) == leptongmom ) {
 
       //      cout<<"found top granddaughter "<<TMath::Nint(mc_doc_id->at(jj))<<endl;
 
@@ -8391,7 +8796,13 @@ int EventCalculator::getTTbarDecayType(int & leptonicTop) {
       }
       //jmt test
       //if (wdau==11 ||wdau==13||wdau==15) cout<<" top with leptonic daughter = "<<TMath::Nint(mc_doc_grandmother_id->at(jj))<<" "<<TMath::Nint(mc_doc_id->at(jj))<<endl;
-      if (wdau==11 ||wdau==13||wdau==15) leptonicTop += TMath::Nint(mc_doc_grandmother_id->at(jj));
+      if (wdau==11 ||wdau==13||wdau==15) {
+	leptonicTop += TMath::Nint(mc_doc_grandmother_id->at(jj));
+	leptonEta = mc_doc_eta->at(jj);
+	leptonPt = mc_doc_pt->at(jj);
+	leptonPhi = mc_doc_phi->at(jj);
+
+      }
 
     }
   }

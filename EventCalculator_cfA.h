@@ -134,12 +134,22 @@ public:
   float getPUWeight(reweight::LumiReWeighting lumiWeights);
   //  float getPUWeight(/* Lumi3DReWeighting lumiWeights*/); //FIXME CFA
 
-  bool isGoodMuon(const unsigned int imuon, const bool disableRelIso=false, const float ptthreshold=10);
+  bool isGoodMuon(const unsigned int imuon, const bool disableRelIso, const float ptthreshold,int & lossCode);
+  bool isGoodElectron(const unsigned int iele, const bool disableRelIso, const float ptthreshold, const bool use2012id,int &lossCode);
+  unsigned int countEle(const float ptthreshold,const bool use2012id,const int ttbarDecayCode,int & lostLeptonCode,const float genEta,const float genPhi) ;
+  bool isCleanMuon(const unsigned int imuon, const float ptthreshold,int & lossCode);
+  unsigned int countMu(const float ptthreshold,const int ttbarDecayCode, int & lostLeptonCode,const float genEta,const float genPhi);
+
+  bool isGoodMuon(const unsigned int imuon, const bool disableRelIso=false, const float ptthreshold=10) {
+    int lossCode=-1; return isGoodMuon(imuon,disableRelIso,ptthreshold,lossCode);}
   bool isGoodRecoMuon(const unsigned int imuon, const bool disableRelIso=false, const float ptthreshold=10);
-  bool isGoodElectron(const unsigned int iele, const bool disableRelIso=false, const float ptthreshold=10, const bool use2012id=true);
-  unsigned int countEle(const float ptthreshold=10,const bool use2012id=true) ;
-  bool isCleanMuon(const unsigned int imuon, const float ptthreshold=10);
-  unsigned int countMu(const float ptthreshold=10);
+  bool isGoodElectron(const unsigned int iele, const bool disableRelIso=false, const float ptthreshold=10, const bool use2012id=true) {
+    int code=-1; return isGoodElectron(iele,disableRelIso,ptthreshold,use2012id,code);}
+  unsigned int countEle(const float ptthreshold=10,const bool use2012id=true) {
+    int code=-1; return countEle(ptthreshold,use2012id,-1,code,-99,-99);}
+  bool isCleanMuon(const unsigned int imuon, const float ptthreshold=10) {
+    int code=-1; return isCleanMuon(imuon,ptthreshold,code);}
+  unsigned int countMu(const float ptthreshold=10) {int code=-1; return countMu(ptthreshold,-1,code,-99,-99);}
 
   //for MET-Reweighting
   bool isGoodTightMuon(const unsigned int imuon, const bool disableRelIso=false, const float ptthreshold=25);
@@ -358,13 +368,21 @@ public:
   int electronMatch(const int trueElectron);
   int tauMatch(const int trueTau);
   int daughterMatch(const int Wdaughter, const int WdecayType);
-  int getTTbarDecayType(int & leptonicTop);
+  int getTTbarDecayType(int & leptonicTop, float & leptonEta, float & leptonPhi,float & leptonPt);
   int getTauDecayType(int tauid);
   int findJetMatchGenTau();
+  float getMinDeltaRToJet(const float eta, const float phi, int &jetflavor);
+  void fillGenTopInfo(const int ttbarDecayCode, const int leptonicTop, float &genTopPtLep,float & genWPtLep,float & genTopPtHad,float & genWPtHad);
 
-
+  //return the 4-vectors of the true bbbb in hh->bbbb signal events
   void genLevelHiggs(TLorentzVector (&bbbb)[2][2] ) ;
+  //'truehiggs' are the indices of the jets on the jet list that DR-match the true hh->bbbb quarks
+  // fill higgsMbb1/2 with the best *pair* of hh candidates (using 125 GeV mass)
   void higgs125massPairs(float & higgsMbb1,float & higgsMbb2,const std::vector< std::pair<int,int> > & truehiggs  ) ;
+  void higgs125massPairsAllJets(float & higgsMbb1,float & higgsMbb2);
+
+  void massPairsDeltaSort(float & higgsMbb1,float & higgsMbb2);
+  float getBestH125(); //return jet invariant mass pair closest to 125 GeV
   std::vector< std::pair<int,int> > matchRecoJetsToHiggses(TLorentzVector (&bbbb)[2][2]);
 
   //  int getWDecayType(int& WdecayType, int& W, int& Wdaughter, bool fromtop);
@@ -378,6 +396,7 @@ public:
   double getBtagSF(const int flavor, const float pt, int eta) ;//in development. not for production
   float getBtagEffMC(const int flavor, const float pt) ;//currently used only in test code
   int nGoodBJets_Tweaked() ;
+  float getTopPtWeight(float & topPt);
 
   //the standard jet-tag probability method that we have been using  
   void calculateTagProb(float &Prob0, float &ProbGEQ1, float &Prob1, float &ProbGEQ2, float & Prob2, float &ProbGEQ3,
