@@ -381,6 +381,9 @@ public:
   void higgs125massPairs(float & higgsMbb1,float & higgsMbb2,const std::vector< std::pair<int,int> > & truehiggs  ) ;
   void higgs125massPairsAllJets(float & higgsMbb1,float & higgsMbb2);
 
+  float mbbHighPt( BTaggerType tagger ) ;
+
+
   void massPairsDeltaSort(float & higgsMbb1,float & higgsMbb2);
   float getBestH125(); //return jet invariant mass pair closest to 125 GeV
   std::vector< std::pair<int,int> > matchRecoJetsToHiggses(TLorentzVector (&bbbb)[2][2]);

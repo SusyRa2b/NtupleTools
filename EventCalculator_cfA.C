@@ -4205,6 +4205,23 @@ return either 0,1,2
 
 }
 
+float EventCalculator::mbbHighPt( BTaggerType tagger ) {
+
+  //look for the highest pT jets passing the btagger
+
+  vector<int> bjetindex;
+  //loop over jets (already sorted by pT)
+  for (size_t jj = 0; jj < jets_AK5PF_pt->size(); jj++) {
+    if (isGoodJet(jj) && passBTagger(jj,tagger)) {
+      bjetindex.push_back(jj);
+    }
+    if (bjetindex.size() == 2) break;
+  }
+  if (bjetindex.size()<2) return -1;
+  return calc_mNj(bjetindex[0],bjetindex[1]);
+
+}
+
 
 void EventCalculator::genLevelHiggs(TLorentzVector (&bbbb)[2][2] ) {
 
@@ -6340,6 +6357,10 @@ void EventCalculator::reducedTree(TString outputpath) {
   float mjj_closestB;
   float mjj_h125;
 
+  //replicating high mass higgs search
+  float mjj_highptCSVM;
+  float mjj_highptCSVT;
+
   //optimized for higgs(125) pairs
   //first the "dumb" variables. find the pairs of b-like jets with minimum mass difference from 125 GeV
   float higgsMbb1=-1,higgsMbb2=-1;
@@ -6771,6 +6792,9 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("mjj_closestB",&mjj_closestB,"mjj_closestB/F");
 
   reducedTree.Branch("mjj_h125",&mjj_h125,"mjj_h125/F");
+
+  reducedTree.Branch("mjj_highptCSVM",&mjj_highptCSVM,"mjj_highptCSVM/F");
+  reducedTree.Branch("mjj_highptCSVT",&mjj_highptCSVT,"mjj_highptCSVT/F");
 
   reducedTree.Branch("minDeltaPhi",&minDeltaPhi,"minDeltaPhi/F");
   reducedTree.Branch("minDeltaPhiAll",&minDeltaPhiAll,"minDeltaPhiAll/F");
@@ -7603,6 +7627,9 @@ void EventCalculator::reducedTree(TString outputpath) {
       mjj_bestTwoCSV = (j_index_1>=0 && j_index_2>=0) ? calc_mNj(j_index_1,j_index_2) : -1;
       deltaR_closestB=deltaRClosestTwoBjets(j_index_1,j_index_2);
       mjj_closestB= (j_index_1>=0 && j_index_2>=0) ? calc_mNj(j_index_1,j_index_2) : -1;
+
+      mjj_highptCSVM = mbbHighPt(kCSVM);
+      mjj_highptCSVT = mbbHighPt(kCSVT);
 
       if (isSampleQCD()) { //don't fill except for QCD MC
       minDeltaPhiN_otherPt10                      = getMinDeltaPhiMETN(3,50,2.4,true, 10,2.4,true, false,false);
