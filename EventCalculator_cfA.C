@@ -403,7 +403,7 @@ double EventCalculator::getWeight(Long64_t nentries) {
   double sigma = getCrossSection();
   double w = lumi_ * sigma / double(nentries);
 
-  if (sampleName_.Contains("QCD_Pt_15to3000_TuneZ2_Flat_7TeV_pythia6")) w *= weight;
+  // if (sampleName_.Contains("QCD_Pt_15to3000_TuneZ2_Flat_7TeV_pythia6")) w *= weight;
 
   return  w;
 }
@@ -4652,6 +4652,8 @@ Long64_t EventCalculator::getNEventsGenerated( TString sample) {
   //numbers come from 
   //`http://cms2.physics.ucsb.edu/cgi-bin/cfA.pl?Institute=ALL&process=ALL&version=v66
   if (sample.Contains("UCSB1489")) return 6923750 ; //TT madgraph
+  if (sample.Contains("UCSB1617")) return 6923750 ; //same as the above (small TTbar MG) but in v67
+
   if (sample.Contains("UCSB1558")) return 21675970; //TT powheg
   if (sample.Contains("UCSB1599")) return 32852589; //TT MC@NLO
   if (sample.Contains("UCSB1488")) return 1634582 ; //W 250-300
