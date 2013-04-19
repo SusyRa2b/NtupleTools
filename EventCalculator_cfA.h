@@ -501,6 +501,11 @@ private:
   void loadDataJetRes();
   float getDataJetRes(float pt, float eta);
   TFile *fDataJetRes_;
+
+  //stuff for JES pT caching
+  jmt::eventID * cachedEvent_; //for stupid technical reasons this has to be a pointer
+  std::map<unsigned int, float> jetPtCache_;
+
   TH1D *hEta0_0p5_;
   TH1D *hEta0p5_1_;
   TH1D *hEta1_1p5_;

@@ -83,6 +83,8 @@ EventCalculator::EventCalculator(const TString & sampleName, const vector<string
               hden_ht1000toInf_mu(0),
   f_tageff_(0),
   fDataJetRes_(0),
+  cachedEvent_(new jmt::eventID(0,0,0)),
+  //
   //2011 values, to be used for code validation only
   ResJetPar_(new JetCorrectorParameters("JESfiles/START53_V7F_L2L3Residual_AK5PFchs.txt") ),
   L3JetPar_(new JetCorrectorParameters("JESfiles/START53_V7F_L3Absolute_AK5PFchs.txt") ),
@@ -2646,14 +2648,35 @@ end of kJESFLY block  */
   //  cout<<" jet pt "<<pt;
   //  float pt0 = pt;
 
-  if ( theJESType_ == kJESup ) {
-    //sanity check on unc is now moved inside of getJESUncertainty
-    const    float unc = getJESUncertainty(ijet,addL2L3toJES);
-    pt *= (1+ unc);
-  }
-  else if (theJESType_ == kJESdown) {
-    const    float unc = getJESUncertainty(ijet,addL2L3toJES);
-    pt *= (1- unc);
+  if ( theJESType_ == kJESup || theJESType_ == kJESdown) {
+
+    //is this a new event?
+    jmt::eventID thisevent = jmt::eventID(getRunNumber(),getLumiSection(),getEventNumber());
+    if (thisevent != *cachedEvent_) {
+      //update the current event
+      cachedEvent_->run = thisevent.run;
+      cachedEvent_->ls = thisevent.ls;
+      cachedEvent_->ev = thisevent.ev;
+      //clear the cache
+      jetPtCache_.clear();
+    }
+
+    //let's only use the caching feature if addL2L3toJES is off (it is always off in 2012....)
+    if ( jetPtCache_.count(ijet) && !addL2L3toJES)
+      return jetPtCache_[ijet];
+    else {
+
+      if ( theJESType_ == kJESup ) {
+	//sanity check on unc is now moved inside of getJESUncertainty
+	const    float unc = getJESUncertainty(ijet,addL2L3toJES);
+	pt *= (1+ unc);
+      }
+      else if (theJESType_ == kJESdown) {
+	const    float unc = getJESUncertainty(ijet,addL2L3toJES);
+	pt *= (1- unc);
+      }
+      jetPtCache_[ijet] = pt; //fill the cache
+    }
   }
   //  cout<< " -> "<<pt<<"\t"<< pt/pt0<<endl;  
 
