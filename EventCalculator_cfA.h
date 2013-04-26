@@ -309,6 +309,7 @@ public:
   float bjetPhiOfN(unsigned int n);
   float bjetEtaOfN(unsigned int n);
   float bjetEnergyOfN(unsigned int n);
+  float bjetBestCSV(unsigned int n);
   float bjetCSVOfN(unsigned int n);
   int bjetFlavorOfN(unsigned int n);
   float bjetChargedHadronFracOfN(unsigned int n);

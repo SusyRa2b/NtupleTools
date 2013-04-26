@@ -3335,6 +3335,20 @@ float EventCalculator::bjetCSVOfN(unsigned int n) {
   return 0;
 }
 
+float EventCalculator::bjetBestCSV(unsigned int n) {
+  float CSVvalues[4] = {0.,0.,0.,0.};
+  for (unsigned int i=0; i<jets_AK5PF_pt->size(); i++) {
+    if (isGoodJet(i,20) ) {
+       float CSVval = getJetCSV(i);
+       if (CSVval>CSVvalues[0]) { CSVvalues[3]=CSVvalues[2]; CSVvalues[2]=CSVvalues[1]; CSVvalues[1]=CSVvalues[0]; CSVvalues[0] = CSVval;}
+       else if (CSVval>CSVvalues[1]) { CSVvalues[3]=CSVvalues[2]; CSVvalues[2]=CSVvalues[1]; CSVvalues[1]= CSVval;}
+       else if (CSVval>CSVvalues[2]) { CSVvalues[3]=CSVvalues[2]; CSVvalues[2]=CSVval;}
+       else if (CSVval>CSVvalues[3]) { CSVvalues[3]=CSVval;}
+    }
+  }
+  return CSVvalues[n-1];
+}
+
 
 float EventCalculator::bjetPtOfN(unsigned int n) {
 
@@ -4816,6 +4830,16 @@ Long64_t EventCalculator::getNEventsGenerated( TString sample) {
   if (sample.Contains("UCSB1710")) return 5009488 ;//tt MG scale up
   if (sample.Contains("UCSB1709")) return 5372181 ;//tt MG scale down 
 
+   // ============= v67 samples ============
+  // SKIM is applied, so this is now important
+
+  // numbers come from 
+  // http://cms2.physics.ucsb.edu/cgi-bin/cfA.pl?Institute=ALL&process=ALL&version=v67
+
+  if (sample.Contains("UCSB1737")) return 13843863 ; // QCD MG >1000
+  if (sample.Contains("UCSB1736")) return 30599292 ; // QCD MG 500-1000
+  if (sample.Contains("UCSB1735")) return 27057331 ; // QCD MG 250-500
+
   cout<<"[getNEventsGenerated] unknown sample "<<sample<<endl;
   assert(0);
   return 1;
@@ -6289,6 +6313,7 @@ void EventCalculator::reducedTree(TString outputpath) {
 
   //items to investigate possible heavy flavor understimate in SIG -- looking at semi leptonic decays, bs, etc
   float CSVout1, CSVout2, CSVout3; //CSV tagger output for the lead three b-tagged jets
+  float CSVbest1, CSVbest2, CSVbest3, CSVbest4; //CSV tagger output for the four most b-like jets
   float minDeltaPhiAllb30, deltaPhib1, deltaPhib2, deltaPhib3;
   float minDeltaPhiMETMuonsAll;
 
@@ -6325,6 +6350,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   map<TString, triggerData > triggerlist;
   //BJetPlusX
   triggerlist["DiPFJet80_DiPFJet30_BTagCSVd07d05"]=triggerData();
+  triggerlist["Jet80Eta1p7_Jet70Eta1p7_DiBTagIP3DFastPV"]=triggerData();
   //HTMHT
   triggerlist["PFHT350_PFMET100"]=triggerData();
   triggerlist["PFNoPUHT350_PFMET100"]=triggerData();
@@ -6338,6 +6364,8 @@ void EventCalculator::reducedTree(TString outputpath) {
   triggerlist["PFHT650"]=triggerData();
   triggerlist["PFNoPUHT350"]=triggerData();
   triggerlist["PFNoPUHT650"]=triggerData();
+  // JetMon
+  triggerlist["PFJet80"]=triggerData();
   //MET
   triggerlist["DiCentralJetSumpT100_dPhi05_DiCentralPFJet60_25_PFMET100_HBHENoiseCleaned"]=triggerData();
   triggerlist["DiCentralPFJet50_PFMET80"]=triggerData();
@@ -7048,6 +7076,10 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("CSVout1",&CSVout1,"CSVout1/F");
   reducedTree.Branch("CSVout2",&CSVout2,"CSVout2/F");
   reducedTree.Branch("CSVout3",&CSVout3,"CSVout3/F");
+  reducedTree.Branch("CSVbest1",&CSVbest1,"CSVbest1/F");
+  reducedTree.Branch("CSVbest2",&CSVbest2,"CSVbest2/F");
+  reducedTree.Branch("CSVbest3",&CSVbest3,"CSVbest3/F");
+  reducedTree.Branch("CSVbest4",&CSVbest4,"CSVbest4/F");
   reducedTree.Branch("minDeltaPhiAllb30",&minDeltaPhiAllb30,"minDeltaPhiAllb30/F");
   reducedTree.Branch("deltaPhib1",&deltaPhib1,"deltaPhib1/F");
   reducedTree.Branch("deltaPhib2",&deltaPhib2,"deltaPhib2/F");
@@ -7815,6 +7847,10 @@ void EventCalculator::reducedTree(TString outputpath) {
       CSVout1=bjetCSVOfN(1);
       CSVout2=bjetCSVOfN(2);
       CSVout3=bjetCSVOfN(3);
+      CSVbest1=bjetBestCSV(1);
+      CSVbest2=bjetBestCSV(2);
+      CSVbest3=bjetBestCSV(3);
+      CSVbest4=bjetBestCSV(4);
       minDeltaPhiAllb30=getMinDeltaPhiMET30(99,true);
       deltaPhib1=getDeltaPhiMET(1,30,true);
       deltaPhib2=getDeltaPhiMET(2,30,true); 
