@@ -198,7 +198,7 @@ public:
   void getSphericity(float & sph, bool addMET, bool addLeptons, float jetthreshold);
 
   std::vector<unsigned int> jetsetToVector(const std::vector<unsigned int> & goodjets, const std::set<unsigned int> & myset) ;
-  void jjResonanceFinder(float & mjj1, float & mjj2, int & ngoodMC);//simple first try
+  void jjResonanceFinder(float & mjj1, float & mjj2, int & ngoodMC,const float ptcut=30);//simple first try
   void jjResonanceFinder5(float & mjj1, float & mjj2);
 
   void hadronicTopFinder_DeltaR(float & mjjb1, float & mjjb2, float & topPT1, float & topPT2);
@@ -207,7 +207,10 @@ public:
 
   //two ways to find deltaR between b jets
   float deltaRBestTwoBjets(int & jetindex1, int & jetindex2 );
-  float deltaRClosestTwoBjets(int & jetindex1, int & jetindex2 ) ;
+  float deltaRClosestTwoBjets(int & jetindex1, int & jetindex2,const float ptcut=50 ) ;
+
+  TLorentzVector getLorentzVector( const unsigned int ijet) ;
+  float getDeltaPhi_hb(int j_index_1,int j_index_2) ;
 
   unsigned int getNthGoodJet(unsigned int goodJetN, float mainpt, float maineta, bool mainid);
   double getMinDeltaPhiMET(unsigned int maxjets);
@@ -264,6 +267,8 @@ public:
   bool isGoodJet30(unsigned int ijet) {return isGoodJet(ijet,30,2.4,true);}
   bool isGoodJetMHT(unsigned int ijet);
   bool passBTagger(int ijet, BTaggerType btagger=Nbtaggers );
+
+  float getCosHel( TLorentzVector  d1,  TLorentzVector  d2) ;
 
   unsigned int nGoodJets(const float ptthreshold=50);
   //  unsigned int nGoodJets(TH2D* count,TH2D* unc,TH2D* l2l3); //for a test
@@ -382,7 +387,8 @@ public:
   void higgs125massPairsAllJets(float & higgsMbb1,float & higgsMbb2);
 
   float mbbHighPt( BTaggerType tagger ) ;
-
+  bool jetPartonMatchGood(TLorentzVector gen, int ijet) ;
+  bool higgsRecoCorrect(TLorentzVector (&bbbb)[2][2], int hj1, int hj2);
 
   void massPairsDeltaSort(float & higgsMbb1,float & higgsMbb2);
   float getBestH125(); //return jet invariant mass pair closest to 125 GeV

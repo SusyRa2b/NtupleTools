@@ -2197,19 +2197,19 @@ float EventCalculator::deltaRBestTwoBjets(int & jetindex1, int & jetindex2 ) {
   return dr;
 }
 
-float EventCalculator::deltaRClosestTwoBjets(int & jetindex1, int & jetindex2 ) {
+float EventCalculator::deltaRClosestTwoBjets(int & jetindex1, int & jetindex2,const float ptcut ) {
 
   float mindr=1e9;
   jetindex1 = -1;
   jetindex2=-1;
 
   for (unsigned int j1 = 0; j1<jets_AK5PF_pt->size(); j1++) {
-    if (isGoodJet(j1) && passBTagger(j1)) {
+    if (isGoodJet(j1,ptcut) && passBTagger(j1)) {
 
       //avoid duplicates by starting loop at the jet after j1
       for (unsigned int j2 = j1+1; j2<jets_AK5PF_pt->size(); j2++) {
 	
-	if (isGoodJet(j2) && passBTagger(j2)) {
+	if (isGoodJet(j2,ptcut) && passBTagger(j2)) {
 	  float   dr= jmt::deltaR( jets_AK5PF_eta->at(j1), jets_AK5PF_phi->at(j1),jets_AK5PF_eta->at(j2), jets_AK5PF_phi->at(j2));
 	  if (dr<mindr) {
 	    mindr=dr;
@@ -3449,6 +3449,61 @@ int  EventCalculator::bjetChargedHadronMultOfN(unsigned int n) {
   return 0;
 }
 
+float EventCalculator::getDeltaPhi_hb(int j_index_1,int j_index_2) {
+
+  float dp = -99;
+
+  if (j_index_1 <0 || j_index_2<0) return dp;
+  //find angle between the jj system and a b-tagged jet
+  TLorentzVector resonance = getLorentzVector(j_index_1)+getLorentzVector(j_index_2);
+
+  //find other bjets in event
+  vector<unsigned int> otherb;
+  for (unsigned int i=0; i<jets_AK5PF_pt->size(); i++) {
+    if ((int) i == j_index_1) continue;
+    if ((int) i == j_index_2) continue;
+
+    if ( isGoodJet(i,20) && passBTagger(i) ) otherb.push_back(i);
+  }
+
+  if (otherb.size() == 1) dp = jmt::deltaPhi( resonance.Phi(), jets_AK5PF_phi->at( otherb.at(0)));
+  else if (otherb.size() >=2 ) { //use the first 2
+    TLorentzVector resonance2 = getLorentzVector(otherb.at(0) )+getLorentzVector(otherb.at(1) );
+    dp = jmt::deltaPhi(resonance.Phi(),resonance2.Phi());
+  }
+  return dp;
+}
+
+TLorentzVector EventCalculator::getLorentzVector( const unsigned int ijet) {
+  //DANGEROUS -- this is not ok under JES shifts!
+
+  //get a TLorentzVector for the requested jet
+  TLorentzVector j;
+  if (ijet >= jets_AK5PF_pt->size()) return j;
+
+  j.SetPtEtaPhiE( jets_AK5PF_pt->at(ijet),jets_AK5PF_eta->at(ijet),jets_AK5PF_phi->at(ijet),jets_AK5PF_energy->at(ijet));
+  return j;
+}
+
+float EventCalculator::getCosHel( TLorentzVector  d1,  TLorentzVector  d2) {
+
+  //angle between the direction of the parent and the direction of d1 in the rest frame of the parent
+  TLorentzVector p = d1+d2;
+  //go to parent's rest frame
+  TVector3 boost = -p.BoostVector();
+  d1.Boost(boost);
+
+  TVector3 p3= p.Vect();
+  TVector3 d13= d1.Vect();
+
+  float mag1=p3.Mag();
+  float mag2=d13.Mag();
+  
+  double dot = p3.Dot(d13);
+
+  return (mag1>0 && mag2>0) ? (dot /(mag1*mag2)) : -99;
+
+}
 
 //-- first two jets are from W.  third is b jet
 void EventCalculator::calcCosHel( unsigned int j1i, unsigned int j2i, unsigned int j3i, float & wcoshel,float &tcoshel) {
@@ -4967,6 +5022,37 @@ double EventCalculator::getScanCrossSection( SUSYProcess p ) {
   return 0;
 }
 
+bool EventCalculator::jetPartonMatchGood(TLorentzVector gen, int ijet) {
+
+  if ( gen.Et() <=0) return false;
+
+  //DeltaR = 0.5 matching *and* pT within 30%
+  double ptfrac = jets_AK5PF_pt->at(ijet) / gen.Pt();
+  double ptdiff = std::abs(jets_AK5PF_pt->at(ijet) - gen.Pt());
+  
+  bool drmatch = (jmt::deltaR(jets_AK5PF_eta->at(ijet),jets_AK5PF_phi->at(ijet),gen.Eta(),gen.Phi()) < 0.5);
+
+  bool ptmatch = ( (gen.Pt()>=20 && ptfrac>=0.7 && ptfrac<=1.3 ) || (gen.Pt()<20 && ptdiff< 6 ) );
+		 
+  return drmatch && ptmatch;
+}
+
+bool EventCalculator::higgsRecoCorrect(TLorentzVector (&bbbb)[2][2], int hj1, int hj2) {
+
+  if (hj1<0) return false;
+  if (hj2<0) return false;
+
+  for (unsigned int ih=0;ih<2; ih++) {
+    //loop over true higgses
+
+    bool match1 = jetPartonMatchGood(bbbb[ih][0],hj1) && jetPartonMatchGood(bbbb[ih][1],hj2);
+    bool match2 = jetPartonMatchGood(bbbb[ih][1],hj1) && jetPartonMatchGood(bbbb[ih][0],hj2);
+    if (match1 || match2) return true;
+
+  }
+  return false;
+}
+
 std::vector< std::pair<int,int> > EventCalculator::matchRecoJetsToHiggses(TLorentzVector (&bbbb)[2][2]) {
   vector< pair<int,int> > truehiggs;
   if (!sampleName_.Contains("TChihh")) return truehiggs;
@@ -4977,28 +5063,42 @@ std::vector< std::pair<int,int> > EventCalculator::matchRecoJetsToHiggses(TLoren
   //paranoia -- init the array
   for (int ii=0; ii<2; ii++) {  for (int jj=0; jj<2; jj++) { jetindex[ii][jj]=-1; } }
 
+  set<unsigned int> jets_used;
+
   int nmatch=0;
-  for (unsigned int kk=0; kk<jets_AK5PF_pt->size(); kk++) {
-    for (int ii=0; ii<2; ii++) {
-      for (int jj=0; jj<2; jj++) {
-	//DeltaR = 0.3 matching
-	if ( jmt::deltaR(jets_AK5PF_eta->at(kk),jets_AK5PF_phi->at(kk),bbbb[ii][jj].Eta(),bbbb[ii][jj].Phi()) < 0.3) { 
+  //loop over the h->bb partons
+  for (int ii=0; ii<2; ii++) {
+    for (int jj=0; jj<2; jj++) {
+      
+      //then loop over each jet
+      for (unsigned int kk=0; kk<jets_AK5PF_pt->size(); kk++) {
+	
+	if (jets_used.count(kk)==1) continue; //don't use a jet twice
+	if ( jetPartonMatchGood(bbbb[ii][jj],kk))  {
 	  jetindex[ii][jj]=kk;
 	  nmatch++;
+	  jets_used.insert(kk);
 	}
-	
       }
     }
     if (nmatch==4) break;
   }
 
-/* jmt higgs debug
+  // jmt higgs debug
+/*
   cout<<" true higgs jet indices "<<endl;
   cout<<  jetindex[0][0]<<" "<<jetindex[0][1];
   cout<<"\t"<<  jetindex[1][0]<<" "<<jetindex[1][1]<<endl;
 */
-  truehiggs.push_back( make_pair( jetindex[0][0],jetindex[0][1]));
-  truehiggs.push_back( make_pair( jetindex[1][0],jetindex[1][1]));
+
+//sort the truehiggs order by the pT of the true higgs
+  TLorentzVector h1 = bbbb[0][0] + bbbb[0][1]; //reconstruct the true higgses
+  TLorentzVector h2 = bbbb[1][0] + bbbb[1][1];
+  int index1 = h1.Pt() > h2.Pt() ? 0 : 1;
+  int index2 = index1==0 ? 1: 0;
+
+  truehiggs.push_back( make_pair( jetindex[index1][0],jetindex[index1][1]));
+  truehiggs.push_back( make_pair( jetindex[index2][0],jetindex[index2][1]));
 
   return truehiggs;
 }
@@ -5255,7 +5355,7 @@ void EventCalculator::higgs125massPairs(float & higgsMbb1,float & higgsMbb2,cons
 }
 
 
-void EventCalculator::jjResonanceFinder(float & mjj1, float & mjj2, int & ngoodMC) {//simple first try
+void EventCalculator::jjResonanceFinder(float & mjj1, float & mjj2, int & ngoodMC,const float ptcut) {//simple first try
   mjj1=0;
   mjj2=0;
   ngoodMC=0;
@@ -5263,7 +5363,7 @@ void EventCalculator::jjResonanceFinder(float & mjj1, float & mjj2, int & ngoodM
   //find the good jets
   vector<unsigned int> gjets;
   for (unsigned int i=0; i < jets_AK5PF_pt->size(); ++i) {
-    if (isGoodJet30(i) )  gjets.push_back(i);
+    if (isGoodJet(i,ptcut) )  gjets.push_back(i);
   }
 
   if ( gjets.size() <4 ) return;
@@ -6275,7 +6375,9 @@ void EventCalculator::reducedTree(TString outputpath) {
   //want a copy of triggerlist, for storing mc trigger results
   map<TString, triggerData > triggerlist_mc(triggerlist);
 
-  int njets, njets30, nbjets, nbjets30,ntruebjets, nElectrons,nElectrons2011, nMuons, nTightMuons,njets20;
+  int njets, njets30, nbjets, nbjets30,ntruebjets, nElectrons,nElectrons2011, nMuons, nTightMuons,njets20,nbjets20;
+  int njetsHiggsMatch20, njetsHiggsMatch20_CSVT,njetsHiggsMatch20_CSVM,njetsHiggsMatch20_CSVL;
+  int ncompleteHiggsReco20;
   int nbjetsTweaked;
   int nTausVLoose,nTausLoose,nTausMedium,nTausTight;
   //  int nIndirectTaus4,nIndirectTaus5,nIndirectTaus2,nIndirectTaus3;
@@ -6356,6 +6458,17 @@ void EventCalculator::reducedTree(TString outputpath) {
   float deltaR_closestB;
   float mjj_closestB;
   float mjj_h125;
+
+  //like mjj_closestB but with 20 GeV threshold
+  float mjj_closestB20;
+  bool mjj_closestB20_correct;//mc truth -- is the higgs correct?
+  float deltaR_closestB20;
+  float cosHel_closestB20; //Bill G's suggestion -- b,h angle in h rest frame
+  //some playing around with h(bb)+h(bb) with =3 b tags in mind
+  float deltaPhi_hb20; //angle between h(bb) and 3rd b in event. if 4th b, calculate deltaPhi(h,h)
+  float sumPtMjjDiff_closestB20;//Sum pT jj - Mjj for this higgs candidate
+
+  //next idea would be fancier decision for making mjj (combination of DR and other stuff)
 
   //replicating high mass higgs search
   float mjj_highptCSVM;
@@ -6541,7 +6654,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   float higgs2b2pt=0, higgs2b2phi=0, higgs2b2eta=0;
   float higgsb1pt=0, higgsb2pt=0, higgsb3pt=0, higgsb4pt=0;
 
-  //useless?
+  //for gen-level higgs decay products
   float higgsDeltaRminCorrect=0;
   float higgsDeltaRminWrong1=0;
   float higgsDeltaRminWrong2=0;
@@ -6550,11 +6663,30 @@ void EventCalculator::reducedTree(TString outputpath) {
   float higgsDeltaRmaxWrong1=0;
   float higgsDeltaRmaxWrong2=0;
 
+  //gen-level hel angles
+  float higgs1CosHelCorrect=0;
+  float higgs1CosHelWrong1=0;
+  float higgs1CosHelWrong2=0;
+
+  //these 6 are probably useless. angles between the b-quarks from higgses
+  float higgsDeltaPhiRminCorrect=0;
+  float higgsDeltaPhiRminWrong1=0;
+  float higgsDeltaPhiRminWrong2=0;
+  float higgsDeltaPhiRmaxCorrect=0;
+  float higgsDeltaPhiRmaxWrong1=0;
+  float higgsDeltaPhiRmaxWrong2=0;
+
+  //angles between the reconstructed higgses (but at gen level) for right and wrong combinations
+  float hhDeltaPhiWrong1=99,hhDeltaPhiWrong2=99;
+  float hhDeltaEtaWrong1=99,hhDeltaEtaWrong2=99;
+
+  float hhDeltaR=99,hhDeltaEta=99,hhDeltaPhi=99;
+
+
   //inv mass and sum pT of every combination
   float higgsMass[6];
   float higgsSumpt[6];
 
-  float hhDeltaR=99,hhDeltaEta=99,hhDeltaPhi=99;
 
   reducedTree.Branch("higgsMass",&higgsMass,"higgsMass[6]/F");
   reducedTree.Branch("higgsSumpt",&higgsSumpt,"higgsSumpt[6]/F");
@@ -6562,6 +6694,15 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("hhDeltaR",&hhDeltaR,"hhDeltaR/F");
   reducedTree.Branch("hhDeltaEta",&hhDeltaEta,"hhDeltaEta/F");
   reducedTree.Branch("hhDeltaPhi",&hhDeltaPhi,"hhDeltaPhi/F");
+  reducedTree.Branch("hhDeltaPhiWrong1",&hhDeltaPhiWrong1,"hhDeltaPhiWrong1/F");
+  reducedTree.Branch("hhDeltaPhiWrong2",&hhDeltaPhiWrong2,"hhDeltaPhiWrong2/F");
+
+  reducedTree.Branch("hhDeltaEtaWrong1",&hhDeltaEtaWrong1,"hhDeltaEtaWrong1/F");
+  reducedTree.Branch("hhDeltaEtaWrong2",&hhDeltaEtaWrong2,"hhDeltaEtaWrong2/F");
+
+  reducedTree.Branch("higgs1CosHelCorrect",&higgs1CosHelCorrect,"higgs1CosHelCorrect/F");
+  reducedTree.Branch("higgs1CosHelWrong1",&higgs1CosHelWrong1,"higgs1CosHelWrong1/F");
+  reducedTree.Branch("higgs1CosHelWrong2",&higgs1CosHelWrong2,"higgs1CosHelWrong2/F");
 
   reducedTree.Branch("higgs1b1pt",&higgs1b1pt,"higgs1b1pt/F");
   reducedTree.Branch("higgs1b1phi",&higgs1b1phi,"higgs1b1phi/F");
@@ -6589,6 +6730,15 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("higgsDeltaRmaxCorrect",&higgsDeltaRmaxCorrect,"higgsDeltaRmaxCorrect/F");
   reducedTree.Branch("higgsDeltaRmaxWrong1",&higgsDeltaRmaxWrong1,"higgsDeltaRmaxWrong1/F");
   reducedTree.Branch("higgsDeltaRmaxWrong2",&higgsDeltaRmaxWrong2,"higgsDeltaRmaxWrong2/F");
+
+  //these 6 variables are probably useless
+  reducedTree.Branch("higgsDeltaPhiRminCorrect",&higgsDeltaPhiRminCorrect,"higgsDeltaPhiRminCorrect/F");
+  reducedTree.Branch("higgsDeltaPhiRminWrong1",&higgsDeltaPhiRminWrong1,"higgsDeltaPhiRminWrong1/F");
+  reducedTree.Branch("higgsDeltaPhiRminWrong2",&higgsDeltaPhiRminWrong2,"higgsDeltaPhiRminWrong2/F");
+
+  reducedTree.Branch("higgsDeltaPhiRmaxCorrect",&higgsDeltaPhiRmaxCorrect,"higgsDeltaPhiRmaxCorrect/F");
+  reducedTree.Branch("higgsDeltaPhiRmaxWrong1",&higgsDeltaPhiRmaxWrong1,"higgsDeltaPhiRmaxWrong1/F");
+  reducedTree.Branch("higgsDeltaPhiRmaxWrong2",&higgsDeltaPhiRmaxWrong2,"higgsDeltaPhiRmaxWrong2/F");
 
 
   reducedTree.Branch("prob0",&prob0,"prob0/F");
@@ -6670,9 +6820,15 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("njets",&njets,"njets/I");
   reducedTree.Branch("njets30",&njets30,"njets30/I");
   reducedTree.Branch("njets20",&njets20,"njets20/I");
+  reducedTree.Branch("njetsHiggsMatch20",&njetsHiggsMatch20,"njetsHiggsMatch20/I");
+  reducedTree.Branch("ncompleteHiggsReco20",&ncompleteHiggsReco20,"ncompleteHiggsReco20/I");
+  reducedTree.Branch("njetsHiggsMatch20_CSVT",&njetsHiggsMatch20_CSVT,"njetsHiggsMatch20_CSVT/I");
+  reducedTree.Branch("njetsHiggsMatch20_CSVM",&njetsHiggsMatch20_CSVM,"njetsHiggsMatch20_CSVM/I");
+  reducedTree.Branch("njetsHiggsMatch20_CSVL",&njetsHiggsMatch20_CSVL,"njetsHiggsMatch20_CSVL/I");
   reducedTree.Branch("nbjets",&nbjets,"nbjets/I");
   reducedTree.Branch("nbjetsTweaked",&nbjetsTweaked,"nbjetsTweaked/I");
   reducedTree.Branch("nbjets30",&nbjets30,"nbjets30/I");
+  reducedTree.Branch("nbjets20",&nbjets20,"nbjets20/I");
   reducedTree.Branch("ntruebjets",&ntruebjets,"ntruebjets/I");
   reducedTree.Branch("nElectrons",&nElectrons,"nElectrons/I");
   reducedTree.Branch("nElectrons2011",&nElectrons2011,"nElectrons2011/I");
@@ -6790,6 +6946,13 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("mjj_bestTwoCSV",&mjj_bestTwoCSV,"mjj_bestTwoCSV/F");
   reducedTree.Branch("deltaR_closestB",&deltaR_closestB,"deltaR_closestB/F");
   reducedTree.Branch("mjj_closestB",&mjj_closestB,"mjj_closestB/F");
+
+  reducedTree.Branch("mjj_closestB20",&mjj_closestB20,"mjj_closestB20/F");
+  reducedTree.Branch("mjj_closestB20_correct",&mjj_closestB20_correct,"mjj_closestB20_correct/O");
+  reducedTree.Branch("deltaR_closestB20",&deltaR_closestB20,"deltaR_closestB20/F");
+  reducedTree.Branch("cosHel_closestB20",&cosHel_closestB20,"cosHel_closestB20/F");
+  reducedTree.Branch("deltaPhi_hb20",&deltaPhi_hb20,"deltaPhi_hb20/F");
+  reducedTree.Branch("sumPtMjjDiff_closestB20",&sumPtMjjDiff_closestB20,"sumPtMjjDiff_closestB20/F");
 
   reducedTree.Branch("mjj_h125",&mjj_h125,"mjj_h125/F");
 
@@ -7375,6 +7538,7 @@ void EventCalculator::reducedTree(TString outputpath) {
 
       topPtWeight = getTopPtWeight(topPt); //topPt is the pT of the top quark (not antitop) in ttbar sample
 
+
       //if we are running over ttbar, fill info on decay mode
       int leptonicTop=-99;
       float leptonEta=99, leptonPt=-1,leptonPhi=99;
@@ -7469,12 +7633,58 @@ void EventCalculator::reducedTree(TString outputpath) {
       	genLevelHiggs(hbbbb);
 	vector< pair<int,int> > genHiggsIndices = matchRecoJetsToHiggses(hbbbb);//match to reco jtes
 
-	TLorentzVector h1 = hbbbb[0][0] + hbbbb[0][1]; //reconstruct the true higgses
+	ncompleteHiggsReco20=0;
+	int njetsHiggsMatch20_temp=0;
+	njetsHiggsMatch20 = 0;
+	njetsHiggsMatch20_CSVT = 0;
+	njetsHiggsMatch20_CSVL = 0;
+	njetsHiggsMatch20_CSVM = 0;
+	for (unsigned int ih =0; ih<genHiggsIndices.size(); ih++) {
+	  if (ih>=2) cout<<" wait ... ih = "<<ih<<endl;
+	  int hj[2];
+	  hj[0]=genHiggsIndices[ih].first;
+	  hj[1]=genHiggsIndices[ih].second;
+	  for (int ihj=0;ihj<2; ihj++) {
+	    if (hj[ihj]>=0) {
+	      if (isGoodJet( (unsigned int)hj[ihj],20)) {
+		njetsHiggsMatch20++;
+		njetsHiggsMatch20_temp++;
+		//could save time by nesting these, but gain isn't worth loss of clarity
+		if ( passBTagger( hj[ihj], kCSVL)) njetsHiggsMatch20_CSVL++;
+		if ( passBTagger( hj[ihj], kCSVM)) njetsHiggsMatch20_CSVM++;
+		if ( passBTagger( hj[ihj], kCSVT)) njetsHiggsMatch20_CSVT++;
+	      }
+	    }
+	  }
+	  if (njetsHiggsMatch20_temp == 2)  ncompleteHiggsReco20++;
+	  njetsHiggsMatch20_temp=0;
+	}
+
+	TLorentzVector h1 = hbbbb[0][0] + hbbbb[0][1];
 	TLorentzVector h2 = hbbbb[1][0] + hbbbb[1][1];
+
 	if (sampleName_.Contains("TChihh")) {
 	  hhDeltaR = jmt::deltaR(h1.Eta(),h1.Phi(),h2.Eta(),h2.Phi());
 	  hhDeltaEta = std::abs( h1.Eta() - h2.Eta());
 	  hhDeltaPhi = jmt::deltaPhi(h1.Phi(),h2.Phi());
+
+	  //incorrect gen-level higgses
+	  TLorentzVector hw1a = hbbbb[0][0] + hbbbb[1][1];
+	  TLorentzVector hw1b = hbbbb[1][0] + hbbbb[0][1];
+
+	  TLorentzVector hw2a = hbbbb[0][0] + hbbbb[1][0];
+	  TLorentzVector hw2b = hbbbb[1][1] + hbbbb[0][1];
+
+	  hhDeltaPhiWrong1 = jmt::deltaPhi( hw1a.Phi(),hw1b.Phi());
+	  hhDeltaPhiWrong2 = jmt::deltaPhi( hw2a.Phi(),hw2b.Phi());
+
+	  hhDeltaEtaWrong1 =  std::abs(hw1a.Eta()-hw1b.Eta());
+	  hhDeltaEtaWrong2 =  std::abs(hw2a.Eta()-hw2b.Eta());
+
+	  higgs1CosHelCorrect = getCosHel(hbbbb[0][0],hbbbb[0][1]);
+	  higgs1CosHelWrong1  = getCosHel(hbbbb[0][0],hbbbb[1][1]);
+	  higgs1CosHelWrong2  = getCosHel(hbbbb[0][0],hbbbb[1][0]);
+
 	//store stuff about the b quarks
       	higgs1b1pt=hbbbb[0][0].Pt(); higgs1b1phi=hbbbb[0][0].Phi(); higgs1b1eta=hbbbb[0][0].Eta();
       	higgs1b2pt=hbbbb[0][1].Pt(); higgs1b2phi=hbbbb[0][1].Phi(); higgs1b2eta=hbbbb[0][1].Eta();
@@ -7483,20 +7693,62 @@ void EventCalculator::reducedTree(TString outputpath) {
 
 	float	higgsDeltaR1 = jmt::deltaR(higgs1b1eta,higgs1b1phi,higgs1b2eta,higgs1b2phi); //12
 	float	higgsDeltaR2 = jmt::deltaR(higgs2b1eta,higgs2b1phi,higgs2b2eta,higgs2b2phi); //34
-	higgsDeltaRminCorrect = higgsDeltaR1<higgsDeltaR2 ? higgsDeltaR1 : higgsDeltaR2;
-	higgsDeltaRmaxCorrect = higgsDeltaR1>higgsDeltaR2 ? higgsDeltaR1 : higgsDeltaR2;
+	if (higgsDeltaR1<higgsDeltaR2) {
+	  higgsDeltaRminCorrect = higgsDeltaR1;
+	  higgsDeltaRmaxCorrect = higgsDeltaR2;
+	  higgsDeltaPhiRminCorrect = jmt::deltaPhi(higgs1b1phi,higgs1b2phi); 
+	  higgsDeltaPhiRmaxCorrect = jmt::deltaPhi(higgs2b1phi,higgs2b2phi); 
+	}
+	else {
+	  higgsDeltaRminCorrect = higgsDeltaR2;
+	  higgsDeltaRmaxCorrect = higgsDeltaR1;
+	  higgsDeltaPhiRminCorrect = jmt::deltaPhi(higgs2b1phi,higgs2b2phi); 
+	  higgsDeltaPhiRmaxCorrect = jmt::deltaPhi(higgs1b1phi,higgs1b2phi); 
+	}
 
 	float higgsDeltaRcomb[4];
+	float higgsDeltaPhicomb[4];
        	higgsDeltaRcomb[0] = jmt::deltaR(higgs1b1eta,higgs1b1phi,higgs2b1eta,higgs2b1phi); // 13
 	higgsDeltaRcomb[1] = jmt::deltaR(higgs1b1eta,higgs1b1phi,higgs2b2eta,higgs2b2phi); // 14
 	higgsDeltaRcomb[2] = jmt::deltaR(higgs1b2eta,higgs1b2phi,higgs2b1eta,higgs2b1phi); // 23
 	higgsDeltaRcomb[3] = jmt::deltaR(higgs1b2eta,higgs1b2phi,higgs2b2eta,higgs2b2phi); // 24
+       	higgsDeltaPhicomb[0] = jmt::deltaPhi(higgs1b1phi,higgs2b1phi); // 13
+	higgsDeltaPhicomb[1] = jmt::deltaPhi(higgs1b1phi,higgs2b2phi); // 14
+	higgsDeltaPhicomb[2] = jmt::deltaPhi(higgs1b2phi,higgs2b1phi); // 23
+	higgsDeltaPhicomb[3] = jmt::deltaPhi(higgs1b2phi,higgs2b2phi); // 24
 	
-	higgsDeltaRminWrong1 = higgsDeltaRcomb[0] <higgsDeltaRcomb[3]?  higgsDeltaRcomb[0] :higgsDeltaRcomb[3];
-	higgsDeltaRmaxWrong1 = higgsDeltaRcomb[0] >higgsDeltaRcomb[3]?  higgsDeltaRcomb[0] :higgsDeltaRcomb[3];
-	higgsDeltaRminWrong2 = higgsDeltaRcomb[1] <higgsDeltaRcomb[2]?  higgsDeltaRcomb[1] :higgsDeltaRcomb[2];
-	higgsDeltaRmaxWrong2 = higgsDeltaRcomb[1] >higgsDeltaRcomb[2]?  higgsDeltaRcomb[1] :higgsDeltaRcomb[2];
+	if ( higgsDeltaRcomb[0] <higgsDeltaRcomb[3] ) {
+	  higgsDeltaRminWrong1 = higgsDeltaRcomb[0];
+	  higgsDeltaRmaxWrong1 = higgsDeltaRcomb[3];
+	  higgsDeltaPhiRminWrong1 = higgsDeltaPhicomb[0];
+	  higgsDeltaPhiRmaxWrong1 = higgsDeltaPhicomb[3];
+	}
+	else {
+	  higgsDeltaRminWrong1 = higgsDeltaRcomb[3];
+	  higgsDeltaRmaxWrong1 = higgsDeltaRcomb[0];
+	  higgsDeltaPhiRminWrong1 = higgsDeltaPhicomb[3];
+	  higgsDeltaPhiRmaxWrong1 = higgsDeltaPhicomb[0];
+	}
+
+	if (higgsDeltaRcomb[1] <higgsDeltaRcomb[2]) {
+	  higgsDeltaRminWrong2 = higgsDeltaRcomb[1];
+	  higgsDeltaRmaxWrong2 = higgsDeltaRcomb[2];
+	  higgsDeltaPhiRminWrong2 = higgsDeltaPhicomb[1];
+	  higgsDeltaPhiRmaxWrong2 = higgsDeltaPhicomb[2];
+
+	}
+	else {
+	  higgsDeltaRminWrong2 = higgsDeltaRcomb[2];
+	  higgsDeltaRmaxWrong2 = higgsDeltaRcomb[1];
+	  higgsDeltaPhiRminWrong2 = higgsDeltaPhicomb[2];
+	  higgsDeltaPhiRmaxWrong2 = higgsDeltaPhicomb[1];
+	}
 	
+	//this is a little obscure
+	//the end result (for our test files) is that:
+	//    the correct combinations are in 0, 5
+	//    wrong combination 1 is in: 1, 4
+	//    wrong combination 2 is in: 2, 3
 	int kk=0;
 	for (int ii=1; ii<=4; ii++) {
 	  for (int jj=ii+1; jj<=4; jj++) {
@@ -7507,6 +7759,8 @@ void EventCalculator::reducedTree(TString outputpath) {
 	    int jj1 = (jj-1)/2;
 	    int jj2 = (jj-1)%2;
 
+
+	    //	    cout<<kk<<"\t"<< ii1<<" "<<ii2<<"\t"<<jj1<<" "<<jj2<<endl;
 	    higgsMass[kk] = TLorentzVector(hbbbb[ii1][ii2] + hbbbb[jj1][jj2]).M();
 	    higgsSumpt[kk] = hbbbb[ii1][ii2].Pt() + hbbbb[jj1][jj2].Pt();
 	    kk++;
@@ -7531,6 +7785,7 @@ void EventCalculator::reducedTree(TString outputpath) {
 	higgsb3pt = higgsbpt[2];
 	higgsb4pt = higgsbpt[3];
 	}
+
 	//calculate the most naive invariant masses (reco level)
 	higgs125massPairs(higgsMbb1,higgsMbb2,genHiggsIndices);
 	higgs125massPairsAllJets(higgsMjj1,higgsMjj2);
@@ -7545,6 +7800,7 @@ void EventCalculator::reducedTree(TString outputpath) {
 
       nbjetsTweaked = nGoodBJets_Tweaked();
       nbjets30 = nGoodBJets(30);
+      nbjets20 = nGoodBJets(20);
       nbjetsSSVM = nGoodBJets( 50, kSSVM);
       nbjetsSSVHPT = nGoodBJets( 50, kSSVHPT);
       nbjetsTCHET = nGoodBJets( 50, kTCHET);
@@ -7566,6 +7822,7 @@ void EventCalculator::reducedTree(TString outputpath) {
       minDeltaPhiMETMuonsAll=getMinDeltaPhiMETMuons(99);
 
       maxTOBTECjetDeltaMult = getMaxTOBTECjetDeltaMult(TOBTECjetChMult);
+
 
 
       //count leptons
@@ -7627,6 +7884,13 @@ void EventCalculator::reducedTree(TString outputpath) {
       mjj_bestTwoCSV = (j_index_1>=0 && j_index_2>=0) ? calc_mNj(j_index_1,j_index_2) : -1;
       deltaR_closestB=deltaRClosestTwoBjets(j_index_1,j_index_2);
       mjj_closestB= (j_index_1>=0 && j_index_2>=0) ? calc_mNj(j_index_1,j_index_2) : -1;
+
+      deltaR_closestB20=deltaRClosestTwoBjets(j_index_1,j_index_2,20);
+      mjj_closestB20= (j_index_1>=0 && j_index_2>=0) ? calc_mNj(j_index_1,j_index_2) : -1;
+      mjj_closestB20_correct = higgsRecoCorrect(hbbbb,j_index_1,j_index_2);
+      cosHel_closestB20 = (j_index_1>=0 && j_index_2>=0) ? getCosHel( getLorentzVector(j_index_1),getLorentzVector(j_index_2)) : -99;
+      deltaPhi_hb20 = getDeltaPhi_hb(j_index_1,j_index_2);
+      sumPtMjjDiff_closestB20 = (j_index_1>=0 && j_index_2>=0) ? getJetPt(j_index_1)+getJetPt(j_index_2)-mjj_closestB20 : -1e9;
 
       mjj_highptCSVM = mbbHighPt(kCSVM);
       mjj_highptCSVT = mbbHighPt(kCSVT);
@@ -8199,7 +8463,7 @@ double EventCalculator::calc_mNj( std::vector<unsigned int> jNi ) {
 
   for (unsigned int i=0; i<jNi.size(); i++) {
     unsigned int j1i = jNi.at(i);
-    sumE += jets_AK5PF_energy->at( j1i ); 
+    sumE += jets_AK5PF_energy->at( j1i );  //this is NOT SAFE when doing JESup JESdown!
 
     sumPx += getJetPx(j1i);
     sumPy += getJetPy(j1i);
