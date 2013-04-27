@@ -5379,6 +5379,83 @@ void EventCalculator::higgs125massPairs(float & higgsMbb1,float & higgsMbb2,cons
 }
 
 
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+//in the higgsMbb1/2 variables, return the best pair (mass difference closest to zero)
+void EventCalculator::minDeltaMassPairs(float & higgsMbb1,float & higgsMbb2,const std::vector< std::pair<int,int> > & truehiggs) {
+
+  higgsMbb1=-1;
+  higgsMbb2=-1;
+
+  //find the 4 most b-like good jets
+  set<pair< float, int> > jets_sorted_by_bdisc;
+  for (unsigned int kk=0; kk<jets_AK5PF_pt->size(); kk++) {
+    if (isGoodJet(kk,20) ) { 
+      float bdiscval = jets_AK5PF_btag_secVertexCombined->at(kk);
+      jets_sorted_by_bdisc.insert(make_pair(bdiscval,kk));
+    }
+  }
+
+  if ( jets_sorted_by_bdisc.size() <4 ) return ;
+
+  int jetindices[4];
+  int iii=0;
+  for (set<pair< float, int> >::reverse_iterator ib=jets_sorted_by_bdisc.rbegin(); ib!=jets_sorted_by_bdisc.rend(); ++ib) {
+    //    cout<<ib->first<<endl; //jmt higgs debug
+    if (iii<4) {
+      jetindices[iii] = ib->second;
+      ++iii;
+    }
+  }
+
+
+  //now calculate all possible invariant mass pairs
+  vector<pair<float,float> > higgsMassPairs;
+
+  int jet1index=0;
+  for (int jet2index=1; jet2index<4; jet2index++ ) {
+
+    float mbb1=calc_mNj(jetindices[jet1index],jetindices[jet2index]);
+    int jetindex2[2];
+    int nj=0;
+    for (int ijetindex=0; ijetindex<4; ijetindex++) {
+      if ( ijetindex!= jet1index && ijetindex!=jet2index) {
+	jetindex2[nj]=ijetindex;
+	nj++;
+      }
+    }
+    float mbb2=calc_mNj(jetindices[jetindex2[0]],jetindices[jetindex2[1]]);
+    
+/* jmt higgs debug
+    cout<<jetindices[jet1index]<<" "<<jetindices[jet2index]<<"\t";
+    cout<<jetindices[jetindex2[0]]<<" "<<jetindices[jetindex2[1]]<<endl;
+*/
+
+    higgsMassPairs.push_back(make_pair(mbb1,mbb2));
+  }
+
+  float minMassDiff=1e9;
+  int minind=-1;
+
+  //  float mindiffOneHiggs=1e9; float OneHiggsMass=-99;
+
+  for (unsigned int ih=0; ih<higgsMassPairs.size(); ih++) {
+    float thisMassDiff = higgsMassPairs[ih].first - higgsMassPairs[ih].second;
+    if (thisMassDiff < minMassDiff) {
+      minMassDiff=thisMassDiff;
+      minind = ih;
+    }
+
+  }
+
+  higgsMbb1 = higgsMassPairs[minind].first;
+  higgsMbb2 = higgsMassPairs[minind].second;
+  //  return OneHiggsMass;
+}
+//////////////////////////////////////////////////////////////////////
+
+
 void EventCalculator::jjResonanceFinder(float & mjj1, float & mjj2, int & ngoodMC,const float ptcut) {//simple first try
   mjj1=0;
   mjj2=0;
@@ -6509,6 +6586,8 @@ void EventCalculator::reducedTree(TString outputpath) {
   float higgsMjj1=-1,higgsMjj2=-1;
   //this is the EXO-like technique -- does not use 125 GeV as input
   float higgsMbb1delta=-1,higgsMbb2delta=-1;
+  // sort best 4 btags by smallest mass difference in jet pairs
+  float higgsMbb1MassDiff=-1,higgsMbb2MassDiff=-1;
 
   //  float transverseThrust,transverseThrustPhi;
   //  float transverseThrustWithMET,transverseThrustWithMETPhi;
@@ -6891,6 +6970,8 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("higgsMjj2",&higgsMjj2,"higgsMjj2/F");
   reducedTree.Branch("higgsMbb1delta",&higgsMbb1delta,"higgsMbb1delta/F");
   reducedTree.Branch("higgsMbb2delta",&higgsMbb2delta,"higgsMbb2delta/F");
+  reducedTree.Branch("higgsMbb1MassDiff",&higgsMbb1MassDiff,"higgsMbb1MassDiff/F");
+  reducedTree.Branch("higgsMbb2MassDiff",&higgsMbb2MassDiff,"higgsMbb2MassDiff/F");
 
 
   reducedTree.Branch("mjjb1",&mjjb1,"mjjb1/F");
@@ -7459,6 +7540,7 @@ void EventCalculator::reducedTree(TString outputpath) {
 	pdfWeightsNNPDF[0] = av; //v66 kludge
 
       }
+
       }//if sample is not v68
     }
     else if (theScanType_==kNotScan && sampleIsSignal_) {
@@ -7825,6 +7907,8 @@ void EventCalculator::reducedTree(TString outputpath) {
 
 	massPairsDeltaSort(higgsMbb1delta,higgsMbb2delta);
       
+        minDeltaMassPairs(higgsMbb1MassDiff,higgsMbb2MassDiff);
+
 
       //count b jets
       ntruebjets = nTrueBJets();
