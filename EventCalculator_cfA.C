@@ -159,11 +159,12 @@ EventCalculator::EventCalculator(const TString & sampleName, const vector<string
 
   cout<<sampleName_<<endl;
 
+//skip this for now since it causes me a crash and I don't want to mess with it. Just commenting this out causes other problems. Grrr.
   if (sampleIsSignal_) {
     cout<<" init PDFs"<<endl;
-    LHAPDF::initPDFSet(1, "cteq66.LHgrid");
-    LHAPDF::initPDFSet(2, "MSTW2008nlo68cl.LHgrid");
-    LHAPDF::initPDFSet(3, "NNPDF20_100.LHgrid");
+    //LHAPDF::initPDFSet(1, "cteq66.LHgrid");
+    //LHAPDF::initPDFSet(2, "MSTW2008nlo68cl.LHgrid");
+    //LHAPDF::initPDFSet(3, "NNPDF20_100.LHgrid");
     cout<<" done with PDF init"<<endl;
   }
   else cout<<"Skipping PDF init"<<endl;
@@ -180,7 +181,7 @@ EventCalculator::~EventCalculator() {
 
 float EventCalculator::getPDFweight(const int ipdfset, const int imember ) {
 
-  //  return 1; //for debugging
+    return 1; //for debugging
 
   assert(ipdfset>=1 && ipdfset<=3);
 
@@ -5383,7 +5384,7 @@ void EventCalculator::higgs125massPairs(float & higgsMbb1,float & higgsMbb2,cons
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //in the higgsMbb1/2 variables, return the best pair (mass difference closest to zero)
-void EventCalculator::minDeltaMassPairs(float & higgsMbb1,float & higgsMbb2,const std::vector< std::pair<int,int> > & truehiggs) {
+void EventCalculator::minDeltaMassPairs(float & higgsMbb1,float & higgsMbb2) {
 
   higgsMbb1=-1;
   higgsMbb2=-1;
@@ -5441,7 +5442,7 @@ void EventCalculator::minDeltaMassPairs(float & higgsMbb1,float & higgsMbb2,cons
   //  float mindiffOneHiggs=1e9; float OneHiggsMass=-99;
 
   for (unsigned int ih=0; ih<higgsMassPairs.size(); ih++) {
-    float thisMassDiff = higgsMassPairs[ih].first - higgsMassPairs[ih].second;
+    float thisMassDiff = fabs(higgsMassPairs[ih].first - higgsMassPairs[ih].second);
     if (thisMassDiff < minMassDiff) {
       minMassDiff=thisMassDiff;
       minind = ih;
@@ -7501,7 +7502,7 @@ void EventCalculator::reducedTree(TString outputpath) {
 
 	 Now use this sample-dependent hack to behave one way for T1bbbb and another for other samples
       */
- 
+/* 
       double av=0; //v66 kludge
       int startat = 0;
       if (sampleName_.Contains("T1bbbb")) startat=1;
@@ -7540,7 +7541,7 @@ void EventCalculator::reducedTree(TString outputpath) {
 	pdfWeightsNNPDF[0] = av; //v66 kludge
 
       }
-
+*/
       }//if sample is not v68
     }
     else if (theScanType_==kNotScan && sampleIsSignal_) {
@@ -7906,7 +7907,6 @@ void EventCalculator::reducedTree(TString outputpath) {
 	mjj_h125 = getBestH125(); 
 
 	massPairsDeltaSort(higgsMbb1delta,higgsMbb2delta);
-      
         minDeltaMassPairs(higgsMbb1MassDiff,higgsMbb2MassDiff);
 
 
