@@ -154,6 +154,7 @@ void signalEff2012::Loop()
     else {
       fChain->SetBranchStatus("m0",1);
       fChain->SetBranchStatus("m12",1);
+      fChain->SetBranchStatus("mIntermediate",1);
     }
     fChain->SetBranchStatus("weight3",1); 
     fChain->SetBranchStatus("PUweight",1); 
@@ -208,6 +209,17 @@ void signalEff2012::Loop()
       if (isPMSSM_) {
 	m0 = runNumber;
 	m12=0;
+      }
+      else if ( is3D_) {
+	if (unfilledDimension_ == "y") {
+	  //m0 stays as m0
+	  m12 = mIntermediate;
+	}
+	else if (unfilledDimension_ == "x") {
+	  m0 = mIntermediate;
+	  //m12 stays as m12
+	}
+	//in case it's z, do nothing
       }
       
       if (jentry%500000==0) {
@@ -366,3 +378,28 @@ void signalEff2012::Loop()
    cout<<" done. Wall clock rate = "<<nentries<<" / "<<watch.RealTime()<<" = "<< nentries /watch.RealTime()<<" Hz"<<endl;
 
 }
+
+
+
+bool signalEff2012::dimensionIsFilled(TString dim,TH3D* h3,int & filledbin) {
+
+  filledbin=-1;
+  //see if more than one bin in the dimension is filled
+  //if not, also return the index of the bin that is filled
+
+  //this might leak memory but i don't care
+  TH1D* oned = (TH1D*)h3->Project3D(dim);
+  
+  int nbinsFilled=0;
+  for (int ibin=1;ibin<=oned->GetNbinsX(); ibin++) {
+    if (oned->GetBinContent(ibin)!=0) {
+      nbinsFilled++;
+      filledbin=ibin;
+    }
+  }
+  
+  if (nbinsFilled>1) filledbin=-1;
+  return (nbinsFilled>1);
+
+}
+

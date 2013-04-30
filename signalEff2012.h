@@ -12,6 +12,7 @@
 #include <TChain.h>
 #include <TFile.h>
 #include <TH2.h>
+#include "TH3.h"
 
 #include <iostream>
 
@@ -118,6 +119,7 @@ public :
    ULong64_t       eventNumber;
    Int_t           m0;
    Int_t           m12;
+   Int_t           mIntermediate;
    Int_t           ttbarDecayCode;
    Float_t         PUweight;
    Float_t PUweightSystVar;
@@ -449,6 +451,7 @@ public :
    TBranch        *b_eventNumber;   //!
    TBranch        *b_m0;   //!
    TBranch        *b_m12;   //!
+   TBranch        *b_mIntermediate;   //!
    TBranch* b_maxTOBTECjetDeltaMult;
    TBranch *b_nIsoTracks15_005_03;
    TBranch        *b_ttbarDecayCode;   //!
@@ -777,8 +780,12 @@ public :
    virtual void     Show(Long64_t entry = -1);
 
    //BEGIN jmt
+   bool dimensionIsFilled(TString dim,TH3D* h3,int & filledbin);
+
    TH2D* scanSMSngen_;
    bool isPMSSM_;
+   bool is3D_;
+   TString unfilledDimension_;
    vector<TH2D*> scanProcessTotals_;
    TString filestub_;
    bool joinbtagbins_;
@@ -797,6 +804,8 @@ public :
 signalEff2012::signalEff2012(TString path, TString filestub,bool joinbtagbins, bool usebtagsf, bool dopdfs, bool pusyst, int minnjets, int isrmode) : fChain(0) 
 													    , scanSMSngen_(0)
 													    ,isPMSSM_(false)
+													    ,is3D_(false)
+												            ,unfilledDimension_("")
 													    ,filestub_(filestub)
 													    ,joinbtagbins_(joinbtagbins)
 													    ,usebtagsf_(usebtagsf)
@@ -837,6 +846,20 @@ signalEff2012::signalEff2012(TString path, TString filestub,bool joinbtagbins, b
       f->GetObject("reducedTree",tree);
       scanSMSngen_ = (TH2D*) f->Get("scanSMSngen"); //BEGIN  jmt mod
       TH1D*   scanpMSSMngen = (TH1D*) f->Get("scanpMSSMngen");
+      TH3D*   scanSMSngen3D = (TH3D*) f->Get("scanSMSngen3D");
+
+      //dimensions are:
+      //                x == mParent
+      //                y == mLSP
+      //                z == mIntermediate
+      if ( filestub.Contains("T5tttt") ) {
+	is3D_=true;
+	unfilledDimension_="y"; //T5tttt fixes the LSP mass
+      }
+      else if ( filestub.Contains("T1t1t") ) {
+	is3D_=true;
+	unfilledDimension_="x"; //T5tttt fixes the LSP mass
+      }
 
       if (scanpMSSMngen!=0) {
 	assert(scanSMSngen_==0); //only one of these should exist.
@@ -847,6 +870,47 @@ signalEff2012::signalEff2012(TString path, TString filestub,bool joinbtagbins, b
 	  scanSMSngen_->SetBinContent(ix, 1, scanpMSSMngen->GetBinContent(ix));
 	}
 	isPMSSM_=true;
+      }
+      else if (is3D_ ) {
+	//all of our scans are actually 2D. Map the 3d scan onto 2d.
+	//advantage -- code stays unchanged after this point
+	//disadvantage, need to manually keep track of 3rd mass (probably not a big deal)
+
+	//i was going to try to automatically find the unfilled dimension
+	//but since i process the scans split into strips of gluino mass, this is not possible
+
+	int filledbin;
+	bool isfilled = dimensionIsFilled(unfilledDimension_,scanSMSngen3D,filledbin);
+	assert( !isfilled);
+
+	TAxis * xaxis=0;
+	TAxis * yaxis=0;
+	if ( unfilledDimension_=="z") {
+	  xaxis = scanSMSngen3D->GetXaxis();
+	  yaxis = scanSMSngen3D->GetYaxis();
+	}
+	else if (unfilledDimension_=="y") {
+	  xaxis = scanSMSngen3D->GetXaxis();
+	  yaxis = scanSMSngen3D->GetZaxis();
+	}
+	else if (unfilledDimension_=="x") {
+	  xaxis = scanSMSngen3D->GetZaxis();
+	  yaxis = scanSMSngen3D->GetYaxis();
+	}
+	else assert(0);
+
+	scanSMSngen_=new TH2D("scanSMSngen","scan sms ngen", xaxis->GetNbins(),xaxis->GetXmin(),xaxis->GetXmax() ,yaxis->GetNbins(), yaxis->GetXmin(),yaxis->GetXmax()  );
+
+	for ( int ix = 1; ix<=xaxis->GetNbins(); ix++) {
+	  for ( int iy = 1; iy<=yaxis->GetNbins() ; iy++) {
+	    double val=0;
+	    if (unfilledDimension_=="z") val =scanSMSngen3D->GetBinContent( ix,iy,filledbin);
+	    else  if (unfilledDimension_=="y") val= scanSMSngen3D->GetBinContent( ix,filledbin,iy);
+	    else  if (unfilledDimension_=="x") val=scanSMSngen3D->GetBinContent( filledbin,iy,ix);
+
+	    scanSMSngen_->SetBinContent(ix,iy, val);
+	  }
+	}
       }
       if (scanSMSngen_==0) {
 	std::cout<<" WARNING -- scanSMSngen not found (only ok for non-SMS)"<<std::endl;
@@ -918,6 +982,7 @@ void signalEff2012::Init(TTree *tree)
    fChain->SetBranchAddress("eventNumber", &eventNumber, &b_eventNumber);
    fChain->SetBranchAddress("m0", &m0, &b_m0);
    fChain->SetBranchAddress("m12", &m12, &b_m12);
+   fChain->SetBranchAddress("mIntermediate", &mIntermediate, &b_mIntermediate);
    fChain->SetBranchAddress("nIsoTracks15_005_03", &nIsoTracks15_005_03, &b_nIsoTracks15_005_03);
    fChain->SetBranchAddress("maxTOBTECjetDeltaMult", &maxTOBTECjetDeltaMult, &b_maxTOBTECjetDeltaMult);
    fChain->SetBranchAddress("ttbarDecayCode", &ttbarDecayCode, &b_ttbarDecayCode);
