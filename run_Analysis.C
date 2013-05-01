@@ -73,16 +73,7 @@ void decodeCommandLine(int argc, char** argv, commandLine& cl)
   else
 	cl.filelist = std::string("filelist.txt");
 
-  // 2nd (optional) command line argument
-  if ( argc > 2 ) 
-	cl.outputfilename = std::string(argv[2]);
-  else
-	cl.outputfilename = cl.progname + std::string("_histograms");
 
-  // Make sure extension is ".root"
-  std::string name = cl.outputfilename;
-  if ( name.substr(name.size()-5, 5) != std::string(".root") )
-    cl.outputfilename += std::string(".root");
 }
 
 // Read ntuple filenames from file list
@@ -107,8 +98,6 @@ int main(int argc, char* argv[])
 
   cout << "Very begining of run_Analysis" << endl;
 
-  cout << "Begun analysis!\n";
-
   TString outputDir = "./"; //this is where reducedTrees will go, use "./" for T3
   //parse command line arguments: <file list> <options list>
   TString options="";
@@ -130,27 +119,46 @@ int main(int argc, char* argv[])
 
   // Get names of ntuple files to be processed and open chain of ntuples
   vector<string> filenames = getFilenames(cmdline.filelist);
-
+    cout<<" n files = "<<filenames.size()<<endl;
   //for convenience I will continue to pass 'fileArg' but then I will also pass this filename list
 
   //Instantiate and run class
-//  Analyzer FullAnalyzer(filename,identifier,xsec,IntLum,outfilename,numentries);
-//  Analyzer FullAnalyzer("/mnt/hadoop/UCSBntup/HT_Run2011B-PromptReco-v1_AOD_UCSB1095_v55s/cfA_HT_Run2011B-PromptReco-v1_AOD_UCSB1095_v55s_f1_1_cql.root",0,0.005,4900.,"output",100);
-  EventCalculator ec(fileArg,filenames, EventCalculator::kPF2PAT, EventCalculator::kPFMETTypeI);
-  ec.setBTaggerType(EventCalculator::kCSVM);
-  if (options=="btageff") {
-    ec.plotBTagEffMC();
+  if (options=="slim") {
+    //special mode
+
+    for (unsigned int ifile=0; ifile<filenames.size(); ifile++) {
+      cout<<ifile<<endl;
+      cout<<"Processing "<<filenames[ifile]<<endl;
+      std::vector<std::string> afilename;
+      afilename.push_back(filenames[ifile]);
+      EventCalculator ec(fileArg,afilename, EventCalculator::kPF2PAT, EventCalculator::kPFMETTypeI);
+      bool statusOk =   ec.slim();
+      if (statusOk ) {
+	cout<<"done ok  "<<filenames[ifile]<<endl;
+      }
+      else {
+	cout<<"NOT ok   "<<filenames[ifile]<<endl;
+      }
+    }
   }
-  else if (options=="scanSMSngen") {
-    ec.fillSMShist();
+  else { //normal mode
+    EventCalculator ec(fileArg,filenames, EventCalculator::kPF2PAT, EventCalculator::kPFMETTypeI);
+    ec.setBTaggerType(EventCalculator::kCSVM);
+    if (options=="btageff") {
+      ec.plotBTagEffMC();
+    }
+    else if (options=="scanSMSngen") {
+      ec.fillSMShist();
+    }
+    else if (options=="debug1") {
+      ec.debugSMS();
+    }
+    else {
+      ec.setOptions(options);
+      ec.reducedTree(outputDir);
+    }
   }
-  else if (options=="debug1") {
-    ec.debugSMS();
-  }
-  else {
-    ec.setOptions(options);
-    ec.reducedTree(outputDir);
-  }
+
 
   cout<<"Back in main(). now really terminate"<<endl;  
   return 0;

@@ -2,6 +2,7 @@
 
 #include "PUConstants.h"
 
+#include "TSystem.h"
 #include "TH1.h"
 #include "TH2.h"
 #include "TH3.h"
@@ -175,6 +176,16 @@ EventCalculator::~EventCalculator() {
   //turns out the program does a segv at terminate if i don't properly delete these
   delete chainA;
   delete chainB;
+
+  delete f_trigeff_;
+  delete JetCorrector_;
+
+  delete  ResJetPar_;
+  delete  L3JetPar_;
+  delete  L2JetPar_;
+  delete  L1JetPar_;
+  delete  jecUnc_;
+
   cout<<"EventCalculator dead"<<endl;
 }
 
@@ -10399,6 +10410,67 @@ void EventCalculator::fillSMShist() {
 
 }
 
+bool EventCalculator::slim() {
+  bool everythingOk = true;
+
+  chainB->SetBranchStatus("*",1);
+  chainA->SetBranchStatus("*",1);
+
+  chainA->SetBranchStatus("standalone_triggerobject*",0);
+  chainA->SetBranchStatus("triggerobject*",0);
+
+
+  TString currentFileName= chainA->GetListOfFiles()->At(0)->GetTitle();
+  //need to string off the path
+  TObjArray* filepieces = currentFileName.Tokenize("/");
+  currentFileName = filepieces->At(filepieces->GetEntries()-1)->GetName();
+  delete filepieces;
+
+  //need to make the v66 -> v66s substitution in an automatic way
+  TRegexp vn("v[0-9]+_f[0-9]+");
+  int position_of_v = currentFileName.Index(vn);
+  int position_of_underscore = currentFileName.Index("_",position_of_v);
+  TString vstring = currentFileName(position_of_v,position_of_underscore-position_of_v);
+  vstring += "s";
+  currentFileName.Replace(position_of_v,position_of_underscore-position_of_v,vstring);
+
+  //for testing
+  TString outputdir="";
+  if ( gSystem->Getenv("SLIMOUTPUTDIR") !=0) { //not necessary, but can be used for tests
+    outputdir = gSystem->Getenv("SLIMOUTPUTDIR");
+    currentFileName.Prepend(outputdir);
+  }
+ 
+  // Make the new file
+  TFile newFile(currentFileName,"RECREATE");
+  TDirectoryFile dir("configurableAnalysis","configurableAnalysis");
+  dir.cd();
+  TTree *newtreeA = chainA->CloneTree(0);
+  TTree *newtreeB = chainB->CloneTree(0);
+
+  Long64_t nentries = (Long64_t)chainB->GetEntries();
+  Long64_t nentriesA = (Long64_t)chainA->GetEntries();
+
+  assert(nentries == nentriesA);
+  startTimer();
+  for (Long64_t iEnt = 0; iEnt<nentries; iEnt++) {
+    chainA->GetEntry(iEnt);
+    chainB->GetEntry(iEnt);
+    newtreeA->Fill();
+    newtreeB->Fill();
+  }
+  stopTimer(nentries);
+
+  newtreeA->AutoSave();
+  newtreeB->AutoSave();
+  newFile.Write();
+  newFile.Close();
+
+  //does this leak memory (TTree*)?
+
+  return everythingOk;
+}
+
 //separate out the jettag efficiency code from sampleAnalyzer for ease of use
 void EventCalculator::plotBTagEffMC( ) {
 
@@ -10549,6 +10621,8 @@ void EventCalculator::loadECALStatus() {
     }
  
   }//end loop over input tree
+
+  delete tDetector;
 
   return;
 }
