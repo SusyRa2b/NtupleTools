@@ -111,6 +111,7 @@ EventCalculator::EventCalculator(const TString & sampleName, const vector<string
 	   sampleName_.Contains("T2tt") || 
 	   sampleName_.Contains("T1tttt")|| 
 	   sampleName_.Contains("T5tttt")|| 
+	   sampleName_.Contains("T7btw")||
 	   sampleName_.Contains("T4tW") ||
 	   sampleName_.Contains("TChihh")
 	   ) {
@@ -4551,6 +4552,9 @@ smsMasses EventCalculator::getSMSmasses() {
   //# model T5tttt_800_525_50  0.00289588
   // mgluino_mstop_mlsp 
 
+  //for T7btw
+  //# model T7btw_950_900_150  0.0381246 1.12426e-05 
+  // mgluino_msbottom_mchi- mLSP is fixed 50 and is not in the model string
 
 
   TString modelstring = (*model_params).c_str();
@@ -4558,30 +4562,27 @@ smsMasses EventCalculator::getSMSmasses() {
   TString thesubstring=  thesubstrings->At(2)->GetName();
 
   TObjArray* themasses = thesubstring.Tokenize("_");
-  int index0=1; //index of mParent (gluino, etc)
-  int index1=2; //index of mLSP
-  int m3=0;
+  int index_parent=1; //index of mParent (gluino, etc)
+  int index_lsp=2; //index of mLSP
+  int m_intermediate=0;
   if (sampleName_.Contains("T4tW")) {
-    index0 = 2;
-    index1 = 6;
-    m3 =  TString(themasses->At(4)->GetName()).Atoi();
+    index_parent = 2;
+    index_lsp = 6;
+    m_intermediate =  TString(themasses->At(4)->GetName()).Atoi();
   }
-  else if (sampleName_.Contains("T5tttt")) {
-    index0 = 1;
-    index1 = 3; //mLSP index    
-    m3 =  TString(themasses->At(2)->GetName()).Atoi(); //intermediate particle mass
+  else if (sampleName_.Contains("T5tttt") || sampleName_.Contains("T7btw")) {
+    index_parent = 1;
+    index_lsp = 3; //mLSP index    
+    m_intermediate =  TString(themasses->At(2)->GetName()).Atoi(); //intermediate particle mass
   }
-  int m0=  TString(themasses->At(index0)->GetName()).Atoi();
-  int m12 = TString(themasses->At(index1)->GetName()).Atoi();
+  int m_parent=  TString(themasses->At(index_parent)->GetName()).Atoi();
+  int m_lsp = TString(themasses->At(index_lsp)->GetName()).Atoi();
 
-
-  //  cout<<modelstring<<endl<<m0<<"\t"<<m12<<endl;
   //must clean up!
   delete thesubstrings;
   delete themasses;
 
-  //  return  make_pair(m0,m12);
-  return smsMasses(m0,m12,m3);
+  return smsMasses(m_parent,m_lsp,m_intermediate);
 
 }
 
@@ -4967,6 +4968,10 @@ TString EventCalculator::getSampleNameOutputString(){
   else if  (sampleName_.Contains("UCSB1749reshuf")) outputstring = "SMS-MadGraph_T5tttt-1000to1075-225to1025-50_UCSB1749reshuf_v68";
   else if  (sampleName_.Contains("UCSB1750reshuf")) outputstring = "SMS-MadGraph_T5tttt-1075to1175-225to1025-50_UCSB1750reshuf_v68";
   else if  (sampleName_.Contains("UCSB1751reshuf")) outputstring = "SMS-MadGraph_T5tttt-1175to1200-225to1025-50_UCSB1751reshuf_v68";
+  //T7btw
+  else if  (sampleName_.Contains("UCSB1775reshuf")) outputstring = "SMS-MadGraph_T7btw-800to1400-500to1350-300-50_UCSB1775reshuf_v68";
+  else if  (sampleName_.Contains("UCSB1774reshuf")) outputstring = "SMS-MadGraph_T7btw-800to1400-400to1350-150-50_UCSB1774reshuf_v68";
+
   else {
     //if it isn't found, just use the full name
     return sampleName_;
@@ -5538,6 +5543,7 @@ std::vector<unsigned int> EventCalculator::jetsetToVector(const vector<unsigned 
   return outvec;
 }
 
+//this code never seemed to work well. needs to be retooled from scratch, I think
 void EventCalculator::jjResonanceFinder5(float & mjj1, float & mjj2) {
   //  cout<<"=="<<endl;
   mjj1=0;
@@ -6072,7 +6078,7 @@ float EventCalculator::bJetFastsimSF(const TString & what, int flavor,float pt) 
       float model_value = 1;
       if (sampleName_.Contains("T1bbbb")) 	model_value = get_AN_12_175_Table4_Value(pt);
       //decided that for our purposes I will use T1tttt values for T4tW and T5tttt
-      else if (sampleName_.Contains("T1tttt") || sampleName_.Contains("T4tW") || sampleName_.Contains("T5tttt")) model_value = get_AN_12_175_Table5_Value(pt);
+      else if (sampleName_.Contains("T1tttt") || sampleName_.Contains("T4tW") || sampleName_.Contains("T5tttt") || sampleName_.Contains("T7btw")) model_value = get_AN_12_175_Table5_Value(pt);
       else if (sampleName_.Contains("T2bb")) 	model_value = get_AN_12_175_Table6_Value(pt);
       else if (sampleName_.Contains("T2tt")) 	model_value = get_AN_12_175_Table8_Value(pt);
       else assert(0);
@@ -7737,9 +7743,10 @@ void EventCalculator::reducedTree(TString outputpath) {
       //look for jj resonances
       jjResonanceFinder(mjj1,mjj2, nCorrectRecoStop);
       mjjdiff=fabs(mjj1-mjj2);
+
+      //this code is basically broken I think -- or doesn't work well in any case
       jjResonanceFinder5(mjj1_5,mjj2_5);
       mjjdiff_5=fabs(mjj1_5-mjj2_5);
-
 
       // higgs code -- most (not all) of it is MC truth and irrelevant for most samples
       //  if (sampleName_.Contains("TChihh")) {
