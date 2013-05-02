@@ -153,6 +153,7 @@ int main(int argc, char* argv[])
     else if (options=="debug1") {
       ec.debugSMS();
     }
+    else if (options=="slimCheck") ec.slimCheck();
     else {
       ec.setOptions(options);
       ec.reducedTree(outputDir);

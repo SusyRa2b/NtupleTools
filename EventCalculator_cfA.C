@@ -10410,18 +10410,12 @@ void EventCalculator::fillSMShist() {
 
 }
 
-bool EventCalculator::slim() {
-  bool everythingOk = true;
+TString EventCalculator::slimNameSubstitution(TString & currentFileName) {
+  //modifies currentFileName to replace _vNN_ with _vNNs_
+  //also returns the path, including the trailing /
+  TString path=currentFileName(0,currentFileName.Last('/')+1);
 
-  chainB->SetBranchStatus("*",1);
-  chainA->SetBranchStatus("*",1);
-
-  chainA->SetBranchStatus("standalone_triggerobject*",0);
-  chainA->SetBranchStatus("triggerobject*",0);
-
-
-  TString currentFileName= chainA->GetListOfFiles()->At(0)->GetTitle();
-  //need to string off the path
+  //need to strip off the path
   TObjArray* filepieces = currentFileName.Tokenize("/");
   currentFileName = filepieces->At(filepieces->GetEntries()-1)->GetName();
   delete filepieces;
@@ -10433,6 +10427,75 @@ bool EventCalculator::slim() {
   TString vstring = currentFileName(position_of_v,position_of_underscore-position_of_v);
   vstring += "s";
   currentFileName.Replace(position_of_v,position_of_underscore-position_of_v,vstring);
+
+  return path;
+}
+
+void EventCalculator::slimCheck() {
+  //check the standard input chainA and chainB against a chainA and chainB formed from the slimmed files in the same directory
+
+  //chainA and chainB are the unslimmed chains and are auto-loaded by the class
+
+  chainB->SetBranchStatus("*",1);
+  chainA->SetBranchStatus("*",1);
+
+  vector<TString> problems;
+
+  //chains for slimmed files
+  TChain slimB( "configurableAnalysis/eventB");
+  TChain slimA( "configurableAnalysis/eventA");
+  //loop over the input chain
+  for (int ic=0; ic<chainA->GetListOfFiles()->GetEntries(); ic++) {
+    TString currentFileName = chainA->GetListOfFiles()->At(ic)->GetTitle();
+    TString path = slimNameSubstitution(currentFileName);
+    TString slimCompletePath = path+currentFileName;
+    int naddedB = slimB.Add(slimCompletePath);
+    int naddedA = slimA.Add(slimCompletePath);
+    if (naddedB!=1 || naddedA!=1) problems.push_back(TString("Error adding slimmed file to chain ")+slimCompletePath);
+  }
+  //redundant check -- do all chains have the same number of files?
+  int nA = chainA->GetListOfFiles()->GetEntries();
+  int nB = chainB->GetListOfFiles()->GetEntries();
+
+  if (nA!=nB) problems.push_back("unslimmed nfiles mismatch between A/B");
+
+  int nAs = slimA.GetListOfFiles()->GetEntries();
+  int nBs = slimB.GetListOfFiles()->GetEntries();
+
+  if (nAs!=nBs) problems.push_back("slimmed nfiles mismatch between A/B");
+  if (nA!=nAs) problems.push_back("nfiles mismatch between slim/unslimmed");
+
+  //do the same exercise with the number of events
+  Long64_t nentriesA = chainA->GetEntries();
+  Long64_t nentriesB = chainB->GetEntries();
+
+  if (nentriesA != nentriesB) problems.push_back("unslimmed nevents mismatch between A/B");
+  Long64_t nentriesAs = slimA.GetEntries();
+  Long64_t nentriesBs = slimB.GetEntries();
+  if (nentriesAs != nentriesBs) problems.push_back("slimmed nevents mismatch between A/B");
+
+  if (nentriesA != nentriesAs) problems.push_back("nevents mismatch between slim/unslimmed");
+
+  for (unsigned int i=0; i<problems.size(); i++) {
+    cout<<"PROBLEM in slim: "<<problems.at(i)<<endl;
+  }
+
+  if (problems.size()==0) cout<<"Slim successful; nfiles nentries = "<<nAs<<" "<<nentriesAs<<endl;
+
+}
+
+bool EventCalculator::slim() {
+  bool everythingOk = true;
+
+  chainB->SetBranchStatus("*",1);
+  chainA->SetBranchStatus("*",1);
+
+  chainA->SetBranchStatus("standalone_triggerobject*",0);
+  chainA->SetBranchStatus("triggerobject*",0);
+
+
+  TString currentFileName= chainA->GetListOfFiles()->At(0)->GetTitle();
+  slimNameSubstitution(currentFileName); //modifies currentFileName
 
   //for testing
   TString outputdir="";

@@ -113,7 +113,9 @@ public:
 
   //loop over events
   void reducedTree(TString outputpath);
+  TString slimNameSubstitution(TString & currentFileName) ;
   bool slim();
+  void slimCheck();
 
   //PDFs
   float getPDFweight(const int ipdfset, const int imember );
