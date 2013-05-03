@@ -20,9 +20,8 @@ sub trim($)
 
 ######################################################
 #change this!
-#my $inputdir = 'galank/SUSY/RA2b2011v1/V00-02-33/';
-my $inputdir = 'kreis/RA2b2011v1/V00-02-33/';
-#my $inputdir = 'wteo/RA2b2011v1/V00-02-35/';
+my $inputdir = 'joshmt/cfA/v66/';
+#my $inputdir = 'joshmt/cfA/v66_noskim/';
 ######################################################
 
 
@@ -33,8 +32,9 @@ my $CUbase = 'srm://osg-se.cac.cornell.edu:8443/srm/v2/server?SFN=/xrootdfs/cms/
 
 my $directory = '"' . $CUbase . $inputdir . '"';
 
+#my $command = "srmls $directory | grep T1tttt";
 my $command = "srmls $directory";
-#my $command = 'cat temp.txt';
+
 
 print $command;
 print "\n";
