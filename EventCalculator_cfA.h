@@ -137,22 +137,25 @@ public:
   float getPUWeight(reweight::LumiReWeighting lumiWeights);
   //  float getPUWeight(/* Lumi3DReWeighting lumiWeights*/); //FIXME CFA
 
+  float getMuonRelIso(const unsigned int k);
+  float getElectronRelIso(const unsigned int k, const bool use2012id);
+ 
   bool isGoodMuon(const unsigned int imuon, const bool disableRelIso, const float ptthreshold,int & lossCode);
   bool isGoodElectron(const unsigned int iele, const bool disableRelIso, const float ptthreshold, const bool use2012id,int &lossCode);
-  unsigned int countEle(const float ptthreshold,const bool use2012id,const int ttbarDecayCode,int & lostLeptonCode,const float genEta,const float genPhi) ;
-  bool isCleanMuon(const unsigned int imuon, const float ptthreshold,int & lossCode);
-  unsigned int countMu(const float ptthreshold,const int ttbarDecayCode, int & lostLeptonCode,const float genEta,const float genPhi);
+  unsigned int countEle(const float ptthreshold,const bool use2012id,const bool disableRelIso,const int ttbarDecayCode,int & lostLeptonCode,const float genEta,const float genPhi) ;
+  bool isCleanMuon(const unsigned int imuon, const float ptthreshold,const bool disableRelIso,int & lossCode);
+  unsigned int countMu(const float ptthreshold,const bool disableRelIso,const int ttbarDecayCode, int & lostLeptonCode,const float genEta,const float genPhi);
 
   bool isGoodMuon(const unsigned int imuon, const bool disableRelIso=false, const float ptthreshold=10) {
     int lossCode=-1; return isGoodMuon(imuon,disableRelIso,ptthreshold,lossCode);}
   bool isGoodRecoMuon(const unsigned int imuon, const bool disableRelIso=false, const float ptthreshold=10);
   bool isGoodElectron(const unsigned int iele, const bool disableRelIso=false, const float ptthreshold=10, const bool use2012id=true) {
     int code=-1; return isGoodElectron(iele,disableRelIso,ptthreshold,use2012id,code);}
-  unsigned int countEle(const float ptthreshold=10,const bool use2012id=true) {
-    int code=-1; return countEle(ptthreshold,use2012id,-1,code,-99,-99);}
+  unsigned int countEle(const float ptthreshold=10,const bool use2012id=true,const bool disableRelIso=false) {
+    int code=-1; return countEle(ptthreshold,use2012id,disableRelIso,-1,code,-99,-99);}
   bool isCleanMuon(const unsigned int imuon, const float ptthreshold=10) {
-    int code=-1; return isCleanMuon(imuon,ptthreshold,code);}
-  unsigned int countMu(const float ptthreshold=10) {int code=-1; return countMu(ptthreshold,-1,code,-99,-99);}
+    int code=-1; return isCleanMuon(imuon,ptthreshold,false,code);}
+  unsigned int countMu(const float ptthreshold=10,const bool disableRelIso=false) {int code=-1; return countMu(ptthreshold,disableRelIso,-1,code,-99,-99);}
 
   //for MET-Reweighting
   bool isGoodTightMuon(const unsigned int imuon, const bool disableRelIso=false, const float ptthreshold=25);

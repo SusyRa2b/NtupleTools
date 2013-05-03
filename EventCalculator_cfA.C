@@ -446,6 +446,19 @@ float EventCalculator::getPUWeight( reweight::LumiReWeighting lumiWeights ) {
 
 //3d pu reweighting deprecated for 2012
 
+
+float EventCalculator::getMuonRelIso(const unsigned int k) {
+
+  // now isolation with delta beta corrections are recommended with DelR cone of 0.4
+  float isoNeutral = pf_mus_pfIsolationR04_sumNeutralHadronEt->at(k) + pf_mus_pfIsolationR04_sumPhotonEt->at(k) - 0.5*pf_mus_pfIsolationR04_sumPUPt->at(k);
+  isoNeutral = ( isoNeutral > 0) ? isoNeutral : 0;
+
+  float  muRelIso = (pf_mus_pfIsolationR04_sumChargedHadronPt->at(k) + isoNeutral) / pf_mus_pt->at(k);
+  return muRelIso;
+
+}
+
+
 bool EventCalculator::isGoodMuon(const unsigned int k, const bool disableRelIso, const float ptthreshold,int & lossCode) {
 
   // updated for 2012...basically just copying keith's code
@@ -474,11 +487,9 @@ bool EventCalculator::isGoodMuon(const unsigned int k, const bool disableRelIso,
   if ( TMath::Nint(pf_mus_tk_numvalPixelhits->at(k)) == 0 ) {lossCode=3; return false; }
 
   if ( TMath::Nint(pf_mus_tk_LayersWithMeasurement->at(k)) <= 5 ) {lossCode=3; return false; }
-  // now isolation with delta beta corrections are recommended with DelR cone of 0.4
-  float isoNeutral = pf_mus_pfIsolationR04_sumNeutralHadronEt->at(k) + pf_mus_pfIsolationR04_sumPhotonEt->at(k) - 0.5*pf_mus_pfIsolationR04_sumPUPt->at(k);
-  isoNeutral = ( isoNeutral > 0) ? isoNeutral : 0;
-  float  muRelIso = (pf_mus_pfIsolationR04_sumChargedHadronPt->at(k) + isoNeutral) / pf_mus_pt->at(k);
-  if (muRelIso >= 0.2) {lossCode=4; return false;}
+ 
+  float  muRelIso = getMuonRelIso(k);
+  if ( (disableRelIso==false) && (muRelIso >= 0.2) ) {lossCode=4; return false;}
 
   //if we haven't failed anything yet...then it's good
   lossCode=0;
@@ -605,9 +616,9 @@ bool EventCalculator::isGoodRecoMuon(const unsigned int imuon, const bool disabl
   return false;
 }
 
-bool EventCalculator::isCleanMuon(const unsigned int imuon, const float ptthreshold,int & lossCode) {
+bool EventCalculator::isCleanMuon(const unsigned int imuon, const float ptthreshold, const bool disableRelIso, int & lossCode) {
 
-  if (!isGoodMuon(imuon,false,ptthreshold,lossCode)) return false;
+  if (!isGoodMuon(imuon,disableRelIso,ptthreshold,lossCode)) return false;
 
   //clean muons if using reco-pfjets
   if(theJetType_ == kRECOPF) {    
@@ -633,6 +644,40 @@ bool EventCalculator::isCleanTightMuon(const unsigned int imuon, const float ptt
   
   return true;
   
+}
+
+float EventCalculator::getElectronRelIso(const unsigned int k, const bool use2012id) {
+
+  // now recommended isolation is PF relative isolation with cone = 0.3 with rho (effective area) corrections for PU
+  
+  // isocorr = PFChargedIso (PFNoPU) + max(PFIso(&gamma;+NH) - rho * Aeff(&gamma;+NH), 0.)               
+  float rho = rho_kt6PFJetsForIsolation2011;
+  // get effective area from delR=0.3 2011 data table for neutral+gamma based on supercluster eta pf_els_scEta->at(k)
+  float AE = 0.10; 
+  if (use2012id) { //2012 id R=0.3
+    rho = rho_kt6PFJetsForIsolation2012;
+    float abseta = fabs(pf_els_scEta->at(k) );
+    if      ( abseta < 1.0 ) AE = 0.13;
+    else if ( abseta >=1.0 && abseta <1.479) AE = 0.14;
+    else if ( abseta >=1.479&&abseta <2.0)   AE = 0.07;
+    else if ( abseta >=2.0 && abseta <2.2) AE = 0.09;
+    else if ( abseta >=2.2 && abseta <2.3) AE = 0.11;
+    else if ( abseta >=2.3 && abseta <2.4) AE = 0.11;
+    else if ( abseta >=2.4 ) AE = 0.14;
+  }
+  else { //2011 id R=0.3
+    if ( fabs( pf_els_scEta->at(k) ) > 1.0 ) AE = 0.12;      
+    if ( fabs( pf_els_scEta->at(k) ) > 1.479 ) AE = 0.085;      
+    if ( fabs( pf_els_scEta->at(k) ) > 2.0 ) AE = 0.11;      
+    if ( fabs( pf_els_scEta->at(k) ) > 2.2 ) AE = 0.12;      
+    if ( fabs( pf_els_scEta->at(k) ) > 2.3 ) AE = 0.12;
+    if ( fabs( pf_els_scEta->at(k) ) > 2.4 ) AE = 0.13;      
+  }
+  float eleIso = pf_els_PFphotonIsoR03->at(k) + pf_els_PFneutralHadronIsoR03->at(k) - rho*AE;
+  float  elRelIso = ( pf_els_PFchargedHadronIsoR03->at(k) + ( eleIso > 0 ? eleIso : 0.0 ) )/pf_els_pt->at(k);
+
+  return elRelIso;
+
 }
 
 //this bool could be turned into a more powerful selector for N-1 studies. keep it simple for now
@@ -691,48 +736,22 @@ bool EventCalculator::isGoodElectron(const unsigned int k, const bool disableRel
   if ( fabs(d0) >= 0.04 ) { lossCode=3; return false; }
   if ( fabs(pf_els_vz->at(k) - pv_z->at(0) ) >= 0.2 )  { lossCode=3; return false; }
   
-  // now recommended isolation is PF relative isolation with cone = 0.3 with rho (effective area) corrections for PU
-    
-  // isocorr = PFChargedIso (PFNoPU) + max(PFIso(&gamma;+NH) - rho * Aeff(&gamma;+NH), 0.)               
-  float rho = rho_kt6PFJetsForIsolation2011;
-  // get effective area from delR=0.3 2011 data table for neutral+gamma based on supercluster eta pf_els_scEta->at(k)
-  float AE = 0.10; 
-  if (use2012id) { //2012 id R=0.3
-    rho = rho_kt6PFJetsForIsolation2012;
-    float abseta = fabs(pf_els_scEta->at(k) );
-    if      ( abseta < 1.0 ) AE = 0.13;
-    else if ( abseta >=1.0 && abseta <1.479) AE = 0.14;
-    else if ( abseta >=1.479&&abseta <2.0)   AE = 0.07;
-    else if ( abseta >=2.0 && abseta <2.2) AE = 0.09;
-    else if ( abseta >=2.2 && abseta <2.3) AE = 0.11;
-    else if ( abseta >=2.3 && abseta <2.4) AE = 0.11;
-    else if ( abseta >=2.4 ) AE = 0.14;
-  }
-  else { //2011 id R=0.3
-    if ( fabs( pf_els_scEta->at(k) ) > 1.0 ) AE = 0.12;      
-    if ( fabs( pf_els_scEta->at(k) ) > 1.479 ) AE = 0.085;      
-    if ( fabs( pf_els_scEta->at(k) ) > 2.0 ) AE = 0.11;      
-    if ( fabs( pf_els_scEta->at(k) ) > 2.2 ) AE = 0.12;      
-    if ( fabs( pf_els_scEta->at(k) ) > 2.3 ) AE = 0.12;
-    if ( fabs( pf_els_scEta->at(k) ) > 2.4 ) AE = 0.13;      
-  }
-  float eleIso = pf_els_PFphotonIsoR03->at(k) + pf_els_PFneutralHadronIsoR03->at(k) - rho*AE;
-  float  elRelIso = ( pf_els_PFchargedHadronIsoR03->at(k) + ( eleIso > 0 ? eleIso : 0.0 ) )/pf_els_pt->at(k);
-  if (elRelIso >= 0.15)  {lossCode=4; return false;}
+  float elRelIso = getElectronRelIso(k, use2012id);
+  if ( (disableRelIso == false) && (elRelIso >= 0.15) )  {lossCode=4; return false;}
 
   lossCode=0;
   return true;
 }
 
 
-unsigned int EventCalculator::countEle(const float ptthreshold,const bool use2012id,const int ttbarDecayCode,int & lostLeptonCode,const float genEta,const float genPhi) {
+unsigned int EventCalculator::countEle(const float ptthreshold, const bool use2012id, const bool disableRelIso, const int ttbarDecayCode,int & lostLeptonCode,const float genEta,const float genPhi) {
 
   //count good electrons.
 
   unsigned int ngoodele=0;
   for (unsigned int i=0; i <pf_els_pt->size() ; i++) {
     int whyLeptonLost=-1;
-    if (isGoodElectron(i,false,ptthreshold,use2012id,whyLeptonLost))      ++ngoodele;
+    if (isGoodElectron(i,disableRelIso,ptthreshold,use2012id,whyLeptonLost))      ++ngoodele;
     //if ttbarDecayCode is 3 (single e at gen level), then also return lostLeptonCode information
     if (ttbarDecayCode==3&& lostLeptonCode==5) {
       //check that this reco lepton is a loose DR match to the gen one
@@ -742,13 +761,13 @@ unsigned int EventCalculator::countEle(const float ptthreshold,const bool use201
   return ngoodele;
 }
 
-unsigned int EventCalculator::countMu(const float ptthreshold,const int ttbarDecayCode, int & lostLeptonCode,const float genEta,const float genPhi) {
+unsigned int EventCalculator::countMu(const float ptthreshold, const bool disableRelIso, const int ttbarDecayCode, int & lostLeptonCode,const float genEta,const float genPhi) {
 
   unsigned int ngoodmu=0;
   unsigned int nmu = pf_mus_pt->size();
   for ( unsigned int i = 0; i< nmu; i++) {
     int whyLost=-1;
-    if (isCleanMuon(i,ptthreshold,whyLost)) {
+    if (isCleanMuon(i,ptthreshold,disableRelIso,whyLost)) {
       //once we reach here we've got a good muon in hand
       ++ngoodmu;   
     }
@@ -2785,9 +2804,7 @@ float EventCalculator::getRelIsoForIsolationStudyEle() {
 
   for (unsigned int iele=0; iele < pf_els_pt->size(); ++iele) {
     if ( isGoodElectron(iele,true)) { //true means disable RelIso cut
-      float reliso = (pf_els_chargedHadronIso->at(iele)
-		      + pf_els_photonIso->at(iele) 
-		      + pf_els_neutralHadronIso->at(iele))/pf_els_pt->at(iele);
+      float reliso = getElectronRelIso(iele, true);
       if (reliso < bestRelIso) bestRelIso = reliso;
     }
   }
@@ -2797,23 +2814,22 @@ float EventCalculator::getRelIsoForIsolationStudyEle() {
 }
 
 float EventCalculator::getRelIsoForIsolationStudyMuon() {
-
+  
+  assert(theJetType_ != kRECOPF); //The following code is not set up to do cleaning.
+  
   //loop over muon
   //consider any muon that passes all cuts except reliso
   //return the most isolated reliso of that group
-
+  
   float bestRelIso=1e9;
-/* FIXME CFA
+  
   for (unsigned int imu=0; imu < mus_pt->size(); ++imu) {
-    if ( isGoodRecoMuon(imu,true,10)) { //true means disable RelIso cut
-      float reliso = (myMuonsRECO->at(imu).trackIso
-		      + myMuonsRECO->at(imu).ecalIso 
-		      + myMuonsRECO->at(imu).hcalIso)/myMuonsRECO->at(imu).pt;
-      
+    if ( isGoodMuon(imu,true)) { //true means disable RelIso cut
+      float reliso = getMuonRelIso(imu);
       if (reliso < bestRelIso) bestRelIso = reliso;
     }
   }
-*/
+  
   //if there are no good muons we'll get 1e9 as the return value
   return bestRelIso;
 }
@@ -6498,6 +6514,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   map<TString, triggerData > triggerlist_mc(triggerlist);
 
   int njets, njets30, nbjets, nbjets30,ntruebjets, nElectrons,nElectrons2011, nMuons, nTightMuons,njets20,nbjets20;
+  int nElectronsNoRelIso, nMuonsNoRelIso;
   int njetsHiggsMatch20, njetsHiggsMatch20_CSVT,njetsHiggsMatch20_CSVM,njetsHiggsMatch20_CSVL;
   int ncompleteHiggsReco20;
   int nbjetsTweaked;
@@ -6965,6 +6982,9 @@ void EventCalculator::reducedTree(TString outputpath) {
 
   reducedTree.Branch("nElectrons20",&nElectrons20,"nElectrons20/I"); //jmt
   reducedTree.Branch("nMuons20",&nMuons20,"nMuons20/I");
+
+  reducedTree.Branch("nElectronsNoRelIso",&nElectronsNoRelIso,"nElectronsNoRelIso/I");
+  reducedTree.Branch("nMuonsNoRelIso",&nMuonsNoRelIso,"nMuonsNoRelIso/I");
 
   reducedTree.Branch("nTausVLoose",&nTausVLoose,"nTausVLoose/I");
   reducedTree.Branch("nTausLoose",&nTausLoose,"nTausLoose/I");
@@ -7963,9 +7983,9 @@ void EventCalculator::reducedTree(TString outputpath) {
 
 
       //count leptons
-      nElectrons = countEle(10,true,ttbarDecayCode,lostLeptonCode,leptonEta,leptonPhi);
+      nElectrons = countEle(10,true,false,ttbarDecayCode,lostLeptonCode,leptonEta,leptonPhi);
       nElectrons2011 = countEle(10,false);
-      nMuons = countMu(10,ttbarDecayCode,lostLeptonCode,leptonEta,leptonPhi);
+      nMuons = countMu(10,false,ttbarDecayCode,lostLeptonCode,leptonEta,leptonPhi);
       nElectrons5 = countEle(5);
       nMuons5 = countMu(5);
       nElectrons15 = countEle(15);
@@ -7973,6 +7993,8 @@ void EventCalculator::reducedTree(TString outputpath) {
       nElectrons20 = countEle(20);
       nMuons20 = countMu(20);
       nTightMuons = countTightMu();
+      nElectronsNoRelIso = countEle(10,true,true);
+      nMuonsNoRelIso = countMu(10,true);
 
       //cout<<" ttbarDecayCode leptonEta leptonPt nE nMu lostLeptonCode "<<ttbarDecayCode<<" "<<leptonEta<<" "<<leptonPt<<" "<<nElectrons<<" "<<nMuons<<" "<<lostLeptonCode<<endl;
 
