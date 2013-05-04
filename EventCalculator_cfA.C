@@ -2823,7 +2823,7 @@ float EventCalculator::getRelIsoForIsolationStudyMuon() {
   
   float bestRelIso=1e9;
   
-  for (unsigned int imu=0; imu < mus_pt->size(); ++imu) {
+  for (unsigned int imu=0; imu < pf_mus_pt->size(); ++imu) {
     if ( isGoodMuon(imu,true)) { //true means disable RelIso cut
       float reliso = getMuonRelIso(imu);
       if (reliso < bestRelIso) bestRelIso = reliso;
