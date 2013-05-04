@@ -551,6 +551,11 @@ void setScanPoint(const TString & name) {
 
   // format is e.g. T1bbbb$m0$m12
 
+  if (!name.Contains("$")) {
+    if (!quiet_)    cout<<"warning -- not setting scan point"<<endl;
+    return;
+  }
+
   if ((name.Tokenize("$")->At(1) == 0) || (name.Tokenize("$")->At(2)==0) ) assert(0);
 
   TString m0=name.Tokenize("$")->At(1)->GetName();
@@ -572,7 +577,6 @@ int getSMSProdProcess(const TString & sample) {
 void loadScanSMSngen(const TString& sampleOfInterest) {
   if (scanSMSngen==0) scanSMSngen = (TH2D*) files_[currentConfig_][sampleOfInterest].first->Get("scanSMSngen");
   else {
-    cout<<"Replacing scanSMSngen"<<endl;
     scanSMSngen = (TH2D*) files_[currentConfig_][sampleOfInterest].first->Get("scanSMSngen");
   }
 }
