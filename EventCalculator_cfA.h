@@ -392,7 +392,7 @@ public:
   // fill higgsMbb1/2 with the best *pair* of hh candidates (using 125 GeV mass)
   void higgs125massPairs(float & higgsMbb1,float & higgsMbb2,const std::vector< std::pair<int,int> > & truehiggs  ) ;
   void higgs125massPairsAllJets(float & higgsMbb1,float & higgsMbb2);
-  void minDeltaMassPairs(float & higgsMbb1,float & higgsMbb2 ) ;
+  void minDeltaMassPairs(float & higgsMbb1,float & higgsMbb2 ,int & h1jet1,int & h1jet2,int & h2jet1,int & h2jet2) ;
 
 
   float mbbHighPt( BTaggerType tagger ) ;
