@@ -34,6 +34,7 @@ The input files are the reducedTrees.
 #include "THStack.h"
 #include "TH1.h"
 #include "TH2.h"
+#include "TH3.h"
 #include "TLine.h"
 #include "TCut.h"
 #include "TLatex.h"
@@ -60,7 +61,6 @@ TString dataInputPath =  "/cu4/ra2b/reducedTrees/v66_10/ORIGINALS/";
 //TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35u/Fall11/";//7 TeV
 
 double lumiScale_ = 19399; //Run 2012 ABC+D (update from Keith)
-double preLumiScale_ = 30;//god only knows for 2012
 
 //make a symlink that point from this name to drawReducedTree.h
 //this is to make the ROOT dictionary generation work correctly
@@ -1191,23 +1191,25 @@ void compT1ttttMGVpythia_check() {
 
 }
 
-void t1t5() {
+void t1t1t() { //compare t1t1t to t1tttt
 
-  inputPath = "/cu4/ra2b/reducedTrees/v68_2/";
+  inputPath = "/cu4/ra2b/reducedTrees/signalComparisons/";
   nameOfEventWeight_="weight3"; //for 2012 cfA skimmed ntuples
 
-  addToSamplesAll("SMS-MadGraph_T1tttt-775to1075-25to500_UCSB1741reshuf_v68.825");
-  addToSamplesAll("T5tttt");
+  addToSamplesAll("SMS-MadGraph_T1t1t-1000-200to750-100to650_UCSB1753reshuf_v68");
+  addToSamplesAll("SMS-MadGraph_T1tttt-775to1075-25to500_UCSB1741reshuf_v68.1025");
+  addToSamplesAll("SMS-MadGraph_T1tttt-1100to1400-25to500_UCSB1732reshuf_v68.1150");
+  addToSamplesAll("SMS-MadGraph_T5tttt-1075to1175-225to1025-50_UCSB1750reshuf_v68.1125");
+
+  //how about 
 
   loadSamples(true,"ra2b2012");
 
   clearSamples();
 
-  addSample("SMS-MadGraph_T1tttt-775to1075-25to500_UCSB1741reshuf_v68.825$825$25",kRed,"825,25");
-  addSample("T5tttt$825$50",kBlue,"850,225,50");
-
-  //  setSampleWeightFactor("SMS-MadGraph_T1tttt-775to1075-25to500_UCSB1741reshuf_v68.825","m0==825&&m12==25");
-  setSampleWeightFactor("T5tttt$825$50","mIntermediate==225&&m0==850&&m12==50");
+  //T1tttt -- 1024, 325
+  addSample("SMS-MadGraph_T1tttt-775to1075-25to500_UCSB1741reshuf_v68.1025$1025$325",kBlue,"1025, 325");
+  addSample("SMS-MadGraph_T1t1t-1000-200to750-100to650_UCSB1753reshuf_v68$1000$500$325",kRed,"1000, 500, 325");
 
   drawMCErrors_=true;
   doRatio_=true; ratioMin = 0; ratioMax = 2.2;
@@ -1218,16 +1220,74 @@ void t1t5() {
   TString var,xtitle;
 
   overrideSMSlabels_=true;
+  setStackMode(false,false,false);
+
+  TCut baseline = "cutPV==1 && cutTrigger2==1 && njets>=3 && jetpt2>=70";
+  TCut cleaning="passCleaning==1&&buggyEvent==0&&MET/caloMET<2&&maxTOBTECjetDeltaMult<40";
+  TCut ht = "HT>=400";
+  TCut met = "MET>=125";
+  TCut mdp = "minDeltaPhiN_asin>=4";
+  TCut ldp = "minDeltaPhiN_asin<4";
+  TCut zl = getLeptonVetoCut()&&TCut("nIsoTracks15_005_03==0");
+  TCut zlwoisotk = getLeptonVetoCut();
+
+  selection_=baseline&&cleaning&&ht&&met&&mdp&&zl;
+
+  var="njets"; xtitle="n jets pT>50 GeV";
+  nbins = 13; low=0; high=13;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "T1ttttT1t1t-comp_"+var,0);
+
+  var="HT"; xtitle="HT (GeV)";
+  nbins = 40; low=400; high=2200;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "T1ttttT1t1t-comp_"+var,0);
+
+  var="MET"; xtitle="MET (GeV)";
+  nbins = 40; low=100; high=800;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "T1ttttT1t1t-comp_"+var,0);
+
+  var="jetpt1"; xtitle="lead jet pT (GeV)";
+  nbins = 50; low=0; high=1000;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "T1ttttT1t1t-comp_"+var,0);
+
+  clearSamples();
+  doRatio_=false; ratioMin = 0; ratioMax = 2.2;
+  addSample("SMS-MadGraph_T1tttt-1100to1400-25to500_UCSB1732reshuf_v68.1150$1150$25",kBlue,"1150, 25");
+  addSample("SMS-MadGraph_T5tttt-1075to1175-225to1025-50_UCSB1750reshuf_v68.1125$1125$225$50",kRed+3,"1125, 225, 50");
+  addSample("SMS-MadGraph_T5tttt-1075to1175-225to1025-50_UCSB1750reshuf_v68.1125$1125$700$50",kRed-7,"1125, 700, 50");
+
+
+  var="njets"; xtitle="n jets pT>50 GeV";
+  nbins = 14; low=0; high=14;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "T1ttttT5tttt-comp_"+var,0);
+
+  var="HT"; xtitle="HT (GeV)";
+  nbins = 40; low=400; high=2200;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "T1ttttT5tttt-comp_"+var,0);
+
+  var="MET"; xtitle="MET (GeV)";
+  nbins = 40; low=100; high=800;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "T1ttttT5tttt-comp_"+var,0);
+
+  selection_="(1)";
+  var="MET"; xtitle="MET (GeV)";
+  nbins = 40; low=0; high=800;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "T1ttttT5tttt-nocuts_"+var,0);
+
+  var="HT"; xtitle="HT (GeV)";
+  nbins = 40; low=0; high=3000;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "T1ttttT5tttt-nocuts_"+var,0);
+
   setStackMode(false,true,false);
 
   selection_="(1)";
-  var="njets"; xtitle="n jets pT>50 GeV";
-  nbins = 14; low=0; high=14;
-  drawPlots(var,nbins,low,high,xtitle,"Events", "T1ttttT5tttt-comp_njets",0);
+  var="MET"; xtitle="MET (GeV)";
+  nbins = 40; low=0; high=800;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "T1ttttT5tttt-nocuts_"+var,0);
 
   var="HT"; xtitle="HT (GeV)";
-  nbins = 40; low=0; high=2200;
-  drawPlots(var,nbins,low,high,xtitle,"Events", "T1ttttT5tttt-comp_HT",0);
+  nbins = 40; low=0; high=3000;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "T1ttttT5tttt-nocuts_"+var,0);
+
 
 }
 
