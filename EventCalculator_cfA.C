@@ -4987,6 +4987,7 @@ TString EventCalculator::getSampleNameOutputString(){
   else  if (sampleName_.Contains("UCSB1741reshuf")) outputstring = "SMS-MadGraph_T1tttt-775to1075-25to500_UCSB1741reshuf_v68";  
   else  if (sampleName_.Contains("UCSB1734reshuf")) outputstring = "SMS-MadGraph_T1tttt-775to1075-525to875_UCSB1734reshuf_v68";
   else  if (sampleName_.Contains("UCSB1739reshuf")) outputstring = "SMS-MadGraph_T1tttt-1100to1400-525to1000_UCSB1739reshuf_v68";
+  else  if (sampleName_.Contains("UCSB1777reshuf")) outputstring = "SMS-MadGraph_T1tttt-775to1075-25to500_v3_UCSB1777reshuf_v68";
   //T4tW
   else if  (sampleName_.Contains("UCSB1723reshuf")) outputstring = "SMS-MadGraph_T4tW-325to700-150to625_UCSB1723reshuf_v68";
   //T5tttt
