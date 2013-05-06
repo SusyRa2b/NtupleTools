@@ -198,6 +198,7 @@ TH2D* hdata2d=0;
 
 TString currentConfig_;
 TH2D* scanSMSngen=0;
+TH3D* scanSMSngen3D=0;
 //TH1D* referenceCrossSectionGluino=0;
 CrossSectionTable * CrossSectionTable_gluino_=0;
 CrossSectionTable * CrossSectionTable_stop_=0;
@@ -273,6 +274,7 @@ bool drawFilenameOnPlot_=false;
 
 int m0_=0;
 int m12_=0;
+int mIntermediate_=0;
 TString susyCrossSectionVariation_="";
 
 bool normalized_=false;
@@ -510,6 +512,9 @@ bool isSampleSMS(const TString & name ) {
   if (name.Contains("T1bbbb")) return true;
   if (name.Contains("T2bb")) return true;
   if (name.Contains("T1tttt")) return true;
+  if (name.Contains("T1ttcc")) return true;
+  if (name.Contains("T5tttt")) return true;
+  if (name.Contains("T1t1t")) return true;
   if (name.Contains("T2tt")) return true;
 
   return false;
@@ -551,17 +556,35 @@ void setScanPoint(const TString & name) {
 
   // format is e.g. T1bbbb$m0$m12
 
+  // --or-- T1t1t$m0$mIntermediate$m12
+
+  //either of these is supported
+
   if (!name.Contains("$")) {
     if (!quiet_)    cout<<"warning -- not setting scan point"<<endl;
     return;
   }
 
-  if ((name.Tokenize("$")->At(1) == 0) || (name.Tokenize("$")->At(2)==0) ) assert(0);
+  //careful...need to clean up memory after tokenize
+  TObjArray * substrs = name.Tokenize("$");
+  if ( substrs->At(1)==0 || substrs->At(2)==0) assert(0);
 
-  TString m0=name.Tokenize("$")->At(1)->GetName();
-  TString m12=name.Tokenize("$")->At(2)->GetName();
+  int index_mlsp = 2;
+  TString mintermediate="";
+  if ( substrs->At(3) !=0) {
+    index_mlsp=3;
+    mintermediate = TString(substrs->At(2)->GetName());
+    mIntermediate_ = mintermediate.Atoi();
+  }
+  else {
+    mIntermediate_=0;
+  }
+  TString m0=TString(substrs->At(1)->GetName());
+  TString m12=TString(substrs->At(index_mlsp)->GetName());
   m0_=m0.Atoi();
   m12_=m12.Atoi();
+
+  delete substrs;
 }
 
 
@@ -575,14 +598,14 @@ int getSMSProdProcess(const TString & sample) {
 
 
 void loadScanSMSngen(const TString& sampleOfInterest) {
-  if (scanSMSngen==0) scanSMSngen = (TH2D*) files_[currentConfig_][sampleOfInterest].first->Get("scanSMSngen");
-  else {
-    scanSMSngen = (TH2D*) files_[currentConfig_][sampleOfInterest].first->Get("scanSMSngen");
-  }
+
+  scanSMSngen = (TH2D*) files_[currentConfig_][sampleOfInterest].first->Get("scanSMSngen");
+  scanSMSngen3D = (TH3D*) files_[currentConfig_][sampleOfInterest].first->Get("scanSMSngen3D");
+
 }
 
 void loadReferenceCrossSections() {
-  //bad idea to hard-code to this remote afs?
+
   if ( CrossSectionTable_gluino_ == 0) {
     cout<<"Loading reference cross section file (g~g~)"<<endl;
     CrossSectionTable_gluino_ = new  CrossSectionTable("gluino.root","smsroot","gluino");
@@ -955,12 +978,17 @@ for legacy purposes I am keeping all of the weight and selection TStrings, altho
       weightedcut +=extraSelection;
     }
     if (type == kmSugraPoint || type==kSMSPointGlGl|| type==kSMSPointStopStop) {
+      //a better way to code this would have been to make the names (m0, mStop) a variable and then allow it to be customized
       if (smsHack_) weightedcut += " && mStop=="; //for stop samples where i used the wrong names
       else          weightedcut += " && m0==";
       weightedcut +=m0_;
       if (smsHack_) weightedcut += " && mLSP=="; //for stop samples where i used the wrong names
       else          weightedcut += " && m12==";
       weightedcut +=m12_;
+      if (mIntermediate_!=0) { //use intermediate mass
+	weightedcut += " && mIntermediate==";
+	weightedcut +=mIntermediate_;
+      }
     }
     weightedcut+=")";
   }
@@ -974,6 +1002,10 @@ for legacy purposes I am keeping all of the weight and selection TStrings, altho
       if (smsHack_) weightedcut += " && mLSP=="; //for stop samples where i used the wrong names
       else          weightedcut += " && m12=="; 
       weightedcut +=m12_;
+      if (mIntermediate_!=0) { //use intermediate mass
+	weightedcut += " && mIntermediate==";
+	weightedcut +=mIntermediate_;
+      }
     }
     weightedcut+=")";
   }
@@ -1008,19 +1040,19 @@ for legacy purposes I am keeping all of the weight and selection TStrings, altho
     weightedcut += thisweight;
   }
   else if (type == kSMSPointGlGl || type == kSMSPointStopStop ||type == kSMSPointSbottomSbottom ) {
-    if (!smsHack_) {
+    if (!smsHack_) { //these old hacked samples also did not have the scanSMSngen_
     //need to weight with the standard sigma / N ; lumi factor is done above
-    assert(scanSMSngen!=0);
-    int bin=  scanSMSngen->FindBin(m0_,m12_);
-    double ngen=scanSMSngen->GetBinContent(bin);
-    loadReferenceCrossSections();
-    double xs =0;
-    if (type == kSMSPointGlGl) xs = CrossSectionTable_gluino_->getSMSCrossSection(m0_);
-    else if (type == kSMSPointStopStop) xs = CrossSectionTable_stop_->getSMSCrossSection(m0_);
-    else assert(0); //have not yet implemented sbottom
-    char xsweight[100];
-    sprintf(xsweight,"*(%f/%f)",xs,ngen);
-    weightedcut += xsweight;
+      assert(scanSMSngen3D!=0); //shift to used 3D version (should be generic...)
+      int bin=  scanSMSngen3D->FindBin(m0_,m12_,mIntermediate_);
+      double ngen=scanSMSngen3D->GetBinContent(bin);
+      loadReferenceCrossSections();
+      double xs =0;
+      if (type == kSMSPointGlGl) xs = CrossSectionTable_gluino_->getSMSCrossSection(m0_);
+      else if (type == kSMSPointStopStop) xs = CrossSectionTable_stop_->getSMSCrossSection(m0_);
+      else assert(0); //have not yet implemented sbottom
+      char xsweight[100];
+      sprintf(xsweight,"*(%f/%f)",xs,ngen);
+      weightedcut += xsweight;
     }
   }
   else if (type == kmSugraPlane && susySubProcess<0) { //sanity check
@@ -1991,6 +2023,10 @@ sampleType getSampleType(const TString & sample , const TString & planeOrPoint="
   else if (sample.Contains("T1bbbb") && planeOrPoint=="plane") return kSMSPlane;
   else if (sample.Contains("T1tttt") && planeOrPoint=="point") return kSMSPointGlGl;
   else if (sample.Contains("T1tttt") && planeOrPoint=="plane") return kSMSPlane;
+  else if (sample.Contains("T1t1t") && planeOrPoint=="point") return kSMSPointGlGl;
+  else if (sample.Contains("T1t1t") && planeOrPoint=="plane") return kSMSPlane;
+  else if (sample.Contains("T5tttt") && planeOrPoint=="point") return kSMSPointGlGl;
+  else if (sample.Contains("T5tttt") && planeOrPoint=="plane") return kSMSPlane;
   else if (sample.Contains("T2bb") && planeOrPoint=="point") return kSMSPointSbottomSbottom;
   else if (sample.Contains("T2bb") && planeOrPoint=="plane") return kSMSPlane;
   else if (sample.Contains("T2tt") && planeOrPoint=="point") return kSMSPointStopStop;
