@@ -358,6 +358,7 @@ public:
   float getMT_bMET();
   float getMT_jetMET();
   float getMT_bMET_bestCSV(int& jetId,int & topId);
+  std::pair<float,float> getMT_bMET_maxmin();
   void calcTopDecayVariables(float & wmass, float & tmass, float & wcoshel, float & tcoshel);
   void calcCosHel(unsigned int j1i, unsigned int j2i, unsigned int j3i, float & wcoshel,float &tcoshel);
 
@@ -392,7 +393,7 @@ public:
   // fill higgsMbb1/2 with the best *pair* of hh candidates (using 125 GeV mass)
   void higgs125massPairs(float & higgsMbb1,float & higgsMbb2,const std::vector< std::pair<int,int> > & truehiggs  ) ;
   void higgs125massPairsAllJets(float & higgsMbb1,float & higgsMbb2);
-  void minDeltaMassPairs(float & higgsMbb1,float & higgsMbb2 ,int & h1jet1,int & h1jet2,int & h2jet1,int & h2jet2) ;
+  std::pair<float,float> minDeltaMassPairs(float & higgsMbb1,float & higgsMbb2 ,int & h1jet1,int & h1jet2,int & h2jet1,int & h2jet2) ;
 
 
   float mbbHighPt( BTaggerType tagger ) ;

@@ -192,7 +192,7 @@ EventCalculator::~EventCalculator() {
 
 float EventCalculator::getPDFweight(const int ipdfset, const int imember ) {
 
-  //  return 1; //for debugging
+  //return 1; //for debugging
 
   assert(ipdfset>=1 && ipdfset<=3);
 
@@ -3959,6 +3959,42 @@ std::pair<float,float> EventCalculator::getJERAdjustedMHTxy(int ignoredJet) {
 }
 
 
+std::pair<float,float> EventCalculator::getMT_bMET_maxmin(){
+  float maxMT = -99.;
+  float minMT = 999.;
+  const float themetphi = getMETphi();
+  const float themet = getMET();
+
+  // first get jet indices for 4 highest CSV values
+  int CSVindices[4] = {-1,-1,-1,-1};
+  for (unsigned int i=0; i<jets_AK5PF_pt->size(); i++) {
+    if (isGoodJet(i,20) ) {
+       float CSVval = getJetCSV(i);
+       if (CSVindices[0]<-0.5 || CSVval>getJetCSV(CSVindices[0])) { CSVindices[3]=CSVindices[2]; CSVindices[2]=CSVindices[1]; CSVindices[1]=CSVindices[0]; CSVindices[0] = i;}
+       else if (CSVindices[1]<-0.5 || CSVval>getJetCSV(CSVindices[1])) { CSVindices[3]=CSVindices[2]; CSVindices[2]=CSVindices[1]; CSVindices[1]= i;}
+       else if (CSVindices[2]<-0.5 || CSVval>getJetCSV(CSVindices[2])) { CSVindices[3]=CSVindices[2]; CSVindices[2]=i;}
+       else if (CSVindices[3]<-0.5 || CSVval>getJetCSV(CSVindices[3])) { CSVindices[3]=i;}
+    }
+  }
+  
+    for (int ii=0; ii<4; ii++){
+      int ijet = -1;
+      if(CSVindices[ii]>-0.5) ijet = CSVindices[ii];
+      else continue;
+      float    mt  = 2*getJetPt(ijet)*themet*(1 - cos( getDeltaPhi( jets_AK5PF_phi->at(ijet) , themetphi)));
+      if (mt>0) {
+	mt = sqrt(mt);
+	if (mt<minMT) minMT=mt;
+        if (mt>maxMT) maxMT=mt;
+      }
+      else cout<<"MTjetMET is negative"<<endl;
+    }
+
+  return make_pair(maxMT,minMT);
+
+}
+
+
 void EventCalculator::hadronicTopFinder_DeltaR(float & mjjb1, float & mjjb2 , float & topPT1, float & topPT2) {
   mjjb1=-1;
   mjjb2=-1;
@@ -5416,7 +5452,7 @@ void EventCalculator::higgs125massPairs(float & higgsMbb1,float & higgsMbb2,cons
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //in the higgsMbb1/2 variables, return the best pair (mass difference closest to zero)
-void EventCalculator::minDeltaMassPairs(float & higgsMbb1,float & higgsMbb2,
+std::pair<float,float> EventCalculator::minDeltaMassPairs(float & higgsMbb1,float & higgsMbb2,
 					//also return the indices of the jets used to form the higgs
 					int & h1jet1,int & h1jet2,int & h2jet1,int & h2jet2) {
 
@@ -5436,7 +5472,7 @@ void EventCalculator::minDeltaMassPairs(float & higgsMbb1,float & higgsMbb2,
     }
   }
 
-  if ( jets_sorted_by_bdisc.size() <4 ) return ;
+  if ( jets_sorted_by_bdisc.size() <4 ) return make_pair(-1.,-1.);
 
   int jetindices[4];
   int iii=0;
@@ -5500,6 +5536,23 @@ void EventCalculator::minDeltaMassPairs(float & higgsMbb1,float & higgsMbb2,
   h1jet2=higgsMassPairsIndices[minind].first.second;
   h2jet1=higgsMassPairsIndices[minind].second.first;
   h2jet2=higgsMassPairsIndices[minind].second.second;
+
+  float Hbb1_px = getJetPx(h1jet1) + getJetPx(h1jet2);
+  float Hbb1_py = getJetPy(h1jet1) + getJetPy(h1jet2);
+  float Hbb2_px = getJetPx(h2jet1) + getJetPx(h2jet2);
+  float Hbb2_py = getJetPy(h2jet1) + getJetPy(h2jet2);
+  float Hbb1_pt = sqrt( Hbb1_px*Hbb1_px + Hbb1_py*Hbb1_py );
+  float Hbb2_pt = sqrt( Hbb2_px*Hbb2_px + Hbb2_py*Hbb2_py );
+  float Hbb1_phi = atan2(Hbb1_py,Hbb1_px);
+  float Hbb2_phi = atan2(Hbb2_py,Hbb2_px);
+
+  float themetphi = getMETphi();
+  float themet = getMET(); 
+
+  float mtHbb1 = 2*Hbb1_pt*themet*(1 - cos( getDeltaPhi( Hbb1_phi , themetphi)));
+  float mtHbb2 = 2*Hbb2_pt*themet*(1 - cos( getDeltaPhi( Hbb2_phi , themetphi)));
+ 
+  return make_pair(mtHbb1,mtHbb2);
 
 }
 //////////////////////////////////////////////////////////////////////
@@ -6584,6 +6637,8 @@ void EventCalculator::reducedTree(TString outputpath) {
 
   int MT_bestCSV_gencode;
   float MT_b,MT_bestCSV,MT_jim,minMT_jetMET;
+  float minMT_bMET, maxMT_bMET;
+  float MT_Hbb1, MT_Hbb2;
   float MT_Wlep;
   float MT_Wlep5,MT_Wlep15;
   float wMass, topMass, wCosHel, topCosHel;
@@ -7103,6 +7158,8 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("topCosHel",&topCosHel,"topCosHel/F");
   reducedTree.Branch("WCosHel",&wCosHel,"WCosHel/F");
   reducedTree.Branch("MT_b",&MT_b, "MT_b/F");
+  reducedTree.Branch("MT_Hbb1",&MT_Hbb1, "MT_Hbb1/F");
+  reducedTree.Branch("MT_Hbb2",&MT_Hbb2, "MT_Hbb2/F");
   reducedTree.Branch("MT_Wlep",&MT_Wlep, "MT_Wlep/F");
   reducedTree.Branch("MT_Wlep5",&MT_Wlep5, "MT_Wlep5/F");
   reducedTree.Branch("MT_Wlep15",&MT_Wlep15, "MT_Wlep15/F");
@@ -7111,6 +7168,8 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("MT_bestCSV",&MT_bestCSV, "MT_bestCSV/F");
   reducedTree.Branch("MT_jim",&MT_jim, "MT_jim/F");
   reducedTree.Branch("minMT_jetMET",&minMT_jetMET, "minMT_jetMET/F");
+  reducedTree.Branch("minMT_bMET",&minMT_bMET, "minMT_bMET/F");
+  reducedTree.Branch("maxMT_bMET",&maxMT_bMET, "maxMT_bMET/F");
 
   reducedTree.Branch("deltaThetaT",&deltaThetaT, "deltaThetaT/F");
 
@@ -7974,7 +8033,9 @@ void EventCalculator::reducedTree(TString outputpath) {
 
 	massPairsDeltaSort(higgsMbb1delta,higgsMbb2delta);
 	int h1j1,h1j2,h2j1,h2j2;
-        minDeltaMassPairs(higgsMbb1MassDiff,higgsMbb2MassDiff,h1j1,h1j2,h2j1,h2j2);
+        std::pair<float,float> MT_Hbb = minDeltaMassPairs(higgsMbb1MassDiff,higgsMbb2MassDiff,h1j1,h1j2,h2j1,h2j2);
+        MT_Hbb1 = MT_Hbb.first;
+        MT_Hbb2 = MT_Hbb.second;
 	//does not check -- we may have used the true higgs quarks twice
 	higgsMbb1MassDiff_correct =0;
 	if (  higgsRecoCorrect(hbbbb,h1j1,h1j2)) higgsMbb1MassDiff_correct++;
@@ -8259,6 +8320,9 @@ void EventCalculator::reducedTree(TString outputpath) {
       int chosenTop,chosenJet; //leptonicTop
       MT_bestCSV = getMT_bMET_bestCSV(chosenJet,chosenTop);
       minMT_jetMET = getMT_jetMET();
+      std::pair<float,float> maxmin = getMT_bMET_maxmin();
+      minMT_bMET = maxmin.first;
+      maxMT_bMET = maxmin.second;
       MT_jim = nbjets30>=2 ? MT_b : minMT_jetMET;
 
       //now compare the chosenTop to the leptonic Top
