@@ -387,6 +387,8 @@ public:
   float getMinDeltaRToJet(const float eta, const float phi, int &jetflavor);
   void fillGenTopInfo(const int ttbarDecayCode, const int leptonicTop, float &genTopPtLep,float & genWPtLep,float & genTopPtHad,float & genWPtHad);
 
+  float getMinDeltaRLeptonToJet();
+
   //return the 4-vectors of the true bbbb in hh->bbbb signal events
   void genLevelHiggs(TLorentzVector (&bbbb)[2][2] ) ;
   //'truehiggs' are the indices of the jets on the jet list that DR-match the true hh->bbbb quarks

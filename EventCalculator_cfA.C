@@ -592,6 +592,48 @@ float EventCalculator::getMinDeltaRToJet(const float eta, const float phi,int &j
 
 }
 
+
+float EventCalculator::getMinDeltaRLeptonToJet() {
+  
+  float mindr = 1e9;
+  
+  //loop over muons
+  for (unsigned int imu=0; imu < pf_mus_pt->size(); ++imu) {
+    if ( isGoodMuon(imu,true)) { //true means disable RelIso cut
+      float eta = pf_mus_eta->at(imu);
+      float phi = pf_mus_phi->at(imu);
+      
+      //have a muon. now loop over the jets.
+      for (size_t jj = 0; jj < jets_AK5PF_pt->size(); jj++) {
+	if (isGoodJet(jj, 30)) {
+	  float thisdr = jmt::deltaR(eta, phi, jets_AK5PF_eta->at(jj), jets_AK5PF_phi->at(jj));
+	  if(thisdr<mindr) mindr = thisdr;
+	}//is good jet
+      }//loop over jets
+    }//is good muon
+  }//loop over muons
+  
+  
+  //loop over electrons
+  for (unsigned int iel=0; iel < pf_els_pt->size(); ++iel) {
+    if ( isGoodElectron(iel,true)) { //true means disable RelIso cut
+      float eta = pf_els_eta->at(iel);
+      float phi = pf_els_phi->at(iel);
+      
+      //have an electron. now loop over the jets.
+      for (size_t jj = 0; jj < jets_AK5PF_pt->size(); jj++) {
+	if (isGoodJet(jj, 30)) {
+	  float thisdr = jmt::deltaR(eta, phi, jets_AK5PF_eta->at(jj), jets_AK5PF_phi->at(jj));
+	  if(thisdr<mindr) mindr = thisdr;
+	}//is good jet
+      }//loop over jets
+    }//is good electron
+  }//loop over electrons
+
+  return mindr;
+}
+
+
 bool EventCalculator::isGoodRecoMuon(const unsigned int imuon, const bool disableRelIso, const float ptthreshold) {
 
   assert(disableRelIso); //the iso calculation below is completely worthless. it uses PF quantities on RECO muons.
@@ -6827,8 +6869,9 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("genWPtLep",&genWPtLep,"genWPtLep/F");
   reducedTree.Branch("genWPtHad",&genWPtHad,"genWPtHad/F");
 
-  float minDeltaRLeptonJet=-1;
+  float minDeltaRLeptonJet=-1, minDeltaRLeptonJetReco=-1;
   reducedTree.Branch("minDeltaRLeptonJet",&minDeltaRLeptonJet,"minDeltaRLeptonJet/F");
+  reducedTree.Branch("minDeltaRLeptonJetReco",&minDeltaRLeptonJetReco,"minDeltaRLeptonJetReco/F");
   int minDeltaRJetFlavor=-99;
   reducedTree.Branch("minDeltaRJetFlavor",&minDeltaRJetFlavor,"minDeltaRJetFlavor/I");
 
@@ -8120,6 +8163,8 @@ void EventCalculator::reducedTree(TString outputpath) {
       nMuonsNoRelIso = countMu(10,true);
 
       //cout<<" ttbarDecayCode leptonEta leptonPt nE nMu lostLeptonCode "<<ttbarDecayCode<<" "<<leptonEta<<" "<<leptonPt<<" "<<nElectrons<<" "<<nMuons<<" "<<lostLeptonCode<<endl;
+
+      minDeltaRLeptonJetReco = getMinDeltaRLeptonToJet();
 
       hlteff = getHLTeff(HT,MET,nElectrons,nMuons);
 
