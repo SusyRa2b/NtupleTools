@@ -276,7 +276,7 @@ public:
 
   float getCosHel( TLorentzVector  d1,  TLorentzVector  d2) ;
 
-  unsigned int nGoodJets(const float ptthreshold=50);
+  unsigned int nGoodJets(const float ptthreshold=50, const float etaMax=2.4);
   //  unsigned int nGoodJets(TH2D* count,TH2D* unc,TH2D* l2l3); //for a test
   unsigned int nGoodJets30();
   unsigned int nGoodBJets(float ptthreshold=50, BTaggerType btagger=Nbtaggers);
@@ -361,6 +361,7 @@ public:
   std::pair<float,float> getMT_bMET_maxmin();
   void calcTopDecayVariables(float & wmass, float & tmass, float & wcoshel, float & tcoshel);
   void calcCosHel(unsigned int j1i, unsigned int j2i, unsigned int j3i, float & wcoshel,float &tcoshel);
+  float getMaxDelPhi(int h1j1, int h1j2, int h2j1, int h2j2);
 
   std::pair<float,float> getJERAdjustedMHTxy(int ignoredJet=-1);
 

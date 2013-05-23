@@ -114,7 +114,10 @@ EventCalculator::EventCalculator(const TString & sampleName, const vector<string
 	   sampleName_.Contains("T5tttt")|| 
 	   sampleName_.Contains("T7btw")||
 	   sampleName_.Contains("T4tW") ||
-	   sampleName_.Contains("TChihh")
+	   sampleName_.Contains("TChihh")||
+	   sampleName_.Contains("T6tthh")||
+	   sampleName_.Contains("T6cchh")||
+	   sampleName_.Contains("T6bbHH")
 	   ) {
     theScanType_ = kSMS;
     std::cout<<"\tDetected that I'm running over an SMS scan!"<<std::endl;
@@ -192,7 +195,7 @@ EventCalculator::~EventCalculator() {
 
 float EventCalculator::getPDFweight(const int ipdfset, const int imember ) {
 
-  //return 1; //for debugging
+  // return 1; //for debugging
 
   assert(ipdfset>=1 && ipdfset<=3);
 
@@ -592,7 +595,6 @@ float EventCalculator::getMinDeltaRToJet(const float eta, const float phi,int &j
 
 }
 
-
 float EventCalculator::getMinDeltaRLeptonToJet() {
   
   float mindr = 1e9;
@@ -632,6 +634,7 @@ float EventCalculator::getMinDeltaRLeptonToJet() {
 
   return mindr;
 }
+
 
 
 bool EventCalculator::isGoodRecoMuon(const unsigned int imuon, const bool disableRelIso, const float ptthreshold) {
@@ -2362,11 +2365,11 @@ float EventCalculator::getJetCSV(unsigned int ijet){
   return jets_AK5PF_btag_secVertexCombined->at(ijet);
 }
 
-unsigned int EventCalculator::nGoodJets(const float ptthreshold) {
+unsigned int EventCalculator::nGoodJets(const float ptthreshold, const float etaMax) {
   
   unsigned int njets=0;
   for (unsigned int i=0; i < jets_AK5PF_pt->size(); ++i) {
-    if (isGoodJet(i,ptthreshold) )   njets++;
+    if (isGoodJet(i,ptthreshold,etaMax) )   njets++;
   }
   return njets;
 }
@@ -4036,6 +4039,37 @@ std::pair<float,float> EventCalculator::getMT_bMET_maxmin(){
 
 }
 
+float EventCalculator::getMaxDelPhi(int h1j1, int h1j2, int h2j1, int h2j2){
+  float h1j1phi = jets_AK5PF_phi->at(h1j1);
+  float h1j2phi = jets_AK5PF_phi->at(h1j2);
+  float h2j1phi = jets_AK5PF_phi->at(h2j1);
+  float h2j2phi = jets_AK5PF_phi->at(h2j2);
+  //for each jet, find the closest other jet
+  float h1j1closest = getDeltaPhi( h1j1phi, h1j2phi);
+  if ( getDeltaPhi( h1j1phi, h1j2phi) < h1j1closest ) h1j1closest = getDeltaPhi( h1j1phi, h1j2phi);
+  if ( getDeltaPhi( h1j1phi, h2j1phi) < h1j1closest ) h1j1closest = getDeltaPhi( h1j1phi, h2j1phi);
+  if ( getDeltaPhi( h1j1phi, h2j2phi) < h1j1closest ) h1j1closest = getDeltaPhi( h1j1phi, h2j2phi);
+  float h1j2closest = getDeltaPhi( h1j2phi, h1j1phi);
+  if ( getDeltaPhi( h1j2phi, h1j1phi) < h1j2closest ) h1j2closest = getDeltaPhi( h1j2phi, h1j1phi);
+  if ( getDeltaPhi( h1j2phi, h2j1phi) < h1j2closest ) h1j2closest = getDeltaPhi( h1j2phi, h2j1phi);
+  if ( getDeltaPhi( h1j2phi, h2j2phi) < h1j2closest ) h1j2closest = getDeltaPhi( h1j2phi, h2j2phi);
+  float h2j1closest = getDeltaPhi( h2j1phi, h2j2phi);
+  if ( getDeltaPhi( h2j1phi, h2j2phi) < h2j1closest ) h2j1closest = getDeltaPhi( h2j1phi, h2j2phi);
+  if ( getDeltaPhi( h2j1phi, h2j1phi) < h2j1closest ) h2j1closest = getDeltaPhi( h2j1phi, h2j1phi);
+  if ( getDeltaPhi( h2j1phi, h2j2phi) < h2j1closest ) h2j1closest = getDeltaPhi( h2j1phi, h2j2phi);
+  float h2j2closest = getDeltaPhi( h2j2phi, h2j1phi);
+  if ( getDeltaPhi( h2j2phi, h2j1phi) < h2j2closest ) h2j2closest = getDeltaPhi( h2j2phi, h2j1phi);
+  if ( getDeltaPhi( h2j2phi, h2j1phi) < h2j2closest ) h2j2closest = getDeltaPhi( h2j2phi, h2j1phi);
+  if ( getDeltaPhi( h2j2phi, h2j2phi) < h2j2closest ) h2j2closest = getDeltaPhi( h2j2phi, h2j2phi);
+  //next get largest, next closest jet value
+  float maxClosest = h1j1closest;
+  if (h1j2closest > maxClosest) maxClosest = h1j2closest;
+  if (h2j1closest > maxClosest) maxClosest = h2j1closest;
+  if (h2j2closest > maxClosest) maxClosest = h2j2closest;
+
+  return maxClosest;
+
+}
 
 void EventCalculator::hadronicTopFinder_DeltaR(float & mjjb1, float & mjjb2 , float & topPT1, float & topPT2) {
   mjjb1=-1;
@@ -6201,7 +6235,7 @@ float EventCalculator::bJetFastsimSF(const TString & what, int flavor,float pt) 
   if (what == "value") returnVal=1;
 
   //first check if we're in a FASTSIM model
-  if (theScanType_==kpmssm || sampleName_.Contains("TChihh")) {
+  if (theScanType_==kpmssm || sampleName_.Contains("TChihh") || sampleName_.Contains("T6tthh") || sampleName_.Contains("T6cchh")) {
     //DO NOTHING FOR NOW...this is rather dangerous!
   }
   else  if (theScanType_ != kNotScan ) {
@@ -6625,7 +6659,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   //want a copy of triggerlist, for storing mc trigger results
   map<TString, triggerData > triggerlist_mc(triggerlist);
 
-  int njets, njets30, nbjets, nbjets30,ntruebjets, nElectrons,nElectrons2011, nMuons, nTightMuons,njets20,nbjets20;
+  int njets, njets30, nbjets, nbjets30,ntruebjets, nElectrons,nElectrons2011, nMuons, nTightMuons,njets20,njets20_5p0,nbjets20;
   int nElectronsNoRelIso, nMuonsNoRelIso;
   int njetsHiggsMatch20, njetsHiggsMatch20_CSVT,njetsHiggsMatch20_CSVM,njetsHiggsMatch20_CSVL;
   int ncompleteHiggsReco20;
@@ -6686,6 +6720,9 @@ void EventCalculator::reducedTree(TString outputpath) {
   float wMass, topMass, wCosHel, topCosHel;
   float deltaThetaT;
 
+  float maxDeltaPhi_bbbb;
+  float maxDeltaPhi_bb_bb;
+
   int nGoodPV;
 
   int SUSY_nb;
@@ -6739,6 +6776,8 @@ void EventCalculator::reducedTree(TString outputpath) {
   //test variables related to the higgs-finding above
   int higgsMbb1MassDiff_correct=0; //mc truth -- how many higgses correct?
   float deltaPhi_hh=-99,deltaRmax_hh=-1,deltaRmin_hh=-1,deltaEta_hh=-99,sumPt_hh=-99;
+  float maxDelPhiThrustJet = -99.;
+  float minDelPhiThrustMET = 99.;
 
   //  float transverseThrust,transverseThrustPhi;
   //  float transverseThrustWithMET,transverseThrustWithMETPhi;
@@ -7079,6 +7118,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("njets",&njets,"njets/I");
   reducedTree.Branch("njets30",&njets30,"njets30/I");
   reducedTree.Branch("njets20",&njets20,"njets20/I");
+  reducedTree.Branch("njets20_5p0",&njets20_5p0,"njets20_5p0/I");
   reducedTree.Branch("njetsHiggsMatch20",&njetsHiggsMatch20,"njetsHiggsMatch20/I");
   reducedTree.Branch("ncompleteHiggsReco20",&ncompleteHiggsReco20,"ncompleteHiggsReco20/I");
   reducedTree.Branch("njetsHiggsMatch20_CSVT",&njetsHiggsMatch20_CSVT,"njetsHiggsMatch20_CSVT/I");
@@ -7134,7 +7174,9 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("deltaRmin_hh",&deltaRmin_hh,"deltaRmin_hh/F");
   reducedTree.Branch("deltaEta_hh",&deltaEta_hh,"deltaEta_hh/F");
   reducedTree.Branch("sumPt_hh",&sumPt_hh,"sumPt_hh/F");
-
+  
+  reducedTree.Branch("maxDelPhiThrustJet",&maxDelPhiThrustJet,"maxDelPhiThrustJet/F");
+  reducedTree.Branch("minDelPhiThrustMET",&minDelPhiThrustMET,"minDelPhiThrustMET/F");
 
   reducedTree.Branch("mjjb1",&mjjb1,"mjjb1/F");
   reducedTree.Branch("mjjb2",&mjjb2,"mjjb2/F");
@@ -7206,6 +7248,9 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("MT_Wlep",&MT_Wlep, "MT_Wlep/F");
   reducedTree.Branch("MT_Wlep5",&MT_Wlep5, "MT_Wlep5/F");
   reducedTree.Branch("MT_Wlep15",&MT_Wlep15, "MT_Wlep15/F");
+  
+  reducedTree.Branch("maxDeltaPhi_bbbb",&maxDeltaPhi_bbbb, "maxDeltaPhi_bbbb/F");
+  reducedTree.Branch("maxDeltaPhi_bb_bb",&maxDeltaPhi_bb_bb, "maxDeltaPhi_bb_bb/F");
 
   reducedTree.Branch("MT_bestCSV_gencode",&MT_bestCSV_gencode, "MT_bestCSV_gencode/I");
   reducedTree.Branch("MT_bestCSV",&MT_bestCSV, "MT_bestCSV/F");
@@ -7901,6 +7946,7 @@ void EventCalculator::reducedTree(TString outputpath) {
       njets = nGoodJets();
       njets30 = nGoodJets30();
       njets20 = nGoodJets(20);
+      njets20_5p0 = nGoodJets(20,5.0);
 
       //look for jj resonances
       jjResonanceFinder(mjj1,mjj2, nCorrectRecoStop);
@@ -8103,6 +8149,63 @@ void EventCalculator::reducedTree(TString outputpath) {
 	    deltaRmax_hh=drt;
 	  }
 	  sumPt_hh =  vec_h1j1.Pt() + vec_h1j2.Pt() +  vec_h2j1.Pt() + vec_h2j2.Pt();
+	
+	  maxDeltaPhi_bbbb = getMaxDelPhi(h1j1, h1j2, h2j1, h2j2);
+
+	  float delPhi_bb1 = getDeltaPhi(jets_AK5PF_phi->at(h1j1),jets_AK5PF_phi->at(h1j2) );
+	  float delPhi_bb2 = getDeltaPhi(jets_AK5PF_phi->at(h2j1),jets_AK5PF_phi->at(h2j2) );
+
+	  maxDeltaPhi_bb_bb = delPhi_bb1;
+	  if (delPhi_bb2 > delPhi_bb1) maxDeltaPhi_bb_bb = delPhi_bb2;
+          
+	  // compute thrust axis of four jets
+	  float thrustMin=9999999999.;
+	  float bestThrust = -99.;
+	  for (int iangle=0; iangle<180; iangle++){
+	     //use index to scan over phi.				       
+	     float iphi = iangle*2.*TMath::Pi()/360.;			        
+	     float delphi = jmt::deltaPhi( iphi, jets_AK5PF_phi->at(h1j1) );    
+	     float ithrust = sin(delphi)*jets_AK5PF_pt->at(h1j1);	        
+	     delphi = jmt::deltaPhi( iphi, jets_AK5PF_phi->at(h1j2) );          
+	     ithrust += sin(delphi)*jets_AK5PF_pt->at(h1j2);		        
+	     delphi = jmt::deltaPhi( iphi, jets_AK5PF_phi->at(h2j1) );          
+	     ithrust += sin(delphi)*jets_AK5PF_pt->at(h2j1);		        
+	     delphi = jmt::deltaPhi( iphi, jets_AK5PF_phi->at(h2j2) );          
+	     ithrust += sin(delphi)*jets_AK5PF_pt->at(h2j2);		        
+	     if (ithrust < thrustMin) { 				       
+	       thrustMin = ithrust;					        
+	       bestThrust = iphi;					        
+	     }  							        
+	  }
+
+	  // then compute delta phi between best thrust and MET
+	  minDelPhiThrustMET = jmt::deltaPhi( bestThrust, pfmets_phi->at(0) );
+	  if (minDelPhiThrustMET > TMath::Pi()/2. ) minDelPhiThrustMET = fabs( minDelPhiThrustMET-TMath::Pi() );
+
+	  
+	  // find jet furthest from thrust axis
+	  int nInHemi = 0;
+	  int furthestIndex = -1;
+	  float furthestPhi = -99.;
+	  float currentDelPhi;
+	  int hbbin[4] = {h1j1, h1j2, h2j1, h2j2};
+	  for (int ihjet=0; ihjet<4; ihjet++){
+	    currentDelPhi = jmt::deltaPhi( bestThrust, jets_AK5PF_phi->at(hbbin[ihjet]) );
+	    if (currentDelPhi > TMath::Pi()/2. ) {
+	      currentDelPhi = fabs( currentDelPhi-TMath::Pi() );
+	      nInHemi++;
+	    }
+	    if (currentDelPhi > furthestPhi) {
+	      furthestPhi = currentDelPhi;
+	      furthestIndex = hbbin[ihjet];
+	    }
+          }
+	  //get deltaphi for furtherest jet.
+	  maxDelPhiThrustJet = jmt::deltaPhi( bestThrust, jets_AK5PF_phi->at(furthestIndex) );
+	  if (maxDelPhiThrustJet > TMath::Pi()/2. ) maxDelPhiThrustJet = fabs( maxDelPhiThrustJet-TMath::Pi() );
+          //better to make this the angle from the axis perp to thrust so it's continuous.
+	  maxDelPhiThrustJet = (TMath::Pi()/2.)-maxDelPhiThrustJet;
+	  if (nInHemi!=2) maxDelPhiThrustJet *= -1.;	
 	}
 	else {
 	  deltaPhi_hh =-1e9;
@@ -8110,6 +8213,8 @@ void EventCalculator::reducedTree(TString outputpath) {
 	  deltaRmax_hh =-1e9;
 	  deltaEta_hh =-1e9;
 	  sumPt_hh =-1e9;
+	  maxDelPhiThrustJet = -1e9;
+          minDelPhiThrustMET = -1e9;
 	}
 
 
@@ -8356,7 +8461,7 @@ void EventCalculator::reducedTree(TString outputpath) {
       transverseMETSignificance1 = getTransverseMETSignificance(0);
       transverseMETSignificance2 = getTransverseMETSignificance(1);
       transverseMETSignificance3 = getTransverseMETSignificance(2);
-      
+  
       MT_Wlep = getMT_Wlep();
       MT_Wlep5 = getMT_Wlep(5);
       MT_Wlep15 = getMT_Wlep(15);
@@ -8366,8 +8471,8 @@ void EventCalculator::reducedTree(TString outputpath) {
       MT_bestCSV = getMT_bMET_bestCSV(chosenJet,chosenTop);
       minMT_jetMET = getMT_jetMET();
       std::pair<float,float> maxmin = getMT_bMET_maxmin();
-      minMT_bMET = maxmin.first;
-      maxMT_bMET = maxmin.second;
+      maxMT_bMET = maxmin.first;
+      minMT_bMET = maxmin.second;
       MT_jim = nbjets30>=2 ? MT_b : minMT_jetMET;
 
       //now compare the chosenTop to the leptonic Top
