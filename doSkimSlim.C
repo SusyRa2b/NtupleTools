@@ -138,12 +138,12 @@
       TStopwatch sw ;
       sw.Start() ;
       int time(0) ;
+      float projected_remaining(999999.) ;
       for ( Long64_t ievt=0; ievt<nentries; ievt++ ) {
 
          if ( ievt%1000 == 0 ) {
             int thistime = sw.RealTime() ;
             sw.Continue() ;
-            float projected_remaining ;
             if ( thistime < 2 ) {
                printf("   %10llu out of %10llu  (%6.1f%%) \r", ievt, nentries, 100.*ievt/(1.*nentries) ) ;
             } else {
@@ -151,7 +151,9 @@
                if ( projected_remaining < 100 ) {
                   printf("   %10llu out of %10llu  (%6.1f%%)    seconds remaining %4.0f                       \r", ievt, nentries, 100.*ievt/(1.*nentries), projected_remaining ) ;
                } else if ( projected_remaining < 3600 ) {
-                  printf("   %10llu out of %10llu  (%6.1f%%)    time remaining  %2d:%02d   \r", ievt, nentries, 100.*ievt/(1.*nentries), TMath::Nint(projected_remaining)/60, TMath::Nint(projected_remaining)%60 ) ;
+                  printf("   %10llu out of %10llu  (%6.1f%%)    time remaining     %2d:%02d   \r", ievt, nentries, 100.*ievt/(1.*nentries), TMath::Nint(projected_remaining)/60, TMath::Nint(projected_remaining)%60 ) ;
+               } else {
+                  printf("   %10llu out of %10llu  (%6.1f%%)    time remaining  %2d:%02d:%02d   \r", ievt, nentries, 100.*ievt/(1.*nentries), TMath::Nint(projected_remaining)/3600, (TMath::Nint(projected_remaining)%3600)/60, TMath::Nint(projected_remaining)%60 ) ;
                }
             }
             cout << flush ;
