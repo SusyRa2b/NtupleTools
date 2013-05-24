@@ -6838,11 +6838,11 @@ void EventCalculator::reducedTree(TString outputpath) {
   //initialization of scanProcessTotalsMap used to be here. I'm killing this for now
 
   TH1D* scanpMSSMngen=0;    const int npmssmpoints=20000;//there are actually only 10000, but extra bins won't hurt
-  TH2D* scanSMSngen=0; //legacy
+  TH2D* scanSMSngen=0; //legacy (but still important)
   TH3D* scanSMSngen3D=0;
   if (theScanType_==kSMS) {
-    scanSMSngen = new TH2D("scanSMSngen","number of generated events",80,0,2000,80,0,2000); //mgluino,mLSP
-    scanSMSngen3D = new TH3D("scanSMSngen3D","number of generated events",80,0,2000,80,0,2000,80,0,2000); //mgluino,mLSP,mintermediate
+    scanSMSngen = new TH2D("scanSMSngen","number of generated events",84,0,2100,84,0,2100); //mgluino,mLSP
+    scanSMSngen3D = new TH3D("scanSMSngen3D","number of generated events",84,0,2100,84,0,2100,84,0,2100); //mgluino,mLSP,mintermediate
   }
   else if (theScanType_==kpmssm) {
     scanpMSSMngen = new TH1D("scanpMSSMngen","number of generated events",npmssmpoints,1,npmssmpoints+1);
@@ -7864,6 +7864,13 @@ void EventCalculator::reducedTree(TString outputpath) {
       }
 
       topPtWeight = getTopPtWeight(topPt); //topPt is the pT of the top quark (not antitop) in ttbar sample
+
+
+      //test
+//       for (unsigned int iiii= 0; iiii< jets_AK5PF_pt->size(); iiii++) {
+// 	TLorentzVector myjet=getLorentzVector(iiii);
+// 	cout<<"\tjet pT, mass = "<<jets_AK5PF_pt->at(iiii)<<" , "<<myjet.M()<<endl;
+//       }
 
 
       //if we are running over ttbar, fill info on decay mode
@@ -8896,6 +8903,9 @@ double EventCalculator::calc_mNj( std::vector<unsigned int> jNi ) {
   double sumPy=0;
   double sumPz=0;
 
+  //test machinery
+  //  TLorentzVector jetsum;
+
   for (unsigned int i=0; i<jNi.size(); i++) {
     unsigned int j1i = jNi.at(i);
     sumE += jets_AK5PF_energy->at( j1i );  //this is NOT SAFE when doing JESup JESdown!
@@ -8903,11 +8913,16 @@ double EventCalculator::calc_mNj( std::vector<unsigned int> jNi ) {
     sumPx += getJetPx(j1i);
     sumPy += getJetPy(j1i);
     sumPz += getJetPz(j1i);
+
+    //    jetsum = jetsum+getLorentzVector(j1i);
   }
 
   double sumP2 = sumPx*sumPx + sumPy*sumPy + sumPz*sumPz ;
 
   if ( (sumE*sumE) < sumP2 ) return -2. ;
+
+  //  cout<< " traditional mNj = "<<sqrt( sumE*sumE - sumP2 )<<endl;
+  //  cout<< " new mNj         = "<<jetsum.M()<<endl;
 
   return sqrt( sumE*sumE - sumP2 );
 }
