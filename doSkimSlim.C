@@ -8,6 +8,16 @@
 
 #include <iostream>
 
+//
+// Note: If you are using this on a SLC6 machine, you need to do
+//       this in your interactive root session
+//
+//          gSystem->AddIncludePath(" -D__USE_XOPEN2K8 ")
+//
+//       before doing this
+//
+//          .L doSkimSlim.C+
+//
 
   void doSkimSlim( const char* infile_name, bool doSlim = false  ) {
 
@@ -155,9 +165,11 @@
                if ( projected_remaining < 100 ) {
                   printf("   %10llu out of %10llu  (%6.1f%%)    seconds remaining %4.0f                       \r", ievt, nentries, 100.*ievt/(1.*nentries), projected_remaining ) ;
                } else if ( projected_remaining < 3600 ) {
-                  printf("   %10llu out of %10llu  (%6.1f%%)    time remaining     %2d:%02d   \r", ievt, nentries, 100.*ievt/(1.*nentries), TMath::Nint(projected_remaining)/60, TMath::Nint(projected_remaining)%60 ) ;
+                  printf("   %10llu out of %10llu  (%6.1f%%)    time remaining     %2d:%02d   \r", ievt, nentries, 100.*ievt/(1.*nentries),
+                       TMath::Nint(projected_remaining)/60, TMath::Nint(projected_remaining)%60 ) ;
                } else {
-                  printf("   %10llu out of %10llu  (%6.1f%%)    time remaining  %2d:%02d:%02d   \r", ievt, nentries, 100.*ievt/(1.*nentries), TMath::Nint(projected_remaining)/3600, (TMath::Nint(projected_remaining)%3600)/60, TMath::Nint(projected_remaining)%60 ) ;
+                  printf("   %10llu out of %10llu  (%6.1f%%)    time remaining  %2d:%02d:%02d   \r", ievt, nentries, 100.*ievt/(1.*nentries),
+                       TMath::Nint(projected_remaining)/3600, (TMath::Nint(projected_remaining)%3600)/60, TMath::Nint(projected_remaining)%60 ) ;
                }
             }
             cout << flush ;
@@ -180,6 +192,14 @@
       printf("\n\n\n Done.\n\n\n") ;
 
       printf("\n\n Output file:  %s\n\n\n", outfile_name.Data() ) ;
+
+      if ( time > 3600 ) {
+         printf( "   Total time:  %2d:%02d:%02d \n\n\n", time/3600, (time%3600)/60, time%60 ) ;
+      } else if ( time > 100 ) {
+         printf( "   Total time:     %02d:%02d \n\n\n", time/60, time%60 ) ;
+      } else {
+         printf( "   Total time:     %d seconds \n\n\n", time ) ;
+      }
 
       outReducedTree->AutoSave() ;
 
