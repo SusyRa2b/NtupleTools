@@ -93,6 +93,10 @@
       float CSVbest2 ;
       inReducedTree -> SetBranchAddress("CSVbest2", &CSVbest2) ;
 
+      bool cutPV, passCleaning, buggyEvent ;
+      inReducedTree -> SetBranchAddress("cutPV", &cutPV ) ;
+      inReducedTree -> SetBranchAddress("passCleaning", &passCleaning ) ;
+      inReducedTree -> SetBranchAddress("buggyEvent", &buggyEvent ) ;
 
 
 
@@ -162,6 +166,9 @@
 
          inReducedTree -> GetEntry(ievt) ;
 
+         if ( !cutPV ) continue ;
+         if ( !passCleaning ) continue ;
+         if ( buggyEvent ) continue ;
          if ( !(trig1 || trig2 || trig3) ) continue ;
          if ( njets20<4 || njets20>5 ) continue ;
          if ( CSVbest2 < 0.898 ) continue ;
