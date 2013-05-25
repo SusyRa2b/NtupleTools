@@ -5532,6 +5532,8 @@ std::pair<float,float> EventCalculator::minDeltaMassPairs(float & higgsMbb1,floa
 					//also return the indices of the jets used to form the higgs
 					int & h1jet1,int & h1jet2,int & h2jet1,int & h2jet2) {
 
+  const bool doMinHiggsSumPt=false; //if this is set to false then the whole feature is turned off
+
   higgsMbb1=-1;
   higgsMbb2=-1;
   h1jet1=-1;
@@ -5595,14 +5597,22 @@ std::pair<float,float> EventCalculator::minDeltaMassPairs(float & higgsMbb1,floa
   int minind=-1;
 
   //  float mindiffOneHiggs=1e9; float OneHiggsMass=-99;
-
-  for (unsigned int ih=0; ih<higgsMassPairs.size(); ih++) {
-    float thisMassDiff = fabs(higgsMassPairs[ih].first - higgsMassPairs[ih].second);
-    if (thisMassDiff < minMassDiff) {
-      minMassDiff=thisMassDiff;
-      minind = ih;
+  float minHiggsSumPt=doMinHiggsSumPt ? 400 : 0;
+  while (minind==-1) {
+    
+    for (unsigned int ih=0; ih<higgsMassPairs.size(); ih++) {
+      float thisMassDiff = fabs(higgsMassPairs[ih].first - higgsMassPairs[ih].second);
+      float higgsSumPt = doMinHiggsSumPt ? TLorentzVector(getLorentzVector( higgsMassPairsIndices[ih].first.first)+getLorentzVector( higgsMassPairsIndices[ih].first.second)).Pt() +
+	TLorentzVector(getLorentzVector( higgsMassPairsIndices[ih].second.first)+getLorentzVector( higgsMassPairsIndices[ih].second.second)).Pt()
+	: 1;
+      if (thisMassDiff < minMassDiff && higgsSumPt>minHiggsSumPt) {
+	minMassDiff=thisMassDiff;
+	minind = ih;
+      }
+      
     }
-
+    //    minHiggsSumPt-=100; //for 'marching' algorithm
+    minHiggsSumPt=0;
   }
 
   higgsMbb1 = higgsMassPairs[minind].first;
@@ -6776,6 +6786,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   //test variables related to the higgs-finding above
   int higgsMbb1MassDiff_correct=0; //mc truth -- how many higgses correct?
   float deltaPhi_hh=-99,deltaRmax_hh=-1,deltaRmin_hh=-1,deltaEta_hh=-99,sumPt_hh=-99;
+  float higgsPt1=-99,higgsPt2=-99;
   float maxDelPhiThrustJet = -99.;
   float minDelPhiThrustMET = 99.;
 
@@ -7174,6 +7185,9 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("deltaRmin_hh",&deltaRmin_hh,"deltaRmin_hh/F");
   reducedTree.Branch("deltaEta_hh",&deltaEta_hh,"deltaEta_hh/F");
   reducedTree.Branch("sumPt_hh",&sumPt_hh,"sumPt_hh/F");
+  reducedTree.Branch("higgsPt1",&higgsPt1,"higgsPt1/F");
+  reducedTree.Branch("higgsPt2",&higgsPt2,"higgsPt2/F");
+
   
   reducedTree.Branch("maxDelPhiThrustJet",&maxDelPhiThrustJet,"maxDelPhiThrustJet/F");
   reducedTree.Branch("minDelPhiThrustMET",&minDelPhiThrustMET,"minDelPhiThrustMET/F");
@@ -8147,6 +8161,8 @@ void EventCalculator::reducedTree(TString outputpath) {
 	  TLorentzVector vh2 = vec_h2j1+vec_h2j2;
 
 	  deltaPhi_hh = jmt::deltaPhi( vh1.Phi(),vh2.Phi());
+	  higgsPt1 = vh1.Pt() > vh2.Pt() ? vh1.Pt() : vh2.Pt();
+	  higgsPt2 = vh1.Pt() > vh2.Pt() ? vh2.Pt() : vh1.Pt();
 	  deltaEta_hh = std::abs( vh1.Eta()-vh2.Eta());
 	  deltaRmin_hh = jmt::deltaR(vec_h1j1.Eta(),vec_h1j1.Phi(),vec_h1j2.Eta(),vec_h1j2.Phi());	 
 	  deltaRmax_hh = jmt::deltaR(vec_h2j1.Eta(),vec_h2j1.Phi(),vec_h2j2.Eta(),vec_h2j2.Phi());
@@ -8222,6 +8238,8 @@ void EventCalculator::reducedTree(TString outputpath) {
 	  sumPt_hh =-1e9;
 	  maxDelPhiThrustJet = -1e9;
           minDelPhiThrustMET = -1e9;
+	  higgsPt1=-1e9;
+	  higgsPt2=-1e9;
 	}
 
 
