@@ -4792,7 +4792,7 @@ Long64_t EventCalculator::getNEventsGenerated( TString sample) {
     UPDATE -- I think I can use the UCSBxxxx code as a unique identifier...
 
 
-    The cfA page that catelogs the samples has this information automatically filled in -- just MAKE SURE TO TAKE THE
+    The cfA page that catalogs the samples has this information automatically filled in -- just MAKE SURE TO TAKE THE
     NUMBER FROM THE UNSKIMMED SAMPLE!
   */
   
@@ -4980,6 +4980,8 @@ Long64_t EventCalculator::getNEventsGenerated( TString sample) {
   if (sample.Contains("UCSB1736")) return 30599292 ; // QCD MG 500-1000
   if (sample.Contains("UCSB1735")) return 27057331 ; // QCD MG 250-500
 
+  if (sample.Contains("UCSB1677")) return 20646001; // W+bb
+
   cout<<"[getNEventsGenerated] unknown sample "<<sample<<endl;
   assert(0);
   return 1;
@@ -5030,6 +5032,10 @@ double EventCalculator::getCrossSection(){
   if (sampleName_.BeginsWith("WJetsToLNu_HT-300To400_8TeV-madgraph")) return 45.7; //from AN //38.3; //LO PREP
   if (sampleName_.BeginsWith("WJetsToLNu_HT-400ToInf_8TeV-madgraph")) return 30.1; //from AN //25.22; //LO PREP
   if (sampleName_.BeginsWith("WJetsToLNu_TuneZ2Star_8TeV-madgraph")) return 36257.2; //NNLO
+
+  //W+bb
+  if (sampleName_.BeginsWith("WbbJetsToLNu_Massive_TuneZ2star_8TeV-madgraph")) return 211.3; //LO PREP
+
   //diboson
   if (sampleName_.BeginsWith("WZ_TuneZ2star_8TeV_pythia6_tauola")) return 32.3;// from AN //12.63; //LO PREP
   if (sampleName_.BeginsWith("WW_TuneZ2star_8TeV_pythia6_tauola")) return 55; //from AN //33.61; //LO PREP
