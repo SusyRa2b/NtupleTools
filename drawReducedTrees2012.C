@@ -400,7 +400,7 @@ void higgs_printCutflowTable() {
   TString var,xtitle;
 
   savePlots_=false;
-  setQuiet(false);
+  setQuiet(true);
   //dummy plot
   var="HT"; xtitle="HT";
   nbins=20; low= 0; high=1e9;
