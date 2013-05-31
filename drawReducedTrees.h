@@ -260,6 +260,7 @@ bool smsHack_=false; //horrible...
 bool quiet_=false;
 //bool quiet_=true;
 bool doRatio_=false;
+TString fitRatio_="";
 bool logy_=false;
 bool logx_=false;
 bool dostack_=true;
@@ -535,6 +536,8 @@ bool isSampleSM(const TString & name) {
   if (name.Contains("LM")) return false;
 
   if (name.Contains("sbottom")) return false;
+
+  if (name.Contains("TChihh")) return false;
 
   if (name.Contains("SUGRA")) return false;
   if (isSampleSMS(name)) return false;
@@ -1226,6 +1229,7 @@ void setSampleScaleFactor(const TString & sample, const float sf) {
   bool done=false;
   for (std::vector<TString>::iterator isample=samples_.begin(); isample!=samples_.end(); ++isample) {
     if (*isample == sample) {sampleScaleFactor_[*isample] = sf; done=true;}
+    else if (stripSamplename(*isample)== sample) {sampleScaleFactor_[*isample] = sf; done=true;}
   }
   if (!done) cout<<"Failed to find the sample "<<sample<<endl;
 }
@@ -2586,7 +2590,10 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
 
       //thecanvas->GetPad(2)->SetTopMargin(0.1);
 
-      ratioLine->Draw();
+      if (fitRatio_!="") {
+	ratio->Fit(fitRatio_);
+      }
+      else      ratioLine->Draw();
 
     
   }
@@ -3395,7 +3402,7 @@ void cutflow(bool isTightSelection){
   
 }
 
-void drawEffVRej(const TString & h1, const TString h2,const TString & xtitle,const TString & ytitle,bool flip=false) {
+void drawEffVRej(const TString & h1, const TString h2,const TString & xtitle,const TString & ytitle,bool flip=false,bool drawCutVals=false) {
 
   //step over the bins in histos_[h1] and histos_[h2]
 
@@ -3437,7 +3444,7 @@ void drawEffVRej(const TString & h1, const TString h2,const TString & xtitle,con
       bestX=x; bestY=y; bestBin=ibin;
     }
 
-    //    if (!quiet_)   cout<<ibin<<" "<<histos_[h1]->GetBinLowEdge(ibin)<<" \t "<<x<<" "<<y<<endl;
+    if (!quiet_)   cout<<ibin<<" "<<histos_[h1]->GetBinLowEdge(ibin)<<" \t "<<x<<" "<<y<<endl;
   }
 
   cout<<"Assuming S is on the x axis, B is on the y axis, best S/root(B) is "<<bestSrootB
