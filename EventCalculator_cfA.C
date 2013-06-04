@@ -538,6 +538,8 @@ bool EventCalculator::isGoodTightMuon(const unsigned int k, const bool disableRe
   return true;
 }
 
+
+
 void EventCalculator::fillGenTopInfo(const int ttbarDecayCode, const int leptonicTop, float &genTopPtLep,float & genWPtLep,float & genTopPtHad,float & genWPtHad) {
   genTopPtLep=-1;
   genWPtLep=-1;
@@ -2420,12 +2422,14 @@ unsigned int EventCalculator::nGoodBJets( float ptthreshold,BTaggerType btagger)
 }
 
 unsigned int EventCalculator::nTrueBJets() {
+  //for higgs higgs analysis, change jet threshold to 20 GeV
+
   unsigned int nb=0;
 
   if (jets_AK5PF_partonFlavour==0) return nb; //not actually in the tree? FIXME CFA
 
   for (unsigned int i = 0; i < jets_AK5PF_pt->size(); ++i) {
-    if (isGoodJet(i,30) ) {
+    if (isGoodJet(i,20) ) {
       if ( abs(jets_AK5PF_partonFlavour->at(i))==5 ) nb++;
     }
   }
@@ -4206,14 +4210,97 @@ void EventCalculator::hadronicTopFinder_DeltaR(float & mjjb1, float & mjjb2 , fl
   return;
 }
 
+void EventCalculator::findGluonSplitting(int & ngl_lf,int & ngl_c,int & ngl_b,int & index_q1, int & index_q2) {
+  ngl_lf = 0;  ngl_c = 0;  ngl_b = 0;  index_q1=-1;  index_q2=-1;
+  /*
+this function can find, at truth level, pairs of quarks from gluon splitting
+it can also find other quarks with gluon parents that don't seem to be from gluon splitting (more like radiation I guess)
+don't take advantage of the latter for now, instead just return:
+num gluon -> LF
+num gluon -> charm
+num gluon -> b
+
+mc_doc indices of the gluon daughters 
+  */
+
+  vector<float> v_mother_pt;
+  vector<int> v_id;
+  vector<bool> v_foundmatch;
+  vector<pair<int,int> > v_mcdoc_indices;
+
+  //look for quark-antiquark that share a gluon parent
+  for (unsigned int kk=0; kk<mc_doc_id->size(); kk++) {
+    if ( abs(TMath::Nint(mc_doc_id->at(kk)))>=1 && abs(TMath::Nint(mc_doc_id->at(kk)))<=5 ) {
+      if ( abs(TMath::Nint(mc_doc_mother_id->at(kk)))==21) {
+	//pseudo-code: 
+	/* i did have mother_id here too, but that's useless -- the mother id is always a gluon
+	structure thisguy = structure(mother_pt,id);
+	bool found_match=list_of_guys.search( structure(mother_pt,-id));
+	if (found_match) {
+	//found gluon splitting to quarks of flavor abs(id)
+	}
+	else {
+	list_of_guys.insert(thisguy);
+	}
+	*/
+	//in practice use a bunch of vectors instead of a real data structure -- we don't expect efficiency of search to be an issue
+	float this_mother_pt = mc_doc_mother_pt->at(kk);
+	int this_id = TMath::Nint(mc_doc_id->at(kk));
+	bool foundmatch=false;
+	for (unsigned int ic=0;ic<v_id.size();ic++) {
+	  if ( (this_id == -v_id[ic]) && jmt::AreEqualAbs(this_mother_pt,v_mother_pt[ic]) ) {
+	    v_foundmatch[ic] = true;
+	    foundmatch=true;
+	    v_mcdoc_indices[ic].second = kk;
+	    break;
+	  }
+	}
+	if (!foundmatch) { //push this guy onto the list as a gluon splitting candidate
+	  v_mother_pt.push_back(this_mother_pt);
+	  v_id.push_back(this_id);
+	  v_mcdoc_indices.push_back( make_pair(kk,-1));
+	  v_foundmatch.push_back(false);
+	}
+
+
+      }
+    }
+
+  }
+
+  //now that we're done, summarize
+  int nother=0;
+  for (unsigned int ic=0;ic<v_id.size();ic++) {
+    if (v_foundmatch[ic]) {
+      if ( abs(v_id[ic]) == 5) ngl_b++;
+      else if ( abs(v_id[ic]) == 4) ngl_c++;
+      else  ngl_lf++;
+
+      if ( ngl_b + ngl_c + ngl_lf == 1) { //only do it for the first gluon split. 2nd happens very rarely
+	index_q1 = v_mcdoc_indices[ic].first;
+	index_q2 = v_mcdoc_indices[ic].second;
+      }
+    }
+    else nother++;
+  }
+
+}
+
 void EventCalculator::printDecay() {
   cout<<" -- printDecay --"<<endl;
   for (unsigned int k = 0; k< mc_doc_id->size(); k++) {
-    // cout<<k<<"\t"<<TMath::Nint(mc_doc_id->at(k))<<" "<<mc_doc_mass->at(k)<<" mom="<<TMath::Nint(mc_doc_mother_id->at(k))<<endl;
+     cout<<k<<"\t"<<TMath::Nint(mc_doc_id->at(k))<<" "<<mc_doc_mass->at(k)
+	 <<" mom="<<TMath::Nint(mc_doc_mother_id->at(k))
+	 <<" gmom="<<TMath::Nint(mc_doc_grandmother_id->at(k))<<endl;
     if ( abs(TMath::Nint(mc_doc_mother_id->at(k))) == 1000006) {
       cout<<TMath::Nint(mc_doc_mother_id->at(k))<<"\t"<<mc_doc_eta->at(k)<<" "<<mc_doc_phi->at(k)<<" "<<mc_doc_pt->at(k)<<endl;
     }
+
+    if(abs(TMath::Nint(mc_doc_id->at(k))) >=1 && abs(TMath::Nint(mc_doc_id->at(k)))<=5 && abs(TMath::Nint(mc_doc_mother_id->at(k)))==21) cout<<"gluon splitting?"<<endl;
   }
+
+  int a1,a2,a3,a4,a5;
+  findGluonSplitting(a1,a2,a3,a4,a5);
 
 }
 
@@ -6676,6 +6763,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   map<TString, triggerData > triggerlist_mc(triggerlist);
 
   int njets, njets30, nbjets, nbjets30,ntruebjets, nElectrons,nElectrons2011, nMuons, nTightMuons,njets20,njets20_5p0,nbjets20;
+  int nGluonsSplitToLF,nGluonsSplitToC,nGluonsSplitToB;
   int nElectronsNoRelIso, nMuonsNoRelIso;
   int njetsHiggsMatch20, njetsHiggsMatch20_CSVT,njetsHiggsMatch20_CSVM,njetsHiggsMatch20_CSVL;
   int ncompleteHiggsReco20;
@@ -6696,6 +6784,15 @@ void EventCalculator::reducedTree(TString outputpath) {
   float jetpt3, jetgenpt3, jetphi3, jetgenphi3, jeteta3, jetgeneta3, jetenergy3, bjetpt3, bjetphi3, bjeteta3, bjetenergy3;
   float jetpt4, jetgenpt4, jetphi4, jetgenphi4, jeteta4, jetgeneta4, jetenergy4, bjetpt4, bjetphi4, bjeteta4, bjetenergy4;
   int jetflavor1, jetflavor2, jetflavor3, jetflavor4,bjetflavor1, bjetflavor2, bjetflavor3, bjetflavor4;
+
+  //properties of the 4 higgs jets -- using the massDiff method
+  float higgs1jetpt1,higgs1jetpt2,higgs2jetpt1,higgs2jetpt2;
+  float higgs1CSV1,higgs1CSV2,higgs2CSV1,higgs2CSV2;
+  //  float higgs1genId1,higgs1genId2,higgs2genId1,higgs2genId2;
+  //  float higgs1genMomId1,higgs1genMomId2,higgs2genMomId1,higgs2genMomId2;
+  float higgs1partonId1,higgs1partonId2,higgs2partonId1,higgs2partonId2;
+  float higgs1partonMomId1,higgs1partonMomId2,higgs2partonMomId1,higgs2partonMomId2;
+
 
   //lead jet quality info
   float alletajetpt1,alletajetphi1,alletajeteta1;
@@ -7146,6 +7243,11 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("nbjets30",&nbjets30,"nbjets30/I");
   reducedTree.Branch("nbjets20",&nbjets20,"nbjets20/I");
   reducedTree.Branch("ntruebjets",&ntruebjets,"ntruebjets/I");
+
+  reducedTree.Branch("nGluonsSplitToLF",&nGluonsSplitToLF,"nGluonsSplitToLF/I");
+  reducedTree.Branch("nGluonsSplitToC",&nGluonsSplitToC,"nGluonsSplitToC/I");
+  reducedTree.Branch("nGluonsSplitToB",&nGluonsSplitToB,"nGluonsSplitToB/I");
+
   reducedTree.Branch("nElectrons",&nElectrons,"nElectrons/I");
   reducedTree.Branch("nElectrons2011",&nElectrons2011,"nElectrons2011/I");
   reducedTree.Branch("nMuons",&nMuons,"nMuons/I");
@@ -7193,6 +7295,38 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("sumPt_hh",&sumPt_hh,"sumPt_hh/F");
   reducedTree.Branch("higgsPt1",&higgsPt1,"higgsPt1/F");
   reducedTree.Branch("higgsPt2",&higgsPt2,"higgsPt2/F");
+
+  //more massdiff higgs candidate properties
+  //jet pT
+  reducedTree.Branch("higgs1jetpt1",&higgs1jetpt1,"higgs1jetpt1/F");
+  reducedTree.Branch("higgs1jetpt2",&higgs1jetpt2,"higgs1jetpt2/F");
+  reducedTree.Branch("higgs2jetpt1",&higgs2jetpt1,"higgs2jetpt1/F");
+  reducedTree.Branch("higgs2jetpt2",&higgs2jetpt2,"higgs2jetpt2/F");
+  //CSV value
+  reducedTree.Branch("higgs1CSV1",&higgs1CSV1,"higgs1CSV1/F");
+  reducedTree.Branch("higgs1CSV2",&higgs1CSV2,"higgs1CSV2/F");
+  reducedTree.Branch("higgs2CSV1",&higgs2CSV1,"higgs2CSV1/F");
+  reducedTree.Branch("higgs2CSV2",&higgs2CSV2,"higgs2CSV2/F");
+  //generator level flavor info
+  /*
+  reducedTree.Branch("higgs1genId1",&higgs1genId1,"higgs1genId1/F");
+  reducedTree.Branch("higgs1genId2",&higgs1genId2,"higgs1genId2/F");
+  reducedTree.Branch("higgs2genId1",&higgs2genId1,"higgs2genId1/F");
+  reducedTree.Branch("higgs2genId2",&higgs2genId2,"higgs2genId2/F");
+  reducedTree.Branch("higgs1genMomId1",&higgs1genMomId1,"higgs1genMomId1/F");
+  reducedTree.Branch("higgs1genMomId2",&higgs1genMomId2,"higgs1genMomId2/F");
+  reducedTree.Branch("higgs2genMomId1",&higgs2genMomId1,"higgs2genMomId1/F");
+  reducedTree.Branch("higgs2genMomId2",&higgs2genMomId2,"higgs2genMomId2/F");
+  */
+  //parton instead of 'gen' info
+  reducedTree.Branch("higgs1partonId1",&higgs1partonId1,"higgs1partonId1/F");
+  reducedTree.Branch("higgs1partonId2",&higgs1partonId2,"higgs1partonId2/F");
+  reducedTree.Branch("higgs2partonId1",&higgs2partonId1,"higgs2partonId1/F");
+  reducedTree.Branch("higgs2partonId2",&higgs2partonId2,"higgs2partonId2/F");
+  reducedTree.Branch("higgs1partonMomId1",&higgs1partonMomId1,"higgs1partonMomId1/F");
+  reducedTree.Branch("higgs1partonMomId2",&higgs1partonMomId2,"higgs1partonMomId2/F");
+  reducedTree.Branch("higgs2partonMomId1",&higgs2partonMomId1,"higgs2partonMomId1/F");
+  reducedTree.Branch("higgs2partonMomId2",&higgs2partonMomId2,"higgs2partonMomId2/F");
 
   
   reducedTree.Branch("maxDelPhiThrustJet",&maxDelPhiThrustJet,"maxDelPhiThrustJet/F");
@@ -7654,7 +7788,6 @@ void EventCalculator::reducedTree(TString outputpath) {
     }
     if (entry%100000==0 ) cout << "  entry: " << entry << ", percent done=" << (int)(entry/(double)nevents*100.)<<  endl;
 
-    //    printDecay();
 
     //    pair<int,int> thispoint;
     smsMasses thispoint;
@@ -8142,6 +8275,12 @@ void EventCalculator::reducedTree(TString outputpath) {
 	higgsb4pt = higgsbpt[3];
 	}
 
+
+	//mc truth gluon splitting finding
+	int index_q1,index_q2;	//for now we're not using these indices, but could be used to match to something
+	findGluonSplitting(nGluonsSplitToLF,nGluonsSplitToC, nGluonsSplitToB, index_q1,  index_q2);
+	
+
 	//calculate the most naive invariant masses (reco level)
 	higgs125massPairs(higgsMbb1,higgsMbb2,genHiggsIndices);
 	higgs125massPairsAllJets(higgsMjj1,higgsMjj2);
@@ -8179,6 +8318,33 @@ void EventCalculator::reducedTree(TString outputpath) {
 	  }
 	  sumPt_hh =  vec_h1j1.Pt() + vec_h1j2.Pt() +  vec_h2j1.Pt() + vec_h2j2.Pt();
 	
+	  higgs1jetpt1 = vec_h1j1.Pt();
+	  higgs1jetpt2 = vec_h1j2.Pt();
+	  higgs2jetpt1 = vec_h2j1.Pt();
+	  higgs2jetpt2 = vec_h2j2.Pt();
+	  higgs1CSV1 = jets_AK5PF_btag_secVertexCombined->at(h1j1);
+	  higgs1CSV2 = jets_AK5PF_btag_secVertexCombined->at(h1j2);
+	  higgs2CSV1 = jets_AK5PF_btag_secVertexCombined->at(h2j1);
+	  higgs2CSV2 = jets_AK5PF_btag_secVertexCombined->at(h2j2);
+	  /* seems to be 0
+	  higgs1genId1 = jets_AK5PF_gen_Id->at(h1j1);
+	  higgs1genId2 = jets_AK5PF_gen_Id->at(h1j2);
+	  higgs2genId1 = jets_AK5PF_gen_Id->at(h2j1);
+	  higgs2genId2 = jets_AK5PF_gen_Id->at(h2j2);
+	  higgs1genMomId1 = jets_AK5PF_gen_motherID->at(h1j1);
+	  higgs1genMomId2 = jets_AK5PF_gen_motherID->at(h1j2);
+	  higgs2genMomId1 = jets_AK5PF_gen_motherID->at(h2j1);
+	  higgs2genMomId2 = jets_AK5PF_gen_motherID->at(h2j2);
+	  */
+	  higgs1partonId1 = jets_AK5PF_parton_Id->at(h1j1);
+	  higgs1partonId2 = jets_AK5PF_parton_Id->at(h1j2);
+	  higgs2partonId1 = jets_AK5PF_parton_Id->at(h2j1);
+	  higgs2partonId2 = jets_AK5PF_parton_Id->at(h2j2);
+	  higgs1partonMomId1 = jets_AK5PF_parton_motherId->at(h1j1);
+	  higgs1partonMomId2 = jets_AK5PF_parton_motherId->at(h1j2);
+	  higgs2partonMomId1 = jets_AK5PF_parton_motherId->at(h2j1);
+	  higgs2partonMomId2 = jets_AK5PF_parton_motherId->at(h2j2);
+
 	  maxDeltaPhi_bbbb = getMaxDelPhi(h1j1, h1j2, h2j1, h2j2);
 
 	  float delPhi_bb1 = getDeltaPhi(jets_AK5PF_phi->at(h1j1),jets_AK5PF_phi->at(h1j2) );
@@ -8246,9 +8412,16 @@ void EventCalculator::reducedTree(TString outputpath) {
           minDelPhiThrustMET = -1e9;
 	  higgsPt1=-1e9;
 	  higgsPt2=-1e9;
+
+	  higgs1jetpt1=-1e9;higgs1jetpt2=-1e9;higgs2jetpt1=-1e9;higgs2jetpt2=-1e9;
+	  higgs1CSV1=-1e9;higgs1CSV2=-1e9;higgs2CSV1=-1e9;higgs2CSV2=-1e9;
+	  //	  higgs1genId1=-1e9;higgs1genId2=-1e9;higgs2genId1=-1e9;higgs2genId2=-1e9;
+	  //	  higgs1genMomId1=-1e9;higgs1genMomId2=-1e9;higgs2genMomId1=-1e9;higgs2genMomId2=-1e9;
+	  higgs1partonId1=-1e9;higgs1partonId2=-1e9;higgs2partonId1=-1e9;higgs2partonId2=-1e9;
+	  higgs1partonMomId1=-1e9;higgs1partonMomId2=-1e9;higgs2partonMomId1=-1e9;higgs2partonMomId2=-1e9;
+
 	}
-
-
+	
       //count b jets
       ntruebjets = nTrueBJets();
       nbjets = nGoodBJets();
@@ -8264,6 +8437,8 @@ void EventCalculator::reducedTree(TString outputpath) {
       nbjetsCSVT = nGoodBJets( 30, kCSVT);
       nbjetsCSVM = nGoodBJets( 50, kCSVM);
       nbjetsCSVL = nGoodBJets( 50, kCSVL);
+
+      //      printDecay();
 
       hadronicTopFinder_DeltaR(mjjb1,mjjb2,topPT1,topPT2);
 
