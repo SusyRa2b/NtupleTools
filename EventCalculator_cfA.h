@@ -456,6 +456,20 @@ protected:
   float get_AN_12_175_Table6_Value(const float pt);
   float get_AN_12_175_Table8_Value(const float pt);
   float get_AN_12_175_Table2_Error(const float pt);
+  float get_AN_12_175_Table10_Value(const float pt);
+  float get_AN_12_175_Table10_Error(const float pt);
+  float get_AN_12_175_Table11_Value(const float pt);
+  float get_AN_12_175_Table12_Value(const float pt);
+  float get_AN_12_175_Table13_Value(const float pt);
+  float get_AN_12_175_Table14_Value(const float pt);
+  float get_AN_12_175_Table16_Value(const float pt);
+  float get_AN_12_175_Table18_Value(const float pt);
+  float get_AN_12_175_Table18_Error(const float pt);
+  float get_AN_12_175_Table19_Value(const float pt);
+  float get_AN_12_175_Table20_Value(const float pt);
+  float get_AN_12_175_Table21_Value(const float pt);
+  float get_AN_12_175_Table22_Value(const float pt);
+  float get_AN_12_175_Table24_Value(const float pt);
   int getPtBinIndex(const float pt) ;
 
   void loadTriggerHistos() ;

@@ -6327,6 +6327,146 @@ float EventCalculator::get_AN_12_175_Table8_Value(const float pt) {
 
 }
 
+float EventCalculator::get_AN_12_175_Table10_Value(const float pt) {
+
+  int bin = getPtBinIndex(pt);
+  if (bin<0) return 1;
+
+  float values[]={0.989,0.982,1.009,1.016,1.028,1.022,1.026,1.019,0.99,0.96,0.94,0.92,0.94,1.1};
+
+  return values[bin];
+}
+
+float EventCalculator::get_AN_12_175_Table10_Error(const float pt) {
+
+  int bin = getPtBinIndex(pt);
+  if (bin<0) return 1;
+
+  float values[]={0.006,0.006,0.005,0.006,0.007,0.006,0.007,0.007,0.01,0.02,0.03,0.04,0.07,0.2};
+  return values[bin];
+}
+
+float EventCalculator::get_AN_12_175_Table11_Value(const float pt) {
+
+  int bin = getPtBinIndex(pt);
+  if (bin<0) return 1;
+
+  float values[]={0.993,0.979,1.018,1.020,1.027,1.021,1.021,1.018,0.98,0.94,0.98,0.93,0.8,1};
+  return values[bin];
+}
+
+float EventCalculator::get_AN_12_175_Table12_Value(const float pt) {
+  int bin = getPtBinIndex(pt);
+  if (bin<0) return 1;
+
+  //T1bbbb only!
+  //(tempted to put in an assert, but i guess that is paranoia)
+
+  float values[]={0.955,0.96,0.97,0.97,0.96,0.946,0.94,0.930,0.86,0.77,0.66,0.58,0.58,0.6};
+  return values[bin];
+
+}
+
+float EventCalculator::get_AN_12_175_Table13_Value(const float pt) {
+  int bin = getPtBinIndex(pt);
+  if (bin<0) return 1;
+
+  //T1tttt only!
+  //(tempted to put in an assert, but i guess that is paranoia)
+
+  float values[]={0.973,0.987,1.023,1.028,1.052,1.059,1.071,1.089,1.064,1.030,0.968,0.96,1.01,1.11};
+  return values[bin];
+
+}
+
+float EventCalculator::get_AN_12_175_Table14_Value(const float pt) {
+  int bin = getPtBinIndex(pt);
+  if (bin<0) return 1;
+
+  float values[]={0.96,0.99,0.96,0.98,0.96,0.96,0.94,0.906,0.86,0.80,0.66,0.60,0.54,0.59};
+  return values[bin];
+
+}
+
+float EventCalculator::get_AN_12_175_Table16_Value(const float pt) {
+  int bin = getPtBinIndex(pt);
+  if (bin<0) return 1;
+
+  float values[]={0.952,0.957,0.975,0.983,0.995,0.992,0.990,0.988,0.963,0.932,0.903,0.92,0.98,1.11};
+  return values[bin];
+
+}
+
+float EventCalculator::get_AN_12_175_Table18_Value(const float pt) {
+
+  int bin = getPtBinIndex(pt);
+  if (bin<0) return 1;
+
+  float values[]={1.32,1.37,1.49,1.48,1.54,1.64,1.62,1.79,1.78,1.93,2.17,2.48,3.0,3.9};
+
+  return values[bin];
+}
+
+float EventCalculator::get_AN_12_175_Table18_Error(const float pt) {
+
+  int bin = getPtBinIndex(pt);
+  if (bin<0) return 1;
+
+  float values[]={0.01,0.02,0.02,0.02,0.03,0.03,0.03,0.04,0.05,0.09,0.2,0.2,0.5,1};
+  return values[bin];
+}
+
+float EventCalculator::get_AN_12_175_Table19_Value(const float pt) {
+
+  int bin = getPtBinIndex(pt);
+  if (bin<0) return 1;
+
+  float values[]={1.28,1.34,1.43,1.44,1.50,1.60,1.57,1.67,1.71,1.89,2.21,2.4,2.9,4.3};
+  return values[bin];
+}
+
+float EventCalculator::get_AN_12_175_Table20_Value(const float pt) {
+  int bin = getPtBinIndex(pt);
+  if (bin<0) return 1;
+
+  //T1bbbb only!
+  //(tempted to put in an assert, but i guess that is paranoia)
+
+  float values[]={1.35,1.45,1.55,1.56,1.58,1.56,1.59,1.57,1.46,1.57,1.58,1.71,1.92,2.11};
+  return values[bin];
+
+}
+
+float EventCalculator::get_AN_12_175_Table21_Value(const float pt) {
+  int bin = getPtBinIndex(pt);
+  if (bin<0) return 1;
+
+  //T1tttt only!
+  //(tempted to put in an assert, but i guess that is paranoia)
+
+  float values[]={1.223,1.272,1.365,1.364,1.39,1.414,1.400,1.436,1.45,1.56,1.71,1.99,2.15,2.10};
+  return values[bin];
+
+}
+
+float EventCalculator::get_AN_12_175_Table22_Value(const float pt) {
+  int bin = getPtBinIndex(pt);
+  if (bin<0) return 1;
+
+  float values[]={1.47,1.53,1.74,1.76,1.95,1.99,1.98,2.06,1.93,2.15,2.25,2.21,2.39,2.65};
+  return values[bin];
+
+}
+
+float EventCalculator::get_AN_12_175_Table24_Value(const float pt) {
+  int bin = getPtBinIndex(pt);
+  if (bin<0) return 1;
+
+  float values[]={1.370,1.429,1.551,1.57,1.61,1.664,1.68,1.73,1.76,1.93,2.02,2.36,2.45,2.28};
+  return values[bin];
+
+}
+
 
 //removed unused code getBTagIPWeight()
 float EventCalculator::bJetFastsimSF(const TString & what, int flavor,float pt) {
@@ -6342,37 +6482,102 @@ float EventCalculator::bJetFastsimSF(const TString & what, int flavor,float pt) 
     //DO NOTHING FOR NOW...this is rather dangerous!
   }
   else  if (theScanType_ != kNotScan ) {
-    if ( abs(flavor) != 5) return returnVal; //no correction (for now) for non-b
+    if ( abs(flavor) == 5) {
     
-    if (what == "syst") {//syst errors (fractional)
-      const float table2_value = get_AN_12_175_Table2_Value(pt);
-
-      //table 2 versus table 3 // note that this is a FRACTIONAL uncertainty
-      float systerr2 = (table2_value - get_AN_12_175_Table3_Value(pt)) / table2_value ;
-
-      //now the model-dependent part
-      float model_value = 1;
-      if (sampleName_.Contains("T1bbbb")) 	model_value = get_AN_12_175_Table4_Value(pt);
-      //decided that for our purposes I will use T1tttt values for T4tW and T5tttt
-      else if (sampleName_.Contains("T1tttt") || sampleName_.Contains("T4tW") || sampleName_.Contains("T5tttt") || sampleName_.Contains("T7btw")) model_value = get_AN_12_175_Table5_Value(pt);
-      else if (sampleName_.Contains("T2bb")) 	model_value = get_AN_12_175_Table6_Value(pt);
-      else if (sampleName_.Contains("T2tt")) 	model_value = get_AN_12_175_Table8_Value(pt);
+      if (what == "syst") {//syst errors (fractional)
+	const float table2_value = get_AN_12_175_Table2_Value(pt);
+	
+	//table 2 versus table 3 // note that this is a FRACTIONAL uncertainty
+	float systerr2 = (table2_value - get_AN_12_175_Table3_Value(pt)) / table2_value ;
+	
+	//now the model-dependent part
+	float model_value = 1;
+	if (sampleName_.Contains("T1bbbb")) 	model_value = get_AN_12_175_Table4_Value(pt);
+	//decided that for our purposes I will use T1tttt values for T4tW and T5tttt
+	else if (sampleName_.Contains("T1tttt") || sampleName_.Contains("T4tW") || sampleName_.Contains("T5tttt") || sampleName_.Contains("T7btw")) model_value = get_AN_12_175_Table5_Value(pt);
+	else if (sampleName_.Contains("T2bb")) 	model_value = get_AN_12_175_Table6_Value(pt);
+	//official word from Tom and Sezen is to use T2tt for T1ttcc
+	else if (sampleName_.Contains("T2tt") || sampleName_.Contains("T1ttcc")) model_value = get_AN_12_175_Table8_Value(pt);
+	else assert(0);
+	//Table 2 versus Table 4
+	//Tom says syst_sample = (SF_avg - SF_ttbar)/SF_ttbar 
+	//syst_sample = ( (SF_T1bbbb + SF_ttbar)/2 - SF_ttbar)/SF_ttbar 
+	//note that this is a FRACTIONAL uncertainty
+	
+	float systerr1 = ( ( model_value+table2_value)/2 - table2_value) / table2_value ;
+	
+	//no need for fabs() on these errors because we're adding in quadrature
+	returnVal = sqrt(systerr1*systerr1 + systerr2*systerr2);
+      }
+      //table 2 applies to any FASTSIM sample
+      else if (what=="stat")    returnVal = get_AN_12_175_Table2_Error(pt);
+      else if (what=="value")   returnVal = get_AN_12_175_Table2_Value(pt);
       else assert(0);
-      //Table 2 versus Table 4
-      //Tom says syst_sample = (SF_avg - SF_ttbar)/SF_ttbar 
-      //syst_sample = ( (SF_T1bbbb + SF_ttbar)/2 - SF_ttbar)/SF_ttbar 
-      //note that this is a FRACTIONAL uncertainty
+    } //end b-tag
+    //new code for other flavors, from Pawandeep
+    else if ( abs(flavor) == 4) { //correction for c-tag 
+      if (what == "syst") {//syst errors (fractional)
+        const float table10_value = get_AN_12_175_Table10_Value(pt);
+	
+        //table 10 versus table 11 // note that this is a FRACTIONAL uncertainty
+        float systerr2 = (table10_value - get_AN_12_175_Table11_Value(pt)) / table10_value ;
+	
+        //now the model-dependent part
+        float model_value = 1;
+        if (sampleName_.Contains("T1bbbb")) 	model_value = get_AN_12_175_Table12_Value(pt);
+        //decided that for our purposes I will use T1tttt values for T4tW and T5tttt
+        else if (sampleName_.Contains("T1tttt") || sampleName_.Contains("T4tW") || sampleName_.Contains("T5tttt") || sampleName_.Contains("T1t1t")||sampleName_.Contains("T7btw")) model_value = get_AN_12_175_Table13_Value(pt);
+        else if (sampleName_.Contains("T2bb")) 	model_value = get_AN_12_175_Table14_Value(pt);
+	//Tom and Sezen say to use T2tt for T1ttcc
+        else if (sampleName_.Contains("T2tt") || sampleName_.Contains("T1ttcc")) model_value = get_AN_12_175_Table16_Value(pt);
+        else assert(0);
+        //Table 2 versus Table 4
+        //Tom says syst_sample = (SF_avg - SF_ttbar)/SF_ttbar 
+        //syst_sample = ( (SF_T1bbbb + SF_ttbar)/2 - SF_ttbar)/SF_ttbar 
+        //note that this is a FRACTIONAL uncertainty
 
-      float systerr1 = ( ( model_value+table2_value)/2 - table2_value) / table2_value ;
+        float systerr1 = ( ( model_value+table10_value)/2 - table10_value) / table10_value ;
 
-      //no need for fabs() on these errors because we're adding in quadrature
-      returnVal = sqrt(systerr1*systerr1 + systerr2*systerr2);
-    }
-    //table 2 applies to any FASTSIM sample
-    else if (what=="stat")    returnVal = get_AN_12_175_Table2_Error(pt);
-    else if (what=="value")   returnVal = get_AN_12_175_Table2_Value(pt);
-    else assert(0);
+        //no need for fabs() on these errors because we're adding in quadrature
+        returnVal = sqrt(systerr1*systerr1 + systerr2*systerr2);
+      }
+      //table 10 applies to any FASTSIM sample
+      else if (what=="stat")    returnVal = get_AN_12_175_Table10_Error(pt);
+      else if (what=="value")   returnVal = get_AN_12_175_Table10_Value(pt);
+      else assert(0);
+    } //end c-tag
+    else  { //correction for udsg-tag 
+      if (what == "syst") {//syst errors (fractional)
+	const float table18_value = get_AN_12_175_Table18_Value(pt);
+	
+	//table 18 versus table 19 // note that this is a FRACTIONAL uncertainty
+	float systerr2 = (table18_value - get_AN_12_175_Table19_Value(pt)) / table18_value ;
+	
+	//now the model-dependent part
+	float model_value = 1;
+	if (sampleName_.Contains("T1bbbb")) 	model_value = get_AN_12_175_Table20_Value(pt);
+	//decided that for our purposes I will use T1tttt values for T4tW and T5tttt
+	else if (sampleName_.Contains("T1tttt") || sampleName_.Contains("T4tW") || sampleName_.Contains("T5tttt") || sampleName_.Contains("T1t1t")||sampleName_.Contains("T7btw")) model_value = get_AN_12_175_Table21_Value(pt);
+	else if (sampleName_.Contains("T2bb")) 	model_value = get_AN_12_175_Table22_Value(pt);
+	else if (sampleName_.Contains("T2tt") || sampleName_.Contains("T1ttcc")) model_value = get_AN_12_175_Table24_Value(pt);
+	else assert(0);
+	//Table 2 versus Table 4
+	//Tom says syst_sample = (SF_avg - SF_ttbar)/SF_ttbar 
+	//syst_sample = ( (SF_T1bbbb + SF_ttbar)/2 - SF_ttbar)/SF_ttbar 
+	//note that this is a FRACTIONAL uncertainty
+	
+	float systerr1 = ( ( model_value+table18_value)/2 - table18_value) / table18_value ;
+	
+	//no need for fabs() on these errors because we're adding in quadrature
+	returnVal = sqrt(systerr1*systerr1 + systerr2*systerr2);
+      }
+      //table 18 applies to any FASTSIM sample
+      else if (what=="stat")    returnVal = get_AN_12_175_Table18_Error(pt);
+      else if (what=="value")   returnVal = get_AN_12_175_Table18_Value(pt);
+      else assert(0);
+    } //end udsg-tag
   }
+  
   //cout<<what<<" "<<flavor<<" "<<pt<<"\t"<<returnVal<<endl;
   return returnVal;
 }
@@ -6456,10 +6661,6 @@ float EventCalculator::jetTagEff(unsigned int ijet, TH1D* h_btageff, TH1D* h_cta
 
 	  myErr *= errFactor; //high pT and charm get scaled up
 
-	  // preliminary 2012 correction to the SFb and SFb uncertainty 
-	  // https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagPOG#2012_Data_and_MC
-	  //myErr *= 1.5;
-
 	  if ((theBTagEffType_ == kBTagEffup5) || (modifier==kHFup)) SFb += myErr;
 	  else if ((theBTagEffType_ == kBTagEffdown5) || (modifier==kHFdown)) SFb -= myErr;
 	  else assert(0);
@@ -6494,17 +6695,33 @@ float EventCalculator::jetTagEff(unsigned int ijet, TH1D* h_btageff, TH1D* h_cta
 	}
 	//design question -- what do to for jets at eta>2.4? assert? or return tageff=0?
 	//i guess tageff 0 makes the most sense, so leave SF = 0
+	
+	float deltaSF = SF - nominalSF; //here is the nominal uncertainty on the fullsim SF
 
-	//2012 -- modify the SF by a 2012/2011 factor given here: https://twiki.cern.ch/twiki/pub/CMS/BtagPOG/SFlighCorrFunc_2012_06_06.txt
-	//SF *= (1.10422 + (-0.000523856)*x + (1.14251e-06)*x*x);
-	//nominalSF *=  (1.10422 + (-0.000523856)*x + (1.14251e-06)*x*x);
+	//5 June 2013 -- new code to apply LF mistags
+	//apply FASTSTIM correction where needed
+	SF *= bJetFastsimSF("value",flavor,pt);
 
-	//for high pT, need to double the uncertainty
-	if ((eta<1.5 && pt>cutoff1) || (eta>1.5 && pt>cutoff2)) {
-	  float deltaSF = SF - nominalSF; //here is the nominal uncertainty
-	  deltaSF *= 2; //double it
-	  SF = nominalSF + deltaSF;
+	// now, the extra uncertainties for high pT/eta and Fastsim
+	if (theBTagEffType_ == kBTagEffup5 || theBTagEffType_ == kBTagEffdown5 || modifier==kLFup || modifier == kLFdown) {
+	  //fastsim corrections to the error
+	  float fastsimerr_stat = bJetFastsimSF("stat",flavor,pt);
+	  //syst is a fractional err, so multiply by SF to get absolute err
+	  float fastsimerr_syst = bJetFastsimSF("syst",flavor,pt) * SF;
+	  //in the non-fastsim case, myErr will be equal to |deltaSF|
+	  //cout<<"\t\t"<<deltaSF<<" "<<fastsimerr_stat<<" "<<fastsimerr_syst<<endl;
+	  float myErr = sqrt( deltaSF*deltaSF + fastsimerr_stat*fastsimerr_stat + fastsimerr_syst*fastsimerr_syst);
+	  //for high pT, need to double the uncertainty
+	  //The cutoff is slightly different for Fastsim
+	  if ((eta<1.5 && pt>cutoff1) || (eta>1.5 && pt>cutoff2) || (fastsimerr_stat>0 && pt>670)) {
+	    myErr *= 2;
+	  }
+	  
+	  if ((theBTagEffType_ == kBTagEffup5) || (modifier==kLFup)) SF += myErr;
+	  else if ((theBTagEffType_ == kBTagEffdown5) || (modifier==kLFdown)) SF -= myErr;
+	  else assert(0);
 	}
+
 
 	tageff = SF * extraSFl * h_ltageff->GetBinContent( h_ltageff->FindBin( pt )); 
 	//	cout<<"jet flavor, pt, SF = "<<abs(flavor)<<" "<<pt<<" "<<SF<<endl;
@@ -6518,6 +6735,9 @@ float EventCalculator::jetTagEff(unsigned int ijet, TH1D* h_btageff, TH1D* h_cta
     
   }
 
+
+  if (tageff<0) tageff=0;
+  if (tageff>1) tageff=1;
   return tageff;
 }
 
