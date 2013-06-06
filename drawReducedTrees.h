@@ -272,6 +272,7 @@ bool drawMCErrors_=false;
 bool renormalizeBins_=false;//no setter function
 bool owenColor_ = false;
 bool drawFilenameOnPlot_=false;
+bool dataPoissonError_=true;
 
 int m0_=0;
 int m12_=0;
@@ -2514,7 +2515,7 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
     gROOT->cd();
     dtree->Project(hname,var,getCutString(true));
 
-    hdata->SetBinErrorOption(TH1::kPoisson);
+    if(dataPoissonError_) hdata->SetBinErrorOption(TH1::kPoisson);
     //now the histo is filled
     
     hdata->SetMarkerColor(kBlack);
