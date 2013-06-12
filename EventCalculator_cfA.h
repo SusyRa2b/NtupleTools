@@ -398,6 +398,7 @@ public:
   void higgs125massPairs(float & higgsMbb1,float & higgsMbb2,const std::vector< std::pair<int,int> > & truehiggs  ) ;
   void higgs125massPairsAllJets(float & higgsMbb1,float & higgsMbb2);
   std::pair<float,float> minDeltaMassPairs(float & higgsMbb1,float & higgsMbb2 ,int & h1jet1,int & h1jet2,int & h2jet1,int & h2jet2) ;
+  void massPairsMinDiffAllJets(float & higgsMbb1,float & higgsMbb2,int & h1jet1,int & h1jet2,int & h2jet1,int & h2jet2);
 
 
   float mbbHighPt( BTaggerType tagger ) ;

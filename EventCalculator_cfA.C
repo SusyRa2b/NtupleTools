@@ -5441,6 +5441,64 @@ void EventCalculator::higgs125massPairsAllJets(float & higgsMbb1,float & higgsMb
 
 }
 
+
+
+
+void EventCalculator::massPairsMinDiffAllJets(float & higgsMbb1,float & higgsMbb2,int & h1jet1,int & h1jet2,int & h2jet1,int & h2jet2) {
+
+  //yet another way to form a pair of higgs masses
+  higgsMbb1=-1;
+  higgsMbb2=-1;
+
+  h1jet1 = -1;
+  h1jet2 = -1;
+  h2jet1 = -1;
+  h2jet2 = -1;
+
+  vector<int> goodJetIndex;
+  for (unsigned int kk=0; kk<jets_AK5PF_pt->size(); kk++) {
+    if (isGoodJet(kk,20) )       goodJetIndex.push_back(kk);
+  }
+
+  if (goodJetIndex.size()<4) return;
+
+  float mindelta = 9e9;
+  //make every possible jj' combination
+  for ( unsigned int ijet1 = 0; ijet1<goodJetIndex.size(); ijet1++) {
+    for ( unsigned int jjet1 = ijet1+1; jjet1<goodJetIndex.size(); jjet1++) {
+      //for that pair, look at every possible other pair, where the jets are not reused
+      for ( unsigned int ijet2 = ijet1+1; ijet2<goodJetIndex.size(); ijet2++) {
+	for ( unsigned int jjet2 = ijet2+1; jjet2<goodJetIndex.size(); jjet2++) {
+
+	  if (ijet1==ijet2 || jjet1==ijet2 || ijet1==jjet2 || jjet1==jjet2) continue;
+
+	  //ok, now for this set of jets, calculate the quantity of interest
+	  float mjj1 = calc_mNj(ijet1,jjet1);
+	  float mjj2 = calc_mNj(ijet2,jjet2);
+	  //maybe shouldn't be hard-coding the higgs mass?
+	  float thisdiff = fabs(mjj1-mjj2);
+
+	  if (thisdiff<mindelta) {
+	    mindelta=thisdiff;
+	    higgsMbb1 = mjj1;
+	    higgsMbb2 = mjj2;
+	    h1jet1 = ijet1;
+	    h1jet2 = jjet1;
+	    h2jet1 = ijet2;
+	    h2jet2 = jjet2;
+
+	  }
+
+	}
+      }
+
+    }
+  }
+
+
+
+}
+
 void EventCalculator::massPairsDeltaSort(float & higgsMbb1,float & higgsMbb2) {
   //another h(bb) h(bb) algorithm, loosely based on what is used in the tri-jet pair-resonance search in EXO
 
@@ -7113,6 +7171,11 @@ void EventCalculator::reducedTree(TString outputpath) {
   float maxDelPhiThrustJet = -99.;
   float minDelPhiThrustMET = 99.;
 
+  float higgsMbb1MassDiffAll=-1,higgsMbb2MassDiffAll=-1;
+  float deltaRmax_hhAll=-1,deltaRmin_hhAll=-1;
+
+  int higgsMbb1MassDiffAll_correct=0; //mc truth -- how many higgses correct?
+
   //  float transverseThrust,transverseThrustPhi;
   //  float transverseThrustWithMET,transverseThrustWithMETPhi;
 
@@ -7507,7 +7570,11 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("higgsMbb1MassDiff",&higgsMbb1MassDiff,"higgsMbb1MassDiff/F");
   reducedTree.Branch("higgsMbb2MassDiff",&higgsMbb2MassDiff,"higgsMbb2MassDiff/F");
 
+  reducedTree.Branch("higgsMbb1MassDiffAll",&higgsMbb1MassDiffAll,"higgsMbb1MassDiffAll/F");
+  reducedTree.Branch("higgsMbb2MassDiffAll",&higgsMbb2MassDiffAll,"higgsMbb2MassDiffAll/F");
+
   reducedTree.Branch("higgsMbb1MassDiff_correct",&higgsMbb1MassDiff_correct,"higgsMbb1MassDiff_correct/I");
+  reducedTree.Branch("higgsMbb1MassDiffAll_correct",&higgsMbb1MassDiffAll_correct,"higgsMbb1MassDiffAll_correct/I");
   reducedTree.Branch("deltaPhi_hh",&deltaPhi_hh,"deltaPhi_hh/F");
   reducedTree.Branch("deltaRmax_hh",&deltaRmax_hh,"deltaRmax_hh/F");
   reducedTree.Branch("deltaRmin_hh",&deltaRmin_hh,"deltaRmin_hh/F");
@@ -7515,6 +7582,9 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("sumPt_hh",&sumPt_hh,"sumPt_hh/F");
   reducedTree.Branch("higgsPt1",&higgsPt1,"higgsPt1/F");
   reducedTree.Branch("higgsPt2",&higgsPt2,"higgsPt2/F");
+
+  reducedTree.Branch("deltaRmax_hhAll",&deltaRmax_hhAll,"deltaRmax_hhAll/F");
+  reducedTree.Branch("deltaRmin_hhAll",&deltaRmin_hhAll,"deltaRmin_hhAll/F");
 
   //more massdiff higgs candidate properties
   //jet pT
@@ -8506,15 +8576,43 @@ void EventCalculator::reducedTree(TString outputpath) {
 	higgs125massPairsAllJets(higgsMjj1,higgsMjj2);
 	mjj_h125 = getBestH125(); 
 
+	//yet another way 
+	int h1j1All,h1j2All,h2j1All,h2j2All;
+	massPairsMinDiffAllJets(higgsMbb1MassDiffAll,higgsMbb2MassDiffAll,h1j1All,h1j2All,h2j1All,h2j2All);
+	//does not check -- we may have used the true higgs quarks twice
+	higgsMbb1MassDiffAll_correct =0;
+	if (  higgsRecoCorrect(hbbbb,h1j1All,h1j2All)) higgsMbb1MassDiffAll_correct++;
+	if (  higgsRecoCorrect(hbbbb,h2j1All,h2j2All)) higgsMbb1MassDiffAll_correct++;
+
 	massPairsDeltaSort(higgsMbb1delta,higgsMbb2delta);
 	int h1j1,h1j2,h2j1,h2j2;
         std::pair<float,float> MT_Hbb = minDeltaMassPairs(higgsMbb1MassDiff,higgsMbb2MassDiff,h1j1,h1j2,h2j1,h2j2);
+
         MT_Hbb1 = MT_Hbb.first;
         MT_Hbb2 = MT_Hbb.second;
 	//does not check -- we may have used the true higgs quarks twice
 	higgsMbb1MassDiff_correct =0;
 	if (  higgsRecoCorrect(hbbbb,h1j1,h1j2)) higgsMbb1MassDiff_correct++;
 	if (  higgsRecoCorrect(hbbbb,h2j1,h2j2)) higgsMbb1MassDiff_correct++;
+
+	if (h1j1All>=0 && h1j2All>=0 && h2j1All>=0 && h2j2All>=0) {
+	  TLorentzVector vec_h1j1 = getLorentzVector(h1j1All);
+	  TLorentzVector vec_h1j2 = getLorentzVector(h1j2All);
+	  TLorentzVector vec_h2j1 = getLorentzVector(h2j1All);
+	  TLorentzVector vec_h2j2 = getLorentzVector(h2j2All);
+	  deltaRmin_hhAll = jmt::deltaR(vec_h1j1.Eta(),vec_h1j1.Phi(),vec_h1j2.Eta(),vec_h1j2.Phi());	 
+	  deltaRmax_hhAll = jmt::deltaR(vec_h2j1.Eta(),vec_h2j1.Phi(),vec_h2j2.Eta(),vec_h2j2.Phi());
+	  if (deltaRmin_hhAll>deltaRmax_hhAll) {
+	    float drt = deltaRmin_hhAll;
+	    deltaRmin_hhAll=deltaRmax_hhAll;
+	    deltaRmax_hhAll=drt;
+	  }
+
+	}
+	else {
+	  deltaRmax_hhAll=-1;
+	  deltaRmin_hhAll=-1;
+	}
 
 	if (h1j1>=0 && h1j2>=0 && h2j1>=0 && h2j2>=0) {
 	  TLorentzVector vec_h1j1 = getLorentzVector(h1j1);
