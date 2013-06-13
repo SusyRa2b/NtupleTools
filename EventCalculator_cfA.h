@@ -169,6 +169,8 @@ public:
   float getTauPt( unsigned int itau );
   unsigned int countTau(const TString & wp);
 
+  float getWCandMass(int j1,int j2,int j3,int j4) ;
+
   int countIsoPFCands(const float minpt, const float miniso) ;
   int countIsoTracks(const float minpt, const float miniso, const float maxdr, float & thept, float & theeta, float & thephi, const bool leptondisambiguation=false);
   bool isQualityTrack(const int trackindex) ;

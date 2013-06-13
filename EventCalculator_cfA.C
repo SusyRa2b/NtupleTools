@@ -3688,6 +3688,37 @@ void EventCalculator::calcCosHel( unsigned int j1i, unsigned int j2i, unsigned i
   //   cout<<"cosHel calculator (t,W): "<<tcoshel<<" "<<wcoshel<<endl;
 }
 
+bool jetCSVLessThan( pair<int,pair<float,float> > a, pair<int,pair<float,float> > b) {
+
+  if (a.second.first==b.second.first) { //CSV is tied, use pT
+    return (a.second.second>b.second.second);
+  }
+
+  return (a.second.first<b.second.first);
+
+}
+
+float EventCalculator::getWCandMass(int j1,int j2,int j3,int j4) {
+
+  if (j1<0 || j2<0 || j3<0 || j4<0) return -1;
+  //the pair of floats is CSV and pT
+  vector<pair<int,pair<float,float> > > jetCSV;
+  jetCSV.push_back(make_pair(j1,make_pair(jets_AK5PF_btag_secVertexCombined->at(j1),jets_AK5PF_pt->at(j1))));
+  jetCSV.push_back(make_pair(j2,make_pair(jets_AK5PF_btag_secVertexCombined->at(j2),jets_AK5PF_pt->at(j2))));
+  jetCSV.push_back(make_pair(j3,make_pair(jets_AK5PF_btag_secVertexCombined->at(j3),jets_AK5PF_pt->at(j3))));
+  jetCSV.push_back(make_pair(j4,make_pair(jets_AK5PF_btag_secVertexCombined->at(j4),jets_AK5PF_pt->at(j4))));
+
+  // cout<<" before "<<endl;
+  //  for (unsigned int i=0; i<jetCSV.size(); i++)  cout<<jetCSV.at(i).first<<" "<<jetCSV.at(i).second.first <<" "<<jetCSV.at(i).second.second<<endl;
+  sort(jetCSV.begin(),jetCSV.end(),jetCSVLessThan);
+  //  cout<<" after "<<endl;
+  //  for (unsigned int i=0; i<jetCSV.size(); i++)  cout<<jetCSV.at(i).first<<" "<<jetCSV.at(i).second.first <<" "<<jetCSV.at(i).second.second<<endl;
+
+  //  cout<<  calc_mNj(jetCSV.at(0).first,jetCSV.at(1).first)<<endl;
+
+  return  calc_mNj(jetCSV.at(0).first,jetCSV.at(1).first);
+
+}
 
 void EventCalculator::calcTopDecayVariables(float & wmass, float & tmass, float & wcoshel, float & tcoshel) {
 
@@ -7071,6 +7102,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   float higgs1partonId1,higgs1partonId2,higgs2partonId1,higgs2partonId2;
   float higgs1partonMomId1,higgs1partonMomId2,higgs2partonMomId1,higgs2partonMomId2;
 
+  float higgsWCandMass,higgsWCandMassAll;
 
   //lead jet quality info
   float alletajetpt1,alletajetphi1,alletajeteta1;
@@ -7618,7 +7650,10 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("higgs2partonMomId1",&higgs2partonMomId1,"higgs2partonMomId1/F");
   reducedTree.Branch("higgs2partonMomId2",&higgs2partonMomId2,"higgs2partonMomId2/F");
 
-  
+  reducedTree.Branch("higgsWCandMass",&higgsWCandMass,"higgsWCandMass/F");  
+  reducedTree.Branch("higgsWCandMassAll",&higgsWCandMassAll,"higgsWCandMassAll/F"); 
+
+
   reducedTree.Branch("maxDelPhiThrustJet",&maxDelPhiThrustJet,"maxDelPhiThrustJet/F");
   reducedTree.Branch("minDelPhiThrustMET",&minDelPhiThrustMET,"minDelPhiThrustMET/F");
 
@@ -8587,6 +8622,9 @@ void EventCalculator::reducedTree(TString outputpath) {
 	massPairsDeltaSort(higgsMbb1delta,higgsMbb2delta);
 	int h1j1,h1j2,h2j1,h2j2;
         std::pair<float,float> MT_Hbb = minDeltaMassPairs(higgsMbb1MassDiff,higgsMbb2MassDiff,h1j1,h1j2,h2j1,h2j2);
+
+	higgsWCandMass = getWCandMass(h1j1,h1j2,h2j1,h2j2);
+	higgsWCandMassAll = getWCandMass(h1j1All,h1j2All,h2j1All,h2j2All);
 
         MT_Hbb1 = MT_Hbb.first;
         MT_Hbb2 = MT_Hbb.second;
