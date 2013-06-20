@@ -5095,6 +5095,10 @@ Long64_t EventCalculator::getNEventsGenerated( TString sample) {
   //  if (sample.Contains("UCSB1575")) return 11229902 ; //TT MG semi lep (retired)
   //  if (sample.Contains("UCSB1586")) return 10537444;//TT MG hadronic (partial)
 
+  //sherpa ttbar (v68)
+  if (sample.Contains("UCSB1792")) return  17884018; //TT sherpa SemiLept
+  if (sample.Contains("UCSB1794")) return  19345927; //TT sherpa DiLept
+
   if (sample.Contains("UCSB1605")) return 196046; // ttW
   if (sample.Contains("UCSB1604")) return 210160; // ttZ
 
@@ -5114,6 +5118,7 @@ Long64_t EventCalculator::getNEventsGenerated( TString sample) {
   if (sample.Contains("UCSB1735")) return 27057331 ; // QCD MG 250-500
 
   if (sample.Contains("UCSB1677")) return 20646001; // W+bb
+
 
   cout<<"[getNEventsGenerated] unknown sample "<<sample<<endl;
   assert(0);
@@ -5194,6 +5199,9 @@ double EventCalculator::getCrossSection(){
   if (sampleName_.BeginsWith("TTJets_FullLeptMGDecays_8TeV-madgraph")) return 13.43*(234.0 / (13.43+53.4+53.2)); // PREP corrected to NNLO
   if (sampleName_.BeginsWith("TTJets_HadronicMGDecays_8TeV-madgraph")) return 53.4*(234.0 / (13.43+53.4+53.2)); // PREP corrected to NNLO
   if (sampleName_.BeginsWith("TTJets_SemiLeptMGDecays_8TeV-madgraph")) return 53.2*(234.0 / (13.43+53.4+53.2)); //PREP corrected to NNLO
+
+  if (sampleName_.BeginsWith("TTJets_DileptDecays_8TeV-sherpa")) return 19.7; //from PREP. LO?
+  if (sampleName_.BeginsWith("TTJets_SemiLeptDecays_8TeV-sherpa")) return 82.4; //from PREP. LO?
 
   if (sampleName_.BeginsWith("TTJets_matchingup_TuneZ2star_8TeV-madgraph")) return 234; //approx NNLO
   if (sampleName_.BeginsWith("TTJets_matchingdown_TuneZ2star_8TeV-madgraph")) return 234; //approx NNLO
