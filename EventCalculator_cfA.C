@@ -39,12 +39,13 @@
 
 using namespace std;
 
-EventCalculator::EventCalculator(const TString & sampleName, const vector<string> inputFiles, jetType theJetType, METType theMETType) :
+EventCalculator::EventCalculator(const TString & sampleName, const vector<string> inputFiles, jetType theJetType, METType theMETType, isoType theIsoType) :
   sampleName_(sampleName),
   sampleIsSignal_(false),
   theScanType_(kNotScan),
   theMETType_(theMETType),
   theJetType_(theJetType),
+  theIsoType_(theIsoType),
   theJESType_(kJES0),
   theJERType_(kJER0),
   theMETuncType_(kMETunc0),
@@ -254,6 +255,10 @@ void EventCalculator::initEnumNames() {
 
   theJetNames_[kPF2PAT]="PF2PATjets";
   theJetNames_[kRECOPF]="RecoPFjets";
+
+  theIsoNames_[kIso0]="Iso0";
+  theIsoNames_[kIsoup]="IsoUp";
+  theIsoNames_[kIsodown]="IsoDown";
 
   theJESNames_[kJES0]="JES0";
   theJESNames_[kJESup]="JESup";
@@ -492,7 +497,12 @@ bool EventCalculator::isGoodMuon(const unsigned int k, const bool disableRelIso,
   if ( TMath::Nint(pf_mus_tk_LayersWithMeasurement->at(k)) <= 5 ) {lossCode=3; return false; }
  
   float  muRelIso = getMuonRelIso(k);
-  if ( (disableRelIso==false) && (muRelIso >= 0.2) ) {lossCode=4; return false;}
+
+  float maxRelIso = 0.2;
+  if(theIsoType_ == kIsoup) maxRelIso = 0.56;
+  else if(theIsoType_ == kIsodown) maxRelIso = 0.102;
+
+  if ( (disableRelIso==false) && (muRelIso >= maxRelIso) ) {lossCode=4; return false;}
 
   //if we haven't failed anything yet...then it's good
   lossCode=0;
@@ -784,7 +794,12 @@ bool EventCalculator::isGoodElectron(const unsigned int k, const bool disableRel
   if ( fabs(pf_els_vz->at(k) - pv_z->at(0) ) >= 0.2 )  { lossCode=3; return false; }
   
   float elRelIso = getElectronRelIso(k, use2012id);
-  if ( (disableRelIso == false) && (elRelIso >= 0.15) )  {lossCode=4; return false;}
+ 
+  float maxRelIso = 0.15;
+  if(theIsoType_ == kIsoup) maxRelIso = 0.73;
+  else if(theIsoType_ == kIsodown) maxRelIso = 0.072;
+  
+  if ( (disableRelIso == false) && (elRelIso >= maxRelIso) )  {lossCode=4; return false;}
 
   lossCode=0;
   return true;
@@ -5285,6 +5300,12 @@ TString EventCalculator::getCutDescriptionString(){
   cut += "_";
 
   cut += theHLTEffNames_[theHLTEffType_];
+
+  if(theIsoNames_[theIsoType_] != "Iso0")//only change name if nonstandard
+    {
+      cut += "_";
+      cut += theIsoNames_[theIsoType_];
+    }
 
   return cut;
 }

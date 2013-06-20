@@ -94,6 +94,7 @@ public:
   enum scanType {kNotScan=0, kmSugra, kSMS, kpmssm};
   enum METType {kPFMET=0,kPFMETTypeI};
   enum jetType {kPF2PAT=0, kRECOPF};
+  enum isoType {kIso0=0,kIsoup,kIsodown};
   enum JESType {kJES0=0,kJESup,kJESdown,kJESFLY};
   enum JERType {kJER0=0,kJERbias,kJERup,kJERdown,kJERra2};
   enum METuncType {kMETunc0=0,kMETuncDown,kMETuncUp};
@@ -104,7 +105,7 @@ public:
 
   enum BTagEffModifier {kBTagModifier0=0,kLFdown,kLFup,kHFdown,kHFup}; //ugg...not in love with this design
 
-  EventCalculator(const TString & sampleName, const std::vector<std::string>  inputFiles, jetType theJetType, METType theMETType);
+  EventCalculator(const TString & sampleName, const std::vector<std::string>  inputFiles, jetType theJetType, METType theMETType, isoType theIsoType);
   ~EventCalculator();
 
   //setters
@@ -488,6 +489,7 @@ private:
   scanType theScanType_;
   METType theMETType_; 
   jetType theJetType_;
+  isoType theIsoType_;
   JESType theJESType_;
   JERType theJERType_;
   METuncType theMETuncType_;
@@ -583,6 +585,7 @@ private:
   void initEnumNames();
   std::map<METType, TString> theMETNames_;
   std::map<jetType, TString> theJetNames_;
+  std::map<isoType, TString> theIsoNames_;
   std::map<JESType, TString> theJESNames_;
   std::map<JERType, TString> theJERNames_;
   std::map<METuncType, TString> theMETuncNames_;

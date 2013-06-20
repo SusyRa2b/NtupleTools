@@ -131,7 +131,7 @@ int main(int argc, char* argv[])
       cout<<"Processing "<<filenames[ifile]<<endl;
       std::vector<std::string> afilename;
       afilename.push_back(filenames[ifile]);
-      EventCalculator ec(fileArg,afilename, EventCalculator::kPF2PAT, EventCalculator::kPFMETTypeI);
+      EventCalculator ec(fileArg,afilename, EventCalculator::kPF2PAT, EventCalculator::kPFMETTypeI, EventCalculator::kIso0);
       bool statusOk =   ec.slim();
       if (statusOk ) {
 	cout<<"done ok  "<<filenames[ifile]<<endl;
@@ -142,7 +142,7 @@ int main(int argc, char* argv[])
     }
   }
   else { //normal mode
-    EventCalculator ec(fileArg,filenames, EventCalculator::kPF2PAT, EventCalculator::kPFMETTypeI);
+    EventCalculator ec(fileArg,filenames, EventCalculator::kPF2PAT, EventCalculator::kPFMETTypeI, EventCalculator::kIso0);
     ec.setBTaggerType(EventCalculator::kCSVM);
     if (options=="btageff") {
       ec.plotBTagEffMC();
