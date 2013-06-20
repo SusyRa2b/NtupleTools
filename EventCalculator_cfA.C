@@ -6015,6 +6015,7 @@ void EventCalculator::loadJetTagEffMaps() {
   f_tageff_ = new TFile(filename,"READ");
   if (f_tageff_->IsZombie()) {
     cout<<"Failed to load the b-tag eff map for sample "<<sampleName_<<endl;
+    //comment this next line to ALLOW JOBS TO RUN WITHOUT BTAG EFF
     if (!isSampleRealData())    assert(0); //it's just too frustrating to let jobs continue in this state
     delete f_tageff_;
     f_tageff_=0;
@@ -6072,7 +6073,7 @@ double EventCalculator::getBtagSF(const int flavor, const float pt, const int si
 
 int EventCalculator::nGoodBJets_Tweaked() {
 
-  if ( isSampleRealData() ) return nGoodBJets();
+  if ( isSampleRealData() ||f_tageff_==0) return nGoodBJets();
 
   //this is one of those classic things -- we need a random number but we want the code to be reproducible
   //so construct a (more or less) unique, and completely reproducible seed for each event 
@@ -6113,18 +6114,20 @@ int EventCalculator::nGoodBJets_Tweaked() {
 
 float EventCalculator::getBtagEffMC(const int flavor, const float pt) {
 
+  if (f_tageff_==0) return 0;
+
   //i don't like this part, but for now i'll accept it....
   char btageffname[200], ctageffname[200], ltageffname[200];
   std::string sbtageff = "h_btageff";  std::string sctageff = "h_ctageff";  std::string sltageff = "h_ltageff";
   sprintf(btageffname,"%s",sbtageff.c_str());   
   sprintf(ctageffname,"%s",sctageff.c_str());   
   sprintf(ltageffname,"%s",sltageff.c_str());   
-  TH1F * h_btageff  = (TH1F *)f_tageff_->Get(btageffname);
-  TH1F * h_ctageff  = (TH1F *)f_tageff_->Get(ctageffname);
-  TH1F * h_ltageff  = (TH1F *)f_tageff_->Get(ltageffname);
+  TH1D * h_btageff  = (TH1D *)f_tageff_->Get(btageffname);
+  TH1D * h_ctageff  = (TH1D *)f_tageff_->Get(ctageffname);
+  TH1D * h_ltageff  = (TH1D *)f_tageff_->Get(ltageffname);
 
 
-  TH1F* hh;
+  TH1D* hh;
   if (abs(flavor)==5)      hh=h_btageff;
   else if (abs(flavor)==4) hh=h_ctageff;
   else                     hh=h_ltageff;
@@ -6133,7 +6136,7 @@ float EventCalculator::getBtagEffMC(const int flavor, const float pt) {
 }
 
 float EventCalculator::getBtagWeight() {
-  if ( isSampleRealData() ) return 1;
+  if ( isSampleRealData() ||f_tageff_==0) return 1;
   //yet another procedure, this one with code written by the btv!
 
   //put jets into the 'jetinfos' object
@@ -6160,7 +6163,7 @@ float EventCalculator::getBtagWeight() {
 }
 
 float EventCalculator::getBtagEffWeight() {
-  if ( isSampleRealData() ) return 1;
+  if ( isSampleRealData() ||f_tageff_==0) return 1;
 
   /*
 alternative b-tag SF procedure. Akin to 'PIDweighting' in BaBar.
