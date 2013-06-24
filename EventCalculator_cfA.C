@@ -7129,6 +7129,7 @@ void EventCalculator::reducedTree(TString outputpath) {
 
   //properties of the 4 higgs jets -- using the massDiff method
   float higgs1jetpt1,higgs1jetpt2,higgs2jetpt1,higgs2jetpt2;
+  float higgs1jeteta1,higgs1jeteta2,higgs2jeteta1,higgs2jeteta2;
   float higgs1CSV1,higgs1CSV2,higgs2CSV1,higgs2CSV2;
   //  float higgs1genId1,higgs1genId2,higgs2genId1,higgs2genId2;
   //  float higgs1genMomId1,higgs1genMomId2,higgs2genMomId1,higgs2genMomId2;
@@ -7659,7 +7660,12 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("higgs1jetpt2",&higgs1jetpt2,"higgs1jetpt2/F");
   reducedTree.Branch("higgs2jetpt1",&higgs2jetpt1,"higgs2jetpt1/F");
   reducedTree.Branch("higgs2jetpt2",&higgs2jetpt2,"higgs2jetpt2/F");
-  //CSV value
+  //jet eta
+  reducedTree.Branch("higgs1jeteta1",&higgs1jeteta1,"higgs1jeteta1/F");
+  reducedTree.Branch("higgs1jeteta2",&higgs1jeteta2,"higgs1jeteta2/F");
+  reducedTree.Branch("higgs2jeteta1",&higgs2jeteta1,"higgs2jeteta1/F");
+  reducedTree.Branch("higgs2jeteta2",&higgs2jeteta2,"higgs2jeteta2/F");
+   //CSV value
   reducedTree.Branch("higgs1CSV1",&higgs1CSV1,"higgs1CSV1/F");
   reducedTree.Branch("higgs1CSV2",&higgs1CSV2,"higgs1CSV2/F");
   reducedTree.Branch("higgs2CSV1",&higgs2CSV1,"higgs2CSV1/F");
@@ -8717,6 +8723,10 @@ void EventCalculator::reducedTree(TString outputpath) {
 	  higgs1jetpt2 = vec_h1j2.Pt();
 	  higgs2jetpt1 = vec_h2j1.Pt();
 	  higgs2jetpt2 = vec_h2j2.Pt();
+	  higgs1jeteta1 = vec_h1j1.Eta();
+	  higgs1jeteta2 = vec_h1j2.Eta();
+	  higgs2jeteta1 = vec_h2j1.Eta();
+	  higgs2jeteta2 = vec_h2j2.Eta();
 	  higgs1CSV1 = jets_AK5PF_btag_secVertexCombined->at(h1j1);
 	  higgs1CSV2 = jets_AK5PF_btag_secVertexCombined->at(h1j2);
 	  higgs2CSV1 = jets_AK5PF_btag_secVertexCombined->at(h2j1);
