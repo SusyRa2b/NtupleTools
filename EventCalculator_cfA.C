@@ -6979,6 +6979,7 @@ void EventCalculator::reducedTree(TString outputpath) {
 //   int W1decayType = -1, W2decayType = -1;
 //   int decayType = -1;;
   int ttbarDecayCode=0;
+  int hadWcode=0;
 
   ULong64_t lumiSection, eventNumber, runNumber;
   //  float METsig;
@@ -7361,6 +7362,7 @@ void EventCalculator::reducedTree(TString outputpath) {
 //   reducedTree.Branch("decayType",&decayType,"decayType/I");
   reducedTree.Branch("ttbarDecayCode",&ttbarDecayCode,"ttbarDecayCode/I");
   reducedTree.Branch("lostLeptonCode",&lostLeptonCode,"lostLeptonCode/I");
+  reducedTree.Branch("hadWcode",&hadWcode,"hadWcode/I");
 
   float genTopPtLep=-1,genTopPtHad=-1;
   float genWPtLep=-1,genWPtHad=-1;
@@ -8387,7 +8389,7 @@ void EventCalculator::reducedTree(TString outputpath) {
       int leptonicTop=-99;
       float leptonEta=99, leptonPt=-1,leptonPhi=99;
       if (sampleName_.Contains("TTJets")||sampleName_.BeginsWith("TT_") || sampleName_.Contains("T1tttt")) { //revived for cfA, using the old jmt-ntuples coding scheme
-	ttbarDecayCode = getTTbarDecayType(leptonicTop,leptonEta,leptonPhi,leptonPt);
+	ttbarDecayCode = getTTbarDecayType(leptonicTop,leptonEta,leptonPhi,leptonPt,hadWcode);
 	fillGenTopInfo(ttbarDecayCode,leptonicTop,genTopPtLep,genWPtLep,genTopPtHad,genWPtHad);
 
 	minDeltaRLeptonJet = getMinDeltaRToJet(leptonEta,leptonPhi,minDeltaRJetFlavor);
@@ -10096,7 +10098,9 @@ int EventCalculator::getTauDecayType( int tauid) {
 }
 
  //trying to rewrite from scratch for cfA
-int EventCalculator::getTTbarDecayType(int & leptonicTop, float & leptonEta, float & leptonPhi,float & leptonPt) {
+int EventCalculator::getTTbarDecayType(int & leptonicTop, float & leptonEta, float & leptonPhi,float & leptonPt, int & hadWcode) {
+
+  hadWcode =0;
 
   //the 'leptonic Top ' info is used to ID, in single lepton events, which top quark decayed leptonically
 
@@ -10108,6 +10112,10 @@ int EventCalculator::getTTbarDecayType(int & leptonicTop, float & leptonEta, flo
   int foundmu=0;
   int foundhad=0;
   int foundtau=0;
+
+  // quark id; number found
+  map<int,int> foundq;
+  for (int iq=1; iq<=5; iq++) foundq[iq]=0; //init the possible values
 
   leptonicTop=0;
   leptonEta=99;//choose clearly unphysical defaults
@@ -10145,7 +10153,8 @@ int EventCalculator::getTTbarDecayType(int & leptonicTop, float & leptonEta, flo
 	//neutrinos
       }
       else if (wdau>=1 && wdau<=5) { //quarks //adding b here because W->bc does happen sometimes...
-	foundhad++;
+	++foundq[wdau];
+	foundhad++; //keep the flavor-blind machinery as well
       }
       else {
 	cout<<" Wdau = "<<wdau<<endl;
@@ -10178,20 +10187,32 @@ int EventCalculator::getTTbarDecayType(int & leptonicTop, float & leptonEta, flo
   foundhad /=2;
 
   if (sampleName_.Contains("TT")) { //for ttbar; not tested for T2tt but it would probably work
-  if ( founde+foundmu == 2) return 1;
-  else if ( foundhad == 2) return 2;
-  else if ( founde==1 && foundhad==1 ) return 3;
-  else if ( foundmu==1 && foundhad==1 ) return 4;
-  else if (foundtau==1 && foundhad==1 && taudecay[0]==1) return 5;
-  else if (foundtau==1 && foundhad==1 && taudecay[0]==2) return 6;
-  else if (foundtau==1 && foundhad==1 && taudecay[0]==0) return 7;
-  else if ( foundtau==2) return 8;
-  else if (foundtau==1 && founde==1) return 9;
-  else if (foundtau==1 && foundmu==1) return 9;
+    //classify the hadronic W decay
+    if (foundhad==1) { //i officially don't care about all hadronic ttbar
+      for (int iq=1; iq<=5; iq++) {
+	//	if (foundq[iq]>0) cout<<" foundq "<<iq<<" ";
+	hadWcode += int(pow(10,iq-1)) * foundq[iq]; 
+      }
+      //      cout<<"\t hadWcode = "<<hadWcode<<endl;
+    }
 
-  else {
-    cout<<"PROBLEM -- "<<founde<<" "<<foundmu<<" "<<foundtau<<" "<<foundhad<<" tau info -- "<<taudecay[0]<<" "<<taudecay[1]<<endl;
-  }
+    //then the classic lepton-focused classification
+    if ( founde+foundmu == 2) return 1;
+    else if ( foundhad == 2) return 2;
+    else if ( founde==1 && foundhad==1 ) return 3;
+    else if ( foundmu==1 && foundhad==1 ) return 4;
+    else if (foundtau==1 && foundhad==1 && taudecay[0]==1) return 5;
+    else if (foundtau==1 && foundhad==1 && taudecay[0]==2) return 6;
+    else if (foundtau==1 && foundhad==1 && taudecay[0]==0) return 7;
+    else if ( foundtau==2) return 8;
+    else if (foundtau==1 && founde==1) return 9;
+    else if (foundtau==1 && foundmu==1) return 9;
+    
+    else {
+      cout<<"PROBLEM -- "<<founde<<" "<<foundmu<<" "<<foundtau<<" "<<foundhad<<" tau info -- "<<taudecay[0]<<" "<<taudecay[1]<<endl;
+    }
+
+
   }
   else if (sampleName_.Contains("T1tttt")) {
     if (problem)   cout<<" e m tau had = "<<founde<<" "<<foundmu<<" "<<foundtau<<" "<<foundhad<<endl<<" ---end---"<<endl;
@@ -10208,245 +10229,6 @@ int EventCalculator::getTTbarDecayType(int & leptonicTop, float & leptonEta, flo
   return 0;
 }
  
-/* old version pre cfA
-int EventCalculator::getTTbarDecayType(int& W1decayType, int& W2decayType, int& W1, int& W1daughter, int& W2, int& W2daughter, bool passW2info=false)
-{
-  if(myGenParticles == 0 || myGenParticles->size() == 0) return -1;
-  int top1=-1;
-  int top2=-1;
-  int nTops = findTop(top1,top2);
-  W1 = 0;
-  W1daughter = 0;
-  W1decayType = -1;
-  if(!passW2info){//for single-top-tW-channel
-    W2 = 0;
-    W2daughter = 0;
-    W2decayType = -1;
-  }
-
-  if(nTops>0)
-    {
-      W1decayType = findW(W1,W1daughter,top1);
-      if(nTops>1) W2decayType = findW(W2,W2daughter,top2);
-    }
-
-  //std::cout << "W1decayType = " << W1decayType << ", W2decayType = " << W2decayType << std::endl;
-  //std::cout << "W1daughter = " << W1daughter << ", W2daughter = " << W2daughter << std::endl;
-  
-  int W1daughterMatch = -1;
-  int W2daughterMatch = -1;
-  if( W1decayType > 0 ) W1daughterMatch = daughterMatch(W1daughter,W1decayType);
-  if( W2decayType > 0 ) W2daughterMatch = daughterMatch(W2daughter,W2decayType);
-
-  //cout << "done with matching" << endl;
-
-  //for ttbar, considering only (W->had,W->e/mu), (W->tau->had,W->e/mu), (W->had,W->had), (W->had,W->tau->had) 
-  if( ((sampleName_.Contains("TTJets_TuneZ2") || sampleName_.Contains("ttjets_madgraph")
-	|| sampleName_.Contains("T_TuneZ2_tW") || sampleName_.Contains("Tbar_TuneZ2_tW"))
-       && (W1decayType == 112 || W2decayType == 112 || W1decayType == 134 || W2decayType == 134 || W1decayType == 15 || W2decayType == 15) 
-       && !(W1decayType == 15 && W2decayType == 15))
-      || (sampleName_.Contains("T_TuneZ2_s-channel") || sampleName_.Contains("Tbar_TuneZ2_s-channel")
-	  || sampleName_.Contains("T_TuneZ2_t-channel") || sampleName_.Contains("Tbar_TuneZ2_t-channel"))
-      )
-  //considering only semileptonic decay: (W->had,W->e/mu)
-  //if( ((W1decayType==13 && W2decayType==1) || (W1decayType==1 && W2decayType==13) || (W1decayType==1513 && W2decayType==1) || (W1decayType==1 && W2decayType==1513))
-  //    || ((W1decayType==11 && W2decayType==1) || (W1decayType==1 && W2decayType==11) || (W1decayType==1511 && W2decayType==1) || (W1decayType==1 && W2decayType==1511)))
-    {
-      //find the e/mu decay one
-      int WdecayType, Wdaughter,WdaughterMatch;
-      if(W1decayType!=112 && W1decayType!=134) //if W1 is the non-hadronic one
-	{
-	  WdecayType =  W1decayType;
-	  Wdaughter = W1daughter;
-	  WdaughterMatch = W1daughterMatch;
-	}
-      else if(W2decayType!=112 && W2decayType!=134)
-	{
-	  WdecayType =  W2decayType;
-	  Wdaughter = W2daughter;
-	  WdaughterMatch = W2daughterMatch;
-	}
-      else if(W1decayType!=15)//otherwise, it's a (W->tau->had,W->e/mu) one
-	{
-	  WdecayType =  W1decayType;
-	  Wdaughter = W1daughter;
-	  WdaughterMatch = W1daughterMatch;
-	}
-      else
-	{
-	  WdecayType =  W2decayType;
-	  Wdaughter = W2daughter;
-	  WdaughterMatch = W2daughterMatch;
-	}
-      if(WdecayType == 11 || WdecayType == 1511) //electron
-	{
-	  //cout << "electron match" << endl;
-	  if( WdaughterMatch > -1 ) // electron on electron list
-	    {
-	      if( isGoodElectron(WdaughterMatch) ) 
-		return 101100;//there is match, and it passes all cuts
-	      else if( 
-		      fabs(myElectronsPF->at(WdaughterMatch).superCluster_eta) > 2.5
-		      || fabs(myGenParticles->at(Wdaughter).eta) > 2.5 ) 
-		//there is a match, but it is out of eta range
-		return 101101;
-	      else if( myElectronsPF->at(WdaughterMatch).pt < 10 
-		       || myGenParticles->at(Wdaughter).pt < 10 ) 
-		//there is a match, it is in eta range, but it is out of pt range
-		return 101102;
-	      else if ((myElectronsPF->at(WdaughterMatch).chargedHadronIso
-			+ myElectronsPF->at(WdaughterMatch).photonIso
-			+ myElectronsPF->at(WdaughterMatch).neutralHadronIso)/myElectronsPF->at(WdaughterMatch).pt >=0.2 )
-		//there is a match, it is in eta and pt range, but it fails isolation cut
-		return 101103;
-	      else return 101104;//it fails some other quality cut
-	    }
-	  else
-	    {
-	      if(fabs(myGenParticles->at(Wdaughter).eta) > 2.5) return 201101;//
-	      else if(myGenParticles->at(Wdaughter).pt < 10) return 201102;//
-	      else return 201103;
-	    }
-	}
-      if(WdecayType == 13 || WdecayType == 1513) //muon
-	{
-	  //cout << "muon match" << endl;
-	  if( WdaughterMatch > -1 ) // muon on muon list
-	    {
-	      //cout << "matched daughter" << endl;
-	      //cout << "true index " << Wdaughter << endl;
-	      //cout << "match index " << WdaughterMatch << endl;
-	      if( isGoodMuon(WdaughterMatch) ) return 101300;
-	      else if( fabs(myMuonsPF->at(WdaughterMatch).eta) > 2.4 
-		       || fabs(myGenParticles->at(Wdaughter).eta) > 2.4 ) 
-		return 101301;
-	      else if( myMuonsPF->at(WdaughterMatch).pt < 10 
-		       || myGenParticles->at(Wdaughter).pt < 10 ) 
-		return 101302;
-	      else if ( (myMuonsPF->at(WdaughterMatch).chargedHadronIso
-			 + myMuonsPF->at(WdaughterMatch).photonIso
-			 + myMuonsPF->at(WdaughterMatch).neutralHadronIso)/myMuonsPF->at(WdaughterMatch).pt >=0.2 )
-		return 101303;
-	      else return 101304;
-	    }
-	  else
-	    {
-	      //cout << "unmatched daughter" << endl;
-	      //cout << "true index " << Wdaughter << endl;
-	      if(fabs(myGenParticles->at(Wdaughter).eta) > 2.4) return 201301;//
-	      else if(myGenParticles->at(Wdaughter).pt < 10) return 201302;//
-	      else return 201303;
-	    }
-	}
-      if(WdecayType == 15)//tau
-	{
-	  //cout << "tau match" << endl;
-	  if( WdaughterMatch > -1 ) // tau on jet list
-	    {
-	      if( isGoodJet(WdaughterMatch) ) return 101500;
-	      else return 101501;
-	    }
-	  else
-	    {
-	      return 201500;
-	    }
-	}
-    }
-  
-  return 0;
-}
-
-
-int EventCalculator::getWDecayType(int& WdecayType, int& W, int& Wdaughter, bool fromtop=true)
-{
-  if(myGenParticles == 0 || myGenParticles->size() == 0) return -1;
-
-  WdecayType = findW(W,Wdaughter, fromtop);
-  
-  int WdaughterMatch = -1;
-
-  if( WdecayType > 0 ) WdaughterMatch = daughterMatch(Wdaughter,WdecayType);
-
-  //cout << "done with matching" << endl;
-
-  if(WdecayType == 11 || WdecayType == 1511) //electron
-    {
-      //cout << "electron match" << endl;
-      if( WdaughterMatch > -1 ) // electron on electron list
-	{
-	  if( isGoodElectron(WdaughterMatch) ) 
-	    return 101100;//there is match, and it passes all cuts
-	  else if( 
-		  fabs(myElectronsPF->at(WdaughterMatch).superCluster_eta) > 2.5
-		  || fabs(myGenParticles->at(Wdaughter).eta) > 2.5 ) 
-	    //there is a match, but it is out of eta range
-	    return 101101;
-	  else if( myElectronsPF->at(WdaughterMatch).pt < 10 
-		   || myGenParticles->at(Wdaughter).pt < 10 ) 
-	    //there is a match, it is in eta range, but it is out of pt range
-	    return 101102;
-	  else if ((myElectronsPF->at(WdaughterMatch).chargedHadronIso
-		    + myElectronsPF->at(WdaughterMatch).photonIso
-		    + myElectronsPF->at(WdaughterMatch).neutralHadronIso)/myElectronsPF->at(WdaughterMatch).pt >=0.2 )
-	    //there is a match, it is in eta and pt range, but it fails isolation cut
-	    return 101103;
-	  else return 101104;//it fails some other quality cut
-	}
-      else
-	{
-	  if(fabs(myGenParticles->at(Wdaughter).eta) > 2.5) return 201101;//
-	  else if(myGenParticles->at(Wdaughter).pt < 10) return 201102;//
-	  else return 201103;
-	}
-    }
-  if(WdecayType == 13 || WdecayType == 1513) //muon
-    {
-      //cout << "muon match" << endl;
-      if( WdaughterMatch > -1 ) // muon on muon list
-	{
-	  //cout << "matched daughter" << endl;
-	  //cout << "true index " << Wdaughter << endl;
-	  //cout << "match index " << WdaughterMatch << endl;
-	  if( isGoodMuon(WdaughterMatch) ) return 101300;
-	  else if( fabs(myMuonsPF->at(WdaughterMatch).eta) > 2.4 
-		   || fabs(myGenParticles->at(Wdaughter).eta) > 2.4 ) 
-	    return 101301;
-	  else if( myMuonsPF->at(WdaughterMatch).pt < 10 
-		   || myGenParticles->at(Wdaughter).pt < 10 ) 
-	    return 101302;
-	  else if ( (myMuonsPF->at(WdaughterMatch).chargedHadronIso
-		     + myMuonsPF->at(WdaughterMatch).photonIso
-		     + myMuonsPF->at(WdaughterMatch).neutralHadronIso)/myMuonsPF->at(WdaughterMatch).pt >=0.2 )
-	    return 101303;
-	  else return 101304;
-	}
-      else
-	{
-	  //cout << "unmatched daughter" << endl;
-	  //cout << "true index " << Wdaughter << endl;
-	  if(fabs(myGenParticles->at(Wdaughter).eta) > 2.4) return 201301;//
-	  else if(myGenParticles->at(Wdaughter).pt < 10) return 201302;//
-	  else return 201303;
-	}
-    }
-  if(WdecayType == 15)//tau
-    {
-      //cout << "tau match" << endl;
-      if( WdaughterMatch > -1 ) // tau on jet list
-	{
-	  if( isGoodJet(WdaughterMatch) ) return 101500;
-	  else return 101501;
-	}
-      else
-	{
-	  return 201500;
-	}
-    }
-  
-  
-  return 0;
-}
-*/
 
 void EventCalculator::sampleAnalyzer() {
 

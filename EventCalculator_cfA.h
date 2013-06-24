@@ -386,7 +386,7 @@ public:
   int electronMatch(const int trueElectron);
   int tauMatch(const int trueTau);
   int daughterMatch(const int Wdaughter, const int WdecayType);
-  int getTTbarDecayType(int & leptonicTop, float & leptonEta, float & leptonPhi,float & leptonPt);
+  int getTTbarDecayType(int & leptonicTop, float & leptonEta, float & leptonPhi,float & leptonPt,int & hadWcode);
   int getTauDecayType(int tauid);
   int findJetMatchGenTau();
   float getMinDeltaRToJet(const float eta, const float phi, int &jetflavor);
