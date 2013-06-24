@@ -10187,14 +10187,12 @@ int EventCalculator::getTTbarDecayType(int & leptonicTop, float & leptonEta, flo
   foundhad /=2;
 
   if (sampleName_.Contains("TT")) { //for ttbar; not tested for T2tt but it would probably work
-    //classify the hadronic W decay
-    if (foundhad==1) { //i officially don't care about all hadronic ttbar
+    //classify the hadronic W decays
       for (int iq=1; iq<=5; iq++) {
 	//	if (foundq[iq]>0) cout<<" foundq "<<iq<<" ";
 	hadWcode += int(pow(10,iq-1)) * foundq[iq]; 
       }
       //      cout<<"\t hadWcode = "<<hadWcode<<endl;
-    }
 
     //then the classic lepton-focused classification
     if ( founde+foundmu == 2) return 1;
