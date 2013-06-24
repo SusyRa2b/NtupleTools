@@ -4342,11 +4342,11 @@ void EventCalculator::printDecay() {
       cout<<TMath::Nint(mc_doc_mother_id->at(k))<<"\t"<<mc_doc_eta->at(k)<<" "<<mc_doc_phi->at(k)<<" "<<mc_doc_pt->at(k)<<endl;
     }
 
-    if(abs(TMath::Nint(mc_doc_id->at(k))) >=1 && abs(TMath::Nint(mc_doc_id->at(k)))<=5 && abs(TMath::Nint(mc_doc_mother_id->at(k)))==21) cout<<"gluon splitting?"<<endl;
+    //    if(abs(TMath::Nint(mc_doc_id->at(k))) >=1 && abs(TMath::Nint(mc_doc_id->at(k)))<=5 && abs(TMath::Nint(mc_doc_mother_id->at(k)))==21) cout<<"gluon splitting?"<<endl;
   }
 
-  int a1,a2,a3,a4,a5;
-  findGluonSplitting(a1,a2,a3,a4,a5);
+  //int a1,a2,a3,a4,a5;
+  //  findGluonSplitting(a1,a2,a3,a4,a5);
 
 }
 
@@ -7134,6 +7134,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   //  float higgs1genMomId1,higgs1genMomId2,higgs2genMomId1,higgs2genMomId2;
   float higgs1partonId1,higgs1partonId2,higgs2partonId1,higgs2partonId2;
   float higgs1partonMomId1,higgs1partonMomId2,higgs2partonMomId1,higgs2partonMomId2;
+  bool higgs1tauMatch1,higgs1tauMatch2,higgs2tauMatch1,higgs2tauMatch2;
 
   float higgsWCandMass,higgsWCandMassAll;
 
@@ -7683,6 +7684,10 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("higgs1partonMomId2",&higgs1partonMomId2,"higgs1partonMomId2/F");
   reducedTree.Branch("higgs2partonMomId1",&higgs2partonMomId1,"higgs2partonMomId1/F");
   reducedTree.Branch("higgs2partonMomId2",&higgs2partonMomId2,"higgs2partonMomId2/F");
+  reducedTree.Branch("higgs1tauMatch1",&higgs1tauMatch1,"higgs1tauMatch1/O");
+  reducedTree.Branch("higgs1tauMatch2",&higgs1tauMatch2,"higgs1tauMatch2/O");
+  reducedTree.Branch("higgs2tauMatch1",&higgs2tauMatch1,"higgs2tauMatch1/O");
+  reducedTree.Branch("higgs2tauMatch2",&higgs2tauMatch2,"higgs2tauMatch2/O");
 
   reducedTree.Branch("higgsWCandMass",&higgsWCandMass,"higgsWCandMass/F");  
   reducedTree.Branch("higgsWCandMassAll",&higgsWCandMassAll,"higgsWCandMassAll/F"); 
@@ -8735,6 +8740,11 @@ void EventCalculator::reducedTree(TString outputpath) {
 	  higgs2partonMomId1 = jets_AK5PF_parton_motherId->at(h2j1);
 	  higgs2partonMomId2 = jets_AK5PF_parton_motherId->at(h2j2);
 
+	  higgs1tauMatch1 = (tauindex==h1j1);
+	  higgs1tauMatch2 = (tauindex==h1j2);
+	  higgs2tauMatch1 = (tauindex==h2j1);
+	  higgs2tauMatch2 = (tauindex==h2j2);
+
 	  maxDeltaPhi_bbbb = getMaxDelPhi(h1j1, h1j2, h2j1, h2j2);
 
 	  float delPhi_bb1 = getDeltaPhi(jets_AK5PF_phi->at(h1j1),jets_AK5PF_phi->at(h1j2) );
@@ -8828,7 +8838,7 @@ void EventCalculator::reducedTree(TString outputpath) {
       nbjetsCSVM = nGoodBJets( 50, kCSVM);
       nbjetsCSVL = nGoodBJets( 50, kCSVL);
 
-      //      printDecay();
+      //            printDecay();
 
       hadronicTopFinder_DeltaR(mjjb1,mjjb2,topPT1,topPT2);
 
