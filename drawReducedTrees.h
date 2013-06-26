@@ -264,6 +264,7 @@ TString fitRatio_="";
 bool logy_=false;
 bool logx_=false;
 bool dostack_=true;
+bool stackSignal_=true;
 bool doleg_=true;
 bool dodata_=true;
 bool addOverflow_=true;
@@ -753,7 +754,8 @@ int mainpadWidth; int mainpadHeight;
 int ratiopadHeight = 150;
 // TPad* mainPad=0;
 // TPad* ratioPad=0;
-void renewCanvas(const TString opt="") {
+void renewCanvas(const TString opt="",const int ncol=1) {
+  //careful: ncol argument is not supported by drawPlots()
   if (thecanvas!=0) delete thecanvas;
 
   int canvasWidth = mainpadWidth;
@@ -795,12 +797,24 @@ void renewCanvas(const TString opt="") {
     if (logx_) thecanvas->GetPad(1)->SetLogx();
   }
   else { 
-    if (logy_) thecanvas->SetLogy(); 
-    if (logx_) thecanvas->SetLogx();
-}
+    //    cout<<"[ renewCanvas ] "<<ncol<<endl;
+    if (ncol>1) {  //only support multple columns for the no ratio plot option -- this is a hack!
+      thecanvas->Divide(ncol,1);
+      for (int icol=1;icol<=ncol;icol++) {
+	if (logy_) thecanvas->GetPad(icol)->SetLogy(); 
+	if (logx_) thecanvas->GetPad(icol)->SetLogx();
+      }
+
+    }
+    else {
+      if (logy_) thecanvas->SetLogy(); 
+      if (logx_) thecanvas->SetLogx();
+    }
+
+  }
 
 
-  int cdarg = opt.Contains("ratio") ? 1 : 0;
+  int cdarg = (opt.Contains("ratio") || ncol>1) ? 1 : 0;
   thecanvas->cd(cdarg);
 
 }
@@ -1959,6 +1973,7 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
       addDataToChain(idataset->second,"MET_Run2012A");
       addDataToChain(idataset->second,"MET_Run2012B");
       addDataToChain(idataset->second,"MET_Run2012C");
+      addDataToChain(idataset->second,"MET_Run2012D");
     }
     else if (idataset->first == "MuHad") {
       idataset->second = new TChain(reducedTreeName_);
@@ -2414,7 +2429,7 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
 
     if (dostack_) { //add histo to stack
       //but *don't* add more than one signal to the stack
-      if (isSampleSM(samples_[isample]) || signals.size()<=1) thestack->Add(histos_[samples_[isample]] );
+      if ( isSampleSM(samples_[isample]) || (signals.size()<=1 && stackSignal_)) thestack->Add(histos_[samples_[isample]] );
     }
     else { //draw non-stacked histo
       //normalize
@@ -2484,25 +2499,38 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
     }
 
     //ok, if we've got "extra" signals we need to draw them here (so skip the first one)
-    for (unsigned int isig=1; isig<signals.size(); isig++) {
-      //first we need a name
-      TString extrasignalname="totalsmPlus";
-      extrasignalname+= signals.at(isig);
-      //now clone the totalsm and add the signal to it
-      TH1D* newtotal = (TH1D*) totalsm->Clone(extrasignalname);
-      newtotal->Add( histos_[signals.at(isig)]);
-      //now plop the newtotal into histos_
-      histos_[signals.at(isig)] = newtotal;
-      //FIXME need to adjust the plot max in case this is higher than the stack
-
+    //unless we're not stacking signal, in which case we need to draw them all
+    for (unsigned int isig= (stackSignal_ ? 1:0); isig<signals.size(); isig++) {
+      if (stackSignal_) {
+	//first we need a name
+	TString extrasignalname="totalsmPlus";
+	extrasignalname+= signals.at(isig);
+	//now clone the totalsm and add the signal to it
+	TH1D* newtotal = (TH1D*) totalsm->Clone(extrasignalname);
+	newtotal->Add( histos_[signals.at(isig)]);
+	//now plop the newtotal into histos_
+	histos_[signals.at(isig)] = newtotal;
+	//FIXME need to adjust the plot max in case this is higher than the stack
+      }
+      //if not stacking signal, just draw the signals without the addition of totalsm
       //now draw
       cout<<"drawing "<<signals.at(isig)<<endl;
-      newtotal->SetLineColor(getSampleColor(signals.at(isig)));
-      newtotal->SetLineStyle(sampleLineStyle_[signals.at(isig)]);
-      newtotal->Draw("SAME HIST");
+      histos_[signals.at(isig)]->SetLineColor(getSampleColor(signals.at(isig)));
+      histos_[signals.at(isig)]->SetLineStyle(sampleLineStyle_[signals.at(isig)]);
+      histos_[signals.at(isig)]->Draw("SAME HIST");
     }
 
     if (doCustomPlotMax_) thestack->SetMaximum(customPlotMax_);
+    else {
+      if (!dodata_) { //in case of drawing data, this will be handled later
+	double	mymax = thestack->GetMaximum();
+	if ( findOverallMax(totalsm) >mymax) mymax = findOverallMax(totalsm);
+	for (unsigned int isample=0; isample<samples_.size(); isample++) {
+	  if ( findOverallMax( histos_[samples_[isample]])>mymax) mymax = findOverallMax( histos_[samples_[isample]]);
+	}
+	thestack->SetMaximum( maxScaleFactor_*mymax);
+      }
+    }
     if (doCustomPlotMin_) thestack->SetMinimum(customPlotMin_);
   } //if doStack_
 
@@ -2638,7 +2666,7 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
     int ns=0;
     for (unsigned int isample=0; isample<samples_.size(); isample++) {
       if (!isSampleSM( samples_[isample])) ns++;
-      if ( isSampleSM( samples_[isample]) || ns<=1 || !dostack_) 
+      if ( isSampleSM( samples_[isample]) || ns<=1 || !dostack_ ||(dostack_&&!stackSignal_)) 
 	cout<<samples_[isample]<<" =\t "<<histos_[samples_[isample]]->Integral()<<" +/- "<<jmt::errOnIntegral(histos_[samples_[isample]])<<endl;
       else  //starting with the 2nd signal, the total sm will be included, so we need to get rid of it (only for dostack_ true)
 	cout<<samples_[isample]<<" =\t "<<histos_[samples_[isample]]->Integral()-totalsm->Integral()<<endl;
