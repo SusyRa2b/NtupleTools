@@ -2323,6 +2323,9 @@ bool EventCalculator::isGoodJet(const unsigned int ijet, const float pTthreshold
   if ( getJetPt(ijet) <pTthreshold) return false;
   if ( fabs(jets_AK5PF_eta->at(ijet)) > etaMax) return false;
   if ( jetid && !jetPassLooseID(ijet) ) return false;
+  
+  //PU beta check
+  //if ( pujet_beta[ijet] < 0.2 ) return false;
 
   //do manual cleaning for reco pfjets
   if(theJetType_ == kRECOPF){
@@ -5119,6 +5122,12 @@ Long64_t EventCalculator::getNEventsGenerated( TString sample) {
 
   if (sample.Contains("UCSB1677")) return 20646001; // W+bb
 
+  //v69 
+  if (sample.Contains("UCSB1798")) return 6923750; 
+  if (sample.Contains("UCSB1799")) return 12011428; 
+  if (sample.Contains("UCSB1800")) return 24953451; 
+  if (sample.Contains("UCSB1804")) return 19365927; 
+  if (sample.Contains("UCSB1806")) return 19514018;
 
   cout<<"[getNEventsGenerated] unknown sample "<<sample<<endl;
   assert(0);
@@ -5194,6 +5203,9 @@ double EventCalculator::getCrossSection(){
   if (sampleName_.BeginsWith("TT_CT10_TuneZ2star_8TeV-powheg")) return 234;  //approx NNLO
   if (sampleName_.BeginsWith("TT_8TeV-mcatnlo")) return 234; //approx NNLO
 
+  if (sampleName_.BeginsWith("TTJets_FullLeptMGDecays_8TeV-madgraph-tauola")) return 13.43 ; //Correct?
+  if (sampleName_.BeginsWith("TTJets_SemiLeptMGDecays_8TeV-madgraph-tauola")) return 53.2  ; //Correct?
+
   if (sampleName_.BeginsWith("TTTo2L2Nu2B_8TeV-powheg-pythia6_Summer12")) return 22.14 *(234.0 / 136.3); //PREP corrected to NNLO
 
   if (sampleName_.BeginsWith("TTJets_FullLeptMGDecays_8TeV-madgraph")) return 13.43*(234.0 / (13.43+53.4+53.2)); // PREP corrected to NNLO
@@ -5216,6 +5228,8 @@ double EventCalculator::getCrossSection(){
   if (sampleName_.Contains("sbottom8lnotaus-185-250")) return 5.7; //LO madgraph
   if (sampleName_.Contains("sbottom8lnotaus-189-270")) return 3.7; //LO madgraph
   if (sampleName_.Contains("sbottom8lnotaus-217-300")) return 2.0; //LO madgraph
+
+
 
   std::cout<<"Cannot find cross section for this sample!"<<std::endl;
   assert(0); 
@@ -6004,6 +6018,95 @@ void EventCalculator::jjResonanceFinder5(float & mjj1, float & mjj2) {
   }
 
 }
+
+
+void EventCalculator::extractPUJetVars_Beta(std::vector<float> &beta, TString which ) {
+
+  int totjet = 0;
+  int matches = 0;
+  for (unsigned int ijet=0; ijet<jets_AK5PF_pt->size(); ++ijet) {
+    const float pt = getJetPt(ijet);
+    const float eta = fabs(jets_AK5PF_eta->at(ijet));
+
+    int i = 0;
+    totjet++;
+    for (std::vector<std::vector<float> >::const_iterator itr = puJet_rejectionBeta->begin(); itr != puJet_rejectionBeta->end(); ++itr, ++i) {
+        int j = 0;
+        float mypt = 0;
+        float myeta = 0;
+        float mybeta = 0;
+        float result = 0;
+        float tmp1 = 0, tmp2 = 0, tmp3 = 0, tmp4 = 0;
+        for ( std::vector<float>::const_iterator it = itr->begin(); it != itr->end(); ++it, ++j) {
+      
+          if ( (j%6)==0 ) mypt = *it;  
+          if ( (j%6)==1 ) myeta = fabs(*it); 
+          if ( (j%6)==2 ) tmp1 = *it;  
+          if ( (j%6)==3 ) tmp2 = *it;  
+          if ( (j%6)==4 ) tmp3 = *it;  
+          if ( (j%6)==5 ) tmp4 = *it;  
+
+          if ( which == "beta" )                 result = tmp1; 
+          else if ( which == "betaStar" )        result = tmp2; 
+          else if ( which == "betaClassic" )     result = tmp3; 
+          else if ( which == "betaStarClassic" ) result = tmp4; 
+          else result = -5; //Don't assert..
+
+        }//vector of info of each jet
+        if ( mypt == pt && myeta == eta ) {
+          matches++;
+          mybeta = result;
+          beta.push_back(mybeta);
+          break;
+        }     
+    }//vector of jets
+  } //ijet
+}
+
+void EventCalculator::extractPUJetVars_MVA(std::vector<float> & bdt, std::vector<int> & discrim, TString which ) {
+
+  int totjet = 0;
+  int matches = 0;
+  for (unsigned int ijet=0; ijet<jets_AK5PF_pt->size(); ++ijet) {
+      const float pt = getJetPt(ijet);
+      const float eta = fabs(jets_AK5PF_eta->at(ijet));
+
+      totjet++;
+      int i = 0;
+      for (std::vector<std::vector<float> >::const_iterator itr = puJet_rejectionMVA->begin(); itr != puJet_rejectionMVA->end(); ++itr, ++i) {
+        int j = 0;
+        float mypt = 0;
+        float myeta = 0;
+        float mybdt = 0;
+        int   mydis = 0;
+        float result1 = 0;
+        int   result2 = 0;
+        for ( std::vector<float>::const_iterator it = itr->begin(); it != itr->end(); ++it, ++j) {
+          //Find the correct jet in this collection and get what is wanted 
+          if ( (j%6)==0 ) mypt = *it;  
+          if ( (j%6)==1 ) myeta = fabs(*it); 
+          if ( which == "full" ) {
+            if ( (j%6)==2 ) result1 = *it;  
+            if ( (j%6)==3 ) result2 = *it;  
+          }     
+          else if ( which == "cutbased" )  {
+            if ( (j%6)==4 ) result1 = *it;  
+            if ( (j%6)==5 ) result2 = *it;  
+          }     
+          else { result1 = -5; result2 = -5; }//Don't assert..
+
+        }     
+        if ( mypt == pt && myeta == eta ) { 
+          mybdt = result1; 
+          mydis = result2;
+          matches++;
+          bdt.push_back(mybdt);
+          discrim.push_back(mydis);
+          break;
+        }     
+      }     
+  } //ijet
+}//end method
 
 
 void EventCalculator::loadJetTagEffMaps() {
@@ -7168,6 +7271,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   float rl,rMET;
 
   float METsig,METsig00,METsig10,METsig11;
+  float METsig_2012,METsig00_2012,METsig10_2012,METsig11_2012;
 
   int MT_bestCSV_gencode;
   float MT_b,MT_bestCSV,MT_jim,minMT_jetMET;
@@ -7750,6 +7854,11 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("METsig10",&METsig10,"METsig10/F");
   reducedTree.Branch("METsig11",&METsig11,"METsig11/F");
 
+  reducedTree.Branch("METsig_2012",&METsig_2012,"METsig_2012/F");
+  reducedTree.Branch("METsig00_2012",&METsig00_2012,"METsig00_2012/F");
+  reducedTree.Branch("METsig10_2012",&METsig10_2012,"METsig10_2012/F");
+  reducedTree.Branch("METsig11_2012",&METsig11_2012,"METsig11_2012/F");
+
 
   reducedTree.Branch("caloMET",&caloMET,"caloMET/F");
   reducedTree.Branch("caloMETphi",&caloMETphi,"caloMETphi/F");
@@ -8158,6 +8267,14 @@ void EventCalculator::reducedTree(TString outputpath) {
     }
     if (entry%100000==0 ) cout << "  entry: " << entry << ", percent done=" << (int)(entry/(double)nevents*100.)<<  endl;
 
+    // PU Jet stuff
+    // Should do this as soon as possible since we want to fill/extract beta values for jets before any function calls isGoodJet
+
+    extractPUJetVars_Beta(pujet_beta,"beta");
+    extractPUJetVars_MVA(pujet_MVAfull,pujet_MVAfullID,"full");
+    //extractPUJetVars_Beta(pujet_betaClassic,"betaClassic"); //example
+    //extractPUJetVars_MVA(pujet_MVAcutbased,pujet_MVAcutbasedID,"cutbased"); //example
+
 
     //    pair<int,int> thispoint;
     smsMasses thispoint;
@@ -8211,7 +8328,7 @@ void EventCalculator::reducedTree(TString outputpath) {
 	scanSMSngen3D->Fill(m0,m12,mIntermediate);
       }
       else if (theScanType_==kpmssm)  scanpMSSMngen->Fill(getRunNumber() );
-
+ 
       if ( sampleName_.Contains("v68")) {
 	for (int ipdf=0;ipdf<45;ipdf++) {
 	  pdfWeightsCTEQ[ipdf] = getPDFweight(1,ipdf); //1==cteq
@@ -8905,6 +9022,10 @@ void EventCalculator::reducedTree(TString outputpath) {
       METsig00 = pfmets_fullSignifCov00;
       METsig10 = pfmets_fullSignifCov10;
       METsig11 = pfmets_fullSignifCov11;
+      METsig_2012 = pfmets_fullSignif_2012;
+      METsig00_2012 = pfmets_fullSignifCov00_2012;
+      METsig10_2012 = pfmets_fullSignifCov10_2012;
+      METsig11_2012 = pfmets_fullSignifCov11_2012;
 
       caloMET = mets_AK5_et->at(0);
       caloMETphi = mets_AK5_phi->at(0);
@@ -9251,9 +9372,12 @@ void EventCalculator::reducedTree(TString outputpath) {
       //after looking at keith's code it is the new name for the old particle-based noise rejection
       PBNRcode = doPBNR();
 
+      //hbhe filter turned OFF -- in cfA_v69 it is always 0!
       passCleaning = csctighthaloFilter 
 	//	&& eenoiseFilter 
-	&& greedymuonFilter && hbhenoiseFilter && inconsistentmuonFilter 
+	&& greedymuonFilter 
+	//&& hbhenoiseFilter 
+	&& inconsistentmuonFilter 
 	&& ra2ecaltpFilter && scrapingvetoFilter && trackingfailureFilter
 	&& hcallaser && ecallaser && eebadsc && (PBNRcode>0) && badjetFilter; //last line are new for 2012
 
@@ -11540,6 +11664,8 @@ void EventCalculator::InitializeA(TChain *fChain)
    PU_NumInteractions = 0;
    PU_bunchCrossing = 0;
    PU_TrueNumInteractions = 0;
+   puJet_rejectionBeta = 0;
+   puJet_rejectionMVA = 0;
 
    fChain->SetBranchAddress("trigger_prescalevalue", &trigger_prescalevalue, &b_trigger_prescalevalue);
    fChain->SetBranchAddress("trigger_name", &trigger_name, &b_trigger_name);
@@ -11623,7 +11749,12 @@ void EventCalculator::InitializeA(TChain *fChain)
    fChain->SetBranchAddress("pfmets_fullSignifCov11", &pfmets_fullSignifCov11, &b_pfmets_fullSignifCov11);
    fChain->SetBranchAddress("softjetUp_dMEx", &softjetUp_dMEx, &b_softjetUp_dMEx);
    fChain->SetBranchAddress("softjetUp_dMEy", &softjetUp_dMEy, &b_softjetUp_dMEy);
-
+   fChain->SetBranchAddress("pfmets_fullSignif_2012", &pfmets_fullSignif_2012, &b_pfmets_fullSignif_2012);
+   fChain->SetBranchAddress("pfmets_fullSignifCov00_2012", &pfmets_fullSignifCov00_2012, &b_pfmets_fullSignifCov00_2012);
+   fChain->SetBranchAddress("pfmets_fullSignifCov10_2012", &pfmets_fullSignifCov10_2012, &b_pfmets_fullSignifCov10_2012);
+   fChain->SetBranchAddress("pfmets_fullSignifCov11_2012", &pfmets_fullSignifCov11_2012, &b_pfmets_fullSignifCov11_2012);
+   fChain->SetBranchAddress("puJet_rejectionBeta", &puJet_rejectionBeta, &b_puJet_rejectionBeta);
+   fChain->SetBranchAddress("puJet_rejectionMVA", &puJet_rejectionMVA, &b_puJet_rejectionMVA);
 
    //special! added by hand for signal
    pdfweights_cteq=0;

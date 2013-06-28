@@ -442,6 +442,15 @@ public:
   void dumpEvent ();
   TString getSampleNameOutputString();
 
+  //PU Jet rejection stuff
+  //Declare them global to use them as needed
+  //Goes against the design, I know. Sorry Josh. 
+  std::vector<float> pujet_beta;
+  std::vector<float> pujet_MVAfull;
+  std::vector<int> pujet_MVAfullID;
+
+  void extractPUJetVars_Beta(std::vector<float> & beta, TString which ); 
+  void extractPUJetVars_MVA(std::vector<float>  & bdt, std::vector<int> & discrim, TString which ); 
 
   //bookkeeping
   TString getCutDescriptionString();
@@ -694,6 +703,12 @@ private:
    Float_t         pfmets_fullSignifCov11;
    Float_t         softjetUp_dMEx;
    Float_t         softjetUp_dMEy;
+   Float_t         pfmets_fullSignif_2012;
+   Float_t         pfmets_fullSignifCov00_2012;
+   Float_t         pfmets_fullSignifCov10_2012;
+   Float_t         pfmets_fullSignifCov11_2012;
+   std::vector<std::vector<float> > *puJet_rejectionBeta;
+   std::vector<std::vector<float> > *puJet_rejectionMVA;
 
    // List of branches
    TBranch        *b_trigger_prescalevalue;   //!
@@ -778,6 +793,12 @@ private:
    TBranch        *b_pfmets_fullSignifCov11;   //!
    TBranch        *b_softjetUp_dMEx;   //!
    TBranch        *b_softjetUp_dMEy;   //!
+   TBranch        *b_pfmets_fullSignif_2012;   //!  
+   TBranch        *b_pfmets_fullSignifCov00_2012;   //!  
+   TBranch        *b_pfmets_fullSignifCov10_2012;   //!  
+   TBranch        *b_pfmets_fullSignifCov11_2012;   //!  
+   TBranch        *b_puJet_rejectionBeta;   //!
+   TBranch        *b_puJet_rejectionMVA;    //!
 
    // Declaration of leaf types
    UInt_t          NbeamSpot;
