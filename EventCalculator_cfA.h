@@ -136,7 +136,6 @@ public:
   Long64_t getNEventsGenerated(TString sample="");
   Long64_t getNEventsGeneratedExtended();
   float getPUWeight(reweight::LumiReWeighting lumiWeights);
-  //  float getPUWeight(/* Lumi3DReWeighting lumiWeights*/); //FIXME CFA
 
   float getMuonRelIso(const unsigned int k);
   float getElectronRelIso(const unsigned int k, const bool use2012id);
@@ -223,7 +222,7 @@ public:
   float getDeltaPhi_hb(int j_index_1,int j_index_2) ;
 
   unsigned int getNthGoodJet(unsigned int goodJetN, float mainpt, float maineta, bool mainid);
-  double getMinDeltaPhiMET(unsigned int maxjets);
+  double getMinDeltaPhiMET(unsigned int maxjets,float ptthreshold=50);
   double getTransverseMETError(unsigned int thisJet);
   double getDeltaPhiMET(unsigned int n, float ptThreshold = 50, bool bjetsonly = false);
 
@@ -272,7 +271,7 @@ public:
   ULong64_t getEventNumber() {return event;}
 
   bool isCleanJet(const unsigned int ijet);
-  bool isGoodJet(const unsigned int ijet, const float pTthreshold=50, const float etaMax=2.4, const bool jetid=true); //subset of isCleanJet
+  bool isGoodJet(const unsigned int ijet, const float pTthreshold=50, const float etaMax=2.4, const bool jetid=true,const bool usebeta=true); //subset of isCleanJet
   bool isGoodJet10(unsigned int ijet) {return isGoodJet(ijet,10,2.4,true);}
   bool isGoodJet30(unsigned int ijet) {return isGoodJet(ijet,30,2.4,true);}
   bool isGoodJetMHT(unsigned int ijet);
@@ -281,6 +280,7 @@ public:
   float getCosHel( TLorentzVector  d1,  TLorentzVector  d2) ;
 
   unsigned int nGoodJets(const float ptthreshold=50, const float etaMax=2.4);
+  unsigned int nPUJets(const float ptthreshold, const float etaMax=2.4);
   //  unsigned int nGoodJets(TH2D* count,TH2D* unc,TH2D* l2l3); //for a test
   unsigned int nGoodJets30();
   unsigned int nGoodBJets(float ptthreshold=50, BTaggerType btagger=Nbtaggers);
@@ -319,7 +319,7 @@ public:
   float bjetPhiOfN(unsigned int n);
   float bjetEtaOfN(unsigned int n);
   float bjetEnergyOfN(unsigned int n);
-  float bjetBestCSV(unsigned int n);
+  float bjetBestCSV(unsigned int n,const float ptthreshold);
   float bjetCSVOfN(unsigned int n);
   int bjetFlavorOfN(unsigned int n);
   float bjetChargedHadronFracOfN(unsigned int n);
@@ -615,6 +615,8 @@ private:
   bool  recalculatedVariables_;
 
   TStopwatch* watch_; //not used for everyday running; just for testing
+
+  float minHiggsJetPt_;
 
   // ==== BEGIN giant copy/paste of cfA variables =============================================================
   // generated from ra2b skimmed v65 --

@@ -97,6 +97,7 @@ EventCalculator::EventCalculator(const TString & sampleName, const vector<string
   starttime_(0),
   recalculatedVariables_(false),
   watch_(0),
+  minHiggsJetPt_(30), //defines the min jet pT of the higgs candidates (mass diff method)
   //new cfA stuff
   chainB( new TChain("/configurableAnalysis/eventB")),
   chainV( 0),
@@ -436,9 +437,9 @@ double EventCalculator::getWeight(Long64_t nentries) {
 //https://twiki.cern.ch/twiki/bin/viewauth/CMS/PileupMCReweightingUtilities
 float EventCalculator::getPUWeight( reweight::LumiReWeighting lumiWeights ) {
   if (isSampleRealData() ) return 1;
-
+  //  cout<<" ----"<<endl;
   float weight=1;
-  int npv = -1;
+  float npv = -1;
   for ( unsigned int i = 0; i<PU_bunchCrossing->size() ; i++) {
     //consider only in-time PU
     int BX =PU_bunchCrossing->at(i) ;
@@ -447,7 +448,8 @@ float EventCalculator::getPUWeight( reweight::LumiReWeighting lumiWeights ) {
     }
   }
   //in-time PU only
-  weight = lumiWeights.ITweight( npv );
+  weight = lumiWeights.ITweight( npv ); 
+
   return weight;
 }
 
@@ -1674,7 +1676,7 @@ float EventCalculator::getMaxJetFracMis(unsigned int rank=1, unsigned int maxjet
   else { assert(0); }
 }
 
-double EventCalculator::getMinDeltaPhiMET(unsigned int maxjets) {
+double EventCalculator::getMinDeltaPhiMET(unsigned int maxjets,float ptthreshold) {
 
   double mindp=99;
 
@@ -1682,7 +1684,7 @@ double EventCalculator::getMinDeltaPhiMET(unsigned int maxjets) {
   //get the minimum angle between the first n jets and MET
   for (unsigned int i=0; i< jets_AK5PF_pt->size(); i++) {
     
-    if (isGoodJet(i)) {
+    if (isGoodJet(i,ptthreshold)) {
       ++ngood;
       double dp =  getDeltaPhi( jets_AK5PF_phi->at(i) , getMETphi());
       if (dp<mindp) mindp=dp;
@@ -2318,14 +2320,14 @@ float EventCalculator::deltaRClosestTwoBjets(int & jetindex1, int & jetindex2,co
 }
 
 
-bool EventCalculator::isGoodJet(const unsigned int ijet, const float pTthreshold, const float etaMax, const bool jetid) {
+bool EventCalculator::isGoodJet(const unsigned int ijet, const float pTthreshold, const float etaMax, const bool jetid,const bool usebeta) {
 
   if ( getJetPt(ijet) <pTthreshold) return false;
   if ( fabs(jets_AK5PF_eta->at(ijet)) > etaMax) return false;
   if ( jetid && !jetPassLooseID(ijet) ) return false;
   
   //PU beta check
-  //if ( pujet_beta[ijet] < 0.2 ) return false;
+  if ( usebeta && pujet_beta[ijet] < 0.2 ) return false;
 
   //do manual cleaning for reco pfjets
   if(theJetType_ == kRECOPF){
@@ -2392,6 +2394,21 @@ unsigned int EventCalculator::nGoodJets(const float ptthreshold, const float eta
     if (isGoodJet(i,ptthreshold,etaMax) )   njets++;
   }
   return njets;
+}
+
+unsigned int EventCalculator::nPUJets(const float ptthreshold, const float etaMax) {
+
+  //this is a computationally inefficient way to do it...oh well
+
+  unsigned int ngoodjetstotal = nGoodJets(ptthreshold,etaMax);
+
+  unsigned int njetstotal=0;
+  for (unsigned int i=0; i < jets_AK5PF_pt->size(); ++i) {
+    //disable beta cut
+    if (isGoodJet(i,ptthreshold,etaMax,true,false) )   njetstotal++;
+  }
+  if (ngoodjetstotal>njetstotal) {cout<<" nPUJets problem"<<endl; return 0;}
+  return njetstotal - ngoodjetstotal;
 }
 
 //this was for testing only...to fill these special histograms
@@ -3430,10 +3447,10 @@ float EventCalculator::bjetCSVOfN(unsigned int n) {
   return 0;
 }
 
-float EventCalculator::bjetBestCSV(unsigned int n) {
+float EventCalculator::bjetBestCSV(unsigned int n,const float ptthreshold) {
   float CSVvalues[4] = {0.,0.,0.,0.};
   for (unsigned int i=0; i<jets_AK5PF_pt->size(); i++) {
-    if (isGoodJet(i,20) ) {
+    if (isGoodJet(i,ptthreshold) ) {
        float CSVval = getJetCSV(i);
        if (CSVval>CSVvalues[0]) { CSVvalues[3]=CSVvalues[2]; CSVvalues[2]=CSVvalues[1]; CSVvalues[1]=CSVvalues[0]; CSVvalues[0] = CSVval;}
        else if (CSVval>CSVvalues[1]) { CSVvalues[3]=CSVvalues[2]; CSVvalues[2]=CSVvalues[1]; CSVvalues[1]= CSVval;}
@@ -5769,7 +5786,7 @@ std::pair<float,float> EventCalculator::minDeltaMassPairs(float & higgsMbb1,floa
   //find the 4 most b-like good jets
   set<pair< float, int> > jets_sorted_by_bdisc;
   for (unsigned int kk=0; kk<jets_AK5PF_pt->size(); kk++) {
-    if (isGoodJet(kk,20) ) { 
+    if (isGoodJet(kk,minHiggsJetPt_) ) { 
       float bdiscval = jets_AK5PF_btag_secVertexCombined->at(kk);
       jets_sorted_by_bdisc.insert(make_pair(bdiscval,kk));
     }
@@ -7086,7 +7103,7 @@ void EventCalculator::reducedTree(TString outputpath) {
 
   ULong64_t lumiSection, eventNumber, runNumber;
   //  float METsig;
-  float ST, STeff, HT, HT30,MHT, MET, METphi, minDeltaPhi, minDeltaPhiAll, minDeltaPhiAll30,minDeltaPhi30_eta5_noIdAll;
+  float ST, STeff, HT, HT30,MHT, MET, METphi, minDeltaPhi, minDeltaPhi30,minDeltaPhi20,minDeltaPhiAll, minDeltaPhiAll30,minDeltaPhi30_eta5_noIdAll;
   //  float correctedMET, correctedMETphi
   float caloMET,caloMETphi;
   float rawPFMET,rawPFMETphi;
@@ -7208,6 +7225,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   map<TString, triggerData > triggerlist_mc(triggerlist);
 
   int njets, njets30, nbjets, nbjets30,ntruebjets, nElectrons,nElectrons2011, nMuons, nTightMuons,njets20,njets20_5p0,nbjets20;
+  int nPUjets20,nPUjets30;
   int nGluonsSplitToLF,nGluonsSplitToC,nGluonsSplitToB;
   int nElectronsNoRelIso, nMuonsNoRelIso;
   int njetsHiggsMatch20, njetsHiggsMatch20_CSVT,njetsHiggsMatch20_CSVM,njetsHiggsMatch20_CSVL;
@@ -7687,6 +7705,8 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("njets",&njets,"njets/I");
   reducedTree.Branch("njets30",&njets30,"njets30/I");
   reducedTree.Branch("njets20",&njets20,"njets20/I");
+  reducedTree.Branch("nPUjets30",&nPUjets30,"nPUjets30/I");
+  reducedTree.Branch("nPUjets20",&nPUjets20,"nPUjets20/I");
   reducedTree.Branch("njets20_5p0",&njets20_5p0,"njets20_5p0/I");
   reducedTree.Branch("njetsHiggsMatch20",&njetsHiggsMatch20,"njetsHiggsMatch20/I");
   reducedTree.Branch("ncompleteHiggsReco20",&ncompleteHiggsReco20,"ncompleteHiggsReco20/I");
@@ -7917,6 +7937,8 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("minDeltaPhi",&minDeltaPhi,"minDeltaPhi/F");
   reducedTree.Branch("minDeltaPhiAll",&minDeltaPhiAll,"minDeltaPhiAll/F");
   reducedTree.Branch("minDeltaPhiAll30",&minDeltaPhiAll30,"minDeltaPhiAll30/F");
+  reducedTree.Branch("minDeltaPhi20",&minDeltaPhi20,"minDeltaPhi20/F");
+  reducedTree.Branch("minDeltaPhi30",&minDeltaPhi30,"minDeltaPhi30/F");
   reducedTree.Branch("minDeltaPhi30_eta5_noIdAll",&minDeltaPhi30_eta5_noIdAll,"minDeltaPhi30_eta5_noIdAll/F");
 
   reducedTree.Branch("minDeltaPhiMetTau",&minDeltaPhiMetTau,"minDeltaPhiMetTau/F");
@@ -8546,27 +8568,12 @@ void EventCalculator::reducedTree(TString outputpath) {
 	tauMatch_jetcsv = -1;
 	tauMatch_MT = -1;
       }
-/*
-      //single-top tW-channel has two W's (one from a top)
-      if (sampleName_.Contains("T_TuneZ2_tW-channel") || sampleName_.Contains("Tbar_TuneZ2_tW-channel")) {
-	int W1, W1daughter, W2, W2daughter;	
-	getWDecayType(W2decayType, W2, W2daughter, false); //FIXME CFA
-	decayType = getTTbarDecayType(W1decayType, W2decayType, W1, W1daughter, W2, W2daughter,true); //FIXME CFA
-      }
-      //if we are running of w+jets fill info on decay mode
-      //single-top s/t-channel also has one W (from a top)
-      if (sampleName_.Contains("WJetsToLNu") 
-	  || sampleName_.Contains("T_TuneZ2_s-channel") || sampleName_.Contains("Tbar_TuneZ2_s-channel") 
-	  || sampleName_.Contains("T_TuneZ2_t-channel") || sampleName_.Contains("Tbar_TuneZ2_t-channel")){
-	int W1, W1daughter;
-	decayType = getWDecayType(W1decayType, W1, W1daughter, false); //FIXME CFA
-      }
-*/
+
+      nGoodPV = countGoodPV();
 
       HT30=getHT(30);
-      PUweight =  puReweightIs1D ? getPUWeight(*LumiWeights) : 1;// FIXME CFA getPUWeight(*LumiWeights3D);
-      PUweightSystVar =  puReweightIs1D ? getPUWeight(*LumiWeightsSystVar) : 1;// FIXME CFA getPUWeight(*LumiWeights3D);
-      //      pfmhtweight = getPFMHTWeight();
+      PUweight =  puReweightIs1D ? getPUWeight(*LumiWeights) : 1;
+      PUweightSystVar =  puReweightIs1D ? getPUWeight(*LumiWeightsSystVar) : 1;
 
       cutPV = passPV();
 
@@ -8583,8 +8590,6 @@ void EventCalculator::reducedTree(TString outputpath) {
 
       pass_utilityPrescaleModuleHLT = passUtilityPrescaleModuleHLT();
 
-      nGoodPV = countGoodPV();
-
       SUSY_nb = sampleIsSignal_ ? getSUSYnb() : 0;
       //      bjetSumSUSY[thispoint] += SUSY_nb;
       //if(SUSY_process==NotFound) cout<<"SUSY_nb = "<<SUSY_nb<<endl;
@@ -8594,6 +8599,10 @@ void EventCalculator::reducedTree(TString outputpath) {
       njets30 = nGoodJets30();
       njets20 = nGoodJets(20);
       njets20_5p0 = nGoodJets(20,5.0);
+
+      //uses central eta
+      nPUjets20 = nPUJets(20);
+      nPUjets30 = nPUJets(30);
 
       //look for jj resonances
       jjResonanceFinder(mjj1,mjj2, nCorrectRecoStop);
@@ -8972,10 +8981,10 @@ void EventCalculator::reducedTree(TString outputpath) {
       CSVout1=bjetCSVOfN(1);
       CSVout2=bjetCSVOfN(2);
       CSVout3=bjetCSVOfN(3);
-      CSVbest1=bjetBestCSV(1);
-      CSVbest2=bjetBestCSV(2);
-      CSVbest3=bjetBestCSV(3);
-      CSVbest4=bjetBestCSV(4);
+      CSVbest1=bjetBestCSV(1,minHiggsJetPt_);
+      CSVbest2=bjetBestCSV(2,minHiggsJetPt_);
+      CSVbest3=bjetBestCSV(3,minHiggsJetPt_);
+      CSVbest4=bjetBestCSV(4,minHiggsJetPt_);
       minDeltaPhiAllb30=getMinDeltaPhiMET30(99,true);
       deltaPhib1=getDeltaPhiMET(1,30,true);
       deltaPhib2=getDeltaPhiMET(2,30,true); 
@@ -9041,11 +9050,13 @@ void EventCalculator::reducedTree(TString outputpath) {
       minDeltaPhi = getMinDeltaPhiMET(3);
       minDeltaPhiAll = getMinDeltaPhiMET(99);
       minDeltaPhiAll30 = getMinDeltaPhiMET30(99);
+      minDeltaPhi20 = getMinDeltaPhiMET(3,20);
       minDeltaPhi30_eta5_noIdAll = getMinDeltaPhiMET30_eta5_noId(99);
       maxDeltaPhi = getMaxDeltaPhiMET(3);
       maxDeltaPhiAll = getMaxDeltaPhiMET(99);
       maxDeltaPhiAll30 = getMaxDeltaPhiMET30(99);
       maxDeltaPhi30_eta5_noIdAll = getMaxDeltaPhiMET30_eta5_noId(99);
+      minDeltaPhi30=getMinDeltaPhiMET30(3,false);
       
       int j_index_1,j_index_2;
       deltaR_bestTwoCSV = deltaRBestTwoBjets(j_index_1,j_index_2);
