@@ -5220,8 +5220,9 @@ double EventCalculator::getCrossSection(){
   if (sampleName_.BeginsWith("TT_CT10_TuneZ2star_8TeV-powheg")) return 234;  //approx NNLO
   if (sampleName_.BeginsWith("TT_8TeV-mcatnlo")) return 234; //approx NNLO
 
-  if (sampleName_.BeginsWith("TTJets_FullLeptMGDecays_8TeV-madgraph-tauola")) return 13.43 ; //Correct?
-  if (sampleName_.BeginsWith("TTJets_SemiLeptMGDecays_8TeV-madgraph-tauola")) return 53.2  ; //Correct?
+  //these lines are redundant with the ones below, but that's ok
+  if (sampleName_.BeginsWith("TTJets_FullLeptMGDecays_8TeV-madgraph-tauola")) return 13.43*(234.0 / (13.43+53.4+53.2)) ; //PREP corrected to approx NNLO
+  if (sampleName_.BeginsWith("TTJets_SemiLeptMGDecays_8TeV-madgraph-tauola")) return 53.2 *(234.0 / (13.43+53.4+53.2)) ; //PREP corrected to approx NNLO
 
   if (sampleName_.BeginsWith("TTTo2L2Nu2B_8TeV-powheg-pythia6_Summer12")) return 22.14 *(234.0 / 136.3); //PREP corrected to NNLO
 
