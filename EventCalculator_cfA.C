@@ -6137,7 +6137,7 @@ void EventCalculator::loadJetTagEffMaps() {
   if (f_tageff_->IsZombie()) {
     cout<<"Failed to load the b-tag eff map for sample "<<sampleName_<<endl;
     //comment this next line to ALLOW JOBS TO RUN WITHOUT BTAG EFF
-    if (!isSampleRealData())    assert(0); //it's just too frustrating to let jobs continue in this state
+    //if (!isSampleRealData())    assert(0); //it's just too frustrating to let jobs continue in this state
     delete f_tageff_;
     f_tageff_=0;
   }
@@ -8351,8 +8351,9 @@ void EventCalculator::reducedTree(TString outputpath) {
 	scanSMSngen3D->Fill(m0,m12,mIntermediate);
       }
       else if (theScanType_==kpmssm)  scanpMSSMngen->Fill(getRunNumber() );
- 
-      if ( sampleName_.Contains("v68")) {
+
+      if ( sampleName_.Contains("v68") ||sampleName_.Contains("v69")) {
+
 	for (int ipdf=0;ipdf<45;ipdf++) {
 	  pdfWeightsCTEQ[ipdf] = getPDFweight(1,ipdf); //1==cteq
 	  //remove scanprocesstotalsmap
@@ -8590,6 +8591,7 @@ void EventCalculator::reducedTree(TString outputpath) {
       calculateTagProb(prob0_LFminus,probge1_LFminus,prob1_LFminus,probge2_LFminus,prob2_LFminus,probge3_LFminus,prob3_LFminus,probge4_LFminus,1,1,1,kLFdown);
 
       pass_utilityPrescaleModuleHLT = passUtilityPrescaleModuleHLT();
+
 
       SUSY_nb = sampleIsSignal_ ? getSUSYnb() : 0;
       //      bjetSumSUSY[thispoint] += SUSY_nb;
@@ -14289,7 +14291,7 @@ void EventCalculator::InitializeB(TChain *fChain)
    mc_pdf_id2=0;
    mc_pdf_q=0;
 
-   if ( sampleName_.Contains("v68")) {
+   if ( sampleName_.Contains("v68") ||sampleName_.Contains("v69") ) {
 
      fChain->SetBranchAddress("mc_pdf_x1", &mc_pdf_x1, &b_mc_pdf_x1);
      fChain->SetBranchAddress("mc_pdf_x2", &mc_pdf_x2, &b_mc_pdf_x2);
