@@ -10,11 +10,12 @@
 #into
 #eventcounts.Isr0.CSVM_PF2PATjets_JES0_JER0_PFMETTypeI_METunc0_PUunc0_BTagEff05_HLTEff0.T1bbbbMG.root
 
-sampleid='SMS-MadGraph_T5tttt'
-sampleidout='T5tttt'
+sampleid='SMS-MadGraph_Pythia6Zstar_8TeV_T1ttcc_2J_mGo-1000_mStop'
+sampleidout='T1ttcc'
 #sampleid='pMSSM12_MCMC1_120mh130_batch4_'
 #sampleidout='pMSSM4'
-finaldir='eventCounts-v68_3/ORIGINALS'
+finaldir='/home/joshmt/rootfiles_6June2013/hadded'
+inputdir='/home/joshmt/rootfiles_6June2013'
 
 mkdir -p $finaldir
 
@@ -39,7 +40,7 @@ stub[7]='eventcounts.mergebbins.Isr0.CSVM_PF2PATjets_JESdown_JER0_PFMETTypeI_MET
 for t in "${stub[@]}"
 do
 echo $t
-hadd ${t}.${sampleidout}.root ${t}.${sampleid}*.root
-mv ${t}.${sampleid}*.root $finaldir
+hadd ${inputdir}/${t}.${sampleidout}.root ${inputdir}/${t}.${sampleid}*.root
+mv ${inputdir}/${t}.${sampleid}*.root $finaldir
 done
 

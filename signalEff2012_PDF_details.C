@@ -21,7 +21,7 @@ void signalEff2012_PDF_details(const TString what="CTEQMSTW",const TString sampl
   }
 
   TString stub1="eventcounts2x2.mergebbins";
-  if (sample.Contains("pMSSM")) stub1="eventcounts.mergebbins";
+  if (sample.Contains("pMSSM") ||sample.Contains("T1ttcc")) stub1="eventcounts.mergebbins";
 
   TString stub2=stub1;
   stub2+=".withpdfs";

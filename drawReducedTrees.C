@@ -6,7 +6,6 @@ The supporting classes need to be compiled only when they are changed.
 
 gSystem->Load("TSelectorMultiDraw_C.so");
 gSystem->Load("CrossSectionTable_cxx.so");
-gSystem->Load("CrossSectionTable_cxx.so");
 gSystem->Load("ConfigurationDescriptions_cxx.so");
 gSystem->Load("SearchRegion_cxx.so");
 gSystem->Load("SystInfo_cxx.so");

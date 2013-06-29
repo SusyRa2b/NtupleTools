@@ -48,6 +48,7 @@ void signalEff2012::Loop()
   if (filestub_.Contains("SMS-MadGraph")) {
     assert(theIsrMode_ != kNoIsrWeight);
     madgraphIsr=true;
+    cout<<" madgraph Isr Mode enabled"<<endl;
   }
   //the T1tttt part is a hack
   //  if (!filestub_.Contains("SMS-MadGraph") )  assert(theIsrMode_ == kNoIsrWeight);

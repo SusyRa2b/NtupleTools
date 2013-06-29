@@ -3,7 +3,7 @@
 #first compile the macro
 root -b -l -q signalEff2012_writetxt_compile.C
 
-files=`ls eventcounts.*.T5tttt.root`
+files=`ls eventcounts.*.T1ttcc.root`
 
 #loop over files
 for j in $files;

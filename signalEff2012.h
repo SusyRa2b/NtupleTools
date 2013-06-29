@@ -852,13 +852,18 @@ signalEff2012::signalEff2012(TString path, TString filestub,bool joinbtagbins, b
       //                x == mParent
       //                y == mLSP
       //                z == mIntermediate
-      if ( filestub.Contains("T5tttt") ) {
+      if ( filestub.Contains("T5tttt") ||filestub.Contains("T7btw")) {
+	//T7btw has the same structure as T5tttt. mParent and mIntermediate are scanned
 	is3D_=true;
 	unfilledDimension_="y"; //T5tttt fixes the LSP mass
       }
       else if ( filestub.Contains("T1t1t") ) {
 	is3D_=true;
-	unfilledDimension_="x"; //T5tttt fixes the LSP mass
+	unfilledDimension_="x"; //T1t1t fixed the gluino mass
+      }
+      else if ( filestub.Contains("T1ttcc") ) {
+      //T1ttcc is an interesting case. Gluino is fixed at 1000 GeV. m0 is the stop mass. m12 is the LSP mass. Use scanSMSngen
+	is3D_=false; //not strictly needed since this is the default value
       }
 
       if (scanpMSSMngen!=0) {

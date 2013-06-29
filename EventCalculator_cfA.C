@@ -448,7 +448,7 @@ float EventCalculator::getPUWeight( reweight::LumiReWeighting lumiWeights ) {
     }
   }
   //in-time PU only
-  weight = lumiWeights.ITweight( npv ); 
+  weight = lumiWeights.weight( npv ); 
 
   return weight;
 }
@@ -10470,34 +10470,6 @@ void EventCalculator::sampleAnalyzer() {
   const Long64_t neventsB = chainB->GetEntries();
   assert(nevents==neventsB);
 
-  //float prob0,probge1,prob1,probge2,probge3;
-
-  //float n0b = 0, nge1b = 0, neq1b = 0, nge2b = 0, nge3b = 0;
-
-  ////initialize PU things
-  //std::vector< float > DataDist2011;
-  //std::vector< float > MCDist2011;
-  //for( int i=0; i<35; ++i) {
-  //  //for PU_S3 (only in-time)
-  //  //DataDist2011.push_back(pu::ObsDist2011_f[i]);
-  //  //MCDist2011.push_back(pu::PoissonOneXDist_f[i]);
-  //  //for 3dPU reweighting 
-  //  DataDist2011.push_back(pu::TrueDist2011_f[i]);
-  //  if(i<25)
-  //    MCDist2011.push_back(pu::probdistFlat10_f[i]);
-  //  //std::cout << i << " " << pu::probdistFlat10_f[i] << std::endl;
-  //}  
-  ////for( int i=0; i<1000; ++i) {
-  ////  DataDist2011.push_back(pu::TrueDist2011_finebin_f[i]);
-  ////}
-  ////reweight::LumiReWeighting LumiWeights = reweight::LumiReWeighting( MCDist2011, DataDist2011 );
-  ////Lumi3DReWeighting LumiWeights = Lumi3DReWeighting("Summer11MC_PUDistTruth.root", "PileupTruth_finebin_data_SUM_upto180252.root", "mcpileup", "pileup");
-  //Lumi3DReWeighting LumiWeights = Lumi3DReWeighting( MCDist2011, DataDist2011);
-  //
-  //std::cout << "size of MC = " << MCDist2011.size() << ", size of Data = " << DataDist2011.size() << std::endl;
-  //LumiWeights.weight3D_init(1);
-  ////LumiWeights.weight3D_init();
-  ////LumiWeights.weight3D_init("Weight3D.root");
 
   cout<<"Running..."<<endl;  
   int npass = 0;
@@ -11378,6 +11350,8 @@ void EventCalculator::plotBTagEffMC( ) {
 
   //we only need the jet branches
   chainB->SetBranchStatus("jets_AK5PF_*",1);
+  chainA->SetBranchStatus("puJet_rejectionBeta",1);
+
 
   TString outfile = assembleBTagEffFilename();
 
@@ -11416,13 +11390,14 @@ void EventCalculator::plotBTagEffMC( ) {
   startTimer();
   for(Long64_t entry=0; entry < nevents; ++entry){
     chainB->GetEntry(entry);
-    //we do not need chainA for this code
-    //    chainA->GetEntry(entry);
+    
+    chainA->GetEntry(entry);
 
     if(entry%10000==0) cout << "entry: " << entry << ", percent done=" << (int)(entry/(double)nevents*100.)<<  endl;
     
     npass++;
-    
+    extractPUJetVars_Beta(pujet_beta,"beta");
+
     for (unsigned int i = 0; i < jets_AK5PF_pt->size(); ++i) {
       int flavor = jets_AK5PF_partonFlavour->at(i);
 

@@ -2,6 +2,8 @@ ROOTCFLAGS    = $(shell $(ROOTSYS)/bin/root-config --cflags)
 ROOTLIBS      = $(shell $(ROOTSYS)/bin/root-config --libs)
 ROOTGLIBS     = $(shell $(ROOTSYS)/bin/root-config --glibs)
 
+#roofitsys = $(shell echo $(ROOFITSYS))
+
 #######################################
 # -- DEFINE ARCH to something sensible!
 #######################################
@@ -21,6 +23,7 @@ LIBS           = $(ROOTLIBS)
 
 NGLIBS         = $(ROOTGLIBS) 
 NGLIBS        += -lMinuit
+#NGLIBS        += -L$(roofitsys)lib -lRooFitCore -lRooFit
 GLIBS          = $(filter-out -lNew -lz, $(NGLIBS))
 
 all: run_Analysis
@@ -46,8 +49,15 @@ JetCorrectionUncertainty.o: JetCorrectionUncertainty.cc JetCorrectionUncertainty
 SimpleJetCorrectionUncertainty.o: SimpleJetCorrectionUncertainty.cc SimpleJetCorrectionUncertainty.h
 	$(CXX) $(CXXFLAGS) -c SimpleJetCorrectionUncertainty.cc
 
+#MyDict.cxx: RooTransverseThrustVar.h Linkdef.h
+#	rootcint -I$(roofitsys)/include -f $@ -c $(CXXFLAGS) -p $^
+ 
+#RooTransverseThrustVar.so: MyDict.cxx RooTransverseThrustVar.cxx RooTransverseThrustVar.h
+#	$(CXX) -shared -o$@ `root-config --ldflags` $(CXXFLAGS) -I$(ROOTSYS)/include -I$(roofitsys)/include $^
+
 EventCalculator_cfA.o: EventCalculator_cfA.C EventCalculator_cfA.h
 	$(CXX) $(CXXFLAGS) -c EventCalculator_cfA.C
+#	$(CXX) $(CXXFLAGS) -I$(roofitsys)/include -c EventCalculator_cfA.C
 
 run_Analysis.o: run_Analysis.C
 	$(CXX) $(CXXFLAGS) -c run_Analysis.C

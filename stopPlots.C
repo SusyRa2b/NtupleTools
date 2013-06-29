@@ -6,10 +6,10 @@ must have symlink to MiscUtil.cxx in the working directory.
 gSystem->Load("TSelectorMultiDraw_C.so");
 gSystem->Load("CrossSectionTable_cxx.so");
 gSystem->Load("ConfigurationDescriptions_cxx.so");
-gSystem->Load("SearchRegion_cxx.so");
-gSystem->Load("SystInfo_cxx.so");
-gSystem->Load("SignalEffData_cxx.so");
-.L stopPlots.C++
+//gSystem->Load("SearchRegion_cxx.so");
+//gSystem->Load("SystInfo_cxx.so");
+//gSystem->Load("SignalEffData_cxx.so");
+.L stopPlots.C+
 
 */
 
@@ -58,6 +58,643 @@ double preLumiScale_ = 30;//god only knows for 2012
 //this is to make the ROOT dictionary generation work correctly
 #include "stopPlots.h"
 
+void prettyplots() { //not important except maybe not sanity checks
+
+  inputPath = "/cu3/joshmt/stop/embedTrees/v2/";
+  reducedTreeName_ = "maketree/reducedTree"; 
+  loadSamples(true,"stop");
+  clearSamples();
+  addSample("TTbarJetsPowheg:ttbarDecayCode==4||ttbarDecayCode==6",kAzure-3,"#mu, #tau #rightarrow #mu");
+  addSample("TTbarJetsPowheg:ttbarDecayCode==3||ttbarDecayCode==5",kRed,"e, #tau #rightarrow e");
+  addSample("TTbarJetsPowheg:ttbarDecayCode==1||ttbarDecayCode==8||ttbarDecayCode==9",kBlue,"dileptonic");
+  addSample("TTbarJetsPowheg:ttbarDecayCode==2",kYellow,"hadronic");
+  addSample("TTbarJetsPowheg:ttbarDecayCode==7",kOrange,"#tau #rightarrow h");
+  currentConfig_=configDescriptions_.getDefault();
+  dodata_=false;
+
+  TCut baseline = "MET>175 && njets70>=2 && njets50>=4 &&njets30>=5";
+  TCut lepveto = "electronpt1<5 && muonpt1<5";
+  TCut tkveto="isotrackpt1<10";
+
+  //these trees have no weight!
+  nameOfEventWeight_="(1)";
+  lumiScale_=20000;
+  setSampleScaleFactor("TTbarJetsPowheg",234.0/double(getTree("TTbarJetsPowheg")->GetEntries())); //assumes no skim
+
+  int nbins;
+  float low,high;
+  TString var,xtitle;
+
+  selection_=baseline;
+
+  var="MET"; xtitle=var;
+  nbins = 8; low=175; high=350;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "ttbar_met_baseline",0);
+
+  selection_=baseline&&lepveto;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "ttbar_met_lepveto",0);
+
+  selection_=baseline&&lepveto&&tkveto;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "ttbar_met_tkveto",0);
+
+  TCut dp="DeltaPhiMetJet1>0.5 && DeltaPhiMetJet2>0.5 && DeltaPhiMetJet3>0.3";
+
+  selection_=baseline&&lepveto&&tkveto&&dp;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "ttbar_met_dp",0);
+
+
+
+}
+
+void acceptance() { 
+
+  inputPath = "/cu3/joshmt/stop/embedTrees/v2/";
+  reducedTreeName_ = "maketree/reducedTree"; 
+  loadSamples(true,"stop");
+  clearSamples();
+  addSample("TTbarJetsPowheg:ttbarDecayCode==4",kAzure-3,"MC W #rightarrow #mu");
+  currentConfig_=configDescriptions_.getDefault();
+  dodata_=false;
+
+  //these trees have no weight!
+  nameOfEventWeight_="(1)";
+  lumiScale_=20000;
+  setSampleScaleFactor("TTbarJetsPowheg",234.0/double(getTree("TTbarJetsPowheg")->GetEntries())); //assumes no skim
+
+  int nbins;
+  float low,high;
+  TString var,xtitle;
+
+  selection_ ="MET>150 && njets70>=2 && njets50>=4 &&njets30>=5"; //baseline (with looser MET)
+  setLogY(false);
+  var="MET"; xtitle="MET";
+  nbins = 6; low=150; high=300;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "ttbar_met_loosecuts",0);
+  TH1D* nocuts = (TH1D*) getHist("TTbarJetsPowheg:ttbarDecayCode==4")->Clone("all");
+
+  selection_ = "MET>150 && njets70>=2 && njets50>=4 &&njets30>=5 && genLeptonPt1>=5 && genLeptonEta1>-2.4 && genLeptonEta1<2.4";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "ttbar_met_inac_loosecuts",0);
+  TH1D* inac = (TH1D*) getHist("TTbarJetsPowheg:ttbarDecayCode==4")->Clone("inac2");
+  renewCanvas();
+  inac->Divide(nocuts);
+  inac->SetFillColor(0);
+  inac->Draw("he");
+}
+
+void efficiency_tauhad() { //18 Dec 2012
+
+  /*
+    goal -- make the following histograms:
+    TH1 -- eff_track(eta)
+    TH1 -- eff_mu|track(eta)
+    TH1 -- eff_id,is|mu(pT)
+    
+    output is in the form of graphs (for human viewing) and TH1D for use in code
+    
+    These histograms are used for closure tests in MC
+  */
+
+  inputPath = "/cu3/joshmt/stop/embedTrees/v4/";
+  reducedTreeName_ = "maketree/reducedTree"; 
+  loadSamples(true,"stop");
+  clearSamples();
+  addSample("TTbarJetsPowheg:ttbarDecayCode==4",kAzure-3,"MC W #rightarrow #mu");
+  currentConfig_=configDescriptions_.getDefault();
+  dodata_=false;
+
+  //these trees have no weight!
+  nameOfEventWeight_="(1)";
+  lumiScale_=1;
+  //setSampleScaleFactor("TTbarJetsPowheg",234.0/double(getTree("TTbarJetsPowheg")->GetEntries())); //assumes no skim
+
+  int nbins;
+  float low,high;
+  TString var,xtitle;
+
+  savePlots_=false;
+
+  // ------ as a function of eta ------
+
+  //denominator is all W->mu events pT>5, |eta|<2.4
+  selection_ = "MET>175 && njets70>=2 && njets50>=4 &&njets30>=5 && genLeptonEta1>=-2.4 && genLeptonEta1<=2.4 && genLeptonPt1>=5"; //baseline
+  var="genLeptonEta1"; xtitle="#eta";
+  nbins = 40; low=-2.4; high=2.4;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "ttbar_muoneta_all",0);
+  TH1D* muoneta_all = (TH1D*)  hinteractive->Clone("muoneeta_all");
+
+  //require a matched track
+  selection_ = "MET>175 && njets70>=2 && njets50>=4 &&njets30>=5 && genLeptonEta1>=-2.4 && genLeptonEta1<=2.4 && genLeptonPt1>=5 && genmatchedTrackPt1>=5";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "ttbar_muoneta_track",0);
+  TH1D* muoneta_track = (TH1D*)  hinteractive->Clone("muoneeta_track");
+
+  //require a track and a muon
+  selection_ = "MET>175 && njets70>=2 && njets50>=4 &&njets30>=5 && genLeptonEta1>=-2.4 && genLeptonEta1<=2.4 && genLeptonPt1>=5 && genmatchedTrackPt1>=5 && genmatchedMuPt1>=5";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "ttbar_muoneta_mu",0);
+  TH1D* muoneta_mu = (TH1D*)  hinteractive->Clone("muoneeta_mu");
+
+  //now the reco matched sample
+  selection_ = "MET>175 && njets70>=2 && njets50>=4 &&njets30>=5 && genLeptonEta1>=-2.4 && genLeptonEta1<=2.4 && genLeptonPt1>=5 && genmatchedTrackPt1>=5 && genmatchedMuPt1>=5 && muonpt1>=5 && sqrt(acos(cos(genLeptonPhi1-muonphi1))*acos(cos(genLeptonPhi1-muonphi1)) + (genLeptonEta1-muoneta1)*(genLeptonEta1-muoneta1))<0.3";
+  //first plot in the same binning and variable as above
+  drawPlots(var,nbins,low,high,xtitle,"Events", "ttbar_muoneta_recod",0);
+  TH1D* muoneta_recod = (TH1D*)  hinteractive->Clone("muoneeta_recod");
+
+  if (effgraph != 0) delete effgraph;
+  effgraph = new TGraphAsymmErrors();
+  effgraph->BayesDivide(muoneta_track,muoneta_all);
+  effgraph->GetHistogram()->SetYTitle("tracking eff");
+  renewCanvas();
+  effgraph->Draw("AP");
+  thecanvas->SaveAs("stop_eff_MC_tracking.eps");
+  thecanvas->SaveAs("stop_eff_MC_tracking.png");
+  thecanvas->SaveAs("stop_eff_MC_tracking.pdf");
+
+  if (effgraph != 0) delete effgraph;
+  effgraph = new TGraphAsymmErrors();
+  effgraph->BayesDivide(muoneta_mu,muoneta_track);
+  effgraph->GetHistogram()->SetYTitle("muon reco eff");
+  renewCanvas();
+  effgraph->Draw("AP");
+  thecanvas->SaveAs("stop_eff_MC_muon.eps");
+  thecanvas->SaveAs("stop_eff_MC_muon.png");
+  thecanvas->SaveAs("stop_eff_MC_muon.pdf");
+
+  if (effgraph != 0) delete effgraph;
+  effgraph = new TGraphAsymmErrors();
+  effgraph->BayesDivide(muoneta_recod  ,muoneta_mu);
+  effgraph->GetHistogram()->SetYTitle("id/iso eff");
+  renewCanvas();
+  effgraph->Draw("AP");
+  thecanvas->SaveAs("stop_eff_MC_idiso.eps");
+  thecanvas->SaveAs("stop_eff_MC_idiso.png");
+  thecanvas->SaveAs("stop_eff_MC_idiso.pdf");
+
+
+  //in 1d -- deltaR(mu,jet)
+  //require a track and a muon
+  var="minDRmuonJet"; xtitle="min #Delta R(#mu, jet)";
+  nbins = 10; low=0.3; high=6;
+
+  selection_ = "MET>175 && njets70>=2 && njets50>=4 &&njets30>=5 && genLeptonEta1>=-2.4 && genLeptonEta1<=2.4 && genLeptonPt1>=5 && genmatchedTrackPt1>=5 && genmatchedMuPt1>=5";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "ttbar_muonDeltaR_mu",0);
+  TH1D* muonDeltaR_mu = (TH1D*)  hinteractive->Clone("muonDeltaR_mu");
+
+  //now the reco matched sample
+  selection_ = "MET>175 && njets70>=2 && njets50>=4 &&njets30>=5 && genLeptonEta1>=-2.4 && genLeptonEta1<=2.4 && genLeptonPt1>=5 && genmatchedTrackPt1>=5 && genmatchedMuPt1>=5 && muonpt1>=5 && sqrt(acos(cos(genLeptonPhi1-muonphi1))*acos(cos(genLeptonPhi1-muonphi1)) + (genLeptonEta1-muoneta1)*(genLeptonEta1-muoneta1))<0.3";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "ttbar_muonDeltaR_recod",0);
+  TH1D* muonDeltaR_recod = (TH1D*)  hinteractive->Clone("muonDeltaR_recod");
+
+  if (effgraph != 0) delete effgraph;
+  effgraph = new TGraphAsymmErrors();
+  effgraph->BayesDivide(muonDeltaR_recod  ,muonDeltaR_mu);
+  effgraph->GetHistogram()->SetYTitle("id/iso eff");
+  renewCanvas();
+  effgraph->Draw("AP");
+  thecanvas->SaveAs("stop_eff_MC_idiso_muonDR.eps");
+  thecanvas->SaveAs("stop_eff_MC_idiso_muonDR.png");
+  thecanvas->SaveAs("stop_eff_MC_idiso_muonDR.pdf");
+
+
+  //in 1d -- pT
+
+  var="genLeptonPt1"; xtitle="muon p_{T} [GeV]";
+  nbins = 5; low=5; high=200;
+  float ptbins[]={5,10,20,40,90,200};
+  //require a track and a muon
+  selection_ = "MET>175 && njets70>=2 && njets50>=4 &&njets30>=5 && genLeptonEta1>=-2.4 && genLeptonEta1<=2.4 && genLeptonPt1>=5 && genmatchedTrackPt1>=5 && genmatchedMuPt1>=5";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "ttbar_muonpt_mu",ptbins);
+  TH1D* muonpt_mu = (TH1D*)  hinteractive->Clone("muonpt_mu");
+
+  //now the reco matched sample
+  selection_ = "MET>175 && njets70>=2 && njets50>=4 &&njets30>=5 && genLeptonEta1>=-2.4 && genLeptonEta1<=2.4 && genLeptonPt1>=5 && genmatchedTrackPt1>=5 && genmatchedMuPt1>=5 && muonpt1>=5 && sqrt(acos(cos(genLeptonPhi1-muonphi1))*acos(cos(genLeptonPhi1-muonphi1)) + (genLeptonEta1-muoneta1)*(genLeptonEta1-muoneta1))<0.3";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "ttbar_muonpt_recod",ptbins);
+  TH1D* muonpt_recod = (TH1D*)  hinteractive->Clone("muonpt_recod");
+
+  if (effgraph != 0) delete effgraph;
+  effgraph = new TGraphAsymmErrors();
+  effgraph->BayesDivide(muonpt_recod  ,muonpt_mu);
+  effgraph->GetHistogram()->SetYTitle("id/iso eff");
+  renewCanvas();
+  effgraph->Draw("AP");
+  thecanvas->SaveAs("stop_eff_MC_idiso_muonpt.eps");
+  thecanvas->SaveAs("stop_eff_MC_idiso_muonpt.png");
+  thecanvas->SaveAs("stop_eff_MC_idiso_muonpt.pdf");
+
+
+  // now save histograms
+  TFile fout("stop_eff_MC.root","recreate");
+
+  if (ratio!=0) delete ratio;
+  ratio = (TH1D*) muoneta_track->Clone("eff_tracking");
+  ratio->Reset();
+  ratio->Divide(muoneta_track,muoneta_all);
+  ratio->Write();
+
+
+  if (ratio!=0) delete ratio;
+  ratio = (TH1D*) muoneta_track->Clone("eff_mu");
+  ratio->Reset();
+  ratio->Divide(muoneta_mu,muoneta_track);
+  ratio->Write();
+
+
+  if (ratio!=0) delete ratio;
+  ratio = (TH1D*) muonpt_recod->Clone("eff_idiso");
+  ratio->Reset();
+  ratio->Divide(muonpt_recod,muonpt_mu);
+  ratio->Write();
+
+  fout.Close();
+
+  /*
+  TString  vary="minDRmuonJet";
+  TString varx="genLeptonPt1";
+  logx_=true; //log scale x axis
+  setLogY(true);
+  draw2d(varx, 5,5, 200, vary, 5,0.3,6,"muon pT","min #Delta R(#mu , jet)","stop_eff2d_MC_muon",0,0);
+  */
+
+}
+
+
+
+void tauembedtest2_luke() { //5 Dec 2012
+  /*
+idea from luke to embed _all_ gen-level W->mu events.
+
+this gave strange results. Does not seem to have been useful
+  */
+
+  inputPath = "/cu3/joshmt/stop/embedTrees/v3/";
+  reducedTreeName_ = "maketree/reducedTree"; 
+
+  //add special test samples
+  addToSamplesAll("TTbarEmbedGenAllTauHad");
+
+  loadSamples(true,"stop");
+  clearSamples();
+  addSample("TTbarJetsPowheg:ttbarDecayCode==7",kAzure-3,"MC #tau #rightarrow h");
+  //accidentally embedded dilepton events as well. Enforce decay code 4 to get W->mu sample
+  //decay code was calculated with the original PAT genParticles (before embedding)
+  addSample("TTbarEmbedGenAllTauHad:ttbarDecayCode==4",kMagenta,"MC embedded #tau #rightarrow h");
+  currentConfig_=configDescriptions_.getDefault();
+  dodata_=false;
+  doRatioPlot(true); ratioMin = 0; ratioMax = 2;
+
+  //these trees have no weight!
+  nameOfEventWeight_="(1)";
+  lumiScale_=1;
+
+  //now compensate for branching fractions
+  setSampleScaleFactor("TTbarEmbedGenAllTauHad:ttbarDecayCode==4",11.25*0.6479 / 10.57); //assumes no skim
+
+  int nbins;
+  float low,high;
+  TString var,xtitle;
+  
+  setStackMode(false,false);
+
+  TCut jets="njets70>=2 && njets50>=4 && njets30>=5";
+  TCut met = "MET>=175";
+  TCut lepveto = "electronpt1 <5 && muonpt1<5";
+
+  selection_ =jets&&met&&lepveto;
+  //
+  setLogY(false);
+  var="njets30"; xtitle="njets (pT>30 GeV)";
+  nbins = 8; low=4; high=12;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "embed_njets30",0);
+
+  TCut isotkveto = "isotrackpt1<10";
+  selection_ =jets&&met&&lepveto&&isotkveto;
+  var="njets30"; xtitle="njets (pT>30 GeV)";
+  nbins = 8; low=4; high=12;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "embed_njets30",0);
+
+}
+
+void compareseeds() { //5 Dec 2012
+
+
+  inputPath = "/cu3/joshmt/stop/embedTrees/v3/";
+  reducedTreeName_ = "maketree/reducedTree"; 
+  loadSamples(true,"stop");
+  clearSamples();
+  addSample("TTbarJetsPowheg:ttbarDecayCode==7",kAzure-3,"MC #tau #rightarrow h");
+  addSample("TTbarEmbedGenTauHad",kMagenta,"MC embedded #tau #rightarrow h");
+  currentConfig_=configDescriptions_.getDefault();
+  dodata_=false;
+  doRatioPlot(true); ratioMin = 0; ratioMax = 2;
+
+  //these trees have no weight!
+  nameOfEventWeight_="(1)";
+  lumiScale_=1;
+
+
+  //now compensate for branching fractions
+  setSampleScaleFactor("TTbarEmbedGenTauHad",11.25*0.6479 / 10.57); //assumes no skim
+
+  int nbins;
+  float low,high;
+  TString var,xtitle;
+  
+  //pT spectrum of (a) gen-level taus (b) seed sample
+
+  setStackMode(false,false);
+
+  TCut jets="njets70>=2 && njets50>=4 && njets30>=5";
+  TCut met = "MET>=175";
+  TCut lepveto = "electronpt1 <5 && muonpt1<5";
+
+  // -- pt plot --
+
+  selection_ =jets&&met;//  && TCut("minDRmuonJet>0.5");
+  setLogY(false);
+  //(a) gen-level taus
+  var="genLeptonPt1"; xtitle="gen tau pT";
+  nbins = 50; low=0; high=200;
+  //  drawPlots(var,nbins,low,high,xtitle,"Events", "embed_njets30",0);
+  drawSimple(var, nbins, low, high,"filename","genleveltaupt" ,"TTbarJetsPowheg:ttbarDecayCode==7",0 ,xtitle,"Events");
+  TH1D* htaupt=  (TH1D*)hinteractive->Clone("genleveltaupt");
+  var="seedmuonpt"; xtitle="seed muon pT";
+  drawSimple(var, nbins, low, high,"filename","seedmuonpt" ,"TTbarEmbedGenTauHad",0 ,xtitle,"Events");
+  TH1D* hseedpt = (TH1D*)hinteractive->Clone("seedmuonpt");
+
+  renewCanvas();
+  htaupt->SetLineColor(kRed); 
+  htaupt->SetMarkerSize(0);
+  hseedpt->SetMarkerSize(0);
+  htaupt->Draw("he");
+  hseedpt->SetLineColor(kBlue);
+  hseedpt->Draw("He same");
+
+  // -- eta plot --
+
+  selection_ =jets&&met;
+  setLogY(false);
+  //(a) gen-level taus
+  var="genLeptonEta1"; xtitle="gen tau eta";
+  nbins = 50; low=-5; high=5;
+  drawSimple(var, nbins, low, high,"filename","genleveltaueta" ,"TTbarJetsPowheg:ttbarDecayCode==7",0 ,xtitle,"Events");
+  TH1D* htaueta=  (TH1D*)hinteractive->Clone("genleveltaueta");
+  var="seedmuoneta"; xtitle="seed muon eta";
+  drawSimple(var, nbins, low, high,"filename","seedmuoneta" ,"TTbarEmbedGenTauHad",0 ,xtitle,"Events");
+  TH1D* hseedeta = (TH1D*)hinteractive->Clone("seedmuoneta");
+
+  renewCanvas();
+  htaueta->SetLineColor(kRed); 
+  htaueta->SetMarkerSize(0);
+  hseedeta->SetMarkerSize(0);
+  htaueta->Draw("he");
+  hseedeta->SetLineColor(kBlue);
+  hseedeta->Draw("He same");
+
+
+}
+
+void tauembedtest() { //29 Nov 2012 ; updated 19 Dec
+  /*
+first real embedding closure test on Steven's agenda
+mixed results...sort of promising but certaintly some weird stuff going on
+
+updated for v4
+
+9 Jan -- update for v5
+
+16 Jan -- update for v5b (just switch to raw jets)
+  */
+
+  inputPath = "/cu3/joshmt/stop/embedTrees/v5b/";
+  reducedTreeName_ = "maketree/reducedTree"; 
+  //  addToSamplesAll("TTbarEmbedGenTauHad");
+  loadSamples(true,"stop");
+  clearSamples();
+  //enforce that the MC truth is only the part inside of acceptance
+  addSample("TTbarJetsPowheg:ttbarDecayCode==7&&abs(genLeptonEta1)<2.4",kAzure-3,"MC #tau #rightarrow h");
+  addSample("TTbarEmbedGenTauHad",kMagenta,"MC embedded #tau #rightarrow h");
+    //addSample("TTbarEmbedGenTauHadSwap",kMagenta+2,"MC embedded #tau #rightarrow h (swap)");
+  currentConfig_=configDescriptions_.getDefault();
+  dodata_=false;
+  doRatioPlot(true); ratioMin = 0; ratioMax = 2;
+
+  //these trees have no weight!
+  nameOfEventWeight_="(1)";
+  lumiScale_=1;
+
+
+  //now compensate for branching fractions
+  setSampleScaleFactor("TTbarEmbedGenTauHad",11.25*0.6479 / 10.57);
+  setSampleWeightFactor("TTbarEmbedGenTauHad","1.0/(eff_tr*eff_mu*eff_iso)"); //weight embedded events by event-by-event CS eff correction
+
+  int nbins;
+  float low,high;
+  TString var,xtitle;
+  
+
+  setStackMode(false,false);
+
+  TCut jets="njets70raw>=2 && njets50raw>=4 && njets30raw>=5";
+  TCut met = "MET>=175";
+  TCut lepveto = "electronpt1 <5 && muonpt1<5";
+  TCut isotkveto = "isotrackpt1<10";
+
+  //do not expect anything with lep veto to give good results
+
+  selection_ =jets&&met&&lepveto;
+  //
+  setLogY(false);
+  var="njets30"; xtitle="njets (pT>30 GeV)";
+  nbins = 8; low=4; high=12;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "embed_njets30",0);
+
+  selection_ =jets&&met&&lepveto;
+  //
+  setLogY(false);
+  var="njets50"; xtitle="njets (pT>50 GeV)";
+  nbins = 8; low=3; high=11;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "embed_njets50",0);
+
+  selection_ = TCut("njets50>=4 && njets30>=5")&&met&&lepveto;
+  setLogY(false);
+  var="njets70"; xtitle="njets (pT>70 GeV)";
+  nbins = 8; low=0; high=8;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "embed_njets70",0);
+
+  selection_ = met&&lepveto;
+  setLogY(false);
+  var="njets30"; xtitle="njets (pT>30 GeV)";
+  nbins = 12; low=0; high=12;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "embed_njets30_nojetcuts",0);
+
+
+//   clearSamples();
+//   addSample("TTbarJetsPowheg:ttbarDecayCode==7",kAzure-3,"MC #tau #rightarrow h");
+//   addSample("TTbarEmbedGenTauHad",kMagenta,"MC embedded #tau #rightarrow h");
+//   addSample("TTbarJetsPowheg:ttbarDecayCode==4",kBlue,"MC W #rightarrow #mu (rescaled)");
+//   setSampleScaleFactor("TTbarJetsPowheg:ttbarDecayCode==4",11.25*0.6479 / 10.57); //assumes no skim
+
+  selection_ = met;
+  setLogY(false);
+  var="njets30"; xtitle="njets (pT>30 GeV)";
+  nbins = 12; low=0; high=12;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "embed_njets30_metcutonly",0);
+
+
+  selection_ = jets && lepveto;
+  var = "MET"; xtitle="E^{T}_{miss} (GeV)";
+  nbins = 20; low =0; high=400;
+  setLogY(true);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "embed_met",0,"GeV");
+
+  //add isotk veto
+  setLogY(false);
+  selection_ =jets&&met&&lepveto&&isotkveto;
+  var="njets30"; xtitle="njets (pT>30 GeV)";
+  nbins = 8; low=4; high=12;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "embed_njets30",0);
+
+
+  //look at e/mu/isotk distributions.
+  selection_ = met &&jets;
+  var = "muonpt1"; xtitle="muon pT (GeV)";
+  nbins = 20; low =0; high=200;
+  setLogY(true);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "embed_muonpt",0,"GeV");
+
+
+  //look at e/mu/isotk distributions.
+  selection_ = met &&jets;
+  var = "electronpt1"; xtitle="electron pT (GeV)";
+  nbins = 20; low =0; high=100;
+  setLogY(true);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "embed_electronpt",0,"GeV");
+
+
+  //look at e/mu/isotk distributions.
+  selection_ = met &&jets;
+  var = "isotrackpt1"; xtitle="iso track pT (GeV)";
+  nbins = 40; low =-100; high=100;
+  setLogY(true);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "embed_isotrackpt",0,"GeV");
+
+  //no lepton vetoes but isotrack veto
+  selection_ =jets&&met&&isotkveto;
+  var = "MET"; xtitle="E^{T}_{miss} (GeV)";
+  nbins = 20; low =175; high=500;
+  setLogY(true);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "embed_met_jets-met-isotk",0,"GeV");
+
+  setLogY(false);
+  var="njets30raw"; xtitle="njets (raw pT>30 GeV)";
+  nbins = 8; low=4; high=12;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "embed_njets30_jets-met-isotk",0);
+
+  var="njets50"; xtitle="njets (pT>50 GeV)";
+  nbins = 8; low=4; high=12;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "embed_njets50_jets-met-isotk",0);
+
+  var="DeltaPhiMetJet1"; xtitle="#Delta #phi(jet1, MET)";
+  nbins = 24; low=0; high=3;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "embed_dp1_jets-met-isotk",0);
+
+  var="DeltaPhiMetJet2"; xtitle="#Delta #phi(jet2, MET)";
+  nbins = 24; low=0; high=3;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "embed_dp2_jets-met-isotk",0);
+
+  var="DeltaPhiMetJet3"; xtitle="#Delta #phi(jet3, MET)";
+  nbins = 24; low=0; high=3;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "embed_dp3_jets-met-isotk",0);
+
+  var="jeteta1"; xtitle="lead jet eta";
+  nbins = 30; low=-2.4; high=2.4;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "embed_jeteta1_jets-met-isotk",0);
+
+  //
+  setLogY(false);
+  var="nbjets30raw"; xtitle="nbjets (raw pT>30 GeV)";
+  nbins = 4; low=0; high=4;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "embed_nbjets30_jets-met-isotk",0);
+
+  //some mess down here
+
+  setLogY(false);
+  var="njets30"; xtitle="njets (pT>30 GeV)";
+  nbins = 8; low=4; high=12;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "embed_njets30_jets-met",0);
+
+  var="njets50"; xtitle="njets (pT>50 GeV)";
+  nbins = 8; low=4; high=12;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "embed_njets50_jets-met",0);
+
+  //top tagging
+  TCut toptag = "bestTopJetMass>80 && bestTopJetMass<270";
+  TCut loosetoptag = "bestTopJetIdx>=0"; //redundant if toptag is applied
+  TCut otherb = "remainPassCSVS==1";
+  TCut mt2 = "MT2>300";
+  TCut mtcuts = "mTbJet+0.5*mTbestTopJet > 500";
+  //what is this?   
+  // if( !taggingMode_ && type3TopTaggerPtr->pickedRemainingCombfatJetIdx == -1 && oriJetsVec.size()>=6 ) return false; 
+
+  selection_ =jets&&met&&isotkveto && toptag&&otherb&&mt2&&mtcuts;
+  var = "MET"; xtitle="E^{T}_{miss} (GeV)";
+  nbins = 20; low =175; high=500;
+  setLogY(true);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "embed_met_kitchensink",0,"GeV");
+
+
+}
+
+void embedtest() {
+
+  inputPath = "/cu3/joshmt/stop/embedTrees/v2/";
+  reducedTreeName_ = "maketree/reducedTree"; 
+  loadSamples(true,"stop");
+  clearSamples();
+  addSample("TTbarJetsPowheg:ttbarDecayCode==4",kAzure-3,"MC W #rightarrow #mu");
+  addSample("TTbarEmbedFlipRecoMu",kMagenta,"MC embedded #mu");
+  currentConfig_=configDescriptions_.getDefault();
+  dodata_=false;
+
+  //these trees have no weight!
+  nameOfEventWeight_="(1)";
+  lumiScale_=1;
+  //setSampleScaleFactor("TTbarJetsPowheg",234.0/double(getTree("TTbarJetsPowheg")->GetEntries())); //assumes no skim
+
+  int nbins;
+  float low,high;
+  TString var,xtitle;
+  
+
+  setStackMode(false,false);
+
+  TCut jets="njets70>=2 && njets50>=4 && njets30>=5";
+  TCut met = "MET>=175";
+  TCut lepveto = "electronpt1 <5 && muonpt1<5";
+
+  selection_ =jets&&met&&lepveto;
+  //
+  setLogY(false);
+  var="njets30"; xtitle="njets (pT>30 GeV)";
+  nbins = 8; low=4; high=12;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "embed_njets30",0);
+
+
+  nbins=10; low=175; high=300;
+  var="MET";xtitle=var;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "embedMu_met",0);
+
+  //now try electrons
+  clearSamples();
+  addSample("TTbarJetsPowheg:ttbarDecayCode==3",kAzure-3,"MC W #rightarrow e");
+  addSample("TTbarEmbedFlipRecoEle",kMagenta,"MC embedded e");
+  drawPlots(var,nbins,low,high,xtitle,"Events", "embedEle_njets30",0);
+
+  nbins=10; low=175; high=300;
+  var="MET";xtitle=var;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "embedEle_met",0);
+
+
+
+}
 
 void stopPAT() {
 

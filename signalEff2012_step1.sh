@@ -5,8 +5,19 @@ root -b -l -q signalEff2012_compile.C
 
 #nominal T1bbbb version
 #files=`ls /cu4/ra2b/reducedTrees/v68_1/ORIGINALS/reducedTree.*.*T1bbbb*.root`
-#pMSSM1 version
-files=`ls /cu4/ra2b/reducedTrees/v68_3/ORIGINALS/reducedTree.*.*T5tttt*.root`
+
+#files=`ls /cu4/ra2b/reducedTrees/v68_3/ORIGINALS/reducedTree.*.*T5tttt*.root`
+#files=`ls /cu6/joshmt/reducedTrees/v68_3_pawandeep/reducedTree.*.*T1t1t*.root`
+#files=`ls /cu4/ra2b/reducedTrees/v68_3/ORIGINALS/reducedTree.*.*T7btw*.root`
+#files=`ls /cu5/joshmt/reducedTrees/v68_4_t14t/reducedTree.*.*T1tttt*.root`
+files=`ls /cu5/joshmt/reducedTrees/v68_6/reducedTree.*.*T1ttcc*.root`
+
+#must not be in afs
+outdirlog=/home/joshmt/logfiles_6June2013
+outdirroot=/home/joshmt/rootfiles_6June2013
+
+mkdir -p $outdirlog
+mkdir -p $outdirroot
 
 #count events in each file
 for j in $files;
@@ -29,6 +40,12 @@ do
 
   wait
 #wait for all of the above to finish before moving on; fancier behavior would be nice but would take new tools (gnu parallel?)
+
+#special hack for the case where a made a gazillion output files
+  tar cvfz $outdirlog/${filename}_logs.tgz ev*log
+  rm ev*log
+  tar cvfz $outdirroot/${filename}_root.tgz ev*root
+  rm ev*root
 
 done
 

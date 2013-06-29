@@ -42,11 +42,12 @@ void combineScanBins(TString infilename) {
   TFile infile(infilename);
 
   TH2D* scanSMSngen = (TH2D*) infile.Get("scanSMSngen");
+  TH2D* eventsTotalIsr = (TH2D*) infile.Get("eventstotalisr");//a clone of scanSMSngen, but with different values!
   //first we have to load the histograms from the input file
   vector<TH2D*> vh0;
   for (int ih = 0; ih<infile.GetListOfKeys()->GetEntries(); ih++) {
     TString histname = infile.GetListOfKeys()->At(ih)->GetName();
-    if (! (histname.BeginsWith("events_") ||histname.BeginsWith("eventstotal_")) ) continue;
+    if (! (histname.BeginsWith("events_") ||histname.BeginsWith("eventstotal_") ||histname=="eventstotalisr") ) continue;
     TH2D* h0 = (TH2D*) infile.Get(histname);
     vh0.push_back(h0);
   }
@@ -82,6 +83,19 @@ void combineScanBins(TString infilename) {
       scanSMSngen->SetBinContent(ix+1,iy,0);
       scanSMSngen->SetBinContent(ix,iy+1,0);
       scanSMSngen->SetBinContent(ix+1,iy+1,0);
+
+      if (eventsTotalIsr!=0) {
+	double ngentotalisr = 
+	  eventsTotalIsr->GetBinContent(ix,iy) +
+	  eventsTotalIsr->GetBinContent(ix+1,iy) +
+	  eventsTotalIsr->GetBinContent(ix,iy+1) +
+	  eventsTotalIsr->GetBinContent(ix+1,iy+1);
+	eventsTotalIsr->SetBinContent(ix,iy,ngentotalisr);
+	eventsTotalIsr->SetBinContent(ix+1,iy,0);
+	eventsTotalIsr->SetBinContent(ix,iy+1,0);
+	eventsTotalIsr->SetBinContent(ix+1,iy+1,0);
+      }
+
       //now loop over all of the event count histos
       for (unsigned int ih=0; ih<vh0.size(); ih++) {
 	double ntotal = 
@@ -95,6 +109,7 @@ void combineScanBins(TString infilename) {
     }
   }
 
+  if (eventsTotalIsr!=0) eventsTotalIsr->Write();
   scanSMSngen->Write();
   outfile.Write();
   outfile.Close();
@@ -184,6 +199,13 @@ void writetxt(TString which, const TString sample, const TString prefix="eventco
   }
 
   TH2D* scanSMSngen = (TH2D*) f0->Get("scanSMSngen");
+  TH2D* eventsTotalIsr = (TH2D*) f0->Get("eventstotalisr");
+  TH2D* eventsTotalIsrD=0;
+  TH2D* eventsTotalIsrU=0;
+  if (which=="ISR") {
+    eventsTotalIsrU = (TH2D*) fu->Get("eventstotalisr");
+    eventsTotalIsrD = (TH2D*) fd->Get("eventstotalisr");
+  }
 
   //load histograms from the input files
   int nhist=0;
@@ -221,7 +243,8 @@ void writetxt(TString which, const TString sample, const TString prefix="eventco
       txtfile<<vh0[0]->GetXaxis()->GetBinLowEdge(ix)<<" "
 	     <<vh0[0]->GetYaxis()->GetBinLowEdge(iy)<<" ";
 
-      if (which=="counts") txtfile<<scanSMSngen->GetBinContent(ix,iy)<<" ";
+      if (which=="counts" && !useISR) txtfile<<scanSMSngen->GetBinContent(ix,iy)<<" ";
+      else if (which=="counts" && useISR) txtfile<<eventsTotalIsr->GetBinContent(ix,iy)<<" ";
 
       cout<<" == "<<vh0[0]->GetXaxis()->GetBinLowEdge(ix)<<" "
 	  <<vh0[0]->GetYaxis()->GetBinLowEdge(iy)<<" =="<<endl;
@@ -253,7 +276,13 @@ void writetxt(TString which, const TString sample, const TString prefix="eventco
 	  //signed symmetrization of the up and down errors
 	  const double cutoff=10; //enforce some sanity check to get rid of NaNs and crazy values
 	  bool notok= vhu[ih]->GetBinContent(ix,iy)<cutoff || vhd[ih]->GetBinContent(ix,iy)<cutoff || vh0[ih]->GetBinContent(ix,iy)<cutoff;
-	  double delta = notok ? 0 : 0.5*(vhu[ih]->GetBinContent(ix,iy) - vhd[ih]->GetBinContent(ix,iy)) / vh0[ih]->GetBinContent(ix,iy);
+	  double delta = 0;
+	  if (!notok) {
+	    //for ISR, we need to compute the DeltaEff, not the DeltaCounts
+	    if (which=="ISR") delta = 0.5*( (vhu[ih]->GetBinContent(ix,iy)/eventsTotalIsrU->GetBinContent(ix,iy)) - (vhd[ih]->GetBinContent(ix,iy)/ eventsTotalIsrD->GetBinContent(ix,iy))) 
+	      / ( vh0[ih]->GetBinContent(ix,iy)/eventsTotalIsr->GetBinContent(ix,iy) );
+	    else  delta = 0.5*(vhu[ih]->GetBinContent(ix,iy) - vhd[ih]->GetBinContent(ix,iy)) / vh0[ih]->GetBinContent(ix,iy);
+	  }
 	  
 	  //unsymmetrized
 	  //	  double deltau = vhu[ih]->GetBinContent(ix,iy) / vh0[ih]->GetBinContent(ix,iy) - 1.0;	
@@ -263,19 +292,30 @@ void writetxt(TString which, const TString sample, const TString prefix="eventco
 	  //if we're merging the 3 b bins, then repeat the number twice more
 	  if (prefix.Contains("mergebbins")) txtfile<<delta<<" "<<delta<<" ";
 
-	  hjesU->SetBinContent(ih+1,vhu[ih]->GetBinContent(ix,iy));
-	  hjesD->SetBinContent(ih+1,vhd[ih]->GetBinContent(ix,iy));
-	  hjesU->SetBinError(ih+1,vhu[ih]->GetBinError(ix,iy));
-	  hjesD->SetBinError(ih+1,vhd[ih]->GetBinError(ix,iy));
+	  double denomU=1,denomD=1;
+	  if (which=="ISR") {
+	    denomU = eventsTotalIsrU->GetBinContent(ix,iy);
+	    denomD = eventsTotalIsrD->GetBinContent(ix,iy);
+	  }
+	  hjesU->SetBinContent(ih+1,vhu[ih]->GetBinContent(ix,iy)/denomU);
+	  hjesD->SetBinContent(ih+1,vhd[ih]->GetBinContent(ix,iy)/denomD);
+	  hjesU->SetBinError(ih+1,vhu[ih]->GetBinError(ix,iy)/denomU); 
+	  hjesD->SetBinError(ih+1,vhd[ih]->GetBinError(ix,iy)/denomD);
 	}
 	else {
 	  txtfile<< vh0[ih]->GetBinContent(ix,iy)<<" ";
 	}
-	hjes0->SetBinContent(ih+1,vh0[ih]->GetBinContent(ix,iy));
-	hjes0->SetBinError(ih+1,vh0[ih]->GetBinError(ix,iy));
+	double denom0= (which=="ISR") ? eventsTotalIsr->GetBinContent(ix,iy) : 1;
+	hjes0->SetBinContent(ih+1,vh0[ih]->GetBinContent(ix,iy)/denom0);
+	hjes0->SetBinError(ih+1,vh0[ih]->GetBinError(ix,iy)/denom0);
 
-	hjes0eff->SetBinContent(ih+1,vh0[ih]->GetBinContent(ix,iy)/scanSMSngen->GetBinContent(ix,iy) );
-	hjes0eff->SetBinError(ih+1,vh0[ih]->GetBinError(ix,iy)/scanSMSngen->GetBinContent(ix,iy) );//assumes no error on scanSMSngen
+	if (useISR) {
+	  hjes0eff->SetBinContent(ih+1,vh0[ih]->GetBinContent(ix,iy)/eventsTotalIsr->GetBinContent(ix,iy) );
+	  hjes0eff->SetBinError(ih+1,vh0[ih]->GetBinError(ix,iy)/eventsTotalIsr->GetBinContent(ix,iy) );
+	} else {
+	  hjes0eff->SetBinContent(ih+1,vh0[ih]->GetBinContent(ix,iy)/scanSMSngen->GetBinContent(ix,iy) );
+	  hjes0eff->SetBinError(ih+1,vh0[ih]->GetBinError(ix,iy)/scanSMSngen->GetBinContent(ix,iy) );//assumes no error on scanSMSngen
+	}
       }
 
       if (which=="counts") { //need to also print the stat errors
@@ -366,10 +406,14 @@ void drawstuff(TString pointstring = "1100_700", TString what="JES",const TStrin
   // hJES_sym->DrawCopy();
   //hJES_down->DrawCopy("SAME");
 
-  //need to make a prettier plot; skip the LDP
-  hJES_pretty = new TH1D("hJES_pretty",what+" systematics", hJES_0->GetNbinsX()/2 , 0,hJES_0->GetNbinsX()/2 );
+  //need to make a prettier plot
+  //want to show only SIG, not LDP etc
+  int divisor = 2; //for T1bbbb where there is SIG, LDP
+  if (sample.Contains("T1tttt")) divisor = 4; //there is SIG, SLSIG, SL, LDP
+
+  hJES_pretty = new TH1D("hJES_pretty",what+" systematics", hJES_0->GetNbinsX()/divisor , 0,hJES_0->GetNbinsX()/divisor );
   int extrabin=0;
-  for ( int ibin = 1; ibin <= hJES_0->GetNbinsX() / 2; ibin++ ) {
+  for ( int ibin = 1; ibin <= hJES_0->GetNbinsX() / divisor; ibin++ ) {
 
     double val = hJES_sym->GetBinContent(ibin);
 
