@@ -167,6 +167,9 @@ EventCalculator::EventCalculator(const TString & sampleName, const vector<string
 
   cout<<sampleName_<<endl;
 
+  if (v69orLater_) cout<<" --> this is a v69 or later sample. PU beta and METsig2012 enabled"<<endl;
+  else cout<<" =========> This is a pre-v69 sample! PU beta and METsig2012 DISabled!"<<endl;
+
   if (sampleIsSignal_) {
     cout<<" init PDFs"<<endl;
     LHAPDF::initPDFSet(1, "cteq66.LHgrid");
