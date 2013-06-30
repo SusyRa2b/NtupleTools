@@ -42,6 +42,7 @@ using namespace std;
 EventCalculator::EventCalculator(const TString & sampleName, const vector<string> inputFiles, jetType theJetType, METType theMETType, isoType theIsoType) :
   sampleName_(sampleName),
   sampleIsSignal_(false),
+  v69orLater_(sampleName.Contains("v69")),
   theScanType_(kNotScan),
   theMETType_(theMETType),
   theJetType_(theJetType),
@@ -2327,7 +2328,7 @@ bool EventCalculator::isGoodJet(const unsigned int ijet, const float pTthreshold
   if ( jetid && !jetPassLooseID(ijet) ) return false;
   
   //PU beta check
-  if ( usebeta && pujet_beta[ijet] < 0.2 ) return false;
+  if (v69orLater_ && usebeta && pujet_beta[ijet] < 0.2 ) return false;
 
   //do manual cleaning for reco pfjets
   if(theJetType_ == kRECOPF){
@@ -6040,6 +6041,8 @@ void EventCalculator::jjResonanceFinder5(float & mjj1, float & mjj2) {
 
 void EventCalculator::extractPUJetVars_Beta(std::vector<float> &beta, TString which ) {
 
+  if (!v69orLater_) return;
+
   int totjet = 0;
   int matches = 0;
   for (unsigned int ijet=0; ijet<jets_AK5PF_pt->size(); ++ijet) {
@@ -6082,6 +6085,7 @@ void EventCalculator::extractPUJetVars_Beta(std::vector<float> &beta, TString wh
 }
 
 void EventCalculator::extractPUJetVars_MVA(std::vector<float> & bdt, std::vector<int> & discrim, TString which ) {
+  if (!v69orLater_) return;
 
   int totjet = 0;
   int matches = 0;
@@ -9034,10 +9038,10 @@ void EventCalculator::reducedTree(TString outputpath) {
       METsig00 = pfmets_fullSignifCov00;
       METsig10 = pfmets_fullSignifCov10;
       METsig11 = pfmets_fullSignifCov11;
-      METsig_2012 = pfmets_fullSignif_2012;
-      METsig00_2012 = pfmets_fullSignifCov00_2012;
-      METsig10_2012 = pfmets_fullSignifCov10_2012;
-      METsig11_2012 = pfmets_fullSignifCov11_2012;
+      METsig_2012 = v69orLater_ ? pfmets_fullSignif_2012 : -1;
+      METsig00_2012 = v69orLater_ ? pfmets_fullSignifCov00_2012 : -1;
+      METsig10_2012 = v69orLater_ ? pfmets_fullSignifCov10_2012 : -1;
+      METsig11_2012 = v69orLater_ ? pfmets_fullSignifCov11_2012 : -1;
 
       caloMET = mets_AK5_et->at(0);
       caloMETphi = mets_AK5_phi->at(0);

@@ -494,6 +494,8 @@ private:
   TString sampleName_;
   bool sampleIsSignal_;
 
+  bool v69orLater_;
+
   //configuration options
   scanType theScanType_;
   METType theMETType_; 
