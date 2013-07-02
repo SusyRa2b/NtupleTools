@@ -80,6 +80,37 @@
          inReducedTree -> SetBranchStatus("weight",1) ;
          inReducedTree -> SetBranchStatus("weight2",1) ;
          inReducedTree -> SetBranchStatus("weight3",1) ;
+         inReducedTree -> SetBranchStatus("PUweight",1) ;
+         inReducedTree -> SetBranchStatus("nGoodPV",1) ;
+
+        //--- jet pt
+         inReducedTree -> SetBranchStatus("jetpt1",1) ;
+         inReducedTree -> SetBranchStatus("jetpt2",1) ;
+         inReducedTree -> SetBranchStatus("jetpt3",1) ;
+         inReducedTree -> SetBranchStatus("jetpt4",1) ;
+
+        //--- new vars from Josh for trying to understand ABCD non-closure.
+         inReducedTree -> SetBranchStatus("higgs1jetpt1",1) ;
+         inReducedTree -> SetBranchStatus("higgs1jetpt2",1) ;
+         inReducedTree -> SetBranchStatus("higgs2jetpt1",1) ;
+         inReducedTree -> SetBranchStatus("higgs2jetpt2",1) ;
+         inReducedTree -> SetBranchStatus("higgs1CSV1",1) ;
+         inReducedTree -> SetBranchStatus("higgs1CSV2",1) ;
+         inReducedTree -> SetBranchStatus("higgs2CSV1",1) ;
+         inReducedTree -> SetBranchStatus("higgs2CSV2",1) ;
+         inReducedTree -> SetBranchStatus("higgs1partonId1",1) ;
+         inReducedTree -> SetBranchStatus("higgs1partonId2",1) ;
+         inReducedTree -> SetBranchStatus("higgs2partonId1",1) ;
+         inReducedTree -> SetBranchStatus("higgs2partonId2",1) ;
+         inReducedTree -> SetBranchStatus("higgs1partonMomId1",1) ;
+         inReducedTree -> SetBranchStatus("higgs1partonMomId2",1) ;
+         inReducedTree -> SetBranchStatus("higgs2partonMomId1",1) ;
+         inReducedTree -> SetBranchStatus("higgs2partonMomId2",1) ;
+         inReducedTree -> SetBranchStatus("nGluonsSplitToLF",1) ;
+         inReducedTree -> SetBranchStatus("nGluonsSplitToC",1) ;
+         inReducedTree -> SetBranchStatus("nGluonsSplitToB",1) ;
+
+
 
       } else {
 
