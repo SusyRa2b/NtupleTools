@@ -2855,11 +2855,6 @@ float EventCalculator::getJetPz( unsigned int ijet ) {
   return getJetPt(ijet) * sinh(jets_AK5PF_eta->at(ijet));
 }
 
-float EventCalculator::getJetEnergy( unsigned int ijet ) {
-  //need to move to using jecFactor 
-  return jets_AK5PF_energy->at(ijet);
-}
-
 bool EventCalculator::jetPassLooseID( unsigned int ijet ) {
 
   //want the uncorrected energy
@@ -3604,14 +3599,27 @@ float EventCalculator::getDeltaPhi_hb(int j_index_1,int j_index_2) {
   return dp;
 }
 
+float EventCalculator::getJetEnergy( const unsigned int ijet) {
+
+  //2 July -- according to Souvik, higgs->bb rescales the jet *energy* by
+  // pT' / pT where pT' is calculated after a JES shift.
+
+  //nominal pT
+  const  float pt0 = jets_AK5PF_pt->at(ijet);
+  //includes JES (or JER) variation
+  const  float ptshifted = getJetPt(ijet);
+
+  return (ptshifted/pt0)*jets_AK5PF_energy->at(ijet);
+
+}
+
 TLorentzVector EventCalculator::getLorentzVector( const unsigned int ijet) {
-  //DANGEROUS -- this is not ok under JES shifts!
 
   //get a TLorentzVector for the requested jet
   TLorentzVector j;
   if (ijet >= jets_AK5PF_pt->size()) return j;
 
-  j.SetPtEtaPhiE( jets_AK5PF_pt->at(ijet),jets_AK5PF_eta->at(ijet),jets_AK5PF_phi->at(ijet),jets_AK5PF_energy->at(ijet));
+  j.SetPtEtaPhiE( getJetPt(ijet),jets_AK5PF_eta->at(ijet),jets_AK5PF_phi->at(ijet),getJetEnergy(ijet));
   return j;
 }
 
@@ -9662,7 +9670,8 @@ double EventCalculator::calc_mNj( std::vector<unsigned int> jNi ) {
 
   for (unsigned int i=0; i<jNi.size(); i++) {
     unsigned int j1i = jNi.at(i);
-    sumE += jets_AK5PF_energy->at( j1i );  //this is NOT SAFE when doing JESup JESdown!
+
+    sumE += getJetEnergy( j1i );
 
     sumPx += getJetPx(j1i);
     sumPy += getJetPy(j1i);

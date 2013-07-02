@@ -294,11 +294,12 @@ public:
   float getJESUncertainty( unsigned int ijet, bool addL2L3toJES );
 
   float getJetPt( unsigned int ijet, bool addL2L3toJES=false );
+  float getJetEnergy( const unsigned int ijet) ;
+
   float getUncorrectedJetPt( unsigned int ijet, bool addL2L3toJES=false );
   float getJetPx( unsigned int ijet ) ;
   float getJetPy( unsigned int ijet ) ;
   float getJetPz( unsigned int ijet ) ;
-  float getJetEnergy( unsigned int ijet ) ;
   bool jetPassLooseID( unsigned int ijet );
   float getJetCSV( unsigned int ijet );
 
