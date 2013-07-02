@@ -56,6 +56,7 @@
 
         //--- njets
          inReducedTree -> SetBranchStatus("njets20",1) ;
+         inReducedTree -> SetBranchStatus("njets30",1) ;
 
         //--- btagging
          inReducedTree -> SetBranchStatus("CSVbest1",1) ;
@@ -99,6 +100,8 @@
 
       int njets20 ;
       inReducedTree -> SetBranchAddress("njets20", &njets20 ) ;
+      int njets30 ;
+      inReducedTree -> SetBranchAddress("njets30", &njets30 ) ;
 
       float CSVbest2 ;
       inReducedTree -> SetBranchAddress("CSVbest2", &CSVbest2) ;
@@ -182,7 +185,11 @@
          if ( !passCleaning ) continue ;
          if ( buggyEvent ) continue ;
          if ( !(trig1 || trig2 || trig3) ) continue ;
-         if ( njets20<4 || njets20>5 ) continue ;
+         //-----------
+         // Owen: make njets cut safe for pt>20 or pt>30.
+         //       this means you must cut on the appropriate njets variable when using the skim output.
+         if ( njets20<4 || njets30>5 ) continue ;
+         //-----------
          if ( CSVbest2 < 0.898 ) continue ;
 
          outReducedTree->Fill() ;
