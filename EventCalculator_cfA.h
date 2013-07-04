@@ -495,7 +495,7 @@ private:
   TString sampleName_;
   bool sampleIsSignal_;
 
-  bool v69orLater_;
+  int cfAversion_;
 
   //configuration options
   scanType theScanType_;

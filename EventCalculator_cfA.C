@@ -42,7 +42,7 @@ using namespace std;
 EventCalculator::EventCalculator(const TString & sampleName, const vector<string> inputFiles, jetType theJetType, METType theMETType, isoType theIsoType) :
   sampleName_(sampleName),
   sampleIsSignal_(false),
-  v69orLater_(sampleName.Contains("v69")),
+  cfAversion_(0),
   theScanType_(kNotScan),
   theMETType_(theMETType),
   theJetType_(theJetType),
@@ -104,6 +104,19 @@ EventCalculator::EventCalculator(const TString & sampleName, const vector<string
   chainV( 0),
   chainA( new TChain("configurableAnalysis/eventA"))
 {
+
+  if       (sampleName_.Contains("v69")) cfAversion_=69;
+  else  if (sampleName_.Contains("v68")) cfAversion_=68;
+  else  if (sampleName_.Contains("v67")) cfAversion_=67;
+  else  if (sampleName_.Contains("v66")) cfAversion_=66;
+  else  if (sampleName_.Contains("v65")) cfAversion_=65;
+  else  if (sampleName_.Contains("v64")) cfAversion_=64;
+  else  if (sampleName_.Contains("v63")) cfAversion_=63;
+
+  cout<<" Found cfA version = "<<cfAversion_<<endl;
+  assert(cfAversion_>0);
+  if (cfAversion_>=69) cout<<" --> this is a v69 or later sample. PU beta and METsig2012 enabled"<<endl;
+  else cout<<" =========> This is a pre-v69 sample! PU beta and METsig2012 DISabled!"<<endl;
 
   if ( sampleName_.Contains("mSUGRA") ) {
     theScanType_ = kmSugra;
@@ -167,8 +180,6 @@ EventCalculator::EventCalculator(const TString & sampleName, const vector<string
 
   cout<<sampleName_<<endl;
 
-  if (v69orLater_) cout<<" --> this is a v69 or later sample. PU beta and METsig2012 enabled"<<endl;
-  else cout<<" =========> This is a pre-v69 sample! PU beta and METsig2012 DISabled!"<<endl;
 
   if (sampleIsSignal_) {
     cout<<" init PDFs"<<endl;
@@ -1445,14 +1456,6 @@ void EventCalculator::loadDataJetRes(){
     hEta2p5_3_ = (TH1D*) fDataJetRes_->Get("hEta2p5_3");
     hEta3_5_   = (TH1D*) fDataJetRes_->Get("hEta3_5");
 
-    cout<<    hEta0_0p5_ <<endl
-	<<    hEta0p5_1_ <<endl
-    << hEta1_1p5_  <<endl
-	 <<hEta1p5_2_ <<endl 
-	 <<hEta2_2p5_ <<endl 
-	 <<hEta2p5_3_ <<endl 
-	<<hEta3_5_   <<endl ;
-
   }
 }
 
@@ -2331,7 +2334,7 @@ bool EventCalculator::isGoodJet(const unsigned int ijet, const float pTthreshold
   if ( jetid && !jetPassLooseID(ijet) ) return false;
   
   //PU beta check
-  if (v69orLater_ && usebeta && pujet_beta[ijet] < 0.2 ) return false;
+  if ((cfAversion_>=69) && usebeta && pujet_beta[ijet] < 0.2 ) return false;
 
   //do manual cleaning for reco pfjets
   if(theJetType_ == kRECOPF){
@@ -6052,7 +6055,7 @@ void EventCalculator::jjResonanceFinder5(float & mjj1, float & mjj2) {
 
 void EventCalculator::extractPUJetVars_Beta(std::vector<float> &beta, TString which ) {
 
-  if (!v69orLater_) return;
+  if (cfAversion_<69) return;
 
   int totjet = 0;
   int matches = 0;
@@ -6096,7 +6099,7 @@ void EventCalculator::extractPUJetVars_Beta(std::vector<float> &beta, TString wh
 }
 
 void EventCalculator::extractPUJetVars_MVA(std::vector<float> & bdt, std::vector<int> & discrim, TString which ) {
-  if (!v69orLater_) return;
+  if (cfAversion_<69) return;
 
   int totjet = 0;
   int matches = 0;
@@ -8367,7 +8370,7 @@ void EventCalculator::reducedTree(TString outputpath) {
       }
       else if (theScanType_==kpmssm)  scanpMSSMngen->Fill(getRunNumber() );
 
-      if ( sampleName_.Contains("v68") ||sampleName_.Contains("v69")) {
+      if (cfAversion_>=68 ) {
 
 	for (int ipdf=0;ipdf<45;ipdf++) {
 	  pdfWeightsCTEQ[ipdf] = getPDFweight(1,ipdf); //1==cteq
@@ -9049,10 +9052,10 @@ void EventCalculator::reducedTree(TString outputpath) {
       METsig00 = pfmets_fullSignifCov00;
       METsig10 = pfmets_fullSignifCov10;
       METsig11 = pfmets_fullSignifCov11;
-      METsig_2012 = v69orLater_ ? pfmets_fullSignif_2012 : -1;
-      METsig00_2012 = v69orLater_ ? pfmets_fullSignifCov00_2012 : -1;
-      METsig10_2012 = v69orLater_ ? pfmets_fullSignifCov10_2012 : -1;
-      METsig11_2012 = v69orLater_ ? pfmets_fullSignifCov11_2012 : -1;
+      METsig_2012 = cfAversion_>=69 ? pfmets_fullSignif_2012 : -1;
+      METsig00_2012 = cfAversion_>=69 ? pfmets_fullSignifCov00_2012 : -1;
+      METsig10_2012 = cfAversion_>=69 ? pfmets_fullSignifCov10_2012 : -1;
+      METsig11_2012 = cfAversion_>=69 ? pfmets_fullSignifCov11_2012 : -1;
 
       caloMET = mets_AK5_et->at(0);
       caloMETphi = mets_AK5_phi->at(0);
@@ -9392,7 +9395,7 @@ void EventCalculator::reducedTree(TString outputpath) {
       bool hcallaser = hcallaserfilter_decision == 1 ? true:false;
       bool ecallaser = true;
       //does this work? trying to protect v66 where this variable does not exist
-      if (isRealData && sampleName_.Contains("v67")) ecallaser = ecallaserfilter_decision == 1 ? true:false;
+      if (isRealData && cfAversion_>=67) ecallaser = ecallaserfilter_decision == 1 ? true:false;
       bool eebadsc = eebadscfilter_decision == 1 ? true:false;
 
       badjetFilter = passBadJetFilter();
@@ -9405,7 +9408,7 @@ void EventCalculator::reducedTree(TString outputpath) {
       passCleaning = csctighthaloFilter 
 	//	&& eenoiseFilter 
 	&& greedymuonFilter 
-	//&& hbhenoiseFilter 
+	&& hbhenoiseFilter 
 	&& inconsistentmuonFilter 
 	&& ra2ecaltpFilter && scrapingvetoFilter && trackingfailureFilter
 	&& hcallaser && ecallaser && eebadsc && (PBNRcode>0) && badjetFilter; //last line are new for 2012
@@ -14307,7 +14310,7 @@ void EventCalculator::InitializeB(TChain *fChain)
    mc_pdf_id2=0;
    mc_pdf_q=0;
 
-   if ( sampleName_.Contains("v68") ||sampleName_.Contains("v69") ) {
+   if ( cfAversion_>=68) {
 
      fChain->SetBranchAddress("mc_pdf_x1", &mc_pdf_x1, &b_mc_pdf_x1);
      fChain->SetBranchAddress("mc_pdf_x2", &mc_pdf_x2, &b_mc_pdf_x2);
