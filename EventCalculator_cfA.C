@@ -6057,6 +6057,9 @@ void EventCalculator::extractPUJetVars_Beta(std::vector<float> &beta, TString wh
 
   if (cfAversion_<69) return;
 
+  //Clear out the vector before starting a new event!
+  beta.clear(); 
+
   int totjet = 0;
   int matches = 0;
   for (unsigned int ijet=0; ijet<jets_AK5PF_pt->size(); ++ijet) {
@@ -6100,6 +6103,9 @@ void EventCalculator::extractPUJetVars_Beta(std::vector<float> &beta, TString wh
 
 void EventCalculator::extractPUJetVars_MVA(std::vector<float> & bdt, std::vector<int> & discrim, TString which ) {
   if (cfAversion_<69) return;
+
+  //Clear out the vector before starting a new event!
+  bdt.clear(); discrim.clear();  
 
   int totjet = 0;
   int matches = 0;
