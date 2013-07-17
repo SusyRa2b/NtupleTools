@@ -45,7 +45,7 @@ void signalEff2012::Loop()
   vector<SearchRegion> searchregions;
 
   bool madgraphIsr=false;
-  if (filestub_.Contains("SMS-MadGraph")) {
+  if (filestub_.Contains("SMS-MadGraph") || (filestub_.Contains("SMS")&&filestub_.Contains("madgraph"))) {
     assert(theIsrMode_ != kNoIsrWeight);
     madgraphIsr=true;
     cout<<" madgraph Isr Mode enabled"<<endl;

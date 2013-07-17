@@ -1,16 +1,17 @@
 #!/bin/sh
 
-#final argument should be true for ISR samples and false for others
-root -b -l -q "signalEff2012_writetxt_run.C(\"counts\",\"T1ttcc\",3,true)"
-root -b -l -q "signalEff2012_writetxt_run.C(\"JES\",\"T1ttcc\",3,true)"
-#needed for samples with ISR, not for others
-root -b -l -q "signalEff2012_writetxt_run.C(\"ISR\",\"T1ttcc\",3,true)"
-root -b -l -q "signalEff2012_PDF_details.C++(\"CTEQMSTW\",\"T1ttcc\",3,true)" 
-root -b -l -q "signalEff2012_PDF_details.C++(\"CTEQNNPDF\",\"T1ttcc\",3,true)" 
-root -b -l -q "signalEff2012_PDF_details_writetxt.C++(\"T1ttcc\")"
-
 #this line is usually redundant, but not if we skip step 2
-#root -b -l -q signalEff2012_writetxt_compile.C
+root -b -l -q signalEff2012_writetxt_compile.C
+
+#final argument should be true for ISR samples and false for others
+root -b -l -q "signalEff2012_writetxt_run.C(\"counts\",\"T1bbbb14TeV\",3,true)"
+root -b -l -q "signalEff2012_writetxt_run.C(\"JES\",\"T1bbbb14TeV\",3,true)"
+#needed for samples with ISR, not for others
+root -b -l -q "signalEff2012_writetxt_run.C(\"ISR\",\"T1bbbb14TeV\",3,true)"
+root -b -l -q "signalEff2012_PDF_details.C++(\"CTEQMSTW\",\"T1bbbb14TeV\",3,true)" 
+root -b -l -q "signalEff2012_PDF_details.C++(\"CTEQNNPDF\",\"T1bbbb14TeV\",3,true)" 
+root -b -l -q "signalEff2012_PDF_details_writetxt.C++(\"T1bbbb14TeV\")"
+
 #true/false is an ISR switch
 #root -b -l -q "signalEff2012_writetxt_run.C(\"counts\",\"pMSSM4\",3,false)"
 #root -b -l -q "signalEff2012_writetxt_run.C(\"JES\",\"pMSSM4\",3,false)"

@@ -120,8 +120,7 @@ void signalEff2012_PDF_details_writetxt(const TString sample,const int minnjets=
       fname+=vh1[0]->GetYaxis()->GetBinLowEdge(iy);
       fname+=".png";
 
-      if (vh1[0]->GetXaxis()->GetBinLowEdge(ix) >800 && vh1[0]->GetXaxis()->GetBinLowEdge(ix)<1400)
-	thecanvas->SaveAs(fname);
+      //      if (vh1[0]->GetXaxis()->GetBinLowEdge(ix) >800 && vh1[0]->GetXaxis()->GetBinLowEdge(ix)<1400)	thecanvas->SaveAs(fname);
       delete hpretty;
       delete thecanvas;
 
