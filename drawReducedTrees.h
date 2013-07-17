@@ -666,10 +666,12 @@ void loadSusyScanHistograms() {
   loadedSusyHistos_=true;
 }
 
-void drawPlotHeaderInside() {
+void drawPlotHeaderInside(TString displaytext="") {
   if (text1 != 0 ) delete text1;
-  //text1 = new TLatex(3.570061,23.08044,"CMS Preliminary");
-  text1 = new TLatex(5,23.08044,"CMS Simulation");
+
+  if ( displaytext=="") displaytext = "CMS Simulation";
+
+  text1 = new TLatex(5,23.08044,displaytext);
   text1->SetNDC();
   text1->SetTextAlign(13);
   text1->SetX(0.6);
@@ -1223,7 +1225,7 @@ void addSample(const TString & newsample, const int color=-1, const TString labe
     if (label!="") sampleLabel_[newsample] = label;
   }
   else {
-    cout<<"Could not find sample with name "<<newsample<<endl;
+    cout<<"Could not find sample with name "<<stripSamplename(newsample)<<endl;
   }
 }
 
@@ -1897,6 +1899,10 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   //  primaryDatasets_["MuEG"]=0;
   //  primaryDatasets_["Photon"]=0;
   primaryDatasets_["MET"]=0;
+  primaryDatasets_["META"]=0;
+  primaryDatasets_["METB"]=0;
+  primaryDatasets_["METC"]=0;
+  primaryDatasets_["METD"]=0;
  
   primaryDatasets_["2012hybrid"] = 0;
   primaryDatasets_["2012hybridplus"] = 0;
@@ -1973,6 +1979,22 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
       addDataToChain(idataset->second,"MET_Run2012A");
       addDataToChain(idataset->second,"MET_Run2012B");
       addDataToChain(idataset->second,"MET_Run2012C");
+      addDataToChain(idataset->second,"MET_Run2012D");
+    }
+    else if (idataset->first == "META") {
+      idataset->second = new TChain(reducedTreeName_);
+      addDataToChain(idataset->second,"MET_Run2012A");
+    }
+    else if (idataset->first == "METB") {
+      idataset->second = new TChain(reducedTreeName_);
+      addDataToChain(idataset->second,"MET_Run2012B");
+    }
+    else if (idataset->first == "METC") {
+      idataset->second = new TChain(reducedTreeName_);
+      addDataToChain(idataset->second,"MET_Run2012C");
+    }
+    else if (idataset->first == "METD") {
+      idataset->second = new TChain(reducedTreeName_);
       addDataToChain(idataset->second,"MET_Run2012D");
     }
     else if (idataset->first == "MuHad") {
