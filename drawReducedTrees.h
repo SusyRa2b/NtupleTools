@@ -540,6 +540,7 @@ bool isSampleSM(const TString & name) {
   if (name.Contains("sbottom")) return false;
 
   if (name.Contains("TChihh")) return false;
+  if (name.Contains("Higgsino")) return false;
 
   if (name.Contains("SUGRA")) return false;
   if (isSampleSMS(name)) return false;
@@ -2171,26 +2172,49 @@ float drawSimple(const TString var, const int nbins, const float* varbins, const
 void draw2d(const TString var, const int nbins, const float low, const float high, 
 	    const TString vary, const int nbinsy, const float lowy, const float highy,
 	    const TString xtitle, TString ytitle, TString filename="",
-	    const float* varbins=0,const float* varbinsy=0) {
+	    const float* varbins=0,const float* varbinsy=0,
+	    const TString signalname="") {
   //in case varbins is used, the low and high will not be used
 
+  /*
+use cases:
+1) compare totalsm to data  -- already implemented; user sets dodata_ to true
+2) plot just one component (totalsm, signal, etc) -- not now
+3) compare totalsm to signal -- to do; user sets signalname to 
+
+the plots with multiple components basically only work in the case of a box plot
+the plots with one component might be good as COLZ
+
+  */
+
+  if (signalname!="" && dodata_) {cout<<"Problem in draw2d(). Can't plot signal and data at the same time."<<endl; return;}
+
+  //let's tell the user what we're doing
+  if (!quiet_) cout<<"[draw2d] 2d comparison of totalsm and ";
+  if (!quiet_ && dodata_) cout<<"data"<<endl;
+  else if (!quiet_ && signalname!="") cout<<signalname<<endl;
+
   loadSamples();
-  if (filename=="") filename=var;
+  if (filename=="")     filename.Form("%s_%s",var.Data(),vary.Data());
   gROOT->SetStyle("CMS");
 
   renewCanvas();
+
+  //h2d contains the 'totalsm' component
   if (h2d!=0) delete h2d;
   const TString hname="h2d";
   if (varbins==0 &&varbinsy==0)  h2d = new TH2D(hname,"",nbins,low,high,nbinsy,lowy,highy);
   else  h2d = new TH2D(hname,"",nbins,varbins,nbinsy,varbinsy);
   h2d->Sumw2();
 
+  //this is just a temp histogram for totalsm calculation
   TH2D*  h2d_temp =0;
   if (varbins==0 &&varbinsy==0) h2d_temp= new TH2D("h2d_temp","",nbins,low,high,nbinsy,lowy,highy);
   else h2d_temp= new TH2D("h2d_temp","",nbins,varbins,nbinsy,varbinsy);
   h2d_temp->Sumw2();
 
-  if (dodata_) {
+  //data or signal histogram
+  if (dodata_ || signalname!="") {
     if (hdata2d!=0) delete hdata2d;
     if (varbins==0 &&varbinsy==0)   hdata2d = new TH2D("hdata2d","",nbins,low,high,nbinsy,lowy,highy);
     else   hdata2d = new TH2D("hdata2d","",nbins,varbins,nbinsy,varbinsy);
@@ -2202,17 +2226,24 @@ void draw2d(const TString var, const int nbins, const float low, const float hig
   drawstring+=":";
   drawstring+=var;
   for (unsigned int isample=0; isample<samples_.size() ; isample++) {
-    if ( isSampleSM(samples_[isample]) ) {
-      gROOT->cd();
-      //      TChain* tree = (TChain*) files_[currentConfig_][samples_[isample]]->Get(reducedTreeName_);
-      TChain* tree = getTree(samples_[isample]);
-      gROOT->cd();
-      
+    gROOT->cd();
+    TChain* tree = getTree(samples_[isample]);
+    gROOT->cd();
+ 
+    if ( isSampleSM(samples_[isample]) ) { //add to the totalsm histogram h2d
+     
       h2d_temp->Reset(); //just to be safe
       tree->Project("h2d_temp",drawstring,getCutString( getSampleType(samples_[isample],"point"),getSampleWeightFactor(samples_[isample]),selection_,extractExtraCut(samples_[isample]),0,"",-1,getSampleScaleFactor(samples_[isample])).Data());
 
       h2d->Add(h2d_temp);
     }
+    else if ( signalname.Contains(samples_[isample]) ) { //this sample was given by the user in signalname
+
+      tree->Project("hdata2d",drawstring,getCutString( getSampleType(samples_[isample],"point"),getSampleWeightFactor(samples_[isample]),selection_,extractExtraCut(samples_[isample]),0,"",-1,getSampleScaleFactor(samples_[isample])).Data());
+      hdata2d->SetLineColor( getSampleColor(samples_[isample]) );
+
+    }
+
   }
   h2d->SetXTitle(xtitle);
   h2d->SetYTitle(ytitle);
@@ -2222,18 +2253,19 @@ void draw2d(const TString var, const int nbins, const float low, const float hig
   if (dodata_) {
     dtree->Project("hdata2d",drawstring, getCutString(true));
     hdata2d->SetLineColor(kBlack);
-    if (hdata2d->GetMaximum() > zmax) zmax= hdata2d->GetMaximum();
   }
+  if ((dodata_||signalname!="") && hdata2d->GetMaximum() > zmax) zmax= hdata2d->GetMaximum();
 
   h2d->Draw(opt);
 
   h2d->SetMaximum(zmax*1.1);
   hdata2d->SetMaximum(zmax*1.1);
 
-  if (dodata_)  hdata2d->Draw("box same");
+  if (dodata_ ||signalname!="")  hdata2d->Draw("box same");
 
 
   TString savename = filename;
+  //offering logy and not logx or logz is pretty stupid. To do
   if (logy_) savename += "-logY";
 
   savename += "-draw2d";
@@ -2241,7 +2273,6 @@ void draw2d(const TString var, const int nbins, const float low, const float hig
   //amazingly, \includegraphics cannot handle an extra dot in the filename. so avoid it.
   if (savePlots_) {
     thecanvas->SaveAs(savename+".eps"); //for me
-    //  thecanvas->Print(savename+".C");    //for formal purposes
     thecanvas->SaveAs(savename+".pdf"); //for pdftex
     thecanvas->SaveAs(savename+".png"); //for twiki
   }
