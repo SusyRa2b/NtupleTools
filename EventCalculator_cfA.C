@@ -98,7 +98,7 @@ EventCalculator::EventCalculator(const TString & sampleName, const vector<string
   starttime_(0),
   recalculatedVariables_(false),
   watch_(0),
-  minHiggsJetPt_(30), //defines the min jet pT of the higgs candidates (mass diff method)
+  minHiggsJetPt_(20), //defines the min jet pT of the higgs candidates (mass diff method)
   //new cfA stuff
   chainB( new TChain("/configurableAnalysis/eventB")),
   chainV( 0),
