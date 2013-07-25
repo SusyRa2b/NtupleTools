@@ -2622,40 +2622,29 @@ float EventCalculator::getJERbiasFactor(unsigned int ijet) {
 
   if (theJERType_ == kJERup || theJERType_ ==kJERbias ||theJERType_ ==kJERdown) {
     //old numbers were from JME-10-014-pas
-    //now replaced by 2011 numbers from https://twiki.cern.ch/twiki/bin/view/CMS/JetResolution
-    float m = 0;
-    if (theJERType_ == kJERup) m=1;
-    else if (theJERType_==kJERdown) m=-1;
+    //now replaced by numbers from https://twiki.cern.ch/twiki/bin/view/CMS/JetResolution
+    float err=0;
+    if (theJERType_ == kJERup) {
+      if (abseta < 0.5)                     err = jmt::addInQuad(0.012,0.062);
+      else if (abseta <1.1 && abseta>=0.5)  err = jmt::addInQuad(0.012,0.056);
+      else if (abseta <1.7 && abseta>=1.1)  err = jmt::addInQuad(0.017,0.063);
+      else if (abseta <2.3 && abseta>=1.7)  err = jmt::addInQuad(0.035,0.087);
+      else if (abseta<=5 && abseta>= 2.3)   err = jmt::addInQuad(0.127,0.155);
+    }
+    else if (theJERType_==kJERdown) {
+      if (abseta < 0.5)                     err = -jmt::addInQuad(0.012,0.061);
+      else if (abseta <1.1 && abseta>=0.5)  err = -jmt::addInQuad(0.012,0.055);
+      else if (abseta <1.7 && abseta>=1.1)  err = -jmt::addInQuad(0.017,0.062);
+      else if (abseta <2.3 && abseta>=1.7)  err = -jmt::addInQuad(0.035,0.085);
+      else if (abseta<=5 && abseta>= 2.3)   err = -jmt::addInQuad(0.127,0.153);
+    }
 
-    if (abseta < 0.5)                     return 0.052   + m*0.063;
-    else if (abseta <1.1 && abseta>=0.5)  return 0.057   + m*0.057;
-    else if (abseta <1.7 && abseta>=1.1)  return 0.096   + m*0.065;
-    else if (abseta <2.3 && abseta>=1.7)  return 0.134   + m*0.094;
-    else if (abseta<=5 && abseta>= 2.3)   return 0.288   + m*0.200;
+    if (abseta < 0.5)                     return 1.052   + err;
+    else if (abseta <1.1 && abseta>=0.5)  return 1.057   + err;
+    else if (abseta <1.7 && abseta>=1.1)  return 1.096   + err;
+    else if (abseta <2.3 && abseta>=1.7)  return 1.134   + err;
+    else if (abseta<=5 && abseta>= 2.3)   return 1.288   + err;
     else return 0; //eta>5 not given
-  }
-  else if (theJERType_ == kJERra2) {
-    //from the RA2 AN 2011/247
-    float m = 0;
-
-    if (abseta < 0.5) {
-      return 0.052 + m*0.065;
-    }
-    else if (abseta <1.1 && abseta>=0.5) {
-      return 0.057 + m*0.06;
-    }
-    else if (abseta <1.7 && abseta>=1.1) {
-      return  0.096 + m*0.07;
-    }
-    else if (abseta <2.3 && abseta>=1.7) {
-      return  0.134 + m*0.1;
-    }
-    else if (abseta<=5 && abseta>= 2.3) {
-      return 0.288 + m*0.222;
-    }
-    else { //eta>5 not given
-      return 0;
-    }
   }
 
   assert(0);
@@ -2751,24 +2740,18 @@ float EventCalculator::getJetPt( unsigned int ijet, bool addL2L3toJES ) {
   }
 end of kJESFLY block  */
 
-  
  //first JER
   if ( theJERType_ != kJER0 ) {
     float genpt = jets_AK5PF_gen_pt->at(ijet);
-    if (genpt > 15) {
-      float factor = getJERbiasFactor(ijet);
-      float deltapt = (pt - genpt) * factor;
-      float frac = (pt+deltapt)/pt;
-      float ptscale = frac>0 ? frac : 0;
-      pt *= ptscale;
+    if (genpt > 15) { //no guidance given on minimum pt to correct. let's stick with this
+
+      pt = genpt + (getJERbiasFactor(ijet))*(pt - genpt);
+      if (pt<0) pt=0;
     }
     
   }
-  
-  //  cout<<endl<< " == computing jet pT "<<endl; //JMT DEBUG
+
   //then JES
-  //  cout<<" jet pt "<<pt;
-  //  float pt0 = pt;
 
   if ( theJESType_ == kJESup || theJESType_ == kJESdown) {
 
