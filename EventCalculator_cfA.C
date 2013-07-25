@@ -2746,7 +2746,7 @@ end of kJESFLY block  */
     if (genpt > 15) { //no guidance given on minimum pt to correct. let's stick with this
 
       pt = genpt + (getJERbiasFactor(ijet))*(pt - genpt);
-      if (pt<0) pt=0;
+      if (pt<=0) 	pt=0.1; //some code goes nuts with pT=0 so use 0.1 instead
     }
     
   }
