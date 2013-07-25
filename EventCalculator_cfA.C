@@ -2726,7 +2726,6 @@ float EventCalculator::getJetPt( unsigned int ijet, bool addL2L3toJES ) {
   //(hence use if repeated 'if' instead of 'else if')
 
   float pt = jets_AK5PF_pt->at(ijet);
-  //if ( theJESType_ == kJES0 && theJERType_ == kJER0) return pt;
 
     /* leave this code intact but we don't really want to use this right now
   if (theJESType_ == kJESFLY) {
@@ -2751,6 +2750,7 @@ float EventCalculator::getJetPt( unsigned int ijet, bool addL2L3toJES ) {
 
   }
 end of kJESFLY block  */
+
   
  //first JER
   if ( theJERType_ != kJER0 ) {
@@ -2784,6 +2784,7 @@ end of kJESFLY block  */
     }
 
     //let's only use the caching feature if addL2L3toJES is off (it is always off in 2012....)
+    // -- nb: it would probably be slightly faster to get an iterator, test it, and then dereference it. 1 lookup in the list instead of 2
     if ( jetPtCache_.count(ijet) && !addL2L3toJES)
       return jetPtCache_[ijet];
     else {
@@ -6063,11 +6064,13 @@ void EventCalculator::extractPUJetVars_Beta(std::vector<float> &beta, TString wh
   int totjet = 0;
   int matches = 0;
   for (unsigned int ijet=0; ijet<jets_AK5PF_pt->size(); ++ijet) {
-    const float pt = getJetPt(ijet);
+    const float pt = jets_AK5PF_pt->at(ijet); // this is just used as a consistency check, so don't use getJetPt()
     const float eta = fabs(jets_AK5PF_eta->at(ijet));
 
     int i = 0;
     totjet++;
+    //jmt -- note that these jet vectors should be aligned, so we could save time by heading straight to jet ijet
+    //but let's leave the code alone for now
     for (std::vector<std::vector<float> >::const_iterator itr = puJet_rejectionBeta->begin(); itr != puJet_rejectionBeta->end(); ++itr, ++i) {
         int j = 0;
         float mypt = 0;
@@ -6091,12 +6094,12 @@ void EventCalculator::extractPUJetVars_Beta(std::vector<float> &beta, TString wh
           else result = -5; //Don't assert..
 
         }//vector of info of each jet
-        if ( mypt == pt && myeta == eta ) {
+        if ( jmt::AreEqualAbs(mypt,pt) && jmt::AreEqualAbs(myeta ,eta) ) {
           matches++;
           mybeta = result;
           beta.push_back(mybeta);
           break;
-        }     
+        }
     }//vector of jets
   } //ijet
 }
@@ -6110,7 +6113,7 @@ void EventCalculator::extractPUJetVars_MVA(std::vector<float> & bdt, std::vector
   int totjet = 0;
   int matches = 0;
   for (unsigned int ijet=0; ijet<jets_AK5PF_pt->size(); ++ijet) {
-      const float pt = getJetPt(ijet);
+      const float pt = jets_AK5PF_pt->at(ijet); // this is just used as a consistency check, so don't use getJetPt()
       const float eta = fabs(jets_AK5PF_eta->at(ijet));
 
       totjet++;
@@ -6138,14 +6141,14 @@ void EventCalculator::extractPUJetVars_MVA(std::vector<float> & bdt, std::vector
           else { result1 = -5; result2 = -5; }//Don't assert..
 
         }     
-        if ( mypt == pt && myeta == eta ) { 
+        if ( jmt::AreEqualAbs(mypt,pt) && jmt::AreEqualAbs(myeta ,eta) ) {
           mybdt = result1; 
           mydis = result2;
           matches++;
           bdt.push_back(mybdt);
           discrim.push_back(mydis);
           break;
-        }     
+        }
       }     
   } //ijet
 }//end method
