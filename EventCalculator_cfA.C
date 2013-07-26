@@ -240,7 +240,6 @@ float EventCalculator::getTopPtWeight(float & topPt) {
     }
 
     if (topPt<0) return 1;
-    if ( sampleName_.Contains("madgraph")) { //only return weight for madgraph
       
       const  double p0 = 1.18246e+00;
       const  double p1 = 4.63312e+02;
@@ -250,7 +249,7 @@ float EventCalculator::getTopPtWeight(float & topPt) {
       if ( x>p1 ) x = p1; //use flat factor above 463 GeV
       double result = p0 + p2 * x * ( x - 2 * p1 );
       return float(result);
-    }
+
   }
 
   return 1;
