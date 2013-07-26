@@ -11,6 +11,8 @@
 
 #include "TGraphAsymmErrors.h"
 
+#include "TSystem.h"
+
 #include <utility>
 
 //CMS style
@@ -195,6 +197,8 @@ std::vector<float> verticalLinePositions_; //for decorating plots with a set of 
 TChain* dtree=0;
 TH1D* hdata=0;
 TH2D* hdata2d=0;
+
+TString outputdirectory_="";
 
 TString currentConfig_;
 TH2D* scanSMSngen=0;
@@ -478,6 +482,26 @@ void resetVerticalLine() {
   deleteVerticalLines();
   verticalLines_.clear();
   verticalLinePositions_.clear();
+}
+
+void setOutputDirectory(TString path) {
+
+  if (TString(path( path.Length()-1 ))!="/") path.Append("/");
+  outputdirectory_ = path;
+
+  FileStat_t fs;
+  int dirnotthere = gSystem->GetPathInfo(outputdirectory_.Data(),fs);
+
+  if (dirnotthere==1) { //then make the directory
+    cout<<"Directory "<<outputdirectory_<<" not found. ";
+    int mkdirstat = gSystem->mkdir(outputdirectory_.Data());
+    if (mkdirstat==0) cout<<"Created it!"<<endl;
+    else {
+      cout<<"Problem creating directory. Will revert to output in main directory."<<endl;
+      outputdirectory_="";
+    }
+  }
+
 }
 
 void doOverflowAddition(bool doOv) {
@@ -2272,9 +2296,9 @@ the plots with one component might be good as COLZ
 
   //amazingly, \includegraphics cannot handle an extra dot in the filename. so avoid it.
   if (savePlots_) {
-    thecanvas->SaveAs(savename+".eps"); //for me
-    thecanvas->SaveAs(savename+".pdf"); //for pdftex
-    thecanvas->SaveAs(savename+".png"); //for twiki
+    thecanvas->SaveAs(outputdirectory_+savename+".eps"); //for me
+    thecanvas->SaveAs(outputdirectory_+savename+".pdf"); //for pdftex
+    thecanvas->SaveAs(outputdirectory_+savename+".png"); //for twiki
   }
 
   delete h2d_temp;
@@ -2708,10 +2732,10 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
 
   //amazingly, \includegraphics cannot handle an extra dot in the filename. so avoid it.
   if (savePlots_) {
-    thecanvas->SaveAs(savename+".eps"); //for me
+    thecanvas->SaveAs(outputdirectory_+savename+".eps"); //for me
     //    thecanvas->Print(savename+".C");    //for formal purposes
-    thecanvas->SaveAs(savename+".pdf"); //for pdftex
-    thecanvas->SaveAs(savename+".png"); //for twiki
+    thecanvas->SaveAs(outputdirectory_+savename+".pdf"); //for pdftex
+    thecanvas->SaveAs(outputdirectory_+savename+".png"); //for twiki
   }
 
   //dump some event counts to the screen
@@ -3071,420 +3095,7 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
   drawR(vary, cutVal, var, nbins, 0, 1, savename, varbins);
 }
 
-//code from gala (I think) to make cut flow tables.
-//I will not remove it for now, but I think it is quite outdated
-void getCutStringForCutflow(vector<TString> &vectorOfCuts, vector<TString> &stageCut, bool isTightSelection, bool btagSF=false) {
-
-  //careful -- doesn't support mSUGRA right now
-
-  vectorOfCuts.clear(); stageCut.clear();
-
-  //define the HT and MET thresholds
-  TString minHT; TString minMET;
-  if (!isTightSelection) {minHT = "400"; minMET = "250";}
-  else {minHT = "500"; minMET = "300";}
-
-  TString cut;
-  TString thisSelection;
-  TString selectionPreB;
-  TString selectionEq1bLoose;
-  TString selectionEq2bLoose;
-  TString selectionGe3bLoose;  
-  TString selectionGe1bLoose;
-  TString selectionGe2bLoose;
-  TString selectionEq1bTightHT;
-  TString selectionEq2bTightHT;  
-  TString selectionGe3bTightHT;  
-  TString selectionGe1bTightHT;
-  TString selectionGe2bTightHT;  
-  TString selectionEq1bTightMET;
-  TString selectionEq2bTightMET;  
-  TString selectionGe3bTightMET;  
-  TString selectionGe1bTightMET;
-  TString selectionGe2bTightMET;  
-
-  TString selectionGe1bTight;
-  TString selectionGe2bTight;  
-
-  //inclusive
-  thisSelection="";
-  cut=getCutString(kMC,thisSelection);
-  vectorOfCuts.push_back(cut);
-  stageCut.push_back("Inclusive");
-
-  //trigger
-  if (thisSelection=="") thisSelection += "cutTrigger==1";
-  else thisSelection += " && cutTrigger";
-  cut=getCutString(kMC,thisSelection);
-  vectorOfCuts.push_back(cut);
-  stageCut.push_back("Trigger");
-  
-  //PV
-  if (thisSelection=="") thisSelection += "cutPV==1";
-  else thisSelection += " && cutPV==1";
-  cut=getCutString(kMC,thisSelection);
-  vectorOfCuts.push_back(cut);
-  stageCut.push_back("PV");
-
-  //HT
-  if (thisSelection=="") {thisSelection += "HT>="; thisSelection += minHT;}
-  else { thisSelection += " && HT>="; thisSelection += minHT;}
-  cut=getCutString(kMC,thisSelection); //not compatible with scans!
-  vectorOfCuts.push_back(cut);
-  if (latexMode_) stageCut.push_back("HT$\\ge$"+minHT);
-  else stageCut.push_back("HT>="+minHT);
-  
-  //MET
-  if (thisSelection=="") {thisSelection += "MET>="; thisSelection += minMET; }
-  else {thisSelection += " && MET>="; thisSelection += minMET;}
-  cut=getCutString(kMC,thisSelection);
-  vectorOfCuts.push_back(cut);
-  if (latexMode_) stageCut.push_back("\\MET$\\ge$"+minMET);
-  else stageCut.push_back("MET>="+minMET);
-
-  //3 or more jets
-  if (thisSelection=="") thisSelection += "cut3Jets==1";
-  else thisSelection += " && cut3Jets==1";
-  cut=getCutString(kMC,thisSelection);
-  vectorOfCuts.push_back(cut);
-  if (latexMode_) stageCut.push_back("$\\ge$ 3 jets");
-  else stageCut.push_back(">= 3 jets");
-
-  //Ele veto
-  if (thisSelection=="") thisSelection += "cutEleVeto==1";
-  else thisSelection += " && cutEleVeto==1";
-  cut=getCutString(kMC,thisSelection);
-  vectorOfCuts.push_back(cut);
-  stageCut.push_back("e veto");
-
-  //Mu veto
-  if (thisSelection=="") thisSelection += "cutMuVeto==1";
-  else thisSelection += " && cutMuVeto==1";
-  cut=getCutString(kMC,thisSelection);
-  vectorOfCuts.push_back(cut);
-  if (latexMode_) stageCut.push_back("$\\mu$ veto");
-  else stageCut.push_back("Mu veto");
-
-  //angular cuts
-
-  //  //deltaPhi
-  //  if (thisSelection=="") thisSelection += "cutDeltaPhi==1";
-  //  else thisSelection += " && cutDeltaPhi==1";
-  //  cut=getCutString(lumiScale_,thisSelection);
-  //  vectorOfCuts.push_back(cut);
-  //  stageCut.push_back("DeltaPhi");
-
-  //deltaPhiN
-  //  if (thisSelection=="") thisSelection += "cutDeltaPhiN==1";
-  //  else thisSelection += " && cutDeltaPhiN==1";
-  if (thisSelection=="") thisSelection += "minDeltaPhiN>4";
-  else thisSelection += " && minDeltaPhiN>=4";
-  cut=getCutString(kMC,thisSelection);
-  vectorOfCuts.push_back(cut);
-  if (latexMode_) stageCut.push_back("$\\minDeltaPhiN>$4");
-  else stageCut.push_back("minDeltaPhiN>4");
-
-  //  //deltaPhi(MET,taus)
-  //  if (thisSelection=="") thisSelection += "cutDeltaPhiTaus==1";
-  //  else thisSelection += " && cutDeltaPhiTaus==1";
-  //  cut=getCutString(lumiScale_,thisSelection);
-  //  vectorOfCuts.push_back(cut);
-  //  stageCut.push_back("DeltaPhiTaus");
-  
-  //Cleaning
-  if (thisSelection=="") thisSelection += "passCleaning==1";
-  else thisSelection +=" && passCleaning==1";
-  cut=getCutString(kMC,thisSelection);
-  vectorOfCuts.push_back(cut);
-  stageCut.push_back("Cleaning");
-
-  //store selection string pre b cut
-  selectionPreB=thisSelection;
-
-  //loose selection
-  ////>= 1 b
-  selectionGe1bLoose=selectionPreB;
-  if (btagSF) btagSFweight_="probge1";
-  else selectionGe1bLoose += " && nbjetsCSVM>=1";
-  cut=getCutString(kMC,selectionGe1bLoose);
-  vectorOfCuts.push_back(cut);
-  if (latexMode_) stageCut.push_back("HT$\\ge$400, \\MET$\\ge$250, $\\ge$1 b");
-  else stageCut.push_back("HT>=400, MET>=250, >= 1 b");
-
-
-  //==1b
-/* shape
-  selectionEq1bLoose=selectionPreB; 
-  if (btagSF) btagSFweight_="prob1";
-  else selectionEq1bLoose +=" && nbjetsCSVM==1";
-  cut=getCutString(kMC,selectionEq1bLoose);
-  vectorOfCuts.push_back(cut);
-  if (latexMode_) stageCut.push_back("HT$\\ge$400, \\MET$\\ge$250, $==$1 b");
-  else stageCut.push_back("HT>=400, MET>=250, == 1 b");
-*/
-
-  ////>= 2 b
-  selectionGe2bLoose=selectionPreB; 
-  if (btagSF) btagSFweight_="probge2";
-  else selectionGe2bLoose += " && nbjetsCSVM>=2";
-  cut=getCutString(kMC,selectionGe2bLoose);
-  vectorOfCuts.push_back(cut);
-  if (latexMode_) stageCut.push_back("HT$\\ge$400, \\MET$\\ge$250, $\\ge$2 b");
-  else stageCut.push_back("HT>=400, MET>=250, >= 2 b");
-
-  //== 2 b
-  /* shape
-  selectionEq2bLoose=selectionPreB; 
-  if (btagSF) btagSFweight_="(1-prob1-prob0-probge3)";
-  else selectionEq2bLoose += " && nbjetsCSVM==2";
-  cut=getCutString(kMC,selectionEq2bLoose);
-  vectorOfCuts.push_back(cut);
-  if (latexMode_) stageCut.push_back("HT$\\ge$400, \\MET$\\ge$250, $==$2 b");
-  else stageCut.push_back("HT>=400, MET>=250, == 2 b");
-*/
-
-  //>= 3 b
-  selectionGe3bLoose=selectionPreB; 
-  if (btagSF) btagSFweight_="probge3";
-  else selectionGe3bLoose += " && nbjetsCSVM>=3";
-  cut=getCutString(kMC,selectionGe3bLoose);
-  vectorOfCuts.push_back(cut);
-  if (latexMode_) stageCut.push_back("HT$\\ge$400, \\MET$\\ge$250, $\\ge$3 b");
-  else stageCut.push_back("HT>=400, MET>=250, >= 3 b");
-
-
-  //tight selection
-  if (!isTightSelection){ //print out the results for the tight selection anyway
-
-    ////OLD 1BT and 2BT cuts
-    ////>=1 b
-    selectionGe1bTight=selectionPreB; 
-    if (btagSF) {btagSFweight_="probge1"; selectionGe1bTight += " && HT>=500 && MET>=500";}
-    else selectionGe1bTight += " && nbjetsCSVM>=1 && HT>=500 && MET>=500"; //hard-coded!
-    cut=getCutString(kMC,selectionGe1bTight);
-    vectorOfCuts.push_back(cut);
-    if (latexMode_) stageCut.push_back("HT$\\ge$500, \\MET$\\ge$500, $\\ge$1 b");
-    else stageCut.push_back("HT>=500, MET>=500, >= 1 b");
-    ////>=2 b
-    selectionGe1bTight=selectionPreB;
-    if (btagSF) {btagSFweight_="probge2"; selectionGe1bTight += " && HT>=600 && MET>=300";}
-    else selectionGe1bTight += " && nbjetsCSVM>=2 && HT>=600 && MET>=300"; //hard-coded!
-    cut=getCutString(kMC,selectionGe1bTight);
-    vectorOfCuts.push_back(cut);
-    if (latexMode_) stageCut.push_back("HT$\\ge$600, \\MET$\\ge$300, $\\ge$2 b");
-    else stageCut.push_back("HT>=600, MET>=300, >= 2 b");  
-
-    //TIGHT MET
-    //==1 b
-/*  shape
-   selectionEq1bTightMET=selectionPreB; 
-    if (btagSF) {btagSFweight_="prob1"; selectionEq1bTightMET += " && HT>=500 && MET>=500";}
-    else selectionEq1bTightMET += " && nbjetsCSVM==1 && HT>=500 && MET>=500"; //hard-coded!
-    cut=getCutString(kMC,selectionEq1bTightMET);
-    vectorOfCuts.push_back(cut);
-    if (latexMode_) stageCut.push_back("HT$\\ge$500, \\MET$\\ge$500, $==$1 b");
-    else stageCut.push_back("HT>=500, MET>=500, == 1 b");
-    //==2 b
-    selectionEq2bTightMET=selectionPreB; 
-    if (btagSF) {btagSFweight_="(1-prob1-prob0-probge3)"; selectionEq2bTightMET += " && HT>=500 && MET>=500";}
-    else selectionEq2bTightMET += " && nbjetsCSVM==2 && HT>=500 && MET>=500"; //hard-coded!
-    cut=getCutString(kMC,selectionEq2bTightMET);
-    vectorOfCuts.push_back(cut);
-    if (latexMode_) stageCut.push_back("HT$\\ge$500, \\MET$\\ge$500, $==$2 b");
-    else stageCut.push_back("HT>=500, MET>=500, == 2 b");
-    //>=3 b
-    selectionGe3bTightMET=selectionPreB; 
-    if (btagSF) {btagSFweight_="probge3"; selectionGe3bTightMET += " && HT>=500 && MET>=500";}
-    else selectionGe3bTightMET += " && nbjetsCSVM>=3 && HT>=500 && MET>=500"; //hard-coded!
-    cut=getCutString(kMC,selectionGe3bTightMET);
-    vectorOfCuts.push_back(cut);
-    if (latexMode_) stageCut.push_back("HT$\\ge$500, \\MET$\\ge$500, $\\ge$3 b");
-    else stageCut.push_back("HT>=500, MET>=500, >= 3 b");
-        
-    //TIGHT HT
-    //==1 b
-    selectionEq1bTightHT=selectionPreB; 
-    if (btagSF) {btagSFweight_="prob1"; selectionEq1bTightHT += " && HT>=600 && MET>=300";}
-    else selectionEq1bTightHT += " && nbjetsCSVM==1 && HT>=600 && MET>=300"; //hard-coded!
-    cut=getCutString(kMC,selectionEq1bTightHT);
-    vectorOfCuts.push_back(cut);
-    if (latexMode_) stageCut.push_back("HT$\\ge$600, \\MET$\\ge$300, $==$1 b");
-    else stageCut.push_back("HT>=600, MET>=300, == 1 b");
-    //==2 b
-    selectionEq2bTightHT=selectionPreB; 
-    if (btagSF) {btagSFweight_="(1-prob1-prob0-probge3)"; selectionEq2bTightHT += " && HT>=600 && MET>=300";}
-    else selectionEq2bTightHT += " && nbjetsCSVM==2 && HT>=600 && MET>=300"; //hard-coded!
-    cut=getCutString(kMC,selectionEq2bTightHT);
-    vectorOfCuts.push_back(cut);
-    if (latexMode_) stageCut.push_back("HT$\\ge$600, \\MET$\\ge$300, $==$2 b");
-    else stageCut.push_back("HT>=600, MET>=300, == 2 b");
-    //>=3 b
-    selectionGe3bTightHT=selectionPreB; 
-    if (btagSF) {btagSFweight_="probge3"; selectionGe3bTightHT += " && HT>=600 && MET>=300";}
-    else selectionGe3bTightHT += " && nbjetsCSVM>=3 && HT>=600 && MET>=300"; //hard-coded!
-    cut=getCutString(kMC,selectionGe3bTightHT);
-    vectorOfCuts.push_back(cut);
-    if (latexMode_) stageCut.push_back("HT$\\ge$600, \\MET$\\ge$300, $\\ge$3 b");
-    else stageCut.push_back("HT>=600, MET>=300, >= 3 b");
-     */   
-  }
-  
-  //  //check output
-  //  for (unsigned int istage=0; istage<vectorOfCuts.size(); istage++){
-  //    cout<<stageCut[istage]<<endl;
-  //    cout<<vectorOfCuts[istage]<<endl;
-  //  }
-      
-}
-
-void cutflow(bool isTightSelection){
-
-  loadSamples();
-  resetHistos();
-
-  //jmt -- turn on weighting
-  usePUweight_=true; 
-  useTrigEff_=true;   
-  currentConfig_=configDescriptions_.getCorrected(); //use JERbias
-
-  vector<TString> vectorOfCuts; //each element is a successive cut string for the cutflow table
-  vector<TString> stageCut; //name of cut at each stage
-  //the 'true' at the end turns on b tag SF
-  getCutStringForCutflow(vectorOfCuts, stageCut, isTightSelection,true); //fills vectorOfCuts
-
-  vector< vector<float> > cutflowEntries; //stores events by stage and sample
-  vector< vector<float> > cutflowEntriesE; //stores error
-
-  TString var = "HT";
-  const float* varbins=0;
-  const int nbins=1; const float low=0; const float high=100000000000;
-
-  vector<float> nSumSM;
-  vector<float> nSumSME;
-
-  //loop over cuts
-  for (unsigned int istage=0; istage<vectorOfCuts.size(); istage++){
-    TString thisStageCut = vectorOfCuts[istage];
-    resetHistos();
-
-    vector<float> nPass; //number of events passing current cut in each sample
-    vector<float> nPassE; //error on events passing cuts    
-
-    //for total background
-    if (totalsm!=0) delete totalsm;
-    totalsm = (varbins==0) ? new TH1D("totalsm","",nbins,low,high) : new TH1D("totalsm","",nbins,varbins);
-    totalsm->Sumw2();
-
-    //loop over samples, copied from drawPlots()
-    for (unsigned int isample=0; isample<samples_.size(); isample++) {
-      if (!quiet_)   cout <<samples_[isample]<<endl;
-
-      gROOT->cd();
-      //should each histo have a different name? maybe
-      TString hname = jmt::fortranize(var); hname += "_"; hname += samples_[isample];
-      histos_[samples_[isample]] = (varbins==0) ? new TH1D(hname,"",nbins,low,high) : new TH1D(hname,"",nbins,varbins);
-      histos_[samples_[isample]]->Sumw2();
-
-      //      TChain* tree = (TChain*) files_[currentConfig_][samples_[isample]]->Get(reducedTreeName_);
-      TChain* tree = getTree(samples_[isample]);
-      gROOT->cd();
-      TString weightopt= "";
-      tree->Project(hname,var,thisStageCut);
-      //now the histo is filled
-
-      if (isSampleSM(samples_[isample])) {
-	totalsm->Add(histos_[samples_[isample]]);
-	if (!quiet_)    cout << "totalsm: " << samples_[isample] << endl;
-      }
-
-      nPass.push_back(histos_[samples_[isample]]->GetBinContent(1)); //to get total entries with weighting applied
-      nPassE.push_back(histos_[samples_[isample]]->GetBinError(1)); //error
-            
-    }//end loop over samples
-
-    cutflowEntries.push_back(nPass);
-    cutflowEntriesE.push_back(nPassE);
-    nSumSM.push_back(totalsm->GetBinContent(1));
-    nSumSME.push_back(totalsm->GetBinError(1));
-
-  }//end current cut 
-
-  //now print out the cutflow table
-  if (isTightSelection) cout<<"tight selection (HT>=500, MET>=300)"<<endl;
-  else cout<<"baseline selection (HT>=400, MET>=250)"<<endl; 
-
-  TString col_start; TString col; TString col_end; TString hline; TString hhline;
-
-  if (latexMode_){
-    col_start=""; col=" & "; col_end=" \\\\ "; hline="\\hline"; hhline="\\hline \\hline";
-  }
-  else{
-    col_start=" | "; col=" | "; col_end=" | "; hline=""; hhline="";
-  }
-
-  cout<<hhline<<endl;
-  //list sample names
-  cout<<col_start<<"Cut "<<col;
-  for (unsigned int isample=0; isample<samples_.size(); isample++) {
-    if ( isSampleSM(samples_[isample])) { //skip LM points to add total background column first 
-      if ( samples_[isample].Contains("VV") ) cout<<"Diboson"<<col; 
-      else if ( samples_[isample].Contains("QCD") ) cout<<"QCD"<<col;
-      else if ( samples_[isample]=="SingleTop" ) cout<<"Single Top"<<col;
-      else if ( samples_[isample].Contains("TTbarJets") ){
-	if (latexMode_) cout<<"\\ttbar"<<col;
-	else cout<<samples_[isample]<<col;
-      }
-      else if ( samples_[isample].Contains("WJets") ){
-	if (latexMode_)cout<<"\\WJets"<<col;
-	else cout<<samples_[isample]<<col;
-      }
-      else if ( samples_[isample].Contains("ZJets") ){
-	if (latexMode_)cout<<"\\ZJets"<<col;
-        else cout<<samples_[isample]<<col;
-      }
-      else if ( samples_[isample].Contains("Zinvisible") ){
-        if (latexMode_)cout<<"\\Zinvisible"<<col;
-        else cout<<samples_[isample]<<col;
-      }
-      else cout<<samples_[isample]<<col;
-    }
-  }
-  //now add total background, LM
-  cout<<"Total SM";
-  for (unsigned int isample=0; isample<samples_.size(); isample++) {
-    if ( !isSampleSM(samples_[isample])  ) cout<<col<<samples_[isample];
-  }
-  cout<<col_end<<endl;
-  
-  //fill table
-  for (unsigned int istage=0; istage<vectorOfCuts.size(); istage++){
-    cout<<col_start<<stageCut[istage]<<col;
-    for (unsigned int isample=0; isample<samples_.size(); isample++){
-      if ( isSampleSM(samples_[isample]) ) {
-	cout<<jmt::format_nevents(cutflowEntries[istage][isample],cutflowEntriesE[istage][isample])<<col;
-      }
-    }//end loop over samples
-    //now add total background, LM
-    cout<<jmt::format_nevents(nSumSM[istage],nSumSME[istage]);
-    for (unsigned int isample=0; isample<samples_.size(); isample++) {
-      if ( !isSampleSM(samples_[isample]) ) cout<<col<<jmt::format_nevents(cutflowEntries[istage][isample],cutflowEntriesE[istage][isample]);
-    }
-    cout<<col_end<<endl;
-    if (stageCut[istage]=="Cleaning") cout<<hline<<endl;
-
-    if (latexMode_){
-      if (stageCut[istage]=="HT$\\ge$400, \\MET$\\ge$250, $\\ge$3 b" && !isTightSelection) cout<<hline<<endl;
-    }
-    else {
-      if (stageCut[istage]=="HT>=400, MET>=250, >= 2 b" && !isTightSelection) cout<<hline<<endl;
-    }
-
-  }//end loop over cuts
-  cout<<hhline<<endl;
-  
-}
-
-void drawEffVRej(const TString & h1, const TString h2,const TString & xtitle,const TString & ytitle,bool flip=false,bool drawCutVals=false) {
+void drawEffVRej(const TString & h1, const TString h2,const TString & xtitle,const TString & ytitle,bool flip=false) {
 
   //step over the bins in histos_[h1] and histos_[h2]
 
@@ -3610,8 +3221,8 @@ void drawTrigEff(const TString & pd, const TCut & tag, const TCut & probe, const
   TString filename;
   filename.Form("trigEff_%s-%s_%s_%s",pd.Data(),jmt::fortranize(tag.GetTitle()).Data(),jmt::fortranize(probe.GetTitle()).Data(),var.Data());
   if (savePlots_) {
-    thecanvas->SaveAs(filename+".eps");
-    thecanvas->SaveAs(filename+".png");
-    thecanvas->SaveAs(filename+".pdf");
+    thecanvas->SaveAs(outputdirectory_+filename+".eps");
+    thecanvas->SaveAs(outputdirectory_+filename+".png");
+    thecanvas->SaveAs(outputdirectory_+filename+".pdf");
   }
 }

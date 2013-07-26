@@ -116,10 +116,9 @@ void initHiggsSamples69(const bool useSkim=true,const TString samplelist="") {
 
   nameOfEventWeight_="weight3"; 
 
-  inputPath="/cu6/joshmt/reducedTrees/v69_2_pt20/"; 
+  if (samplelist=="metsigtest1") inputPath = "/cu5/joshmt/reducedTrees/v69_2_pt20/";//special test
+  else  inputPath="/cu6/joshmt/reducedTrees/v69_2_pt20/"; 
   dataInputPath="/cu6/joshmt/reducedTrees/v69_2_pt20/data/"; //for skimmed data
-  //  inputPath="/cu6/joshmt/reducedTrees/v69_2_nobeta/"; 
-  //  dataInputPath="/cu6/joshmt/reducedTrees/v69_2_nobeta/data/"; //for skimmed data
   if (!useSkim)   dataInputPath+="unskimmed/";
 
   loadSamples(true,"ra2b2012");
@@ -1244,6 +1243,111 @@ void higgs_dataMC_debug() {
 
 }
 
+void higgs_dataMC_control_SL_JERtest() {
+  initHiggsSamples69(false,"metsigtest1");
+
+  setOutputDirectory("plots_JERtest");
+
+  int nbins;
+  float low,high;
+  TString var,xtitle;
+
+  doOverflowAddition(true);
+  doRatio_=true; ratioMin = 0; ratioMax = 2.2;
+  dodata_=true;
+
+  //define useful cuts
+  TCut baseline = "cutPV==1 &&passCleaning==1 &&buggyEvent==0&& MET/caloMET<2 && maxTOBTECjetDeltaMult<40"; 
+
+  TCut triggerJetMET = "passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1";
+  //cannot use this with MET PD only
+  //  TCut triggerJets = "passMC_DiPFJet80_DiPFJet30_BTagCSVd07d05==1";
+  TCut triggerMET = "passMC_PFMET150==1";
+  TCut trigger = triggerJetMET||triggerMET;
+
+  TCut zl = "nMuons==0&&nElectrons==0&&nTausLoose==0";
+  TCut isotk="nIsoTracks15_005_03==0";//&&nIsoTracks5_005_03<2";
+
+  TCut sl = "nMuons+nElectrons==1 &&nTausLoose==0 &&nIsoTracks15_005_03_lepcleaned==0";
+
+  TCut njets4="njets20==4"; //switch back to 20 GeV jets
+  TCut njets5="njets20==5";
+  TCut jet2="jetpt2>50";
+  TCut mdp = "minDeltaPhi30>0.3"; // does this need to go to 20?
+  TCut btag2="CSVbest2>0.898";
+  TCut btag3="CSVbest3>0.679";
+  TCut btag4="CSVbest4>0.244";
+
+  TCut higgsSR_av = "(0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)>100)&&(0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)<140)";
+  TCut higgsSR_d = "abs(higgsMbb1MassDiff-higgsMbb2MassDiff)<20";
+  TCut higgsSR = higgsSR_av && higgsSR_d;
+
+  TCut higgsSB_avl = "0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)<90";
+  TCut higgsSB_avh = "0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)>150";
+  TCut higgsSB_d = "abs(higgsMbb1MassDiff-higgsMbb2MassDiff)>30";
+  TCut higgsSB = higgsSB_avl||higgsSB_avh||higgsSB_d;
+
+  TCut metsigveryloose="METsig_2012>25";
+
+  TCut drmax = "deltaRmax_hh<2.2";
+  //  TCut drmin = "deltaRmin_hh<1.9";
+
+  //  setSampleScaleFactor("TTJets_FullLeptMGDecays_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v2_AODSIM_UCSB1596_v66-skim",0.8);
+
+  setStackMode(true,false,false); //stack,norm,label override
+  setLogY(false);
+
+  //2b pre-selection ; basically the minimum required by the trigger, plus SL
+  selection_ = baseline && trigger && sl && (njets4||njets5) &&jet2&&mdp && btag2;
+
+  currentConfig_=configDescriptions_.getDefault();
+  nbins=30; low=0; high=300;
+  var="METsig_2012"; xtitle="MET significance (new)";
+  setLogY(false);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselection_METsig2012_JER0",0);
+  setLogY(true);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselection_METsig2012_JER0",0);
+
+  currentConfig_=configDescriptions_.getCorrected();
+  setLogY(false);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselection_METsig2012_JERbias",0);
+  setLogY(true);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselection_METsig2012_JERbias",0);
+
+  currentConfig_=configDescriptions_.getDefault();
+  var="METsig"; xtitle="MET significance (old)";
+  nbins=30; low=0; high=300;
+  setLogY(false);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselection_METsig_JER0",0);
+  setLogY(true);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselection_METsig_JER0",0);
+
+  currentConfig_=configDescriptions_.getCorrected();
+  setLogY(false);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselection_METsig_JERbias",0);
+  setLogY(true);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselection_METsig_JERbias",0);
+
+  //MET, for completeness
+  currentConfig_=configDescriptions_.getDefault();
+  nbins=30; low=0; high=400;
+  setLogY(false);
+  var="MET"; xtitle="MET (GeV)";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselection_MET_JER0",0);
+  setLogY(true);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselection_MET_JER0",0);
+
+  currentConfig_=configDescriptions_.getCorrected();
+  nbins=30; low=0; high=400;
+  setLogY(false);
+  var="MET"; xtitle="MET (GeV)";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselection_MET_JERbias",0);
+  setLogY(true);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselection_MET_JERbias",0);
+
+
+}
+
 void higgs_dataMC_control_SL() {
 
   //goal do data / MC comparisons; use skim to save time. means I can't make a useful njets plot
@@ -1276,10 +1380,10 @@ void higgs_dataMC_control_SL() {
 
   TCut sl = "nMuons+nElectrons==1 &&nTausLoose==0 &&nIsoTracks15_005_03_lepcleaned==0";
 
-  TCut njets4="njets30==4";
-  TCut njets5="njets30==5";
+  TCut njets4="njets20==4"; //switch back to 20 GeV jets
+  TCut njets5="njets20==5";
   TCut jet2="jetpt2>50";
-  TCut mdp = "minDeltaPhi30>0.3";
+  TCut mdp = "minDeltaPhi30>0.3"; // does this need to go to 20?
   TCut btag2="CSVbest2>0.898";
   TCut btag3="CSVbest3>0.679";
   TCut btag4="CSVbest4>0.244";
@@ -1315,25 +1419,24 @@ void higgs_dataMC_control_SL() {
   setLogY(true);
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselection_METsig2012",0);
 
-  return;
+  //this was a special test
+//   double fullLumi = lumiScale_;
 
-  double fullLumi = lumiScale_;
+//   // to check for run dependence
+//   setDatasetToDraw("META"); lumiScale_ = 807.1;
+//   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselection_METsig2012_DEBUG_2012A",0);
 
-  // to check for run dependence
-  setDatasetToDraw("META"); lumiScale_ = 807.1;
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselection_METsig2012_DEBUG_2012A",0);
+//   setDatasetToDraw("METB"); lumiScale_ = 4421;
+//   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselection_METsig2012_DEBUG_2012B",0);
 
-  setDatasetToDraw("METB"); lumiScale_ = 4421;
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselection_METsig2012_DEBUG_2012B",0);
+//   setDatasetToDraw("METC"); lumiScale_ = 495+6402;
+//   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselection_METsig2012_DEBUG_2012C",0);
 
-  setDatasetToDraw("METC"); lumiScale_ = 495+6402;
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselection_METsig2012_DEBUG_2012C",0);
+//   setDatasetToDraw("METD"); lumiScale_ = 5956+1317;
+//   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselection_METsig2012_DEBUG_2012D",0);
 
-  setDatasetToDraw("METD"); lumiScale_ = 5956+1317;
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselection_METsig2012_DEBUG_2012D",0);
-
-  setDatasetToDraw("MET"); 
-  lumiScale_=fullLumi;
+//   setDatasetToDraw("MET"); 
+//   lumiScale_=fullLumi;
 
   nbins=30; low=0; high=300;
   setLogY(false);
@@ -1349,6 +1452,8 @@ void higgs_dataMC_control_SL() {
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselection_MET",0);
   setLogY(true);
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselection_MET",0);
+
+  return;
 
   //nPV
   nbins=20; low=0; high=40;

@@ -240,7 +240,6 @@ float EventCalculator::getTopPtWeight(float & topPt) {
     }
 
     if (topPt<0) return 1;
-    if ( sampleName_.Contains("madgraph")) { //only return weight for madgraph
       
       const  double p0 = 1.18246e+00;
       const  double p1 = 4.63312e+02;
@@ -250,7 +249,7 @@ float EventCalculator::getTopPtWeight(float & topPt) {
       if ( x>p1 ) x = p1; //use flat factor above 463 GeV
       double result = p0 + p2 * x * ( x - 2 * p1 );
       return float(result);
-    }
+
   }
 
   return 1;
@@ -6168,41 +6167,11 @@ void EventCalculator::loadJetTagEffMaps() {
 
 double EventCalculator::getBtagSF(const int flavor, const float pt, const int signedeta) {
 
-  const int  eta = fabs(signedeta);
+  //this is [was] largely redundant with the production code
+  //now i've got yet another implementation, so point this code to that
 
-  //this is largely redundant with the production code
-  //i don't want to touch that code at the moment
-  //i also don't care about implementing the uncertainties yet
-
-  //x is the pt value that will be used to evaluate the SF
-  //the max pt depends on flavor, and, for LF jets, eta
-  const float cutoff1=800; const float cutoff2=700;
-  float x;
-  //HF or central LF, max is 800
-  if ( abs(flavor)==5 || abs(flavor)==4 || eta<1.5) x = pt > cutoff1 ? cutoff1 : pt;
-  //high eta LF, max is 700
-  else x = pt > cutoff2 ? cutoff2 : pt;
-
-
-
-  if (abs(flavor) ==4 || abs(flavor)==5) { //heavy flavor
-    // Tagger: CSVM within 20 < pt < 800 GeV, abs(eta) < 2.4, x = pt
-    return 0.726981*((1.+(0.253238*x))/(1.+(0.188389*x)));
-  }
-  else { //light flavor
-    //note that these are valid only to a cutoff value, so use 'x' and not 'pt'
-    if ( eta < 0.8 ) {
-	  return  ((1.06238+(0.00198635*x))+(-4.89082e-06*(x*x)))+(3.29312e-09*(x*(x*x))); // SF without + or - variation in mistag rate
-    }
-    else if (eta>=0.8 && eta<1.6) {
-      return ((1.08048+(0.00110831*x))+(-2.96189e-06*(x*x)))+(2.16266e-09*(x*(x*x)));
-    }
-    else if (eta>=1.6 && eta<=2.4) {
-      return ((1.09145+(0.000687171*x))+(-2.45054e-06*(x*x)))+(1.7844e-09*(x*(x*x)));
-    }
-  }
-
-  return 1;
+  //2 == CSVM
+  return getBtagSF( flavor, pt,signedeta,2,kBTagModifier0) ;
 
 }
 
@@ -6270,11 +6239,188 @@ float EventCalculator::getBtagEffMC(const int flavor, const float pt) {
   return hh->GetBinContent( hh->FindBin(pt));
 }
 
+float EventCalculator::getBtagSF(const int flavor,const float pt,const float jet_eta,const int tagcat, BTagEffModifier variation) {
+  //this is for CSV L+M+T
+
+  //This is the Moriond13 prescription
+
+  if (tagcat==0) return 1;
+  if (tagcat==4) return 0;
+
+  const float eta = fabs(jet_eta);
+  if (eta>2.4) return 0; //no b-tag eff here!
+
+  float SF=1;
+
+  assert(variation==kBTagModifier0); // haven't coded the errors yet
+  if (abs(flavor) == 5 || abs(flavor)==4) { // heavy flavor SFs
+    const float x = pt>800? 800 : pt;
+    if (tagcat == 1) { //CSVL
+      SF = 0.981149*((1.+(-0.000713295*x))/(1.+(-0.000703264*x)));
+    }
+    else if (tagcat == 2) { //CSVM
+      SF = 0.726981*((1.+(0.253238*x))/(1.+(0.188389*x)));
+    }
+    else if (tagcat == 3) {//CSVT
+      SF = 0.869965*((1.+(0.0335062*x))/(1.+(0.0304598*x)));
+    }
+    else assert(0);
+
+  }
+  else { //light flavor SFs
+    float x = pt;
+    if ( pt> 800) x = 800;
+    if ( pt> 700 && eta>=1.5 && tagcat==1) x=700; //special maximum pt for high eta, CSVL
+
+    //adapted from https://twiki.cern.ch/twiki/pub/CMS/BtagPOG/SFlightFuncs_Moriond2013.C
+    if( tagcat == 1 && eta< 0.5)      {
+      if ( variation==kBTagModifier0 ||  variation==kHFdown || variation==kHFup ) SF = ((1.04901+(0.00152181*x))+(-3.43568e-06*(x*x)))+(2.17219e-09*(x*(x*x)));
+      else if ( variation==kLFdown) SF=	((0.973773+(0.00103049*x))+(-2.2277e-06*(x*x)))+(1.37208e-09*(x*(x*x)));
+      else if (variation==kLFup) SF=	((1.12424+(0.00201136*x))+(-4.64021e-06*(x*x)))+(2.97219e-09*(x*(x*x)));
+    }
+    else if( tagcat == 1 && eta >= 0.5 && eta < 1.0)      {
+      if ( variation==kBTagModifier0 ||  variation==kHFdown || variation==kHFup ) SF = ((0.991915+(0.00172552*x))+(-3.92652e-06*(x*x)))+(2.56816e-09*(x*(x*x)));
+      else if ( variation==kLFdown)                                               SF = ((0.921518+(0.00129098*x))+(-2.86488e-06*(x*x)))+(1.86022e-09*(x*(x*x)));
+      else if (variation==kLFup)                                                  SF = ((1.06231+(0.00215815*x))+(-4.9844e-06*(x*x)))+(3.27623e-09*(x*(x*x)));
+    }
+    else if( tagcat == 1 && eta >= 1.0 && eta < 1.5)      {
+      if ( variation==kBTagModifier0 ||  variation==kHFdown || variation==kHFup ) SF = ((0.962127+(0.00192796*x))+(-4.53385e-06*(x*x)))+(3.0605e-09*(x*(x*x)));
+      else if ( variation==kLFdown)                                               SF = ((0.895419+(0.00153387*x))+(-3.48409e-06*(x*x)))+(2.30899e-09*(x*(x*x)));
+      else if (variation==kLFup)                                                  SF = ((1.02883+(0.00231985*x))+(-5.57924e-06*(x*x)))+(3.81235e-09*(x*(x*x)));
+    }
+    else if( tagcat == 1 && eta >= 1.5 && eta <= 2.4) {
+      if ( variation==kBTagModifier0 ||  variation==kHFdown || variation==kHFup ) SF = ((1.06121+(0.000332747*x))+(-8.81201e-07*(x*x)))+(7.43896e-10*(x*(x*x)));
+      else if ( variation==kLFdown)                                               SF = ((0.983607+(0.000196747*x))+(-3.98327e-07*(x*x)))+(2.95764e-10*(x*(x*x)));
+      else if (variation==kLFup)                                                  SF = ((1.1388+(0.000468418*x))+(-1.36341e-06*(x*x)))+(1.19256e-09*(x*(x*x)));
+    }
+    else if( tagcat == 2 && eta< 0.8)      {
+      if ( variation==kBTagModifier0 ||  variation==kHFdown || variation==kHFup ) SF = ((1.06238+(0.00198635*x))+(-4.89082e-06*(x*x)))+(3.29312e-09*(x*(x*x)));
+      else if ( variation==kLFdown)                                               SF = ((0.972746+(0.00104424*x))+(-2.36081e-06*(x*x)))+(1.53438e-09*(x*(x*x)));
+      else if (variation==kLFup)                                                  SF = ((1.15201+(0.00292575*x))+(-7.41497e-06*(x*x)))+(5.0512e-09*(x*(x*x)));
+    }
+    else if( tagcat == 2 && eta >= 0.8 && eta < 1.6)      {
+      if ( variation==kBTagModifier0 ||  variation==kHFdown || variation==kHFup ) SF = ((1.08048+(0.00110831*x))+(-2.96189e-06*(x*x)))+(2.16266e-09*(x*(x*x)));
+      else if ( variation==kLFdown)                                               SF = ((0.9836+(0.000649761*x))+(-1.59773e-06*(x*x)))+(1.14324e-09*(x*(x*x)));
+      else if (variation==kLFup)                                                  SF = ((1.17735+(0.00156533*x))+(-4.32257e-06*(x*x)))+(3.18197e-09*(x*(x*x)));
+    }
+    else if( tagcat == 2 && eta >= 1.6 && eta <= 2.4)      {
+      if ( variation==kBTagModifier0 ||  variation==kHFdown || variation==kHFup ) SF = ((1.09145+(0.000687171*x))+(-2.45054e-06*(x*x)))+(1.7844e-09*(x*(x*x)));
+      else if ( variation==kLFdown)                                               SF = ((1.00616+(0.000358884*x))+(-1.23768e-06*(x*x)))+(6.86678e-10*(x*(x*x)));
+      else if (variation==kLFup)                                                  SF = ((1.17671+(0.0010147*x))+(-3.66269e-06*(x*x)))+(2.88425e-09*(x*(x*x)));
+    }
+    else if( tagcat == 3 && eta <= 2.4)      {
+      if ( variation==kBTagModifier0 ||  variation==kHFdown || variation==kHFup ) SF = ((1.01739+(0.00283619*x))+(-7.93013e-06*(x*x)))+(5.97491e-09*(x*(x*x)));
+      else if ( variation==kLFdown)                                               SF = ((0.953587+(0.00124872*x))+(-3.97277e-06*(x*x)))+(3.23466e-09*(x*(x*x)));
+      else if (variation==kLFup)                                                  SF = ((1.08119+(0.00441909*x))+(-1.18764e-05*(x*x)))+(8.71372e-09*(x*(x*x)));
+    }
+    else assert(0);
+
+  }
+
+  return SF;
+}
+
+
+float EventCalculator::getBtagEffMC(const int flavor, const float pt, const float jet_eta, const int tagcat) {
+  if (f_tageff_==0) return 0;
+
+  //this is hard-coded for CSV L+M+T
+  if (tagcat == 0) return 1;
+  if (tagcat == 4) return 0;
+
+  const float eta = fabs(jet_eta);
+
+  //we actually only need one histogram per call to this function.
+  //assemble the name
+
+  TString flavorLetter;
+  TString taggerLetter;
+
+  if (tagcat==1) taggerLetter="L";
+  else  if (tagcat==2) taggerLetter="M";
+  else  if (tagcat==3) taggerLetter="T";
+  else assert(0);
+
+  if (flavor==5) flavorLetter="b";
+  else  if (flavor==4) flavorLetter="c";
+  else flavorLetter="l";
+
+  TString hname;
+  hname.Form("h2d_%stageff_CSV%s",flavorLetter.Data(),taggerLetter.Data());
+
+  //  cout<<"[getBtagEffMC] "<<hname<<endl;
+
+  TH2D * h2d  = (TH2D*) f_tageff_->Get(hname);
+  //  cout<<h2d<<endl;
+  int bin=h2d->FindBin(pt,eta);
+  return h2d->GetBinContent(bin);
+
+}
+
+int EventCalculator::getJetTagCatIndex(const int ijet) {
+
+  const float csv =  jets_AK5PF_btag_secVertexCombined->at(ijet);
+
+  if       ( csv < 0.244 ) return 0; // not tagged
+  else if  ( csv >=0.244 && csv<0.679) return 1; //Loose, not M
+  else if  ( csv >=0.679 && csv<0.898) return 2; //M, not T
+  else if  ( csv >=0.898) return 3;// Tight
+
+  return -1;
+}
+
+float EventCalculator::getBtagWeightCSV_LMT(BTagEffModifier variation) {
+  if ( isSampleRealData() ) return 1;
+  if (f_tageff_==0) return 0;
+
+  /*
+this is aimed at the EWKino higgs analysis where we require Loose, Medium, and Tight CSV tags
+The implementation here follows prescription (1a) here: https://twiki.cern.ch/twiki/bin/view/CMS/BTagSFMethods?rev=13
+
+  */
+
+  // 0=Not tagged, 1=L not M, 2=M not L, 3=T
+  double prodMC[4]={1,1,1,1};
+  double prodD[4]={1,1,1,1};
+  // loop over jets
+  for (unsigned int ijet=0; ijet<jets_AK5PF_pt->size(); ++ijet) {
+    //only consider good jets (eta, quality, pT)
+    if(isGoodJet(ijet,minHiggsJetPt_)) { //use whatever pT threshold we're using for the higgs analysis
+
+      int tagcat = getJetTagCatIndex(ijet); //classify jet according to CSV value
+      int jet_flavor = abs(jets_AK5PF_partonFlavour->at(ijet));
+      float jet_pt = getJetPt( ijet);
+      float jet_eta = fabs(jets_AK5PF_eta->at(ijet));
+
+      double eff_J      = getBtagEffMC(jet_flavor,jet_pt,jet_eta,tagcat);
+      double eff_Jplus1 = getBtagEffMC(jet_flavor,jet_pt,jet_eta,tagcat+1);
+
+      double SF_J      = getBtagSF(jet_flavor,jet_pt,jet_eta,tagcat,variation);
+      double SF_Jplus1 = getBtagSF(jet_flavor,jet_pt,jet_eta,tagcat+1,variation);
+
+      prodMC[tagcat] *= (eff_J - eff_Jplus1 );
+      prodD[tagcat] *= (SF_J * eff_J - SF_Jplus1*eff_Jplus1);
+    }
+  }
+
+  double pMC=1;
+  double pD=1;
+
+  for (int iJ=0; iJ<4; iJ++) {
+    //    cout<<prodD[iJ]<<" "<<prodMC[iJ]<<endl;
+    pMC *= prodMC[iJ];
+    pD  *= prodD[iJ];
+  }
+  double w = pD / pMC;
+  return float(w);
+
+}
+
 float EventCalculator::getBtagWeight() {
   if ( isSampleRealData() ||f_tageff_==0) return 1;
   //yet another procedure, this one with code written by the btv!
 
-  //put jets into the 'jetinfos' object
+  //put jets into the 'jetinfos' object 
   vector<BTagWeight::JetInfo> jetinfos;
   int ntagged=0;
   for (unsigned int ijet=0; ijet<jets_AK5PF_pt->size(); ++ijet) {
@@ -7413,7 +7559,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   float prob0,probge1,prob1,probge2,probge3,prob2, prob3, probge4;
   
   float PIDweight;
-  float BTagWeight;
+  float BTagWeight,BTagWeight_LMT;
 
   float prob0_HFplus,probge1_HFplus,prob1_HFplus,probge2_HFplus,probge3_HFplus,prob2_HFplus,probge4_HFplus,prob3_HFplus;
   float prob0_HFminus,probge1_HFminus,prob1_HFminus,probge2_HFminus,probge3_HFminus,prob2_HFminus,probge4_HFminus,prob3_HFminus;
@@ -7529,6 +7675,7 @@ void EventCalculator::reducedTree(TString outputpath) {
 
   reducedTree.Branch("PIDweight",&PIDweight,"PIDweight/F");
   reducedTree.Branch("BTagWeight",&BTagWeight,"BTagWeight/F");
+  reducedTree.Branch("BTagWeight_LMT",&BTagWeight_LMT,"BTagWeight_LMT/F");
 
   float SUSY_msq12[2]={-1,-1};
   float SUSY_msq23[2]={-1,-1};
@@ -8596,6 +8743,8 @@ void EventCalculator::reducedTree(TString outputpath) {
       PIDweight=getBtagEffWeight();
       BTagWeight = getBtagWeight();
 
+      //TESTING
+      BTagWeight_LMT = getBtagWeightCSV_LMT(kBTagModifier0);
       calculateTagProb(prob0,probge1,prob1,probge2,prob2,probge3,prob3,probge4);
 
       calculateTagProb(prob0_HFplus,probge1_HFplus,prob1_HFplus,probge2_HFplus,prob2_HFplus,probge3_HFplus,prob3_HFplus,probge4_HFplus,1,1,1,kHFup);
@@ -11377,6 +11526,8 @@ void EventCalculator::plotBTagEffMC( ) {
   
   const float jetptthreshold = 20;
   double bins[18] = {20, 30, 40, 50, 60, 70, 80, 100, 120, 160, 210, 260, 320, 400, 500, 600, 800, 99999};
+
+  //old histograms for backwards compatibility
   const int nbins = 17; //must be the number above - 1
   TH1D * h_bjet = new TH1D("h_bjet","bjet",nbins,bins);
   TH1D * h_cjet = new TH1D("h_cjet","cjet",nbins,bins);
@@ -11392,6 +11543,47 @@ void EventCalculator::plotBTagEffMC( ) {
   h_ltag->Sumw2();
 
 
+  //26 july 2013 -- extend to eta bins and 3 working points
+  double etabinsL[4] = {0, 1.0, 1.5, 2.4}; 
+  double etabinsM[4] = {0, 0.8, 1.6, 2.4}; 
+  double etabinsT[2] = {0, 2.4}; 
+  int neta[3] = {3,3,1};
+
+  vector<TString> suffix;
+  suffix.push_back("CSVL");
+  suffix.push_back("CSVM");
+  suffix.push_back("CSVT");
+
+  vector<BTaggerType> vwp;
+  vwp.push_back(kCSVL);
+  vwp.push_back(kCSVM);
+  vwp.push_back(kCSVT);
+
+  vector<double *> etabins;
+  etabins.push_back(etabinsL);
+  etabins.push_back(etabinsM);
+  etabins.push_back(etabinsT);
+
+  map<BTaggerType,TH2D*> h2d_bjet;
+  map<BTaggerType,TH2D*> h2d_cjet;
+  map<BTaggerType,TH2D*> h2d_ljet;
+  map<BTaggerType,TH2D*> h2d_btag;
+  map<BTaggerType,TH2D*> h2d_ctag;
+  map<BTaggerType,TH2D*> h2d_ltag;
+
+  //new (pT, eta) histos
+  for (size_t kwp = 0; kwp<3; kwp++) {
+
+    BTaggerType wp = vwp[kwp];
+
+    h2d_bjet[wp] = new TH2D(TString("h2d_bjet_")+suffix[kwp],TString("bjet ")+suffix[kwp],nbins,bins,neta[kwp],etabins[kwp]);
+    h2d_cjet[wp] = new TH2D(TString("h2d_cjet_")+suffix[kwp],TString("cjet ")+suffix[kwp],nbins,bins,neta[kwp],etabins[kwp]);
+    h2d_ljet[wp] = new TH2D(TString("h2d_ljet_")+suffix[kwp],TString("ljet ")+suffix[kwp],nbins,bins,neta[kwp],etabins[kwp]);
+    h2d_btag[wp] = new TH2D(TString("h2d_btag_")+suffix[kwp],TString("btag ")+suffix[kwp],nbins,bins,neta[kwp],etabins[kwp]);
+    h2d_ctag[wp] = new TH2D(TString("h2d_ctag_")+suffix[kwp],TString("ctag ")+suffix[kwp],nbins,bins,neta[kwp],etabins[kwp]);
+    h2d_ltag[wp] = new TH2D(TString("h2d_ltag_")+suffix[kwp],TString("ltag ")+suffix[kwp],nbins,bins,neta[kwp],etabins[kwp]);
+  }
+
   const Long64_t nevents = chainA->GetEntries();
   const Long64_t neventsB = chainB->GetEntries();
   assert(nevents==neventsB);
@@ -11399,6 +11591,7 @@ void EventCalculator::plotBTagEffMC( ) {
   cout<<"Running..."<<endl;  
   Long64_t npass = 0;
 
+  //i think these are for debugging (screen output) only
   Long64_t ntaggedjets = 0;
   Long64_t ntaggedjets_b = 0;
   Long64_t ntaggedjets_c = 0;
@@ -11419,17 +11612,32 @@ void EventCalculator::plotBTagEffMC( ) {
     for (unsigned int i = 0; i < jets_AK5PF_pt->size(); ++i) {
       int flavor = jets_AK5PF_partonFlavour->at(i);
 
+      float pt = getJetPt(i);
+      float eta = fabs(jets_AK5PF_eta->at(i));
             
       if(isGoodJet(i,jetptthreshold)){
       
 	  
-	if(abs(flavor)==5)
-	  h_bjet->Fill( getJetPt(i) ) ;
-	else if(abs(flavor)==4)
-	  h_cjet->Fill( getJetPt(i) ) ;
-	else if(abs(flavor)==3 ||abs(flavor)==2 ||abs(flavor)==1 ||abs(flavor)==21 )
-	  h_ljet->Fill( getJetPt(i) ) ;
+	if(abs(flavor)==5) {
+	  h_bjet->Fill( pt ) ;
+	  h2d_bjet[kCSVL]->Fill(pt,eta );
+	  h2d_bjet[kCSVM]->Fill(pt,eta );
+	  h2d_bjet[kCSVT]->Fill(pt,eta );
+	}
+	else if(abs(flavor)==4) {
+	  h_cjet->Fill( pt ) ;
+	  h2d_cjet[kCSVL]->Fill(pt,eta );
+	  h2d_cjet[kCSVM]->Fill(pt,eta );
+	  h2d_cjet[kCSVT]->Fill(pt,eta );
+	}
+	else if(abs(flavor)==3 ||abs(flavor)==2 ||abs(flavor)==1 ||abs(flavor)==21 ) {
+	  h_ljet->Fill( pt ) ;
+	  h2d_ljet[kCSVL]->Fill(pt,eta );
+	  h2d_ljet[kCSVM]->Fill(pt,eta );
+	  h2d_ljet[kCSVT]->Fill(pt,eta );
+	}
       
+	//legacy code for CSVM; leave untouched
 	if(passBTagger(i)){
 	  if(abs(flavor)==5)
 	    h_btag->Fill( getJetPt(i) ) ;
@@ -11437,6 +11645,28 @@ void EventCalculator::plotBTagEffMC( ) {
 	    h_ctag->Fill( getJetPt(i) ) ;
 	  else if(abs(flavor)==3 ||abs(flavor)==2 ||abs(flavor)==1 ||abs(flavor)==21 )
 	    h_ltag->Fill( getJetPt(i) ) ;
+	}
+
+	for (int kwp=0; kwp<3; kwp++) {
+	  BTaggerType wp;
+	  if (kwp==0) wp=kCSVL;
+	  else if (kwp==1) wp=kCSVM;
+	  else if (kwp==2) wp=kCSVT;
+	  else assert(0);
+
+	  if (passBTagger(i, wp) ) {
+
+	    if ( abs(flavor)==5 ) {
+	      h2d_btag[wp]->Fill(pt,eta );
+	    }
+	    else if (abs(flavor)==4) {
+	      h2d_ctag[wp]->Fill(pt,eta );
+	    }
+	    else if (abs(flavor)==3 ||abs(flavor)==2 ||abs(flavor)==1 ||abs(flavor)==21 ) {
+	      h2d_ltag[wp]->Fill(pt,eta );
+	    }
+
+	  }
 	}
       
       }
@@ -11472,6 +11702,23 @@ void EventCalculator::plotBTagEffMC( ) {
   TH1D * h_ltageff = new TH1D("h_ltageff","ltageff",nbins,bins);
   h_ltageff->Divide(h_ltag,h_ljet,1,1,"B");
   
+  map<BTaggerType, TH2D*> h2d_btageff;
+  map<BTaggerType, TH2D*> h2d_ctageff;
+  map<BTaggerType, TH2D*> h2d_ltageff;
+
+  for (int kwp=0; kwp<3; kwp++) {
+    BTaggerType wp = vwp[kwp];
+
+    h2d_btageff[wp] = new TH2D(TString("h2d_btageff_")+suffix[kwp],TString("btageff ")+suffix[kwp],nbins,bins,neta[kwp],etabins[kwp]);
+    h2d_btageff[wp]->Divide(h2d_btag[wp],h2d_bjet[wp],1,1,"B");
+
+    h2d_ctageff[wp] = new TH2D(TString("h2d_ctageff_")+suffix[kwp],TString("ctageff ")+suffix[kwp],nbins,bins,neta[kwp],etabins[kwp]);
+    h2d_ctageff[wp]->Divide(h2d_ctag[wp],h2d_cjet[wp],1,1,"B");
+
+    h2d_ltageff[wp] = new TH2D(TString("h2d_ltageff_")+suffix[kwp],TString("ltageff ")+suffix[kwp],nbins,bins,neta[kwp],etabins[kwp]);
+    h2d_ltageff[wp]->Divide(h2d_ltag[wp],h2d_ljet[wp],1,1,"B");
+
+  }  
   
   fout.Write();
   fout.Close();
