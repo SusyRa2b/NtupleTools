@@ -419,10 +419,16 @@ public:
 
   double getScanCrossSection( SUSYProcess p);
 
+  float getBtagWeightCSV_LMT(BTagEffModifier variation); // new CSV L+M+T b-tag weighting
+  int getJetTagCatIndex(const int ijet);  //helper for getBtagWeightCSV_LMT()
+
   float getBtagEffWeight(); //alternative b-tag weighting implementation
   float getBtagWeight(); //yet another (from btv)
   double getBtagSF(const int flavor, const float pt, int eta) ;//in development. not for production
+  float getBtagSF(const int flavor,const float pt,const float jet_eta,const int tagcat, BTagEffModifier variation); // for L+M+T reweighting
   float getBtagEffMC(const int flavor, const float pt) ;//currently used only in test code
+  float getBtagEffMC(const int flavor, const float pt, const float jet_eta, const int tagcat) ; //for L+M+T weighting
+
   int nGoodBJets_Tweaked() ;
   float getTopPtWeight(float & topPt);
 
