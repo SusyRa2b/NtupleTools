@@ -4940,6 +4940,8 @@ Long64_t EventCalculator::getNEventsGenerated( TString sample) {
   //the argument let's you override the default. by default, we return the current sample
   if(sample=="") sample = sampleName_;
 
+  if (sample.Contains("CU0001")) return 1; // special test
+
   /*
     in the past we have auto-calculated event weights based on the number of events in the parent TChain
     
@@ -5172,6 +5174,8 @@ double EventCalculator::getCrossSection(){
 
   //const double bf = 0.32442;
   if (theScanType_ != kNotScan ) return 1; //for scans we don't use this weight
+
+  if (sampleName_.Contains("CU0001")) return 1; //special test
 
   //Drell Yan
   if (sampleName_.BeginsWith("DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph")) return 3503.71; //NNLO
