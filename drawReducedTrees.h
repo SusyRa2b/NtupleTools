@@ -11,6 +11,8 @@
 
 #include "TGraphAsymmErrors.h"
 
+#include "TSystem.h"
+
 #include <utility>
 
 //CMS style
@@ -195,6 +197,8 @@ std::vector<float> verticalLinePositions_; //for decorating plots with a set of 
 TChain* dtree=0;
 TH1D* hdata=0;
 TH2D* hdata2d=0;
+
+TString outputdirectory_="";
 
 TString currentConfig_;
 TH2D* scanSMSngen=0;
@@ -478,6 +482,26 @@ void resetVerticalLine() {
   deleteVerticalLines();
   verticalLines_.clear();
   verticalLinePositions_.clear();
+}
+
+void setOutputDirectory(TString path) {
+
+  if (TString(path( path.Length()-1 ))!="/") path.Append("/");
+  outputdirectory_ = path;
+
+  FileStat_t fs;
+  int dirnotthere = gSystem->GetPathInfo(outputdirectory_.Data(),fs);
+
+  if (dirnotthere==1) { //then make the directory
+    cout<<"Directory "<<outputdirectory_<<" not found. ";
+    int mkdirstat = gSystem->mkdir(outputdirectory_.Data());
+    if (mkdirstat==0) cout<<"Created it!"<<endl;
+    else {
+      cout<<"Problem creating directory. Will revert to output in main directory."<<endl;
+      outputdirectory_="";
+    }
+  }
+
 }
 
 void doOverflowAddition(bool doOv) {
@@ -2272,9 +2296,9 @@ the plots with one component might be good as COLZ
 
   //amazingly, \includegraphics cannot handle an extra dot in the filename. so avoid it.
   if (savePlots_) {
-    thecanvas->SaveAs(savename+".eps"); //for me
-    thecanvas->SaveAs(savename+".pdf"); //for pdftex
-    thecanvas->SaveAs(savename+".png"); //for twiki
+    thecanvas->SaveAs(outputdirectory_+savename+".eps"); //for me
+    thecanvas->SaveAs(outputdirectory_+savename+".pdf"); //for pdftex
+    thecanvas->SaveAs(outputdirectory_+savename+".png"); //for twiki
   }
 
   delete h2d_temp;
@@ -2708,10 +2732,10 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
 
   //amazingly, \includegraphics cannot handle an extra dot in the filename. so avoid it.
   if (savePlots_) {
-    thecanvas->SaveAs(savename+".eps"); //for me
+    thecanvas->SaveAs(outputdirectory_+savename+".eps"); //for me
     //    thecanvas->Print(savename+".C");    //for formal purposes
-    thecanvas->SaveAs(savename+".pdf"); //for pdftex
-    thecanvas->SaveAs(savename+".png"); //for twiki
+    thecanvas->SaveAs(outputdirectory_+savename+".pdf"); //for pdftex
+    thecanvas->SaveAs(outputdirectory_+savename+".png"); //for twiki
   }
 
   //dump some event counts to the screen
@@ -3610,8 +3634,8 @@ void drawTrigEff(const TString & pd, const TCut & tag, const TCut & probe, const
   TString filename;
   filename.Form("trigEff_%s-%s_%s_%s",pd.Data(),jmt::fortranize(tag.GetTitle()).Data(),jmt::fortranize(probe.GetTitle()).Data(),var.Data());
   if (savePlots_) {
-    thecanvas->SaveAs(filename+".eps");
-    thecanvas->SaveAs(filename+".png");
-    thecanvas->SaveAs(filename+".pdf");
+    thecanvas->SaveAs(outputdirectory_+filename+".eps");
+    thecanvas->SaveAs(outputdirectory_+filename+".png");
+    thecanvas->SaveAs(outputdirectory_+filename+".pdf");
   }
 }
