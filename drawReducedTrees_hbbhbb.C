@@ -75,7 +75,7 @@ void initHiggsSamples69(const bool useSkim=true,const TString samplelist="") {
   const  TString skimstring = useSkim?"-skim":"";
 
   addToSamplesAll("TTJets_ResolutionTest_PU_S10_CU0001_v69"); //special test
-
+  addToSamplesAll("TTJets_ResolutionTest_PU_S10_CU0001_JERbias_v69"); // special test
   addToSamplesAll("HiggsinoNLSP_chargino130_to_500_bino1_TChihh_v69");
 
   //MG ttbar  
@@ -889,13 +889,12 @@ void higgs_ttbar_sculpt() {
 
 }
 
-void higgs_dataMC_control_QCD() {
+void higgs_dataMC_control_QCD_noskim() {
+  //plots that are looser than the skim
 
-  //goal: use 2-b sample to get a qcd control region. 
+  initHiggsSamples69(false,"ttbar znunu qcd");
 
-
-  // initHiggsSamples(true,"ttbar znunu qcd hh200"); //plot a signal to show contamination
-  initHiggsSamples69(true,"ttbar znunu qcd");
+  setOutputDirectory("plots_Control_QCD");
 
   int nbins;
   float low,high;
@@ -906,7 +905,7 @@ void higgs_dataMC_control_QCD() {
   dodata_=true;
 
   //define useful cuts
-  TCut baseline = "cutPV==1 &&passCleaning==1 &&buggyEvent==0"; 
+  TCut baseline = "cutPV==1 &&passCleaning==1 &&buggyEvent==0&& MET/caloMET<2 && maxTOBTECjetDeltaMult<40"; 
 
   TCut triggerJetMET = "passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1";
   TCut triggerMET = "passMC_PFMET150==1";
@@ -917,8 +916,8 @@ void higgs_dataMC_control_QCD() {
 
   TCut sl = "nMuons+nElectrons==1 &&nTausLoose==0 &&nIsoTracks15_005_03_lepcleaned==0";
 
-  TCut njets4="njets30==4";
-  TCut njets5="njets30==5";
+  TCut njets4="njets20==4";
+  TCut njets5="njets20==5";
   TCut jet2="jetpt2>50";
   TCut jets=(njets4||njets5) &&jet2;
   TCut btag2="CSVbest2>0.898";
@@ -936,7 +935,87 @@ void higgs_dataMC_control_QCD() {
   TCut higgsSB_d = "abs(higgsMbb1MassDiff-higgsMbb2MassDiff)>30";
   TCut higgsSB = higgsSB_avl||higgsSB_avh||higgsSB_d;
 
-  TCut metsigbound="METsig_2012<60";
+  TCut metsigbound="METsig<60";
+
+  TCut drmax = "deltaRmax_hh<2.2";
+
+  //plot:
+  //DeltaPhi(jets,MET)
+
+  setStackMode(true,false,false); //stack,norm,label override
+  setLogY(false);
+
+   //i think we want: Loose selection -- veto on 2nd tight b-tag
+  selection_ = baseline && trigger && zl&&isotk && jets&&jet2 && !btag2 &&!mdp;
+
+
+  nbins=30; low=0; high=300;
+  setLogY(false);
+  var="METsig"; xtitle="MET significance (old)";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_01bLDP_METsig",0);
+  setLogY(true);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_01bLDP_METsig",0);
+
+
+  nbins=30; low=0; high=400;
+  setLogY(false);
+  var="MET"; xtitle="MET (GeV)";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_01bLDP_MET",0);
+  setLogY(true);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_01bLDP_MET",0);
+
+
+}
+
+void higgs_dataMC_control_QCD() {
+
+  //goal: use 2-b sample to get a qcd control region. 
+
+  // initHiggsSamples(true,"ttbar znunu qcd hh200"); //plot a signal to show contamination
+  initHiggsSamples69(true,"ttbar znunu qcd");
+
+  setOutputDirectory("plots_Control_QCD");
+
+  int nbins;
+  float low,high;
+  TString var,xtitle;
+
+  doOverflowAddition(true);
+  doRatio_=true; ratioMin = 0; ratioMax = 2.2;
+  dodata_=true;
+
+  //define useful cuts
+  TCut baseline = "cutPV==1 &&passCleaning==1 &&buggyEvent==0&& MET/caloMET<2 && maxTOBTECjetDeltaMult<40"; 
+
+  TCut triggerJetMET = "passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1";
+  TCut triggerMET = "passMC_PFMET150==1";
+  TCut trigger = triggerJetMET||triggerMET;
+
+  TCut zl = "nMuons==0&&nElectrons==0&&nTausLoose==0";
+  TCut isotk="nIsoTracks15_005_03==0";//&&nIsoTracks5_005_03<2";
+
+  TCut sl = "nMuons+nElectrons==1 &&nTausLoose==0 &&nIsoTracks15_005_03_lepcleaned==0";
+
+  TCut njets4="njets20==4";
+  TCut njets5="njets20==5";
+  TCut jet2="jetpt2>50";
+  TCut jets=(njets4||njets5) &&jet2;
+  TCut btag2="CSVbest2>0.898";
+  TCut btag3="CSVbest3>0.679";
+  TCut btag4="CSVbest4>0.244";
+
+  TCut mdp = "minDeltaPhi30>0.3";
+
+  TCut higgsSR_av = "(0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)>100)&&(0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)<140)";
+  TCut higgsSR_d = "abs(higgsMbb1MassDiff-higgsMbb2MassDiff)<20";
+  TCut higgsSR = higgsSR_av && higgsSR_d;
+
+  TCut higgsSB_avl = "0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)<90";
+  TCut higgsSB_avh = "0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)>150";
+  TCut higgsSB_d = "abs(higgsMbb1MassDiff-higgsMbb2MassDiff)>30";
+  TCut higgsSB = higgsSB_avl||higgsSB_avh||higgsSB_d;
+
+  TCut metsigbound="METsig<60";
 
   TCut drmax = "deltaRmax_hh<2.2";
 
@@ -948,14 +1027,16 @@ void higgs_dataMC_control_QCD() {
   setLogY(false);
 
    //i think we want: preselection. 2b tags. lepton & isotk vetoes.
-  selection_ = baseline && trigger && zl&&isotk && jets && btag2;
+  selection_ = baseline && trigger && zl&&isotk && jets && btag2 && !btag3;
 
+  /*
   nbins=30; low=0; high=300;
   setLogY(false);
   var="METsig_2012"; xtitle="MET significance (new)";
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_preselection_METsig2012",0);
   setLogY(true);
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_preselection_METsig2012",0);
+  */
 
   nbins=30; low=0; high=300;
   setLogY(false);
@@ -978,14 +1059,16 @@ void higgs_dataMC_control_QCD() {
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_preselection_nGoodPV",0);
 
   //same plots but adding mdp cut
-  selection_ = baseline && trigger && zl&&isotk && jets && btag2&&mdp;
+  selection_ = baseline && trigger && zl&&isotk && jets && btag2&&!btag3&&mdp;
 
+  /*
   nbins=30; low=0; high=300;
   setLogY(false);
   var="METsig_2012"; xtitle="MET significance (new)";
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_preselectionMDP_METsig2012",0);
   setLogY(true);
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_preselectionMDP_METsig2012",0);
+  */
 
   nbins=30; low=0; high=300;
   setLogY(false);
@@ -1009,14 +1092,16 @@ void higgs_dataMC_control_QCD() {
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselectionMDP_nGoodPV",0);
 
   //same plots but inverting mdp cut
-  selection_ = baseline && trigger && zl&&isotk && jets && btag2&&!mdp;
+  selection_ = baseline && trigger && zl&&isotk && jets && btag2&&!btag3&&!mdp;
 
+  /*
   nbins=30; low=0; high=300;
   setLogY(false);
   var="METsig_2012"; xtitle="MET significance (new)";
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_preselectionLDP_METsig2012",0);
   setLogY(true);
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_preselectionLDP_METsig2012",0);
+  */
 
   nbins=30; low=0; high=300;
   setLogY(false);
@@ -1042,14 +1127,15 @@ void higgs_dataMC_control_QCD() {
   TCut minmet="MET>125";
 
   //same plots but adding mdp cut
-  selection_ = baseline && trigger && zl&&isotk && jets && btag2&&mdp&&minmet;
-
+  selection_ = baseline && trigger && zl&&isotk && jets && btag2&&!btag3&&mdp&&minmet;
+  /*
   nbins=30; low=0; high=300;
   setLogY(false);
   var="METsig_2012"; xtitle="MET significance (new)";
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_preselectionMDP-MET125_METsig2012",0);
   setLogY(true);
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_preselectionMDP-MET125_METsig2012",0);
+  */
 
   nbins=30; low=0; high=300;
   setLogY(false);
@@ -1065,14 +1151,16 @@ void higgs_dataMC_control_QCD() {
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselectionMDP-MET125_nGoodPV",0);
 
   //same plots but inverting mdp cut
-  selection_ = baseline && trigger && zl&&isotk && jets && btag2&&!mdp&&minmet;
+  selection_ = baseline && trigger && zl&&isotk && jets && btag2&&!btag3&&!mdp&&minmet;
 
+  /*
   nbins=30; low=0; high=300;
   setLogY(false);
   var="METsig_2012"; xtitle="MET significance (new)";
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_preselectionLDP-MET125_METsig2012",0);
   setLogY(true);
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_preselectionLDP-MET125_METsig2012",0);
+  */
 
   nbins=30; low=0; high=300;
   setLogY(false);
@@ -1297,53 +1385,227 @@ void higgs_dataMC_control_SL_JERtest() {
   setStackMode(true,false,false); //stack,norm,label override
   setLogY(false);
 
+  for (int iii=0; iii<2; iii++) {
   //2b pre-selection ; basically the minimum required by the trigger, plus SL
+
   selection_ = baseline && trigger && sl && (njets4||njets5) &&jet2&&mdp && btag2;
+
+  if (iii==1) setSampleWeightFactor("TTJets_ResolutionTest_PU_S10_CU0001_v69","topPtWeight");
+  else resetSampleWeightFactors();
+
+  TString suffix=getSampleWeightFactor("TTJets_ResolutionTest_PU_S10_CU0001_v69");
+  if (suffix!="") suffix.Prepend("-");
 
   currentConfig_=configDescriptions_.getDefault();
   nbins=30; low=0; high=300;
   var="METsig_2012"; xtitle="MET significance (new)";
   setLogY(false);
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselection_METsig2012_JER0",0);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselection_METsig2012_JER0"+suffix,0);
   setLogY(true);
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselection_METsig2012_JER0",0);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselection_METsig2012_JER0"+suffix,0);
 
   currentConfig_=configDescriptions_.getCorrected();
   setLogY(false);
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselection_METsig2012_JERbias",0);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselection_METsig2012_JERbias"+suffix,0);
   setLogY(true);
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselection_METsig2012_JERbias",0);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselection_METsig2012_JERbias"+suffix,0);
 
   currentConfig_=configDescriptions_.getDefault();
   var="METsig"; xtitle="MET significance (old)";
   nbins=30; low=0; high=300;
   setLogY(false);
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselection_METsig_JER0",0);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselection_METsig_JER0"+suffix,0);
   setLogY(true);
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselection_METsig_JER0",0);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselection_METsig_JER0"+suffix,0);
 
   currentConfig_=configDescriptions_.getCorrected();
   setLogY(false);
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselection_METsig_JERbias",0);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselection_METsig_JERbias"+suffix,0);
   setLogY(true);
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselection_METsig_JERbias",0);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselection_METsig_JERbias"+suffix,0);
 
   //MET, for completeness
   currentConfig_=configDescriptions_.getDefault();
   nbins=30; low=0; high=400;
   setLogY(false);
   var="MET"; xtitle="MET (GeV)";
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselection_MET_JER0",0);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselection_MET_JER0"+suffix,0);
   setLogY(true);
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselection_MET_JER0",0);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselection_MET_JER0"+suffix,0);
 
   currentConfig_=configDescriptions_.getCorrected();
   nbins=30; low=0; high=400;
   setLogY(false);
   var="MET"; xtitle="MET (GeV)";
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselection_MET_JERbias",0);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselection_MET_JERbias"+suffix,0);
   setLogY(true);
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselection_MET_JERbias",0);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselection_MET_JERbias"+suffix,0);
+
+  //now add a MET cut; remove other extraneous cuts that are fairly specific to our analysis
+  //keep trigger, SL, jet2 (for the trigger), CSVT
+  selection_ = baseline && trigger &&TCut("MET>125") && sl &&jet2 && btag2;
+
+  //first, no correction
+  currentConfig_=configDescriptions_.getDefault();
+  nbins=60; low=0; high=300;
+  setLogY(false);
+  var="jetpt1"; xtitle="lead jet pT (GeV)";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_loose_jetpt1_JER0"+suffix,0);
+  setLogY(true);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_loose_jetpt1_JER0"+suffix,0);
+
+  nbins=60; low=0; high=300;
+  setLogY(false);
+  var="jetpt2"; xtitle="2nd jet pT (GeV)";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_loose_jetpt2_JER0"+suffix,0);
+  setLogY(true);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_loose_jetpt2_JER0"+suffix,0);
+
+  currentConfig_=configDescriptions_.getCorrected();
+  nbins=60; low=0; high=300;
+  setLogY(false);
+  var="jetpt1"; xtitle="lead jet pT (GeV)";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_loose_jetpt1_JERbias"+suffix,0);
+  setLogY(true);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_loose_jetpt1_JERbias"+suffix,0);
+
+  nbins=60; low=0; high=300;
+  setLogY(false);
+  var="jetpt2"; xtitle="2nd jet pT (GeV)";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_loose_jetpt2_JERbias"+suffix,0);
+  setLogY(true);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_loose_jetpt2_JERbias"+suffix,0);
+
+  //dilepton selection
+  //i'm assuming that non-ttbar will be very small due to MET and b-tag requirements
+  TCut dl = "nMuons+nElectrons==2";
+  selection_ = baseline && trigger &&TCut("MET>125") && dl &&jet2 && btag2;
+
+  currentConfig_=configDescriptions_.getDefault();
+  nbins=30; low=100; high=400;
+  setLogY(false);
+  var="MET"; xtitle="MET (GeV)";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_DL_loose_MET_JER0"+suffix,0);
+  setLogY(true);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_DL_loose_MET_JER0"+suffix,0);
+
+  currentConfig_=configDescriptions_.getCorrected();
+
+  nbins=30; low=100; high=400;
+  setLogY(false);
+  var="MET"; xtitle="MET (GeV)";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_DL_loose_MET_JERbias"+suffix,0);
+  setLogY(true);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_DL_loose_MET_JERbias"+suffix,0);
+
+
+
+  //first, no correction
+  currentConfig_=configDescriptions_.getDefault();
+  nbins=40; low=0; high=300;
+  setLogY(false);
+  var="jetpt1"; xtitle="lead jet pT (GeV)";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_DL_loose_jetpt1_JER0"+suffix,0);
+  setLogY(true);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_DL_loose_jetpt1_JER0"+suffix,0);
+
+  nbins=40; low=0; high=300;
+  setLogY(false);
+  var="jetpt2"; xtitle="2nd jet pT (GeV)";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_DL_loose_jetpt2_JER0"+suffix,0);
+  setLogY(true);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_DL_loose_jetpt2_JER0"+suffix,0);
+
+  currentConfig_=configDescriptions_.getCorrected();
+  nbins=40; low=0; high=300;
+  setLogY(false);
+  var="jetpt1"; xtitle="lead jet pT (GeV)";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_DL_loose_jetpt1_JERbias"+suffix,0);
+  setLogY(true);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_DL_loose_jetpt1_JERbias"+suffix,0);
+
+  nbins=40; low=0; high=300;
+  setLogY(false);
+  var="jetpt2"; xtitle="2nd jet pT (GeV)";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_DL_loose_jetpt2_JERbias"+suffix,0);
+  setLogY(true);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_DL_loose_jetpt2_JERbias"+suffix,0);
+
+  currentConfig_=configDescriptions_.getDefault();
+  }
+
+  // =============== now, MC-MC comparisons ===============
+  clearSamples();
+  dodata_=false;
+
+  currentConfig_=configDescriptions_.getDefault();
+
+  addSample("TTJets_ResolutionTest_PU_S10_CU0001_v69",kBlue,"Nominal");
+  addSample("TTJets_ResolutionTest_PU_S10_CU0001_JERbias_v69",kRed,"JER smearing");
+
+  //this is quite a hack.
+  //i don't have a pre-coded way to plot JERbias and non-JERbias at the same time, so as a hack, just make a symlink from the regular JERbias name to 
+  //a name with JER0 in the first stub and JERbias in the second. kind of ugly, but ok for now
+  //manually set scale factor for JERbias sample
+  setSampleScaleFactor("TTJets_ResolutionTest_PU_S10_CU0001_JERbias_v69",234.0 / getTree("TTJets_ResolutionTest_PU_S10_CU0001_JERbias_v69")->GetEntries());
+  resetSampleWeightFactors(); //critical!
+
+  //use only gen-level
+  TCut ttbar1l = "ttbarDecayCode>=3 && ttbarDecayCode<=7";
+  TCut ttbar2l = "ttbarDecayCode==1 || ttbarDecayCode>=8";
+  TCut ttbar0l = "ttbarDecayCode==2";
+  selection_ = TCut("cutPV==1")&&ttbar1l; //that's it!
+
+  doRatio_=true; ratioMin = 0.85; ratioMax = 1.15;
+
+  setStackMode(false,false,false);
+  nbins=60; low=0; high=300;
+  setLogY(false);
+  var="MET"; xtitle="MET (GeV)";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "MConly_JER0_JERbias_ttbar1l_MET");
+  setLogY(true);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "MConly_JER0_JERbias_ttbar1l_MET");
+
+  nbins=60; low=0; high=400;
+  setLogY(false);
+  var="jetpt1"; xtitle="lead jet pT (GeV)";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "MConly_JER0_JERbias_ttbar1l_jetpt1");
+  setLogY(true);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "MConly_JER0_JERbias_ttbar1l_jetpt1");
+
+  nbins=60; low=0; high=400;
+  setLogY(false);
+  var="jetpt2"; xtitle="2nd jet pT (GeV)";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "MConly_JER0_JERbias_ttbar1l_jetpt2");
+  setLogY(true);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "MConly_JER0_JERbias_ttbar1l_jetpt2");
+
+
+  nbins=40; low=0; high=300;
+  setLogY(false);
+  var="jetpt3"; xtitle="3rd jet pT (GeV)";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "MConly_JER0_JERbias_ttbar1l_jetpt3");
+  setLogY(true);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "MConly_JER0_JERbias_ttbar1l_jetpt3");
+
+  nbins=40; low=0; high=200;
+  setLogY(false);
+  var="jetpt4"; xtitle="4th jet pT (GeV)";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "MConly_JER0_JERbias_ttbar1l_jetpt4");
+  setLogY(true);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "MConly_JER0_JERbias_ttbar1l_jetpt4");
+
+
+  // == now try a zero-MET sample ==
+  doRatio_=true; ratioMin = 0.7; ratioMax = 1.3;
+
+  selection_ = TCut("cutPV==1")&&ttbar0l; //that's it!
+  nbins=50; low=0; high=100;
+  setLogY(false);
+  var="MET"; xtitle="MET (GeV)";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "MConly_JER0_JERbias_ttbar0l_MET");
+  setLogY(true);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "MConly_JER0_JERbias_ttbar0l_MET");
 
 
 }
@@ -1351,12 +1613,12 @@ void higgs_dataMC_control_SL_JERtest() {
 void higgs_dataMC_control_SL() {
 
   //goal do data / MC comparisons; use skim to save time. means I can't make a useful njets plot
-  //  initHiggsSamples69(true,"ttbar znunu qcd"); //use all samples except signal
+  initHiggsSamples69(true,"ttbar znunu qcd"); //use all samples except signal
   //this is the current default
   //  initHiggsSamples69(true,"qcd ttbar"); //don't bother with negligible znunu and qcd
 
   //special test
-  initHiggsSamples69(false,"metsigtest1");
+  //  initHiggsSamples69(false,"metsigtest1");
 
   int nbins;
   float low,high;
@@ -1365,6 +1627,9 @@ void higgs_dataMC_control_SL() {
   doOverflowAddition(true);
   doRatio_=true; ratioMin = 0; ratioMax = 2.2;
   dodata_=true;
+
+  setOutputDirectory("plots_Control_SL");
+
 
   //define useful cuts
   TCut baseline = "cutPV==1 &&passCleaning==1 &&buggyEvent==0&& MET/caloMET<2 && maxTOBTECjetDeltaMult<40"; 
@@ -1397,7 +1662,7 @@ void higgs_dataMC_control_SL() {
   TCut higgsSB_d = "abs(higgsMbb1MassDiff-higgsMbb2MassDiff)>30";
   TCut higgsSB = higgsSB_avl||higgsSB_avh||higgsSB_d;
 
-  TCut metsigveryloose="METsig_2012>25";
+  TCut metsigveryloose="METsig>30"; //go back to old METsig
 
   TCut drmax = "deltaRmax_hh<2.2";
   //  TCut drmin = "deltaRmin_hh<1.9";
@@ -1412,12 +1677,14 @@ void higgs_dataMC_control_SL() {
 
   //Owen's METsig bins
   //float binning[]={0,10,20,30,50,100,150,200};
+  /* no need to mess with new METsig for the moment
   nbins=30; low=0; high=300;
   setLogY(false);
   var="METsig_2012"; xtitle="MET significance (new)";
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselection_METsig2012",0);
   setLogY(true);
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselection_METsig2012",0);
+  */
 
   //this was a special test
 //   double fullLumi = lumiScale_;
@@ -1453,8 +1720,6 @@ void higgs_dataMC_control_SL() {
   setLogY(true);
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselection_MET",0);
 
-  return;
-
   //nPV
   nbins=20; low=0; high=40;
   setLogY(false);
@@ -1463,6 +1728,7 @@ void higgs_dataMC_control_SL() {
 
 
   // === now in bins of PV
+  /* for now, don't make these plots. may want to add them back in eventually
   drawFilenameOnPlot_=true;
 
   TCut pvcut[4];
@@ -1485,6 +1751,7 @@ void higgs_dataMC_control_SL() {
     ratiosByPV[ipv]->SetMarkerColor(ipv+1);
     setLogY(true);
     drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselection_METsig2012_"+pvdesc,0);
+
     nbins=30; low=0; high=300;
     setLogY(false);
     var="METsig"; xtitle="MET significance (old)";
@@ -1498,7 +1765,7 @@ void higgs_dataMC_control_SL() {
     setLogY(true);
     drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselection_MET_"+pvdesc,0);
   }
-
+  */
 /*
 root [101] ratiosByPV[0]->SetLineColor(kMagenta+4)
 root [103] ratiosByPV[1]->SetLineColor(kMagenta+2)
@@ -1510,6 +1777,7 @@ root [108] ratiosByPV[1]->SetMarkerColor(kMagenta+2)
 root [109] ratiosByPV[0]->SetMarkerColor(kMagenta+4)
 
 */ 
+/*
  renewCanvas();
   ratiosByPV[0]->Draw();
   ratiosByPV[1]->Draw("same");
@@ -1520,17 +1788,24 @@ root [109] ratiosByPV[0]->SetMarkerColor(kMagenta+4)
   return;
   drawFilenameOnPlot_=false;
   /// === done with bins of PV
+  */
 
   //minDeltaPhi distribution (no MET or METsig cut)
   selection_ = baseline && trigger && sl && (njets4||njets5) &&jet2 && btag2;
   nbins=30; low=0; high=3;
   setLogY(false);
   var="minDeltaPhi30"; xtitle=var;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselectionNoMdpNoMETsig_minDeltaPhi30",0);
+
+  //add the standard METsig cut
+  selection_ = baseline && trigger && sl && (njets4||njets5) &&jet2 && btag2 &&metsigveryloose;
+  nbins=30; low=0; high=3;
+  setLogY(false);
+  var="minDeltaPhi30"; xtitle=var;
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselectionNoMdp_minDeltaPhi30",0);
 
-
   //CSV3
-  selection_ = baseline && trigger && sl && (njets4||njets5) &&jet2&&mdp && btag2;
+  selection_ = baseline && trigger && sl && (njets4||njets5) &&jet2&&mdp && btag2 &&metsigveryloose;
   nbins=20; low=0; high=1;
   setLogY(false);
   var="CSVbest3"; xtitle="3rd CSV value";
@@ -1545,7 +1820,7 @@ root [109] ratiosByPV[0]->SetMarkerColor(kMagenta+4)
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselection_CSVbest4",0);
 
   //apply 3rd b tag
-  selection_ = baseline && trigger && sl && (njets4||njets5) &&jet2&&mdp && btag2 &&btag3;
+  selection_ = baseline && trigger && sl && (njets4||njets5) &&jet2&&mdp && btag2 &&btag3 &&metsigveryloose;
 
   //CSV4
   nbins=10; low=0; high=1;
@@ -1558,6 +1833,7 @@ root [109] ratiosByPV[0]->SetMarkerColor(kMagenta+4)
   //now apply full b-tag selection
   selection_ = baseline && trigger && sl && (njets4||njets5) &&jet2&&mdp && btag2 &&btag3&&btag4;
 
+  /*
   //MET sig
   nbins=15; low=0; high=300;
   setLogY(false);
@@ -1565,6 +1841,7 @@ root [109] ratiosByPV[0]->SetMarkerColor(kMagenta+4)
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_4bPreselection_METsig2012",0);
   setLogY(true);
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_4bPreselection_METsig2012",0);
+  */
   //old MET sig
   nbins=15; low=0; high=300;
   setLogY(false);
@@ -1585,20 +1862,20 @@ root [109] ratiosByPV[0]->SetMarkerColor(kMagenta+4)
   nbins=10; low=0; high=100;
   setLogY(false);
   var="abs(higgsMbb1MassDiff-higgsMbb2MassDiff)"; xtitle="|#Delta m_{bb}|";
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_4bMETsig25_DeltaMbb",0);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_4bMETsig30_DeltaMbb",0);
 
   //higgs mass
   nbins=20; low=0; high=200;
   setLogY(false);
   var="0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)"; xtitle="<m_{bb}>";
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_4bMETsig25_AvMbb",0);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_4bMETsig30_AvMbb",0);
 
   //now add the higgs SR
   selection_ = baseline && trigger && sl && (njets4||njets5)&&jet2&&mdp && btag2 &&btag3&&btag4 &&metsigveryloose &&higgsSR;
   nbins=20; low=0; high=5;
   setLogY(false);
   var="deltaRmax_hh"; xtitle="#Delta R_{max}(b,b)";
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_hhSR-METsig25_DRmax",0);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_hhSR-METsig30_DRmax",0);
 
   //true N - 1 plots -- for the AN
   selection_ = baseline && trigger && sl && (njets4||njets5)&&jet2&&mdp && btag2 &&btag3&&btag4 &&metsigveryloose &&higgsSR_d &&drmax;
@@ -1606,22 +1883,22 @@ root [109] ratiosByPV[0]->SetMarkerColor(kMagenta+4)
   nbins=20; low=0; high=200;
   setLogY(false);
   var="0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)"; xtitle="<m_{jj}>";
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_Nm1METsig25_AvMbb",0);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_Nm1METsig30_AvMbb",0);
 
   selection_ = baseline && trigger && sl && (njets4||njets5)&&jet2&&mdp && btag2 &&btag3&&btag4 &&metsigveryloose &&higgsSR_d &&drmax;
   nbins=10; low=0; high=100;
   setLogY(false);
   var="abs(higgsMbb1MassDiff-higgsMbb2MassDiff)"; xtitle="|#Delta m_{jj}|";
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_Nm1METsig25_DeltaMbb",0);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_Nm1METsig30_DeltaMbb",0);
 
   //
   selection_ = baseline && trigger && sl && (njets4||njets5)&&jet2&&mdp && btag2 &&btag3&&btag4  &&higgsSR &&drmax;
   nbins=30; low=0; high=300;
   setLogY(true);
-  var="METsig_2012"; xtitle="MET significance";
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_Nm1_METsig2012",0);
+  var="METsig"; xtitle="MET significance";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_Nm1_METsig",0);
   setLogY(false);
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_Nm1_METsig2012",0);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_Nm1_METsig",0);
 
 
 
@@ -2618,7 +2895,7 @@ void higgs_Nminus1() {
 void higgs_printCutflowTable(const bool latexMode=false,TString region="4bSR", const  bool unweighted=false) {
   TString jetpttest=""; // "20GeV/" or ""
 
-  if (unweighted)  initHiggsSamples69(false,"ttbar hh200 hh350"); //reduced list of samples
+  if (unweighted)  initHiggsSamples69(true,"ttbar hh200 hh350"); //reduced list of samples
   else initHiggsSamples69(true,"ttbar qcd znunu");
 
   if (!(region.Contains("4bSR")||region.Contains("2bSR")||region.Contains("4bSB")||region.Contains("2bSB"))) {cout<<"check region!"<<endl;return;}
@@ -2653,7 +2930,7 @@ void higgs_printCutflowTable(const bool latexMode=false,TString region="4bSR", c
   TCut zl = "nMuons==0&&nElectrons==0&&nTausLoose==0";
   TCut isotk="nIsoTracks15_005_03==0";
 
-  TCut njets="njets30>=4&&njets30<=5";
+  TCut njets="njets20>=4&&njets20<=5";
   TCut secondjet="jetpt2>50";
 
   TCut btagpre="CSVbest2>0.898";
@@ -2668,12 +2945,8 @@ void higgs_printCutflowTable(const bool latexMode=false,TString region="4bSR", c
   TCut higgsSB = higgsSB_avl||higgsSB_avh||higgsSB_d;
 
   TCut drmax = "deltaRmax_hh<2.2"; //owen's been using 2.2
-  TCut drmin = "deltaRmin_hh<1.2";
 
-  TCut metsigloose = "METsig_2012>25";
-  TCut metsig1 = "METsig_2012>40";
-  TCut metsig2 = "METsig_2012>85";
-  TCut metsig3 = "METsig_2012>120";
+  TCut metsigloose = "METsig>30";
 
   TCut skim = baseline&&triggers&&njets&&btagpre;
 
@@ -2692,7 +2965,7 @@ void higgs_printCutflowTable(const bool latexMode=false,TString region="4bSR", c
 
 
   cuts.push_back(make_pair("jet2 >50",secondjet));
-  if (region.Contains("2b"))  cuts.push_back(make_pair("minDeltaPhi30",TCut("minDeltaPhi30>0.3")));
+  cuts.push_back(make_pair("minDeltaPhi30",TCut("minDeltaPhi30>0.3")));
   //
   cuts.push_back(make_pair( "Lepton/isotk vetoes",zl&&isotk)); 
 
@@ -2715,9 +2988,9 @@ void higgs_printCutflowTable(const bool latexMode=false,TString region="4bSR", c
   int step = region.Contains("MET")? 10 : 5;
   for (int icut=10;icut<=max;icut+=step) {
     TString label;
-    if (region.Contains("oldsig")) label = "METsig>";
-    else if (region.Contains("MET"))  label = "MET>";
-    else                              label = "METsig_2012>";
+    //    if (region.Contains("oldsig")) label = "METsig>";
+     if (region.Contains("MET"))  label = "MET>";
+    else                              label = "METsig>";
     label+=icut;
     cuts.push_back(make_pair( label,label.Data()));
   }
