@@ -5313,11 +5313,14 @@ TString EventCalculator::getSampleNameOutputString(){
 TString EventCalculator::getCutDescriptionString(){
   
   TString cut = "";
-  cut += theBTaggerNames_[theBTaggerType_];
-  cut += "_";
 
-  cut += theJetNames_[theJetType_];
-  cut += "_";
+  //suppress some of the filename length
+    
+  //cut += theBTaggerNames_[theBTaggerType_];
+  //    cut += "_";
+
+  //  cut += theJetNames_[theJetType_];
+  //  cut += "_";
 
   cut += theJESNames_[theJESType_];
   cut += "_";
@@ -5334,10 +5337,13 @@ TString EventCalculator::getCutDescriptionString(){
   cut += thePUuncNames_[thePUuncType_];
   cut += "_";
 
-  cut += theBTagEffNames_[theBTagEffType_];
-  cut += "_";
+  cut+= "hpt";
+  cut+= int(minHiggsJetPt_);
 
-  cut += theHLTEffNames_[theHLTEffType_];
+  //  cut += theBTagEffNames_[theBTagEffType_];
+  //  cut += "_";
+
+  //  cut += theHLTEffNames_[theHLTEffType_];
 
   if(theIsoNames_[theIsoType_] != "Iso0")//only change name if nonstandard
     {
@@ -5782,21 +5788,26 @@ std::pair<float,float> EventCalculator::minDeltaMassPairs(float & higgsMbb1,floa
   h2jet1=-1;
   h2jet2=-1;
 
+  //  int nneg1=0;
+
   //find the 4 most b-like good jets
   set<pair< float, int> > jets_sorted_by_bdisc;
   for (unsigned int kk=0; kk<jets_AK5PF_pt->size(); kk++) {
     if (isGoodJet(kk,minHiggsJetPt_) ) { 
       float bdiscval = jets_AK5PF_btag_secVertexCombined->at(kk);
       jets_sorted_by_bdisc.insert(make_pair(bdiscval,kk));
+      //      if (bdiscval <0) nneg1++;
     }
   }
 
   if ( jets_sorted_by_bdisc.size() <4 ) return make_pair(-1.,-1.);
 
+  //  if (nneg1>1)  cout<<" == "<<endl;
+
   int jetindices[4];
   int iii=0;
   for (set<pair< float, int> >::reverse_iterator ib=jets_sorted_by_bdisc.rbegin(); ib!=jets_sorted_by_bdisc.rend(); ++ib) {
-    //    cout<<ib->first<<endl; //jmt higgs debug
+    //  if (nneg1>1)cout<<ib->first<<" "<<ib->second<<endl; //jmt higgs debug
     if (iii<4) {
       jetindices[iii] = ib->second;
       ++iii;
@@ -9209,6 +9220,22 @@ void EventCalculator::reducedTree(TString outputpath) {
 	caloMETwithHO = -1;
 	caloMETwithHOphi = -1;
       }
+
+      //for (old) METsig, if we're varying the jets, recompute (old) METsig using the varied jets
+      if (theJESType_!=kJES0) {
+	TVectorD metvec(2);
+	metvec(0) = rawPFMET * cos(rawPFMETphi);
+	metvec(1) = rawPFMET * sin(rawPFMETphi);
+	TMatrixD v_tot(2,2);
+	v_tot(0,0) = METsig00;
+	v_tot(1,1) = METsig11;
+	v_tot(0,1) = METsig10;
+	v_tot(1,0) = METsig10;
+	//METsig = (METx,y) Cov ^-1 (METx,y)T
+	v_tot.Invert();
+	METsig = metvec * (v_tot * metvec);
+      }
+
       minDeltaPhi = getMinDeltaPhiMET(3);
       minDeltaPhiAll = getMinDeltaPhiMET(99);
       minDeltaPhiAll30 = getMinDeltaPhiMET30(99);
