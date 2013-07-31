@@ -5777,8 +5777,10 @@ void EventCalculator::higgs125massPairs(float & higgsMbb1,float & higgsMbb2,cons
 //in the higgsMbb1/2 variables, return the best pair (mass difference closest to zero)
 std::pair<float,float> EventCalculator::minDeltaMassPairs(float & higgsMbb1,float & higgsMbb2,
 					//also return the indices of the jets used to form the higgs
-					int & h1jet1,int & h1jet2,int & h2jet1,int & h2jet2) {
+							  int & h1jet1,int & h1jet2,int & h2jet1,int & h2jet2,bool & tiebreak) {
 
+  //this was a feature to try to improve the rate of getting the higgs reco correct.
+  //the idea was to reject combinations with too low sum pT. it didn't have much effect so we keep it disabled via this bool
   const bool doMinHiggsSumPt=false; //if this is set to false then the whole feature is turned off
 
   higgsMbb1=-1;
@@ -5788,7 +5790,8 @@ std::pair<float,float> EventCalculator::minDeltaMassPairs(float & higgsMbb1,floa
   h2jet1=-1;
   h2jet2=-1;
 
-  //  int nneg1=0;
+  int nneg1=0;
+  tiebreak=false; //keep track of how often there are multiple jets with -1 as the CSV value
 
   //find the 4 most b-like good jets
   set<pair< float, int> > jets_sorted_by_bdisc;
@@ -5796,18 +5799,17 @@ std::pair<float,float> EventCalculator::minDeltaMassPairs(float & higgsMbb1,floa
     if (isGoodJet(kk,minHiggsJetPt_) ) { 
       float bdiscval = jets_AK5PF_btag_secVertexCombined->at(kk);
       jets_sorted_by_bdisc.insert(make_pair(bdiscval,kk));
-      //      if (bdiscval <0) nneg1++;
+      if (bdiscval <0) nneg1++;
     }
   }
 
   if ( jets_sorted_by_bdisc.size() <4 ) return make_pair(-1.,-1.);
 
-  //  if (nneg1>1)  cout<<" == "<<endl;
+  if (nneg1>1 && jets_sorted_by_bdisc.size()>=5) tiebreak=true;
 
   int jetindices[4];
   int iii=0;
   for (set<pair< float, int> >::reverse_iterator ib=jets_sorted_by_bdisc.rbegin(); ib!=jets_sorted_by_bdisc.rend(); ++ib) {
-    //  if (nneg1>1)cout<<ib->first<<" "<<ib->second<<endl; //jmt higgs debug
     if (iii<4) {
       jetindices[iii] = ib->second;
       ++iii;
@@ -5978,73 +5980,6 @@ std::vector<unsigned int> EventCalculator::jetsetToVector(const vector<unsigned 
   return outvec;
 }
 
-//this code never seemed to work well. needs to be retooled from scratch, I think
-void EventCalculator::jjResonanceFinder5(float & mjj1, float & mjj2) {
-  //  cout<<"=="<<endl;
-  mjj1=0;
-  mjj2=0;
-
- //find the good jets                                                                                                                                                                               
-  vector<unsigned int> gjets;
-  for (unsigned int i=0; i < jets_AK5PF_pt->size(); ++i) {
-    //for the moment don't bother with the 30 versus 25 GeV cuts. Just use 30
-    if (isGoodJet30(i) )  gjets.push_back(i);
-  }
-  if (gjets.size() < 5) return;
-
-  float mindiff=1e9;
-  // " try all possible pairings of 2 and 3 jets"
-
-  //map is overkill here; could just make this a set. but map works so let's stick with it
-  map<  pair<set<unsigned int>, set<unsigned int> > , pair<float,float> > combos;
-
-  for (unsigned int i1=0; i1<gjets.size(); i1++) {
-    for (unsigned int i2=0; i2<gjets.size(); i2++) {
-      for (unsigned int i3=0; i3<gjets.size(); i3++) {
-	for (unsigned int i4=0; i4<gjets.size(); i4++) {
-	  for (unsigned int i5=0; i5<gjets.size(); i5++) {
-	    
-	    //can only use a jet once
-	    if ( i1==i2  || i1==i3 || i1==i4 || i1==i5) continue;
-	    if (  i2==i3 || i2==i4 || i2==i5) continue;
-	    if ( i3==i4 || i3==i5) continue;
-	    if ( i4==i5) continue;
-
-	    //use of set ensures that the indices are sorted, so that 1,3,5 and 5,3,1 are the same
-	    //2-jet combo
-	    set<unsigned int> r2;
-	    r2.insert(i1);
-	    r2.insert(i2);
-
-	    //3-jet combo
-	    set<unsigned int> r3;
-	    r3.insert(i3);
-	    r3.insert(i4);
-	    r3.insert(i5);
-
-	    pair<set<unsigned int>, set<unsigned int> > rpair = make_pair(r2,r3);
-	    if (combos.count(rpair) == 0) { //have we already calculated this?
-	      //get invariant masses
-	      float this_mjj1= calc_mNj(jetsetToVector( gjets, r2));//gjets.at(i1),gjets.at(i2));
-	      float this_mjj2= calc_mNj(jetsetToVector(gjets, r3));
-	      //store inv masses
-	      combos[rpair]=make_pair(mjj1,mjj2);
-	      //is this the best one?
-	      if ( fabs(this_mjj1-this_mjj2) < mindiff) {
-		mindiff = fabs(this_mjj1-this_mjj2);
-		mjj1=this_mjj1;
-		mjj2=this_mjj2;
-	      }
-	      //	      cout<<"("<<i1<<" "<<i2<<") ("<<i3<<" "<<i4<<" "<<i5<<")\t"<<mjj1<<" "<<mjj2<<endl;
-	    }
-
-	  }
-	}
-      }
-    }
-  }
-
-}
 
 
 void EventCalculator::extractPUJetVars_Beta(std::vector<float> &beta, TString which ) {
@@ -7407,7 +7342,6 @@ void EventCalculator::reducedTree(TString outputpath) {
 
   float bestZmass;
   float mjj1,mjj2,mjjdiff;
-  float mjj1_5,mjj2_5,mjjdiff_5;
   int nCorrectRecoStop;
 
   float jetpt1, jetgenpt1, jetphi1, jetgenphi1, jeteta1, jetgeneta1, jetenergy1, bjetpt1, bjetphi1, bjeteta1, bjetenergy1;
@@ -7521,6 +7455,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   float higgsMbb1delta=-1,higgsMbb2delta=-1;
   // sort best 4 btags by smallest mass difference in jet pairs
   float higgsMbb1MassDiff=-1,higgsMbb2MassDiff=-1;
+  bool higgsMbbMassDiff_tiebreak=false;
   //test variables related to the higgs-finding above
   int higgsMbb1MassDiff_correct=0; //mc truth -- how many higgses correct?
   float deltaPhi_hh=-99,deltaRmax_hh=-1,deltaRmin_hh=-1,deltaEta_hh=-99,sumPt_hh=-99;
@@ -7918,9 +7853,6 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("mjj1",&mjj1,"mjj1/F");
   reducedTree.Branch("mjj2",&mjj2,"mjj2/F");
   reducedTree.Branch("mjjdiff",&mjjdiff,"mjjdiff/F");
-  reducedTree.Branch("mjj1_5",&mjj1_5,"mjj1_5/F");
-  reducedTree.Branch("mjj2_5",&mjj2_5,"mjj2_5/F");
-  reducedTree.Branch("mjjdiff_5",&mjjdiff_5,"mjjdiff_5/F");
 
   reducedTree.Branch("higgsMbb1",&higgsMbb1,"higgsMbb1/F");
   reducedTree.Branch("higgsMbb2",&higgsMbb2,"higgsMbb2/F");
@@ -7930,6 +7862,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("higgsMbb2delta",&higgsMbb2delta,"higgsMbb2delta/F");
   reducedTree.Branch("higgsMbb1MassDiff",&higgsMbb1MassDiff,"higgsMbb1MassDiff/F");
   reducedTree.Branch("higgsMbb2MassDiff",&higgsMbb2MassDiff,"higgsMbb2MassDiff/F");
+  reducedTree.Branch("higgsMbbMassDiff_tiebreak",&higgsMbbMassDiff_tiebreak,"higgsMbbMassDiff_tiebreak/O");
 
   reducedTree.Branch("higgsMbb1MassDiffAll",&higgsMbb1MassDiffAll,"higgsMbb1MassDiffAll/F");
   reducedTree.Branch("higgsMbb2MassDiffAll",&higgsMbb2MassDiffAll,"higgsMbb2MassDiffAll/F");
@@ -8781,10 +8714,7 @@ void EventCalculator::reducedTree(TString outputpath) {
       jjResonanceFinder(mjj1,mjj2, nCorrectRecoStop);
       mjjdiff=fabs(mjj1-mjj2);
 
-      //this code is basically broken I think -- or doesn't work well in any case
-      jjResonanceFinder5(mjj1_5,mjj2_5);
-      mjjdiff_5=fabs(mjj1_5-mjj2_5);
-
+ 
       // higgs code -- most (not all) of it is MC truth and irrelevant for most samples
       //  if (sampleName_.Contains("TChihh")) {
       	TLorentzVector hbbbb[2][2];
@@ -8965,7 +8895,7 @@ void EventCalculator::reducedTree(TString outputpath) {
 
 	massPairsDeltaSort(higgsMbb1delta,higgsMbb2delta);
 	int h1j1,h1j2,h2j1,h2j2;
-        std::pair<float,float> MT_Hbb = minDeltaMassPairs(higgsMbb1MassDiff,higgsMbb2MassDiff,h1j1,h1j2,h2j1,h2j2);
+        std::pair<float,float> MT_Hbb = minDeltaMassPairs(higgsMbb1MassDiff,higgsMbb2MassDiff,h1j1,h1j2,h2j1,h2j2,higgsMbbMassDiff_tiebreak);
 
 	higgsWCandMass = getWCandMass(h1j1,h1j2,h2j1,h2j2);
 	higgsWCandMassAll = getWCandMass(h1j1All,h1j2All,h2j1All,h2j2All);

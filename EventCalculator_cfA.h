@@ -207,7 +207,6 @@ public:
 
   std::vector<unsigned int> jetsetToVector(const std::vector<unsigned int> & goodjets, const std::set<unsigned int> & myset) ;
   void jjResonanceFinder(float & mjj1, float & mjj2, int & ngoodMC,const float ptcut=30);//simple first try
-  void jjResonanceFinder5(float & mjj1, float & mjj2);
 
   void hadronicTopFinder_DeltaR(float & mjjb1, float & mjjb2, float & topPT1, float & topPT2);
   void printDecay();
@@ -401,7 +400,8 @@ public:
   // fill higgsMbb1/2 with the best *pair* of hh candidates (using 125 GeV mass)
   void higgs125massPairs(float & higgsMbb1,float & higgsMbb2,const std::vector< std::pair<int,int> > & truehiggs  ) ;
   void higgs125massPairsAllJets(float & higgsMbb1,float & higgsMbb2);
-  std::pair<float,float> minDeltaMassPairs(float & higgsMbb1,float & higgsMbb2 ,int & h1jet1,int & h1jet2,int & h2jet1,int & h2jet2) ;
+  //this is *the* higgs-finding algorithm
+  std::pair<float,float> minDeltaMassPairs(float & higgsMbb1,float & higgsMbb2 ,int & h1jet1,int & h1jet2,int & h2jet1,int & h2jet2,bool & tiebreak) ;
   void massPairsMinDiffAllJets(float & higgsMbb1,float & higgsMbb2,int & h1jet1,int & h1jet2,int & h2jet1,int & h2jet2);
 
 
