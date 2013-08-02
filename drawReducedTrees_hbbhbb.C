@@ -1958,7 +1958,6 @@ void higgs_SLratios2() {
   TCut baseline = "cutPV==1 &&passCleaning==1 &&buggyEvent==0&& MET/caloMET<2 && maxTOBTECjetDeltaMult<40"; 
 
   TCut triggerJetMET = "passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1";
-  //  TCut triggerJets = "passMC_DiPFJet80_DiPFJet30_BTagCSVd07d05==1";
   TCut triggerMET = "passMC_PFMET150==1";
   TCut trigger = triggerJetMET||triggerMET;
 
@@ -1979,7 +1978,7 @@ void higgs_SLratios2() {
 
   TCut metsigloose="METsig>30";
 
-  TCut drmax = "deltaRmax_hh<2.4";
+  TCut drmax = "deltaRmax_hh<2.2";
   //  TCut drmin = "deltaRmin_hh<1.9";
 
 
@@ -2000,7 +1999,7 @@ void higgs_SLratios2() {
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_shapes",binning);
   TH1D* ratio_4b = (TH1D*) ratio->Clone("ratio_4b");  
 
-  selection_=baseline&&trigger&&sl&&(njets4||njets5)&& btag2&&notbtag3 &&higgsSR&&drmax;
+  selection_=baseline&&trigger&&sl&&(njets4||njets5)&& btag2&&!btag3 &&higgsSR&&drmax;
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_shapes",binning);
   TH1D* ratio_2b = (TH1D*) ratio->Clone("ratio_2b");  
 
@@ -2019,7 +2018,7 @@ void higgs_ttbarjetmult_sbsig() {
   // reproduce owen's SR/SB numbers in bins of b multiplicity and METsig
   // see if there is a dependence on njets
   // can also compare SR and SB for things like jet pT spectra (which would correlate with b-tag efficiency)
-  initHiggsSamples(true,"znunu ttbar wbb ttv");
+  initHiggsSamples69(true,"znunu ttbar");
   //  initHiggsSamples(true,"ttbarjoint");
 
   const  TString sample = "sl"; //or zl
@@ -2062,7 +2061,7 @@ void higgs_ttbarjetmult_sbsig() {
 
   TCut metsigloose="METsig>50";
 
-  TCut drmax = "deltaRmax_hh<2.4";
+  TCut drmax = "deltaRmax_hh<2.2";
   //  TCut drmin = "deltaRmin_hh<1.9";
 
 
@@ -2359,7 +2358,7 @@ void higgs_ttbarjetmult_sbsig() {
 
 void higgs_ttbarjetmult1() {
 
-  initHiggsSamples(false,"ttbar hh250 hh400"); //skim has triggers -- can't use it!
+  initHiggsSamples69(false,"ttbar hh250 hh400"); //skim has triggers -- can't use it!
 
   int nbins;
   float low,high;
@@ -2439,7 +2438,7 @@ void higgs_ttbarjetmult1() {
 
 
 void higgs_triggerImportance() {
-  initHiggsSamples(false,"znunu ttbar hh150 hh200 hh250 hh400 wbb ttv"); //skim has triggers -- can't use it!
+  initHiggsSamples69(false,"znunu ttbar hh150 hh200 hh250 hh400 wbb ttv"); //skim has triggers -- can't use it!
 
   int nbins;
   float low,high;
@@ -4946,7 +4945,7 @@ plot a bunch of signal+ttbar distributions, no cuts.
 main goal is to view the sculpting of the invariant mass variables in background
 */
 
-  initHiggsSamples(false,"hh150 hh200 hh250 hh400"); //update to new loading framework
+  initHiggsSamples69(false,"hh150 hh200 hh250 hh400"); //update to new loading framework
 
   usePUweight_=true; //helps bring signal and background into alignment; not perfect but better than nothing
 
