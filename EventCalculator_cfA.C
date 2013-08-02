@@ -7214,6 +7214,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   float unclusteredMET,unclusteredMETphi;
   float maxDeltaPhi, maxDeltaPhiAll, maxDeltaPhiAll30, maxDeltaPhi30_eta5_noIdAll;
   float deltaPhi1, deltaPhi2, deltaPhi3;
+  float deltaPhi1_20, deltaPhi2_20, deltaPhi3_20;
   float sumDeltaPhi, diffDeltaPhi;
   float minDeltaPhiN, deltaPhiN1, deltaPhiN2, deltaPhiN3;
   float minDeltaPhiN_deltaT, deltaT1, deltaT2, deltaT3; 
@@ -8048,6 +8049,10 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("deltaPhi1", &deltaPhi1, "deltaPhi1/F");
   reducedTree.Branch("deltaPhi2", &deltaPhi2, "deltaPhi2/F");
   reducedTree.Branch("deltaPhi3", &deltaPhi3, "deltaPhi3/F");
+
+  reducedTree.Branch("deltaPhi1_20", &deltaPhi1_20, "deltaPhi1_20/F");
+  reducedTree.Branch("deltaPhi2_20", &deltaPhi2_20, "deltaPhi2_20/F");
+  reducedTree.Branch("deltaPhi3_20", &deltaPhi3_20, "deltaPhi3_20/F");
 
   reducedTree.Branch("maxDeltaPhi",&maxDeltaPhi,"maxDeltaPhi/F");
   reducedTree.Branch("maxDeltaPhiAll",&maxDeltaPhiAll,"maxDeltaPhiAll/F");
@@ -9249,6 +9254,10 @@ void EventCalculator::reducedTree(TString outputpath) {
       deltaPhi1 = getDeltaPhiMET(1,50,false);
       deltaPhi2 = getDeltaPhiMET(2,50,false);
       deltaPhi3 = getDeltaPhiMET(3,50,false);
+
+      deltaPhi1_20 = getDeltaPhiMET(1,20,false);
+      deltaPhi2_20 = getDeltaPhiMET(2,20,false);
+      deltaPhi3_20 = getDeltaPhiMET(3,20,false);
 
       //a hack that could be put into getMinDeltaPhiMETN with some work
       if(deltaPhiN1<=deltaPhiN2 && deltaPhiN1<=deltaPhiN3) minDeltaPhiN_chosenJet = 1;
