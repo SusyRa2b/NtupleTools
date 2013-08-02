@@ -925,6 +925,8 @@ void higgs_dataMC_control_QCD_noskim() {
 
 
   // == now other plots (non-LDP)
+  doRatio_=true; ratioMin = 0; ratioMax = 2.2;
+
   selection_ = baseline && trigger && zl && isotk && jet2&& btag2 && !btag3 && mdp && metsigloose;
   nbins=10; low = 0; high=10;
   setLogY(false);
@@ -1161,10 +1163,25 @@ void higgs_dataMC_control_QCD() {
 
   // == now other plots
   selection_ = baseline && trigger && zl && isotk && jets && btag2 && !btag3 && metsigloose;
-  nbins=20; low = 0; high=3;
+  nbins=30; low = 0; high=3;
   setLogY(false);
   var="minDeltaPhi20"; xtitle="#Delta #phi_{min}(jet, MET)";
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_0l2bMETsig30_minDeltaPhi20",0);
+  //this plot is worrisome in that there are extra events outside of the veto region
+
+  nbins=30; low = 0; high=3;
+  setLogY(false);
+  var="deltaPhi1"; xtitle="#Delta #phi(jet 1 (50), MET)";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_0l2bMETsig30_deltaPhi1",0);
+  nbins=30; low = 0; high=3;
+  setLogY(false);
+  var="deltaPhi2"; xtitle="#Delta #phi(jet 2 (50), MET)";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_0l2bMETsig30_deltaPhi2",0);
+  nbins=30; low = 0; high=3;
+  setLogY(false);
+  var="deltaPhi3"; xtitle="#Delta #phi(jet 3 (50), MET)";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_0l2bMETsig30_deltaPhi3",0);
+
 
   //almost an N-1 plot but don't apply DeltaRmax
   selection_ = baseline && trigger && zl && isotk && jets && btag2 && !btag3 && mdp && metsigloose && higgsSR_d;
@@ -2045,6 +2062,8 @@ void higgs_ttbarjetmult_sbsig() {
 
   TCut njets4="njets20==4";
   TCut njets5="njets20==5";
+  TCut mdp="minDeltaPhi20>0.3";
+  TCut jet2="jetpt2>50";
   TCut btag2="CSVbest2>0.898";
   TCut btag3="CSVbest3>0.679";
   TCut btag4="CSVbest4>0.244";
@@ -2067,12 +2086,12 @@ void higgs_ttbarjetmult_sbsig() {
 
   //Owen's METsig bins
   float binning1[]={0,10,20,30,50,100,150,200};
-  float binning2[]={0,10,20,30,50,100,200};
+  float binning2[]={0,20,30,50,100,200};
   float * binning=0;
   if (sample=="zl") binning = binning1;
   else if (sample=="sl") binning=binning2;
   nbins=7; low=0; high=200;
-  if (sample=="sl") nbins=6; //use binning2
+  if (sample=="sl") nbins=5; //use binning2
   var="METsig"; xtitle=var;
 
   //samples have already been chained. trick is to not reset the chains, then clear the samples and re-add them
@@ -2103,19 +2122,19 @@ void higgs_ttbarjetmult_sbsig() {
     TCut njets=njetsv[ijets];
 
     //SR cuts ; 2 btags
-    selection_ = baseline&&trigger&&leptoncut&&njets&&drmax && higgsSR && btag2 && notbtag3; // was !btag3
+    selection_ = baseline&&trigger&&leptoncut&&njets&&drmax&&mdp&&jet2 && higgsSR && btag2 && !btag3; // was notbtag3
     drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_SRSBshapes",binning);
     TH1D* h_SR_2b = (TH1D*) totalsm->Clone("h_SR_2b");
     TH1D* h_SR_2b_data=0; if (dodata_) h_SR_2b_data = (TH1D*) hdata->Clone("h_SR_2b_data");
     
     //SR cuts ; 3 btags
-    selection_ = baseline&&trigger&&leptoncut&&njets&&drmax && higgsSR && btag2&&btag3 &&!btag4;
+    selection_ = baseline&&trigger&&leptoncut&&njets&&drmax&&mdp&&jet2 && higgsSR && btag2&&btag3 &&!btag4;
     drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_SRSBshapes",binning);
     TH1D* h_SR_3b = (TH1D*) totalsm->Clone("h_SR_3b");
     TH1D* h_SR_3b_data=0; if (dodata_) h_SR_3b_data = (TH1D*) hdata->Clone("h_SR_3b_data");
     
     //SR cuts ; 4 btags
-    selection_ = baseline&&trigger&&leptoncut&&njets&&drmax && higgsSR && btag2&&btag3&&btag4;
+    selection_ = baseline&&trigger&&leptoncut&&njets&&drmax&&mdp&&jet2 && higgsSR && btag2&&btag3&&btag4;
     drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_SRSBshapes",binning);
     TH1D* h_SR_4b = (TH1D*) totalsm->Clone("h_SR_4b");
     TH1D* h_SR_4b_data=0; if (dodata_) h_SR_4b_data = (TH1D*) hdata->Clone("h_SR_4b_data");
@@ -2123,19 +2142,19 @@ void higgs_ttbarjetmult_sbsig() {
     // -- now SB --
     
     //SB cuts ; 2 btags
-    selection_ = baseline&&trigger&&leptoncut&&njets&&drmax && higgsSB && btag2 &&notbtag3;
+    selection_ = baseline&&trigger&&leptoncut&&njets&&drmax&&mdp&&jet2 && higgsSB && btag2 &&!btag3;
     drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_SRSBshapes",binning);
     TH1D* h_SB_2b = (TH1D*) totalsm->Clone("h_SB_2b");
     TH1D* h_SB_2b_data=0; if (dodata_) h_SB_2b_data = (TH1D*) hdata->Clone("h_SB_2b_data");
     
     //SB cuts ; 3 btags
-    selection_ = baseline&&trigger&&leptoncut&&njets&&drmax && higgsSB && btag2&&btag3 &&!btag4;
+    selection_ = baseline&&trigger&&leptoncut&&njets&&drmax&&mdp&&jet2 && higgsSB && btag2&&btag3 &&!btag4;
     drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_SRSBshapes",binning);
     TH1D* h_SB_3b = (TH1D*) totalsm->Clone("h_SB_3b");
     TH1D* h_SB_3b_data=0; if (dodata_) h_SB_3b_data = (TH1D*) hdata->Clone("h_SB_3b_data");
 
     //SB cuts ; 4 btags
-    selection_ = baseline&&trigger&&leptoncut&&njets&&drmax && higgsSB && btag2&&btag3&&btag4;
+    selection_ = baseline&&trigger&&leptoncut&&njets&&drmax&&mdp&&jet2 && higgsSB && btag2&&btag3&&btag4;
     drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_SRSBshapes",binning);
     TH1D* h_SB_4b = (TH1D*) totalsm->Clone("h_SB_4b");
     TH1D* h_SB_4b_data=0; if (dodata_) h_SB_4b_data = (TH1D*) hdata->Clone("h_SB_4b_data");
@@ -2228,7 +2247,6 @@ void higgs_ttbarjetmult_sbsig() {
       ratio_2b->SetMaximum(0.4);
       
       
-      
       thecanvas->cd(1);
       ratio_2b_data->Draw("hist e same");
       thecanvas->cd(2);
@@ -2239,6 +2257,82 @@ void higgs_ttbarjetmult_sbsig() {
     thecanvas->SaveAs(TString("higgs_SRSB_shapes_")+njetsdesc[ijets]+".eps");
     
     //    } //end of loop over jet multiplicity
+
+    if (dodata_) {//just want a simple plot of SR/SB ratio in bins of btag
+
+      ratio_2b_data->SetLineColor(kBlue);
+      ratio_3b_data->SetLineColor(kRed);
+      ratio_4b_data->SetLineColor(kMagenta);
+      
+      ratio_2b_data->SetMarkerColor(kBlue);
+      ratio_3b_data->SetMarkerColor(kRed);
+      ratio_4b_data->SetMarkerColor(kMagenta);
+
+      ratio_2b_data->SetMarkerStyle(21);
+      ratio_3b_data->SetMarkerStyle(24);
+      ratio_4b_data->SetMarkerStyle(25);
+      
+      ratio_2b_data->SetYTitle("Signal region / sideband");
+      ratio_2b_data->SetXTitle("MET significance");
+      ratio_3b_data->SetYTitle("Signal region / sideband");
+      ratio_3b_data->SetXTitle("MET significance");
+      ratio_4b_data->SetYTitle("Signal region / sideband");
+      ratio_4b_data->SetXTitle("MET significance");
+
+      renewCanvas();
+      renewLegend();
+      leg->AddEntry(ratio_2b_data,"2b");
+      leg->AddEntry(ratio_3b_data,"3b");
+      leg->AddEntry(ratio_4b_data,"4b");
+      ratio_3b_data->Draw("hist e");
+      ratio_4b_data->Draw("hist e same");
+      ratio_2b_data->Draw("hist e same");
+      ratio_3b_data->SetMinimum(0);
+      ratio_3b_data->SetMaximum(0.5);
+      leg->Draw();
+      thecanvas->SaveAs(TString("higgs_SL_closureInData_")+njetsdesc[ijets]+".eps");
+      thecanvas->SaveAs(TString("higgs_SL_closureInData_")+njetsdesc[ijets]+".pdf");
+      thecanvas->SaveAs(TString("higgs_SL_closureInData_")+njetsdesc[ijets]+".png");
+
+      double chi2_23=0;
+      double chi2_24=0;
+      for (int ibin=3; ibin<=5 ; ++ibin) {
+	chi2_23 += pow(ratio_2b_data->GetBinContent(ibin)-ratio_3b_data->GetBinContent(ibin),2) / pow(jmt::addInQuad(ratio_2b_data->GetBinError(ibin),ratio_3b_data->GetBinError(ibin)),2);
+	chi2_24 += pow(ratio_2b_data->GetBinContent(ibin)-ratio_4b_data->GetBinContent(ibin),2) / pow(jmt::addInQuad(ratio_2b_data->GetBinError(ibin),ratio_4b_data->GetBinError(ibin)),2);
+      }
+      cout<<"2b3b chi2 (/dof) = "<<chi2_23<<" "<<chi2_23 / 3.0<<endl;
+      cout<<"2b4b chi2 (/dof) = "<<chi2_24<<" "<<chi2_24 / 3.0<<endl;
+
+      //ok, in fact this is too hard to read. so do one at a time:
+      renewCanvas();
+      renewLegend();
+      leg->AddEntry(ratio_2b_data,"2b");
+      leg->AddEntry(ratio_3b_data,"3b");
+      ratio_3b_data->Draw("hist e");
+      ratio_2b_data->Draw("hist e same");
+      ratio_3b_data->SetMinimum(0);
+      ratio_3b_data->SetMaximum(0.5);
+      leg->Draw();
+      thecanvas->SaveAs(TString("higgs_SL_closureInData_2b3b_")+njetsdesc[ijets]+".eps");
+      thecanvas->SaveAs(TString("higgs_SL_closureInData_2b3b_")+njetsdesc[ijets]+".pdf");
+      thecanvas->SaveAs(TString("higgs_SL_closureInData_2b3b_")+njetsdesc[ijets]+".png");
+
+      renewCanvas();
+      renewLegend();
+      leg->AddEntry(ratio_2b_data,"2b");
+      leg->AddEntry(ratio_4b_data,"4b");
+      ratio_4b_data->Draw("hist e");
+      ratio_2b_data->Draw("hist e same");
+      ratio_4b_data->SetMinimum(0);
+      ratio_4b_data->SetMaximum(0.5);
+      leg->Draw();
+      thecanvas->SaveAs(TString("higgs_SL_closureInData_2b4b_")+njetsdesc[ijets]+".eps");
+      thecanvas->SaveAs(TString("higgs_SL_closureInData_2b4b_")+njetsdesc[ijets]+".pdf");
+      thecanvas->SaveAs(TString("higgs_SL_closureInData_2b4b_")+njetsdesc[ijets]+".png");
+
+    }
+
+    return; //screw the kappa factor stuff. simple plots are better
 
     //now, plot the ratio of ratios: 4b/2b and 4b/3b
     //this is the 'kappa' factor
