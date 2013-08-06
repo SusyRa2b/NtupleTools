@@ -121,8 +121,6 @@ public:
   //PDFs
   float getPDFweight(const int ipdfset, const int imember );
 
-  //  void cutflow(itreestream& stream, int maxevents);
-  void sampleAnalyzer();
   void plotBTagEffMC();
   void fillSMShist();
   void debugSMS();
