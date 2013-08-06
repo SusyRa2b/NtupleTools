@@ -6271,8 +6271,17 @@ The implementation here follows prescription (1a) here: https://twiki.cern.ch/tw
       double SF_J      = getBtagSF(jet_flavor,jet_pt,jet_eta,tagcat,variation);
       double SF_Jplus1 = getBtagSF(jet_flavor,jet_pt,jet_eta,tagcat+1,variation);
 
+      //add some sanity checks
+      double StimesEff_J = SF_J*eff_J;
+      double StimesEff_Jp1 = SF_Jplus1*eff_Jplus1;
+      if ( StimesEff_J >1) StimesEff_J =1;
+      else  if (StimesEff_J <0) StimesEff_J =0;
+      if ( StimesEff_Jp1 >1) StimesEff_Jp1 =1;
+      else  if (StimesEff_Jp1 <0) StimesEff_Jp1 =0;
+      //end of sanity checks
+
       prodMC[tagcat] *= (eff_J - eff_Jplus1 );
-      prodD[tagcat] *= (SF_J * eff_J - SF_Jplus1*eff_Jplus1);
+      prodD[tagcat] *= (StimesEff_J - StimesEff_Jp1);
     }
   }
 
@@ -6284,6 +6293,8 @@ The implementation here follows prescription (1a) here: https://twiki.cern.ch/tw
     pMC *= prodMC[iJ];
     pD  *= prodD[iJ];
   }
+
+  if (pMC<=0 ||pD<0) return 1; // i think this is sensible. just return unity weight in case of insanity
   double w = pD / pMC;
   return float(w);
 
