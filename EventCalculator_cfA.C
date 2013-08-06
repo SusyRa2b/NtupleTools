@@ -112,6 +112,7 @@ EventCalculator::EventCalculator(const TString & sampleName, const vector<string
   else  if (sampleName_.Contains("v65")) cfAversion_=65;
   else  if (sampleName_.Contains("v64")) cfAversion_=64;
   else  if (sampleName_.Contains("v63")) cfAversion_=63;
+  else  if (sampleName_.Contains("v71")) cfAversion_=71;
 
   cout<<" Found cfA version = "<<cfAversion_<<endl;
   assert(cfAversion_>0);
