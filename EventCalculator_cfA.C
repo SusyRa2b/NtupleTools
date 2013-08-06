@@ -4962,91 +4962,13 @@ Long64_t EventCalculator::getNEventsGenerated( TString sample) {
   //numbers come from 
   //http://cms2.physics.ucsb.edu/cgi-bin/cfA.pl?Institute=ALL&process=ALL&version=v63
 
-  if (sample.Contains("UCSB1318")) return 3789889 ;
-  if (sample.Contains("UCSB1319")) return 1703863 ;
-  if (sample.Contains("UCSB1341")) return 30461028 ;
+  // v63 removed as part of cleanup
 
-  if (sample.Contains("UCSB1311")) return 1964088 ;
-  if (sample.Contains("UCSB1347")) return 5935732 ;
-  if (sample.Contains("UCSB1312")) return 2000062 ;
-  if (sample.Contains("UCSB1317")) return 1025622 ;
-  if (sample.Contains("UCSB1336")) return 2947160 ;
-  if (sample.Contains("UCSB1314")) return 977586 ;
-  if (sample.Contains("UCSB1292")) return 5927300 ;
-  if (sample.Contains("UCSB1332")) return 5480000 ;
-  if (sample.Contains("UCSB1297")) return 3994848 ;
-  if (sample.Contains("UCSB1298")) return 3992760 ;
-  if (sample.Contains("UCSB1310")) return 3998563 ;
-  
-  if (sample.Contains("UCSB1355")) return 7618593 ;
-  if (sample.Contains("UCSB1338")) return 1087272 ;
-  if (sample.Contains("UCSB1291")) return 13880079 ;
-  if (sample.Contains("UCSB1344")) return 259961 ;
-  if (sample.Contains("UCSB1306")) return 23777 ;
-  if (sample.Contains("UCSB1307")) return 497658 ;
-  if (sample.Contains("UCSB1345")) return 139974 ;
-  if (sample.Contains("UCSB1330")) return 1935072 ;
-  if (sample.Contains("UCSB1305")) return 493460 ;
-  
-  if (sample.Contains("UCSB1322")) return 1634582 ;
-  if (sample.Contains("UCSB1328")) return 1698744 ;
-  if (sample.Contains("UCSB1339")) return 1647807 ;
-  if (sample.Contains("UCSB1331")) return 18393090 ;
-  
-  if (sample.Contains("UCSB1337")) return 6800431 ;
-  if (sample.Contains("UCSB1326")) return 9996622 ;
-  if (sample.Contains("UCSB1329")) return 4416646 ;
-  if (sample.Contains("UCSB1327")) return 5066608 ;
-  if (sample.Contains("UCSB1324")) return 1006928 ;
-  if (sample.Contains("UCSB1323")) return 4053786 ;
-  if (sample.Contains("UCSB1288")) return 9799908 ;
-
-
-  //  if (sample=="sbottom8lnotaus-189-270") return 50000; //probably deprecated in favor of the names below
-
-  if (sample=="RPVSUSY_sbottom8lnotaus-185-250") return 50000;
-  if (sample=="RPVSUSY_sbottom8lnotaus-189-270") return 50000;
-  if (sample=="RPVSUSY_sbottom8lnotaus-217-300") return 50000;
 
   // ============= v65 samples ============
   // SKIM is applied, so this is now important
 
-  //numbers come from 
-  //http://cms2.physics.ucsb.edu/cgi-bin/cfA.pl?Institute=ALL&process=ALL&version=v65
-  if (sample.Contains("UCSB1403")) return 6923750 ; //TT madgraph
-  if (sample.Contains("UCSB1439")) return 21673270; //TT powheg
-  if (sample.Contains("UCSB1443")) return 1634582 ; //W 250-300
-  if (sample.Contains("UCSB1405")) return 1699486 ; //W 300-400
-  if (sample.Contains("UCSB1406")) return 1647807 ; //W 400-
-  if (sample.Contains("UCSB1464")) return 1647807 ; //W 400- (52X)
-  if (sample.Contains("UCSB1422")) return 139974 ;  //tbar s channel
-  if (sample.Contains("UCSB1421")) return 259961 ;  //t s channel
-  if (sample.Contains("UCSB1451")) return 493460 ;  //tbar tW channel
-  if (sample.Contains("UCSB1455")) return 497658 ;  //t tW channel
-  if (sample.Contains("UCSB1461")) return 1923628;	//tbar t channel
-  if (sample.Contains("UCSB1470")) return 23777; //t t channel
-  if (sample.Contains("UCSB1438")) return 5995944; // QCD 50-80
-                                                        //QCD 80-120
-  if (sample.Contains("UCSB1477")) return 5755732; //QCD120-170
-  if (sample.Contains("UCSB1453")) return 5814398 ;//QCD170-300
-  if (sample.Contains("UCSB1425")) return 5927300 ; //QCD 300-470
-  if (sample.Contains("UCSB1446")) return 3994848 ; //QCD 470-600
-  if (sample.Contains("UCSB1447")) return 3992760 ; //QCD 600-800
-  if (sample.Contains("UCSB1459")) return 3998563 ; //QCD 800-1000
-  if (sample.Contains("UCSB1448")) return 1964088; //QCD 1000-1400
-  if (sample.Contains("UCSB1449")) return 2000062; //QCD 1400-1800
-  if (sample.Contains("UCSB1450")) return 977586 ; // QCD 1800-
-  if (sample.Contains("UCSB1469")) return 4416646; //Znn100-200
-  if (sample.Contains("UCSB1468")) return 5055885; //Znn200-400
-  if (sample.Contains("UCSB1391")) return 1006928 ; //Znn 400-
-                                           
-  if (sample.Contains("UCSB1389")) return 3789889 ; //DY 200-400
-  if (sample.Contains("UCSB1390")) return 1703863 ; //DY 400-
-  if (sample.Contains("UCSB1388")) return 30459503 ;//DY inclusive
-  if (sample.Contains("UCSB1424")) return 9799908 ; //ZZ
-  if (sample.Contains("UCSB1458")) return 10000431; //WW
-  if (sample.Contains("UCSB1445")) return 10000283 ; //WZ
-
+  //v65 removed as part of cleanup
 
     // ============= v66 samples ============
   // SKIM is applied, so this is now important
@@ -5139,12 +5061,16 @@ Long64_t EventCalculator::getNEventsGenerated( TString sample) {
 
   if (sample.Contains("UCSB1677")) return 20646001; // W+bb
 
-  //v69 
+   // ============= v69 samples ============
   if (sample.Contains("UCSB1798")) return 6923750; 
   if (sample.Contains("UCSB1799")) return 12011428; 
   if (sample.Contains("UCSB1800")) return 24953451; 
   if (sample.Contains("UCSB1804")) return 19365927; 
   if (sample.Contains("UCSB1806")) return 19514018;
+
+   // ============= v71 samples ============
+  if (sample.Contains("UCSB1850")) return 6923750; //hopefully this is correct ; need to verify
+
 
   cout<<"[getNEventsGenerated] unknown sample "<<sample<<endl;
   assert(0);
@@ -5317,11 +5243,14 @@ TString EventCalculator::getSampleNameOutputString(){
 TString EventCalculator::getCutDescriptionString(){
   
   TString cut = "";
-  cut += theBTaggerNames_[theBTaggerType_];
-  cut += "_";
 
-  cut += theJetNames_[theJetType_];
-  cut += "_";
+  //suppress some of the filename length
+    
+  //cut += theBTaggerNames_[theBTaggerType_];
+  //    cut += "_";
+
+  //  cut += theJetNames_[theJetType_];
+  //  cut += "_";
 
   cut += theJESNames_[theJESType_];
   cut += "_";
@@ -5338,10 +5267,13 @@ TString EventCalculator::getCutDescriptionString(){
   cut += thePUuncNames_[thePUuncType_];
   cut += "_";
 
-  cut += theBTagEffNames_[theBTagEffType_];
-  cut += "_";
+  cut+= "hpt";
+  cut+= int(minHiggsJetPt_);
 
-  cut += theHLTEffNames_[theHLTEffType_];
+  //  cut += theBTagEffNames_[theBTagEffType_];
+  //  cut += "_";
+
+  //  cut += theHLTEffNames_[theHLTEffType_];
 
   if(theIsoNames_[theIsoType_] != "Iso0")//only change name if nonstandard
     {
@@ -5775,8 +5707,10 @@ void EventCalculator::higgs125massPairs(float & higgsMbb1,float & higgsMbb2,cons
 //in the higgsMbb1/2 variables, return the best pair (mass difference closest to zero)
 std::pair<float,float> EventCalculator::minDeltaMassPairs(float & higgsMbb1,float & higgsMbb2,
 					//also return the indices of the jets used to form the higgs
-					int & h1jet1,int & h1jet2,int & h2jet1,int & h2jet2) {
+							  int & h1jet1,int & h1jet2,int & h2jet1,int & h2jet2,bool & tiebreak) {
 
+  //this was a feature to try to improve the rate of getting the higgs reco correct.
+  //the idea was to reject combinations with too low sum pT. it didn't have much effect so we keep it disabled via this bool
   const bool doMinHiggsSumPt=false; //if this is set to false then the whole feature is turned off
 
   higgsMbb1=-1;
@@ -5786,21 +5720,26 @@ std::pair<float,float> EventCalculator::minDeltaMassPairs(float & higgsMbb1,floa
   h2jet1=-1;
   h2jet2=-1;
 
+  int nneg1=0;
+  tiebreak=false; //keep track of how often there are multiple jets with -1 as the CSV value
+
   //find the 4 most b-like good jets
   set<pair< float, int> > jets_sorted_by_bdisc;
   for (unsigned int kk=0; kk<jets_AK5PF_pt->size(); kk++) {
     if (isGoodJet(kk,minHiggsJetPt_) ) { 
       float bdiscval = jets_AK5PF_btag_secVertexCombined->at(kk);
       jets_sorted_by_bdisc.insert(make_pair(bdiscval,kk));
+      if (bdiscval <0) nneg1++;
     }
   }
 
   if ( jets_sorted_by_bdisc.size() <4 ) return make_pair(-1.,-1.);
 
+  if (nneg1>1 && jets_sorted_by_bdisc.size()>=5) tiebreak=true;
+
   int jetindices[4];
   int iii=0;
   for (set<pair< float, int> >::reverse_iterator ib=jets_sorted_by_bdisc.rbegin(); ib!=jets_sorted_by_bdisc.rend(); ++ib) {
-    //    cout<<ib->first<<endl; //jmt higgs debug
     if (iii<4) {
       jetindices[iii] = ib->second;
       ++iii;
@@ -5971,73 +5910,6 @@ std::vector<unsigned int> EventCalculator::jetsetToVector(const vector<unsigned 
   return outvec;
 }
 
-//this code never seemed to work well. needs to be retooled from scratch, I think
-void EventCalculator::jjResonanceFinder5(float & mjj1, float & mjj2) {
-  //  cout<<"=="<<endl;
-  mjj1=0;
-  mjj2=0;
-
- //find the good jets                                                                                                                                                                               
-  vector<unsigned int> gjets;
-  for (unsigned int i=0; i < jets_AK5PF_pt->size(); ++i) {
-    //for the moment don't bother with the 30 versus 25 GeV cuts. Just use 30
-    if (isGoodJet30(i) )  gjets.push_back(i);
-  }
-  if (gjets.size() < 5) return;
-
-  float mindiff=1e9;
-  // " try all possible pairings of 2 and 3 jets"
-
-  //map is overkill here; could just make this a set. but map works so let's stick with it
-  map<  pair<set<unsigned int>, set<unsigned int> > , pair<float,float> > combos;
-
-  for (unsigned int i1=0; i1<gjets.size(); i1++) {
-    for (unsigned int i2=0; i2<gjets.size(); i2++) {
-      for (unsigned int i3=0; i3<gjets.size(); i3++) {
-	for (unsigned int i4=0; i4<gjets.size(); i4++) {
-	  for (unsigned int i5=0; i5<gjets.size(); i5++) {
-	    
-	    //can only use a jet once
-	    if ( i1==i2  || i1==i3 || i1==i4 || i1==i5) continue;
-	    if (  i2==i3 || i2==i4 || i2==i5) continue;
-	    if ( i3==i4 || i3==i5) continue;
-	    if ( i4==i5) continue;
-
-	    //use of set ensures that the indices are sorted, so that 1,3,5 and 5,3,1 are the same
-	    //2-jet combo
-	    set<unsigned int> r2;
-	    r2.insert(i1);
-	    r2.insert(i2);
-
-	    //3-jet combo
-	    set<unsigned int> r3;
-	    r3.insert(i3);
-	    r3.insert(i4);
-	    r3.insert(i5);
-
-	    pair<set<unsigned int>, set<unsigned int> > rpair = make_pair(r2,r3);
-	    if (combos.count(rpair) == 0) { //have we already calculated this?
-	      //get invariant masses
-	      float this_mjj1= calc_mNj(jetsetToVector( gjets, r2));//gjets.at(i1),gjets.at(i2));
-	      float this_mjj2= calc_mNj(jetsetToVector(gjets, r3));
-	      //store inv masses
-	      combos[rpair]=make_pair(mjj1,mjj2);
-	      //is this the best one?
-	      if ( fabs(this_mjj1-this_mjj2) < mindiff) {
-		mindiff = fabs(this_mjj1-this_mjj2);
-		mjj1=this_mjj1;
-		mjj2=this_mjj2;
-	      }
-	      //	      cout<<"("<<i1<<" "<<i2<<") ("<<i3<<" "<<i4<<" "<<i5<<")\t"<<mjj1<<" "<<mjj2<<endl;
-	    }
-
-	  }
-	}
-      }
-    }
-  }
-
-}
 
 
 void EventCalculator::extractPUJetVars_Beta(std::vector<float> &beta, TString which ) {
@@ -7272,6 +7144,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   float unclusteredMET,unclusteredMETphi;
   float maxDeltaPhi, maxDeltaPhiAll, maxDeltaPhiAll30, maxDeltaPhi30_eta5_noIdAll;
   float deltaPhi1, deltaPhi2, deltaPhi3;
+  float deltaPhi1_20, deltaPhi2_20, deltaPhi3_20;
   float sumDeltaPhi, diffDeltaPhi;
   float minDeltaPhiN, deltaPhiN1, deltaPhiN2, deltaPhiN3;
   float minDeltaPhiN_deltaT, deltaT1, deltaT2, deltaT3; 
@@ -7400,7 +7273,6 @@ void EventCalculator::reducedTree(TString outputpath) {
 
   float bestZmass;
   float mjj1,mjj2,mjjdiff;
-  float mjj1_5,mjj2_5,mjjdiff_5;
   int nCorrectRecoStop;
 
   float jetpt1, jetgenpt1, jetphi1, jetgenphi1, jeteta1, jetgeneta1, jetenergy1, bjetpt1, bjetphi1, bjeteta1, bjetenergy1;
@@ -7514,6 +7386,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   float higgsMbb1delta=-1,higgsMbb2delta=-1;
   // sort best 4 btags by smallest mass difference in jet pairs
   float higgsMbb1MassDiff=-1,higgsMbb2MassDiff=-1;
+  bool higgsMbbMassDiff_tiebreak=false;
   //test variables related to the higgs-finding above
   int higgsMbb1MassDiff_correct=0; //mc truth -- how many higgses correct?
   float deltaPhi_hh=-99,deltaRmax_hh=-1,deltaRmin_hh=-1,deltaEta_hh=-99,sumPt_hh=-99;
@@ -7911,9 +7784,6 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("mjj1",&mjj1,"mjj1/F");
   reducedTree.Branch("mjj2",&mjj2,"mjj2/F");
   reducedTree.Branch("mjjdiff",&mjjdiff,"mjjdiff/F");
-  reducedTree.Branch("mjj1_5",&mjj1_5,"mjj1_5/F");
-  reducedTree.Branch("mjj2_5",&mjj2_5,"mjj2_5/F");
-  reducedTree.Branch("mjjdiff_5",&mjjdiff_5,"mjjdiff_5/F");
 
   reducedTree.Branch("higgsMbb1",&higgsMbb1,"higgsMbb1/F");
   reducedTree.Branch("higgsMbb2",&higgsMbb2,"higgsMbb2/F");
@@ -7923,6 +7793,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("higgsMbb2delta",&higgsMbb2delta,"higgsMbb2delta/F");
   reducedTree.Branch("higgsMbb1MassDiff",&higgsMbb1MassDiff,"higgsMbb1MassDiff/F");
   reducedTree.Branch("higgsMbb2MassDiff",&higgsMbb2MassDiff,"higgsMbb2MassDiff/F");
+  reducedTree.Branch("higgsMbbMassDiff_tiebreak",&higgsMbbMassDiff_tiebreak,"higgsMbbMassDiff_tiebreak/O");
 
   reducedTree.Branch("higgsMbb1MassDiffAll",&higgsMbb1MassDiffAll,"higgsMbb1MassDiffAll/F");
   reducedTree.Branch("higgsMbb2MassDiffAll",&higgsMbb2MassDiffAll,"higgsMbb2MassDiffAll/F");
@@ -8108,6 +7979,10 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("deltaPhi1", &deltaPhi1, "deltaPhi1/F");
   reducedTree.Branch("deltaPhi2", &deltaPhi2, "deltaPhi2/F");
   reducedTree.Branch("deltaPhi3", &deltaPhi3, "deltaPhi3/F");
+
+  reducedTree.Branch("deltaPhi1_20", &deltaPhi1_20, "deltaPhi1_20/F");
+  reducedTree.Branch("deltaPhi2_20", &deltaPhi2_20, "deltaPhi2_20/F");
+  reducedTree.Branch("deltaPhi3_20", &deltaPhi3_20, "deltaPhi3_20/F");
 
   reducedTree.Branch("maxDeltaPhi",&maxDeltaPhi,"maxDeltaPhi/F");
   reducedTree.Branch("maxDeltaPhiAll",&maxDeltaPhiAll,"maxDeltaPhiAll/F");
@@ -8774,10 +8649,7 @@ void EventCalculator::reducedTree(TString outputpath) {
       jjResonanceFinder(mjj1,mjj2, nCorrectRecoStop);
       mjjdiff=fabs(mjj1-mjj2);
 
-      //this code is basically broken I think -- or doesn't work well in any case
-      jjResonanceFinder5(mjj1_5,mjj2_5);
-      mjjdiff_5=fabs(mjj1_5-mjj2_5);
-
+ 
       // higgs code -- most (not all) of it is MC truth and irrelevant for most samples
       //  if (sampleName_.Contains("TChihh")) {
       	TLorentzVector hbbbb[2][2];
@@ -8958,7 +8830,7 @@ void EventCalculator::reducedTree(TString outputpath) {
 
 	massPairsDeltaSort(higgsMbb1delta,higgsMbb2delta);
 	int h1j1,h1j2,h2j1,h2j2;
-        std::pair<float,float> MT_Hbb = minDeltaMassPairs(higgsMbb1MassDiff,higgsMbb2MassDiff,h1j1,h1j2,h2j1,h2j2);
+        std::pair<float,float> MT_Hbb = minDeltaMassPairs(higgsMbb1MassDiff,higgsMbb2MassDiff,h1j1,h1j2,h2j1,h2j2,higgsMbbMassDiff_tiebreak);
 
 	higgsWCandMass = getWCandMass(h1j1,h1j2,h2j1,h2j2);
 	higgsWCandMassAll = getWCandMass(h1j1All,h1j2All,h2j1All,h2j2All);
@@ -9213,6 +9085,22 @@ void EventCalculator::reducedTree(TString outputpath) {
 	caloMETwithHO = -1;
 	caloMETwithHOphi = -1;
       }
+
+      //for (old) METsig, if we're varying the jets, recompute (old) METsig using the varied jets
+      if (theJESType_!=kJES0) {
+	TVectorD metvec(2);
+	metvec(0) = rawPFMET * cos(rawPFMETphi);
+	metvec(1) = rawPFMET * sin(rawPFMETphi);
+	TMatrixD v_tot(2,2);
+	v_tot(0,0) = METsig00;
+	v_tot(1,1) = METsig11;
+	v_tot(0,1) = METsig10;
+	v_tot(1,0) = METsig10;
+	//METsig = (METx,y) Cov ^-1 (METx,y)T
+	v_tot.Invert();
+	METsig = metvec * (v_tot * metvec);
+      }
+
       minDeltaPhi = getMinDeltaPhiMET(3);
       minDeltaPhiAll = getMinDeltaPhiMET(99);
       minDeltaPhiAll30 = getMinDeltaPhiMET30(99);
@@ -9296,6 +9184,10 @@ void EventCalculator::reducedTree(TString outputpath) {
       deltaPhi1 = getDeltaPhiMET(1,50,false);
       deltaPhi2 = getDeltaPhiMET(2,50,false);
       deltaPhi3 = getDeltaPhiMET(3,50,false);
+
+      deltaPhi1_20 = getDeltaPhiMET(1,20,false);
+      deltaPhi2_20 = getDeltaPhiMET(2,20,false);
+      deltaPhi3_20 = getDeltaPhiMET(3,20,false);
 
       //a hack that could be put into getMinDeltaPhiMETN with some work
       if(deltaPhiN1<=deltaPhiN2 && deltaPhiN1<=deltaPhiN3) minDeltaPhiN_chosenJet = 1;
@@ -9966,111 +9858,6 @@ void EventCalculator::getTransverseThrustVariables(float & thrust, float & thrus
 */
 
 
-/* FIXME CFA
-void EventCalculator::cutflow(itreestream& stream, int maxevents=-1){
-
-  std::vector<int> npass;
-  std::vector<double> sumw; //sum of weights
-  std::vector<double> sumw2; //sum of weights squared
-  int npass_eq1b=0;
-  double sumw_eq1b=0,sumw2_eq1b=0; //special kludge for eq1b case
-
-  int nevents = stream.size();
-
-  setCutScheme();
-
-  for (unsigned int i=0 ; i<cutTags_.size(); i++) {
-    //std::cout << "cutTags_["<< i<< "]=" << cutTags_.at(i) << std::endl;
-    npass.push_back(0);
-    sumw.push_back(0);
-    sumw2.push_back(0);
-  }
-
-  cout<<"Running..."<<endl;  
-
-
-
-  startTimer();
-  for(int entry=0; entry < nevents; ++entry){
-
-    if(maxevents>0 && entry>=maxevents) break;
-
-    // Read event into memory
-    stream.read(entry);
-    fillObjects();
-
-    //some output to watch while it's running
-    if(entry==0){
-      if(!isSampleRealData()){
-        cout << "MC xsec: " << getCrossSection() << endl;
-      }
-      else{
-        cout << "This is data!"<< endl;
-      }
-      cout << "weight: "<< getWeight(nevents) << endl;
-    }
-    if(entry%100000==0) cout << "  entry: " << entry << ", percent done=" << (int)(entry/(double)nevents*100.)<<  endl;
-    //if (entry%1000000==0) checkTimer(entry,nevents);
-    
-    const double weight = getWeight(nevents); //calculate weight
-      
-    for (unsigned int i=0 ; i<cutTags_.size(); i++) {
-
-      if (cutRequired(cutTags_[i]) && passCut(cutTags_[i]) ) {
-	npass.at(i) = npass.at(i) +1;
-	sumw.at(i) = sumw.at(i) + weight;
-	sumw2.at(i) = sumw2.at(i) + weight*weight;
-      }
-      else if (cutRequired(cutTags_[i]) && !passCut(cutTags_[i]) ) break;
-
-      //special kludge for eq1b
-      //if we reach this point then we have passed the cut. if the cut is >=1b, then we might also
-      //pass the ==1b cut
-      if ( cutRequired(cutTags_[i]) && cutTags_[i]=="cut1b") {
-      	if (passCut("cutEq1b")){
-      	  ++npass_eq1b;
-      	  sumw_eq1b+=weight;
-      	  sumw2_eq1b+= weight*weight;
-      	}
-      }
-
-    }
-  }
-
-  cout<<endl;
-  stopTimer(nevents);
-
-  for (unsigned int i=0 ; i<npass.size(); i++) {
-    
-    if (cutRequired(cutTags_[i])) {
-      
-      double weighted = sumw.at(i);
-      double weighted_error = sqrt(sumw2.at(i));
-      
-      char ccc[150];
-      sprintf(ccc,"%20s %15d | %.2f | Weighted = %f +/- %f",cutNames_[cutTags_[i]].Data(),npass.at(i),100*weighted/sumw.at(0),weighted,weighted_error);
-      cout<<ccc<<endl;
-
-      //special kludge for ==1b case
-      //this is an ugly duplication of code, to be dealt with later
-      if ( cutTags_[i]=="cut1b") {
-	//error = sqrt(npass_eq1b);
-	weighted = sumw_eq1b;
-	weighted_error = sqrt(sumw2_eq1b);
-	sprintf(ccc,"%20s %15d | %.2f | Weighted = %f +/- %f","==1b",npass_eq1b,100*sumw_eq1b/sumw.at(0),weighted,weighted_error);
-	cout<<ccc<<endl;
-	//file <<"==1b"<<"\t"<<setprecision(20) << weighted<<"\t" << weighted_error<<endl;
-	//fileU <<"==1b"<<"\t"<<setprecision(20) << npass_eq1b<<endl;
-
-      }
-    }
-  }
-
-  return;
-}
-
-*/
-
 
 void EventCalculator::loadEventList( std::set<jmt::eventID> & veid, const TString & what) {
   
@@ -10550,683 +10337,6 @@ int EventCalculator::getTTbarDecayType(int & leptonicTop, float & leptonEta, flo
 }
  
 
-void EventCalculator::sampleAnalyzer() {
-
-
-  TFile fout("histos.root","RECREATE");
-  
-  //TH1F * h_MCPU = new TH1F("h_MCPU","unweighted PU distribution",35,0.5,34.5);
-  //TH1F * h_MCPUr = new TH1F("h_MCPUr","reweighted PU distribution",35,-0.5,34.5);
-  //TH1F * h_MCPUBXp1 = new TH1F("h_MCPUBXp1","unweighted PU distribution",35,0.5,34.5);
-  //TH1F * h_MCPUrBXp1 = new TH1F("h_MCPUrBxp1","reweighted PU distribution",35,-0.5,34.5);
-  //TH1F * h_MCPUBXm1 = new TH1F("h_MCPUBXm1","unweighted PU distribution",35,0.5,34.5);
-  //TH1F * h_MCPUrBXm1 = new TH1F("h_MCPUrBXm1","reweighted PU distribution",35,-0.5,34.5);
-
-  //TH1F * h_ht = new TH1F("h_ht","HT",1000,0,1000);
-  //TH1F * h_ht_trig = new TH1F("h_ht_trig","HT",1000,0,1000);
-
-  //TH1F * h_met = new TH1F("h_met","HT",1000,0,1000);
-  //TH1F * h_met_trig = new TH1F("h_met_trig","HT",1000,0,1000);
-
-  //TH1F * h_met_den_mht75 = new TH1F("h_met_den_mht75","HT",1000,0,1000);
-  //TH1F * h_met_trig_mht75 = new TH1F("h_met_trig_mht75","HT",1000,0,1000);
-  //TH1F * h_met_den_mht80 = new TH1F("h_met_den_mht80","HT",1000,0,1000);
-  //TH1F * h_met_trig_mht80 = new TH1F("h_met_trig_mht80","HT",1000,0,1000);
-  //TH1F * h_met_den_mht90_ht300 = new TH1F("h_met_den_mht90_ht300","HT",1000,0,1000);
-  //TH1F * h_met_trig_mht90_ht300 = new TH1F("h_met_trig_mht90_ht300","HT",1000,0,1000);
-  //TH1F * h_met_den_mht90_ht350 = new TH1F("h_met_den_mht90_ht350","HT",1000,0,1000);
-  //TH1F * h_met_trig_mht90_ht350 = new TH1F("h_met_trig_mht90_ht350","HT",1000,0,1000);
-  //TH1F * h_met_den_mht110 = new TH1F("h_met_den_mht110","HT",1000,0,1000);
-  //TH1F * h_met_trig_mht110 = new TH1F("h_met_trig_mht110","HT",1000,0,1000);
-  //
-  //TH1F * h_met_0L_den_mht75       = new TH1F("h_met_0L_den_mht75","HT",1000,0,1000);
-  //TH1F * h_met_0L_trig_mht75      = new TH1F("h_met_0L_trig_mht75","HT",1000,0,1000);
-  //TH1F * h_met_0L_den_mht80       = new TH1F("h_met_0L_den_mht80","HT",1000,0,1000);
-  //TH1F * h_met_0L_trig_mht80      = new TH1F("h_met_0L_trig_mht80","HT",1000,0,1000);
-  //TH1F * h_met_0L_den_mht90_ht300 = new TH1F("h_met_0L_den_mht90_ht300","HT",1000,0,1000);
-  //TH1F * h_met_0L_trig_mht90_ht300= new TH1F("h_met_0L_trig_mht90_ht300","HT",1000,0,1000);
-  //TH1F * h_met_0L_den_mht90_ht350 = new TH1F("h_met_0L_den_mht90_ht350","HT",1000,0,1000);
-  //TH1F * h_met_0L_trig_mht90_ht350= new TH1F("h_met_0L_trig_mht90_ht350","HT",1000,0,1000);
-  //TH1F * h_met_0L_den_mht110      = new TH1F("h_met_0L_den_mht110","HT",1000,0,1000);
-  //TH1F * h_met_0L_trig_mht110     = new TH1F("h_met_0L_trig_mht110","HT",1000,0,1000);
-  //
-  //TH1F * h_met_1L_den_mht75       = new TH1F("h_met_1L_den_mht75","HT",1000,0,1000);
-  //TH1F * h_met_1L_trig_mht75      = new TH1F("h_met_1L_trig_mht75","HT",1000,0,1000);
-  //TH1F * h_met_1L_den_mht80       = new TH1F("h_met_1L_den_mht80","HT",1000,0,1000);
-  //TH1F * h_met_1L_trig_mht80      = new TH1F("h_met_1L_trig_mht80","HT",1000,0,1000);
-  //TH1F * h_met_1L_den_mht90_ht300 = new TH1F("h_met_1L_den_mht90_ht300","HT",1000,0,1000);
-  //TH1F * h_met_1L_trig_mht90_ht300= new TH1F("h_met_1L_trig_mht90_ht300","HT",1000,0,1000);
-  //TH1F * h_met_1L_den_mht90_ht350 = new TH1F("h_met_1L_den_mht90_ht350","HT",1000,0,1000);
-  //TH1F * h_met_1L_trig_mht90_ht350= new TH1F("h_met_1L_trig_mht90_ht350","HT",1000,0,1000);
-  //TH1F * h_met_1L_den_mht110      = new TH1F("h_met_1L_den_mht110","HT",1000,0,1000);
-  //TH1F * h_met_1L_trig_mht110     = new TH1F("h_met_1L_trig_mht110","HT",1000,0,1000);
-  //
-  //TH1F * h_met_1e0mu_den_mht75       = new TH1F("h_met_1e0mu_den_mht75","HT",1000,0,1000);
-  //TH1F * h_met_1e0mu_trig_mht75      = new TH1F("h_met_1e0mu_trig_mht75","HT",1000,0,1000);
-  //TH1F * h_met_1e0mu_den_mht80       = new TH1F("h_met_1e0mu_den_mht80","HT",1000,0,1000);
-  //TH1F * h_met_1e0mu_trig_mht80      = new TH1F("h_met_1e0mu_trig_mht80","HT",1000,0,1000);
-  //TH1F * h_met_1e0mu_den_mht90_ht300 = new TH1F("h_met_1e0mu_den_mht90_ht300","HT",1000,0,1000);
-  //TH1F * h_met_1e0mu_trig_mht90_ht300= new TH1F("h_met_1e0mu_trig_mht90_ht300","HT",1000,0,1000);
-  //TH1F * h_met_1e0mu_den_mht90_ht350 = new TH1F("h_met_1e0mu_den_mht90_ht350","HT",1000,0,1000);
-  //TH1F * h_met_1e0mu_trig_mht90_ht350= new TH1F("h_met_1e0mu_trig_mht90_ht350","HT",1000,0,1000);
-  //TH1F * h_met_1e0mu_den_mht110      = new TH1F("h_met_1e0mu_den_mht110","HT",1000,0,1000);
-  //TH1F * h_met_1e0mu_trig_mht110     = new TH1F("h_met_1e0mu_trig_mht110","HT",1000,0,1000);
-  //
-  //TH1F * h_met_1mu0e_den_mht75       = new TH1F("h_met_1mu0e_den_mht75","HT",1000,0,1000);
-  //TH1F * h_met_1mu0e_trig_mht75      = new TH1F("h_met_1mu0e_trig_mht75","HT",1000,0,1000);
-  //TH1F * h_met_1mu0e_den_mht80       = new TH1F("h_met_1mu0e_den_mht80","HT",1000,0,1000);
-  //TH1F * h_met_1mu0e_trig_mht80      = new TH1F("h_met_1mu0e_trig_mht80","HT",1000,0,1000);
-  //TH1F * h_met_1mu0e_den_mht90_ht300 = new TH1F("h_met_1mu0e_den_mht90_ht300","HT",1000,0,1000);
-  //TH1F * h_met_1mu0e_trig_mht90_ht300= new TH1F("h_met_1mu0e_trig_mht90_ht300","HT",1000,0,1000);
-  //TH1F * h_met_1mu0e_den_mht90_ht350 = new TH1F("h_met_1mu0e_den_mht90_ht350","HT",1000,0,1000);
-  //TH1F * h_met_1mu0e_trig_mht90_ht350= new TH1F("h_met_1mu0e_trig_mht90_ht350","HT",1000,0,1000);
-  //TH1F * h_met_1mu0e_den_mht110      = new TH1F("h_met_1mu0e_den_mht110","HT",1000,0,1000);
-  //TH1F * h_met_1mu0e_trig_mht110     = new TH1F("h_met_1mu0e_trig_mht110","HT",1000,0,1000);
-
-
-  //TH2F * h_Wlnueta = new TH2F("h_Wlnueta","lepton eta vs neutrino eta",100,-5,5,100,-5,5);
-  //TH2F * h_Wlnupt = new TH2F("h_Wlnupt","lepton pt vs neutrino pt",100,0,300,100,0,300);
-  //
-  //TH2F * h_Wtaulnueta = new TH2F("h_Wtaulnueta","tautolepton eta vs neutrino eta",100,-5,5,100,-5,5);
-  //TH2F * h_Wtaulnupt = new TH2F("h_Wtaulnupt","tautolepton pt vs neutrino pt",100,0,300,100,0,300);
-
-  //std::vector<int> vrun,vlumi,vevent;
-  //loadEventList(vrun, vlumi, vevent);
-
-  const Long64_t nevents = chainA->GetEntries();
-  const Long64_t neventsB = chainB->GetEntries();
-  assert(nevents==neventsB);
-
-
-  cout<<"Running..."<<endl;  
-  int npass = 0;
-
-  //int decayType;
-  int W1decayType;
-  //int W2decayType;
-  int nSemiMu=0,nSemiEle=0,nSemiTauHad=0,nDilep=0,nHad=0,nOther=0;
-
-  startTimer();
-  for(Long64_t entry=0; entry < nevents; ++entry){
-    chainB->GetEntry(entry);
-    chainA->GetEntry(entry);
-
-
-    if(entry%10000==0) cout << "entry: " << entry << ", percent done=" << (int)(entry/(double)nevents*100.)<<  endl;
-    //int event = getEventNumber();
-    //if(event !=86684 ) continue;
-    
-    //std::cout << " HT = " << getHT() << std::endl;
-    //
-    //for (unsigned int i = 0; i < jets_AK5PF_pt->size(); ++i) {
-    //  std::cout << "jet " << i << " pt = " << getJetPt(i)<< ", eta = " << myJetsPF->at(i).eta << ", passID = " << jetPassLooseID(i) <<std::endl;
-    //
-    //  std::cout << "\tneutralHadEnFrac (should be <0.99) = " << myJetsPF->at(i).neutralHadronEnergyFraction << std::endl;
-    //  std::cout << "\tneutralEmEnFrac  (should be <0.99) = " << myJetsPF->at(i).neutralEmEnergyFraction << std::endl;
-    //  std::cout << "\tnumDaughters (should be >1)        = " << myJetsPF->at(i).numberOfDaughters << std::endl;
-    //  std::cout << "\tchargedHadEnFrac (should be >0)    = " << myJetsPF->at(i).chargedHadronEnergyFraction << std::endl;
-    //  std::cout << "\tchargedEmEnFrac  (should be <0.99) = " << myJetsPF->at(i).chargedEmEnergyFraction << std::endl;
-    //  std::cout << "\tchargedMult (should be >0)         = " << myJetsPF->at(i).chargedMultiplicity << std::endl;
-    // 
-    //
-    //
-    //}
-    //for(uint i = 0; i< myGenParticles->size(); ++i){
-    //  if(myGenParticles->at(i).status == 3){
-    //  std::cout << i << ": ID = " << myGenParticles->at(i).pdgId 
-    //		<< ", status = " << myGenParticles->at(i).status 
-    //		<< ", pt = " << myGenParticles->at(i).pt 
-    //		<< ", eta = " << myGenParticles->at(i).eta 
-    //		<< ", phi = " << myGenParticles->at(i).phi 
-    //		<< ", mmin = " << myGenParticles->at(i).firstMother 
-    //		<< ", mmax = " << myGenParticles->at(i).lastMother
-    //		<< ", dmin = " << myGenParticles->at(i).firstDaughter 
-    //		<< ", dmax = " << myGenParticles->at(i).lastDaughter
-    //		<< std::endl;
-    //  }
-    //}
-
-    //for (unsigned int k = 0; k<myGenParticles->size(); k++) {
-    //  //      for debugging
-    //  if(myGenParticles->at(k).status==3)
-    //	cout<<k<<"\t"<<TMath::Nint(myGenParticles->at(k).pdgId )<<"\t"<< TMath::Nint(myGenParticles->at(k).firstMother)<<"\t"<<TMath::Nint(myGenParticles->at(k).lastMother)<<"\t"<<TMath::Nint(myGenParticles->at(k).status ) <<endl;
-    //}
-
-    int W1, W1daughter, returnvalue;
-    //int W2, W2daughter;
-
-    returnvalue = 1; //getWDecayType(W1decayType, W1, W1daughter, false);  //FIXME CFA
-    //decayType = getTTbarDecayType(W1decayType, W2decayType, W1, W1daughter, W2, W2daughter,true);
-
-
-    //std::cout << "decaytype = " << decayType << ", W1decayType = " << W1decayType << ", W2decayType = " << W2decayType 
-    //  		<< ", W1 = " << W1 << ", W1 daughter = " << W1daughter << ", W2 = " << W2 << ", W2daughter = " << W2daughter << std::endl;
-
-    //
-    ////W1decayType = findW(W1,W1daughter);
-    //if(returnvalue==101302){
-      std::cout << "W1decayType = " << W1decayType << ", W1 = " << W1 << ", W1daughter = " << W1daughter << std::endl;
-      std::cout << "\t returnvalue = " << returnvalue << std::endl;
-    //}
-    //std::cout << "myGenparticles size = " << myGenParticles->size() << std::endl;
-    /*
-    decayType = getTTbarDecayType(W1decayType, W2decayType, W1, W1daughter, W2, W2daughter);
-
-    if(W1decayType == 11 || W1decayType == 13 ){
-      //|| W1decayType == 1511 || W1decayType == 1513 ){
-    //if(W1decayType == 1511 || W1decayType == 1513 ){
-       //|| W2decayType == 11 || W2decayType == 13 || W2decayType == 1511 || W2decayType == 1513){
-
-      //std::cout << "decaytype = " << decayType << ", W1decayType = " << W1decayType << ", W2decayType = " << W2decayType 
-      //		<< ", W1 = " << W1 << ", W1 daughter = " << W1daughter << ", W2 = " << W2 << ", W2daughter = " << W2daughter << std::endl;
-      
-      //std::cout << "\t W1 daughter: pdgId = " << myGenParticles->at(W1daughter).pdgId << ", eta = " << myGenParticles->at(W1daughter).eta << ", pt = " << myGenParticles->at(W1daughter).pt  << std::endl;
-      //std::cout << "\t W1 daughter+1: pdgId = " << myGenParticles->at(W1daughter+1).pdgId << ", eta = " << myGenParticles->at(W1daughter+1).eta << ", pt = " << myGenParticles->at(W1daughter+1).pt  << std::endl;
-
-       int W1firstdaughter = TMath::Nint(myGenParticles->at(W1).firstDaughter);
-       //std::cout << "W1 first daughter = " << W1firstdaughter << std::endl;
-       int d1_id = abs(myGenParticles->at(W1firstdaughter).pdgId);
-       int d2_id = abs(myGenParticles->at(W1firstdaughter+1).pdgId);
-       float d1_eta = myGenParticles->at(W1firstdaughter).eta;
-       float d2_eta = myGenParticles->at(W1firstdaughter+1).eta;
-       float d1_pt = myGenParticles->at(W1firstdaughter).pt;
-       float d2_pt = myGenParticles->at(W1firstdaughter+1).pt;
-       //std::cout << "\t W1 daughter 1: pdgId = " << d1_id << ", eta = " << d1_eta << ", pt = " << d1_pt  << std::endl;
-       //std::cout << "\t W1 daughter 2: pdgId = " << d2_id << ", eta = " << d2_eta << ", pt = " << d2_pt  << std::endl;
-
-       float l_eta, nu_eta, l_pt, nu_pt;
-       if( d1_id == 12 || d1_id == 14 || d1_id == 16){
-	 nu_eta = d1_eta; nu_pt = d1_pt;
-	 l_eta = d2_eta; l_pt = d2_pt;
-       }
-       else if( d2_id == 12 || d2_id == 14 || d2_id == 16){
-	 nu_eta = d2_eta; nu_pt = d2_pt;
-	 l_eta = d1_eta; l_pt = d1_pt;
-       }
-       else{std::cout << "error - expected a neutrino" << std::endl; assert(0);}
-      //std::cout << "\t W2 daughter: pdgID = " << myGenParticles->at(W2daughter).pdgid << ", eta = " << myGenParticles->at(W2daughter).eta << ", pt = " << myGenParticles->at(W2daughter).pt  << std::endl;
-      
-       h_Wlnueta->Fill(l_eta, nu_eta);
-       h_Wlnupt->Fill(l_pt, nu_pt);
-
-    }
-    
-    if(W2decayType == 11 || W2decayType == 13 ){
-
-       int W2firstdaughter = TMath::Nint(myGenParticles->at(W2).firstDaughter);
-       //std::cout << "W1 first daughter = " << W1firstdaughter << std::endl;
-       int d1_id = abs(myGenParticles->at(W2firstdaughter).pdgId);
-       int d2_id = abs(myGenParticles->at(W2firstdaughter+1).pdgId);
-       float d1_eta = myGenParticles->at(W2firstdaughter).eta;
-       float d2_eta = myGenParticles->at(W2firstdaughter+1).eta;
-       float d1_pt = myGenParticles->at(W2firstdaughter).pt;
-       float d2_pt = myGenParticles->at(W2firstdaughter+1).pt;
-
-       float l_eta, nu_eta, l_pt, nu_pt;
-       if( d1_id == 12 || d1_id == 14 || d1_id == 16){
-	 nu_eta = d1_eta; nu_pt = d1_pt;
-	 l_eta = d2_eta; l_pt = d2_pt;
-       }
-       else if( d2_id == 12 || d2_id == 14 || d2_id == 16){
-	 nu_eta = d2_eta; nu_pt = d2_pt;
-	 l_eta = d1_eta; l_pt = d1_pt;
-       }
-       else{std::cout << "error - expected a neutrino" << std::endl; assert(0);}
-
-      
-       h_Wlnueta->Fill(l_eta, nu_eta);
-       h_Wlnupt->Fill(l_pt, nu_pt);
-
-    }
-
-    //tautolepton
-    if(W1decayType == 1511 || W1decayType == 1513 ){
-
-      //W1 daughter is always the e/mu
-      int wd_pdgid = abs(myGenParticles->at(W1daughter).pdgId);
-      float wd_eta = myGenParticles->at(W1daughter).eta;
-      float wd_pt = myGenParticles->at(W1daughter).pt;
-
-      if(wd_pdgid != 11 && wd_pdgid !=13){std::cout << "error- expected an electron or muon" << std::endl; assert(0);}
-
-      //std::cout << "decaytype = " << decayType << ", W1decayType = " << W1decayType << ", W2decayType = " << W2decayType 
-      //		<< ", W1 = " << W1 << ", W1 daughter = " << W1daughter << ", W2 = " << W2 << ", W2daughter = " << W2daughter << std::endl;
-      //std::cout << "\t W1 daughter: pdgId = " << wd_pdgid << ", eta = " << wd_eta << ", pt = " << wd_pt  << std::endl;
-      //std::cout << "\t W1 daughter+1: pdgId = " << myGenParticles->at(W1daughter+1).pdgId << ", eta = " << myGenParticles->at(W1daughter+1).eta << ", pt = " << myGenParticles->at(W1daughter+1).pt  << std::endl;
-      
-      int W1firstdaughter = TMath::Nint(myGenParticles->at(W1).firstDaughter);
-      //std::cout << "W1 first daughter = " << W1firstdaughter << std::endl;
-      int d1_id = abs(myGenParticles->at(W1firstdaughter).pdgId);
-      int d2_id = abs(myGenParticles->at(W1firstdaughter+1).pdgId);
-      float d1_eta = myGenParticles->at(W1firstdaughter).eta;
-      float d2_eta = myGenParticles->at(W1firstdaughter+1).eta;
-      float d1_pt = myGenParticles->at(W1firstdaughter).pt;
-      float d2_pt = myGenParticles->at(W1firstdaughter+1).pt;
-      //std::cout << "\t W1 daughter 1: pdgId = " << d1_id << ", eta = " << d1_eta << ", pt = " << d1_pt  << std::endl;
-      //std::cout << "\t W1 daughter 2: pdgId = " << d2_id << ", eta = " << d2_eta << ", pt = " << d2_pt  << std::endl;
-         
-      float l_eta, nu_eta, l_pt, nu_pt;
-      l_eta = wd_eta; l_pt = wd_pt;
-      if( d1_id == 16){
-	nu_eta = d1_eta; nu_pt = d1_pt;
-      }
-      else if( d2_id == 16){
-	nu_eta = d2_eta; nu_pt = d2_pt;
-      }
-      else{std::cout << "d1_id = " << d1_id << std::endl; std::cout << "error - expected a neutrino" << std::endl; assert(0);}
-      ////std::cout << "\t W2 daughter: pdgID = " << myGenParticles->at(W2daughter).pdgid << ", eta = " << myGenParticles->at(W2daughter).eta << ", pt = " << myGenParticles->at(W2daughter).pt  << std::endl;
-      
-      h_Wtaulnueta->Fill(l_eta, nu_eta);
-      h_Wtaulnupt->Fill(l_pt, nu_pt);
-    }
-
-    if(W2decayType == 1511 || W2decayType == 1513 ){
-      
-      //W1 daughter is always the e/mu
-      int wd_pdgid = abs(myGenParticles->at(W2daughter).pdgId);
-      float wd_eta = myGenParticles->at(W2daughter).eta;
-      float wd_pt = myGenParticles->at(W2daughter).pt;
-
-      if(wd_pdgid != 11 && wd_pdgid !=13){std::cout << "error- expected an electron or muon" << std::endl; assert(0);}
-
-      //std::cout << "decaytype = " << decayType << ", W1decayType = " << W1decayType << ", W2decayType = " << W2decayType 
-      //		<< ", W1 = " << W1 << ", W1 daughter = " << W1daughter << ", W2 = " << W2 << ", W2daughter = " << W2daughter << std::endl;
-      //std::cout << "\t W1 daughter: pdgId = " << wd_pdgid << ", eta = " << wd_eta << ", pt = " << wd_pt  << std::endl;
-
-      int W2firstdaughter = TMath::Nint(myGenParticles->at(W2).firstDaughter);
-      //std::cout << "W1 first daughter = " << W1firstdaughter << std::endl;
-      int d1_id = abs(myGenParticles->at(W2firstdaughter).pdgId);
-      int d2_id = abs(myGenParticles->at(W2firstdaughter+1).pdgId);
-      float d1_eta = myGenParticles->at(W2firstdaughter).eta;
-      float d2_eta = myGenParticles->at(W2firstdaughter+1).eta;
-      float d1_pt = myGenParticles->at(W2firstdaughter).pt;
-      float d2_pt = myGenParticles->at(W2firstdaughter+1).pt;
-      //std::cout << "\t W2 daughter 1: pdgId = " << d1_id << ", eta = " << d1_eta << ", pt = " << d1_pt  << std::endl;
-      //std::cout << "\t W2 daughter 2: pdgId = " << d2_id << ", eta = " << d2_eta << ", pt = " << d2_pt  << std::endl;
-   
-
-      float l_eta, nu_eta, l_pt, nu_pt;
-      l_eta = wd_eta; l_pt = wd_pt;
-      if( d1_id == 16){
-	nu_eta = d1_eta; nu_pt = d1_pt;
-      }
-      else if( d2_id == 16){
-	nu_eta = d2_eta; nu_pt = d2_pt;
-      }
-      else{std::cout << "d1_id = " << d1_id << std::endl; std::cout << "error - expected a neutrino" << std::endl; assert(0);}
-      ////std::cout << "\t W2 daughter: pdgID = " << myGenParticles->at(W2daughter).pdgid << ", eta = " << myGenParticles->at(W2daughter).eta << ", pt = " << myGenParticles->at(W2daughter).pt  << std::endl;
-      
-      h_Wtaulnueta->Fill(l_eta, nu_eta);
-      h_Wtaulnupt->Fill(l_pt, nu_pt);
-    }
-    */
-
-    
-    //if((W1decayType==13 && W2decayType==1) || (W1decayType==1 && W2decayType==13) || (W1decayType==1513 && W2decayType==1) || (W1decayType==1 && W2decayType==1513)){
-    //  nSemiMu++;
-    //}
-    //else if((W1decayType==11 && W2decayType==1) || (W1decayType==1 && W2decayType==11) || (W1decayType==1511 && W2decayType==1) || (W1decayType==1 && W2decayType==1511)){
-    //  nSemiEle++;
-    //}
-    //else if((W1decayType==15 && W2decayType==1) || (W1decayType==1 && W2decayType==15)){
-    //  nSemiTauHad++;
-    //}
-    //else if((W1decayType==11 || W1decayType==13 || W1decayType==1511 || W1decayType==1513) && (W2decayType==11 || W2decayType==13 || W2decayType==1511 || W2decayType==1513)){
-    //  nDilep++;
-    //}
-    //else if(W1decayType==1 && W2decayType==1){
-    //  nHad++;
-    //}
-    //else if((W1decayType==15 && W2decayType==15)||(W1decayType==11 && W2decayType==15)||(W1decayType==15 && W2decayType==11)||(W1decayType==1511 && W2decayType==15)||(W1decayType==15 && W2decayType==1511)||(W1decayType==13 && W2decayType==15)||(W1decayType==15 && W2decayType==13)||(W1decayType==15 && W2decayType==1513)||(W1decayType==1513 && W2decayType==15)){
-    //  nOther++;
-    //}
-    //else{
-    //  std::cout << "We got a problem boss" << std::endl;
-    //  std::cout << "\t W1decayType = " << W1decayType << ", W2decayType = " << W2decayType << std::endl;
-    //}
-
-    //if(Cut()==1){
-
-
-    //std::cout << "ngood jets = " << nGoodJets() << std::endl;
-    //for (unsigned int i=0; i < jets_AK5PF_pt->size(); ++i) {
-    //  if(getJetPt(i)<30) continue;
-    //  if (isGoodJet30(i) ){
-    //	std::cout << "found good jet" << std::endl;
-    //  }
-    //  else{
-    //	std::cout << "jet failed id" << std::endl;
-    //	std::cout << "\tneutralHadEnFrac (should be <0.99) = " << myJetsPF->at(i).neutralHadronEnergyFraction << std::endl;
-    //	std::cout << "\tneutralEmEnFrac  (should be <0.99) = " << myJetsPF->at(i).neutralEmEnergyFraction << std::endl;
-    //	std::cout << "\tnumDaughters (should be >1)        = " << myJetsPF->at(i).numberOfDaughters << std::endl;
-    //	std::cout << "\tchargedHadEnFrac (should be >0)    = " << myJetsPF->at(i).chargedHadronEnergyFraction << std::endl;
-    //	std::cout << "\tchargedEmEnFrac  (should be <0.99) = " << myJetsPF->at(i).chargedEmEnergyFraction << std::endl;
-    //	std::cout << "\tchargedMult (should be >0)         = " << myJetsPF->at(i).chargedMultiplicity << std::endl;
-    //
-    //  }
-    //  std::cout << "\tjet pt = " << getJetPt(i) << ", eta = " << myJetsPF->at(i).eta << ", phi = " << myJetsPF->at(i).phi;
-    //  std::cout << ", CSV disc = " <<  myJetsPF->at(i).combinedSecondaryVertexBJetTags << std::endl;
-    //
-    //}
-
-
-      npass++;
-
-      //double effUp,effDown;     
-      //if( (countMu()==1 && countEle()==0) || (countMu()==0 && countEle()==1)){
-      //	std::cout << "HT = " << getHT() << ",MET = " << getMET() << ", eff = "
-      //		  << getHLTMHTeffBNN(getMET(),getHT(),countEle(),countMu(),getMinDeltaPhiMETN(3),effUp,effDown) << std::endl;
-      //	std::cout << ", effUp = " << effUp << ", effDown = " << effDown << std::endl;
-      //}
-      //std::cout << "MET = " << getMET() << ", eff = " << getHLTMHTeff(getMET()) << std::endl;
-      //std::cout << "HT = " << getHT() << ", eff = " << getHLTHTeff(getHT()) << std::endl;
-
-      /*
-      bool cutEleVeto,cutMuVeto;
-      cutEleVeto = passCut("cutEleVeto");
-      cutMuVeto = passCut("cutMuVeto");
-      int nElectrons, nMuons;
-      nElectrons = countEle();
-      nMuons = countMu();
-                  
-      //int lumi =  getLumiSection();
-      int run = getRunNumber();
-      //if(run ==170722 && lumi >=110 && lumi<=287) return false;
-      if(passLumiMask()){
-	int version = 0, prescale = 0;
-
-	/////////////
-	//HT300_MHT75
-	/////////////
-	if(run>=165922 && run<=166978){
-	  if(passUtilityHLT(version,prescale)){
-	    h_met_den_mht75->Fill(getMET());	
-	    if(passHLT())
-	      h_met_trig_mht75->Fill(getMET());
-
-	    //0L sample
-	    if(cutEleVeto && cutMuVeto){
-	      h_met_0L_den_mht75->Fill(getMET());	
-	      if(passHLT())
-		h_met_0L_trig_mht75->Fill(getMET());
-	    }
-	    //1L sample
-	    if( (nElectrons==1 && nMuons ==0)||(nElectrons==0 && nMuons==1) ){
-	      h_met_1L_den_mht75->Fill(getMET());	
-	      if(passHLT())
-		h_met_1L_trig_mht75->Fill(getMET());
-	    }
-	    //1e0mu sample
-	    if( nElectrons==1 && nMuons ==0 ){
-	      h_met_1e0mu_den_mht75->Fill(getMET());	
-	      if(passHLT())
-		h_met_1e0mu_trig_mht75->Fill(getMET());	      
-	    }
-	    //1mu0e sample
-	    if( nElectrons==0 && nMuons ==1){
-	      h_met_1mu0e_den_mht75->Fill(getMET());	
-	      if(passHLT())
-		h_met_1mu0e_trig_mht75->Fill(getMET());
-	    }
-
-	  }
-	}
-
-	/////////////
-	//HT300_MHT80
-	/////////////
-	if(run>=166979 && run<=173211){
-	  if(passUtilityHLT(version,prescale)){
-	    h_met_den_mht80->Fill(getMET());	
-	    if(passHLT())
-	      h_met_trig_mht80->Fill(getMET());
-
-
-	    //0L sample
-	    if(cutEleVeto && cutMuVeto){
-	      h_met_0L_den_mht80->Fill(getMET());	
-	      if(passHLT())
-		h_met_0L_trig_mht80->Fill(getMET());
-	    }
-	    //1L sample
-	    if( (nElectrons==1 && nMuons ==0)||(nElectrons==0 && nMuons==1) ){
-	      h_met_1L_den_mht80->Fill(getMET());	
-	      if(passHLT())
-		h_met_1L_trig_mht80->Fill(getMET());
-	    }
-	    //1e0mu sample
-	    if( nElectrons==1 && nMuons ==0 ){
-	      h_met_1e0mu_den_mht80->Fill(getMET());	
-	      if(passHLT())
-		h_met_1e0mu_trig_mht80->Fill(getMET());	      
-	    }
-	    //1mu0e sample
-	    if( nElectrons==0 && nMuons ==1){
-	      h_met_1mu0e_den_mht80->Fill(getMET());	
-	      if(passHLT())
-		h_met_1mu0e_trig_mht80->Fill(getMET());
-	    }
-
-
-	  }
-	}
-
-	/////////////
-	//HT300_MHT90
-	/////////////
-
-	if(run>=173212 && run<=176544){
-	  if(passUtilityHLT(version,prescale)){
-	    h_met_den_mht90_ht300->Fill(getMET());	
-	    if(passHLT())
-	      h_met_trig_mht90_ht300->Fill(getMET());
-
-
-	    //0L sample
-	    if(cutEleVeto && cutMuVeto){
-	      h_met_0L_den_mht90_ht300->Fill(getMET());	
-	      if(passHLT())
-		h_met_0L_trig_mht90_ht300->Fill(getMET());
-	    }
-	    //1L sample
-	    if( (nElectrons==1 && nMuons ==0)||(nElectrons==0 && nMuons==1) ){
-	      h_met_1L_den_mht90_ht300->Fill(getMET());	
-	      if(passHLT())
-		h_met_1L_trig_mht90_ht300->Fill(getMET());
-	    }
-	    //1e0mu sample
-	    if( nElectrons==1 && nMuons ==0 ){
-	      h_met_1e0mu_den_mht90_ht300->Fill(getMET());	
-	      if(passHLT())
-		h_met_1e0mu_trig_mht90_ht300->Fill(getMET());	      
-	    }
-	    //1mu0e sample
-	    if( nElectrons==0 && nMuons ==1){
-	      h_met_1mu0e_den_mht90_ht300->Fill(getMET());	
-	      if(passHLT())
-		h_met_1mu0e_trig_mht90_ht300->Fill(getMET());
-	    }
-
-
-	  }
-	}
-
-	/////////////
-	//HT350_MHT90
-	/////////////
-
-	if(run>=176545 && run<=178410){
-	  if(passUtilityHLT(version,prescale)){
-	    h_met_den_mht90_ht350->Fill(getMET());	
-	    if(passHLT())
-	      h_met_trig_mht90_ht350->Fill(getMET());
-
-	    //0L sample
-	    if(cutEleVeto && cutMuVeto){
-	      h_met_0L_den_mht90_ht350->Fill(getMET());	
-	      if(passHLT())
-		h_met_0L_trig_mht90_ht350->Fill(getMET());
-	    }
-	    //1L sample
-	    if( (nElectrons==1 && nMuons ==0)||(nElectrons==0 && nMuons==1) ){
-	      h_met_1L_den_mht90_ht350->Fill(getMET());	
-	      if(passHLT())
-		h_met_1L_trig_mht90_ht350->Fill(getMET());
-	    }
-	    //1e0mu sample
-	    if( nElectrons==1 && nMuons ==0 ){
-	      h_met_1e0mu_den_mht90_ht350->Fill(getMET());	
-	      if(passHLT())
-		h_met_1e0mu_trig_mht90_ht350->Fill(getMET());	      
-	    }
-	    //1mu0e sample
-	    if( nElectrons==0 && nMuons ==1){
-	      h_met_1mu0e_den_mht90_ht350->Fill(getMET());	
-	      if(passHLT())
-		h_met_1mu0e_trig_mht90_ht350->Fill(getMET());
-	    }
-
-
-
-	  }
-	}
-
-	//////////////
-	//HT350_MHT110
-	//////////////
-
-	if(run>=178411 && run<=180252){
-	  if(passUtilityHLT(version,prescale)){
-	    h_met_den_mht110->Fill(getMET());	
-	    if(passHLT())
-	      h_met_trig_mht110->Fill(getMET());
-
-	    //0L sample
-	    if(cutEleVeto && cutMuVeto){
-	      h_met_0L_den_mht110->Fill(getMET());	
-	      if(passHLT())
-		h_met_0L_trig_mht110->Fill(getMET());
-	    }
-	    //1L sample
-	    if( (nElectrons==1 && nMuons ==0)||(nElectrons==0 && nMuons==1) ){
-	      h_met_1L_den_mht110->Fill(getMET());	
-	      if(passHLT())
-		h_met_1L_trig_mht110->Fill(getMET());
-	    }
-	    //1e0mu sample
-	    if( nElectrons==1 && nMuons ==0 ){
-	      h_met_1e0mu_den_mht110->Fill(getMET());	
-	      if(passHLT())
-		h_met_1e0mu_trig_mht110->Fill(getMET());	      
-	    }
-	    //1mu0e sample
-	    if( nElectrons==0 && nMuons ==1){
-	      h_met_1mu0e_den_mht110->Fill(getMET());	
-	      if(passHLT())
-		h_met_1mu0e_trig_mht110->Fill(getMET());
-	    }
-
-	  }
-	}
-      }      
-      */
-      /*          
-      //h_ht->Fill(getHT());
-      if(getHT()>400){
-      h_met->Fill(getMET());
-      
-      int lumi =  getLumiSection();
-      int run = getRunNumber();
-      int event = getEventNumber();
-      
-      bool passTrig = false;
-      for(uint i = 0; i< vevent.size(); ++i){
-      	if( event == vevent.at(i)){
-      	  if( lumi == vlumi.at(i)){
-      	    if( run == vrun.at(i)){
-      	      passTrig = true;
-      	      break;
-      	    }
-      	  }
-      	}
-      }
-      if(passTrig)
-      	//h_ht_trig->Fill(getHT());
-	h_met_trig->Fill(getMET());
-      }
-      */     
-
-
-      /*               
-      int npv = 0, npvbxp1 = 0, npvbxm1 = 0;
-      for ( unsigned int i = 0; i<pileupsummaryinfo.size() ; i++) {
-	//npv = pileupsummaryinfo.at(i).addpileupinfo_getPU_NumInteractions;
-	//sum_nvtx += float(npv);
-	
-	//consider only in-time PU
-	int BX = pileupsummaryinfo.at(i).addpileupinfo_getBunchCrossing;
-	if(BX == 0) { 
-	  npv = pileupsummaryinfo.at(i).addpileupinfo_getPU_NumInteractions;
-	  //continue;
-	}
-	else if(BX == 1) { 
-	  npvbxp1 = pileupsummaryinfo.at(i).addpileupinfo_getPU_NumInteractions;
-	  //continue;
-	}
-	else if(BX == -1) { 
-	  npvbxm1 = pileupsummaryinfo.at(i).addpileupinfo_getPU_NumInteractions;
-	  //continue;
-	}
-	
-      }
-      //std::cout << "npv = " << npv << std::endl;
-      h_MCPU->Fill(npv);
-      //std::cout << "weight = " << getPUWeight(LumiWeights) << std::endl;
-      h_MCPUr->Fill(npv, getPUWeight(LumiWeights) );
-	
-      h_MCPUBXp1->Fill(npvbxp1);
-      h_MCPUrBXp1->Fill(npvbxp1, getPUWeight(LumiWeights) );
-      h_MCPUBXm1->Fill(npvbxm1);
-      h_MCPUrBXm1->Fill(npvbxm1, getPUWeight(LumiWeights) );
-      */
-
-      //calculateTagProb(prob0,probge1,prob1,probge2,probge3);
-      //n0b += prob0; 
-      //nge1b += probge1; 
-      //neq1b += prob1; 
-      //nge2b += probge2;      
-      //nge3b += probge3;
-
-      //}//end Cut
-
-  }
-
-
-  cout<<endl;
-  stopTimer(nevents);
-
-  //std::cout << "n0b = " << n0b << std::endl;
-  //std::cout << "nge1b = " << nge1b << std::endl;
-  //std::cout << "neq1b = " << neq1b << std::endl;
-  //std::cout << "nge2b = " << nge2b << std::endl;
-  //std::cout << "nge3b = " << nge3b << std::endl;
-  
-  //std::cout << "npass = " << npass << std::endl;
-  
-  std::cout << "nSemiMu = " << nSemiMu << std::endl;  
-  std::cout << "nSemiEle = " << nSemiEle << std::endl;  
-  std::cout << "nSemiTauHad = " << nSemiTauHad << std::endl;  
-  std::cout << "nDilep = " << nDilep << std::endl;  
-  std::cout << "nHad = " << nHad << std::endl;  
-  std::cout << "nOther = " << nOther << std::endl;  
-  
-  
-  fout.Write();
-  fout.Close();
-
-
-  return;
-}
 
 TString EventCalculator::assembleBTagEffFilename(bool cutnametail) {
 

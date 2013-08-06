@@ -275,6 +275,7 @@ bool addOverflow_=true;
 //bool doSubtraction_=false;
 bool drawMCErrors_=false;
 bool renormalizeBins_=false;//no setter function
+double renormalizeWidth_=1;
 bool owenColor_ = false;
 bool drawFilenameOnPlot_=false;
 bool dataPoissonError_=true;
@@ -899,31 +900,21 @@ double findOverallMax(const TH1D* hh) {
   return max;
 }
 
-//code largely lifted from Owen
-//returned string is the y title of the renormalized histo
-TString renormBins( TH1D* hp, int refbin ) {
+//code originally lifted from Owen
+void renormBins( TH1D* hp ) {
 
-  if ( hp==0 ) return "PROBLEM";
+  if ( hp==0 ) return;// "PROBLEM";
 
-  double refbinwid = -99;
-  if(refbin==-1) refbinwid = 1.;
-  else {
-    refbin = hp->GetBinLowEdge( refbin+1 ) - hp->GetBinLowEdge( refbin ) ;
-    if (!quiet_)  printf(" reference bin: [%6.1f,%6.1f], width = %6.3f\n",  hp->GetBinLowEdge( refbin ), hp->GetBinLowEdge( refbin+1 ), refbinwid ) ;
-  }
 
   for ( int bi=1; bi<= hp->GetNbinsX(); bi++ ) {
     double binwid = hp->GetBinLowEdge( bi+1 ) - hp->GetBinLowEdge( bi ) ;
-    double sf = refbinwid / binwid ;
-    if (!quiet_)    printf("  bin %d : width= %6.2f, sf=%7.3f\n", bi, binwid, sf ) ;
+    double sf = renormalizeWidth_ / binwid ;
+    //    if (!quiet_)    printf("  bin %d : width= %6.2f, sf=%7.3f\n", bi, binwid, sf ) ; //too verbose
     hp->SetBinContent( bi, sf*(hp->GetBinContent( bi )) ) ;
     hp->SetBinError( bi, sf*(hp->GetBinError( bi )) ) ;
   } // bi.
 
-  TString ytitle;
-  ytitle.Form("(Events / bin) * (%5.1f / bin width)", refbinwid );
 
-  return ytitle;
 }
 
 
@@ -2333,7 +2324,7 @@ TString appendBinWidth(const TString & ytitle, const double low,const double hig
 
   if (ytitle=="Arbitrary units") return ytitle; //oh this is so ugly
 
-  double w = (high - low)/nbins;
+  double w = renormalizeBins_ ? renormalizeWidth_ : (high - low)/nbins;
 
   if (unit!="") unit.Prepend(" "); //if and only if unit is not null, prepend a space
 
@@ -2408,7 +2399,8 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
   totalsmsusy->SetMarkerStyle(sampleMarkerStyle_["Total"]);
   if (!drawMarkers_)  totalsmsusy->SetMarkerSize(0); //no marker for this one
 
-  if (doAppendBinWidth_ && varbins==0 && !renormalizeBins_) {ytitle = appendBinWidth(ytitle,low,high,nbins,unit);} //add the " / 10 GeV" part to the title
+  if ( (doAppendBinWidth_ && varbins==0 && !renormalizeBins_) || (doAppendBinWidth_ && varbins!=0 && renormalizeBins_)  ) {ytitle = appendBinWidth(ytitle,low,high,nbins,unit);} //add the " / 10 GeV" part to the title
+
 
   //here is the part that is really different from the previous implementation
   //need to make new histograms
@@ -2446,7 +2438,7 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
     tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),getSampleWeightFactor(samples_[isample]),selection_,extractExtraCut(samples_[isample]),0,"",-1,getSampleScaleFactor(samples_[isample])).Data());
 
     //now the histo is filled
-    if (renormalizeBins_) ytitle=renormBins(histos_[samples_[isample]],2 ); //manipulates the TH1D //FIXME hard-coded "2"
+    if (renormalizeBins_) renormBins(histos_[samples_[isample]] ); //manipulates the TH1D 
     if (addOverflow_)  addOverflowBin( histos_[samples_[isample]] ); //manipulates the TH1D
     histos_[samples_[isample]]->SetXTitle(xtitle);
     histos_[samples_[isample]]->SetYTitle(ytitle);
@@ -2620,14 +2612,14 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
     gROOT->cd();
     dtree->Project(hname,var,getCutString(true));
 
-    if(dataPoissonError_) hdata->SetBinErrorOption(TH1::kPoisson);
+    if(dataPoissonError_ &&!renormalizeBins_) hdata->SetBinErrorOption(TH1::kPoisson);
     //now the histo is filled
     
     hdata->SetMarkerColor(kBlack);
     hdata->SetLineWidth(2);
     hdata->SetMarkerStyle(kFullCircle);
     hdata->SetMarkerSize(1);
-    if (renormalizeBins_) renormBins(hdata,2 ); //manipulates the histogram //FIXME hard-coded "2"
+    if (renormalizeBins_) renormBins(hdata ); //manipulates the histogram 
     if (addOverflow_)     addOverflowBin(hdata); // manipulates the histogram!
     leg->AddEntry(hdata,"Data");
 
@@ -2729,6 +2721,8 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
   if (!dostack_ && !normalized_)      savename += "-drawPlain";
   else if (!dostack_ && normalized_)  savename += "-drawNorm";
   else savename += "-drawStack";
+
+  if (renormalizeBins_) savename += "-renormBins";
 
   //amazingly, \includegraphics cannot handle an extra dot in the filename. so avoid it.
   if (savePlots_) {
