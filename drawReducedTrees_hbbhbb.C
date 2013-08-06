@@ -840,12 +840,12 @@ void higgs_dataMC_control_QCD_noskim() {
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_lt3bLDP_trigMET150_METsig",0);
 
 
-  nbins=50; low=0; high=500;
+  nbins=40; low=0; high=600;
   setLogY(false);
   var="MET"; xtitle="MET (GeV)";
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_lt3bLDP_trigMET150_MET",0);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_lt3bLDP_trigMET150_MET",0,"GeV");
   setLogY(true);
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_lt3bLDP_trigMET150_MET",0);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_lt3bLDP_trigMET150_MET",0,"GeV");
 
   //might be better to raise the MET cut above the turn-on curve
   selection_ = baseline && triggerMET && zl&&isotk && jets&&jet2 && !btag3 &&!mdp &&TCut("MET>230");
@@ -869,12 +869,12 @@ void higgs_dataMC_control_QCD_noskim() {
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_lt3bLDP_trigJetMET_METsig",0);
 
 
-  nbins=50; low=0; high=500;
+  nbins=40; low=0; high=600;
   setLogY(false);
   var="MET"; xtitle="MET (GeV)";
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_lt3bLDP_trigJetMET_MET",0);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_lt3bLDP_trigJetMET_MET",0,"GeV");
   setLogY(true);
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_lt3bLDP_trigJetMET_MET",0);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_lt3bLDP_trigJetMET_MET",0,"GeV");
 
 
   selection_ = baseline && ra2btrigger && zl&&isotk && jets&&jet2high && !btag3 &&!mdp&&TCut("MET>160");
@@ -891,12 +891,12 @@ void higgs_dataMC_control_QCD_noskim() {
 
   selection_ = weird && ra2btrigger && zl&&isotk && jets&&jet2high && !btag3 &&TCut("MET>160");
 
-  nbins=50; low=0; high=500;
+  nbins=40; low=0; high=600;
   setLogY(false);
   var="MET"; xtitle="MET (GeV)";
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_weird_trigJetMET_MET",0);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_weird_trigJetMET_MET",0,"GeV");
   setLogY(true);
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_weird_trigJetMET_MET",0);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_weird_trigJetMET_MET",0,"GeV");
 
   nbins=40; low=0; high=400;
   setLogY(false);
@@ -909,12 +909,12 @@ void higgs_dataMC_control_QCD_noskim() {
 
   selection_ = junk && ra2btrigger && zl&&isotk && jets&&jet2high && !btag3 &&TCut("MET>160");
 
-  nbins=50; low=0; high=500;
+  nbins=40; low=0; high=600;
   setLogY(false);
   var="MET"; xtitle="MET (GeV)";
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_junk_trigJetMET_MET",0);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_junk_trigJetMET_MET",0,"GeV");
   setLogY(true);
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_junk_trigJetMET_MET",0);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_junk_trigJetMET_MET",0,"GeV");
 
   nbins=40; low=0; high=400;
   setLogY(false);
@@ -1220,16 +1220,97 @@ void higgs_dataMC_control_QCD() {
   var="deltaRmax_hh"; xtitle="#Delta R_{max}";
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_0l2bN-1_dRmax",0);
 
-
-  return;
-
-  selection_=baseline&&trigger&&zl&&isotk&&jets&&btag2&&TCut("CSVbest3<0.244")&&higgsSR&&TCut("METsig_2012>25")&&drmax &&TCut("MET/caloMET<2&&maxTOBTECjetDeltaMult<40");
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_2bT_deltaPhiMin-withMetOverCalo-TOBTEC",0);
+  //apply full selection with 2b && !3b
+  selection_=baseline&&trigger&&zl&&isotk&&jets&&btag2&&!btag3 &&higgsSR && metsigloose &&drmax &&mdp;
 
   var="abs(min(abs(METphi-caloMETphi),abs(2*3.14159-METphi+caloMETphi))-3.14159)"; xtitle="| |#Delta #phi_{PF,calo}| - #pi |";
   nbins = 30; low=0; high=TMath::Pi();
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_2bT_RazorNoiseVar-withMetOverCalo-TOBTEC",0);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_0l2bAllCuts_RazorNoiseVar",0);
 
+
+  //apply full selection with 2b && !3b ; ldp region
+  selection_=baseline&&trigger&&zl&&isotk&&jets&&btag2&&!btag3 &&higgsSR && metsigloose &&drmax &&!mdp;
+
+  var="abs(min(abs(METphi-caloMETphi),abs(2*3.14159-METphi+caloMETphi))-3.14159)"; xtitle="| |#Delta #phi_{PF,calo}| - #pi |";
+  nbins = 30; low=0; high=TMath::Pi();
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_0l2bLDP_2bT_RazorNoiseVar",0);
+
+  //2b && !3b, no mdp cut
+  //=== begin using this selection
+  selection_=baseline&&trigger&&zl&&isotk&&jets&&btag2&&!btag3 &&higgsSR && metsigloose &&drmax;
+
+  var="jetpt1"; xtitle=var;
+  nbins = 30; low=0; high=300;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_0l2b_jetpt1",0);
+
+  var="jetpt2"; xtitle=var;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_0l2b_jetpt2",0);
+
+  var="jetpt3"; xtitle=var;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_0l2b_jetpt3",0);
+
+  var="jetpt4"; xtitle=var;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_0l2b_jetpt4",0);
+
+  var="jeteta1"; xtitle=var;
+  nbins = 30; low=-3; high=3;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_0l2b_jeteta1",0);
+
+  var="jeteta2"; xtitle=var;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_0l2b_jeteta2",0);
+
+  var="jeteta3"; xtitle=var;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_0l2b_jeteta3",0);
+
+  var="jeteta4"; xtitle=var;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_0l2b_jeteta4",0);
+
+  var="jetphi1"; xtitle=var;
+  nbins = 30; low=-TMath::Pi(); high=TMath::Pi();
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_0l2b_jetphi1",0);
+
+  var="jetphi2"; xtitle=var;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_0l2b_jetphi2",0);
+
+  var="jetphi3"; xtitle=var;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_0l2b_jetphi3",0);
+
+  var="jetphi4"; xtitle=var;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_0l2b_jetphi4",0);
+
+  //now the variables for "all eta" for the lead jet
+  var="alletajetpt1"; xtitle=var;
+  nbins = 30; low=0; high=300;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_0l2b_alletajetpt1",0);
+
+  var="alletajetphi1"; xtitle=var;
+  nbins = 30; low=-TMath::Pi(); high=TMath::Pi();
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_0l2b_alletajetphi1",0);
+
+  var="alletajeteta1"; xtitle=var;
+  nbins = 30; low=-5; high=5;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_0l2b_alletajeteta1",0);
+
+  var="alletajetneutralhadronfrac1"; xtitle=var;
+  nbins = 30; low=0; high=1;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_0l2b_alletajetneutralhadronfrac1",0);
+
+  var="alletajetneutralemfrac1"; xtitle=var;
+  nbins = 30; low=0; high=1;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_0l2b_alletajetneutralemfrac1",0);
+
+  var="alletajetneutralphotonfrac1"; xtitle=var;
+  nbins = 30; low=0; high=1;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_0l2b_alletajetneutralphotonfrac1",0);
+
+  //some b-jet variables
+  var="bjetchargedhadronmult1"; xtitle=var;
+  nbins = 30; low=0; high=100;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_0l2b_bjetchargedhadronmult1",0);
+
+  var="bjetchargedhadronmult2"; xtitle=var;
+  nbins = 30; low=0; high=100;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_0l2b_bjetchargedhadronmult2",0);
 
 }
 
@@ -2035,6 +2116,10 @@ void higgs_ttbarjetmult_sbsig() {
   // reproduce owen's SR/SB numbers in bins of b multiplicity and METsig
   // see if there is a dependence on njets
   // can also compare SR and SB for things like jet pT spectra (which would correlate with b-tag efficiency)
+
+  //this code also generates the plots used for the ABCD cross-check in SL data
+  //there is a "sl" or "zl" setting below. The SL setting is used for the data-driven cross-check
+
   initHiggsSamples69(true,"znunu ttbar");
   //  initHiggsSamples(true,"ttbarjoint");
 
@@ -3080,7 +3165,8 @@ void higgs_printCutflowTable(const bool latexMode=false,TString region="4bSR", c
 
   TCut btagpre="CSVbest2>0.898";
   TCut btag3 = "CSVbest3>0.679";
-  TCut btag4 = "CSVbest4>0.244"; //TCut btag4 = "CSVbest4>0.679";
+  //  TCut btag4 = "CSVbest4>0.244"; 
+  TCut btag4 = "CSVbest4>0.679";
 
   TCut higgsmass = "((0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)>100)&&(0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)<140)) && abs(higgsMbb1MassDiff-higgsMbb2MassDiff)<20";
 
@@ -3142,6 +3228,10 @@ void higgs_printCutflowTable(const bool latexMode=false,TString region="4bSR", c
 
   //first print a header row
 
+  //also make TGraphs of S/root(B)
+  map<TString, TGraph*> SRootBGraphs;
+  map<TString, TGraph*> SGraphs;
+
   const TString dividerHead = latexMode ? " & ":" *|* ";
   const TString divider = latexMode ? " & ":" | ";
   const TString lineEnd=latexMode ? "\\\\":" |";
@@ -3149,15 +3239,33 @@ void higgs_printCutflowTable(const bool latexMode=false,TString region="4bSR", c
   cout<<"Cut \t\t"<<dividerHead;
   bool foundsignals=false;
   for (unsigned int isample = 0; isample<samples_.size(); isample++) {
-    if ( !isSampleSM(samples_.at(isample)) && !foundsignals) {
+
+    //when we get to the first signal, add a Total SM column
+    if ( !isSampleSM(samples_.at(isample)) && !foundsignals) { 
       cout<<" Total SM"<<dividerHead;
       foundsignals=true;
     }
+
+    if (!isSampleSM(samples_.at(isample))) { //signal sample: create sensitivity TGraph
+      TGraph* SRootBGraph = new TGraph();
+      SRootBGraph->SetName( jmt::fortranize(TString("SOverRootB_")+samples_.at(isample),"dash"));
+      SRootBGraph->SetLineColor( getSampleColor( samples_.at(isample)));
+      SRootBGraph->SetMarkerColor( getSampleColor( samples_.at(isample)));
+      SRootBGraphs[samples_.at(isample)] = SRootBGraph;
+
+      TGraph* SGraph = new TGraph();
+      SGraph->SetName( jmt::fortranize(TString("S_")+samples_.at(isample),"dash"));
+      SGraph->SetLineColor( getSampleColor( samples_.at(isample)));
+      SGraph->SetMarkerColor( getSampleColor( samples_.at(isample)));
+      SGraphs[samples_.at(isample)] = SGraph;
+    }
+
     cout<<sampleLabel_[samples_.at(isample)];
     if (isample==samples_.size()-1) cout<<lineEnd;
     else   cout<<dividerHead;
   }
   cout<<endl;
+
 
   TCut totalcut = cuts.at(0).second;
   for (unsigned int icut=0; icut<cuts.size(); icut++) {
@@ -3185,12 +3293,24 @@ void higgs_printCutflowTable(const bool latexMode=false,TString region="4bSR", c
       if (unweighted)     cout<<setprecision(10)<<n;
       else     cout<<jmt::format_nevents(n,e,false,latexMode);
 
-      if (foundsignals) cout<<" ("<<setprecision(2)<<n/sqrt(totalsmvalue)<<") ";
-      
+      //for signals, calculate S/sqrt(B)
+      if (foundsignals) {
+	double soverrootb = n/sqrt(totalsmvalue);
+	cout<<" ("<<setprecision(2)<<soverrootb <<") ";
+	//using icut as the x-value is a bit crude but that's the best we can do for now
+	SRootBGraphs[ thissamplename ]->SetPoint(SRootBGraphs[ thissamplename ]->GetN(),icut,soverrootb);
+	SGraphs[ thissamplename ]->SetPoint(SGraphs[ thissamplename ]->GetN(),icut,n);
+      }
 
       if (isample==samples_.size()-1) cout<<lineEnd<<endl;
       else   cout<<divider;
     }
+  }
+
+  if ( SRootBGraphs.size() >0 ) {
+    TFile fcutflowoutput("higgs_cutflow_graphs.root","recreate"); //hardcode filename for now
+    for (  map<TString, TGraph*>::iterator ig = SRootBGraphs.begin(); ig!= SRootBGraphs.end() ; ++ig)    ig->second->Write();
+    for (  map<TString, TGraph*>::iterator ig = SGraphs.begin(); ig!= SGraphs.end() ; ++ig)    ig->second->Write();
   }
 
 }
@@ -3521,12 +3641,20 @@ void higgsmbb_quickmbbPlots() {
   nbins=20; low= 0; high=200;
   setStackMode(false,false,false); 
   drawPlots(var,nbins,low,high,xtitle,"Events", "ewkhh_massshape_mbb_350",0,"GeV");
+ //make the same plots but requiring that it is possible to reconstruct the higgs (all 4 b from higgs were reconstructed)
+  selection_=baseline&&triggers && zl&& tauveto && isotk1 && njets&&jet2 && btag2 && btag3 && btag4 && higgsdiff && drmax && metsig &&TCut("njetsHiggsMatch20==4");
+  drawPlots(var,nbins,low,high,xtitle,"Events", "ewkhh_massshape_mbb_350_4possible",0,"GeV");
 
+  selection_=baseline&&triggers && zl&& tauveto && isotk1 && njets&&jet2 && btag2 && btag3 && btag4 && higgsdiff && drmax && metsig;
   clearSamples(); //SMS-HbbHbb_mHiggsino-200_mLSP-1_8TeV-Pythia6Z_jgsmith_UCSB1807_v69
   addSample("SMS-HbbHbb_mHiggsino-200_mLSP-1_8TeV-Pythia6Z_jgsmith_UCSB1807_v69:higgsMbb1MassDiff_correct==0",kRed,"hh 200 (0)");
   addSample("SMS-HbbHbb_mHiggsino-200_mLSP-1_8TeV-Pythia6Z_jgsmith_UCSB1807_v69:higgsMbb1MassDiff_correct==1",kBlue,"hh 200 (1)");
   addSample("SMS-HbbHbb_mHiggsino-200_mLSP-1_8TeV-Pythia6Z_jgsmith_UCSB1807_v69:higgsMbb1MassDiff_correct==2",kGreen+4,"hh 200 (2)");
   drawPlots(var,nbins,low,high,xtitle,"Events", "ewkhh_massshape_mbb_200",0,"GeV");
+
+  //make the same plots but requiring that it is possible to reconstruct the higgs (all 4 b from higgs were reconstructed)
+  selection_=baseline&&triggers && zl&& tauveto && isotk1 && njets&&jet2 && btag2 && btag3 && btag4 && higgsdiff && drmax && metsig &&TCut("njetsHiggsMatch20==4");
+  drawPlots(var,nbins,low,high,xtitle,"Events", "ewkhh_massshape_mbb_200_4possible",0,"GeV");
 
 
 
