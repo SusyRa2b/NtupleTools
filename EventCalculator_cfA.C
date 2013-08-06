@@ -10707,6 +10707,7 @@ void EventCalculator::plotBTagEffMC( ) {
   Long64_t ntaggedjets_c = 0;
   Long64_t ntaggedjets_l = 0;
 
+  std::cout<<" ==== about to run over "<<nevents<<" events"<<std::endl;
 
   startTimer();
   for(Long64_t entry=0; entry < nevents; ++entry){
