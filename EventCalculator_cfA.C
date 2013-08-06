@@ -4960,91 +4960,13 @@ Long64_t EventCalculator::getNEventsGenerated( TString sample) {
   //numbers come from 
   //http://cms2.physics.ucsb.edu/cgi-bin/cfA.pl?Institute=ALL&process=ALL&version=v63
 
-  if (sample.Contains("UCSB1318")) return 3789889 ;
-  if (sample.Contains("UCSB1319")) return 1703863 ;
-  if (sample.Contains("UCSB1341")) return 30461028 ;
+  // v63 removed as part of cleanup
 
-  if (sample.Contains("UCSB1311")) return 1964088 ;
-  if (sample.Contains("UCSB1347")) return 5935732 ;
-  if (sample.Contains("UCSB1312")) return 2000062 ;
-  if (sample.Contains("UCSB1317")) return 1025622 ;
-  if (sample.Contains("UCSB1336")) return 2947160 ;
-  if (sample.Contains("UCSB1314")) return 977586 ;
-  if (sample.Contains("UCSB1292")) return 5927300 ;
-  if (sample.Contains("UCSB1332")) return 5480000 ;
-  if (sample.Contains("UCSB1297")) return 3994848 ;
-  if (sample.Contains("UCSB1298")) return 3992760 ;
-  if (sample.Contains("UCSB1310")) return 3998563 ;
-  
-  if (sample.Contains("UCSB1355")) return 7618593 ;
-  if (sample.Contains("UCSB1338")) return 1087272 ;
-  if (sample.Contains("UCSB1291")) return 13880079 ;
-  if (sample.Contains("UCSB1344")) return 259961 ;
-  if (sample.Contains("UCSB1306")) return 23777 ;
-  if (sample.Contains("UCSB1307")) return 497658 ;
-  if (sample.Contains("UCSB1345")) return 139974 ;
-  if (sample.Contains("UCSB1330")) return 1935072 ;
-  if (sample.Contains("UCSB1305")) return 493460 ;
-  
-  if (sample.Contains("UCSB1322")) return 1634582 ;
-  if (sample.Contains("UCSB1328")) return 1698744 ;
-  if (sample.Contains("UCSB1339")) return 1647807 ;
-  if (sample.Contains("UCSB1331")) return 18393090 ;
-  
-  if (sample.Contains("UCSB1337")) return 6800431 ;
-  if (sample.Contains("UCSB1326")) return 9996622 ;
-  if (sample.Contains("UCSB1329")) return 4416646 ;
-  if (sample.Contains("UCSB1327")) return 5066608 ;
-  if (sample.Contains("UCSB1324")) return 1006928 ;
-  if (sample.Contains("UCSB1323")) return 4053786 ;
-  if (sample.Contains("UCSB1288")) return 9799908 ;
-
-
-  //  if (sample=="sbottom8lnotaus-189-270") return 50000; //probably deprecated in favor of the names below
-
-  if (sample=="RPVSUSY_sbottom8lnotaus-185-250") return 50000;
-  if (sample=="RPVSUSY_sbottom8lnotaus-189-270") return 50000;
-  if (sample=="RPVSUSY_sbottom8lnotaus-217-300") return 50000;
 
   // ============= v65 samples ============
   // SKIM is applied, so this is now important
 
-  //numbers come from 
-  //http://cms2.physics.ucsb.edu/cgi-bin/cfA.pl?Institute=ALL&process=ALL&version=v65
-  if (sample.Contains("UCSB1403")) return 6923750 ; //TT madgraph
-  if (sample.Contains("UCSB1439")) return 21673270; //TT powheg
-  if (sample.Contains("UCSB1443")) return 1634582 ; //W 250-300
-  if (sample.Contains("UCSB1405")) return 1699486 ; //W 300-400
-  if (sample.Contains("UCSB1406")) return 1647807 ; //W 400-
-  if (sample.Contains("UCSB1464")) return 1647807 ; //W 400- (52X)
-  if (sample.Contains("UCSB1422")) return 139974 ;  //tbar s channel
-  if (sample.Contains("UCSB1421")) return 259961 ;  //t s channel
-  if (sample.Contains("UCSB1451")) return 493460 ;  //tbar tW channel
-  if (sample.Contains("UCSB1455")) return 497658 ;  //t tW channel
-  if (sample.Contains("UCSB1461")) return 1923628;	//tbar t channel
-  if (sample.Contains("UCSB1470")) return 23777; //t t channel
-  if (sample.Contains("UCSB1438")) return 5995944; // QCD 50-80
-                                                        //QCD 80-120
-  if (sample.Contains("UCSB1477")) return 5755732; //QCD120-170
-  if (sample.Contains("UCSB1453")) return 5814398 ;//QCD170-300
-  if (sample.Contains("UCSB1425")) return 5927300 ; //QCD 300-470
-  if (sample.Contains("UCSB1446")) return 3994848 ; //QCD 470-600
-  if (sample.Contains("UCSB1447")) return 3992760 ; //QCD 600-800
-  if (sample.Contains("UCSB1459")) return 3998563 ; //QCD 800-1000
-  if (sample.Contains("UCSB1448")) return 1964088; //QCD 1000-1400
-  if (sample.Contains("UCSB1449")) return 2000062; //QCD 1400-1800
-  if (sample.Contains("UCSB1450")) return 977586 ; // QCD 1800-
-  if (sample.Contains("UCSB1469")) return 4416646; //Znn100-200
-  if (sample.Contains("UCSB1468")) return 5055885; //Znn200-400
-  if (sample.Contains("UCSB1391")) return 1006928 ; //Znn 400-
-                                           
-  if (sample.Contains("UCSB1389")) return 3789889 ; //DY 200-400
-  if (sample.Contains("UCSB1390")) return 1703863 ; //DY 400-
-  if (sample.Contains("UCSB1388")) return 30459503 ;//DY inclusive
-  if (sample.Contains("UCSB1424")) return 9799908 ; //ZZ
-  if (sample.Contains("UCSB1458")) return 10000431; //WW
-  if (sample.Contains("UCSB1445")) return 10000283 ; //WZ
-
+  //v65 removed as part of cleanup
 
     // ============= v66 samples ============
   // SKIM is applied, so this is now important
@@ -5137,12 +5059,16 @@ Long64_t EventCalculator::getNEventsGenerated( TString sample) {
 
   if (sample.Contains("UCSB1677")) return 20646001; // W+bb
 
-  //v69 
+   // ============= v69 samples ============
   if (sample.Contains("UCSB1798")) return 6923750; 
   if (sample.Contains("UCSB1799")) return 12011428; 
   if (sample.Contains("UCSB1800")) return 24953451; 
   if (sample.Contains("UCSB1804")) return 19365927; 
   if (sample.Contains("UCSB1806")) return 19514018;
+
+   // ============= v71 samples ============
+  if (sample.Contains("UCSB1850")) return 6923750; //hopefully this is correct ; need to verify
+
 
   cout<<"[getNEventsGenerated] unknown sample "<<sample<<endl;
   assert(0);
