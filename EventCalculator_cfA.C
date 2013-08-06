@@ -7289,6 +7289,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   //  float higgs1genId1,higgs1genId2,higgs2genId1,higgs2genId2;
   //  float higgs1genMomId1,higgs1genMomId2,higgs2genMomId1,higgs2genMomId2;
   float higgs1partonId1,higgs1partonId2,higgs2partonId1,higgs2partonId2;
+  float higgs1partonFlavor1,higgs1partonFlavor2,higgs2partonFlavor1,higgs2partonFlavor2;
   float higgs1partonMomId1,higgs1partonMomId2,higgs2partonMomId1,higgs2partonMomId2;
   bool higgs1tauMatch1,higgs1tauMatch2,higgs2tauMatch1,higgs2tauMatch2;
 
@@ -7844,6 +7845,10 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("higgs1partonId2",&higgs1partonId2,"higgs1partonId2/F");
   reducedTree.Branch("higgs2partonId1",&higgs2partonId1,"higgs2partonId1/F");
   reducedTree.Branch("higgs2partonId2",&higgs2partonId2,"higgs2partonId2/F");
+  reducedTree.Branch("higgs1partonFlavor1",&higgs1partonFlavor1,"higgs1partonFlavor1/F");
+  reducedTree.Branch("higgs1partonFlavor2",&higgs1partonFlavor2,"higgs1partonFlavor2/F");
+  reducedTree.Branch("higgs2partonFlavor1",&higgs2partonFlavor1,"higgs2partonFlavor1/F");
+  reducedTree.Branch("higgs2partonFlavor2",&higgs2partonFlavor2,"higgs2partonFlavor2/F");
   reducedTree.Branch("higgs1partonMomId1",&higgs1partonMomId1,"higgs1partonMomId1/F");
   reducedTree.Branch("higgs1partonMomId2",&higgs1partonMomId2,"higgs1partonMomId2/F");
   reducedTree.Branch("higgs2partonMomId1",&higgs2partonMomId1,"higgs2partonMomId1/F");
@@ -8910,6 +8915,10 @@ void EventCalculator::reducedTree(TString outputpath) {
 	  higgs1partonId2 = jets_AK5PF_parton_Id->at(h1j2);
 	  higgs2partonId1 = jets_AK5PF_parton_Id->at(h2j1);
 	  higgs2partonId2 = jets_AK5PF_parton_Id->at(h2j2);
+	  higgs1partonFlavor1 = jets_AK5PF_partonFlavour->at(h1j1);
+	  higgs1partonFlavor2 = jets_AK5PF_partonFlavour->at(h1j2);
+	  higgs2partonFlavor1 = jets_AK5PF_partonFlavour->at(h2j1);
+	  higgs2partonFlavor2 = jets_AK5PF_partonFlavour->at(h2j2);
 	  higgs1partonMomId1 = jets_AK5PF_parton_motherId->at(h1j1);
 	  higgs1partonMomId2 = jets_AK5PF_parton_motherId->at(h1j2);
 	  higgs2partonMomId1 = jets_AK5PF_parton_motherId->at(h2j1);
@@ -8993,6 +9002,7 @@ void EventCalculator::reducedTree(TString outputpath) {
 	  //	  higgs1genId1=-1e9;higgs1genId2=-1e9;higgs2genId1=-1e9;higgs2genId2=-1e9;
 	  //	  higgs1genMomId1=-1e9;higgs1genMomId2=-1e9;higgs2genMomId1=-1e9;higgs2genMomId2=-1e9;
 	  higgs1partonId1=-1e9;higgs1partonId2=-1e9;higgs2partonId1=-1e9;higgs2partonId2=-1e9;
+	  higgs1partonFlavor1=-1e9;higgs1partonFlavor2=-1e9;higgs2partonFlavor1=-1e9;higgs2partonFlavor2=-1e9;
 	  higgs1partonMomId1=-1e9;higgs1partonMomId2=-1e9;higgs2partonMomId1=-1e9;higgs2partonMomId2=-1e9;
 
 	}
