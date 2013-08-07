@@ -35,6 +35,7 @@ CrossSectionTable::CrossSectionTable(const TString & inputFile, const TString & 
   else if (format=="smsroot") loadFileToDatabaseSMSRoot(inputFile,histoname);
   else if (format=="CMSSM") loadFileToDatabase(inputFile);
   else if (format=="pMSSM") loadFileToDatabasePMSSM(inputFile,false);
+  else if (format=="simplesms") loadFileToDatabaseSMS_simple(inputFile);
   else assert(0);
 
 }
@@ -166,6 +167,36 @@ void CrossSectionTable::loadFileToDatabaseSMSRoot(const TString & filename,const
   else cout << "Problem with file or histogram!"<<endl; 
 
   fxs.Close();
+
+}
+
+void CrossSectionTable::loadFileToDatabaseSMS_simple(const TString & filename) {
+
+  using namespace std;
+  const int m12 = 0; //no change as a function of m12 axis; used fixed value. 0 seems logical
+
+  ifstream file10(filename.Data());
+  //simple 2 column format
+  // mass cross-section
+
+  if (!file10.good() ) {
+    cout<<"Problem with file! Terminating..."<<endl;
+    assert(0);
+  }
+
+  database_.clear(); //just to be sure
+  int mass;
+  double xs;
+  while ( file10>>mass>>xs ) {
+    pair<int, int> scanpoint = make_pair(mass,m12);
+    map<SUSYProcess, double> theseCrossSections;
+    //see comments elsewhere about choice of NotFound
+    theseCrossSections[NotFound] = xs;
+    database_[scanpoint] = theseCrossSections;
+  }
+
+  file10.close();
+  cout<<"Loaded cross sections for "<<database_.size()<<" scan points"<<endl;
 
 }
 

@@ -35,6 +35,7 @@ public:
   ~CrossSectionTable();
   void loadFileToDatabase(const TString & filename); //CMSSM
   void loadFileToDatabaseSMS(const TString & filename); //SMS
+  void loadFileToDatabaseSMS_simple(const TString & filename); // simple 2 column [mass] [cross-section] format
   void loadFileToDatabaseSMSRoot(const TString & filename,const TString & histoname); //SMS from root file
   void loadFileToDatabasePMSSM(const TString & filename,const bool append); //pMSSM
 

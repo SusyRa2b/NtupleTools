@@ -206,7 +206,7 @@ TH3D* scanSMSngen3D=0;
 //TH1D* referenceCrossSectionGluino=0;
 CrossSectionTable * CrossSectionTable_gluino_=0;
 CrossSectionTable * CrossSectionTable_stop_=0;
-
+CrossSectionTable * CrossSectionTable_higgsino_ = 0;
 
 //default selection
 TString selection_ ="cutHT==1 && cutPV==1 && cutTrigger==1 && cut3Jets==1 && cutEleVeto==1 && cutMuVeto==1";
@@ -258,8 +258,6 @@ toPlot::toPlot(TString a, int b, double c, double d) {
 void toPlot::print() {
   cout << varname << ": " << nbins << " bins, from " << binlow << " to " << binhigh << endl;
 }
-
-bool smsHack_=false; //horrible...
 
 bool quiet_=false;
 //bool quiet_=true;
@@ -545,6 +543,8 @@ bool isSampleSMS(const TString & name ) {
   if (name.Contains("T1t1t")) return true;
   if (name.Contains("T2tt")) return true;
 
+  if (name.BeginsWith("HiggsinoNLSP")) return true;
+
   return false;
 }
 
@@ -645,6 +645,11 @@ void loadReferenceCrossSections() {
   if (CrossSectionTable_stop_ == 0) {
     cout<<"Loading reference cross section file (t~t~)"<<endl;
     CrossSectionTable_stop_ = new  CrossSectionTable("stop.root","smsroot","stop");
+  }
+
+  if (CrossSectionTable_higgsino_==0) {
+    cout<<"Loading reference cross section file (higgsino)"<<endl;
+    CrossSectionTable_higgsino_ = new CrossSectionTable("CrossSectionsHiggsino.txt","simplesms");
   }
 
 }
@@ -920,7 +925,7 @@ void renormBins( TH1D* hp ) {
 
 //jmt Dec 2012 -- clearly this function is stylistically awful, but it does the job and I don't want to mess with it right now
 //try to bring some rationality to the options passed to getcutstring....
-enum sampleType {kData, kMC, kmSugraPoint, kmSugraPlane, kSMSPointGlGl, kSMSPointStopStop, kSMSPointSbottomSbottom, kSMSPlane};
+enum sampleType {kData, kMC, kmSugraPoint, kmSugraPlane, kSMSPointGlGl, kSMSPointStopStop, kSMSPointSbottomSbottom, kSMSPlane, kSMSPointHiggsino};
 //for more rationality, should make a data struct (or class) to hold the options, so that fewer arguments need to be passed
 //TString getCutString(double lumiscale, TString extraWeight="", TString thisSelection="", TString extraSelection="", int pdfWeightIndex=0,TString pdfSet="CTEQ", bool isSusyScan=false, int susySubProcess=-1, const bool isData=false) {
 TString getCutString(sampleType type, TString extraWeight="", TString thisSelection="", TString extraSelection="", int pdfWeightIndex=0,TString pdfSet="CTEQ", int susySubProcess=-1,const float scalefactor=1) {
@@ -943,7 +948,7 @@ for legacy purposes I am keeping all of the weight and selection TStrings, altho
   //for now treat sms point just like smsplane
 
   if (type==kData)    lumiscale=1;
-  else if (type==kMC || type==kmSugraPoint || type==kmSugraPlane ||type==kSMSPointGlGl || type==kSMSPointStopStop) lumiscale=lumiScale_;
+  else if (type==kMC || type==kmSugraPoint || type==kmSugraPlane ||type==kSMSPointGlGl || type==kSMSPointStopStop ||type==kSMSPointHiggsino) lumiscale=lumiScale_;
   else if (type==kSMSPlane) lumiscale=1;
   else {assert(0);}
 
@@ -958,15 +963,6 @@ for legacy purposes I am keeping all of the weight and selection TStrings, altho
   weightedcut +=scalefactor;
   weightedcut+=")";
 
-  //horrible kludge
-  /*
-  if (type!=kData) {
-    if (thisSelection.Contains("pass_PFHT350_PFMET100")) thisSelection.ReplaceAll("pass_PFHT350_PFMET100","1");
-    else  if (thisSelection.Contains("pass_PFHT350_Mu15_PFMET45")) thisSelection.ReplaceAll("pass_PFHT350_Mu15_PFMET45","1");
-    else  if (thisSelection.Contains("pass_IsoMu24_eta2p1")) thisSelection.ReplaceAll("pass_IsoMu24_eta2p1","1");
-    else  if (thisSelection.Contains("pass_IsoMu24")) thisSelection.ReplaceAll("pass_IsoMu24","1");
-  }
-  */
 
   if (extraWeight!="") {
     weightedcut += "*(";
@@ -1013,13 +1009,10 @@ for legacy purposes I am keeping all of the weight and selection TStrings, altho
       weightedcut += " && ";
       weightedcut +=extraSelection;
     }
-    if (type == kmSugraPoint || type==kSMSPointGlGl|| type==kSMSPointStopStop) {
-      //a better way to code this would have been to make the names (m0, mStop) a variable and then allow it to be customized
-      if (smsHack_) weightedcut += " && mStop=="; //for stop samples where i used the wrong names
-      else          weightedcut += " && m0==";
+    if (type == kmSugraPoint || type==kSMSPointGlGl|| type==kSMSPointStopStop ||type==kSMSPointHiggsino) {
+      weightedcut += " && m0==";
       weightedcut +=m0_;
-      if (smsHack_) weightedcut += " && mLSP=="; //for stop samples where i used the wrong names
-      else          weightedcut += " && m12==";
+      weightedcut += " && m12==";
       weightedcut +=m12_;
       if (mIntermediate_!=0) { //use intermediate mass
 	weightedcut += " && mIntermediate==";
@@ -1031,12 +1024,10 @@ for legacy purposes I am keeping all of the weight and selection TStrings, altho
   else if (extraSelection !="") {
     weightedcut += "*(";
     weightedcut +=extraSelection;
-    if (type == kmSugraPoint || type==kSMSPointGlGl|| type==kSMSPointStopStop) {
-      if (smsHack_)  weightedcut += " && mStop=="; //for stop samples where i used the wrong names
-      else           weightedcut += " && m0==";
+    if (type == kmSugraPoint || type==kSMSPointGlGl|| type==kSMSPointStopStop ||type==kSMSPointHiggsino) {
+      weightedcut += " && m0==";
       weightedcut +=m0_;
-      if (smsHack_) weightedcut += " && mLSP=="; //for stop samples where i used the wrong names
-      else          weightedcut += " && m12=="; 
+      weightedcut += " && m12=="; 
       weightedcut +=m12_;
       if (mIntermediate_!=0) { //use intermediate mass
 	weightedcut += " && mIntermediate==";
@@ -1075,21 +1066,20 @@ for legacy purposes I am keeping all of the weight and selection TStrings, altho
     sprintf(thisweight, "*((SUSY_process==%d)*scanCrossSection%s)",susySubProcess,susyCrossSectionVariation_.Data());
     weightedcut += thisweight;
   }
-  else if (type == kSMSPointGlGl || type == kSMSPointStopStop ||type == kSMSPointSbottomSbottom ) {
-    if (!smsHack_) { //these old hacked samples also did not have the scanSMSngen_
+  else if (type == kSMSPointGlGl || type == kSMSPointStopStop ||type == kSMSPointSbottomSbottom||type==kSMSPointHiggsino ) {
     //need to weight with the standard sigma / N ; lumi factor is done above
-      assert(scanSMSngen3D!=0); //shift to used 3D version (should be generic...)
-      int bin=  scanSMSngen3D->FindBin(m0_,m12_,mIntermediate_);
-      double ngen=scanSMSngen3D->GetBinContent(bin);
-      loadReferenceCrossSections();
-      double xs =0;
-      if (type == kSMSPointGlGl) xs = CrossSectionTable_gluino_->getSMSCrossSection(m0_);
-      else if (type == kSMSPointStopStop) xs = CrossSectionTable_stop_->getSMSCrossSection(m0_);
-      else assert(0); //have not yet implemented sbottom
-      char xsweight[100];
-      sprintf(xsweight,"*(%f/%f)",xs,ngen);
-      weightedcut += xsweight;
-    }
+    assert(scanSMSngen3D!=0); //shift to used 3D version (should be generic...)
+    int bin=  scanSMSngen3D->FindBin(m0_,m12_,mIntermediate_);
+    double ngen=scanSMSngen3D->GetBinContent(bin);
+    loadReferenceCrossSections();
+    double xs =0;
+    if (type == kSMSPointGlGl) xs = CrossSectionTable_gluino_->getSMSCrossSection(m0_);
+    else if (type == kSMSPointStopStop) xs = CrossSectionTable_stop_->getSMSCrossSection(m0_);
+    else if (type == kSMSPointHiggsino) xs = CrossSectionTable_higgsino_->getSMSCrossSection(m0_);
+    else assert(0); //have not yet implemented sbottom
+    char xsweight[100];
+    sprintf(xsweight,"*(%f/%f)",xs,ngen);
+    weightedcut += xsweight;
   }
   else if (type == kmSugraPlane && susySubProcess<0) { //sanity check
     cout<<"You need to specify the susySubProcess!"<<endl; assert(0);
@@ -2089,6 +2079,9 @@ sampleType getSampleType(const TString & sample , const TString & planeOrPoint="
   else if (sample.Contains("T2bb") && planeOrPoint=="plane") return kSMSPlane;
   else if (sample.Contains("T2tt") && planeOrPoint=="point") return kSMSPointStopStop;
   else if (sample.Contains("T2tt") && planeOrPoint=="plane") return kSMSPlane;
+
+  else if (sample.Contains("HiggsinoNLSP") && planeOrPoint=="point") return kSMSPointHiggsino;
+  else if (sample.Contains("HiggsinoNLSP") && planeOrPoint=="plane") return kSMSPlane;
 
   return kMC;
 

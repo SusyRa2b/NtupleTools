@@ -76,7 +76,7 @@ void initHiggsSamples69(const bool useSkim=true,const TString samplelist="") {
 
   addToSamplesAll("TTJets_ResolutionTest_PU_S10_CU0001_v69"); //special test
   addToSamplesAll("TTJets_ResolutionTest_PU_S10_CU0001_JERbias_v69"); // special test
-  addToSamplesAll("HiggsinoNLSP_chargino130_to_500_bino1_TChihh_v69");
+  addToSamplesAll("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69"); //Dave Mason mg signal
 
   //MG ttbar  
   addToSamplesAll(TString("TTJets_SemiLeptMGDecays_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7C-v1_AODSIM_UCSB1800_v69")+skimstring);
@@ -213,20 +213,32 @@ void initHiggsSamples69(const bool useSkim=true,const TString samplelist="") {
   if (samplelist==""||samplelist.Contains("hh450"))
     setSampleScaleFactor("SMS-HbbHbb_mHiggsino-450_mLSP-1_8TeV-Pythia6Z_jgsmith_UCSB1808_v69",   0.0163 *hbbbb/getTree("SMS-HbbHbb_mHiggsino-450_mLSP-1_8TeV-Pythia6Z_jgsmith_UCSB1808_v69")->GetEntries());
   
+/*
+  if (samplelist.Contains("hhmg200"))     addSample("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69$200$1",kRed-9,"hh MG 200");
+  if (samplelist.Contains("hhmg250"))     addSample("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69$250$1",kRed-7,"hh MG 250");
+  if (samplelist.Contains("hhmg300"))     addSample("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69$300$1",kRed-4,"hh MG 300");
+  if (samplelist.Contains("hhmg350"))     addSample("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69$350$1",kRed+1,"hh MG 350");
+  if (samplelist.Contains("hhmg400"))     addSample("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69$400$1",kRed+2,"hh MG 400");
+  if (samplelist.Contains("hhmg450"))     addSample("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69$450$1",kRed+3,"hh MG 450");
+  if (samplelist.Contains("hhmg500"))     addSample("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69$500$1",kRed+4,"hh MG 500");
+*/
+
+//special colors for comparisons between mg and pythia  
+if (samplelist.Contains("hhmg200"))     addSample("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69$200$1",kBlue-9,"hh MG 200");
+  if (samplelist.Contains("hhmg250"))     addSample("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69$250$1",kBlue-7,"hh MG 250");
+  if (samplelist.Contains("hhmg300"))     addSample("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69$300$1",kBlue-4,"hh MG 300");
+  if (samplelist.Contains("hhmg350"))     addSample("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69$350$1",kBlue+1,"hh MG 350");
+  if (samplelist.Contains("hhmg400"))     addSample("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69$400$1",kBlue+2,"hh MG 400");
+  if (samplelist.Contains("hhmg450"))     addSample("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69$450$1",kBlue+3,"hh MG 450");
+  if (samplelist.Contains("hhmg500"))     addSample("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69$500$1",kBlue+4,"hh MG 500");
 
 
-  if (samplelist.Contains("hhmg200")) {
-    addSample("HiggsinoNLSP_chargino130_to_500_bino1_TChihh_v69:m0==200",kBlue-7,"hh MG 200");
-    setSampleScaleFactor("HiggsinoNLSP_chargino130_to_500_bino1_TChihh_v69:m0==200", 0.608 *hbbbb/408456.0); //sigma x BF / ngen
-  }
+  //scale by h->bb squared factor
+  if (samplelist.Contains("hhmg")) setSampleScaleFactor("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69",hbbbb);
 
-  if (samplelist.Contains("hhmg350")) {
-    addSample("HiggsinoNLSP_chargino130_to_500_bino1_TChihh_v69:m0==350",kBlue+2,"hh MG 350");
-    setSampleScaleFactor("HiggsinoNLSP_chargino130_to_500_bino1_TChihh_v69:m0==350", 0.0553 *hbbbb/72112.0); //sigma x BF / ngen
-  }
+  overrideSMSlabels_=true; //don't use the auto-labels for SMS
 
   setDatasetToDraw("MET"); //when plotting data, use the MET PD
-
 
 }
 
@@ -240,7 +252,7 @@ void mgSignalCheck() {
   doRatio_=false; ratioMin = 0; ratioMax = 2.2;
   dodata_=false;
 
-  usePUweight_=false;  //broken 
+  //  usePUweight_=false;  //broken 
 
   setStackMode(false,false,false); //stack,norm,label override
 
@@ -397,10 +409,12 @@ void mgSignalCheck() {
   //now, another check
   selection_="(1)";
   clearSamples();
-    addSample("HiggsinoNLSP_chargino130_to_500_bino1_TChihh_v69:m0==200",kGreen,"hh MG 200");
-    addSample("HiggsinoNLSP_chargino130_to_500_bino1_TChihh_v69:m0==250",kBlue,"hh MG 250");
-    addSample("HiggsinoNLSP_chargino130_to_500_bino1_TChihh_v69:m0==300",kMagenta,"hh MG 300");
-    addSample("HiggsinoNLSP_chargino130_to_500_bino1_TChihh_v69:m0==350",kRed,"hh MG 350");
+    addSample("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69$200$1",kGreen,"hh MG 200");
+    addSample("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69$250$1",kBlue,"hh MG 250");
+    addSample("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69$300$1",kMagenta,"hh MG 300");
+    addSample("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69$350$1",kRed,"hh MG 350");
+    addSample("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69$500$1",kOrange,"hh MG 500");
+
   setStackMode(false,true,false); //stack,norm,label override
  
   nbins=40; low=0; high=400;
@@ -411,10 +425,6 @@ void mgSignalCheck() {
   var="METsig"; xtitle="METsig";
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_SignalValidationAll4_"+var,0);
 
-
-  nbins=40; low=0; high=300;
-  var="METsig_2012"; xtitle="METsig_2012";
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_SignalValidationAll4_"+var,0);
 
 
 }
