@@ -7235,6 +7235,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   triggerlist["PFJet80"]=triggerData();
   //MET
   triggerlist["DiCentralJetSumpT100_dPhi05_DiCentralPFJet60_25_PFMET100_HBHENoiseCleaned"]=triggerData();
+  triggerlist["DiCentralPFJet30_PFMHT80"]=triggerData();
   triggerlist["DiCentralPFJet50_PFMET80"]=triggerData();
   triggerlist["DiCentralPFJet30_PFMET80"]=triggerData();
   triggerlist["DiCentralPFJet30_PFMET80_BTagCSV07"]=triggerData();
