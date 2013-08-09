@@ -6242,6 +6242,60 @@ int EventCalculator::getJetTagCatIndex(const int ijet) {
   return -1;
 }
 
+float EventCalculator::getBtagWeightCSV_TnotM(BTagEffModifier variation) { 
+  /*
+this is aimed at the control sample of the EWKino higgs analysis where we require 2Tight + !M
+  */
+
+  if ( isSampleRealData() ) return 1;
+  if (f_tageff_==0) return 0;
+
+  double prodMC=1;
+  double prodD=1;
+  // loop over jets
+  for (unsigned int ijet=0; ijet<jets_AK5PF_pt->size(); ++ijet) {
+    //only consider good jets (eta, quality, pT)
+    if(isGoodJet(ijet,minHiggsJetPt_)) { //use whatever pT threshold we're using for the higgs analysis
+      // 0=Not tagged, 1=L not M, 2=M not T, 3=T
+      int tagcat = getJetTagCatIndex(ijet); //classify jet according to CSV value
+      int jet_flavor = abs(jets_AK5PF_partonFlavour->at(ijet));
+      float jet_pt = getJetPt( ijet);
+      float jet_eta = fabs(jets_AK5PF_eta->at(ijet));
+
+      if ( tagcat == 3) { //jet is tagged Tight
+	double effMC = getBtagEffMC(jet_flavor,jet_pt,jet_eta,tagcat);
+	double sf = getBtagSF(jet_flavor,jet_pt,jet_eta,tagcat,variation);
+
+	double dprod = effMC*sf;
+	if (dprod>1) dprod=1;//sanity checks
+	if (dprod<0) dprod=0;
+
+	prodMC *= effMC;
+	prodD  *= dprod;
+      }
+      else if ( tagcat == 0 || tagcat==1 ) { //jet is not Medium (it is loose or untagged)
+	const int mediumTag=2;
+	double effMC = getBtagEffMC(jet_flavor,jet_pt,jet_eta, mediumTag);
+	double sf = getBtagSF(jet_flavor,jet_pt,jet_eta,mediumTag,variation);
+
+	double dprod = effMC*sf;
+	if (dprod>1) dprod=1;//sanity checks
+	if (dprod<0) dprod=0;
+
+	prodMC *= (1.0 - effMC);
+	prodD  *= (1.0 - dprod);
+      }
+      else assert(0); //do not call this method on events with a medium tag!
+
+    }
+  }
+
+  if (prodMC<=0) return 1;
+  double w = prodD / prodMC;
+  return float(w);
+
+}
+
 float EventCalculator::getBtagWeightCSV_LMT(BTagEffModifier variation) {
   if ( isSampleRealData() ) return 1;
   if (f_tageff_==0) return 0;
@@ -6252,7 +6306,7 @@ The implementation here follows prescription (1a) here: https://twiki.cern.ch/tw
 
   */
 
-  // 0=Not tagged, 1=L not M, 2=M not L, 3=T
+  // 0=Not tagged, 1=L not M, 2=M not T, 3=T
   double prodMC[4]={1,1,1,1};
   double prodD[4]={1,1,1,1};
   // loop over jets
@@ -7446,7 +7500,9 @@ void EventCalculator::reducedTree(TString outputpath) {
   float prob0,probge1,prob1,probge2,probge3,prob2, prob3, probge4;
   
   float PIDweight;
-  float BTagWeight,BTagWeight_LMT;
+  float BTagWeight;
+
+  float BTagWeightLMT,BTagWeightLMT_HFplus,BTagWeightLMT_HFminus,BTagWeightLMT_LFplus,BTagWeightLMT_LFminus;
 
   float prob0_HFplus,probge1_HFplus,prob1_HFplus,probge2_HFplus,probge3_HFplus,prob2_HFplus,probge4_HFplus,prob3_HFplus;
   float prob0_HFminus,probge1_HFminus,prob1_HFminus,probge2_HFminus,probge3_HFminus,prob2_HFminus,probge4_HFminus,prob3_HFminus;
@@ -7562,7 +7618,11 @@ void EventCalculator::reducedTree(TString outputpath) {
 
   reducedTree.Branch("PIDweight",&PIDweight,"PIDweight/F");
   reducedTree.Branch("BTagWeight",&BTagWeight,"BTagWeight/F");
-  reducedTree.Branch("BTagWeight_LMT",&BTagWeight_LMT,"BTagWeight_LMT/F");
+  reducedTree.Branch("BTagWeightLMT",&BTagWeightLMT,"BTagWeightLMT/F");
+  reducedTree.Branch("BTagWeightLMT_HFplus",&BTagWeightLMT_HFplus,"BTagWeightLMT_HFplus/F");
+  reducedTree.Branch("BTagWeightLMT_HFminus",&BTagWeightLMT_HFminus,"BTagWeightLMT_HFminus/F");
+  reducedTree.Branch("BTagWeightLMT_LFplus",&BTagWeightLMT_LFplus,"BTagWeightLMT_LFplus/F");
+  reducedTree.Branch("BTagWeightLMT_LFminus",&BTagWeightLMT_LFminus,"BTagWeightLMT_LFminus/F");
 
   float SUSY_msq12[2]={-1,-1};
   float SUSY_msq23[2]={-1,-1};
@@ -8636,8 +8696,6 @@ void EventCalculator::reducedTree(TString outputpath) {
       PIDweight=getBtagEffWeight();
       BTagWeight = getBtagWeight();
 
-      //TESTING
-      BTagWeight_LMT = getBtagWeightCSV_LMT(kBTagModifier0);
       calculateTagProb(prob0,probge1,prob1,probge2,prob2,probge3,prob3,probge4);
 
       calculateTagProb(prob0_HFplus,probge1_HFplus,prob1_HFplus,probge2_HFplus,prob2_HFplus,probge3_HFplus,prob3_HFplus,probge4_HFplus,1,1,1,kHFup);
@@ -9046,6 +9104,36 @@ void EventCalculator::reducedTree(TString outputpath) {
       CSVbest2=bjetBestCSV(2,minHiggsJetPt_);
       CSVbest3=bjetBestCSV(3,minHiggsJetPt_);
       CSVbest4=bjetBestCSV(4,minHiggsJetPt_);
+
+      BTagWeightLMT = 0;
+      BTagWeightLMT_HFplus = 0;
+      BTagWeightLMT_HFminus = 0;
+      BTagWeightLMT_LFplus = 0;
+      BTagWeightLMT_LFminus = 0;
+      //for higgs analysis, classify events into 2b,3b,4b for
+      //the purpose of calculating data/MC weights
+
+      //the first method applies to 3b and 4b events, that is:
+      // (CSVbest2>0.898 && CSVbest3>0.679 && CSVbest4> 0.244) //4b
+      // (CSVbest2>0.898 && CSVbest3>0.679 && CSVbest4<=0.244) //3b
+      //in other words, the CSVbest4 test can be dropped
+      if ( CSVbest2>0.898 && CSVbest3>0.679 ) {
+	BTagWeightLMT = getBtagWeightCSV_LMT(kBTagModifier0);
+	BTagWeightLMT_HFplus = getBtagWeightCSV_LMT(kHFup);
+	BTagWeightLMT_HFminus = getBtagWeightCSV_LMT(kHFdown);
+	BTagWeightLMT_LFplus = getBtagWeightCSV_LMT(kLFup);
+	BTagWeightLMT_LFminus = getBtagWeightCSV_LMT(kLFdown);
+      }
+      else if (CSVbest2>0.898 && CSVbest3<=0.679) { //2b
+	//2b requires a different method
+	BTagWeightLMT = getBtagWeightCSV_TnotM(kBTagModifier0);
+	BTagWeightLMT_HFplus = getBtagWeightCSV_TnotM(kHFup);
+	BTagWeightLMT_HFminus = getBtagWeightCSV_TnotM(kHFdown);
+	BTagWeightLMT_LFplus = getBtagWeightCSV_TnotM(kLFup);
+	BTagWeightLMT_LFminus = getBtagWeightCSV_TnotM(kLFdown);
+      }
+      //for non 2b/3b/4b events, just leave the weights as zero
+
       minDeltaPhiAllb30=getMinDeltaPhiMET30(99,true);
       deltaPhib1=getDeltaPhiMET(1,30,true);
       deltaPhib2=getDeltaPhiMET(2,30,true); 
