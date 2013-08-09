@@ -426,7 +426,7 @@ public:
   double getBtagSF(const int flavor, const float pt, int eta) ;//in development. not for production
   float getBtagSF(const int flavor,const float pt,const float jet_eta,const int tagcat, BTagEffModifier variation); // for L+M+T reweighting
   float getBtagEffMC(const int flavor, const float pt) ;//currently used only in test code
-  float getBtagEffMC(const int flavor, const float pt, const float jet_eta, const int tagcat) ; //for L+M+T weighting
+  float getBtagEffMC(const int jet_flavor, const float pt, const float jet_eta, const int tagcat) ; //for L+M+T weighting
   float getBtagSFerr_b(const float pt, const int tagcat);
 
   int nGoodBJets_Tweaked() ;
@@ -436,6 +436,7 @@ public:
   void calculateTagProb(float &Prob0, float &ProbGEQ1, float &Prob1, float &ProbGEQ2, float & Prob2, float &ProbGEQ3,
                         float & Prob3, float &ProbGEQ4, 
 			float extraSFb=1, float extraSFc=1, float extraSFl=1, BTagEffModifier modifier=kBTagModifier0);
+  void calculateTagProb_ewk(float &Prob2b, float &Prob3b, float &Prob4b);
 
   //btag stuff
   float jetTagEff(unsigned int ijet, TH1D* h_btageff, TH1D* h_ctageff, TH1D* h_ltageff,

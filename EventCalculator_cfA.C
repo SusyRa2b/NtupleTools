@@ -5068,6 +5068,24 @@ Long64_t EventCalculator::getNEventsGenerated( TString sample) {
   if (sample.Contains("UCSB1800")) return 24953451; 
   if (sample.Contains("UCSB1804")) return 19365927; 
   if (sample.Contains("UCSB1806")) return 19514018;
+  if (sample.Contains("UCSB1814")) return 5964018;  //120 
+  if (sample.Contains("UCSB1815")) return 5804150;  //170 
+  if (sample.Contains("UCSB1816")) return 5931100;  //300 
+  if (sample.Contains("UCSB1817")) return 3966456;  //470 
+  if (sample.Contains("UCSB1818")) return 3987792;  //600 
+  if (sample.Contains("UCSB1819")) return 3934497;  //800 
+  if (sample.Contains("UCSB1820")) return 1964088;  //1000
+  if (sample.Contains("UCSB1821")) return 1953814;  //1400
+  if (sample.Contains("UCSB1822")) return 977586;  //1800
+  if (sample.Contains("UCSB1831")) return 1006928; //Zjets 400-Inf  
+  if (sample.Contains("UCSB1832")) return 4416646; //Zjets 100-200 
+  if (sample.Contains("UCSB1833")) return 5055885; //Zjets 200-400  
+  if (sample.Contains("UCSB1834")) return 4689734; //Zjets 200-400ext  
+  if (sample.Contains("UCSB1835")) return 4088782;  //Zjets400-Infext 
+  if (sample.Contains("UCSB1837")) return 32852589;  
+  if (sample.Contains("UCSB1838")) return 21673270;  
+  if (sample.Contains("UCSB1848")) return 31223821;  
+  //if (sample.Contains("UCSB18")) return ;  
 
    // ============= v71 samples ============
   if (sample.Contains("UCSB1850")) return 6923750; //hopefully this is correct ; need to verify
@@ -6285,7 +6303,7 @@ float EventCalculator::getBtagSF(const int flavor,const float pt,const float jet
 }
 
 
-float EventCalculator::getBtagEffMC(const int flavor, const float pt, const float jet_eta, const int tagcat) {
+float EventCalculator::getBtagEffMC(const int jet_flavor, const float pt, const float jet_eta, const int tagcat) {
   if (f_tageff_==0) return 0;
 
   //this is hard-coded for CSV L+M+T
@@ -6293,6 +6311,7 @@ float EventCalculator::getBtagEffMC(const int flavor, const float pt, const floa
   if (tagcat == 4) return 0;
 
   const float eta = fabs(jet_eta);
+  const int flavor = fabs(jet_flavor);
 
   //we actually only need one histogram per call to this function.
   //assemble the name
@@ -6508,6 +6527,68 @@ Use the b-tag algorithm output and calculate a weight for the _event_ based on t
   return (float)outputweight;
 
 }
+
+
+void EventCalculator::calculateTagProb_ewk(float &Prob2b, float &Prob3b, float &Prob4b){ 
+
+  //Init
+  Prob2b = 0;
+  Prob3b = 0;
+  Prob4b = 0;
+
+  if (f_tageff_ == 0) {
+    Prob2b = -1; 
+    Prob3b = -1; 
+    Prob4b = -1; 
+  } 
+
+  float pTthresh = minHiggsJetPt_; //use Higg jet threshold 
+  //unsigned int js = 4;
+  //unsigned int jetsize = js > jets_AK5PF_pt->size() ? jets_AK5PF_pt->size() : js; 
+  unsigned int jetsize = jets_AK5PF_pt->size();
+
+  const int csvt = 3;
+  const int csvm = 2;
+  const int csvl = 1;
+
+  for (unsigned int ijet=0; ijet<jetsize; ++ijet) {
+    if(!isGoodJet(ijet,pTthresh)) continue; //apply threshold
+    int jflavi  = fabs(jets_AK5PF_partonFlavour->at(ijet));
+    float jpti  = getJetPt(ijet);
+    float jetai = fabs(jets_AK5PF_eta->at(ijet));
+    double effi = getBtagSF(jflavi,jpti,jetai,csvt,kBTagModifier0)*getBtagEffMC(jflavi,jpti,jetai,csvt); // Tight
+    for (unsigned int jjet=ijet+1; jjet<jetsize; ++jjet) {
+      if (jjet == ijet ) continue; 
+      if(!isGoodJet(jjet,pTthresh)) continue;
+      int jflavj  = fabs(jets_AK5PF_partonFlavour->at(jjet));
+      float jptj  = getJetPt(jjet);
+      float jetaj = fabs(jets_AK5PF_eta->at(jjet));
+      double effj = getBtagSF(jflavj,jptj,jetaj,csvt,kBTagModifier0)*getBtagEffMC(jflavj,jptj,jetaj,csvt); // Tight
+      double prod2b = 1;
+      for (unsigned int kjet=0; kjet<jetsize; ++kjet) {
+        if( (kjet == jjet) || (kjet == ijet) ) continue;
+        if(!isGoodJet(kjet,pTthresh)) continue;
+        int jflavk  = fabs(jets_AK5PF_partonFlavour->at(kjet));
+        float jptk  = getJetPt(kjet);
+        float jetak = fabs(jets_AK5PF_eta->at(kjet));
+        double effk = getBtagSF(jflavk,jptk,jetak,csvm,kBTagModifier0)*getBtagEffMC(jflavk,jptk,jetak,csvm); // Medium
+        prod2b *= (1-effk);
+        //l loop not needed.. 
+        for (unsigned int ljet=0; ljet<jetsize; ++ljet) {
+          if( (ljet == kjet) || (ljet == ijet) || (ljet == jjet) ) continue;
+          if(isGoodJet(ljet,pTthresh)) continue;
+          int jflavl  = fabs(jets_AK5PF_partonFlavour->at(ljet));
+          float jptl  = getJetPt(ljet);
+          float jetal = fabs(jets_AK5PF_eta->at(ljet));
+          double effl = getBtagSF(jflavl,jptl,jetal,csvl,kBTagModifier0)*getBtagEffMC(jflavl,jptl,jetal,csvl); // Loose 
+        } //l loop
+      }// k loop
+      Prob2b += prod2b*effi*effj;
+    }//j loop
+    //Prob2b += sub2b;
+  }//i loop
+
+}//end method
 
 /*
 void EventCalculator::calculateTagProb(float &Prob0, float &ProbGEQ1, float &Prob1, float &ProbGEQ2, float &Prob2, float &ProbGEQ3,
@@ -7589,7 +7670,8 @@ void EventCalculator::reducedTree(TString outputpath) {
   int nIsoTracks15_005_03_lepcleaned;
 
   float prob0,probge1,prob1,probge2,probge3,prob2, prob3, probge4;
-  
+  float prob2b, prob3b, prob4b; 
+ 
   float PIDweight;
   float BTagWeight;
 
@@ -7825,6 +7907,9 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("higgsDeltaPhiRmaxWrong1",&higgsDeltaPhiRmaxWrong1,"higgsDeltaPhiRmaxWrong1/F");
   reducedTree.Branch("higgsDeltaPhiRmaxWrong2",&higgsDeltaPhiRmaxWrong2,"higgsDeltaPhiRmaxWrong2/F");
 
+  reducedTree.Branch("prob2b",&prob2b,"prob2b/F");
+  reducedTree.Branch("prob3b",&prob2b,"prob3b/F");
+  reducedTree.Branch("prob4b",&prob2b,"prob4b/F");
 
   reducedTree.Branch("prob0",&prob0,"prob0/F");
   reducedTree.Branch("probge1",&probge1,"probge1/F");
@@ -8788,6 +8873,8 @@ void EventCalculator::reducedTree(TString outputpath) {
       BTagWeight = getBtagWeight();
 
       calculateTagProb(prob0,probge1,prob1,probge2,prob2,probge3,prob3,probge4);
+
+      calculateTagProb_ewk(prob2b,prob3b,prob4b);
 
       calculateTagProb(prob0_HFplus,probge1_HFplus,prob1_HFplus,probge2_HFplus,prob2_HFplus,probge3_HFplus,prob3_HFplus,probge4_HFplus,1,1,1,kHFup);
       calculateTagProb(prob0_HFminus,probge1_HFminus,prob1_HFminus,probge2_HFminus,prob2_HFminus,probge3_HFminus,prob3_HFminus,probge4_HFminus,1,1,1,kHFdown);
