@@ -6112,6 +6112,88 @@ float EventCalculator::getBtagEffMC(const int flavor, const float pt) {
   return hh->GetBinContent( hh->FindBin(pt));
 }
 
+float EventCalculator::getBtagSFerr_b(const float pt, const int tagcat) {
+  //https://twiki.cern.ch/twiki/pub/CMS/BtagPOG/SFb-pt_payload_Moriond13.txt
+
+  float ptmin[] = {20, 30, 40, 50, 60, 70, 80, 100, 120, 160, 210, 260, 320, 400, 500, 600};
+  float ptmax[] = {30, 40, 50, 60, 70, 80,100, 120, 160, 210, 260, 320, 400, 500, 600, 800};
+  const int nbins=16;
+
+  float CSVL_error[] = {
+    0.0484285,
+    0.0126178,
+    0.0120027,
+    0.0141137,
+    0.0145441,
+    0.0131145,
+    0.0168479,
+    0.0160836,
+    0.0126209,
+    0.0136017,
+    0.019182,
+    0.0198805,
+    0.0386531,
+    0.0392831,
+    0.0481008,
+    0.0474291 };
+
+  float CSVM_error[] = {
+    0.0554504,
+    0.0209663,
+    0.0207019,
+    0.0230073,
+    0.0208719,
+    0.0200453,
+    0.0264232,
+    0.0240102,
+    0.0229375,
+    0.0184615,
+    0.0216242,
+    0.0248119,
+    0.0465748,
+    0.0474666,
+    0.0718173,
+    0.0717567 };
+
+  float CSVT_error[] = {
+    0.0567059,
+    0.0266907,
+    0.0263491,
+    0.0342831,
+    0.0303327,
+    0.024608,
+    0.0333786,
+    0.0317642,
+    0.031102,
+    0.0295603,
+    0.0474663,
+    0.0503182,
+    0.0580424,
+    0.0575776,
+    0.0769779,
+    0.0898199 };
+
+  float * SFb_error=0;
+  if      (tagcat == 1) SFb_error =  CSVL_error;
+  else if (tagcat == 2) SFb_error =  CSVM_error;
+  else if (tagcat == 3) SFb_error =  CSVT_error;
+  else assert(0);
+
+  //need to figure out which bin i'm in
+  float myErr = SFb_error[nbins-1]; //put the high pT guys in the last bin
+  for (int i=0; i<nbins; i++) {
+    if (pt >= ptmin[i] && pt<ptmax[i]) { //found it
+      myErr = SFb_error[i]; 
+      break;
+    }
+  }
+
+  //double the error for high pT jets
+  if ( pt > 800) myErr*=2;
+
+  return myErr;
+}
+
 float EventCalculator::getBtagSF(const int flavor,const float pt,const float jet_eta,const int tagcat, BTagEffModifier variation) {
   //this is for CSV L+M+T
 
@@ -6125,7 +6207,6 @@ float EventCalculator::getBtagSF(const int flavor,const float pt,const float jet
 
   float SF=1;
 
-  assert(variation==kBTagModifier0); // haven't coded the errors yet
   if (abs(flavor) == 5 || abs(flavor)==4) { // heavy flavor SFs
     const float x = pt>800? 800 : pt;
     if (tagcat == 1) { //CSVL
@@ -6139,7 +6220,17 @@ float EventCalculator::getBtagSF(const int flavor,const float pt,const float jet
     }
     else assert(0);
 
-  }
+    float SFerr = 0;
+    if ( variation == kHFdown || variation == kHFup) {
+      SFerr = getBtagSFerr_b(pt,tagcat); //takes care of doubling the error for high pT jets
+      if (abs(flavor)==4) SFerr*=2; //double the error for charm
+      //now apply the error
+      if      (variation==kHFdown) SF -= SFerr;
+      else if (variation==kHFup)   SF += SFerr;
+    }
+    //FASTSIM corrections and errors not implemented at the moment
+
+  } //if heavy flavor
   else { //light flavor SFs
     float x = pt;
     if ( pt> 800) x = 800;
@@ -6188,7 +6279,7 @@ float EventCalculator::getBtagSF(const int flavor,const float pt,const float jet
     }
     else assert(0);
 
-  }
+  } //else (light flavor SFs)
 
   return SF;
 }

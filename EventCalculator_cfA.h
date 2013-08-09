@@ -427,6 +427,7 @@ public:
   float getBtagSF(const int flavor,const float pt,const float jet_eta,const int tagcat, BTagEffModifier variation); // for L+M+T reweighting
   float getBtagEffMC(const int flavor, const float pt) ;//currently used only in test code
   float getBtagEffMC(const int flavor, const float pt, const float jet_eta, const int tagcat) ; //for L+M+T weighting
+  float getBtagSFerr_b(const float pt, const int tagcat);
 
   int nGoodBJets_Tweaked() ;
   float getTopPtWeight(float & topPt);
