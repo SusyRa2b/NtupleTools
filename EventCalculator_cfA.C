@@ -10943,10 +10943,10 @@ void EventCalculator::plotBTagEffMC( ) {
 
 
   //26 july 2013 -- extend to eta bins and 3 working points
-  double etabinsL[4] = {0, 1.0, 1.5, 2.4}; 
+  double etabinsL[5] = {0, 0.5, 1.0, 1.5, 2.4}; 
   double etabinsM[4] = {0, 0.8, 1.6, 2.4}; 
   double etabinsT[2] = {0, 2.4}; 
-  int neta[3] = {3,3,1};
+  int neta[3] = {4,3,1};
 
   vector<TString> suffix;
   suffix.push_back("CSVL");
