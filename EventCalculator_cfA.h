@@ -169,7 +169,7 @@ public:
 
   float getWCandMass(int j1,int j2,int j3,int j4) ;
 
-  int countIsoPFCands(const float minpt, const float miniso) ;
+  int countIsoPFCands(const float minpt, const float maxiso) ;
   int countIsoTracks(const float minpt, const float miniso, const float maxdr, float & thept, float & theeta, float & thephi, const bool leptondisambiguation=false);
   bool isQualityTrack(const int trackindex) ;
   float mostIsolatedTrackValue(const float minpt, const float maxdr, float & d0,float & thept);

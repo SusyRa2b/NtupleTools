@@ -1158,50 +1158,25 @@ int EventCalculator::countIsoTracks(const float minpt, const float miniso, const
   return nisotracks;
 }
 
-int EventCalculator::countIsoPFCands(const float minpt, const float miniso) {
-  //a pf cand-based implementation of ben hooberman's isoTrack counter
-
-  //code largely copied and pasted from countIsoTracks()
-
-  if (!isGoodPV(0)) return 0;
+int EventCalculator::countIsoPFCands(const float minpt, const float maxiso) {
+  //tossing out the old version of this code, based on pf cands stored in the cfA, and instead just applying
+  //basic cuts to the isolated pf cands stored by my IsoTrackFinder
 
   int nisotracks=0;
 
-  const float maxdr = 0.3; //this is hooberman's default
-  //  const float maxdz = 0.05; //ditto
-
-  for (unsigned int iii=0; iii<pfcand_pt->size(); ++iii) {
-    
-    //look only at charged candidates above a certain pt
-    if (pfcand_pt->at(iii) >= minpt && TMath::Nint(pfcand_charge->at(iii))!=0 ) {
-      
-      //now check deltaz to the PV, and using the Hooberman default value
-      //	if ( fabs(tracks_vz->at(iii) - pv_z->at(0) ) >= maxdz ) return false;
-      //do not have z vertex info for pf cands.
-      //dream of matching pf cands to tracks using pt,eta,phi. for now leave it out
-      
-      //finally, compute the iso sum
-      float isosum=0;
-      //imitate hooberman's algorithm here
-      for (unsigned int jjj=0; jjj<pfcand_pt->size(); jjj++) {
-	if (iii==jjj) continue;  //don't count yourself
-	
-	//don't use neutrals
-	if ( TMath::Nint(pfcand_charge->at(jjj))==0) continue;
-	
-	//this is the isolation cone definition
-	float dr = jmt::deltaR(pfcand_eta->at(iii),pfcand_phi->at(iii),pfcand_eta->at(jjj),pfcand_phi->at(jjj));
-	if (dr > maxdr) continue;
-	//cut on dz of this track -- or not in this case
-	//	if ( fabs( tracks_vz->at(jjj) - pv_z->at(0)) >= maxdz) continue;
-	isosum += pfcand_pt->at(jjj);
-      }
-      //now, if it is isolated, increment counter
-      if ( isosum / pfcand_pt->at(iii) <= miniso) ++nisotracks;
-      
+  for ( unsigned int itrack = 0 ; itrack < isotk_pt->size() ; ++itrack) {
+    if ( (isotk_pt->at(itrack) >= minpt) &&
+	 //ntuple stores isolation, not relative isolation
+	 (isotk_iso->at(itrack) /isotk_pt->at(itrack) < maxiso ) &&
+	 ( fabs(isotk_dzpv->at(itrack)) <0.1) && //important to apply this; was not applied at ntuple creation
+	 ( fabs(isotk_eta->at(itrack)) < 2.4 ) //this is more of a sanity check
+	 ) {
+      ++nisotracks;
     }
     
   }
+
+
   return nisotracks;
   
 }
@@ -7663,6 +7638,8 @@ void EventCalculator::reducedTree(TString outputpath) {
   int nIsoTracks10_005_03;
   int nIsoTracks5_005_03;
 
+  int nIsoPFcands10_010;
+
   float minTrackIso10,minTrackIso5,minTrackIso15,minTrackIso20;
   float trackd0_10,trackd0_5,trackd0_15,trackd0_20;
   float trackpt_10,trackpt_5,trackpt_15,trackpt_20;
@@ -8527,6 +8504,8 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("nIsoTracks10_005_03",&nIsoTracks10_005_03,"nIsoTracks10_005_03/I");
   reducedTree.Branch("nIsoTracks5_005_03",&nIsoTracks5_005_03,"nIsoTracks5_005_03/I");
   reducedTree.Branch("nIsoTracks15_005_03_lepcleaned",&nIsoTracks15_005_03_lepcleaned,"nIsoTracks15_005_03_lepcleaned/I");
+
+  reducedTree.Branch("nIsoPFcands10_010",&nIsoPFcands10_010,"nIsoPFcands10_010/I");
 
   reducedTree.Branch("minTrackIso10", &minTrackIso10, "minTrackIso10/F");
   reducedTree.Branch("minTrackIso5", &minTrackIso5, "minTrackIso5/F");
@@ -9787,7 +9766,7 @@ void EventCalculator::reducedTree(TString outputpath) {
       minTrackIso15 = mostIsolatedTrackValue(15,0.3,trackd0_15,trackpt_15);
       minTrackIso20 = mostIsolatedTrackValue(20,0.3,trackd0_20,trackpt_20);
 
-
+      nIsoPFcands10_010 = countIsoPFCands(10,0.10);// pt, isolation
 
       //Uncomment next two lines to do thrust calculations
 //       getTransverseThrustVariables(transverseThrust, transverseThrustPhi, false);
