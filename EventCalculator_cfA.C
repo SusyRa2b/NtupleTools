@@ -1158,50 +1158,25 @@ int EventCalculator::countIsoTracks(const float minpt, const float miniso, const
   return nisotracks;
 }
 
-int EventCalculator::countIsoPFCands(const float minpt, const float miniso) {
-  //a pf cand-based implementation of ben hooberman's isoTrack counter
-
-  //code largely copied and pasted from countIsoTracks()
-
-  if (!isGoodPV(0)) return 0;
+int EventCalculator::countIsoPFCands(const float minpt, const float maxiso) {
+  //tossing out the old version of this code, based on pf cands stored in the cfA, and instead just applying
+  //basic cuts to the isolated pf cands stored by my IsoTrackFinder
 
   int nisotracks=0;
 
-  const float maxdr = 0.3; //this is hooberman's default
-  //  const float maxdz = 0.05; //ditto
-
-  for (unsigned int iii=0; iii<pfcand_pt->size(); ++iii) {
-    
-    //look only at charged candidates above a certain pt
-    if (pfcand_pt->at(iii) >= minpt && TMath::Nint(pfcand_charge->at(iii))!=0 ) {
-      
-      //now check deltaz to the PV, and using the Hooberman default value
-      //	if ( fabs(tracks_vz->at(iii) - pv_z->at(0) ) >= maxdz ) return false;
-      //do not have z vertex info for pf cands.
-      //dream of matching pf cands to tracks using pt,eta,phi. for now leave it out
-      
-      //finally, compute the iso sum
-      float isosum=0;
-      //imitate hooberman's algorithm here
-      for (unsigned int jjj=0; jjj<pfcand_pt->size(); jjj++) {
-	if (iii==jjj) continue;  //don't count yourself
-	
-	//don't use neutrals
-	if ( TMath::Nint(pfcand_charge->at(jjj))==0) continue;
-	
-	//this is the isolation cone definition
-	float dr = jmt::deltaR(pfcand_eta->at(iii),pfcand_phi->at(iii),pfcand_eta->at(jjj),pfcand_phi->at(jjj));
-	if (dr > maxdr) continue;
-	//cut on dz of this track -- or not in this case
-	//	if ( fabs( tracks_vz->at(jjj) - pv_z->at(0)) >= maxdz) continue;
-	isosum += pfcand_pt->at(jjj);
-      }
-      //now, if it is isolated, increment counter
-      if ( isosum / pfcand_pt->at(iii) <= miniso) ++nisotracks;
-      
+  for ( unsigned int itrack = 0 ; itrack < isotk_pt->size() ; ++itrack) {
+    if ( (isotk_pt->at(itrack) >= minpt) &&
+	 //ntuple stores isolation, not relative isolation
+	 (isotk_iso->at(itrack) /isotk_pt->at(itrack) < maxiso ) &&
+	 ( fabs(isotk_dzpv->at(itrack)) <0.1) && //important to apply this; was not applied at ntuple creation
+	 ( fabs(isotk_eta->at(itrack)) < 2.4 ) //this is more of a sanity check
+	 ) {
+      ++nisotracks;
     }
     
   }
+
+
   return nisotracks;
   
 }
@@ -7663,6 +7638,8 @@ void EventCalculator::reducedTree(TString outputpath) {
   int nIsoTracks10_005_03;
   int nIsoTracks5_005_03;
 
+  int nIsoPFcands10_010;
+
   float minTrackIso10,minTrackIso5,minTrackIso15,minTrackIso20;
   float trackd0_10,trackd0_5,trackd0_15,trackd0_20;
   float trackpt_10,trackpt_5,trackpt_15,trackpt_20;
@@ -8527,6 +8504,8 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("nIsoTracks10_005_03",&nIsoTracks10_005_03,"nIsoTracks10_005_03/I");
   reducedTree.Branch("nIsoTracks5_005_03",&nIsoTracks5_005_03,"nIsoTracks5_005_03/I");
   reducedTree.Branch("nIsoTracks15_005_03_lepcleaned",&nIsoTracks15_005_03_lepcleaned,"nIsoTracks15_005_03_lepcleaned/I");
+
+  reducedTree.Branch("nIsoPFcands10_010",&nIsoPFcands10_010,"nIsoPFcands10_010/I");
 
   reducedTree.Branch("minTrackIso10", &minTrackIso10, "minTrackIso10/F");
   reducedTree.Branch("minTrackIso5", &minTrackIso5, "minTrackIso5/F");
@@ -9787,7 +9766,7 @@ void EventCalculator::reducedTree(TString outputpath) {
       minTrackIso15 = mostIsolatedTrackValue(15,0.3,trackd0_15,trackpt_15);
       minTrackIso20 = mostIsolatedTrackValue(20,0.3,trackd0_20,trackpt_20);
 
-
+      nIsoPFcands10_010 = countIsoPFCands(10,0.10);// pt, isolation
 
       //Uncomment next two lines to do thrust calculations
 //       getTransverseThrustVariables(transverseThrust, transverseThrustPhi, false);
@@ -11265,24 +11244,6 @@ void EventCalculator::InitializeA(TChain *fChain)
    trigger_name = 0;
    trigger_decision = 0;
    trigger_lastfiltername = 0;
-   triggerobject_pt = 0;
-   triggerobject_px = 0;
-   triggerobject_py = 0;
-   triggerobject_pz = 0;
-   triggerobject_et = 0;
-   triggerobject_energy = 0;
-   triggerobject_phi = 0;
-   triggerobject_eta = 0;
-   triggerobject_collectionname = 0;
-   standalone_triggerobject_pt = 0;
-   standalone_triggerobject_px = 0;
-   standalone_triggerobject_py = 0;
-   standalone_triggerobject_pz = 0;
-   standalone_triggerobject_et = 0;
-   standalone_triggerobject_energy = 0;
-   standalone_triggerobject_phi = 0;
-   standalone_triggerobject_eta = 0;
-   standalone_triggerobject_collectionname = 0;
    L1trigger_bit = 0;
    L1trigger_techTrigger = 0;
    L1trigger_prescalevalue = 0;
@@ -11315,31 +11276,26 @@ void EventCalculator::InitializeA(TChain *fChain)
    PU_NumInteractions = 0;
    PU_bunchCrossing = 0;
    PU_TrueNumInteractions = 0;
+   pdfweights_cteq = 0;
+   pdfweights_mstw = 0;
+   pdfweights_nnpdf = 0;
+   photon_chIsoValues = 0;
+   photon_phIsoValues = 0;
+   photon_nhIsoValues = 0;
+   photon_passElectronVeto = 0;
    puJet_rejectionBeta = 0;
    puJet_rejectionMVA = 0;
+   isotk_pt = 0;
+   isotk_phi = 0;
+   isotk_eta = 0;
+   isotk_iso = 0;
+   isotk_dzpv = 0;
+   isotk_charge = 0;
 
    fChain->SetBranchAddress("trigger_prescalevalue", &trigger_prescalevalue, &b_trigger_prescalevalue);
    fChain->SetBranchAddress("trigger_name", &trigger_name, &b_trigger_name);
    fChain->SetBranchAddress("trigger_decision", &trigger_decision, &b_trigger_decision);
    fChain->SetBranchAddress("trigger_lastfiltername", &trigger_lastfiltername, &b_trigger_lastfiltername);
-   fChain->SetBranchAddress("triggerobject_pt", &triggerobject_pt, &b_triggerobject_pt);
-   fChain->SetBranchAddress("triggerobject_px", &triggerobject_px, &b_triggerobject_px);
-   fChain->SetBranchAddress("triggerobject_py", &triggerobject_py, &b_triggerobject_py);
-   fChain->SetBranchAddress("triggerobject_pz", &triggerobject_pz, &b_triggerobject_pz);
-   fChain->SetBranchAddress("triggerobject_et", &triggerobject_et, &b_triggerobject_et);
-   fChain->SetBranchAddress("triggerobject_energy", &triggerobject_energy, &b_triggerobject_energy);
-   fChain->SetBranchAddress("triggerobject_phi", &triggerobject_phi, &b_triggerobject_phi);
-   fChain->SetBranchAddress("triggerobject_eta", &triggerobject_eta, &b_triggerobject_eta);
-   fChain->SetBranchAddress("triggerobject_collectionname", &triggerobject_collectionname, &b_triggerobject_collectionname);
-   fChain->SetBranchAddress("standalone_triggerobject_pt", &standalone_triggerobject_pt, &b_standalone_triggerobject_pt);
-   fChain->SetBranchAddress("standalone_triggerobject_px", &standalone_triggerobject_px, &b_standalone_triggerobject_px);
-   fChain->SetBranchAddress("standalone_triggerobject_py", &standalone_triggerobject_py, &b_standalone_triggerobject_py);
-   fChain->SetBranchAddress("standalone_triggerobject_pz", &standalone_triggerobject_pz, &b_standalone_triggerobject_pz);
-   fChain->SetBranchAddress("standalone_triggerobject_et", &standalone_triggerobject_et, &b_standalone_triggerobject_et);
-   fChain->SetBranchAddress("standalone_triggerobject_energy", &standalone_triggerobject_energy, &b_standalone_triggerobject_energy);
-   fChain->SetBranchAddress("standalone_triggerobject_phi", &standalone_triggerobject_phi, &b_standalone_triggerobject_phi);
-   fChain->SetBranchAddress("standalone_triggerobject_eta", &standalone_triggerobject_eta, &b_standalone_triggerobject_eta);
-   fChain->SetBranchAddress("standalone_triggerobject_collectionname", &standalone_triggerobject_collectionname, &b_standalone_triggerobject_collectionname);
    fChain->SetBranchAddress("L1trigger_bit", &L1trigger_bit, &b_L1trigger_bit);
    fChain->SetBranchAddress("L1trigger_techTrigger", &L1trigger_techTrigger, &b_L1trigger_techTrigger);
    fChain->SetBranchAddress("L1trigger_prescalevalue", &L1trigger_prescalevalue, &b_L1trigger_prescalevalue);
@@ -11357,6 +11313,9 @@ void EventCalculator::InitializeA(TChain *fChain)
    fChain->SetBranchAddress("pf_els_PFphotonIsoR03", &pf_els_PFphotonIsoR03, &b_pf_els_PFphotonIsoR03);
    fChain->SetBranchAddress("pf_els_PFneutralHadronIsoR03", &pf_els_PFneutralHadronIsoR03, &b_pf_els_PFneutralHadronIsoR03);
    fChain->SetBranchAddress("pf_els_hasMatchedConversion", &pf_els_hasMatchedConversion, &b_pf_els_hasMatchedConversion);
+   fChain->SetBranchAddress("trk_nTOBTEC", &trk_nTOBTEC, &b_Ctrk_nTOBTEC);
+   fChain->SetBranchAddress("trk_ratioAllTOBTEC", &trk_ratioAllTOBTEC, &b_trk_ratioAllTOBTEC);
+   fChain->SetBranchAddress("trk_ratioJetTOBTEC", &trk_ratioJetTOBTEC, &b_trk_ratioJetTOBTEC);
    fChain->SetBranchAddress("hbhefilter_decision", &hbhefilter_decision, &b_hbhefilter_decision);
    fChain->SetBranchAddress("trackingfailurefilter_decision", &trackingfailurefilter_decision, &b_trackingfailurefilter_decision);
    fChain->SetBranchAddress("cschalofilter_decision", &cschalofilter_decision, &b_cschalofilter_decision);
@@ -11369,12 +11328,18 @@ void EventCalculator::InitializeA(TChain *fChain)
    fChain->SetBranchAddress("ecallaserfilter_decision", &ecallaserfilter_decision, &b_ecallaserfilter_decision);
    fChain->SetBranchAddress("eenoisefilter_decision", &eenoisefilter_decision, &b_eenoisefilter_decision);
    fChain->SetBranchAddress("eebadscfilter_decision", &eebadscfilter_decision, &b_eebadscfilter_decision);
+   fChain->SetBranchAddress("trackercoherentnoisefilter1_decision", &trackercoherentnoisefilter1_decision, &b_trackercoherentnoisefilter1 );
+   fChain->SetBranchAddress("trackercoherentnoisefilter2_decision", &trackercoherentnoisefilter2_decision, &b_trackercoherentnoisefilter2 );
+   fChain->SetBranchAddress("trackertoomanyclustersfilter_decision", &trackertoomanyclustersfilter_decision, &b_trackertoomanyclustersfilter);
+   fChain->SetBranchAddress("trackertoomanytripletsfilter_decision", &trackertoomanytripletsfilter_decision, &b_trackertoomanytripletsfilter);
+   fChain->SetBranchAddress("trackertoomanyseedsfilter_decision", &trackertoomanyseedsfilter_decision, &b_trackertoomanyseedsfilter );
    fChain->SetBranchAddress("passprescalePFHT350filter_decision", &passprescalePFHT350filter_decision, &b_passprescalePFHT350filter_decision);
    fChain->SetBranchAddress("passprescaleHT250filter_decision", &passprescaleHT250filter_decision, &b_passprescaleHT250filter_decision);
    fChain->SetBranchAddress("passprescaleHT300filter_decision", &passprescaleHT300filter_decision, &b_passprescaleHT300filter_decision);
    fChain->SetBranchAddress("passprescaleHT350filter_decision", &passprescaleHT350filter_decision, &b_passprescaleHT350filter_decision);
    fChain->SetBranchAddress("passprescaleHT400filter_decision", &passprescaleHT400filter_decision, &b_passprescaleHT400filter_decision);
    fChain->SetBranchAddress("passprescaleHT450filter_decision", &passprescaleHT450filter_decision, &b_passprescaleHT450filter_decision);
+   fChain->SetBranchAddress("passprescaleJet30MET80filter_decision", &passprescaleJet30MET80filter_decision, &b_passprescaleJet30MET80filter_decision);
    fChain->SetBranchAddress("MPT", &MPT, &b_MPT);
    fChain->SetBranchAddress("genHT", &genHT, &b_genHT);
    fChain->SetBranchAddress("jets_AK5PFclean_corrL2L3", &jets_AK5PFclean_corrL2L3, &b_jets_AK5PFclean_corrL2L3);
@@ -11400,12 +11365,29 @@ void EventCalculator::InitializeA(TChain *fChain)
    fChain->SetBranchAddress("pfmets_fullSignifCov11", &pfmets_fullSignifCov11, &b_pfmets_fullSignifCov11);
    fChain->SetBranchAddress("softjetUp_dMEx", &softjetUp_dMEx, &b_softjetUp_dMEx);
    fChain->SetBranchAddress("softjetUp_dMEy", &softjetUp_dMEy, &b_softjetUp_dMEy);
+   fChain->SetBranchAddress("pdfweights_cteq", &pdfweights_cteq, &b_pdfweights_cteq);
+   fChain->SetBranchAddress("pdfweights_mstw", &pdfweights_mstw, &b_pdfweights_mstw);
+   fChain->SetBranchAddress("pdfweights_nnpdf", &pdfweights_nnpdf, &b_pdfweights_nnpdf);
+   fChain->SetBranchAddress("photon_chIsoValues", &photon_chIsoValues, &b_photon_chIsoValues);
+   fChain->SetBranchAddress("photon_phIsoValues", &photon_phIsoValues, &b_photon_phIsoValues);
+   fChain->SetBranchAddress("photon_nhIsoValues", &photon_nhIsoValues, &b_photon_nhIsoValues);
+   fChain->SetBranchAddress("photon_passElectronVeto", &photon_passElectronVeto, &b_photon_passElectronVeto);
+   fChain->SetBranchAddress("puJet_rejectionBeta", &puJet_rejectionBeta, &b_puJet_rejectionBeta);
+   fChain->SetBranchAddress("puJet_rejectionMVA", &puJet_rejectionMVA, &b_puJet_rejectionMVA);
    fChain->SetBranchAddress("pfmets_fullSignif_2012", &pfmets_fullSignif_2012, &b_pfmets_fullSignif_2012);
    fChain->SetBranchAddress("pfmets_fullSignifCov00_2012", &pfmets_fullSignifCov00_2012, &b_pfmets_fullSignifCov00_2012);
    fChain->SetBranchAddress("pfmets_fullSignifCov10_2012", &pfmets_fullSignifCov10_2012, &b_pfmets_fullSignifCov10_2012);
    fChain->SetBranchAddress("pfmets_fullSignifCov11_2012", &pfmets_fullSignifCov11_2012, &b_pfmets_fullSignifCov11_2012);
-   fChain->SetBranchAddress("puJet_rejectionBeta", &puJet_rejectionBeta, &b_puJet_rejectionBeta);
-   fChain->SetBranchAddress("puJet_rejectionMVA", &puJet_rejectionMVA, &b_puJet_rejectionMVA);
+   fChain->SetBranchAddress("pfmets_fullSignif_2012_dataRes", &pfmets_fullSignif_2012_dataRes, &b_pfmets_fullSignif_2012_dataRes);
+   fChain->SetBranchAddress("pfmets_fullSignifCov00_2012_dataRes", &pfmets_fullSignifCov00_2012_dataRes, &b_pfmets_fullSignifCov00_2012_dataRes);
+   fChain->SetBranchAddress("pfmets_fullSignifCov10_2012_dataRes", &pfmets_fullSignifCov10_2012_dataRes, &b_pfmets_fullSignifCov10_2012_dataRes);
+   fChain->SetBranchAddress("pfmets_fullSignifCov11_2012_dataRes", &pfmets_fullSignifCov11_2012_dataRes, &b_pfmets_fullSignifCov11_2012_dataRes);
+   fChain->SetBranchAddress("isotk_pt", &isotk_pt, &b_isotk_pt);
+   fChain->SetBranchAddress("isotk_phi", &isotk_phi, &b_isotk_phi);
+   fChain->SetBranchAddress("isotk_eta", &isotk_eta, &b_isotk_eta);
+   fChain->SetBranchAddress("isotk_iso", &isotk_iso, &b_isotk_iso);
+   fChain->SetBranchAddress("isotk_dzpv", &isotk_dzpv, &b_isotk_dzpv);
+   fChain->SetBranchAddress("isotk_charge", &isotk_charge, &b_isotk_charge);
 
    //special! added by hand for signal
    pdfweights_cteq=0;
@@ -11422,6 +11404,7 @@ void EventCalculator::InitializeA(TChain *fChain)
 
 void EventCalculator::InitializeB(TChain *fChain)
 {
+
 
    // Set object pointer
    beamSpot_x = 0;
@@ -11855,6 +11838,11 @@ void EventCalculator::InitializeB(TChain *fChain)
    mc_taus_vertex_z = 0;
    mc_taus_mass = 0;
    mc_taus_numOfDaughters = 0;
+   metsHO_et = 0;
+   metsHO_phi = 0;
+   metsHO_ex = 0;
+   metsHO_ey = 0;
+   metsHO_sumEt = 0;
    mets_AK5_et = 0;
    mets_AK5_phi = 0;
    mets_AK5_ex = 0;
@@ -12101,8 +12089,6 @@ void EventCalculator::InitializeB(TChain *fChain)
    mus_tpfms_numvalPixelhits = 0;
    mus_dB = 0;
    mus_numberOfMatchedStations = 0;
-   metsHO_et = 0;
-   metsHO_phi = 0;
    pfTypeINoXYCorrmets_et = 0;
    pfTypeINoXYCorrmets_phi = 0;
    pfTypeINoXYCorrmets_ex = 0;
@@ -12495,6 +12481,43 @@ void EventCalculator::InitializeB(TChain *fChain)
    pf_mus_dB = 0;
    pf_mus_numberOfMatchedStations = 0;
    pf_mus_isPFMuon = 0;
+   pf_photons_energy = 0;
+   pf_photons_et = 0;
+   pf_photons_eta = 0;
+   pf_photons_phi = 0;
+   pf_photons_pt = 0;
+   pf_photons_px = 0;
+   pf_photons_py = 0;
+   pf_photons_pz = 0;
+   pf_photons_status = 0;
+   pf_photons_theta = 0;
+   pf_photons_hadOverEM = 0;
+   pf_photons_hadTowOverEM = 0;
+   pf_photons_scEnergy = 0;
+   pf_photons_scRawEnergy = 0;
+   pf_photons_scEta = 0;
+   pf_photons_scPhi = 0;
+   pf_photons_scEtaWidth = 0;
+   pf_photons_scPhiWidth = 0;
+   pf_photons_isAlsoElectron = 0;
+   pf_photons_hasPixelSeed = 0;
+   pf_photons_isConverted = 0;
+   pf_photons_isEBGap = 0;
+   pf_photons_isEEGap = 0;
+   pf_photons_isEBEEGap = 0;
+   pf_photons_isEBPho = 0;
+   pf_photons_isEEPho = 0;
+   pf_photons_maxEnergyXtal = 0;
+   pf_photons_e1x5 = 0;
+   pf_photons_e2x5 = 0;
+   pf_photons_e3x3 = 0;
+   pf_photons_e5x5 = 0;
+   pf_photons_sigmaEtaEta = 0;
+   pf_photons_sigmaIetaIeta = 0;
+   pf_photons_r9 = 0;
+   pf_photons_chIso = 0;
+   pf_photons_nhIso = 0;
+   pf_photons_phIso = 0;
    pfcand_pdgId = 0;
    pfcand_particleId = 0;
    pfcand_pt = 0;
@@ -12527,6 +12550,7 @@ void EventCalculator::InitializeB(TChain *fChain)
    photons_status = 0;
    photons_theta = 0;
    photons_hadOverEM = 0;
+   photons_hadTowOverEM = 0;
    photons_scEnergy = 0;
    photons_scRawEnergy = 0;
    photons_scEta = 0;
@@ -13070,6 +13094,7 @@ void EventCalculator::InitializeB(TChain *fChain)
    fChain->SetBranchAddress("mc_nutaus_vertex_z", &mc_nutaus_vertex_z, &b_mc_nutaus_vertex_z);
    fChain->SetBranchAddress("mc_nutaus_mass", &mc_nutaus_mass, &b_mc_nutaus_mass);
    fChain->SetBranchAddress("mc_nutaus_numOfDaughters", &mc_nutaus_numOfDaughters, &b_mc_nutaus_numOfDaughters);
+   fChain->SetBranchAddress("Nmc_pdf", &Nmc_pdf, &b_Nmc_pdf);
    fChain->SetBranchAddress("Nmc_photons", &Nmc_photons, &b_Nmc_photons);
    fChain->SetBranchAddress("mc_photons_id", &mc_photons_id, &b_mc_photons_id);
    fChain->SetBranchAddress("mc_photons_pt", &mc_photons_pt, &b_mc_photons_pt);
@@ -13112,6 +13137,12 @@ void EventCalculator::InitializeB(TChain *fChain)
    fChain->SetBranchAddress("mc_taus_vertex_z", &mc_taus_vertex_z, &b_mc_taus_vertex_z);
    fChain->SetBranchAddress("mc_taus_mass", &mc_taus_mass, &b_mc_taus_mass);
    fChain->SetBranchAddress("mc_taus_numOfDaughters", &mc_taus_numOfDaughters, &b_mc_taus_numOfDaughters);
+   fChain->SetBranchAddress("NmetsHO", &NmetsHO, &b_NmetsHO);
+   fChain->SetBranchAddress("metsHO_et", &metsHO_et, &b_metsHO_et);
+   fChain->SetBranchAddress("metsHO_phi", &metsHO_phi, &b_metsHO_phi);
+   fChain->SetBranchAddress("metsHO_ex", &metsHO_ex, &b_metsHO_ex);
+   fChain->SetBranchAddress("metsHO_ey", &metsHO_ey, &b_metsHO_ey);
+   fChain->SetBranchAddress("metsHO_sumEt", &metsHO_sumEt, &b_metsHO_sumEt);
    fChain->SetBranchAddress("Nmets_AK5", &Nmets_AK5, &b_Nmets_AK5);
    fChain->SetBranchAddress("mets_AK5_et", &mets_AK5_et, &b_mets_AK5_et);
    fChain->SetBranchAddress("mets_AK5_phi", &mets_AK5_phi, &b_mets_AK5_phi);
@@ -13360,8 +13391,6 @@ void EventCalculator::InitializeB(TChain *fChain)
    fChain->SetBranchAddress("mus_tpfms_numvalPixelhits", &mus_tpfms_numvalPixelhits, &b_mus_tpfms_numvalPixelhits);
    fChain->SetBranchAddress("mus_dB", &mus_dB, &b_mus_dB);
    fChain->SetBranchAddress("mus_numberOfMatchedStations", &mus_numberOfMatchedStations, &b_mus_numberOfMatchedStations);
-   fChain->SetBranchAddress("metsHO_et", &metsHO_et, &b_metsHO_et);
-   fChain->SetBranchAddress("metsHO_phi", &metsHO_phi, &b_metsHO_phi);
    fChain->SetBranchAddress("NpfTypeINoXYCorrmets", &NpfTypeINoXYCorrmets, &b_NpfTypeINoXYCorrmets);
    fChain->SetBranchAddress("pfTypeINoXYCorrmets_et", &pfTypeINoXYCorrmets_et, &b_pfTypeINoXYCorrmets_et);
    fChain->SetBranchAddress("pfTypeINoXYCorrmets_phi", &pfTypeINoXYCorrmets_phi, &b_pfTypeINoXYCorrmets_phi);
@@ -13759,6 +13788,44 @@ void EventCalculator::InitializeB(TChain *fChain)
    fChain->SetBranchAddress("pf_mus_dB", &pf_mus_dB, &b_pf_mus_dB);
    fChain->SetBranchAddress("pf_mus_numberOfMatchedStations", &pf_mus_numberOfMatchedStations, &b_pf_mus_numberOfMatchedStations);
    fChain->SetBranchAddress("pf_mus_isPFMuon", &pf_mus_isPFMuon, &b_pf_mus_isPFMuon);
+   fChain->SetBranchAddress("Npf_photons", &Npf_photons, &b_Npf_photons);
+   fChain->SetBranchAddress("pf_photons_energy", &pf_photons_energy, &b_pf_photons_energy);
+   fChain->SetBranchAddress("pf_photons_et", &pf_photons_et, &b_pf_photons_et);
+   fChain->SetBranchAddress("pf_photons_eta", &pf_photons_eta, &b_pf_photons_eta);
+   fChain->SetBranchAddress("pf_photons_phi", &pf_photons_phi, &b_pf_photons_phi);
+   fChain->SetBranchAddress("pf_photons_pt", &pf_photons_pt, &b_pf_photons_pt);
+   fChain->SetBranchAddress("pf_photons_px", &pf_photons_px, &b_pf_photons_px);
+   fChain->SetBranchAddress("pf_photons_py", &pf_photons_py, &b_pf_photons_py);
+   fChain->SetBranchAddress("pf_photons_pz", &pf_photons_pz, &b_pf_photons_pz);
+   fChain->SetBranchAddress("pf_photons_status", &pf_photons_status, &b_pf_photons_status);
+   fChain->SetBranchAddress("pf_photons_theta", &pf_photons_theta, &b_pf_photons_theta);
+   fChain->SetBranchAddress("pf_photons_hadOverEM", &pf_photons_hadOverEM, &b_pf_photons_hadOverEM);
+   fChain->SetBranchAddress("pf_photons_hadTowOverEM", &pf_photons_hadTowOverEM, &b_pf_photons_hadTowOverEM);
+   fChain->SetBranchAddress("pf_photons_scEnergy", &pf_photons_scEnergy, &b_pf_photons_scEnergy);
+   fChain->SetBranchAddress("pf_photons_scRawEnergy", &pf_photons_scRawEnergy, &b_pf_photons_scRawEnergy);
+   fChain->SetBranchAddress("pf_photons_scEta", &pf_photons_scEta, &b_pf_photons_scEta);
+   fChain->SetBranchAddress("pf_photons_scPhi", &pf_photons_scPhi, &b_pf_photons_scPhi);
+   fChain->SetBranchAddress("pf_photons_scEtaWidth", &pf_photons_scEtaWidth, &b_pf_photons_scEtaWidth);
+   fChain->SetBranchAddress("pf_photons_scPhiWidth", &pf_photons_scPhiWidth, &b_pf_photons_scPhiWidth);
+   fChain->SetBranchAddress("pf_photons_isAlsoElectron", &pf_photons_isAlsoElectron, &b_pf_photons_isAlsoElectron);
+   fChain->SetBranchAddress("pf_photons_hasPixelSeed", &pf_photons_hasPixelSeed, &b_pf_photons_hasPixelSeed);
+   fChain->SetBranchAddress("pf_photons_isConverted", &pf_photons_isConverted, &b_pf_photons_isConverted);
+   fChain->SetBranchAddress("pf_photons_isEBGap", &pf_photons_isEBGap, &b_pf_photons_isEBGap);
+   fChain->SetBranchAddress("pf_photons_isEEGap", &pf_photons_isEEGap, &b_pf_photons_isEEGap);
+   fChain->SetBranchAddress("pf_photons_isEBEEGap", &pf_photons_isEBEEGap, &b_pf_photons_isEBEEGap);
+   fChain->SetBranchAddress("pf_photons_isEBPho", &pf_photons_isEBPho, &b_pf_photons_isEBPho);
+   fChain->SetBranchAddress("pf_photons_isEEPho", &pf_photons_isEEPho, &b_pf_photons_isEEPho);
+   fChain->SetBranchAddress("pf_photons_maxEnergyXtal", &pf_photons_maxEnergyXtal, &b_pf_photons_maxEnergyXtal);
+   fChain->SetBranchAddress("pf_photons_e1x5", &pf_photons_e1x5, &b_pf_photons_e1x5);
+   fChain->SetBranchAddress("pf_photons_e2x5", &pf_photons_e2x5, &b_pf_photons_e2x5);
+   fChain->SetBranchAddress("pf_photons_e3x3", &pf_photons_e3x3, &b_pf_photons_e3x3);
+   fChain->SetBranchAddress("pf_photons_e5x5", &pf_photons_e5x5, &b_pf_photons_e5x5);
+   fChain->SetBranchAddress("pf_photons_sigmaEtaEta", &pf_photons_sigmaEtaEta, &b_pf_photons_sigmaEtaEta);
+   fChain->SetBranchAddress("pf_photons_sigmaIetaIeta", &pf_photons_sigmaIetaIeta, &b_pf_photons_sigmaIetaIeta);
+   fChain->SetBranchAddress("pf_photons_r9", &pf_photons_r9, &b_pf_photons_r9);
+   fChain->SetBranchAddress("pf_photons_chIso", &pf_photons_chIso, &b_pf_photons_chIso);
+   fChain->SetBranchAddress("pf_photons_nhIso", &pf_photons_nhIso, &b_pf_photons_nhIso);
+   fChain->SetBranchAddress("pf_photons_phIso", &pf_photons_phIso, &b_pf_photons_phIso);
    fChain->SetBranchAddress("Npfcand", &Npfcand, &b_Npfcand);
    fChain->SetBranchAddress("pfcand_pdgId", &pfcand_pdgId, &b_pfcand_pdgId);
    fChain->SetBranchAddress("pfcand_particleId", &pfcand_particleId, &b_pfcand_particleId);
@@ -13794,6 +13861,7 @@ void EventCalculator::InitializeB(TChain *fChain)
    fChain->SetBranchAddress("photons_status", &photons_status, &b_photons_status);
    fChain->SetBranchAddress("photons_theta", &photons_theta, &b_photons_theta);
    fChain->SetBranchAddress("photons_hadOverEM", &photons_hadOverEM, &b_photons_hadOverEM);
+   fChain->SetBranchAddress("photons_hadTowOverEM", &photons_hadTowOverEM, &b_photons_hadTowOverEM);
    fChain->SetBranchAddress("photons_scEnergy", &photons_scEnergy, &b_photons_scEnergy);
    fChain->SetBranchAddress("photons_scRawEnergy", &photons_scRawEnergy, &b_photons_scRawEnergy);
    fChain->SetBranchAddress("photons_scEta", &photons_scEta, &b_photons_scEta);

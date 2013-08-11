@@ -169,7 +169,7 @@ public:
 
   float getWCandMass(int j1,int j2,int j3,int j4) ;
 
-  int countIsoPFCands(const float minpt, const float miniso) ;
+  int countIsoPFCands(const float minpt, const float maxiso) ;
   int countIsoTracks(const float minpt, const float miniso, const float maxdr, float & thept, float & theeta, float & thephi, const bool leptondisambiguation=false);
   bool isQualityTrack(const int trackindex) ;
   float mostIsolatedTrackValue(const float minpt, const float maxdr, float & d0,float & thept);
@@ -629,32 +629,14 @@ private:
   float minHiggsJetPt_;
 
   // ==== BEGIN giant copy/paste of cfA variables =============================================================
-  // generated from ra2b skimmed v65 --
-  //source: http://cms2.physics.ucsb.edu/cfA/TTJets_MassiveBinDECAY_TuneZ2star_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1403ra2b_v65/TTJets_MassiveBinDECAY_TuneZ2star_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1403ra2b_v65.h
+  // generated from ra2b skimmed v71 -- (new higgs skim/slim)
+  // http://cms2.physics.ucsb.edu/cfA/T_s-channel_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1860ra2b_v71s/T_s-channel_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1860ra2b_v71s.h
 
-   // Declaration of leaf types
+
    std::vector<float>   *trigger_prescalevalue;
    std::vector<std::string>  *trigger_name;
    std::vector<float>   *trigger_decision;
    std::vector<std::string>  *trigger_lastfiltername;
-   std::vector<std::vector<float> > *triggerobject_pt;
-   std::vector<std::vector<float> > *triggerobject_px;
-   std::vector<std::vector<float> > *triggerobject_py;
-   std::vector<std::vector<float> > *triggerobject_pz;
-   std::vector<std::vector<float> > *triggerobject_et;
-   std::vector<std::vector<float> > *triggerobject_energy;
-   std::vector<std::vector<float> > *triggerobject_phi;
-   std::vector<std::vector<float> > *triggerobject_eta;
-   std::vector<std::vector<std::string> > *triggerobject_collectionname;
-   std::vector<float>   *standalone_triggerobject_pt;
-   std::vector<float>   *standalone_triggerobject_px;
-   std::vector<float>   *standalone_triggerobject_py;
-   std::vector<float>   *standalone_triggerobject_pz;
-   std::vector<float>   *standalone_triggerobject_et;
-   std::vector<float>   *standalone_triggerobject_energy;
-   std::vector<float>   *standalone_triggerobject_phi;
-   std::vector<float>   *standalone_triggerobject_eta;
-   std::vector<std::string>  *standalone_triggerobject_collectionname;
    std::vector<float>   *L1trigger_bit;
    std::vector<float>   *L1trigger_techTrigger;
    std::vector<float>   *L1trigger_prescalevalue;
@@ -672,6 +654,9 @@ private:
    std::vector<float>   *pf_els_PFphotonIsoR03;
    std::vector<float>   *pf_els_PFneutralHadronIsoR03;
    std::vector<bool>    *pf_els_hasMatchedConversion;
+   Int_t           trk_nTOBTEC;
+   Float_t         trk_ratioAllTOBTEC;
+   Float_t         trk_ratioJetTOBTEC;
    Int_t           hbhefilter_decision;
    Int_t           trackingfailurefilter_decision;
    Int_t           cschalofilter_decision;
@@ -684,12 +669,18 @@ private:
    Int_t           ecallaserfilter_decision;
    Int_t           eenoisefilter_decision;
    Int_t           eebadscfilter_decision;
+   Int_t           trackercoherentnoisefilter1_decision;
+   Int_t           trackercoherentnoisefilter2_decision;
+   Int_t           trackertoomanyclustersfilter_decision;
+   Int_t           trackertoomanytripletsfilter_decision;
+   Int_t           trackertoomanyseedsfilter_decision;
    Int_t           passprescalePFHT350filter_decision;
    Int_t           passprescaleHT250filter_decision;
    Int_t           passprescaleHT300filter_decision;
    Int_t           passprescaleHT350filter_decision;
    Int_t           passprescaleHT400filter_decision;
    Int_t           passprescaleHT450filter_decision;
+   Int_t           passprescaleJet30MET80filter_decision;
    Float_t         MPT;
    Float_t         genHT;
    std::vector<float>   *jets_AK5PFclean_corrL2L3;
@@ -715,36 +706,35 @@ private:
    Float_t         pfmets_fullSignifCov11;
    Float_t         softjetUp_dMEx;
    Float_t         softjetUp_dMEy;
+   std::vector<float>   *pdfweights_cteq;
+   std::vector<float>   *pdfweights_mstw;
+   std::vector<float>   *pdfweights_nnpdf;
+   std::vector<float>   *photon_chIsoValues;
+   std::vector<float>   *photon_phIsoValues;
+   std::vector<float>   *photon_nhIsoValues;
+   std::vector<bool>    *photon_passElectronVeto;
+   std::vector<std::vector<float> > *puJet_rejectionBeta;
+   std::vector<std::vector<float> > *puJet_rejectionMVA;
    Float_t         pfmets_fullSignif_2012;
    Float_t         pfmets_fullSignifCov00_2012;
    Float_t         pfmets_fullSignifCov10_2012;
    Float_t         pfmets_fullSignifCov11_2012;
-   std::vector<std::vector<float> > *puJet_rejectionBeta;
-   std::vector<std::vector<float> > *puJet_rejectionMVA;
+   Float_t         pfmets_fullSignif_2012_dataRes;
+   Float_t         pfmets_fullSignifCov00_2012_dataRes;
+   Float_t         pfmets_fullSignifCov10_2012_dataRes;
+   Float_t         pfmets_fullSignifCov11_2012_dataRes;
+   std::vector<float>   *isotk_pt;
+   std::vector<float>   *isotk_phi;
+   std::vector<float>   *isotk_eta;
+   std::vector<float>   *isotk_iso;
+   std::vector<float>   *isotk_dzpv;
+   std::vector<int>     *isotk_charge;
 
-   // List of branches
+  // List of branches
    TBranch        *b_trigger_prescalevalue;   //!
    TBranch        *b_trigger_name;   //!
    TBranch        *b_trigger_decision;   //!
    TBranch        *b_trigger_lastfiltername;   //!
-   TBranch        *b_triggerobject_pt;   //!
-   TBranch        *b_triggerobject_px;   //!
-   TBranch        *b_triggerobject_py;   //!
-   TBranch        *b_triggerobject_pz;   //!
-   TBranch        *b_triggerobject_et;   //!
-   TBranch        *b_triggerobject_energy;   //!
-   TBranch        *b_triggerobject_phi;   //!
-   TBranch        *b_triggerobject_eta;   //!
-   TBranch        *b_triggerobject_collectionname;   //!
-   TBranch        *b_standalone_triggerobject_pt;   //!
-   TBranch        *b_standalone_triggerobject_px;   //!
-   TBranch        *b_standalone_triggerobject_py;   //!
-   TBranch        *b_standalone_triggerobject_pz;   //!
-   TBranch        *b_standalone_triggerobject_et;   //!
-   TBranch        *b_standalone_triggerobject_energy;   //!
-   TBranch        *b_standalone_triggerobject_phi;   //!
-   TBranch        *b_standalone_triggerobject_eta;   //!
-   TBranch        *b_standalone_triggerobject_collectionname;   //!
    TBranch        *b_L1trigger_bit;   //!
    TBranch        *b_L1trigger_techTrigger;   //!
    TBranch        *b_L1trigger_prescalevalue;   //!
@@ -762,6 +752,9 @@ private:
    TBranch        *b_pf_els_PFphotonIsoR03;   //!
    TBranch        *b_pf_els_PFneutralHadronIsoR03;   //!
    TBranch        *b_pf_els_hasMatchedConversion;   //!
+   TBranch        *b_Ctrk_nTOBTEC;   //!
+   TBranch        *b_trk_ratioAllTOBTEC;   //!
+   TBranch        *b_trk_ratioJetTOBTEC;   //!
    TBranch        *b_hbhefilter_decision;   //!
    TBranch        *b_trackingfailurefilter_decision;   //!
    TBranch        *b_cschalofilter_decision;   //!
@@ -774,12 +767,18 @@ private:
    TBranch        *b_ecallaserfilter_decision;   //!
    TBranch        *b_eenoisefilter_decision;   //!
    TBranch        *b_eebadscfilter_decision;   //!
+   TBranch        *b_trackercoherentnoisefilter1 ;   //!
+   TBranch        *b_trackercoherentnoisefilter2 ;   //!
+   TBranch        *b_trackertoomanyclustersfilter;   //!
+   TBranch        *b_trackertoomanytripletsfilter;   //!
+   TBranch        *b_trackertoomanyseedsfilter ;   //!
    TBranch        *b_passprescalePFHT350filter_decision;   //!
    TBranch        *b_passprescaleHT250filter_decision;   //!
    TBranch        *b_passprescaleHT300filter_decision;   //!
    TBranch        *b_passprescaleHT350filter_decision;   //!
    TBranch        *b_passprescaleHT400filter_decision;   //!
    TBranch        *b_passprescaleHT450filter_decision;   //!
+   TBranch        *b_passprescaleJet30MET80filter_decision;   //!
    TBranch        *b_MPT;   //!
    TBranch        *b_genHT;   //!
    TBranch        *b_jets_AK5PFclean_corrL2L3;   //!
@@ -805,12 +804,29 @@ private:
    TBranch        *b_pfmets_fullSignifCov11;   //!
    TBranch        *b_softjetUp_dMEx;   //!
    TBranch        *b_softjetUp_dMEy;   //!
-   TBranch        *b_pfmets_fullSignif_2012;   //!  
-   TBranch        *b_pfmets_fullSignifCov00_2012;   //!  
-   TBranch        *b_pfmets_fullSignifCov10_2012;   //!  
-   TBranch        *b_pfmets_fullSignifCov11_2012;   //!  
+   TBranch        *b_pdfweights_cteq;   //!
+   TBranch        *b_pdfweights_mstw;   //!
+   TBranch        *b_pdfweights_nnpdf;   //!
+   TBranch        *b_photon_chIsoValues;   //!
+   TBranch        *b_photon_phIsoValues;   //!
+   TBranch        *b_photon_nhIsoValues;   //!
+   TBranch        *b_photon_passElectronVeto;   //!
    TBranch        *b_puJet_rejectionBeta;   //!
-   TBranch        *b_puJet_rejectionMVA;    //!
+   TBranch        *b_puJet_rejectionMVA;   //!
+   TBranch        *b_pfmets_fullSignif_2012;   //!
+   TBranch        *b_pfmets_fullSignifCov00_2012;   //!
+   TBranch        *b_pfmets_fullSignifCov10_2012;   //!
+   TBranch        *b_pfmets_fullSignifCov11_2012;   //!
+   TBranch        *b_pfmets_fullSignif_2012_dataRes;   //!
+   TBranch        *b_pfmets_fullSignifCov00_2012_dataRes;   //!
+   TBranch        *b_pfmets_fullSignifCov10_2012_dataRes;   //!
+   TBranch        *b_pfmets_fullSignifCov11_2012_dataRes;   //!
+   TBranch        *b_isotk_pt;   //!
+   TBranch        *b_isotk_phi;   //!
+   TBranch        *b_isotk_eta;   //!
+   TBranch        *b_isotk_iso;   //!
+   TBranch        *b_isotk_dzpv;   //!
+   TBranch        *b_isotk_charge;   //!
 
    // Declaration of leaf types
    UInt_t          NbeamSpot;
@@ -1214,6 +1230,12 @@ private:
    std::vector<float>   *mc_nutaus_vertex_z;
    std::vector<float>   *mc_nutaus_mass;
    std::vector<float>   *mc_nutaus_numOfDaughters;
+   UInt_t          Nmc_pdf;
+   std::vector<float>   *mc_pdf_x1;
+   std::vector<float>   *mc_pdf_x2;
+   std::vector<float>   *mc_pdf_q;
+   std::vector<float>   *mc_pdf_id1;
+   std::vector<float>   *mc_pdf_id2;
    UInt_t          Nmc_photons;
    std::vector<float>   *mc_photons_id;
    std::vector<float>   *mc_photons_pt;
@@ -1256,9 +1278,12 @@ private:
    std::vector<float>   *mc_taus_vertex_z;
    std::vector<float>   *mc_taus_mass;
    std::vector<float>   *mc_taus_numOfDaughters;
-  //v67 only
-  std::vector<float>   *metsHO_et;
-  std::vector<float>   *metsHO_phi;
+   UInt_t          NmetsHO;
+   std::vector<float>   *metsHO_et;
+   std::vector<float>   *metsHO_phi;
+   std::vector<float>   *metsHO_ex;
+   std::vector<float>   *metsHO_ey;
+   std::vector<float>   *metsHO_sumEt;
    UInt_t          Nmets_AK5;
    std::vector<float>   *mets_AK5_et;
    std::vector<float>   *mets_AK5_phi;
@@ -1904,6 +1929,44 @@ private:
    std::vector<float>   *pf_mus_dB;
    std::vector<float>   *pf_mus_numberOfMatchedStations;
    std::vector<float>   *pf_mus_isPFMuon;
+   UInt_t          Npf_photons;
+   std::vector<float>   *pf_photons_energy;
+   std::vector<float>   *pf_photons_et;
+   std::vector<float>   *pf_photons_eta;
+   std::vector<float>   *pf_photons_phi;
+   std::vector<float>   *pf_photons_pt;
+   std::vector<float>   *pf_photons_px;
+   std::vector<float>   *pf_photons_py;
+   std::vector<float>   *pf_photons_pz;
+   std::vector<float>   *pf_photons_status;
+   std::vector<float>   *pf_photons_theta;
+   std::vector<float>   *pf_photons_hadOverEM;
+   std::vector<float>   *pf_photons_hadTowOverEM;
+   std::vector<float>   *pf_photons_scEnergy;
+   std::vector<float>   *pf_photons_scRawEnergy;
+   std::vector<float>   *pf_photons_scEta;
+   std::vector<float>   *pf_photons_scPhi;
+   std::vector<float>   *pf_photons_scEtaWidth;
+   std::vector<float>   *pf_photons_scPhiWidth;
+   std::vector<float>   *pf_photons_isAlsoElectron;
+   std::vector<float>   *pf_photons_hasPixelSeed;
+   std::vector<float>   *pf_photons_isConverted;
+   std::vector<float>   *pf_photons_isEBGap;
+   std::vector<float>   *pf_photons_isEEGap;
+   std::vector<float>   *pf_photons_isEBEEGap;
+   std::vector<float>   *pf_photons_isEBPho;
+   std::vector<float>   *pf_photons_isEEPho;
+   std::vector<float>   *pf_photons_maxEnergyXtal;
+   std::vector<float>   *pf_photons_e1x5;
+   std::vector<float>   *pf_photons_e2x5;
+   std::vector<float>   *pf_photons_e3x3;
+   std::vector<float>   *pf_photons_e5x5;
+   std::vector<float>   *pf_photons_sigmaEtaEta;
+   std::vector<float>   *pf_photons_sigmaIetaIeta;
+   std::vector<float>   *pf_photons_r9;
+   std::vector<float>   *pf_photons_chIso;
+   std::vector<float>   *pf_photons_nhIso;
+   std::vector<float>   *pf_photons_phIso;
    UInt_t          Npfcand;
    std::vector<float>   *pfcand_pdgId;
    std::vector<float>   *pfcand_particleId;
@@ -1939,6 +2002,7 @@ private:
    std::vector<float>   *photons_status;
    std::vector<float>   *photons_theta;
    std::vector<float>   *photons_hadOverEM;
+   std::vector<float>   *photons_hadTowOverEM;
    std::vector<float>   *photons_scEnergy;
    std::vector<float>   *photons_scRawEnergy;
    std::vector<float>   *photons_scEta;
@@ -2494,6 +2558,12 @@ private:
    TBranch        *b_mc_nutaus_vertex_z;   //!
    TBranch        *b_mc_nutaus_mass;   //!
    TBranch        *b_mc_nutaus_numOfDaughters;   //!
+   TBranch        *b_Nmc_pdf;   //!
+   TBranch        *b_mc_pdf_x1;   //!
+   TBranch        *b_mc_pdf_x2;   //!
+   TBranch        *b_mc_pdf_q;   //!
+   TBranch        *b_mc_pdf_id1;   //!
+   TBranch        *b_mc_pdf_id2;   //!
    TBranch        *b_Nmc_photons;   //!
    TBranch        *b_mc_photons_id;   //!
    TBranch        *b_mc_photons_pt;   //!
@@ -2536,8 +2606,12 @@ private:
    TBranch        *b_mc_taus_vertex_z;   //!
    TBranch        *b_mc_taus_mass;   //!
    TBranch        *b_mc_taus_numOfDaughters;   //!
+   TBranch        *b_NmetsHO;   //!
    TBranch        *b_metsHO_et;   //!
    TBranch        *b_metsHO_phi;   //!
+   TBranch        *b_metsHO_ex;   //!
+   TBranch        *b_metsHO_ey;   //!
+   TBranch        *b_metsHO_sumEt;   //!
    TBranch        *b_Nmets_AK5;   //!
    TBranch        *b_mets_AK5_et;   //!
    TBranch        *b_mets_AK5_phi;   //!
@@ -3183,6 +3257,44 @@ private:
    TBranch        *b_pf_mus_dB;   //!
    TBranch        *b_pf_mus_numberOfMatchedStations;   //!
    TBranch        *b_pf_mus_isPFMuon;   //!
+   TBranch        *b_Npf_photons;   //!
+   TBranch        *b_pf_photons_energy;   //!
+   TBranch        *b_pf_photons_et;   //!
+   TBranch        *b_pf_photons_eta;   //!
+   TBranch        *b_pf_photons_phi;   //!
+   TBranch        *b_pf_photons_pt;   //!
+   TBranch        *b_pf_photons_px;   //!
+   TBranch        *b_pf_photons_py;   //!
+   TBranch        *b_pf_photons_pz;   //!
+   TBranch        *b_pf_photons_status;   //!
+   TBranch        *b_pf_photons_theta;   //!
+   TBranch        *b_pf_photons_hadOverEM;   //!
+   TBranch        *b_pf_photons_hadTowOverEM;   //!
+   TBranch        *b_pf_photons_scEnergy;   //!
+   TBranch        *b_pf_photons_scRawEnergy;   //!
+   TBranch        *b_pf_photons_scEta;   //!
+   TBranch        *b_pf_photons_scPhi;   //!
+   TBranch        *b_pf_photons_scEtaWidth;   //!
+   TBranch        *b_pf_photons_scPhiWidth;   //!
+   TBranch        *b_pf_photons_isAlsoElectron;   //!
+   TBranch        *b_pf_photons_hasPixelSeed;   //!
+   TBranch        *b_pf_photons_isConverted;   //!
+   TBranch        *b_pf_photons_isEBGap;   //!
+   TBranch        *b_pf_photons_isEEGap;   //!
+   TBranch        *b_pf_photons_isEBEEGap;   //!
+   TBranch        *b_pf_photons_isEBPho;   //!
+   TBranch        *b_pf_photons_isEEPho;   //!
+   TBranch        *b_pf_photons_maxEnergyXtal;   //!
+   TBranch        *b_pf_photons_e1x5;   //!
+   TBranch        *b_pf_photons_e2x5;   //!
+   TBranch        *b_pf_photons_e3x3;   //!
+   TBranch        *b_pf_photons_e5x5;   //!
+   TBranch        *b_pf_photons_sigmaEtaEta;   //!
+   TBranch        *b_pf_photons_sigmaIetaIeta;   //!
+   TBranch        *b_pf_photons_r9;   //!
+   TBranch        *b_pf_photons_chIso;   //!
+   TBranch        *b_pf_photons_nhIso;   //!
+   TBranch        *b_pf_photons_phIso;   //!
    TBranch        *b_Npfcand;   //!
    TBranch        *b_pfcand_pdgId;   //!
    TBranch        *b_pfcand_particleId;   //!
@@ -3218,6 +3330,7 @@ private:
    TBranch        *b_photons_status;   //!
    TBranch        *b_photons_theta;   //!
    TBranch        *b_photons_hadOverEM;   //!
+   TBranch        *b_photons_hadTowOverEM;   //!
    TBranch        *b_photons_scEnergy;   //!
    TBranch        *b_photons_scRawEnergy;   //!
    TBranch        *b_photons_scEta;   //!
@@ -3381,28 +3494,8 @@ private:
   
   // ==== END giant copy/paste of cfA variable ================================================================
 
-  //special! for signal only
-  std::vector<float> *pdfweights_cteq;
-  std::vector<float> *pdfweights_mstw;
-  std::vector<float> *pdfweights_nnpdf;
 
 
-  std::vector<float>   *mc_pdf_x1;
-  std::vector<float>   *mc_pdf_x2;
-  std::vector<float>   *mc_pdf_q;
-  std::vector<float>   *mc_pdf_id1;
-  std::vector<float>   *mc_pdf_id2;
-
-  TBranch *b_pdfweights_cteq;
-  TBranch *b_pdfweights_mstw;
-  TBranch *b_pdfweights_nnpdf;
-
-  TBranch *b_mc_pdf_x1;
-  TBranch *b_mc_pdf_x2;
-
-  TBranch *b_mc_pdf_id1;
-  TBranch *b_mc_pdf_id2;
-  TBranch *b_mc_pdf_q;
   
 };
 
