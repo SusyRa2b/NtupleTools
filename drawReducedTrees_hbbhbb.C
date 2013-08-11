@@ -850,7 +850,7 @@ void higgs_dataMC_control_QCD_noskim() {
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_lt3bLDP_trigMET150_METsig",0);
 
 
-  nbins=40; low=0; high=600;
+  nbins=40; low=0; high=700;
   setLogY(false);
   var="MET"; xtitle="MET (GeV)";
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_lt3bLDP_trigMET150_MET",0,"GeV");
@@ -879,7 +879,7 @@ void higgs_dataMC_control_QCD_noskim() {
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_lt3bLDP_trigJetMET_METsig",0);
 
 
-  nbins=40; low=0; high=600;
+  nbins=40; low=0; high=700;
   setLogY(false);
   var="MET"; xtitle="MET (GeV)";
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_lt3bLDP_trigJetMET_MET",0,"GeV");
@@ -901,7 +901,7 @@ void higgs_dataMC_control_QCD_noskim() {
 
   selection_ = weird && ra2btrigger && zl&&isotk && jets&&jet2high && !btag3 &&TCut("MET>160");
 
-  nbins=40; low=0; high=600;
+  nbins=40; low=0; high=700;
   setLogY(false);
   var="MET"; xtitle="MET (GeV)";
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_weird_trigJetMET_MET",0,"GeV");
@@ -919,7 +919,7 @@ void higgs_dataMC_control_QCD_noskim() {
 
   selection_ = junk && ra2btrigger && zl&&isotk && jets&&jet2high && !btag3 &&TCut("MET>160");
 
-  nbins=40; low=0; high=600;
+  nbins=40; low=0; high=700;
   setLogY(false);
   var="MET"; xtitle="MET (GeV)";
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_junk_trigJetMET_MET",0,"GeV");
@@ -1704,7 +1704,7 @@ void higgs_dataMC_control_SL_noskim() {
   TCut njets4="njets20==4"; //switch back to 20 GeV jets
   TCut njets5="njets20==5";
   TCut jet2="jetpt2>50";
-  TCut mdp = "minDeltaPhi30>0.3"; // does this need to go to 20?
+  TCut mdp = "minDeltaPhi20>0.3";
   TCut btag2="CSVbest2>0.898";
   TCut btag3="CSVbest3>0.679";
   TCut btag4="CSVbest4>0.244";
@@ -1795,7 +1795,7 @@ void higgs_dataMC_control_SL() {
   TCut njets4="njets20==4"; //switch back to 20 GeV jets
   TCut njets5="njets20==5";
   TCut jet2="jetpt2>50";
-  TCut mdp = "minDeltaPhi30>0.3"; // does this need to go to 20?
+  TCut mdp = "minDeltaPhi20>0.3"; 
   TCut btag2="CSVbest2>0.898";
   TCut btag3="CSVbest3>0.679";
   TCut btag4="CSVbest4>0.244";
@@ -1941,15 +1941,15 @@ root [109] ratiosByPV[0]->SetMarkerColor(kMagenta+4)
   selection_ = baseline && trigger && sl && (njets4||njets5) &&jet2 && btag2;
   nbins=30; low=0; high=3;
   setLogY(false);
-  var="minDeltaPhi30"; xtitle=var;
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselectionNoMdpNoMETsig_minDeltaPhi30",0);
+  var="minDeltaPhi20"; xtitle=var;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselectionNoMdpNoMETsig_minDeltaPhi20",0);
 
   //add the standard METsig cut
   selection_ = baseline && trigger && sl && (njets4||njets5) &&jet2 && btag2 &&metsigveryloose;
   nbins=30; low=0; high=3;
   setLogY(false);
-  var="minDeltaPhi30"; xtitle=var;
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselectionNoMdp_minDeltaPhi30",0);
+  var="minDeltaPhi20"; xtitle=var;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselectionNoMdp_minDeltaPhi20",0);
 
   //CSV3
   selection_ = baseline && trigger && sl && (njets4||njets5) &&jet2&&mdp && btag2 &&metsigveryloose;
@@ -1992,7 +1992,7 @@ root [109] ratiosByPV[0]->SetMarkerColor(kMagenta+4)
   //old MET sig
   nbins=15; low=0; high=300;
   setLogY(false);
-  var="METsig"; xtitle="MET significance (old)";
+  var="METsig"; xtitle="MET significance";
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_4bPreselection_METsig",0);
   setLogY(true);
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_4bPreselection_METsig",0);
