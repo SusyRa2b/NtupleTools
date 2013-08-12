@@ -1249,12 +1249,17 @@ void resetSampleWeightFactors() {
 }
 
 void setSampleScaleFactor(const TString & sample, const float sf) {
+
   bool done=false;
   for (std::vector<TString>::iterator isample=samples_.begin(); isample!=samples_.end(); ++isample) {
+
     if (*isample == sample) {sampleScaleFactor_[*isample] = sf; done=true;}
-    else if (stripSamplename(*isample)== sample) {sampleScaleFactor_[*isample] = sf; done=true;}
+    //this used to assign the sf to the full name of the sample: sampleScaleFactor_[*isample] = sf; but that doesn't seem right
+    //I guess if I find a use case for the old behavior then I'll have to make them live together. I could just assign the SF to both of them
+    else if (stripSamplename(*isample)== sample) { sampleScaleFactor_[sample]=sf; done=true;}
   }
   if (!done) cout<<"Failed to find the sample "<<sample<<endl;
+
 }
 
 float getSampleScaleFactor(const TString & sample) {

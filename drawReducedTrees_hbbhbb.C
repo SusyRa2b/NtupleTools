@@ -180,6 +180,7 @@ void initHiggsSamples69(const bool useSkim=true,const TString samplelist="") {
     //    if (useSkim)    setSampleWeightFactor(TString("TTJets_FullLeptMGDecays_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7C-v2_AODSIM_UCSB1799_v69")+skimstring,"topPtWeight");
   }
 
+  const float hbbbb=0.561*0.561;
 
   if (samplelist==""||samplelist.Contains("hh200")) 
     //    addSample("TChihh-HbbHbb_mHiggsino-200_mLSP-1_8TeV-Pythia6Z_jgsmith-SMS-HbbHbb_mHiggsino-200_mLSP-1_1_UCSB1807_v69",kRed-7,"hh 200");
@@ -197,7 +198,6 @@ void initHiggsSamples69(const bool useSkim=true,const TString samplelist="") {
     addSample("SMS-HbbHbb_mHiggsino-450_mLSP-1_8TeV-Pythia6Z_jgsmith_UCSB1808_v69",kRed+3,"hh 450");
 
 
-  const float hbbbb=0.561*0.561;
   //https://twiki.cern.ch/twiki/bin/view/CMS/Electrohiggs#Prospino_NLO_Cross_Sections
    //sigma x BF / ngen
   if (samplelist==""||samplelist.Contains("hh200"))
@@ -212,17 +212,16 @@ void initHiggsSamples69(const bool useSkim=true,const TString samplelist="") {
     setSampleScaleFactor("SMS-HbbHbb_mHiggsino-400_mLSP-1_8TeV-Pythia6Z_jgsmith_UCSB1812_v69",  0.0294 *hbbbb/getTree("SMS-HbbHbb_mHiggsino-400_mLSP-1_8TeV-Pythia6Z_jgsmith_UCSB1812_v69")->GetEntries());
   if (samplelist==""||samplelist.Contains("hh450"))
     setSampleScaleFactor("SMS-HbbHbb_mHiggsino-450_mLSP-1_8TeV-Pythia6Z_jgsmith_UCSB1808_v69",   0.0163 *hbbbb/getTree("SMS-HbbHbb_mHiggsino-450_mLSP-1_8TeV-Pythia6Z_jgsmith_UCSB1808_v69")->GetEntries());
-  
-/*
-  if (samplelist.Contains("hhmg200"))     addSample("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69$200$1",kRed-9,"hh MG 200");
-  if (samplelist.Contains("hhmg250"))     addSample("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69$250$1",kRed-7,"hh MG 250");
-  if (samplelist.Contains("hhmg300"))     addSample("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69$300$1",kRed-4,"hh MG 300");
-  if (samplelist.Contains("hhmg350"))     addSample("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69$350$1",kRed+1,"hh MG 350");
-  if (samplelist.Contains("hhmg400"))     addSample("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69$400$1",kRed+2,"hh MG 400");
-  if (samplelist.Contains("hhmg450"))     addSample("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69$450$1",kRed+3,"hh MG 450");
-  if (samplelist.Contains("hhmg500"))     addSample("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69$500$1",kRed+4,"hh MG 500");
-*/
 
+  if (samplelist.Contains("hhmg200") || samplelist=="")     addSample("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69$200$1",kRed-9,"hh MG 200");
+  if (samplelist.Contains("hhmg250") || samplelist=="")     addSample("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69$250$1",kRed-7,"hh MG 250");
+  if (samplelist.Contains("hhmg300") || samplelist=="")     addSample("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69$300$1",kRed-4,"hh MG 300");
+  if (samplelist.Contains("hhmg350") || samplelist=="")     addSample("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69$350$1",kRed+1,"hh MG 350");
+  if (samplelist.Contains("hhmg400") || samplelist=="")     addSample("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69$400$1",kRed+2,"hh MG 400");
+  if (samplelist.Contains("hhmg450") || samplelist=="")     addSample("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69$450$1",kRed+3,"hh MG 450");
+  if (samplelist.Contains("hhmg500") || samplelist=="")     addSample("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69$500$1",kRed+4,"hh MG 500");
+
+/*
 //special colors for comparisons between mg and pythia  
 if (samplelist.Contains("hhmg200"))     addSample("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69$200$1",kBlue-9,"hh MG 200");
   if (samplelist.Contains("hhmg250"))     addSample("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69$250$1",kBlue-7,"hh MG 250");
@@ -231,10 +230,10 @@ if (samplelist.Contains("hhmg200"))     addSample("HiggsinoNLSP_chargino130_to_5
   if (samplelist.Contains("hhmg400"))     addSample("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69$400$1",kBlue+2,"hh MG 400");
   if (samplelist.Contains("hhmg450"))     addSample("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69$450$1",kBlue+3,"hh MG 450");
   if (samplelist.Contains("hhmg500"))     addSample("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69$500$1",kBlue+4,"hh MG 500");
-
+*/
 
   //scale by h->bb squared factor
-  if (samplelist.Contains("hhmg")) setSampleScaleFactor("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69",hbbbb);
+  if (samplelist.Contains("hhmg") || samplelist=="") setSampleScaleFactor("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69",hbbbb);
 
   overrideSMSlabels_=true; //don't use the auto-labels for SMS
 
@@ -252,7 +251,7 @@ void mgSignalCheck() {
   doRatio_=false; ratioMin = 0; ratioMax = 2.2;
   dodata_=false;
 
-  //  usePUweight_=false;  //broken 
+  usePUweight_=true; 
 
   setStackMode(false,false,false); //stack,norm,label override
 
@@ -377,10 +376,10 @@ void mgSignalCheck() {
 
   TCut sl = "nMuons+nElectrons==1 &&nTausLoose==0 &&nIsoTracks15_005_03_lepcleaned==0";
 
-  TCut njets4="njets30==4";
-  TCut njets5="njets30==5";
+  TCut njets4="njets20==4";
+  TCut njets5="njets20==5";
   TCut jet2="jetpt2>50";
-  TCut mdp = "minDeltaPhi30>0.3";
+  TCut mdp = "minDeltaPhi20>0.3";
   TCut btag2="CSVbest2>0.898";
   TCut btag3="CSVbest3>0.679";
   TCut btag4="CSVbest4>0.244";
@@ -394,14 +393,14 @@ void mgSignalCheck() {
   TCut higgsSB_d = "abs(higgsMbb1MassDiff-higgsMbb2MassDiff)>30";
   TCut higgsSB = higgsSB_avl||higgsSB_avh||higgsSB_d;
 
-  TCut metsigveryloose="METsig_2012>25";
+  TCut metsig="METsig>30";
 
   TCut drmax = "deltaRmax_hh<2.2";
   //  TCut drmin = "deltaRmin_hh<1.9";
-  selection_ = baseline && trigger && zl&&isotk&& (njets4||njets5)&&jet2&& btag2&&btag3&&btag4 && higgsSR && drmax && TCut("MET>110");
+  selection_ = baseline && trigger && zl&&isotk&& (njets4||njets5)&&jet2&& btag2&&btag3&&btag4 && higgsSR && drmax &&metsig;
 
-  nbins=20; low=0; high=5;
-  var="deltaRmin_hh"; xtitle=var;
+  nbins=20; low=0; high=300;
+  var="bjetpt1"; xtitle=var;
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_SignalValidation_signalLikeSelection_"+var,0);
 
 
@@ -3642,11 +3641,15 @@ void higgsmbb_quickmbbPlots() {
   //no higgs mass cut
   selection_=baseline&&triggers && zl&& tauveto && isotk1 && njets&&jet2 && btag2 && btag3 && btag4 && higgsdiff && drmax && metsig;
 
-  clearSamples(); //SMS-HbbHbb_mHiggsino-350_mLSP-1_8TeV-Pythia6Z_jgsmith_UCSB1811_v69
+  clearSamples(); 
+  addSample("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69$350$1:higgsMbb1MassDiff_correct==0",kRed,"hh 350 (0)");
+  addSample("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69$350$1:higgsMbb1MassDiff_correct==1",kBlue,"hh 350 (1)");
+  addSample("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69$350$1:higgsMbb1MassDiff_correct==2",kGreen+4,"hh 350 (2)");
+/*
   addSample("SMS-HbbHbb_mHiggsino-350_mLSP-1_8TeV-Pythia6Z_jgsmith_UCSB1811_v69:higgsMbb1MassDiff_correct==0",kRed,"hh 350 (0)");
   addSample("SMS-HbbHbb_mHiggsino-350_mLSP-1_8TeV-Pythia6Z_jgsmith_UCSB1811_v69:higgsMbb1MassDiff_correct==1",kBlue,"hh 350 (1)");
   addSample("SMS-HbbHbb_mHiggsino-350_mLSP-1_8TeV-Pythia6Z_jgsmith_UCSB1811_v69:higgsMbb1MassDiff_correct==2",kGreen+4,"hh 350 (2)");
-
+*/
   var="0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)"; xtitle="<m_{jj}> (GeV)";
   nbins=20; low= 0; high=200;
   setStackMode(false,false,false); 
@@ -3656,10 +3659,15 @@ void higgsmbb_quickmbbPlots() {
   drawPlots(var,nbins,low,high,xtitle,"Events", "ewkhh_massshape_mbb_350_4possible",0,"GeV");
 
   selection_=baseline&&triggers && zl&& tauveto && isotk1 && njets&&jet2 && btag2 && btag3 && btag4 && higgsdiff && drmax && metsig;
-  clearSamples(); //SMS-HbbHbb_mHiggsino-200_mLSP-1_8TeV-Pythia6Z_jgsmith_UCSB1807_v69
+  clearSamples(); 
+  addSample("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69$200$1:higgsMbb1MassDiff_correct==0",kRed,"hh 200 (0)");
+  addSample("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69$200$1:higgsMbb1MassDiff_correct==1",kBlue,"hh 200 (1)");
+  addSample("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69$200$1:higgsMbb1MassDiff_correct==2",kGreen+4,"hh 200 (2)");
+/*
   addSample("SMS-HbbHbb_mHiggsino-200_mLSP-1_8TeV-Pythia6Z_jgsmith_UCSB1807_v69:higgsMbb1MassDiff_correct==0",kRed,"hh 200 (0)");
   addSample("SMS-HbbHbb_mHiggsino-200_mLSP-1_8TeV-Pythia6Z_jgsmith_UCSB1807_v69:higgsMbb1MassDiff_correct==1",kBlue,"hh 200 (1)");
   addSample("SMS-HbbHbb_mHiggsino-200_mLSP-1_8TeV-Pythia6Z_jgsmith_UCSB1807_v69:higgsMbb1MassDiff_correct==2",kGreen+4,"hh 200 (2)");
+*/
   drawPlots(var,nbins,low,high,xtitle,"Events", "ewkhh_massshape_mbb_200",0,"GeV");
 
   //make the same plots but requiring that it is possible to reconstruct the higgs (all 4 b from higgs were reconstructed)
