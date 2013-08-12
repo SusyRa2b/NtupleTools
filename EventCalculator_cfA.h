@@ -209,6 +209,8 @@ public:
   void hadronicTopFinder_DeltaR(float & mjjb1, float & mjjb2, float & topPT1, float & topPT2);
   void printDecay();
   void findGluonSplitting(int & ngl_lf,int & ngl_c,int & ngl_b,int & index_q1, int & index_q2) ;
+  void findGluonSplittingReco(int & nlf,int & nc,int & nb);
+
   int jjResonance_mcTruthCheck(int jj1, int jj2);
 
   //two ways to find deltaR between b jets

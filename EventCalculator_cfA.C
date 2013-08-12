@@ -4250,6 +4250,38 @@ void EventCalculator::hadronicTopFinder_DeltaR(float & mjjb1, float & mjjb2 , fl
   return;
 }
 
+void EventCalculator::findGluonSplittingReco(int & nlf,int & nc,int & nb) {
+  //history:
+  //jmt: I wrote the algorithm in findGluonSplitting() myself
+  //it looks only at truth level
+  //I'm not sure that was the best approach, nor am I sure that the results are right.
+
+  //this algorithm looks at reco'd jets, and uses a criterion that I got from Chris West:
+  //fabs(jets_AK5PFclean_partonFlavour->at(iB))==5 && fabs(jets_AK5PFclean_parton_Id->at(iB))==21
+
+  //the values returned in the arguments are the number of *jets* of each flavor that seem to come from gluon splitting
+  nlf=0;
+  nc=0;
+  nb=0;
+
+  for ( size_t ijet = 0; ijet< jets_AK5PF_partonFlavour->size(); ++ijet) {
+
+    if ( abs( TMath::Nint( jets_AK5PF_parton_Id->at(ijet) ))==21 ) { //jet has gluon parton id
+
+      int partonFlv = abs(TMath::Nint( jets_AK5PF_partonFlavour->at(ijet)));
+
+      //see if jet flavor is a quark
+      if      (partonFlv >=1 && partonFlv<=3) ++nlf;
+      else if (partonFlv ==4 )                ++nc;
+      else if (partonFlv ==5 )                ++nb;
+
+    }
+  }
+
+  //that's it!
+
+}
+
 void EventCalculator::findGluonSplitting(int & ngl_lf,int & ngl_c,int & ngl_b,int & index_q1, int & index_q2) {
   ngl_lf = 0;  ngl_c = 0;  ngl_b = 0;  index_q1=-1;  index_q2=-1;
   /*
@@ -7475,6 +7507,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   int njets, njets30, nbjets, nbjets30,ntruebjets, nElectrons,nElectrons2011, nMuons, nTightMuons,njets20,njets20_5p0,nbjets20;
   int nPUjets20,nPUjets30;
   int nGluonsSplitToLF,nGluonsSplitToC,nGluonsSplitToB;
+  int nlfjetsFromGluons,ncjetsFromGluons,nbjetsFromGluons;
   int nElectronsNoRelIso, nMuonsNoRelIso;
   int njetsHiggsMatch20, njetsHiggsMatch20_CSVT,njetsHiggsMatch20_CSVM,njetsHiggsMatch20_CSVL;
   int ncompleteHiggsReco20;
@@ -7984,6 +8017,10 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("nGluonsSplitToLF",&nGluonsSplitToLF,"nGluonsSplitToLF/I");
   reducedTree.Branch("nGluonsSplitToC",&nGluonsSplitToC,"nGluonsSplitToC/I");
   reducedTree.Branch("nGluonsSplitToB",&nGluonsSplitToB,"nGluonsSplitToB/I");
+
+  reducedTree.Branch("nlfjetsFromGluons",&nlfjetsFromGluons,"nlfjetsFromGluons/I");
+  reducedTree.Branch("ncjetsFromGluons",&ncjetsFromGluons,"ncjetsFromGluons/I");
+  reducedTree.Branch("nbjetsFromGluons",&nbjetsFromGluons,"nbjetsFromGluons/I");
 
   reducedTree.Branch("nElectrons",&nElectrons,"nElectrons/I");
   reducedTree.Branch("nElectrons2011",&nElectrons2011,"nElectrons2011/I");
@@ -9046,7 +9083,7 @@ void EventCalculator::reducedTree(TString outputpath) {
 	//mc truth gluon splitting finding
 	int index_q1,index_q2;	//for now we're not using these indices, but could be used to match to something
 	findGluonSplitting(nGluonsSplitToLF,nGluonsSplitToC, nGluonsSplitToB, index_q1,  index_q2);
-	
+	findGluonSplittingReco(nlfjetsFromGluons,ncjetsFromGluons,nbjetsFromGluons);
 
 	//calculate the most naive invariant masses (reco level)
 	higgs125massPairs(higgsMbb1,higgsMbb2,genHiggsIndices);
