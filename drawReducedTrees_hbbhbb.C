@@ -1,27 +1,33 @@
 /*
-to compile:
-
-must have symlink to MiscUtil.cxx in the working directory.
-
-gSystem->Load("TSelectorMultiDraw_C.so");
-gSystem->Load("CrossSectionTable_cxx.so");
-gSystem->Load("ConfigurationDescriptions_cxx.so");
-
-.L drawReducedTrees_hbbhbb.C+
-
-or
-
-gSystem->Load("drawReducedTrees_hbbhbb_C.so");
-
-
 ====== this is the nominal code for drawing RA2b data/MC comparison plots =======
-The signal efficiency functions are now forked into signalEffSyst.C
 
 The functions that do the heavy lifting, along with various utility functions,
 are in drawReducedTrees.h.
 
-This code replaces drawCutflowPlots.C (which had replaced drawBasicPlots.C). 
-The input files are the reducedTrees.
+Suggested version of ROOT is ROOT 5.34/04
+/afs/cern.ch/sw/lcg/app/releases/ROOT/5.34.04/x86_64-slc5-gcc43-opt/root/bin/thisroot.csh
+ROOT 5.32 will not work.
+
+--- setup --
+
+You must have symlink to or copy of MiscUtil.cxx in the working directory.
+This is available at:
+https://github.com/joshmt1/UserCode/blob/master/MiscUtil.cxx
+
+You must also make a symlink as follows:
+ln -s drawReducedTrees.h drawReducedTrees_hbbhbb.h
+
+--- to compile ---
+
+.L TSelectorMultiDraw.C+
+.L CrossSectionTable.cxx+
+.L ConfigurationDescriptions.cxx+
+
+.L drawReducedTrees_hbbhbb.C+
+
+-- input file locations --
+
+The paths to the reducedTrees are defined at the top of initHiggsSamples69()
 
 */
 
@@ -58,18 +64,23 @@ The input files are the reducedTrees.
 #include <iomanip>
 #include <map>
 #include <set>
-	
-TString inputPath = "/cu4/ra2b/reducedTrees/v66_10/"; //2012
-TString dataInputPath =  "/cu4/ra2b/reducedTrees/v66_10/ORIGINALS/";
-//TString inputPath = "/cu2/ra2b/reducedTrees/V00-02-35u/Fall11/";//7 TeV
 
-double lumiScale_ = 19399; //Run 2012 ABC+D (update from Keith)
+TString inputPath = "";
+TString dataInputPath =  "";
+
+double lumiScale_ = 19399; //Run 2012 ABC+D
 
 //make a symlink that point from this name to drawReducedTree.h
 //this is to make the ROOT dictionary generation work correctly
 #include "drawReducedTrees_hbbhbb.h"
 
 void initHiggsSamples69(const bool useSkim=true,const TString samplelist="") { 
+
+  inputPath="/cu6/joshmt/reducedTrees/v69_2_pt20/"; 
+  dataInputPath="/cu6/joshmt/reducedTrees/v69_2_pt20/data/"; //for skimmed data
+  if (!useSkim)   dataInputPath+="unskimmed/";
+
+  if (samplelist=="metsigtest1") inputPath = "/cu5/joshmt/reducedTrees/v69_2_pt20/";//special test
 
   //  if (useSkim==false) {cout<<"Must use skim!"<<endl; assert(0);}
   const  TString skimstring = useSkim?"-skim":"";
@@ -120,13 +131,8 @@ void initHiggsSamples69(const bool useSkim=true,const TString samplelist="") {
 
   nameOfEventWeight_="weight3"; 
 
-  if (samplelist=="metsigtest1") inputPath = "/cu5/joshmt/reducedTrees/v69_2_pt20/";//special test
-  else  inputPath="/cu6/joshmt/reducedTrees/v69_2_pt20/"; 
-  dataInputPath="/cu6/joshmt/reducedTrees/v69_2_pt20/data/"; //for skimmed data
-  if (!useSkim)   dataInputPath+="unskimmed/";
-
   loadSamples(true,"ra2b2012");
-  usePUweight_=true; //helps bring signal and background into alignment
+  usePUweight_=true; 
 
   useTrigEff_=false;
   currentConfig_=configDescriptions_.getDefault();
