@@ -287,6 +287,7 @@ bool normalized_=false;
 
 bool usePUweight_=false;
 bool useTrigEff_ = false;
+TString trigEffWeight_="*hlteff";
 
 TString btagSFweight_="1";
 
@@ -978,7 +979,7 @@ for legacy purposes I am keeping all of the weight and selection TStrings, altho
     weightedcut +="*PUweight";
   }
   if (useTrigEff_ &&  type!=kData) {
-    weightedcut +="*hlteff";
+    weightedcut += trigEffWeight_;
   }
   if (btagSFweight_=="") btagSFweight_="1";
   if ( type==kData) {
@@ -1987,7 +1988,8 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
     }
     else if (idataset->first == "MET") {
       idataset->second = new TChain(reducedTreeName_);
-      addDataToChain(idataset->second,"MET_Run2012A");
+      cout<<"WARNING -- Run2012A excluded!"<<endl;
+      //      addDataToChain(idataset->second,"MET_Run2012A");
       addDataToChain(idataset->second,"MET_Run2012B");
       addDataToChain(idataset->second,"MET_Run2012C");
       addDataToChain(idataset->second,"MET_Run2012D");
