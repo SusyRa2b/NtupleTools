@@ -7671,7 +7671,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   int nIsoTracks10_005_03;
   int nIsoTracks5_005_03;
 
-  int nIsoPFcands10_010;
+  int nIsoPFcands5_010,nIsoPFcands10_010,nIsoPFcands15_010;
 
   float minTrackIso10,minTrackIso5,minTrackIso15,minTrackIso20;
   float trackd0_10,trackd0_5,trackd0_15,trackd0_20;
@@ -8541,7 +8541,9 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("nIsoTracks5_005_03",&nIsoTracks5_005_03,"nIsoTracks5_005_03/I");
   reducedTree.Branch("nIsoTracks15_005_03_lepcleaned",&nIsoTracks15_005_03_lepcleaned,"nIsoTracks15_005_03_lepcleaned/I");
 
+  reducedTree.Branch("nIsoPFcands5_010",&nIsoPFcands5_010,"nIsoPFcands5_010/I");
   reducedTree.Branch("nIsoPFcands10_010",&nIsoPFcands10_010,"nIsoPFcands10_010/I");
+  reducedTree.Branch("nIsoPFcands15_010",&nIsoPFcands15_010,"nIsoPFcands15_010/I");
 
   reducedTree.Branch("minTrackIso10", &minTrackIso10, "minTrackIso10/F");
   reducedTree.Branch("minTrackIso5", &minTrackIso5, "minTrackIso5/F");
@@ -9801,6 +9803,8 @@ void EventCalculator::reducedTree(TString outputpath) {
       minTrackIso20 = mostIsolatedTrackValue(20,0.3,trackd0_20,trackpt_20);
 
       nIsoPFcands10_010 = countIsoPFCands(10,0.10);// pt, isolation
+      nIsoPFcands15_010 = countIsoPFCands(15,0.10);// pt, isolation
+      nIsoPFcands5_010 = countIsoPFCands(5,0.10);// pt, isolation
 
       //Uncomment next two lines to do thrust calculations
 //       getTransverseThrustVariables(transverseThrust, transverseThrustPhi, false);
