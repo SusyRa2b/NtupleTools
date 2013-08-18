@@ -7509,7 +7509,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   int nGluonsSplitToLF,nGluonsSplitToC,nGluonsSplitToB;
   int nlfjetsFromGluons,ncjetsFromGluons,nbjetsFromGluons;
   int nElectronsNoRelIso, nMuonsNoRelIso;
-  int njetsHiggsMatch20, njetsHiggsMatch20_CSVT,njetsHiggsMatch20_CSVM,njetsHiggsMatch20_CSVL;
+  int njetsHiggsMatch20, njetsHiggsMatch20_eta5;
   int ncompleteHiggsReco20;
   int nbjetsTweaked;
   int nTausVLoose,nTausLoose,nTausMedium,nTausTight;
@@ -8005,9 +8005,8 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("njets20_5p0",&njets20_5p0,"njets20_5p0/I");
   reducedTree.Branch("njetsHiggsMatch20",&njetsHiggsMatch20,"njetsHiggsMatch20/I");
   reducedTree.Branch("ncompleteHiggsReco20",&ncompleteHiggsReco20,"ncompleteHiggsReco20/I");
-  reducedTree.Branch("njetsHiggsMatch20_CSVT",&njetsHiggsMatch20_CSVT,"njetsHiggsMatch20_CSVT/I");
-  reducedTree.Branch("njetsHiggsMatch20_CSVM",&njetsHiggsMatch20_CSVM,"njetsHiggsMatch20_CSVM/I");
-  reducedTree.Branch("njetsHiggsMatch20_CSVL",&njetsHiggsMatch20_CSVL,"njetsHiggsMatch20_CSVL/I");
+  reducedTree.Branch("njetsHiggsMatch20_eta5",&njetsHiggsMatch20_eta5,"njetsHiggsMatch20_eta5/I");
+
   reducedTree.Branch("nbjets",&nbjets,"nbjets/I");
   reducedTree.Branch("nbjetsTweaked",&nbjetsTweaked,"nbjetsTweaked/I");
   reducedTree.Branch("nbjets30",&nbjets30,"nbjets30/I");
@@ -8929,9 +8928,8 @@ void EventCalculator::reducedTree(TString outputpath) {
 	ncompleteHiggsReco20=0;
 	int njetsHiggsMatch20_temp=0;
 	njetsHiggsMatch20 = 0;
-	njetsHiggsMatch20_CSVT = 0;
-	njetsHiggsMatch20_CSVL = 0;
-	njetsHiggsMatch20_CSVM = 0;
+	njetsHiggsMatch20_eta5 = 0;
+
 	for (unsigned int ih =0; ih<genHiggsIndices.size(); ih++) {
 	  if (ih>=2) cout<<" wait ... ih = "<<ih<<endl;
 	  int hj[2];
@@ -8939,13 +8937,12 @@ void EventCalculator::reducedTree(TString outputpath) {
 	  hj[1]=genHiggsIndices[ih].second;
 	  for (int ihj=0;ihj<2; ihj++) {
 	    if (hj[ihj]>=0) {
+	      //looser eta cut
+	      if (isGoodJet( (unsigned int)hj[ihj],20,5) ) njetsHiggsMatch20_eta5++;
+	      //normal eta cut
 	      if (isGoodJet( (unsigned int)hj[ihj],20)) {
 		njetsHiggsMatch20++;
 		njetsHiggsMatch20_temp++;
-		//could save time by nesting these, but gain isn't worth loss of clarity
-		if ( passBTagger( hj[ihj], kCSVL)) njetsHiggsMatch20_CSVL++;
-		if ( passBTagger( hj[ihj], kCSVM)) njetsHiggsMatch20_CSVM++;
-		if ( passBTagger( hj[ihj], kCSVT)) njetsHiggsMatch20_CSVT++;
 	      }
 	    }
 	  }
