@@ -1164,6 +1164,8 @@ int EventCalculator::countIsoPFCands(const float minpt, const float maxiso) {
 
   int nisotracks=0;
 
+  if ( cfAversion_ < 71 ) return nisotracks; 
+
   for ( unsigned int itrack = 0 ; itrack < isotk_pt->size() ; ++itrack) {
     if ( (isotk_pt->at(itrack) >= minpt) &&
 	 //ntuple stores isolation, not relative isolation
@@ -5096,6 +5098,9 @@ Long64_t EventCalculator::getNEventsGenerated( TString sample) {
 
    // ============= v71 samples ============
   if (sample.Contains("UCSB1850")) return 6923750; //hopefully this is correct ; need to verify
+  if (sample.Contains("UCSB1877")) return 34044921; //W2Jets 
+  if (sample.Contains("UCSB1878")) return 15539503; //W3Jets 
+  if (sample.Contains("UCSB1879")) return 13382803; //W4Jets  
 
 
   cout<<"[getNEventsGenerated] unknown sample "<<sample<<endl;
