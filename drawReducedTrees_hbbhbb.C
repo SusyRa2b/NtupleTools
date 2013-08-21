@@ -117,6 +117,10 @@ void initHiggsSamples69(const bool useSkim=true,const TString samplelist="") {
   addToSamplesAll(TString("ZJetsToNuNu_400_HT_inf_TuneZ2Star_8TeV_madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1831_v69")+skimstring);
   addToSamplesAll(TString("ZJetsToNuNu_400_HT_inf_TuneZ2Star_8TeV_madgraph_ext_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1835_v69")+skimstring);
 
+  //W in njets bins
+  addToSamplesAll(TString("W2JetsToLNu_TuneZ2Star_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1877_v71")+skimstring);
+  addToSamplesAll(TString("W3JetsToLNu_TuneZ2Star_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1878_v71")+skimstring);
+  addToSamplesAll(TString("W4JetsToLNu_TuneZ2Star_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1879_v71")+skimstring);
 
   //signal (no skim)
   addToSamplesAll("TChihh-HbbHbb_mHiggsino-200_mLSP-1_8TeV-Pythia6Z_jgsmith-SMS-HbbHbb_mHiggsino-200_mLSP-1_1_UCSB1807_v69");
@@ -176,6 +180,15 @@ void initHiggsSamples69(const bool useSkim=true,const TString samplelist="") {
     chainSamples(basezname,TString("ZJetsToNuNu_200_HT_400_TuneZ2Star_8TeV_madgraph_ext_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1834_v69")+skimstring);
     chainSamples(basezname,TString("ZJetsToNuNu_400_HT_inf_TuneZ2Star_8TeV_madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1831_v69")+skimstring);
     chainSamples(basezname,TString("ZJetsToNuNu_400_HT_inf_TuneZ2Star_8TeV_madgraph_ext_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1835_v69")+skimstring);
+  }
+
+  if (samplelist=="" || samplelist.Contains("wjets")) {
+    TString w2=TString("W2JetsToLNu_TuneZ2Star_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1877_v71")+skimstring;
+    addSample(w2,kViolet,"W+jets");
+    chainSamples(w2,TString("W3JetsToLNu_TuneZ2Star_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1878_v71")+skimstring);
+    chainSamples(w2,TString("W4JetsToLNu_TuneZ2Star_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1879_v71")+skimstring);
+
+    setSampleScaleFactor(w2,1.19); // apply k-factor
   }
 
   if (samplelist==""||samplelist.Contains("ttbar")) {
@@ -781,13 +794,26 @@ void higgs_ttbar_sculpt() {
 
 }
 
-void higgs_dataMC_control_QCD_noskim() {
+void higgs_dataMC_control_QCD_noskim(TString options="") {
   //plots that are looser than the skim
 
 
-  initHiggsSamples69(false,"ttbar znunu qcd");
+  initHiggsSamples69(false,"ttbar znunu qcd wjets");
 
-  setOutputDirectory("plots_Control_QCD");
+  useTrigEff_=false;
+
+  TString outputdir = "plots_Control_QCD";
+
+  if (options!="") {
+    outputdir+="_";
+    outputdir+=options;
+
+    if (options.Contains("qcd1p5")) {
+      setSampleScaleFactor("QCD_Pt-120to170_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v3_AODSIM_UCSB1814_v69",1.5);
+    }
+  }
+
+  setOutputDirectory(outputdir);
 
   int nbins;
   float low,high;
@@ -964,7 +990,7 @@ void higgs_dataMC_control_QCD() {
 
   //goal: use 2-b sample to get a qcd control region. 
 
-  initHiggsSamples69(true,"ttbar znunu qcd");
+  initHiggsSamples69(true,"ttbar znunu qcd wjets");
 
   setOutputDirectory("plots_Control_QCD");
 
@@ -1083,6 +1109,43 @@ void higgs_dataMC_control_QCD() {
   setLogY(false);
   var="nGoodPV"; xtitle="n Good PV";
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_preselectionMDP_nGoodPV",0);
+
+
+
+  /*
+     Bill Gary:
+     It might also be good to make distributions of MET for events
+     in each of our four METsig bins
+  */
+  //keep the nominal very loose analysis selection but with 3rd b veto
+  nbins=50; low=0; high=500;
+  var="MET"; xtitle="MET (GeV)";
+
+
+  selection_ = baseline && trigger && zl&&isotk && jets && btag2&&!btag3&&mdp &&TCut("METsig>=30 && METsig<50");
+  setLogY(true);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_preselectionMDP-METsig30to50_MET",0);
+  setLogY(false);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_preselectionMDP-METsig30to50_MET",0);
+
+  selection_ = baseline && trigger && zl&&isotk && jets && btag2&&!btag3&&mdp &&TCut("METsig>=50 && METsig<100");
+  setLogY(true);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_preselectionMDP-METsig50to100_MET",0);
+  setLogY(false);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_preselectionMDP-METsig50to100_MET",0);
+
+  selection_ = baseline && trigger && zl&&isotk && jets && btag2&&!btag3&&mdp &&TCut("METsig>=100 && METsig<150");
+  setLogY(true);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_preselectionMDP-METsig100to150_MET",0);
+  setLogY(false);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_preselectionMDP-METsig100to150_MET",0);
+
+  selection_ = baseline && trigger && zl&&isotk && jets && btag2&&!btag3&&mdp &&TCut("METsig>=150");
+  setLogY(true);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_preselectionMDP-METsig150toInf_MET",0);
+  setLogY(false);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_preselectionMDP-METsig150toInf_MET",0);
+
 
   //same plots but inverting mdp cut
   selection_ = baseline && trigger && zl&&isotk && jets && btag2&&!btag3&&!mdp;
