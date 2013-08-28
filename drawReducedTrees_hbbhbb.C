@@ -2997,8 +2997,10 @@ void higgs_whyLeptonLost() {
 }
 
 void higgs_Nminus1() {
-  initHiggsSamples69(true,"qcd ttbar znunu hh250 hh400");
+  initHiggsSamples69(true,"qcd wjets ttbar znunu hhmg250 hhmg400");
   setOutputDirectory("plots_higgs_Nminus1");
+
+  lumiScale_=19399;
 
   int nbins;
   float low,high;
