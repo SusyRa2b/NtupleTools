@@ -4912,6 +4912,8 @@ Long64_t EventCalculator::getNEventsGeneratedExtended() {
   if ( sampleName_.Contains("UCSB1525") || sampleName_.Contains("UCSB1607"))   return getNEventsGenerated("UCSB1525")+getNEventsGenerated("UCSB1607"); //Znn100-200
   if ( sampleName_.Contains("UCSB1524") || sampleName_.Contains("UCSB1594"))   return getNEventsGenerated("UCSB1524")+getNEventsGenerated("UCSB1594"); //Znn200-400
   if ( sampleName_.Contains("UCSB1523") || sampleName_.Contains("UCSB1602"))   return getNEventsGenerated("UCSB1523")+getNEventsGenerated("UCSB1602"); //Znn400-inf
+  if ( sampleName_.Contains("UCSB1888") || sampleName_.Contains("UCSB1889"))   return getNEventsGenerated("UCSB1888")+getNEventsGenerated("UCSB1889"); //Znn200-400
+  if ( sampleName_.Contains("UCSB1890") || sampleName_.Contains("UCSB1891"))   return getNEventsGenerated("UCSB1890")+getNEventsGenerated("UCSB1891"); //Znn400-inf
 
   if ( sampleName_.Contains("UCSB1526") || sampleName_.Contains("UCSB1608"))   return getNEventsGenerated("UCSB1526")+getNEventsGenerated("UCSB1608"); //DY 200-400
   if ( sampleName_.Contains("UCSB1535") || sampleName_.Contains("UCSB1595"))   return getNEventsGenerated("UCSB1535")+getNEventsGenerated("UCSB1595"); //DY 400-inf
@@ -5098,10 +5100,40 @@ Long64_t EventCalculator::getNEventsGenerated( TString sample) {
 
    // ============= v71 samples ============
   if (sample.Contains("UCSB1850")) return 6923750; //hopefully this is correct ; need to verify
+  if (sample.Contains("UCSB1855")) return 1000008; //TTH  
+  if (sample.Contains("UCSB1856")) return 210160; //TTZJets  
+  if (sample.Contains("UCSB1857")) return 196046; //TTWJets 
+  if (sample.Contains("UCSB1858")) return 1000000; //WH  
+  if (sample.Contains("UCSB1859")) return 20646001; //Wbb  
+  if (sample.Contains("UCSB1860")) return 259961; //T_s  
+  if (sample.Contains("UCSB1861")) return 3758227; //T_t
+  if (sample.Contains("UCSB1862")) return 497658; //T_tW  
+  if (sample.Contains("UCSB1864")) return 139974; //Tbar_s  
+  if (sample.Contains("UCSB1865")) return 1935072; //Tbar_t  
+  if (sample.Contains("UCSB1866")) return 493460; //Tbar_tW 
+  if (sample.Contains("UCSB1868")) return 996299; //ZH  
+  if (sample.Contains("UCSB1874")) return 10000431; //WW  
+  if (sample.Contains("UCSB1875")) return 10000283; //WZ  
+  if (sample.Contains("UCSB1876")) return 9799908; //ZZ  
   if (sample.Contains("UCSB1877")) return 34044921; //W2Jets 
   if (sample.Contains("UCSB1878")) return 15539503; //W3Jets 
   if (sample.Contains("UCSB1879")) return 13382803; //W4Jets  
-
+  if (sample.Contains("UCSB1880")) return 31223821; //TTJets Had  
+  if (sample.Contains("UCSB1881")) return 21675970; //TT powheg 
+  if (sample.Contains("UCSB1882")) return 7303732; //TTJets MG FSIM  
+  if (sample.Contains("UCSB1883")) return 12011428; //TTJets MG 2l   
+  if (sample.Contains("UCSB1884")) return 24953451; //TTJets MG 1l 
+  if (sample.Contains("UCSB1885")) return 32852589; //TT mc@nlo 
+  if (sample.Contains("UCSB1886")) return 19365927; //TTJets sherpa 2l  
+  if (sample.Contains("UCSB1887")) return 4416646; //Zinv100-200 
+  if (sample.Contains("UCSB1888")) return 5055885; //Zinv200-400 
+  if (sample.Contains("UCSB1889")) return 4689734; //Zinv200-400ext 
+  if (sample.Contains("UCSB1890")) return 1006928; //Zinv400-Inf
+  if (sample.Contains("UCSB1891")) return 4088782; //Zinv400-Infext
+  if (sample.Contains("UCSB1892")) return 19514018; //TTJets sherpa 1l  
+  if (sample.Contains("UCSB1893")) return 13183812; //BJets250 
+  if (sample.Contains("UCSB1894")) return 6650243; //BJets500 
+  if (sample.Contains("UCSB1895")) return 3137949; //BJets1000 
 
   cout<<"[getNEventsGenerated] unknown sample "<<sample<<endl;
   assert(0);
@@ -5155,6 +5187,9 @@ double EventCalculator::getCrossSection(){
   if (sampleName_.BeginsWith("WJetsToLNu_HT-300To400_8TeV-madgraph")) return 45.7; //from AN //38.3; //LO PREP
   if (sampleName_.BeginsWith("WJetsToLNu_HT-400ToInf_8TeV-madgraph")) return 30.1; //from AN //25.22; //LO PREP
   if (sampleName_.BeginsWith("WJetsToLNu_TuneZ2Star_8TeV-madgraph")) return 36257.2; //NNLO
+  if (sampleName_.BeginsWith("W2JetsToLNu_TuneZ2Star_8TeV-madgraph")) return  1750.0 ; //from PREP
+  if (sampleName_.BeginsWith("W3JetsToLNu_TuneZ2Star_8TeV-madgraph")) return  519.0 ; //from PREP
+  if (sampleName_.BeginsWith("W4JetsToLNu_TuneZ2Star_8TeV-madgraph")) return  214.0 ; //from PREP
 
   //W+bb
   if (sampleName_.BeginsWith("WbbJetsToLNu_Massive_TuneZ2star_8TeV-madgraph")) return 211.3; //LO PREP
@@ -5163,6 +5198,8 @@ double EventCalculator::getCrossSection(){
   if (sampleName_.BeginsWith("WZ_TuneZ2star_8TeV_pythia6_tauola")) return 32.3;// from AN //12.63; //LO PREP
   if (sampleName_.BeginsWith("WW_TuneZ2star_8TeV_pythia6_tauola")) return 55; //from AN //33.61; //LO PREP
   if (sampleName_.BeginsWith("ZZ_TuneZ2star_8TeV_pythia6_tauola")) return 17.654;// NLO CTEQ //5.196; //LO PREP
+  if (sampleName_.BeginsWith("WH_WToLNu_HToBB_M-125_8TeV-powheg-herwigpp")) return 1.0; //from PREP
+  if (sampleName_.BeginsWith("ZH_ZToBB_HToBB_M-125_8TeV-powheg-herwigpp")) return 1.0; //from PREP
 
   //Z -> nu nu  
   if (sampleName_.BeginsWith("ZJetsToNuNu_100_HT_200_TuneZ2Star_8TeV_madgraph")) return 160.3 *1.19 ; //LO PREP times DY k-factor
@@ -5178,6 +5215,11 @@ double EventCalculator::getCrossSection(){
   if (sampleName_.BeginsWith("TTJets_MassiveBinDECAY_TuneZ2star_8TeV-madgraph-tauola")) return 234;  //approx NNLO
   if (sampleName_.BeginsWith("TT_CT10_TuneZ2star_8TeV-powheg")) return 234;  //approx NNLO
   if (sampleName_.BeginsWith("TT_8TeV-mcatnlo")) return 234; //approx NNLO
+
+  //B-jets
+  if (sampleName_.BeginsWith("BJets_HT-250To500_8TeV-madgraph")) return 5828.0; //from PREP
+  if (sampleName_.BeginsWith("BJets_HT-500To1000_8TeV-madgraph")) return 217.6; //from PREP
+  if (sampleName_.BeginsWith("BJets_HT-1000ToInf_8TeV-madgraph")) return 4.712; //from PREP
 
   //these lines are redundant with the ones below, but that's ok
   if (sampleName_.BeginsWith("TTJets_FullLeptMGDecays_8TeV-madgraph-tauola")) return 13.43*(234.0 / (13.43+53.4+53.2)) ; //PREP corrected to approx NNLO
@@ -5200,6 +5242,7 @@ double EventCalculator::getCrossSection(){
   //ttV
   if (sampleName_.BeginsWith("TTWJets_8TeV-madgraph")) return 0.2149; // from PREP (LO)
   if (sampleName_.BeginsWith("TTZJets_8TeV-madgraph")) return 0.172; // from PREP (LO)
+  if (sampleName_.BeginsWith("TTH_HToBB_M-125_8TeV-pythia6")) return 1.0; //from PREP
 
   //RPV 8 TeV -- cross-sections from 1206.2353. cross section is a function of the larger (sbottom) mass
   if (sampleName_.Contains("sbottom8lnotaus-185-250")) return 5.7; //LO madgraph
@@ -6585,15 +6628,6 @@ void EventCalculator::calculateTagProb_ewk(float &Prob2b, float &Prob3b, float &
         float jetak = fabs(jets_AK5PF_eta->at(kjet));
         double effk = getBtagSF(jflavk,jptk,jetak,csvm,kBTagModifier0)*getBtagEffMC(jflavk,jptk,jetak,csvm); // Medium
         prod2b *= (1-effk);
-        //l loop not needed.. 
-        for (unsigned int ljet=0; ljet<jetsize; ++ljet) {
-          if( (ljet == kjet) || (ljet == ijet) || (ljet == jjet) ) continue;
-          if(isGoodJet(ljet,pTthresh)) continue;
-          int jflavl  = fabs(jets_AK5PF_partonFlavour->at(ljet));
-          float jptl  = getJetPt(ljet);
-          float jetal = fabs(jets_AK5PF_eta->at(ljet));
-          double effl = getBtagSF(jflavl,jptl,jetal,csvl,kBTagModifier0)*getBtagEffMC(jflavl,jptl,jetal,csvl); // Loose 
-        } //l loop
       }// k loop
       Prob2b += prod2b*effi*effj;
     }//j loop
