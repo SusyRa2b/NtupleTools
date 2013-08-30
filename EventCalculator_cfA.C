@@ -132,6 +132,7 @@ EventCalculator::EventCalculator(const TString & sampleName, const vector<string
 	   sampleName_.Contains("T7btw")||
 	   sampleName_.Contains("T4tW") ||
 	   sampleName_.Contains("TChihh")||
+	   sampleName_.Contains("TChiHH")||
 	   sampleName_.Contains("T6tthh")||
 	   sampleName_.Contains("T6cchh")||
 	   sampleName_.Contains("T6bbHH")
@@ -213,7 +214,8 @@ EventCalculator::~EventCalculator() {
 
 float EventCalculator::getPDFweight(const int ipdfset, const int imember ) {
 
-  // return 1; //for debugging
+   
+   //return 1; //for debugging
 
   assert(ipdfset>=1 && ipdfset<=3);
 
@@ -4858,12 +4860,16 @@ smsMasses EventCalculator::getSMSmasses() {
 
 
   TString modelstring = (*model_params).c_str();
+cout << "model_params = " << modelstring << endl;
   TObjArray* thesubstrings = modelstring.Tokenize(" ");
   TString thesubstring=  thesubstrings->At(2)->GetName();
+cout << "thesubstring = " << thesubstring << endl;
 
   TObjArray* themasses = thesubstring.Tokenize("_");
   int index_parent=1; //index of mParent (gluino, etc)
   int index_lsp=2; //index of mLSP
+  int m_parent=0;
+  int m_lsp=0;
   int m_intermediate=0;
   if (sampleName_.Contains("T4tW")) {
     index_parent = 2;
@@ -4875,9 +4881,26 @@ smsMasses EventCalculator::getSMSmasses() {
     index_lsp = 3; //mLSP index    
     m_intermediate =  TString(themasses->At(2)->GetName()).Atoi(); //intermediate particle mass
   }
-  int m_parent=  TString(themasses->At(index_parent)->GetName()).Atoi();
-  int m_lsp = TString(themasses->At(index_lsp)->GetName()).Atoi();
+  else if (sampleName_.Contains("TChiHH") ) {
+    TString charginomass = TString(themasses->At(1)->GetName());// = chargino350
+    charginomass.Replace(0,8,"");
+    m_parent = charginomass.Atoi();
 
+    TString binomass = TString(themasses->At(2)->GetName());// = bino1
+    binomass.Replace(0,4,"");
+    m_lsp = binomass.Atoi();
+  }
+    else if (sampleName_.Contains("T6bbHH") ) {
+    index_parent = 1;
+    index_lsp=2;
+    m_intermediate =  TString(themasses->At(3)->GetName()).Atoi(); //intermediate particle mass
+  }
+
+  if ( !(sampleName_.Contains("TChiHH")) ) {
+    m_parent=  TString(themasses->At(index_parent)->GetName()).Atoi();
+    m_lsp = TString(themasses->At(index_lsp)->GetName()).Atoi();
+  }
+  
   //must clean up!
   delete thesubstrings;
   delete themasses;
@@ -5112,6 +5135,8 @@ Long64_t EventCalculator::getNEventsGenerated( TString sample) {
   if (sample.Contains("UCSB1865")) return 1935072; //Tbar_t  
   if (sample.Contains("UCSB1866")) return 493460; //Tbar_tW 
   if (sample.Contains("UCSB1868")) return 996299; //ZH  
+  if (sample.Contains("UCSB1871")) return 7086514; //HH 350-500  
+  if (sample.Contains("UCSB1872")) return 9944086; //HH 130-325
   if (sample.Contains("UCSB1874")) return 10000431; //WW  
   if (sample.Contains("UCSB1875")) return 10000283; //WZ  
   if (sample.Contains("UCSB1876")) return 9799908; //ZZ  
@@ -5134,6 +5159,7 @@ Long64_t EventCalculator::getNEventsGenerated( TString sample) {
   if (sample.Contains("UCSB1893")) return 13183812; //BJets250 
   if (sample.Contains("UCSB1894")) return 6650243; //BJets500 
   if (sample.Contains("UCSB1895")) return 3137949; //BJets1000 
+  if (sample.Contains("UCSB1896")) return 2193582; //T6bbHH
 
   cout<<"[getNEventsGenerated] unknown sample "<<sample<<endl;
   assert(0);
@@ -7036,7 +7062,7 @@ float EventCalculator::bJetFastsimSF(const TString & what, int flavor,float pt) 
   if (what == "value") returnVal=1;
 
   //first check if we're in a FASTSIM model
-  if (theScanType_==kpmssm || sampleName_.Contains("TChihh") || sampleName_.Contains("T6tthh") || sampleName_.Contains("T6cchh")) {
+  if (theScanType_==kpmssm || sampleName_.Contains("TChihh") || sampleName_.Contains("TChiHH") || sampleName_.Contains("T6bbHH") || sampleName_.Contains("T6tthh") || sampleName_.Contains("T6cchh")) {
     //DO NOTHING FOR NOW...this is rather dangerous!
   }
   else  if (theScanType_ != kNotScan ) {
