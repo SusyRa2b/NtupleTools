@@ -214,7 +214,6 @@ EventCalculator::~EventCalculator() {
 
 float EventCalculator::getPDFweight(const int ipdfset, const int imember ) {
 
-   
    //return 1; //for debugging
 
   assert(ipdfset>=1 && ipdfset<=3);
@@ -4860,10 +4859,8 @@ smsMasses EventCalculator::getSMSmasses() {
 
 
   TString modelstring = (*model_params).c_str();
-cout << "model_params = " << modelstring << endl;
   TObjArray* thesubstrings = modelstring.Tokenize(" ");
   TString thesubstring=  thesubstrings->At(2)->GetName();
-cout << "thesubstring = " << thesubstring << endl;
 
   TObjArray* themasses = thesubstring.Tokenize("_");
   int index_parent=1; //index of mParent (gluino, etc)
