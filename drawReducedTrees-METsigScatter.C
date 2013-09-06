@@ -58,7 +58,7 @@ void go() {
   renewCanvas();
   if (hdata2d!=0)  delete hdata2d;
   hdata2d=new TH2D("hdata2d","hdata",100,0,500,100,0,500);
-  dtree->Draw("MET:METsig>>hdata2d",selection_,"box");
+  dtree->Draw("MET:METsig>>hdata2d",selection_,"colz");
   hdata2d->SetXTitle("MET significance");
   hdata2d->SetYTitle("MET (GeV)");
 
@@ -84,7 +84,7 @@ void go() {
   renewCanvas();
   delete hdata2d;
   hdata2d=new TH2D("hdata2d","hdata",100,0,500,100,0,500);
-  dtree->Draw("MET:METsig>>hdata2d",selection_,"box");
+  dtree->Draw("MET:METsig>>hdata2d",selection_,"colz");
   hdata2d->SetXTitle("MET significance");
   hdata2d->SetYTitle("MET (GeV)");
 
