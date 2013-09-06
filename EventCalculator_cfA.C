@@ -133,6 +133,7 @@ EventCalculator::EventCalculator(const TString & sampleName, const vector<string
 	   sampleName_.Contains("T4tW") ||
 	   sampleName_.Contains("TChihh")||
 	   sampleName_.Contains("TChiHH")||
+	   sampleName_.Contains("TChiZH")||
 	   sampleName_.Contains("T6tthh")||
 	   sampleName_.Contains("T6cchh")||
 	   sampleName_.Contains("T6bbHH")
@@ -4878,7 +4879,7 @@ smsMasses EventCalculator::getSMSmasses() {
     index_lsp = 3; //mLSP index    
     m_intermediate =  TString(themasses->At(2)->GetName()).Atoi(); //intermediate particle mass
   }
-  else if (sampleName_.Contains("TChiHH") ) {
+  else if (sampleName_.Contains("TChiHH") || sampleName_.Contains("TChiHZ") ) {
     TString charginomass = TString(themasses->At(1)->GetName());// = chargino350
     charginomass.Replace(0,8,"");
     m_parent = charginomass.Atoi();
@@ -6606,7 +6607,7 @@ Use the b-tag algorithm output and calculate a weight for the _event_ based on t
 
 }
 
-
+//Function still in development
 void EventCalculator::calculateTagProb_ewk(float &Prob2b, float &Prob3b, float &Prob4b){ 
 
   //Init
@@ -6627,7 +6628,7 @@ void EventCalculator::calculateTagProb_ewk(float &Prob2b, float &Prob3b, float &
 
   const int csvt = 3;
   const int csvm = 2;
-  const int csvl = 1;
+  //const int csvl = 1;
 
   for (unsigned int ijet=0; ijet<jetsize; ++ijet) {
     if(!isGoodJet(ijet,pTthresh)) continue; //apply threshold
@@ -7059,7 +7060,7 @@ float EventCalculator::bJetFastsimSF(const TString & what, int flavor,float pt) 
   if (what == "value") returnVal=1;
 
   //first check if we're in a FASTSIM model
-  if (theScanType_==kpmssm || sampleName_.Contains("TChihh") || sampleName_.Contains("TChiHH") || sampleName_.Contains("T6bbHH") || sampleName_.Contains("T6tthh") || sampleName_.Contains("T6cchh")) {
+  if (theScanType_==kpmssm || sampleName_.Contains("TChihh") || sampleName_.Contains("TChiHH") || sampleName_.Contains("TChiHZ") || sampleName_.Contains("T6bbHH") || sampleName_.Contains("T6tthh") || sampleName_.Contains("T6cchh")) {
     //DO NOTHING FOR NOW...this is rather dangerous!
   }
   else  if (theScanType_ != kNotScan ) {
