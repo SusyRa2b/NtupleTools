@@ -4894,7 +4894,7 @@ smsMasses EventCalculator::getSMSmasses() {
     m_intermediate =  TString(themasses->At(3)->GetName()).Atoi(); //intermediate particle mass
   }
 
-  if ( !(sampleName_.Contains("TChiHH")) ) {
+  if ( !(sampleName_.Contains("TChiHH") || sampleName_.Contains("TChiZH")) ) {
     m_parent=  TString(themasses->At(index_parent)->GetName()).Atoi();
     m_lsp = TString(themasses->At(index_lsp)->GetName()).Atoi();
   }
