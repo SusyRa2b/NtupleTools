@@ -4932,6 +4932,7 @@ Long64_t EventCalculator::getNEventsGeneratedExtended() {
   if ( sampleName_.Contains("UCSB1525") || sampleName_.Contains("UCSB1607"))   return getNEventsGenerated("UCSB1525")+getNEventsGenerated("UCSB1607"); //Znn100-200
   if ( sampleName_.Contains("UCSB1524") || sampleName_.Contains("UCSB1594"))   return getNEventsGenerated("UCSB1524")+getNEventsGenerated("UCSB1594"); //Znn200-400
   if ( sampleName_.Contains("UCSB1523") || sampleName_.Contains("UCSB1602"))   return getNEventsGenerated("UCSB1523")+getNEventsGenerated("UCSB1602"); //Znn400-inf
+  //v71
   if ( sampleName_.Contains("UCSB1888") || sampleName_.Contains("UCSB1889"))   return getNEventsGenerated("UCSB1888")+getNEventsGenerated("UCSB1889"); //Znn200-400
   if ( sampleName_.Contains("UCSB1890") || sampleName_.Contains("UCSB1891"))   return getNEventsGenerated("UCSB1890")+getNEventsGenerated("UCSB1891"); //Znn400-inf
 
@@ -5119,7 +5120,19 @@ Long64_t EventCalculator::getNEventsGenerated( TString sample) {
   //if (sample.Contains("UCSB18")) return ;  
 
    // ============= v71 samples ============
-  if (sample.Contains("UCSB1850")) return 6923750; //hopefully this is correct ; need to verify
+  if (sample.Contains("UCSB1850")) return 6923750; //TTJets MassiveB
+
+  //qcd samples (pythia)
+  if (sample.Contains("UCSB1903")) return 1964088 ;
+  if (sample.Contains("UCSB1897")) return 5985732 ;
+  if (sample.Contains("UCSB1898")) return 5814398 ;
+  if (sample.Contains("UCSB1899")) return 5978500 ;
+  if (sample.Contains("UCSB1904")) return 2000062 ;
+  if (sample.Contains("UCSB1905")) return 977586 ;
+  if (sample.Contains("UCSB1900")) return 3994848 ;
+  if (sample.Contains("UCSB1901")) return 3996864 ;
+  if (sample.Contains("UCSB1902")) return 3998563 ;
+
   if (sample.Contains("UCSB1855")) return 1000008; //TTH  
   if (sample.Contains("UCSB1856")) return 210160; //TTZJets  
   if (sample.Contains("UCSB1857")) return 196046; //TTWJets 
@@ -5210,19 +5223,21 @@ double EventCalculator::getCrossSection(){
   if (sampleName_.BeginsWith("WJetsToLNu_HT-300To400_8TeV-madgraph")) return 45.7; //from AN //38.3; //LO PREP
   if (sampleName_.BeginsWith("WJetsToLNu_HT-400ToInf_8TeV-madgraph")) return 30.1; //from AN //25.22; //LO PREP
   if (sampleName_.BeginsWith("WJetsToLNu_TuneZ2Star_8TeV-madgraph")) return 36257.2; //NNLO
-  if (sampleName_.BeginsWith("W2JetsToLNu_TuneZ2Star_8TeV-madgraph")) return  1750.0 ; //from PREP
-  if (sampleName_.BeginsWith("W3JetsToLNu_TuneZ2Star_8TeV-madgraph")) return  519.0 ; //from PREP
-  if (sampleName_.BeginsWith("W4JetsToLNu_TuneZ2Star_8TeV-madgraph")) return  214.0 ; //from PREP
+  const double wkfactor = 1.19;
+  if (sampleName_.BeginsWith("W2JetsToLNu_TuneZ2Star_8TeV-madgraph")) return  1750.0*wkfactor ; //PREP times inclusive k factor
+  if (sampleName_.BeginsWith("W3JetsToLNu_TuneZ2Star_8TeV-madgraph")) return  519.0*wkfactor ; //PREP times inclusive k factor
+  if (sampleName_.BeginsWith("W4JetsToLNu_TuneZ2Star_8TeV-madgraph")) return  214.0*wkfactor ; //PREP times inclusive k factor
 
   //W+bb
-  if (sampleName_.BeginsWith("WbbJetsToLNu_Massive_TuneZ2star_8TeV-madgraph")) return 211.3; //LO PREP
+  if (sampleName_.BeginsWith("WbbJetsToLNu_Massive_TuneZ2star_8TeV-madgraph")) return 211.3*wkfactor; //PREP times inclusive k factor
 
   //diboson
   if (sampleName_.BeginsWith("WZ_TuneZ2star_8TeV_pythia6_tauola")) return 32.3;// from AN //12.63; //LO PREP
   if (sampleName_.BeginsWith("WW_TuneZ2star_8TeV_pythia6_tauola")) return 55; //from AN //33.61; //LO PREP
   if (sampleName_.BeginsWith("ZZ_TuneZ2star_8TeV_pythia6_tauola")) return 17.654;// NLO CTEQ //5.196; //LO PREP
-  if (sampleName_.BeginsWith("WH_WToLNu_HToBB_M-125_8TeV-powheg-herwigpp")) return 1.0; //from PREP
-  if (sampleName_.BeginsWith("ZH_ZToBB_HToBB_M-125_8TeV-powheg-herwigpp")) return 1.0; //from PREP
+  //https://twiki.cern.ch/twiki/bin/view/LHCPhysics/CERNYellowReportPageAt8TeV and PDG
+  if (sampleName_.BeginsWith("WH_WToLNu_HToBB_M-125_8TeV-powheg-herwigpp")) return 0.7046 *(0.1075+0.1057+0.1125) *0.577; //sigma x BF(W->lnu) x BF(H->bb) //assumes that l includes tau
+  if (sampleName_.BeginsWith("ZH_ZToBB_HToBB_M-125_8TeV-powheg-herwigpp")) return 0.4153*0.1512*0.577;//sigma x BF(Z->bb) x BF(H->bb)
 
   //Z -> nu nu  
   if (sampleName_.BeginsWith("ZJetsToNuNu_100_HT_200_TuneZ2Star_8TeV_madgraph")) return 160.3 *1.19 ; //LO PREP times DY k-factor
@@ -5234,10 +5249,11 @@ double EventCalculator::getCrossSection(){
   if (sampleName_.BeginsWith("SUSY_LM9_sftsht_8TeV"))          return 9.287; //LO 8TeV from PREP
 
   //ttbar
-  if (sampleName_.BeginsWith("TTJets_TuneZ2star_8TeV-madgraph-tauola") )                return 234;  //approx NNLO
-  if (sampleName_.BeginsWith("TTJets_MassiveBinDECAY_TuneZ2star_8TeV-madgraph-tauola")) return 234;  //approx NNLO
-  if (sampleName_.BeginsWith("TT_CT10_TuneZ2star_8TeV-powheg")) return 234;  //approx NNLO
-  if (sampleName_.BeginsWith("TT_8TeV-mcatnlo")) return 234; //approx NNLO
+  const double ttbarxsec = 245.8; //1303.6254 NNLO
+  if (sampleName_.BeginsWith("TTJets_TuneZ2star_8TeV-madgraph-tauola") )                return ttbarxsec; //see above
+  if (sampleName_.BeginsWith("TTJets_MassiveBinDECAY_TuneZ2star_8TeV-madgraph-tauola")) return ttbarxsec;  //see above
+  if (sampleName_.BeginsWith("TT_CT10_TuneZ2star_8TeV-powheg")) return ttbarxsec;  
+  if (sampleName_.BeginsWith("TT_8TeV-mcatnlo")) return ttbarxsec;
 
   //B-jets
   if (sampleName_.BeginsWith("BJets_HT-250To500_8TeV-madgraph")) return 5828.0; //from PREP
@@ -5245,27 +5261,28 @@ double EventCalculator::getCrossSection(){
   if (sampleName_.BeginsWith("BJets_HT-1000ToInf_8TeV-madgraph")) return 4.712; //from PREP
 
   //these lines are redundant with the ones below, but that's ok
-  if (sampleName_.BeginsWith("TTJets_FullLeptMGDecays_8TeV-madgraph-tauola")) return 13.43*(234.0 / (13.43+53.4+53.2)) ; //PREP corrected to approx NNLO
-  if (sampleName_.BeginsWith("TTJets_SemiLeptMGDecays_8TeV-madgraph-tauola")) return 53.2 *(234.0 / (13.43+53.4+53.2)) ; //PREP corrected to approx NNLO
+  if (sampleName_.BeginsWith("TTJets_FullLeptMGDecays_8TeV-madgraph-tauola")) return 13.43*(ttbarxsec / (13.43+53.4+53.2)) ; //PREP corrected to approx NNLO
+  if (sampleName_.BeginsWith("TTJets_SemiLeptMGDecays_8TeV-madgraph-tauola")) return 53.2 *(ttbarxsec / (13.43+53.4+53.2)) ; //PREP corrected to approx NNLO
 
-  if (sampleName_.BeginsWith("TTTo2L2Nu2B_8TeV-powheg-pythia6_Summer12")) return 22.14 *(234.0 / 136.3); //PREP corrected to NNLO
+  if (sampleName_.BeginsWith("TTTo2L2Nu2B_8TeV-powheg-pythia6_Summer12")) return 22.14 *(ttbarxsec / 136.3); //PREP corrected to NNLO
 
-  if (sampleName_.BeginsWith("TTJets_FullLeptMGDecays_8TeV-madgraph")) return 13.43*(234.0 / (13.43+53.4+53.2)); // PREP corrected to NNLO
-  if (sampleName_.BeginsWith("TTJets_HadronicMGDecays_8TeV-madgraph")) return 53.4*(234.0 / (13.43+53.4+53.2)); // PREP corrected to NNLO
-  if (sampleName_.BeginsWith("TTJets_SemiLeptMGDecays_8TeV-madgraph")) return 53.2*(234.0 / (13.43+53.4+53.2)); //PREP corrected to NNLO
+  if (sampleName_.BeginsWith("TTJets_FullLeptMGDecays_8TeV-madgraph")) return 13.43*(ttbarxsec / (13.43+53.4+53.2)); // PREP corrected to NNLO
+  if (sampleName_.BeginsWith("TTJets_HadronicMGDecays_8TeV-madgraph")) return 53.4*(ttbarxsec / (13.43+53.4+53.2)); // PREP corrected to NNLO
+  if (sampleName_.BeginsWith("TTJets_SemiLeptMGDecays_8TeV-madgraph")) return 53.2*(ttbarxsec / (13.43+53.4+53.2)); //PREP corrected to NNLO
 
   if (sampleName_.BeginsWith("TTJets_DileptDecays_8TeV-sherpa")) return 19.7; //from PREP. LO?
   if (sampleName_.BeginsWith("TTJets_SemiLeptDecays_8TeV-sherpa")) return 82.4; //from PREP. LO?
 
-  if (sampleName_.BeginsWith("TTJets_matchingup_TuneZ2star_8TeV-madgraph")) return 234; //approx NNLO
-  if (sampleName_.BeginsWith("TTJets_matchingdown_TuneZ2star_8TeV-madgraph")) return 234; //approx NNLO
-  if (sampleName_.BeginsWith("TTJets_scaleup_TuneZ2star_8TeV-madgraph")) return 234; //approx NNLO
-  if (sampleName_.BeginsWith("TTJets_scaledown_TuneZ2star_8TeV-madgraph")) return 234; //approx NNLO
+  if (sampleName_.BeginsWith("TTJets_matchingup_TuneZ2star_8TeV-madgraph")) return ttbarxsec; 
+  if (sampleName_.BeginsWith("TTJets_matchingdown_TuneZ2star_8TeV-madgraph")) return ttbarxsec;
+  if (sampleName_.BeginsWith("TTJets_scaleup_TuneZ2star_8TeV-madgraph")) return ttbarxsec; 
+  if (sampleName_.BeginsWith("TTJets_scaledown_TuneZ2star_8TeV-madgraph")) return ttbarxsec;
 
   //ttV
   if (sampleName_.BeginsWith("TTWJets_8TeV-madgraph")) return 0.2149; // from PREP (LO)
   if (sampleName_.BeginsWith("TTZJets_8TeV-madgraph")) return 0.172; // from PREP (LO)
-  if (sampleName_.BeginsWith("TTH_HToBB_M-125_8TeV-pythia6")) return 1.0; //from PREP
+  if (sampleName_.BeginsWith("TTH_HToBB_M-125_8TeV-pythia6")) return  0.1293 * 0.577 ;//cross-section x BF from https://twiki.cern.ch/twiki/bin/view/LHCPhysics/CERNYellowReportPageAt8TeV#ttH_Process
+  //and https://twiki.cern.ch/twiki/bin/view/LHCPhysics/CERNYellowReportPageBR2 for 125 GeV higgs
 
   //RPV 8 TeV -- cross-sections from 1206.2353. cross section is a function of the larger (sbottom) mass
   if (sampleName_.Contains("sbottom8lnotaus-185-250")) return 5.7; //LO madgraph
