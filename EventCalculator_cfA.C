@@ -7077,7 +7077,7 @@ float EventCalculator::bJetFastsimSF(const TString & what, int flavor,float pt) 
   if (what == "value") returnVal=1;
 
   //first check if we're in a FASTSIM model
-  if (theScanType_==kpmssm || sampleName_.Contains("TChihh") || sampleName_.Contains("TChiHH") || sampleName_.Contains("TChiHZ") || sampleName_.Contains("T6bbHH") || sampleName_.Contains("T6tthh") || sampleName_.Contains("T6cchh")) {
+  if (theScanType_==kpmssm || sampleName_.Contains("TChihh") || sampleName_.Contains("TChiHH") || sampleName_.Contains("TChiZH") || sampleName_.Contains("T6bbHH") || sampleName_.Contains("T6tthh") || sampleName_.Contains("T6cchh")) {
     //DO NOTHING FOR NOW...this is rather dangerous!
   }
   else  if (theScanType_ != kNotScan ) {
