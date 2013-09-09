@@ -4879,7 +4879,7 @@ smsMasses EventCalculator::getSMSmasses() {
     index_lsp = 3; //mLSP index    
     m_intermediate =  TString(themasses->At(2)->GetName()).Atoi(); //intermediate particle mass
   }
-  else if (sampleName_.Contains("TChiHH") || sampleName_.Contains("TChiHZ") ) {
+  else if (sampleName_.Contains("TChiHH") || sampleName_.Contains("TChiZH") ) {
     TString charginomass = TString(themasses->At(1)->GetName());// = chargino350
     charginomass.Replace(0,8,"");
     m_parent = charginomass.Atoi();
