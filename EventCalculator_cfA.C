@@ -9017,7 +9017,7 @@ void EventCalculator::reducedTree(TString outputpath) {
 	TLorentzVector h1 = hbbbb[0][0] + hbbbb[0][1];
 	TLorentzVector h2 = hbbbb[1][0] + hbbbb[1][1];
 
-	if (sampleName_.Contains("TChihh")) {
+	if (sampleName_.Contains("TChihh") || sampleName_.Contains("TChiHH")) {
 	  hhDeltaR = jmt::deltaR(h1.Eta(),h1.Phi(),h2.Eta(),h2.Phi());
 	  hhDeltaEta = std::abs( h1.Eta() - h2.Eta());
 	  hhDeltaPhi = jmt::deltaPhi(h1.Phi(),h2.Phi());
