@@ -185,7 +185,6 @@ std::set<TString> samplesAll_;
 std::map<TString, std::map<TString, std::pair<TFile*,TChain*> > > files_;
 std::map<TString, TH1D*> histos_;
 std::map<TString, UInt_t> sampleColor_;
-std::map<TString, TString> sampleOwenName_;
 std::map<TString, TString> sampleLabel_;
 std::map<TString, UInt_t> sampleMarkerStyle_;
 std::map<TString, UInt_t> sampleLineStyle_;
@@ -263,6 +262,7 @@ bool quiet_=false;
 //bool quiet_=true;
 bool doRatio_=false;
 TString fitRatio_="";
+bool logz_=false;
 bool logy_=false;
 bool logx_=false;
 bool dostack_=true;
@@ -545,6 +545,7 @@ bool isSampleSMS(const TString & name ) {
   if (name.Contains("T2tt")) return true;
 
   if (name.BeginsWith("HiggsinoNLSP")) return true;
+  if (name.BeginsWith("SMS-TChiHH")) return true;
 
   return false;
 }
@@ -566,6 +567,7 @@ bool isSampleSM(const TString & name) {
   if (name.Contains("sbottom")) return false;
 
   if (name.Contains("TChihh")) return false;
+
   if (name.Contains("Higgsino")) return false;
 
   if (name.Contains("SUGRA")) return false;
@@ -827,6 +829,7 @@ void renewCanvas(const TString opt="",const int ncol=1) {
 		      << thecanvas->GetPad(1)->GetWNDC() <<"\t"
 		      << thecanvas->GetPad(1)->GetYlowNDC() <<"\t"
 		      << thecanvas->GetPad(1)->GetHNDC() <<endl;
+    if (logz_) thecanvas->GetPad(1)->SetLogz();
     if (logy_) thecanvas->GetPad(1)->SetLogy();
     if (logx_) thecanvas->GetPad(1)->SetLogx();
   }
@@ -835,12 +838,14 @@ void renewCanvas(const TString opt="",const int ncol=1) {
     if (ncol>1) {  //only support multple columns for the no ratio plot option -- this is a hack!
       thecanvas->Divide(ncol,1);
       for (int icol=1;icol<=ncol;icol++) {
+	if (logz_) thecanvas->GetPad(icol)->SetLogz(); 
 	if (logy_) thecanvas->GetPad(icol)->SetLogy(); 
 	if (logx_) thecanvas->GetPad(icol)->SetLogx();
       }
 
     }
     else {
+      if (logz_) thecanvas->SetLogz(); 
       if (logy_) thecanvas->SetLogy(); 
       if (logx_) thecanvas->SetLogx();
     }
@@ -1391,9 +1396,7 @@ void setStackMode(bool dostack, bool normalized=false,bool adjustcolors=true) {
   }
 }
 
-void resetSamples(bool joinSingleTop=true) {
-
-  assert(joinSingleTop); //no longer support any other option
+void resetSamples() {
 
   samples_.clear();
   //this block controls what samples will enter your plot
@@ -1470,7 +1473,8 @@ void addToSamplesAll(const TString & name) {
   samplesAll_.insert(name);
 }
 
-void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
+
+void loadSamples( TString signalEffMode="") {
   if (loaded_) return;
   loaded_=true; //implies that loadSamples() can only be called once per session
 
@@ -1478,7 +1482,7 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   resetPadDimensions();
   resetLegendPosition();
 
-  resetSamples(joinSingleTop);
+  resetSamples();
   //samplesAll_ should have *every* available sample
   //however we now have addToSamplesAll() to allow the user to add some stuff before calling loadSamples()
   //also note that there's no harm in failing to load one of these samples, 
@@ -1509,40 +1513,15 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   samplesAll_.insert("PythiaPUQCD");
   //samplesAll_.insert("PythiaPUQCDFlat");
   samplesAll_.insert("TTbarJets");
-  samplesAll_.insert("TTbarJets0");
   samplesAll_.insert("TTbarJetsPowheg");
   samplesAll_.insert("TTbarJetsMCNLO");
-  samplesAll_.insert("TTbarEmbedFlipRecoMu");
-  samplesAll_.insert("TTbarEmbedFlipRecoEle");
-  samplesAll_.insert("TTbarEmbedGenTauHad");
-  samplesAll_.insert("TTTo2L2Nu2B");
-  samplesAll_.insert("TTbarJets8TeV");
-  samplesAll_.insert("TTbarSingleTopWJetsCombined");
-  samplesAll_.insert("WJets");
-  samplesAll_.insert("WJetsInc");
   samplesAll_.insert("ZJets");
   samplesAll_.insert("ZJetsInc");
   samplesAll_.insert("Zinvisible");
   samplesAll_.insert("SingleTop");
-  samplesAll_.insert("SingleTop-sChannel");
-  samplesAll_.insert("SingleTop-tChannel");
-  samplesAll_.insert("SingleTop-tWChannel");
-  samplesAll_.insert("SingleTopBar-sChannel");
-  samplesAll_.insert("SingleTopBar-tChannel");
-  samplesAll_.insert("SingleTopBar-tWChannel");
-  //samplesAll_.insert("SingleTop-sandtCombined");
-  //samplesAll_.insert("SingleTop-tWCombined");
-  samplesAll_.insert("HerwigQCDFlat");
-  //  samplesAll_.insert("WJetsZ2");
-  //  samplesAll_.insert("ZJetsZ2");
   samplesAll_.insert("VV");
   samplesAll_.insert("TTV");
 
-
-  samplesAll_.insert("LM13");
-  samplesAll_.insert("LM9");
-
-  samplesAll_.insert("mSUGRAtanb40");
   samplesAll_.insert("T1bbbb");
   samplesAll_.insert("T1tttt");
   samplesAll_.insert("T2bb");
@@ -1561,6 +1540,10 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   else if (signalEffMode=="ra2b2012") {
      configDescriptions_.setDefault("CSVM_PF2PATjets_JES0_JER0_PFMETTypeI_METunc0_PUunc0_BTagEff05_HLTEff0");
      configDescriptions_.setCorrected("CSVM_PF2PATjets_JES0_JERbias_PFMETTypeI_METunc0_PUunc0_BTagEff05_HLTEff0");
+  }
+  else if (signalEffMode=="hbbhbb") { //new slightly more compact format
+     configDescriptions_.setDefault("JES0_JER0_PFMETTypeI_METunc0_PUunc0_hpt20");
+     configDescriptions_.setCorrected("JES0_JERbias_PFMETTypeI_METunc0_PUunc0_hpt20");
   }
   else if (signalEffMode=="stop") {
     configDescriptions_.setDefault("default");
@@ -1620,24 +1603,8 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   sampleLabel_["TTbarJets0"]="t#bar{t} (small MG)";
   sampleLabel_["TTbarJetsPowheg"]="t#bar{t} (Powheg)";
   sampleLabel_["TTbarJetsMCNLO"]="t#bar{t} (MC@NLO)";
-  sampleLabel_["TTbarSingleTopWJetsCombined"]="t#bar{t}+Single-Top+W#rightarrowl#nu";
   sampleLabel_["ttbar"]="t#bar{t}+W+t"; //for DD ttwt
-  sampleLabel_["TTbarJets-semiMu"]="t#bar{t}:semi-#mu";
-  sampleLabel_["TTbarJets-semiMuGood"]="t#bar{t}:semi-#mu - good";
-  sampleLabel_["TTbarJets-semiMuFailEta"]="t#bar{t}:semi-#mu - faileta";
-  sampleLabel_["TTbarJets-semiMuFailPt"]="t#bar{t}:semi-#mu - failpt";
-  sampleLabel_["TTbarJets-semiMuFailRecoIso"]="t#bar{t}:semi-#mu - failrecoiso";
-  sampleLabel_["TTbarJets-semiMuFailOther"]="t#bar{t}:semi-#mu - failother";
-  sampleLabel_["TTbarJets-semiEle"]="t#bar{t}:semi-e";
-  sampleLabel_["TTbarJets-semiEleGood"]="t#bar{t}:semi-e - good";
-  sampleLabel_["TTbarJets-semiEleFailEta"]="t#bar{t}:semi-e -faileta";
-  sampleLabel_["TTbarJets-semiEleFailPt"]="t#bar{t}:semi-e - failpt";
-  sampleLabel_["TTbarJets-semiEleFailRecoIso"]="t#bar{t}:semi-e - failrecoiso";
-  sampleLabel_["TTbarJets-semiEleFailOther"]="t#bar{t}:semi-e - failother";
-  sampleLabel_["TTbarJets-semiTauHad"]="t#bar{t}:semi-#tau(#rightarrow had)";
-  sampleLabel_["TTbarJets-dilep"]="t#bar{t}:ee,#mu#mu,e#mu";
-  sampleLabel_["TTbarJets-had"]="t#bar{t}:fully hadronic";
-  sampleLabel_["TTbarJets-other"]="t#bar{t}:other";
+
   sampleLabel_["SingleTop"] = "Single-Top";
   sampleLabel_["WJets"] = "W#rightarrowl#nu";
   sampleLabel_["WJetsInc"] = "W#rightarrowl#nu (all HT)";
@@ -1667,33 +1634,7 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   sampleLabel_["SingleTopBar-sChannel"] = "Single-TopBar (s)";
   sampleLabel_["SingleTopBar-tChannel"] = "Single-TopBar (t)";
   sampleLabel_["SingleTopBar-tWChannel"] = "Single-TopBar (tW)";
-  //sampleLabel_["SingleTop-sandtCombined"] = "Single-Top (s and t)";
-  //sampleLabel_["SingleTop-tWCombined"] = "Single-Top (tW)";
-  sampleLabel_["SingleTop-sandtCombined-muGood"] = "Single-Top (s and t)-mu-good";
-  sampleLabel_["SingleTop-sandtCombined-muFailEta"] = "Single-Top (s and t)-mu-faileta";
-  sampleLabel_["SingleTop-sandtCombined-muFailPt"] = "Single-Top (s and t)-mu-failpt";
-  sampleLabel_["SingleTop-sandtCombined-muFailRecoIso"] = "Single-Top (s and t)-mu-failrecoiso";
-  sampleLabel_["SingleTop-sandtCombined-muFailOther"] = "Single-Top (s and t)-mu-failother";
-  sampleLabel_["SingleTop-sandtCombined-eleGood"] = "Single-Top (s and t)-e-good";
-  sampleLabel_["SingleTop-sandtCombined-eleFailEta"] = "Single-Top (s and t)-e-faileta";
-  sampleLabel_["SingleTop-sandtCombined-eleFailPt"] = "Single-Top (s and t)-e-failpt";
-  sampleLabel_["SingleTop-sandtCombined-eleFailRecoIso"] = "Single-Top (s and t)-e-failrecoiso";
-  sampleLabel_["SingleTop-sandtCombined-eleFailOther"] = "Single-Top (s and t)-e-failother";
-  sampleLabel_["SingleTop-sandtCombined-tauHad"] = "Single-Top (s and t)-tauhad";
-  sampleLabel_["SingleTop-tWCombined-semiMuGood"] = "Single-Top (tW)-mu-good";
-  sampleLabel_["SingleTop-tWCombined-semiMuFailEta"] = "Single-Top (tW)-mu-faileta";
-  sampleLabel_["SingleTop-tWCombined-semiMuFailPt"] = "Single-Top (tW)-mu-failpt";
-  sampleLabel_["SingleTop-tWCombined-semiMuFailRecoIso"] = "Single-Top (tW)-mu-failrecoiso";
-  sampleLabel_["SingleTop-tWCombined-semiMuFailOther"] = "Single-Top (tW)-mu-failother";
-  sampleLabel_["SingleTop-tWCombined-semiEleGood"] = "Single-Top (tW)-e-good";
-  sampleLabel_["SingleTop-tWCombined-semiEleFailEta"] = "Single-Top (tW)-e-faileta";
-  sampleLabel_["SingleTop-tWCombined-semiEleFailPt"] = "Single-Top (tW)-e-failpt";
-  sampleLabel_["SingleTop-tWCombined-semiEleFailRecoIso"] = "Single-Top (tW)-e-failrecoiso";
-  sampleLabel_["SingleTop-tWCombined-semiEleFailOther"] = "Single-Top (tW)-e-failother";
-  sampleLabel_["SingleTop-tWCombined-semiTauHad"] = "Single-Top (tW)-tauhad";
-  sampleLabel_["SingleTop-tWCombined-dilep"] = "Single-Top (tW)-dilep";
-  sampleLabel_["SingleTop-tWCombined-had"] = "Single-Top (tW)-had";
-  sampleLabel_["SingleTop-tWCombined-other"] = "Single-Top (tW)-other";
+
   sampleLabel_["VV"] = "Diboson";
   sampleLabel_["HerwigQCDFlat"] = "Herwig QCD";
   sampleLabel_["TotalSM"] = "SM";
@@ -1713,11 +1654,9 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   sampleMarkerStyle_["T1tttt"] = kFullStar;
   sampleMarkerStyle_["T2bb"] = kFullStar;
   sampleMarkerStyle_["T2tt"] = kFullStar;
-  sampleMarkerStyle_["LM13"] = kFullStar;
   sampleMarkerStyle_["sbottom-185-250"]=kFullStar;
   sampleMarkerStyle_["sbottom-189-270"]=kFullStar;
   sampleMarkerStyle_["sbottom-217-300"]=kFullStar;
-  sampleMarkerStyle_["LM9"] = kFullStar;
   sampleMarkerStyle_["QCD"] = kFullCircle;
   sampleMarkerStyle_["PythiaQCD"] = kOpenCircle;
   sampleMarkerStyle_["PythiaPUQCDFlat"] = kOpenCircle;  
@@ -1726,24 +1665,8 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   sampleMarkerStyle_["TTbarJets0"]= kFullCircle;
   sampleMarkerStyle_["TTbarJetsPowheg"]= kOpenCircle;
   sampleMarkerStyle_["TTbarJetsMCNLO"]= kOpenCircle;
-  sampleMarkerStyle_["TTbarSingleTopWJetsCombined"]= kFullSquare;
   sampleMarkerStyle_["ttbar"]= kFullSquare;
-  sampleMarkerStyle_["TTbarJets-semiMu"]= kFullSquare;
-  sampleMarkerStyle_["TTbarJets-semiMuGood"]= kFullSquare;
-  sampleMarkerStyle_["TTbarJets-semiMuFailEta"]= kFullSquare;
-  sampleMarkerStyle_["TTbarJets-semiMuFailPt"]= kFullSquare;
-  sampleMarkerStyle_["TTbarJets-semiMuFailRecoIso"]= kFullSquare;
-  sampleMarkerStyle_["TTbarJets-semiMuFailOther"]= kFullSquare;
-  sampleMarkerStyle_["TTbarJets-semiEle"]= kFullSquare;
-  sampleMarkerStyle_["TTbarJets-semiEleGood"]= kFullSquare;
-  sampleMarkerStyle_["TTbarJets-semiEleFailEta"]= kFullSquare;
-  sampleMarkerStyle_["TTbarJets-semiEleFailPt"]= kFullSquare;
-  sampleMarkerStyle_["TTbarJets-semiEleFailRecoIso"]= kFullSquare;
-  sampleMarkerStyle_["TTbarJets-semiEleFailOther"]= kFullSquare;
-  sampleMarkerStyle_["TTbarJets-semiTauHad"]= kFullSquare;
-  sampleMarkerStyle_["TTbarJets-dilep"]= kFullSquare;
-  sampleMarkerStyle_["TTbarJets-had"]= kFullSquare;
-  sampleMarkerStyle_["TTbarJets-other"]= kFullSquare;
+
   sampleMarkerStyle_["SingleTop"] = kOpenSquare;
   sampleMarkerStyle_["WJets"] = kMultiply;
   sampleMarkerStyle_["WJetsInc"] = kMultiply;
@@ -1775,99 +1698,9 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
   sampleMarkerStyle_["SingleTopBar-sChannel"] = kOpenSquare;
   sampleMarkerStyle_["SingleTopBar-tChannel"] = kOpenSquare;
   sampleMarkerStyle_["SingleTopBar-tWChannel"] = kOpenSquare;
-  //sampleMarkerStyle_["SingleTop-sandtCombined"] = kOpenSquare;
-  //sampleMarkerStyle_["SingleTop-tWCombined"] = kOpenSquare;
-  sampleMarkerStyle_["SingleTop-sandtCombined-muGood"] = kOpenSquare;
-  sampleMarkerStyle_["SingleTop-sandtCombined-muFailEta"] = kOpenSquare;
-  sampleMarkerStyle_["SingleTop-sandtCombined-muFailPt"] = kOpenSquare;
-  sampleMarkerStyle_["SingleTop-sandtCombined-muFailRecoIso"] = kOpenSquare;
-  sampleMarkerStyle_["SingleTop-sandtCombined-muFailOther"] = kOpenSquare;
-  sampleMarkerStyle_["SingleTop-sandtCombined-eleGood"] = kOpenSquare;
-  sampleMarkerStyle_["SingleTop-sandtCombined-eleFailEta"] = kOpenSquare;
-  sampleMarkerStyle_["SingleTop-sandtCombined-eleFailPt"] = kOpenSquare;
-  sampleMarkerStyle_["SingleTop-sandtCombined-eleFailRecoIso"] = kOpenSquare;
-  sampleMarkerStyle_["SingleTop-sandtCombined-eleFailOther"] = kOpenSquare;
-  sampleMarkerStyle_["SingleTop-sandtCombined-tauHad"] = kOpenSquare;
-  sampleMarkerStyle_["SingleTop-tWCombined-semiMuGood"] = kOpenSquare;
-  sampleMarkerStyle_["SingleTop-tWCombined-semiMuFailEta"] = kOpenSquare;
-  sampleMarkerStyle_["SingleTop-tWCombined-semiMuFailPt"] = kOpenSquare;
-  sampleMarkerStyle_["SingleTop-tWCombined-semiMuFailRecoIso"] = kOpenSquare;
-  sampleMarkerStyle_["SingleTop-tWCombined-semiMuFailOther"] = kOpenSquare;
-  sampleMarkerStyle_["SingleTop-tWCombined-semiEleGood"] = kOpenSquare;
-  sampleMarkerStyle_["SingleTop-tWCombined-semiEleFailEta"] = kOpenSquare;
-  sampleMarkerStyle_["SingleTop-tWCombined-semiEleFailPt"] = kOpenSquare;
-  sampleMarkerStyle_["SingleTop-tWCombined-semiEleFailRecoIso"] = kOpenSquare;
-  sampleMarkerStyle_["SingleTop-tWCombined-semiEleFailOther"] = kOpenSquare;
-  sampleMarkerStyle_["SingleTop-tWCombined-semiTauHad"] = kOpenSquare;
-  sampleMarkerStyle_["SingleTop-tWCombined-dilep"] = kOpenSquare;
-  sampleMarkerStyle_["SingleTop-tWCombined-had"] = kOpenSquare;
-  sampleMarkerStyle_["SingleTop-tWCombined-other"] = kOpenSquare;
+
   sampleMarkerStyle_["TotalSM"] = kOpenCross; //FIXME?
   sampleMarkerStyle_["Total"] = kDot; //FIXME?
-
-  //jmt Dec 2012 -- do we use these for anything anymore?
-  sampleOwenName_["mSUGRAtanb40"] = "msugra40";
-  sampleOwenName_["T1bbbb"] = "t1bbbb";
-  sampleOwenName_["T1tttt"] = "t1tttt";
-  sampleOwenName_["T2bb"] = "t2bb";
-  sampleOwenName_["T2tt"] = "t2tt";
-  sampleOwenName_["LM13"] = "lm13";
-  sampleOwenName_["LM9"] = "lm9";
-  sampleOwenName_["sbottom-189-270"]="sbottom189-270";
-  sampleOwenName_["sbottom-185-250"]="sbottom185-250";
-  sampleOwenName_["sbottom-217-300"]="sbottom217-300";
-  sampleOwenName_["QCD"] = "qcd";
-  sampleOwenName_["PythiaQCD"] = "qcd";
-  sampleOwenName_["PythiaPUQCDFlat"] = "qcd"; 
-  sampleOwenName_["PythiaPUQCD"] = "qcd";
-  sampleOwenName_["TTbarJets"]="ttbar";
-  sampleOwenName_["TTbarJetsPowheg"]="ttbar";
-  sampleOwenName_["TTbarSingleTopWJetsCombined"]="ttbartw";
-  sampleOwenName_["ttbar"]="ttbar";
-  sampleOwenName_["SingleTop"] = "singletop";
-  sampleOwenName_["WJets"] = "wjets";
-  sampleOwenName_["WJetsInc"] = "wjetsinc";
-  sampleOwenName_["WJetsZ2"] = "wjets";
-  sampleOwenName_["ZJets"] = "zjets";
-  sampleOwenName_["ZJetsInc"] = "zjetsinc";
-  sampleOwenName_["HerwigQCDFlat"] = "herwigqcdflat";
-  sampleOwenName_["Zinvisible"] = "zinvis";
-  sampleOwenName_["VV"] = "vv";
-  sampleOwenName_["SingleTop-sChannel"] = "singletops";
-  sampleOwenName_["SingleTop-tChannel"] = "singletopt";
-  sampleOwenName_["SingleTop-tWChannel"] = "singletoptw";
-  sampleOwenName_["SingleTopBar-sChannel"] = "singletopbars";
-  sampleOwenName_["SingleTopBar-tChannel"] = "singletopbart";
-  sampleOwenName_["SingleTopBar-tWChannel"] = "singletopbartw";
-  //sampleOwenName_["SingleTop-sandtCombined"] = "singletopsandt";
-  //sampleOwenName_["SingleTop-tWCombined"] = "singletoptw";
-  sampleOwenName_["SingleTop-sandtCombined-muGood"] = "singletopsandt";
-  sampleOwenName_["SingleTop-sandtCombined-muFailEta"] = "singletopsandt";
-  sampleOwenName_["SingleTop-sandtCombined-muFailPt"] = "singletopsandt";
-  sampleOwenName_["SingleTop-sandtCombined-muFailRecoIso"] = "singletopsandt";
-  sampleOwenName_["SingleTop-sandtCombined-muFailOther"] = "singletopsandt";
-  sampleOwenName_["SingleTop-sandtCombined-eleGood"] = "singletopsandt";
-  sampleOwenName_["SingleTop-sandtCombined-eleFailEta"] = "singletopsandt";
-  sampleOwenName_["SingleTop-sandtCombined-eleFailPt"] = "singletopsandt";
-  sampleOwenName_["SingleTop-sandtCombined-eleFailRecoIso"] = "singletopsandt";
-  sampleOwenName_["SingleTop-sandtCombined-eleFailOther"] = "singletopsandt";
-  sampleOwenName_["SingleTop-sandtCombined-tauHad"] = "singletopsandt";
-  sampleOwenName_["SingleTop-tWCombined-semiMuGood"] = "singletoptw";
-  sampleOwenName_["SingleTop-tWCombined-semiMuFailEta"] = "singletoptw";
-  sampleOwenName_["SingleTop-tWCombined-semiMuFailPt"] = "singletoptw";
-  sampleOwenName_["SingleTop-tWCombined-semiMuFailRecoIso"] = "singletoptw";
-  sampleOwenName_["SingleTop-tWCombined-semiMuFailOther"] = "singletoptw";
-  sampleOwenName_["SingleTop-tWCombined-semiEleGood"] = "singletoptw";
-  sampleOwenName_["SingleTop-tWCombined-semiEleFailEta"] = "singletoptw";
-  sampleOwenName_["SingleTop-tWCombined-semiEleFailPt"] = "singletoptw";
-  sampleOwenName_["SingleTop-tWCombined-semiEleFailRecoIso"] = "singletoptw";
-  sampleOwenName_["SingleTop-tWCombined-semiEleFailOther"] = "singletoptw";
-  sampleOwenName_["SingleTop-tWCombined-semiTauHad"] = "singletoptw";
-  sampleOwenName_["SingleTop-tWCombined-dilep"] = "singletoptw";
-  sampleOwenName_["SingleTop-tWCombined-had"] = "singletoptw";
-  sampleOwenName_["SingleTop-tWCombined-other"] = "singletoptw";
-  sampleOwenName_["TotalSM"] = "totalsm";
-  sampleOwenName_["Total"] = "total";  
 
   //set all scale factors to 1 to start with.
   resetSampleScaleFactors();
@@ -1988,8 +1821,8 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
     }
     else if (idataset->first == "MET") {
       idataset->second = new TChain(reducedTreeName_);
-      cout<<"WARNING -- Run2012A excluded!"<<endl;
-      //      addDataToChain(idataset->second,"MET_Run2012A");
+      //      cout<<"WARNING -- Run2012A excluded!"<<endl;
+      addDataToChain(idataset->second,"MET_Run2012A");
       addDataToChain(idataset->second,"MET_Run2012B");
       addDataToChain(idataset->second,"MET_Run2012C");
       addDataToChain(idataset->second,"MET_Run2012D");
@@ -2066,6 +1899,7 @@ void loadSamples(bool joinSingleTop=true, TString signalEffMode="") {
 
 }
 
+
 //ug...not liking this
 sampleType getSampleType(const TString & sample , const TString & planeOrPoint="") {
 
@@ -2089,6 +1923,9 @@ sampleType getSampleType(const TString & sample , const TString & planeOrPoint="
 
   else if (sample.Contains("HiggsinoNLSP") && planeOrPoint=="point") return kSMSPointHiggsino;
   else if (sample.Contains("HiggsinoNLSP") && planeOrPoint=="plane") return kSMSPlane;
+
+  else if (sample.Contains("SMS-TChiHH") && planeOrPoint=="point") return kSMSPointHiggsino;
+  else if (sample.Contains("SMS-TChiHH") && planeOrPoint=="plane") return kSMSPlane;
 
   return kMC;
 
@@ -2271,19 +2108,28 @@ the plots with one component might be good as COLZ
   }
   if ((dodata_||signalname!="") && hdata2d->GetMaximum() > zmax) zmax= hdata2d->GetMaximum();
 
-  h2d->Draw(opt);
 
-  h2d->SetMaximum(zmax*1.1);
-  hdata2d->SetMaximum(zmax*1.1);
-
-  if (dodata_ ||signalname!="")  hdata2d->Draw("box same");
-
+  if (doRatio_) {
+    hdata2d->Divide(h2d);
+    hdata2d->SetMaximum(ratioMax);
+    hdata2d->SetMinimum(ratioMin);
+    hdata2d->Draw("COLZ");
+  }
+  else {
+    h2d->Draw(opt);
+    
+    h2d->SetMaximum(zmax*1.1);
+    hdata2d->SetMaximum(zmax*1.1);
+    
+    if (dodata_ ||signalname!="")  hdata2d->Draw("box same");
+  }
 
   TString savename = filename;
   //offering logy and not logx or logz is pretty stupid. To do
   if (logy_) savename += "-logY";
 
   savename += "-draw2d";
+  if (doRatio_)  savename+="-ratio";
 
   //amazingly, \includegraphics cannot handle an extra dot in the filename. so avoid it.
   if (savePlots_) {
@@ -3147,7 +2993,7 @@ void drawEffVRej(const TString & h1, const TString h2,const TString & xtitle,con
 }
 
 void drawTrigEff(const TString & pd, const TCut & tag, const TCut & probe, const TString & var, int nbins, float low,float high) {
-  loadSamples(true,"ra2b2012");
+  loadSamples("ra2b2012");
 
   //see ~/scratch0/analysis2/CMSSW_4_2_5/src/NtupleTools/BasicLoopCU/splitByTrigger.C
   renewCanvas();

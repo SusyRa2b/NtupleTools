@@ -68,7 +68,7 @@ The paths to the reducedTrees are defined at the top of initHiggsSamples69()
 TString inputPath = "";
 TString dataInputPath =  "";
 
-double lumiScale_ = 19399 -807.1; //Run 2012 ABC+D
+double lumiScale_ = 19399 ; //Run 2012 ABC+D
 
 //make a symlink that point from this name to drawReducedTree.h
 //this is to make the ROOT dictionary generation work correctly
@@ -76,66 +76,62 @@ double lumiScale_ = 19399 -807.1; //Run 2012 ABC+D
 
 void initHiggsSamples69(const bool useSkim=true,const TString samplelist="") { 
 
-  inputPath="/cu6/joshmt/reducedTrees/v69_2_pt20/"; 
-  dataInputPath="/cu6/joshmt/reducedTrees/v69_2_pt20/data/"; //for skimmed data
-  if (!useSkim)   dataInputPath+="unskimmed/";
-
-  if (samplelist=="metsigtest1") inputPath = "/cu5/joshmt/reducedTrees/v69_2_pt20/";//special test
+  inputPath="/cu6/joshmt/reducedTrees/v71_1s/"; 
+  dataInputPath="/cu6/joshmt/reducedTrees/v71_1s/data/"; //for skimmed data
+  //for now we don't really support unskimmed in v71
+  //  if (!useSkim)   dataInputPath+="unskimmed/";
 
   //  if (useSkim==false) {cout<<"Must use skim!"<<endl; assert(0);}
-  const  TString skimstring = useSkim?"-skim":"";
+  const  TString skimstring = "";//useSkim?"-skim":"";
 
-  addToSamplesAll("TTJets_ResolutionTest_PU_S10_CU0001_v69"); //special test
-  addToSamplesAll("TTJets_ResolutionTest_PU_S10_CU0001_JERbias_v69"); // special test
-  addToSamplesAll("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69"); //Dave Mason mg signal
+  //official MG signal
+  addToSamplesAll("SMS-TChiHH_2b2b_2J_mChargino-130to325_mLSP-1to195_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1872_v71");
+  addToSamplesAll("SMS-TChiHH_2b2b_2J_mChargino-350to500_mLSP-1to370_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1871_v71");
+  addToSamplesAll("SMS-TChiZH_ZccbbHbb_2J_mChargino-130to500_mLSP-1to370_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1873_v71");
 
   //MG ttbar  
-  addToSamplesAll(TString("TTJets_SemiLeptMGDecays_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7C-v1_AODSIM_UCSB1800_v69")+skimstring);
-  addToSamplesAll(TString("TTJets_FullLeptMGDecays_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7C-v2_AODSIM_UCSB1799_v69")+skimstring);
-  addToSamplesAll(TString("TTJets_HadronicMGDecays_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A_ext-v1_AODSIM_UCSB1848_v69")+skimstring);
-  //missing the hadronic ttbar for the moment
+  addToSamplesAll("TTJets_SemiLeptMGDecays_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7C-v1_AODSIM_UCSB1884ra2b_v71s");
+  addToSamplesAll("TTJets_FullLeptMGDecays_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7C-v2_AODSIM_UCSB1883ra2b_v71s");
+  //  addToSamplesAll(TString("TTJets_HadronicMGDecays_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A_ext-v1_AODSIM_UCSB1848_v69")+skimstring);
 
   //sherpa
-  addToSamplesAll(TString("TTJets_SemiLeptDecays_8TeV-sherpa_Summer12_DR53X-PU_S10_START53_V19-v1_AODSIM_UCSB1806_v69")+skimstring);
-  addToSamplesAll(TString("TTJets_DileptDecays_8TeV-sherpa_Summer12_DR53X-PU_S10_START53_V19-v1_AODSIM_UCSB1804_v69")+skimstring);
+  addToSamplesAll("TTJets_SemiLeptDecays_8TeV-sherpa_Summer12_DR53X-PU_S10_START53_V19-v1_AODSIM_UCSB1892ra2b_v71s");
+  //  addToSamplesAll(TString("TTJets_DileptDecays_8TeV-sherpa_Summer12_DR53X-PU_S10_START53_V19-v1_AODSIM_UCSB1804_v69")+skimstring);
 
   //QCD
-  addToSamplesAll(TString("QCD_Pt-120to170_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v3_AODSIM_UCSB1814_v69")+skimstring);
-  addToSamplesAll(TString("QCD_Pt-170to300_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v2_AODSIM_UCSB1815_v69")+skimstring);
-  addToSamplesAll(TString("QCD_Pt-300to470_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v2_AODSIM_UCSB1816_v69")+skimstring);
-  addToSamplesAll(TString("QCD_Pt-470to600_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v2_AODSIM_UCSB1817_v69")+skimstring);
-  addToSamplesAll(TString("QCD_Pt-600to800_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v2_AODSIM_UCSB1818_v69")+skimstring);
-  addToSamplesAll(TString("QCD_Pt-800to1000_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v2_AODSIM_UCSB1819_v69")+skimstring);
-  addToSamplesAll(TString("QCD_Pt-1000to1400_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1820_v69")+skimstring);
-  addToSamplesAll(TString("QCD_Pt-1400to1800_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1821_v69")+skimstring);
-  addToSamplesAll(TString("QCD_Pt-1800_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1822_v69")+skimstring);
+  addToSamplesAll("QCD_Pt-120to170_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v3_AODSIM_UCSB1897ra2b_v71s");
+  addToSamplesAll("QCD_Pt-1000to1400_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1903ra2b_v71s");
+  addToSamplesAll("QCD_Pt-1400to1800_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1904ra2b_v71s");
+  addToSamplesAll("QCD_Pt-170to300_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v2_AODSIM_UCSB1898ra2b_v71s");
+  addToSamplesAll("QCD_Pt-1800_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1905ra2b_v71s");
+  addToSamplesAll("QCD_Pt-300to470_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v2_AODSIM_UCSB1899ra2b_v71s");
+  addToSamplesAll("QCD_Pt-470to600_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v2_AODSIM_UCSB1900ra2b_v71s");
+  addToSamplesAll("QCD_Pt-600to800_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v2_AODSIM_UCSB1901ra2b_v71s");
+  addToSamplesAll("QCD_Pt-800to1000_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v2_AODSIM_UCSB1902ra2b_v71s");
+
+  //ttV
+  addToSamplesAll("TTWJets_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1857ra2b_v71s");
+  addToSamplesAll("TTZJets_8TeV-madgraph_v2_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1856ra2b_v71s");
+  addToSamplesAll("TTH_HToBB_M-125_8TeV-pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1855ra2b_v71s");
 
   //Znunu
-  addToSamplesAll(TString("ZJetsToNuNu_100_HT_200_TuneZ2Star_8TeV_madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1832_v69")+skimstring);
-  addToSamplesAll(TString("ZJetsToNuNu_200_HT_400_TuneZ2Star_8TeV_madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1833_v69")+skimstring);
-  addToSamplesAll(TString("ZJetsToNuNu_200_HT_400_TuneZ2Star_8TeV_madgraph_ext_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1834_v69")+skimstring);
-  addToSamplesAll(TString("ZJetsToNuNu_400_HT_inf_TuneZ2Star_8TeV_madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1831_v69")+skimstring);
-  addToSamplesAll(TString("ZJetsToNuNu_400_HT_inf_TuneZ2Star_8TeV_madgraph_ext_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1835_v69")+skimstring);
+  addToSamplesAll("ZJetsToNuNu_100_HT_200_TuneZ2Star_8TeV_madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1887ra2b_v71s");
+  addToSamplesAll("ZJetsToNuNu_200_HT_400_TuneZ2Star_8TeV_madgraph_ext_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1889ra2b_v71s");
+  addToSamplesAll("ZJetsToNuNu_200_HT_400_TuneZ2Star_8TeV_madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1888ra2b_v71s");
+  addToSamplesAll("ZJetsToNuNu_400_HT_inf_TuneZ2Star_8TeV_madgraph_ext_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1891ra2b_v71s");
+  addToSamplesAll("ZJetsToNuNu_400_HT_inf_TuneZ2Star_8TeV_madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1890ra2b_v71s");
 
   //W in njets bins
-  addToSamplesAll(TString("W2JetsToLNu_TuneZ2Star_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1877_v71")+skimstring);
-  addToSamplesAll(TString("W3JetsToLNu_TuneZ2Star_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1878_v71")+skimstring);
-  addToSamplesAll(TString("W4JetsToLNu_TuneZ2Star_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1879_v71")+skimstring);
+  addToSamplesAll("W2JetsToLNu_TuneZ2Star_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1877ra2b_v71s");
+  addToSamplesAll("W3JetsToLNu_TuneZ2Star_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1878ra2b_v71s");
+  addToSamplesAll("W4JetsToLNu_TuneZ2Star_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1879ra2b_v71s");
 
-  //signal (no skim)
-  addToSamplesAll("TChihh-HbbHbb_mHiggsino-200_mLSP-1_8TeV-Pythia6Z_jgsmith-SMS-HbbHbb_mHiggsino-200_mLSP-1_1_UCSB1807_v69");
-  addToSamplesAll("TChihh-HbbHbb_mHiggsino-350_mLSP-1_8TeV-Pythia6Z_jgsmith-SMS-HbbHbb_mHiggsino-350_mLSP-1_1_UCSB1811_v69");
+  addToSamplesAll("WbbJetsToLNu_Massive_TuneZ2star_8TeV-madgraph-pythia6_tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1859ra2b_v71s");
 
-  addToSamplesAll("SMS-HbbHbb_mHiggsino-200_mLSP-1_8TeV-Pythia6Z_jgsmith_UCSB1807_v69");
-  addToSamplesAll("SMS-HbbHbb_mHiggsino-250_mLSP-1_8TeV-Pythia6Z_jgsmith_UCSB1809_v69");
-  addToSamplesAll("SMS-HbbHbb_mHiggsino-300_mLSP-1_8TeV-Pythia6Z_jgsmith_UCSB1810_v69");
-  addToSamplesAll("SMS-HbbHbb_mHiggsino-350_mLSP-1_8TeV-Pythia6Z_jgsmith_UCSB1811_v69");
-  addToSamplesAll("SMS-HbbHbb_mHiggsino-400_mLSP-1_8TeV-Pythia6Z_jgsmith_UCSB1812_v69");
-  addToSamplesAll("SMS-HbbHbb_mHiggsino-450_mLSP-1_8TeV-Pythia6Z_jgsmith_UCSB1808_v69");
 
   nameOfEventWeight_="weight3"; 
 
-  loadSamples(true,"ra2b2012");
+  loadSamples("hbbhbb");
   usePUweight_=true; 
 
   useTrigEff_=true;
@@ -147,61 +143,84 @@ void initHiggsSamples69(const bool useSkim=true,const TString samplelist="") {
   clearSamples();
   resetChains(); //important in the case that we call initHiggsSamples() more than once
 
-  if (samplelist=="metsigtest1") {
-    nameOfEventWeight_="(1)";
-    addSample("TTJets_ResolutionTest_PU_S10_CU0001_v69",kAzure-3,"t#bar{t}");
-
-    //manually set scale factor
-    setSampleScaleFactor("TTJets_ResolutionTest_PU_S10_CU0001_v69",234.0 / getTree("TTJets_ResolutionTest_PU_S10_CU0001_v69")->GetEntries());
-  }
-
   if (samplelist=="" || samplelist.Contains("qcd")) {
-    TString baseqcdname = TString("QCD_Pt-120to170_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v3_AODSIM_UCSB1814_v69")+skimstring;
+    TString baseqcdname = TString("QCD_Pt-120to170_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v3_AODSIM_UCSB1897ra2b_v71s");
     addSample(baseqcdname,kGreen,"QCD");
-    chainSamples(baseqcdname,TString("QCD_Pt-170to300_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v2_AODSIM_UCSB1815_v69")+skimstring);
-    chainSamples(baseqcdname,TString("QCD_Pt-300to470_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v2_AODSIM_UCSB1816_v69")+skimstring);
-    chainSamples(baseqcdname,TString("QCD_Pt-470to600_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v2_AODSIM_UCSB1817_v69")+skimstring);
-    chainSamples(baseqcdname,TString("QCD_Pt-600to800_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v2_AODSIM_UCSB1818_v69")+skimstring);
-    chainSamples(baseqcdname,TString("QCD_Pt-800to1000_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v2_AODSIM_UCSB1819_v69")+skimstring);
-    chainSamples(baseqcdname,TString("QCD_Pt-1000to1400_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1820_v69")+skimstring);
-    chainSamples(baseqcdname,TString("QCD_Pt-1400to1800_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1821_v69")+skimstring);
-    chainSamples(baseqcdname,TString("QCD_Pt-1800_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1822_v69")+skimstring);
+    chainSamples(baseqcdname,TString("QCD_Pt-170to300_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v2_AODSIM_UCSB1897ra2b_v71s")+skimstring);
+    chainSamples(baseqcdname,TString("QCD_Pt-300to470_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v2_AODSIM_UCSB1899ra2b_v71s")+skimstring);
+    chainSamples(baseqcdname,TString("QCD_Pt-470to600_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v2_AODSIM_UCSB1900ra2b_v71s")+skimstring);
+    chainSamples(baseqcdname,TString("QCD_Pt-600to800_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v2_AODSIM_UCSB1901ra2b_v71s")+skimstring);
+    chainSamples(baseqcdname,TString("QCD_Pt-800to1000_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v2_AODSIM_UCSB1902ra2b_v71s")+skimstring);
+    chainSamples(baseqcdname,TString("QCD_Pt-1000to1400_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1903ra2b_v71s")+skimstring);
+    chainSamples(baseqcdname,TString("QCD_Pt-1400to1800_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1904ra2b_v71s")+skimstring);
+    chainSamples(baseqcdname,TString("QCD_Pt-1800_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1905ra2b_v71s")+skimstring);
 
   }
 
+/* to do
   if (samplelist==""||samplelist.Contains("ttbar")) {
     addSample(TString("TTJets_HadronicMGDecays_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A_ext-v1_AODSIM_UCSB1848_v69")+skimstring,kGreen-9,"t#bar{t} (0l)");
   }
+*/
+
+  if (samplelist==""||samplelist.Contains("ttv")) {
+    TString  ttvname="TTWJets_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1857ra2b_v71s";
+    addSample(ttvname,kCyan-7,"TTV");
+    chainSamples(ttvname,"TTZJets_8TeV-madgraph_v2_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1856ra2b_v71s");
+    chainSamples(ttvname,"TTH_HToBB_M-125_8TeV-pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1855ra2b_v71s");
+  }
+
+  if (samplelist==""||samplelist.Contains("vv")) {
+    TString  vvname="WW_TuneZ2star_8TeV_pythia6_tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1874ra2b_v71s";
+    addSample(vvname,kCyan+3,"VV");
+    chainSamples(vvname,"WZ_TuneZ2star_8TeV_pythia6_tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1875ra2b_v71s");
+    chainSamples(vvname,"ZZ_TuneZ2star_8TeV_pythia6_tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1876ra2b_v71s");
+    chainSamples(vvname,"WH_WToLNu_HToBB_M-125_8TeV-powheg-herwigpp_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1858ra2b_v71s");
+  }
+
+
+  if (samplelist==""||samplelist.Contains("singlet")) {
+    TString  stname="T_s-channel_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1860ra2b_v71s";
+    addSample(stname,kBlue,"Single Top");
+    chainSamples(stname,"T_t-channel_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1861ra2b_v71s");
+    chainSamples(stname,"T_tW-channel-DR_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1862ra2b_v71s");
+    chainSamples(stname,"Tbar_s-channel_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1864ra2b_v71s");
+    chainSamples(stname,"Tbar_t-channel_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1865ra2b_v71s");
+    chainSamples(stname,"Tbar_tW-channel-DR_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1866ra2b_v71s");
+  }
+
+
+  if (samplelist.Contains("wjets")) {
+    TString w2=TString("W2JetsToLNu_TuneZ2Star_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1877ra2b_v71s")+skimstring;
+    addSample(w2,kViolet,"W+jets");
+    chainSamples(w2,TString("W3JetsToLNu_TuneZ2Star_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1878ra2b_v71s")+skimstring);
+    chainSamples(w2,TString("W4JetsToLNu_TuneZ2Star_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1879ra2b_v71s")+skimstring);
+  }
+
+  if (samplelist=="" ||samplelist.Contains("wbb")) {
+    addSample("WbbJetsToLNu_Massive_TuneZ2star_8TeV-madgraph-pythia6_tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1859ra2b_v71s",kViolet+2,"W+bb");
+  }
 
   if (samplelist==""||samplelist.Contains("znunu")) {
-    TString basezname = TString("ZJetsToNuNu_100_HT_200_TuneZ2Star_8TeV_madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1832_v69")+skimstring;
+    TString basezname = TString("ZJetsToNuNu_100_HT_200_TuneZ2Star_8TeV_madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1887ra2b_v71s")+skimstring;
     addSample(basezname,kOrange,"Z #rightarrow #nu#nu");
-    chainSamples(basezname,TString("ZJetsToNuNu_200_HT_400_TuneZ2Star_8TeV_madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1833_v69")+skimstring);
-    chainSamples(basezname,TString("ZJetsToNuNu_200_HT_400_TuneZ2Star_8TeV_madgraph_ext_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1834_v69")+skimstring);
-    chainSamples(basezname,TString("ZJetsToNuNu_400_HT_inf_TuneZ2Star_8TeV_madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1831_v69")+skimstring);
-    chainSamples(basezname,TString("ZJetsToNuNu_400_HT_inf_TuneZ2Star_8TeV_madgraph_ext_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1835_v69")+skimstring);
+    chainSamples(basezname,TString("ZJetsToNuNu_200_HT_400_TuneZ2Star_8TeV_madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1888ra2b_v71s")+skimstring);
+    chainSamples(basezname,TString("ZJetsToNuNu_200_HT_400_TuneZ2Star_8TeV_madgraph_ext_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1889ra2b_v71s")+skimstring);
+    chainSamples(basezname,TString("ZJetsToNuNu_400_HT_inf_TuneZ2Star_8TeV_madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1890ra2b_v71s")+skimstring);
+    chainSamples(basezname,TString("ZJetsToNuNu_400_HT_inf_TuneZ2Star_8TeV_madgraph_ext_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1891ra2b_v71s")+skimstring);
   }
 
-  if (samplelist=="" || samplelist.Contains("wjets")) {
-    TString w2=TString("W2JetsToLNu_TuneZ2Star_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1877_v71")+skimstring;
-    addSample(w2,kViolet,"W+jets");
-    chainSamples(w2,TString("W3JetsToLNu_TuneZ2Star_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1878_v71")+skimstring);
-    chainSamples(w2,TString("W4JetsToLNu_TuneZ2Star_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1879_v71")+skimstring);
-
-    setSampleScaleFactor(w2,1.19); // apply k-factor
-  }
 
   if (samplelist==""||samplelist.Contains("ttbar")) {
-
-    addSample(TString("TTJets_FullLeptMGDecays_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7C-v2_AODSIM_UCSB1799_v69")+skimstring,kBlue-10,"t#bar{t} (2l)");
-    addSample(TString("TTJets_SemiLeptMGDecays_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7C-v1_AODSIM_UCSB1800_v69")+skimstring,kAzure-3,"t#bar{t} (1l)");
+    addSample("TTJets_FullLeptMGDecays_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7C-v2_AODSIM_UCSB1883ra2b_v71s",kBlue-10,"t#bar{t} (2l)");
+    addSample(TString("TTJets_SemiLeptMGDecays_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7C-v1_AODSIM_UCSB1884ra2b_v71s")+skimstring,kAzure-3,"t#bar{t} (1l)");
 
     //    setSampleWeightFactor(TString("TTJets_SemiLeptMGDecays_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7C-v1_AODSIM_UCSB1800_v69")+skimstring,"topPtWeight");
     //    if (useSkim)    setSampleWeightFactor(TString("TTJets_FullLeptMGDecays_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7C-v2_AODSIM_UCSB1799_v69")+skimstring,"topPtWeight");
   }
 
   const float hbbbb=0.561*0.561;
-
+/*
   if (samplelist==""||samplelist.Contains("hh200")) 
     //    addSample("TChihh-HbbHbb_mHiggsino-200_mLSP-1_8TeV-Pythia6Z_jgsmith-SMS-HbbHbb_mHiggsino-200_mLSP-1_1_UCSB1807_v69",kRed-7,"hh 200");
     addSample("SMS-HbbHbb_mHiggsino-200_mLSP-1_8TeV-Pythia6Z_jgsmith_UCSB1807_v69",kRed-9,"hh 200");
@@ -216,10 +235,11 @@ void initHiggsSamples69(const bool useSkim=true,const TString samplelist="") {
     addSample("SMS-HbbHbb_mHiggsino-400_mLSP-1_8TeV-Pythia6Z_jgsmith_UCSB1812_v69",kRed+2,"hh 400");
   if (samplelist==""||samplelist.Contains("hh450"))
     addSample("SMS-HbbHbb_mHiggsino-450_mLSP-1_8TeV-Pythia6Z_jgsmith_UCSB1808_v69",kRed+3,"hh 450");
-
+*/
 
   //https://twiki.cern.ch/twiki/bin/view/CMS/Electrohiggs#Prospino_NLO_Cross_Sections
-   //sigma x BF / ngen
+/* 
+  //sigma x BF / ngen
   if (samplelist==""||samplelist.Contains("hh200"))
     setSampleScaleFactor("SMS-HbbHbb_mHiggsino-200_mLSP-1_8TeV-Pythia6Z_jgsmith_UCSB1807_v69", 0.608 *hbbbb/ getTree("SMS-HbbHbb_mHiggsino-200_mLSP-1_8TeV-Pythia6Z_jgsmith_UCSB1807_v69")->GetEntries());
   if (samplelist==""||samplelist.Contains("hh250"))
@@ -232,7 +252,9 @@ void initHiggsSamples69(const bool useSkim=true,const TString samplelist="") {
     setSampleScaleFactor("SMS-HbbHbb_mHiggsino-400_mLSP-1_8TeV-Pythia6Z_jgsmith_UCSB1812_v69",  0.0294 *hbbbb/getTree("SMS-HbbHbb_mHiggsino-400_mLSP-1_8TeV-Pythia6Z_jgsmith_UCSB1812_v69")->GetEntries());
   if (samplelist==""||samplelist.Contains("hh450"))
     setSampleScaleFactor("SMS-HbbHbb_mHiggsino-450_mLSP-1_8TeV-Pythia6Z_jgsmith_UCSB1808_v69",   0.0163 *hbbbb/getTree("SMS-HbbHbb_mHiggsino-450_mLSP-1_8TeV-Pythia6Z_jgsmith_UCSB1808_v69")->GetEntries());
+*/
 
+/*
   if (samplelist.Contains("hhmg200") || samplelist=="")     addSample("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69$200$1",kRed-9,"hh MG 200");
   if (samplelist.Contains("hhmg250") || samplelist=="")     addSample("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69$250$1",kRed-7,"hh MG 250");
   if (samplelist.Contains("hhmg300") || samplelist=="")     addSample("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69$300$1",kRed-4,"hh MG 300");
@@ -240,6 +262,30 @@ void initHiggsSamples69(const bool useSkim=true,const TString samplelist="") {
   if (samplelist.Contains("hhmg400") || samplelist=="")     addSample("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69$400$1",kRed+2,"hh MG 400");
   if (samplelist.Contains("hhmg450") || samplelist=="")     addSample("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69$450$1",kRed+3,"hh MG 450");
   if (samplelist.Contains("hhmg500") || samplelist=="")     addSample("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69$500$1",kRed+4,"hh MG 500");
+*/
+
+  if (samplelist.Contains("hhmg200") || samplelist=="")
+    addSample("SMS-TChiHH_2b2b_2J_mChargino-130to325_mLSP-1to195_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1872_v71$200$1",kRed-9,"hh MG 200");
+
+  if (samplelist.Contains("hhmg250") || samplelist=="")
+    addSample("SMS-TChiHH_2b2b_2J_mChargino-130to325_mLSP-1to195_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1872_v71$250$1",kRed-7,"hh MG 250");
+
+  if (samplelist.Contains("hhmg300") || samplelist=="")
+    addSample("SMS-TChiHH_2b2b_2J_mChargino-130to325_mLSP-1to195_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1872_v71$300$1",kRed-4,"hh MG 300");
+
+  if (samplelist.Contains("hhmg350") || samplelist=="")
+    addSample("SMS-TChiHH_2b2b_2J_mChargino-350to500_mLSP-1to370_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1871_v71$350$1",kRed+1,"hh MG 350");
+
+  if (samplelist.Contains("hhmg400") || samplelist=="")
+    addSample("SMS-TChiHH_2b2b_2J_mChargino-350to500_mLSP-1to370_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1871_v71$400$1",kRed+2,"hh MG 400");
+
+  if (samplelist.Contains("hhmg450") || samplelist=="")
+    addSample("SMS-TChiHH_2b2b_2J_mChargino-350to500_mLSP-1to370_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1871_v71$450$1",kRed+3,"hh MG 450");
+
+  if (samplelist.Contains("hhmg500") || samplelist=="")
+    addSample("SMS-TChiHH_2b2b_2J_mChargino-350to500_mLSP-1to370_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1871_v71$500$1",kRed+4,"hh MG 500");
+
+
 
 /*
 //special colors for comparisons between mg and pythia  
@@ -253,11 +299,88 @@ if (samplelist.Contains("hhmg200"))     addSample("HiggsinoNLSP_chargino130_to_5
 */
 
   //scale by h->bb squared factor
-  if (samplelist.Contains("hhmg") || samplelist=="") setSampleScaleFactor("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69",hbbbb);
+  if (samplelist.Contains("hhmg") || samplelist=="") {
+    setSampleScaleFactor("SMS-TChiHH_2b2b_2J_mChargino-130to325_mLSP-1to195_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1872_v71",hbbbb);
+    setSampleScaleFactor("SMS-TChiHH_2b2b_2J_mChargino-350to500_mLSP-1to370_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1871_v71",hbbbb);
+  }
 
   overrideSMSlabels_=true; //don't use the auto-labels for SMS
 
   setDatasetToDraw("MET"); //when plotting data, use the MET PD
+
+}
+
+void wjetsCompare() {
+
+  initHiggsSamples69(true,"wjets wbb");
+  int nbins;
+  float low,high;
+  TString var,xtitle;
+
+  doOverflowAddition(true);
+  doRatio_=true; ratioMin = 0.4; ratioMax = 1.6;
+  dodata_=false;
+  useTrigEff_=false;
+  usePUweight_=true; 
+
+  setStackMode(false,false,false); //stack,norm,label override
+  //define useful cuts
+  TCut baseline = "cutPV==1 &&passCleaning==1 &&buggyEvent==0&& MET/caloMET<2 && maxTOBTECjetDeltaMult<40"; 
+
+  TCut triggerJetMET = "passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1||passMC_DiCentralPFJet30_PFMHT80==1";
+  //cannot use this with MET PD only
+  //  TCut triggerJets = "passMC_DiPFJet80_DiPFJet30_BTagCSVd07d05==1";
+  TCut triggerMET = "passMC_PFMET150==1";
+  TCut trigger = triggerJetMET||triggerMET;
+
+  TCut zl = "nMuons==0&&nElectrons==0&&nTausLoose==0";
+  TCut isotk="nIsoTracks15_005_03==0";//&&nIsoTracks5_005_03<2";
+
+  TCut sl = "nMuons+nElectrons==1 &&nTausLoose==0 &&nIsoTracks15_005_03_lepcleaned==0";
+
+  TCut njets4="njets20==4";
+  TCut njets5="njets20==5";
+  TCut jet2="jetpt2>50";
+  TCut mdp = "minDeltaPhi20>0.3";
+  TCut btag2="CSVbest2>0.898";
+  TCut btag3="CSVbest3>0.679";
+  TCut btag4="CSVbest4>0.244";
+
+  TCut higgsSR_av = "(0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)>100)&&(0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)<140)";
+  TCut higgsSR_d = "abs(higgsMbb1MassDiff-higgsMbb2MassDiff)<20";
+  TCut higgsSR = higgsSR_av && higgsSR_d;
+
+  TCut higgsSB_avl = "0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)<90";
+  TCut higgsSB_avh = "0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)>150";
+  TCut higgsSB_d = "abs(higgsMbb1MassDiff-higgsMbb2MassDiff)>30";
+  TCut higgsSB = higgsSB_avl||higgsSB_avh||higgsSB_d;
+
+  TCut metsigveryloose="METsig>30";
+
+  TCut drmax = "deltaRmax_hh<2.2";
+
+  selection_=baseline&&zl&&isotk&&(njets4||njets5)&&jet2&&mdp&&btag2;
+
+  nbins=30; low=0; high=300;
+  var="METsig"; xtitle="MET significance";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "wjets_validation_METsig",0);
+
+  selection_=baseline&&jet2&&btag2;
+  nbins=8; low=0; high=8;
+  var="njets20"; xtitle="jet multiplicity";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "wjets_validation_njets20",0);
+
+  selection_=baseline&&jet2&&btag2&&TCut("njets20>=4");
+  nbins=40; low=0; high=1;
+  var="CSVbest3"; xtitle=var;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "wjets_validation_CSVbest3",0);
+
+
+  selection_=baseline&&jet2&&btag2&&TCut("njets20>=4")&&btag3;
+  nbins=40; low=0; high=1;
+  var="CSVbest4"; xtitle=var;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "wjets_validation_CSVbest4",0);
+
 
 }
 
@@ -385,7 +508,7 @@ void mgSignalCheck() {
 //define useful cuts
   TCut baseline = "cutPV==1 &&passCleaning==1 &&buggyEvent==0&& MET/caloMET<2 && maxTOBTECjetDeltaMult<40"; 
 
-  TCut triggerJetMET = "passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1";
+  TCut triggerJetMET = "passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1||passMC_DiCentralPFJet30_PFMHT80==1";
   //cannot use this with MET PD only
   //  TCut triggerJets = "passMC_DiPFJet80_DiPFJet30_BTagCSVd07d05==1";
   TCut triggerMET = "passMC_PFMET150==1";
@@ -463,7 +586,7 @@ void metsigPUcheck() {
   //define useful cuts
   TCut baseline = "cutPV==1 &&passCleaning==1 &&buggyEvent==0&& MET/caloMET<2 && maxTOBTECjetDeltaMult<40"; 
 
-  TCut triggerJetMET = "passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1";
+  TCut triggerJetMET = "passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1||passMC_DiCentralPFJet30_PFMHT80==1";
   //cannot use this with MET PD only
   //  TCut triggerJets = "passMC_DiPFJet80_DiPFJet30_BTagCSVd07d05==1";
   TCut triggerMET = "passMC_PFMET150==1";
@@ -494,7 +617,6 @@ void metsigPUcheck() {
   TCut metsigveryloose="METsig_2012>25";
 
   TCut drmax = "deltaRmax_hh<2.2";
-  //  TCut drmin = "deltaRmin_hh<1.9";
 
   //  setSampleScaleFactor("TTJets_FullLeptMGDecays_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v2_AODSIM_UCSB1596_v66-skim",0.8);
 
@@ -545,7 +667,7 @@ void higgs_genlevel_signal() {
   //define useful cuts
   TCut baseline = "cutPV==1 &&passCleaning==1 &&buggyEvent==0"; 
 
-  TCut triggerJetMET = "passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1";
+  TCut triggerJetMET = "passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1||passMC_DiCentralPFJet30_PFMHT80==1";
   //cannot use this with MET PD only
   //  TCut triggerJets = "passMC_DiPFJet80_DiPFJet30_BTagCSVd07d05==1";
   TCut triggerMET = "passMC_PFMET150==1";
@@ -630,7 +752,7 @@ void higgs_genlevel_signal() {
 
 }
 
-void higgs_signal_scult() {
+void higgs_signal_sculpt() {
 
   initHiggsSamples69(false,"hh250 hh400");
 
@@ -646,7 +768,7 @@ void higgs_signal_scult() {
   //define useful cuts
   TCut baseline = "cutPV==1 &&passCleaning==1 &&buggyEvent==0"; 
 
-  TCut triggerJetMET = "passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1";
+  TCut triggerJetMET = "passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1||passMC_DiCentralPFJet30_PFMHT80==1";
   //cannot use this with MET PD only
   //  TCut triggerJets = "passMC_DiPFJet80_DiPFJet30_BTagCSVd07d05==1";
   TCut triggerMET = "passMC_PFMET150==1";
@@ -713,7 +835,7 @@ void higgs_ttbar_sculpt() {
   //define useful cuts
   TCut baseline = "cutPV==1 &&passCleaning==1 &&buggyEvent==0"; 
 
-  TCut triggerJetMET = "passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1";
+  TCut triggerJetMET = "passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1||passMC_DiCentralPFJet30_PFMHT80==1";
   //cannot use this with MET PD only
   //  TCut triggerJets = "passMC_DiPFJet80_DiPFJet30_BTagCSVd07d05==1";
   TCut triggerMET = "passMC_PFMET150==1";
@@ -825,7 +947,7 @@ void higgs_dataMC_control_QCD_noskim(TString options="") {
 
   //define useful cuts
   TCut baseline = "cutPV==1 &&passCleaning==1 &&buggyEvent==0&& MET/caloMET<2 && maxTOBTECjetDeltaMult<40"; 
-  TCut triggerJetMET = "passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1";
+  TCut triggerJetMET = "passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1||passMC_DiCentralPFJet30_PFMHT80==1";
   TCut triggerMET = "passMC_PFMET150==1";
   TCut trigger = triggerJetMET||triggerMET;
 
@@ -1005,7 +1127,7 @@ void higgs_dataMC_control_QCD() {
   //define useful cuts
   TCut baseline = "cutPV==1 &&passCleaning==1 &&buggyEvent==0&& MET/caloMET<2 && maxTOBTECjetDeltaMult<40"; 
 
-  TCut triggerJetMET = "passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1";
+  TCut triggerJetMET = "passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1||passMC_DiCentralPFJet30_PFMHT80==1";
   TCut triggerMET = "passMC_PFMET150==1";
   TCut trigger = triggerJetMET||triggerMET;
 
@@ -1460,7 +1582,7 @@ void higgs_dataMC_debug() {
   doRatio_=true; ratioMin = 0; ratioMax = 2.2;
   dodata_=true;
 
-  TCut triggerJetMET = "passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1";
+  TCut triggerJetMET = "passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1||passMC_DiCentralPFJet30_PFMHT80==1";
 
   selection_=triggerJetMET;
   nbins=40; low=0; high=40;
@@ -1533,7 +1655,7 @@ void higgs_dataMC_control_SL_JERtest() {
   //define useful cuts
   TCut baseline = "cutPV==1 &&passCleaning==1 &&buggyEvent==0&& MET/caloMET<2 && maxTOBTECjetDeltaMult<40"; 
 
-  TCut triggerJetMET = "passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1";
+  TCut triggerJetMET = "passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1||passMC_DiCentralPFJet30_PFMHT80==1";
   //cannot use this with MET PD only
   //  TCut triggerJets = "passMC_DiPFJet80_DiPFJet30_BTagCSVd07d05==1";
   TCut triggerMET = "passMC_PFMET150==1";
@@ -1814,7 +1936,7 @@ void higgs_dataMC_control_SL_noskim() {
   //define useful cuts
   TCut baseline = "cutPV==1 &&passCleaning==1 &&buggyEvent==0&& MET/caloMET<2 && maxTOBTECjetDeltaMult<40"; 
 
-  TCut triggerJetMET = "passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1";
+  TCut triggerJetMET = "passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1||passMC_DiCentralPFJet30_PFMHT80==1";
   //cannot use this with MET PD only
   //  TCut triggerJets = "passMC_DiPFJet80_DiPFJet30_BTagCSVd07d05==1";
   TCut triggerMET = "passMC_PFMET150==1";
@@ -1884,7 +2006,7 @@ void higgs_dataMC_control_SL_noskim() {
 void higgs_dataMC_control_SL() {
 
   //goal do data / MC comparisons; use skim to save time. means I can't make a useful njets plot
-  initHiggsSamples69(true,"ttbar znunu qcd"); //use all samples except signal
+  initHiggsSamples69(true,"ttbar znunu qcd wjets ttv vv singlet"); //use all samples except signal
   //this is the current default
   //  initHiggsSamples69(true,"qcd ttbar"); //don't bother with negligible znunu and qcd
 
@@ -1905,7 +2027,7 @@ void higgs_dataMC_control_SL() {
   //define useful cuts
   TCut baseline = "cutPV==1 &&passCleaning==1 &&buggyEvent==0&& MET/caloMET<2 && maxTOBTECjetDeltaMult<40"; 
 
-  TCut triggerJetMET = "passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1";
+  TCut triggerJetMET = "passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1||passMC_DiCentralPFJet30_PFMHT80==1";
   //cannot use this with MET PD only
   //  TCut triggerJets = "passMC_DiPFJet80_DiPFJet30_BTagCSVd07d05==1";
   TCut triggerMET = "passMC_PFMET150==1";
@@ -1942,6 +2064,8 @@ void higgs_dataMC_control_SL() {
 
   setStackMode(true,false,false); //stack,norm,label override
   setLogY(false);
+
+  useTrigEff_=false; //no trig eff correction for these
 
   //2b pre-selection ; basically the minimum required by the trigger, plus SL
   selection_ = baseline && trigger && sl && (njets4||njets5) &&jet2&&mdp && btag2;
@@ -2183,7 +2307,7 @@ void higgs_SLratios2() {
 
   TCut baseline = "cutPV==1 &&passCleaning==1 &&buggyEvent==0&& MET/caloMET<2 && maxTOBTECjetDeltaMult<40"; 
 
-  TCut triggerJetMET = "passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1";
+  TCut triggerJetMET = "passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1||passMC_DiCentralPFJet30_PFMHT80==1";
   TCut triggerMET = "passMC_PFMET150==1";
   TCut trigger = triggerJetMET||triggerMET;
 
@@ -2264,7 +2388,7 @@ void higgs_ttbarjetmult_sbsig() {
 
   TCut baseline = "cutPV==1 &&passCleaning==1 &&buggyEvent==0"; 
 
-  TCut triggerJetMET = "passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1";
+  TCut triggerJetMET = "passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1||passMC_DiCentralPFJet30_PFMHT80==1";
   //  TCut triggerJets = "passMC_DiPFJet80_DiPFJet30_BTagCSVd07d05==1";
   TCut triggerMET = "passMC_PFMET150==1";
   TCut trigger = triggerJetMET||triggerMET;
@@ -2677,7 +2801,7 @@ void higgs_ttbarjetmult1() {
   dodata_=false;
 
   TCut baseline = "cutPV==1 &&passCleaning==1 &&buggyEvent==0"; 
-  TCut triggerJetMET = "passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1";
+  TCut triggerJetMET = "passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1||passMC_DiCentralPFJet30_PFMHT80==1";
   TCut triggerJets = "passMC_DiPFJet80_DiPFJet30_BTagCSVd07d05==1";
   TCut triggerMET = "passMC_PFMET150==1";
 
@@ -2765,7 +2889,7 @@ void higgs_triggerImportance() {
   dodata_=false;
 
   TCut baseline = "cutPV==1 &&passCleaning==1 &&buggyEvent==0"; 
-  TCut triggerJetMET = "passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1";
+  TCut triggerJetMET = "passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1||passMC_DiCentralPFJet30_PFMHT80==1";
   TCut triggerJets = "passMC_DiPFJet80_DiPFJet30_BTagCSVd07d05==1";
   TCut triggerMET = "passMC_PFMET150==1";
   TCut triggerRA2b = "passMC_DiCentralPFNoPUJet50_PFMETORPFMETNoMu80==1";
@@ -2922,7 +3046,7 @@ void higgs_whyLeptonLost() {
   //20 June -- update
   TCut baseline = "cutPV==1 &&passCleaning==1 &&buggyEvent==0 && MET/caloMET<2 && maxTOBTECjetDeltaMult<40";
   //20 june -- remove the all jet trigger: ||passMC_DiPFJet80_DiPFJet30_BTagCSVd07d05==1
-  TCut triggers = "passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1||passMC_PFMET150==1";
+  TCut triggers = "passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1||passMC_DiCentralPFJet30_PFMHT80==1||passMC_PFMET150==1";
   TCut zl = "nMuons==0&&nElectrons==0";
   TCut tauveto="nTausLoose==0";
   TCut isotk1="nIsoTracks15_005_03==0";
@@ -3016,7 +3140,7 @@ void higgs_Nminus1() {
   //20 June -- update
   TCut baseline = "cutPV==1 &&passCleaning==1 &&buggyEvent==0 && MET/caloMET<2 && maxTOBTECjetDeltaMult<40";
   //20 june -- remove the all jet trigger: ||passMC_DiPFJet80_DiPFJet30_BTagCSVd07d05==1
-  TCut triggers = "passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1||passMC_PFMET150==1";
+  TCut triggers = "passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1||passMC_DiCentralPFJet30_PFMHT80==1||passMC_PFMET150==1";
   TCut zl = "nMuons==0&&nElectrons==0";
   TCut tauveto="nTausLoose==0";
   TCut isotk1="nIsoTracks15_005_03==0";
@@ -3284,7 +3408,7 @@ void higgs_printCutflowTable(const bool latexMode=false,TString region="4bSR", c
   dodata_=false;
 
   TCut baseline = "cutPV==1 &&passCleaning==1 &&buggyEvent==0"; 
-  TCut triggers = "passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1||passMC_PFMET150==1";
+  TCut triggers = "passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1||passMC_DiCentralPFJet30_PFMHT80==1||passMC_PFMET150==1";
   TCut zl = "nMuons==0&&nElectrons==0&&nTausLoose==0";
   TCut isotk="nIsoTracks15_005_03==0";
 
@@ -3471,7 +3595,7 @@ void higgmb_cutflowE_bbangles() {
   dodata_=false;
 
   TCut baseline = "cutPV==1 &&passCleaning==1 &&buggyEvent==0"; 
-  TCut triggers = "passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1||passMC_PFMET150==1";
+  TCut triggers = "passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1||passMC_DiCentralPFJet30_PFMHT80==1||passMC_PFMET150==1";
   TCut zl = "nMuons==0&&nElectrons==0&&nTausLoose==0";
   TCut isotk="nIsoTracks15_005_03==0";
 
@@ -3720,7 +3844,7 @@ void higgmb_cutflowE_bbangles() {
 
 void higgsmbb_quickmbbPlots() {
 
-  initHiggsSamples69(true,"");
+  initHiggsSamples69(true,"hhmg200 hhmg350");
   setOutputDirectory("quickmbbPlots");
 
   int nbins;
@@ -3734,11 +3858,13 @@ void higgsmbb_quickmbbPlots() {
   doRatio_=false; ratioMin = 0; ratioMax = 2.2;
   dodata_=false;
 
+  useTrigEff_=false;
+
   setStackMode(true,false,false); // stack,norm,labels
   //20 June -- update
   TCut baseline = "cutPV==1 &&passCleaning==1 &&buggyEvent==0 && MET/caloMET<2 && maxTOBTECjetDeltaMult<40"; //4july add full cleanup
   //20 june -- remove the all jet trigger: ||passMC_DiPFJet80_DiPFJet30_BTagCSVd07d05==1
-  TCut triggers = "passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1||passMC_PFMET150==1";
+  TCut triggers = "passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1||passMC_DiCentralPFJet30_PFMHT80==1||passMC_PFMET150==1";
   TCut zl = "nMuons==0&&nElectrons==0";
   TCut tauveto="nTausLoose==0";
   TCut isotk1="nIsoTracks15_005_03==0";
@@ -3755,7 +3881,6 @@ void higgsmbb_quickmbbPlots() {
   TCut higgsdiff = "abs(higgsMbb1MassDiff-higgsMbb2MassDiff)<20";
 
   TCut drmax = "deltaRmax_hh<2.2";
-  TCut drmin = "deltaRmin_hh<1.9";
 
   TCut metsig = "METsig>30";
 
@@ -3763,14 +3888,10 @@ void higgsmbb_quickmbbPlots() {
   selection_=baseline&&triggers && zl&& tauveto && isotk1 && njets&&jet2 && btag2 && btag3 && btag4 && higgsdiff && drmax && metsig;
 
   clearSamples(); 
-  addSample("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69$350$1:higgsMbb1MassDiff_correct==0",kRed,"hh 350 (0)");
-  addSample("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69$350$1:higgsMbb1MassDiff_correct==1",kBlue,"hh 350 (1)");
-  addSample("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69$350$1:higgsMbb1MassDiff_correct==2",kGreen+4,"hh 350 (2)");
-/*
-  addSample("SMS-HbbHbb_mHiggsino-350_mLSP-1_8TeV-Pythia6Z_jgsmith_UCSB1811_v69:higgsMbb1MassDiff_correct==0",kRed,"hh 350 (0)");
-  addSample("SMS-HbbHbb_mHiggsino-350_mLSP-1_8TeV-Pythia6Z_jgsmith_UCSB1811_v69:higgsMbb1MassDiff_correct==1",kBlue,"hh 350 (1)");
-  addSample("SMS-HbbHbb_mHiggsino-350_mLSP-1_8TeV-Pythia6Z_jgsmith_UCSB1811_v69:higgsMbb1MassDiff_correct==2",kGreen+4,"hh 350 (2)");
-*/
+  addSample("SMS-TChiHH_2b2b_2J_mChargino-350to500_mLSP-1to370_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1871_v71$350$1:higgsMbb1MassDiff_correct==0",kRed,"hh 350 (0)");
+  addSample("SMS-TChiHH_2b2b_2J_mChargino-350to500_mLSP-1to370_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1871_v71$350$1:higgsMbb1MassDiff_correct==1",kBlue,"hh 350 (1)");
+  addSample("SMS-TChiHH_2b2b_2J_mChargino-350to500_mLSP-1to370_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1871_v71$350$1:higgsMbb1MassDiff_correct==2",kGreen+4,"hh 350 (2)");
+
   var="0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)"; xtitle="<m_{jj}> (GeV)";
   nbins=20; low= 0; high=200;
   setStackMode(false,false,false); 
@@ -3778,22 +3899,24 @@ void higgsmbb_quickmbbPlots() {
  //make the same plots but requiring that it is possible to reconstruct the higgs (all 4 b from higgs were reconstructed)
   selection_=baseline&&triggers && zl&& tauveto && isotk1 && njets&&jet2 && btag2 && btag3 && btag4 && higgsdiff && drmax && metsig &&TCut("njetsHiggsMatch20==4");
   drawPlots(var,nbins,low,high,xtitle,"Events", "ewkhh_massshape_mbb_350_4possible",0,"GeV");
+  //another iteration but this time requiring that all 4 b from higgs are reco'd with eta<5
+  selection_=baseline&&triggers && zl&& tauveto && isotk1 && njets&&jet2 && btag2 && btag3 && btag4 && higgsdiff && drmax && metsig &&TCut("njetsHiggsMatch20_eta5==4");
+  drawPlots(var,nbins,low,high,xtitle,"Events", "ewkhh_massshape_mbb_350_4possible_eta5",0,"GeV");
 
   selection_=baseline&&triggers && zl&& tauveto && isotk1 && njets&&jet2 && btag2 && btag3 && btag4 && higgsdiff && drmax && metsig;
   clearSamples(); 
-  addSample("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69$200$1:higgsMbb1MassDiff_correct==0",kRed,"hh 200 (0)");
-  addSample("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69$200$1:higgsMbb1MassDiff_correct==1",kBlue,"hh 200 (1)");
-  addSample("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69$200$1:higgsMbb1MassDiff_correct==2",kGreen+4,"hh 200 (2)");
-/*
-  addSample("SMS-HbbHbb_mHiggsino-200_mLSP-1_8TeV-Pythia6Z_jgsmith_UCSB1807_v69:higgsMbb1MassDiff_correct==0",kRed,"hh 200 (0)");
-  addSample("SMS-HbbHbb_mHiggsino-200_mLSP-1_8TeV-Pythia6Z_jgsmith_UCSB1807_v69:higgsMbb1MassDiff_correct==1",kBlue,"hh 200 (1)");
-  addSample("SMS-HbbHbb_mHiggsino-200_mLSP-1_8TeV-Pythia6Z_jgsmith_UCSB1807_v69:higgsMbb1MassDiff_correct==2",kGreen+4,"hh 200 (2)");
-*/
+  addSample("SMS-TChiHH_2b2b_2J_mChargino-130to325_mLSP-1to195_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1872_v71$200$1:higgsMbb1MassDiff_correct==0",kRed,"hh 200 (0)");
+  addSample("SMS-TChiHH_2b2b_2J_mChargino-130to325_mLSP-1to195_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1872_v71$200$1:higgsMbb1MassDiff_correct==1",kBlue,"hh 200 (1)");
+  addSample("SMS-TChiHH_2b2b_2J_mChargino-130to325_mLSP-1to195_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1872_v71$200$1:higgsMbb1MassDiff_correct==2",kGreen+4,"hh 200 (2)");
+
   drawPlots(var,nbins,low,high,xtitle,"Events", "ewkhh_massshape_mbb_200",0,"GeV");
 
   //make the same plots but requiring that it is possible to reconstruct the higgs (all 4 b from higgs were reconstructed)
   selection_=baseline&&triggers && zl&& tauveto && isotk1 && njets&&jet2 && btag2 && btag3 && btag4 && higgsdiff && drmax && metsig &&TCut("njetsHiggsMatch20==4");
   drawPlots(var,nbins,low,high,xtitle,"Events", "ewkhh_massshape_mbb_200_4possible",0,"GeV");
+  //now with eta5
+  selection_=baseline&&triggers && zl&& tauveto && isotk1 && njets&&jet2 && btag2 && btag3 && btag4 && higgsdiff && drmax && metsig &&TCut("njetsHiggsMatch20_eta5==4");
+  drawPlots(var,nbins,low,high,xtitle,"Events", "ewkhh_massshape_mbb_200_4possible_eta5",0,"GeV");
 
 
 
@@ -3810,7 +3933,7 @@ void higgsmbb_backgroundStudies2() { //this time split the off-mbb peak into a c
 
   inputPath="/cu4/ra2b/reducedTrees/v68_4/";
 
-  loadSamples(true,"ra2b2012");
+  loadSamples("ra2b2012");
   usePUweight_=true; //helps bring signal and background into alignment; not perfect but better than nothing
 
   useTrigEff_=false;
@@ -3828,7 +3951,7 @@ void higgsmbb_backgroundStudies2() { //this time split the off-mbb peak into a c
   dodata_=false;
 
   TCut baseline = "cutPV==1 &&passCleaning==1"; 
-  TCut triggers = "passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1||passMC_DiPFJet80_DiPFJet30_BTagCSVd07d05||passMC_PFMET150";
+  TCut triggers = "passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1||passMC_DiCentralPFJet30_PFMHT80==1||passMC_PFMET150";
   TCut zl = "nMuons==0&&nElectrons==0";
   TCut isotk="nIsoTracks15_005_03==0";
 
@@ -3996,154 +4119,6 @@ void higgsmbb_backgroundStudies2() { //this time split the off-mbb peak into a c
 
 }
 
-void higgsmbb_backgroundStudies1() {
-  addToSamplesAll("QCD_Pt-1000to1400");
-  addToSamplesAll("QCD_Pt-120to170");
-  addToSamplesAll("QCD_Pt-1400to1800");
-  addToSamplesAll("QCD_Pt-170to300-1");
-  addToSamplesAll("QCD_Pt-170to300-2");
-  addToSamplesAll("QCD_Pt-1800");
-  addToSamplesAll("QCD_Pt-300to470-1");
-  addToSamplesAll("QCD_Pt-300to470-2");
-  addToSamplesAll("QCD_Pt-470to600");
-  addToSamplesAll("QCD_Pt-600to800");
-  addToSamplesAll("QCD_Pt-800to1000");
-
-  addToSamplesAll("TTJets_FullLeptMGDecays");
-  addToSamplesAll("TTJets_SemiLeptMGDecays");
-
-
-
-  //use keith's cut flow.
-  // Goal 1: check if METsig shape is independent of mbb
-
-  nameOfEventWeight_="weight3";//don't want an event weight
-
-  inputPath="/cu4/ra2b/reducedTrees/v68_4/";
-
-  loadSamples(true,"ra2b2012");
-  usePUweight_=true; //helps bring signal and background into alignment; not perfect but better than nothing
-
-  useTrigEff_=false;
-  currentConfig_=configDescriptions_.getDefault();
-
-  int nbins;
-  float low,high;
-  TString var,xtitle;
-
-  drawFilenameOnPlot_=false;
-  drawMCErrors_=true;
-
-  doOverflowAddition(true);
-  doRatio_=false; ratioMin = 0; ratioMax = 2.2;
-  dodata_=false;
-
-  TCut baseline = "cutPV==1 &&passCleaning==1"; 
-  TCut triggers = "passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1||passMC_DiPFJet80_DiPFJet30_BTagCSVd07d05||passMC_PFMET150";
-  TCut zl = "nMuons==0&&nElectrons==0";
-  TCut isotk="nIsoTracks15_005_03==0";
-
-  TCut njets="njets20==4 || njets20==5";
-  TCut btag = "CSVbest2>=0.898 && CSVbest3>=0.679 && CSVbest4>=0.244";
-
-  TCut metsigVLoose = "METsig>=40";
-
-  TCut mdp="minDeltaPhiN_asin>=4";
-  selection_=baseline && triggers &&zl &&isotk&&njets&&btag&&mdp &&metsigVLoose;
-
-  //this is an inelegant trick to manipulate the chains
-  //it takes advantage of the fact that clearSamples() does not reset the chains.
-  //it's a dirty hack but it works
-  clearSamples();
-
-  addSample("TTJets_FullLeptMGDecays");
-  chainSamples("TTJets_FullLeptMGDecays","TTJets_SemiLeptMGDecays");
-
-  addSample("QCD_Pt-1000to1400");
-  chainSamples("QCD_Pt-1000to1400","QCD_Pt-120to170");
-  chainSamples("QCD_Pt-1000to1400","QCD_Pt-1400to1800");
-  chainSamples("QCD_Pt-1000to1400","QCD_Pt-170to300-1");
-  chainSamples("QCD_Pt-1000to1400","QCD_Pt-170to300-2");
-  chainSamples("QCD_Pt-1000to1400","QCD_Pt-1800");
-  chainSamples("QCD_Pt-1000to1400","QCD_Pt-300to470-1");
-  chainSamples("QCD_Pt-1000to1400","QCD_Pt-300to470-2");
-  chainSamples("QCD_Pt-1000to1400","QCD_Pt-470to600");
-  chainSamples("QCD_Pt-1000to1400","QCD_Pt-600to800");
-  chainSamples("QCD_Pt-1000to1400","QCD_Pt-800to1000");
-
-  for (int iii=0;iii<1; iii++) {
-    
-    clearSamples();
-    
-    TString thissample="";
-    if (iii==0){
-      addSample("TTJets_FullLeptMGDecays:higgsMbb2MassDiff>=100&&higgsMbb2MassDiff<=140&&higgsMbb1MassDiff>=100&&higgsMbb1MassDiff<=140",kGreen,"t#bar{t} (SR)");
-      addSample("TTJets_FullLeptMGDecays:higgsMbb2MassDiff<100||higgsMbb2MassDiff>140||higgsMbb1MassDiff<100||higgsMbb1MassDiff>140",kBlue,"t#bar{t} (off SR)");
-      thissample="ttbar";
-    } else {
-      addSample("QCD_Pt-1000to1400:higgsMbb2MassDiff>=100&&higgsMbb2MassDiff<=140&&higgsMbb1MassDiff>=100&&higgsMbb1MassDiff<=140",kGreen,"QCD (SR)");
-      addSample("QCD_Pt-1000to1400:higgsMbb2MassDiff<100||higgsMbb2MassDiff>140||higgsMbb1MassDiff<100||higgsMbb1MassDiff>140",kBlue,"QCD (off SR)");
-      thissample="qcd";
-    }
-    //////
-    
-    //  addSample("TTbarJets0:higgsMbb2MassDiff>=100&&higgsMbb2MassDiff<=140&&higgsMbb1MassDiff>=100&&higgsMbb1MassDiff<=140",kGreen,"t#bar{t} (SR)");
-    //  addSample("TTbarJets0:higgsMbb2MassDiff<100||higgsMbb2MassDiff>140||higgsMbb1MassDiff<100||higgsMbb1MassDiff>140",kBlue,"t#bar{t} (off SR)");
-    
-    fitRatio_="pol1";
-    
-    var="METsig"; xtitle="MET significance";
-    nbins=30; low= 0; high=300;
-    setStackMode(false,false,false); //no stack
-    setLogY(true);
-    doRatio_=true; ratioMin = 0; ratioMax = 0.5;
-    drawPlots(var,nbins,low,high,xtitle,"Events", "ewkhh_metsig-shapes1-"+thissample,0);
-    
-    setLogY(true);
-    setStackMode(false,true,false); //norm
-    doRatio_=true; ratioMin = 0; ratioMax = 2.2;
-    drawPlots(var,nbins,low,high,xtitle,"Events", "ewkhh_metsig-shapes1-"+thissample,0);
-    
-    
-    //should look at MET too
-    TCut metVLoose = "MET>40";
-    selection_=baseline && triggers &&zl &&isotk&&njets&&btag&&mdp &&metVLoose;
-    var="MET"; xtitle="MET";
-    nbins=30; low= 0; high=300;
-    setStackMode(false,false,false); //no stack
-    setLogY(true);
-    doRatio_=true; ratioMin = 0; ratioMax = 0.5;
-    drawPlots(var,nbins,low,high,xtitle,"Events", "ewkhh_met-shapes1-"+thissample,0);
-    
-    setLogY(true);
-    setStackMode(false,true,false); //norm
-    doRatio_=true; ratioMin = 0; ratioMax = 2.2;
-    drawPlots(var,nbins,low,high,xtitle,"Events", "ewkhh_met-shapes1-"+thissample,0);
-  }
-  return;
-
-  //better SB definition?
-  //what does the ttbar shape look like?
-
-  //
-  clearSamples();
-  addSample("TTbarJets0");
-  var="higgsMbb1MassDiff"; xtitle="mass 1";
-  nbins=30; low= 0; high=300;
-  setStackMode(false,false,false); //no stack
-  setLogY(false);
-  doRatio_=false; ratioMin = 0; ratioMax = 1;
-  drawPlots(var,nbins,low,high,xtitle,"Events", "ewkhh_mbb1",0);
-
-  var="higgsMbb2MassDiff"; xtitle="mass 2";
-  nbins=30; low= 0; high=300;
-  setStackMode(false,false,false); //no stack
-  setLogY(false);
-  doRatio_=false; ratioMin = 0; ratioMax = 1;
-  drawPlots(var,nbins,low,high,xtitle,"Events", "ewkhh_mbb2",0);
-
-}
-
 void higgsmbb_cutflowDtry2_illustration() {
 
   //plots for my cornell talk
@@ -4156,7 +4131,7 @@ void higgsmbb_cutflowDtry2_illustration() {
   addToSamplesAll("TChihh250");
   addToSamplesAll("TChihh400");
 
-  loadSamples(true,"ra2b2012");
+  loadSamples("ra2b2012");
   usePUweight_=true; //helps bring signal and background into alignment; not perfect but better than nothing
 
   useTrigEff_=false;
@@ -4300,7 +4275,7 @@ void higgsmbb_cutflowDtry2() {
 
 
 
-  loadSamples(true,"ra2b2012");
+  loadSamples("ra2b2012");
   usePUweight_=true; //helps bring signal and background into alignment; not perfect but better than nothing
 
   useTrigEff_=false;
@@ -4479,7 +4454,7 @@ For the 400 GeV signal point I can get to S/B~2 with S~4 events cutting METsig>1
   addToSamplesAll("TChihh250");
   addToSamplesAll("TChihh400");
 
-  loadSamples(true,"ra2b2012");
+  loadSamples("ra2b2012");
   usePUweight_=true; //helps bring signal and background into alignment; not perfect but better than nothing
 
   useTrigEff_=false;
@@ -4654,7 +4629,7 @@ void higgsmbb_cutflowC() {
   addToSamplesAll("TChihh250");
   addToSamplesAll("TChihh400");
 
-  loadSamples(true,"ra2b2012");
+  loadSamples("ra2b2012");
   usePUweight_=true; //helps bring signal and background into alignment; not perfect but better than nothing
 
   useTrigEff_=false;
@@ -4970,7 +4945,7 @@ void higgsmbb_cutflowB() {
   addToSamplesAll("TChihh250");
   addToSamplesAll("TChihh400");
 
-  loadSamples(true,"ra2b2012");
+  loadSamples("ra2b2012");
   usePUweight_=true; //helps bring signal and background into alignment; not perfect but better than nothing
 
   useTrigEff_=false;
@@ -5166,7 +5141,7 @@ void higgsmbb_cutflow() {
   addToSamplesAll("TChihh250");
   addToSamplesAll("TChihh400");
 
-  loadSamples(true,"ra2b2012");
+  loadSamples("ra2b2012");
   usePUweight_=true; //helps bring signal and background into alignment; not perfect but better than nothing
 
   useTrigEff_=false;
