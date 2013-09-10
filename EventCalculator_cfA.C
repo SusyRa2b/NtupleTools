@@ -4597,7 +4597,7 @@ float EventCalculator::mbbHighPt( BTaggerType tagger ) {
 
 void EventCalculator::genLevelHiggs(TLorentzVector (&bbbb)[2][2] ) {
 
-  if (!sampleName_.Contains("TChihh")) {
+  if (! (sampleName_.Contains("TChihh")|| sampleName_.Contains("TChiHH"))) {
     for (int i=0;i<2;i++) {
       for (int j=0;j<2;j++) {
 	 bbbb[i][j] = TLorentzVector();
@@ -5458,7 +5458,7 @@ bool EventCalculator::higgsRecoCorrect(TLorentzVector (&bbbb)[2][2], int hj1, in
 
 std::vector< std::pair<int,int> > EventCalculator::matchRecoJetsToHiggses(TLorentzVector (&bbbb)[2][2]) {
   vector< pair<int,int> > truehiggs;
-  if (!sampleName_.Contains("TChihh")) return truehiggs;
+  if (! (sampleName_.Contains("TChihh") ||sampleName_.Contains("TChiHH") )) return truehiggs;
 
   //eta phi match between the true 2xh(bb) in bbbb and the reco jets
 
@@ -9002,7 +9002,6 @@ void EventCalculator::reducedTree(TString outputpath) {
 
  
       // higgs code -- most (not all) of it is MC truth and irrelevant for most samples
-      //  if (sampleName_.Contains("TChihh")) {
       	TLorentzVector hbbbb[2][2];
       	genLevelHiggs(hbbbb);
 	vector< pair<int,int> > genHiggsIndices = matchRecoJetsToHiggses(hbbbb);//match to reco jtes
