@@ -7820,8 +7820,10 @@ void EventCalculator::reducedTree(TString outputpath) {
     if (sampleName_.Contains("PU_S7"))  MCDist.push_back(pu::Summer2012[i]);
     else if (sampleName_.Contains("PU_S6")) MCDist.push_back(pu::Fall2011[i]);
     else if (sampleName_.Contains("PU_S10")) MCDist.push_back(pu::Summer2012_S10[i]);
+    else if (sampleName_.Contains("SMS-TChiHH")) MCDist.push_back(pu::Summer2012_S10[i]);
+    else if (sampleName_.Contains("SMS-TChiZH")) MCDist.push_back(pu::Summer2012_S10[i]);
     else if (sampleName_.Contains("SMS-MadGraph") &&sampleName_.Contains("START52") ) MCDist.push_back(pu::Summer2012[i]);
-    else MCDist.push_back(pu::Summer2012[i]); //just a safety valve (but dangerous!)
+    else assert(0); //no more mistakes! //MCDist.push_back(pu::Summer2012[i]); //just a safety valve (but dangerous!)
   }
 
   reweight::LumiReWeighting * LumiWeights=0;
