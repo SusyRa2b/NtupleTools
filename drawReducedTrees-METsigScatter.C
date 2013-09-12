@@ -5,24 +5,26 @@ void go() {
 .L TSelectorMultiDraw.C+          
 .L CrossSectionTable.cxx+        
  .L ConfigurationDescriptions.cxx+                                                                                                                                                                                    
-.L drawReducedTrees_hbbhbb.C+                        
+.L drawReducedTrees_hbbhbb.C+      
+                  
   */
 
-  initHiggsSamples69(false,"qcd ttbar wjets");
+  initHiggsSamples69(false,"qcd ttbar znunu");
 
   //just want a 2d plot of data for MET:METsig
 
+  useTrigEff_=false;
 
-  //define useful cuts                                                                                                                                                             
+  //define useful cuts                                                                                                                               
   TCut baseline = "cutPV==1 &&passCleaning==1 &&buggyEvent==0&& MET/caloMET<2 && maxTOBTECjetDeltaMult<40";
-  TCut triggerJetMET = "passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1";
+  TCut triggerJetMET = "passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1"; //||passMC_DiCentralPFJet30_PFMHT80==1
   TCut triggerMET = "passMC_PFMET150==1";
   TCut trigger = triggerJetMET||triggerMET;
   
   TCut ra2btrigger = "passMC_DiCentralPFNoPUJet50_PFMETORPFMETNoMu80==1 || passMC_DiCentralPFJet50_PFMET80==1";
   
   TCut zl = "nMuons==0&&nElectrons==0&&nTausLoose==0";
-  TCut isotk="nIsoTracks15_005_03==0";//&&nIsoTracks5_005_03<2";                                                                                                                   
+  TCut isotk="nIsoTracks15_005_03==0";//&&nIsoTracks5_005_03<2";                                                 
   
   TCut sl = "nMuons+nElectrons==1 &&nTausLoose==0 &&nIsoTracks15_005_03_lepcleaned==0";
   
@@ -55,14 +57,32 @@ void go() {
   //for RA2b trigger, raise jetpt2 threshold                                                                                                                                       
   selection_ = baseline && ra2btrigger && zl&&isotk && jets&&jet2high && !btag3 &&!mdp;
 
-  renewCanvas();
+ //  renewCanvas();
+//   if (hdata2d!=0)  delete hdata2d;
+//   hdata2d=new TH2D("hdata2d","hdata",100,0,500,100,0,500);
+//   dtree->Draw("MET:METsig>>hdata2d",selection_,"colz");
+//   hdata2d->SetXTitle("MET significance");
+//   hdata2d->SetYTitle("MET (GeV)");
+
+//   thecanvas->SaveAs("plots_Control_QCD/METversusMETsig_LDP_ra2bTrigger.pdf");
+
+  logz_=true;
+ renewCanvas();
   if (hdata2d!=0)  delete hdata2d;
   hdata2d=new TH2D("hdata2d","hdata",100,0,500,100,0,500);
   dtree->Draw("MET:METsig>>hdata2d",selection_,"colz");
   hdata2d->SetXTitle("MET significance");
   hdata2d->SetYTitle("MET (GeV)");
 
-  thecanvas->SaveAs("plots_Control_QCD/METversusMETsig_LDP_ra2bTrigger.pdf");
+  //thecanvas->SaveAs("plots_Control_QCD/METversusMETsig_LDP_ra2bTrigger_logz.pdf");
+  
+  TProfile * hproj =   hdata2d->ProfileX("hproj");
+  hproj->SetLineWidth(2);
+  hproj->Draw("SAME");
+
+  thecanvas->SaveAs("plots_Control_QCD/METversusMETsig_LDP_ra2bTrigger_logz.pdf");
+
+  logz_=false;
 
   //then make a cut on low-ish MET
 
@@ -81,6 +101,7 @@ void go() {
 
   selection_ = baseline && trigger && zl&&isotk && jets&&jet2 && btag2&&!btag3 &&mdp;
 
+  logz_=true;
   renewCanvas();
   delete hdata2d;
   hdata2d=new TH2D("hdata2d","hdata",100,0,500,100,0,500);
@@ -88,7 +109,86 @@ void go() {
   hdata2d->SetXTitle("MET significance");
   hdata2d->SetYTitle("MET (GeV)");
 
-  thecanvas->SaveAs("plots_Control_QCD/METversusMETsig_MDP.pdf");
+  //thecanvas->SaveAs("plots_Control_QCD/METversusMETsig_MDP.pdf");
 
+ TProfile * hproj2 =   hdata2d->ProfileX("hproj2");
+  hproj2->SetLineWidth(2);
+  hproj2->Draw("SAME");
+  thecanvas->SaveAs("plots_Control_QCD/METversusMETsig_MDP_logz_wproj.pdf");
+
+  //now look at MC
+
+  TChain* qcd=  getTree("QCD_Pt-120to170_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v3_AODSIM_UCSB1814_v69");
+  //TChain* tt0=  getTree("TTJets_HadronicMGDecays_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A_ext-v1_AODSIM_UCSB1848_v69");
+TChain* tt=  getTree("TTJets_FullLeptMGDecays_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7C-v2_AODSIM_UCSB1799_v69");
+ TChain* znn= getTree("ZJetsToNuNu_100_HT_200_TuneZ2Star_8TeV_madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1832_v69");
+
+ selection_ = baseline && trigger && zl&&isotk && jets&&jet2 && btag2&&!btag3 &&mdp;
+ 
+ logz_=true;
+  renewCanvas();
+  delete hdata2d;
+  hdata2d=new TH2D("hdata2d","ttbar",100,0,500,100,0,500);
+  tt->Draw("MET:METsig>>hdata2d",getCutString(false),"colz");
+  hdata2d->SetXTitle("MET significance");
+  hdata2d->SetYTitle("MET (GeV)");
+
+ TProfile * hprojtt =   hdata2d->ProfileX("hprojtt");
+  hprojtt->SetLineWidth(2);
+  hprojtt->Draw("SAME");
+  thecanvas->SaveAs("plots_Control_QCD/METversusMETsig_MDP_ttbarMC.pdf");
+
+
+ logz_=true;
+  renewCanvas();
+  delete hdata2d;
+  hdata2d=new TH2D("hdata2d","znn",100,0,500,100,0,500);
+  znn->Draw("MET:METsig>>hdata2d",getCutString(false),"colz");
+  hdata2d->SetXTitle("MET significance");
+  hdata2d->SetYTitle("MET (GeV)");
+  //HERE
+
+ TProfile * hprojznn =   hdata2d->ProfileX("hprojznn");
+  hprojznn->SetLineWidth(2);
+  hprojznn->Draw("SAME");
+  thecanvas->SaveAs("plots_Control_QCD/METversusMETsig_MDP_znnMC.pdf");
+
+ logz_=true;
+  renewCanvas();
+  delete hdata2d;
+  hdata2d=new TH2D("hdata2d","qcd (mdp)",100,0,500,100,0,500);
+  qcd->Draw("MET:METsig>>hdata2d",getCutString(false),"colz");
+  hdata2d->SetXTitle("MET significance");
+  hdata2d->SetYTitle("MET (GeV)");
+//HERE
+ TProfile * hprojqcd =   hdata2d->ProfileX("hprojqcd");
+  hprojqcd->SetLineWidth(2);
+  hprojqcd->Draw("SAME");
+  thecanvas->SaveAs("plots_Control_QCD/METversusMETsig_MDP_qcdMC.pdf");
+
+  selection_ = baseline && ra2btrigger && zl&&isotk && jets&&jet2high  &&!mdp;
+
+ logz_=true;
+  renewCanvas();
+  delete hdata2d;
+  hdata2d=new TH2D("hdata2d","qcd (ldp)",100,0,500,100,0,500);
+  qcd->Draw("MET:METsig>>hdata2d",getCutString(false),"colz");
+  hdata2d->SetXTitle("MET significance");
+  hdata2d->SetYTitle("MET (GeV)");
+
+  hdata2d->SetTitle("hqcd");
+
+ TProfile * hprojqcd2 =   hdata2d->ProfileX("hprojqcd2");
+  hprojqcd2->SetLineWidth(2);
+  hprojqcd2->Draw("SAME");
+  thecanvas->SaveAs("plots_Control_QCD/METversusMETsig_LDP_qcdMC.pdf");
+
+
+
+  //  logz_=false;
+  //  dodata_=true;
+  //  draw2d("METsig",100,0,500,"MET",100,0,500,"MET significance","MET","plots_Control_QCD/METversusMETsig_MDP_dataMC");
+  //  doRatio_=true;
+  //  draw2d("METsig",50,0,500,"MET",50,0,500,"MET significance","MET","plots_Control_QCD/METversusMETsig_MDP_dataMC");
 
 }

@@ -428,7 +428,9 @@ void chainSamples(const TString & parent, const TString & child) {
 
   cout<<"Adding "<<child<<" to "<<parent<<". n entries goes from "<<getTree(parent)->GetEntries()<<" to ";
 
-  getTree(parent)->Add( getTree(child));
+  TChain* newtree = getTree(child);
+  if (newtree==0) assert(0);
+  getTree(parent)->Add( newtree);
   cout<<getTree(parent)->GetEntries()<<endl;
 
 }
@@ -1509,9 +1511,7 @@ void loadSamples( TString signalEffMode="") {
   samplesAll_.insert("Zinvisible_HT200To400");
   samplesAll_.insert("Zinvisible_HT400ToInf");
 
-  //samplesAll_.insert("PythiaQCD");
   samplesAll_.insert("PythiaPUQCD");
-  //samplesAll_.insert("PythiaPUQCDFlat");
   samplesAll_.insert("TTbarJets");
   samplesAll_.insert("TTbarJetsPowheg");
   samplesAll_.insert("TTbarJetsMCNLO");
@@ -1526,10 +1526,6 @@ void loadSamples( TString signalEffMode="") {
   samplesAll_.insert("T1tttt");
   samplesAll_.insert("T2bb");
   samplesAll_.insert("T2tt");
-
-  samplesAll_.insert("sbottom-185-250"); 
-  samplesAll_.insert("sbottom-189-270"); 
-  samplesAll_.insert("sbottom-217-300"); 
 
   //since we don't use JERbias anymore this is basically irrelevant, but let's keep this framework
   ////////////
