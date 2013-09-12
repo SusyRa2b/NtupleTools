@@ -7823,6 +7823,7 @@ void EventCalculator::reducedTree(TString outputpath) {
     else if (sampleName_.Contains("SMS-TChiHH")) MCDist.push_back(pu::Summer2012_S10[i]);
     else if (sampleName_.Contains("SMS-TChiZH")) MCDist.push_back(pu::Summer2012_S10[i]);
     else if (sampleName_.Contains("SMS-MadGraph") &&sampleName_.Contains("START52") ) MCDist.push_back(pu::Summer2012[i]);
+    else if (isSampleRealData() ) MCDist.push_back(pu::Summer2012[i]); //this won't be used for data
     else assert(0); //no more mistakes! //MCDist.push_back(pu::Summer2012[i]); //just a safety valve (but dangerous!)
   }
 
