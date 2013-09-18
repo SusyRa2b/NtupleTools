@@ -412,7 +412,6 @@ void SimpleABCDcheck() {
   TCut trigger = triggerJetMET||triggerMET;
 
   TCut zl = "nMuons==0&&nElectrons==0&&nTausLoose==0";
-  //  TCut isotk="nIsoTracks15_005_03==0";//&&nIsoTracks5_005_03<2";
   TCut isotk="nIsoPFcands10_010==0";
 
   TCut sl = "nMuons+nElectrons==1 &&nTausLoose==0 &&nIsoTracks15_005_03_lepcleaned==0";
@@ -420,7 +419,7 @@ void SimpleABCDcheck() {
   TCut njets4="njets20==4";
   TCut njets5="njets20==5";
   TCut jet2="jetpt2>50";
-  TCut mdp = "minDeltaPhi20>0.3";
+  TCut mdp = "minDeltaPhi20>0.5 || (minDeltaPhi20>0.3&&METsig>50)";
   TCut btag2="CSVbest2>0.898";
   TCut btag3="CSVbest3>0.679";
   TCut btag4="CSVbest4>0.244";
@@ -509,7 +508,7 @@ void wjetsCompare() {
   TCut njets4="njets20==4";
   TCut njets5="njets20==5";
   TCut jet2="jetpt2>50";
-  TCut mdp = "minDeltaPhi20>0.3";
+  TCut mdp = "minDeltaPhi20>0.5 || (minDeltaPhi20>0.3&&METsig>50)";
   TCut btag2="CSVbest2>0.898";
   TCut btag3="CSVbest3>0.679";
   TCut btag4="CSVbest4>0.244";
@@ -690,7 +689,7 @@ void mgSignalCheck() {
   TCut njets4="njets20==4";
   TCut njets5="njets20==5";
   TCut jet2="jetpt2>50";
-  TCut mdp = "minDeltaPhi20>0.3";
+  TCut mdp = "minDeltaPhi20>0.5 || (minDeltaPhi20>0.3&&METsig>50)";
   TCut btag2="CSVbest2>0.898";
   TCut btag3="CSVbest3>0.679";
   TCut btag4="CSVbest4>0.244";
@@ -1137,7 +1136,7 @@ void higgs_dataMC_control_QCD_noskim(TString options="") {
   TCut btag3="CSVbest3>0.679";
   TCut btag4="CSVbest4>0.244";
 
-  TCut mdp = "minDeltaPhi20>0.3";
+  TCut mdp = "minDeltaPhi20>0.5 || (minDeltaPhi20>0.3&&METsig>50)";
 
   TCut higgsSR_av = "(0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)>100)&&(0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)<140)";
   TCut higgsSR_d = "abs(higgsMbb1MassDiff-higgsMbb2MassDiff)<20";
@@ -1325,7 +1324,7 @@ void higgs_dataMC_control_PUtests() {
   TCut btag3="CSVbest3>0.679";
   TCut btag4="CSVbest4>0.244";
 
-  TCut mdp = "minDeltaPhi20>0.3";
+  TCut mdp = "minDeltaPhi20>0.5 || (minDeltaPhi20>0.3&&METsig>50)";
 
   TCut higgsSR_av = "(0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)>100)&&(0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)<140)";
   TCut higgsSR_d = "abs(higgsMbb1MassDiff-higgsMbb2MassDiff)<20";
@@ -1417,7 +1416,7 @@ void higgs_dataMC_control_QCD() {
   TCut btag3="CSVbest3>0.679";
   TCut btag4="CSVbest4>0.244";
 
-  TCut mdp = "minDeltaPhi20>0.3";
+  TCut mdp = "minDeltaPhi20>0.5 || (minDeltaPhi20>0.3&&METsig>50)";
 
   TCut higgsSR_av = "(0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)>100)&&(0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)<140)";
   TCut higgsSR_d = "abs(higgsMbb1MassDiff-higgsMbb2MassDiff)<20";
@@ -2234,7 +2233,7 @@ void higgs_dataMC_control_SL_noskim() {
   TCut njets4="njets20==4"; //switch back to 20 GeV jets
   TCut njets5="njets20==5";
   TCut jet2="jetpt2>50";
-  TCut mdp = "minDeltaPhi20>0.3";
+  TCut mdp = "minDeltaPhi20>0.5 || (minDeltaPhi20>0.3&&METsig>50)";
   TCut btag2="CSVbest2>0.898";
   TCut btag3="CSVbest3>0.679";
   TCut btag4="CSVbest4>0.244";
@@ -2326,7 +2325,7 @@ void higgs_dataMC_control_SL() {
   TCut njets4="njets20==4"; //switch back to 20 GeV jets
   TCut njets5="njets20==5";
   TCut jet2="jetpt2>50";
-  TCut mdp = "minDeltaPhi20>0.3"; 
+  TCut mdp = "minDeltaPhi20>0.5 || (minDeltaPhi20>0.3&&METsig>50)";
   TCut btag2="CSVbest2>0.898";
   TCut btag3="CSVbest3>0.679";
   TCut btag4="CSVbest4>0.244";
@@ -2678,7 +2677,7 @@ void higgs_ttbarjetmult_sbsig() {
 
   TCut njets4="njets20==4";
   TCut njets5="njets20==5";
-  TCut mdp="minDeltaPhi20>0.3";
+  TCut mdp = "minDeltaPhi20>0.5 || (minDeltaPhi20>0.3&&METsig>50)";
   TCut jet2="jetpt2>50";
   TCut btag2="CSVbest2>0.898";
   TCut btag3="CSVbest3>0.679";
@@ -3336,7 +3335,7 @@ void higgs_whyLeptonLost() {
   TCut btag3="CSVbest3>0.679";
   TCut btag4="CSVbest4>0.244";
 
-  TCut mdp = "minDeltaPhi20>0.3"; //4 july
+  TCut mdp = "minDeltaPhi20>0.5 || (minDeltaPhi20>0.3&&METsig>50)";
 
   TCut higgsmass = "(0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)>100)&&(0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)<140)";
   TCut higgsdiff = "abs(higgsMbb1MassDiff-higgsMbb2MassDiff)<20";
@@ -3432,7 +3431,7 @@ void higgs_Nminus1() {
   TCut btag3="CSVbest3>0.679";
   TCut btag4="CSVbest4>0.244";
 
-  TCut mdp = "minDeltaPhi20>0.3"; //decided to use this everywhere
+  TCut mdp = "minDeltaPhi20>0.5 || (minDeltaPhi20>0.3&&METsig>50)";
 
   TCut higgsmass = "(0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)>100)&&(0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)<140)";
   TCut higgsdiff = "abs(higgsMbb1MassDiff-higgsMbb2MassDiff)<20";
@@ -3731,7 +3730,7 @@ void higgs_printCutflowTable(const bool latexMode=false,TString region="4bSR", c
 
 
   cuts.push_back(make_pair("jet2 >50",secondjet));
-  cuts.push_back(make_pair("minDeltaPhi20",TCut("minDeltaPhi20>0.3")));
+  cuts.push_back(make_pair("minDeltaPhi",TCut("minDeltaPhi20>0.5 || (minDeltaPhi20>0.3&&METsig>50)")));
   //
   cuts.push_back(make_pair( "Lepton vetoes",zl)); 
   cuts.push_back(make_pair( "iso tk veto",isotk)); 
@@ -4158,7 +4157,7 @@ void higgsmbb_quickmbbPlots() {
   TCut btag3="CSVbest3>0.679";
   TCut btag4="CSVbest4>0.244";
 
-  TCut mdp = "minDeltaPhi20>0.3"; //4 july
+  TCut mdp = "minDeltaPhi20>0.5 || (minDeltaPhi20>0.3&&METsig>50)";
 
   TCut higgsmass = "(0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)>100)&&(0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)<140)";
   TCut higgsdiff = "abs(higgsMbb1MassDiff-higgsMbb2MassDiff)<20";
