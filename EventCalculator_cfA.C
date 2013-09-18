@@ -808,7 +808,7 @@ bool EventCalculator::isGoodElectron(const unsigned int k, const bool disableRel
     cout<<"[isGoodElectron] I went through "<<ndone<<" of the barrel+endcap checks. Weird!"<<endl;
   }
 
-  float d0 = pf_els_d0dum->at(k) - beamx*sin(pf_els_phi->at(k)) + beamy*cos(pf_els_phi->at(k));
+  float d0 = pf_els_d0dum->at(k) - beamx*sin(pf_els_tk_phi->at(k)) + beamy*cos(pf_els_tk_phi->at(k));
   if ( fabs(d0) >= 0.04 ) { lossCode=3; return false; }
   if ( fabs(pf_els_vz->at(k) - pv_z->at(0) ) >= 0.2 )  { lossCode=3; return false; }
   
