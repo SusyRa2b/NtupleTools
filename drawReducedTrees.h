@@ -474,15 +474,16 @@ void addVerticalLine(float position) {
 
 void deleteVerticalLines() {
   for (unsigned int il=0; il<verticalLines_.size(); il++) {
-    cout<<" DEBUG deleting line "<<il<<" "<< verticalLines_.at(il)<<endl;
+    //    cout<<" DEBUG deleting line "<<il<<" "<< verticalLines_.at(il)<<endl;
     delete verticalLines_.at(il);
   }
+  verticalLines_.clear();
 }
 
 void resetVerticalLine() {
   //this can crash the code if run at the wrong time. why?
-  deleteVerticalLines();
-  verticalLines_.clear();
+  //  deleteVerticalLines();
+  //
   verticalLinePositions_.clear();
 }
 
@@ -1205,6 +1206,7 @@ void drawVerticalLine() {
     TLine* theLine = new TLine(verticalLinePositions_.at(il),ymin,verticalLinePositions_.at(il),ymax);
     theLine->SetLineColor(kBlack); //hard-coded for now...
     theLine->SetLineWidth(2);
+    theLine->SetLineStyle(2);
     theLine->Draw();
     verticalLines_.push_back(theLine);
   }
