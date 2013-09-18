@@ -1679,12 +1679,15 @@ void higgs_dataMC_control_QCD() {
   selection_=baseline&&trigger && zl && isotk && jets && btag2 && !btag3 && TCut("METsig>30 && METsig<=50") && drmax && higgsSR;
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_2bSIG_minDeltaPhi20",0);
   //can't add 3b SIG, 4b SB, or 4b SIG until we're unblind
- //  selection_=baseline&&trigger && zl && isotk && jets && btag2 && btag3&&btag4 && TCut("METsig>30 && METsig<=50") && drmax && higgsSB;
-//   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_4bSB_minDeltaPhi20",0);
+  selection_=baseline&&trigger && zl && isotk && jets && btag2 && btag3&&btag4 && TCut("METsig>30 && METsig<=50") && drmax && higgsSB;
+   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_4bSB_minDeltaPhi20",0);
 //   selection_=baseline&&trigger && zl && isotk && jets && btag2 && btag3&&!btag4 && TCut("METsig>30 && METsig<=50") && drmax && higgsSR;
 //   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_3bSIG_minDeltaPhi20",0);
 //   selection_=baseline&&trigger && zl && isotk && jets && btag2 && btag3&&btag4 && TCut("METsig>30 && METsig<=50") && drmax && higgsSR;
 //   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_4bSIG_minDeltaPhi20",0);
+
+  selection_=baseline&&trigger && zl && isotk && jets && btag2 && btag3&&btag4 && TCut("METsig>30 && METsig<=50") && drmax && higgsSB && mdp;
+   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_4bSB_minDeltaPhi20-mdpcut",0);
 
   //LDP plot of maxDR (no higgs mass window)
   selection_ = baseline && trigger && zl && isotk && jets && btag2 && !btag3 && !mdp && metsigloose  ;
