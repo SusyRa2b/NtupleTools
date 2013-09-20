@@ -7487,7 +7487,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   float maxJetFracMis, max2JetFracMis, maxJetFracMisAll30, max2JetFracMisAll30;
   float deltaPhiMETJetMaxMis, deltaPhiMETJetMaxMis30;
 
-  float deltaPhiStar, deltaPhiStar_badjet_pt, deltaPhiStar_badjet_eta, deltaPhiStar_badjet_phi;
+  float deltaPhiStar, deltaPhiStar_badjet_pt,deltaPhiStar_badjet_energy, deltaPhiStar_badjet_eta, deltaPhiStar_badjet_phi;
 
   float minDeltaPhiMetTau;
 
@@ -8345,6 +8345,7 @@ void EventCalculator::reducedTree(TString outputpath) {
 
   reducedTree.Branch("deltaPhiStar",&deltaPhiStar,"deltaPhiStar/F");
   reducedTree.Branch("deltaPhiStar_badjet_pt",&deltaPhiStar_badjet_pt,"deltaPhiStar_badjet_pt/F");
+  reducedTree.Branch("deltaPhiStar_badjet_energy",&deltaPhiStar_badjet_energy,"deltaPhiStar_badjet_energy/F");
   reducedTree.Branch("deltaPhiStar_badjet_phi",&deltaPhiStar_badjet_phi,"deltaPhiStar_badjet_phi/F");
   reducedTree.Branch("deltaPhiStar_badjet_eta",&deltaPhiStar_badjet_eta,"deltaPhiStar_badjet_eta/F");
 
@@ -9571,6 +9572,9 @@ void EventCalculator::reducedTree(TString outputpath) {
       deltaPhiStar_badjet_neuEmE = (badjet>=0) ? jets_AK5PF_neutralEmE->at(badjet) : -99;
       deltaPhiStar_badjet_neuHadE = (badjet>=0) ? jets_AK5PF_neutralHadE->at(badjet) : -99;
       deltaPhiStar_badjet_chMuE = (badjet>=0) ? jets_AK5PF_chgMuE->at(badjet) : -99;
+  
+      deltaPhiStar_badjet_energy = (badjet>=0) ? jets_AK5PF_energy->at(badjet) * jets_AK5PF_corrFactorRaw->at(badjet) : -99;
+
       deltaPhiStar_badjet_chMult = (badjet>=0) ? jets_AK5PF_chg_Mult->at(badjet) : -99;
       deltaPhiStar_badjet_neuMult = (badjet>=0) ? jets_AK5PF_neutral_Mult->at(badjet) : -99;
       deltaPhiStar_badjet_muMult = (badjet>=0) ? jets_AK5PF_mu_Mult->at(badjet) : -99;
