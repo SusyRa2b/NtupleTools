@@ -7461,7 +7461,7 @@ void EventCalculator::reducedTree(TString outputpath) {
 
   ULong64_t lumiSection, eventNumber, runNumber;
   //  float METsig;
-  float ST, STeff, HT, HT30,MHT, MET, METphi, minDeltaPhi, minDeltaPhi30,minDeltaPhi20,minDeltaPhiAll, minDeltaPhiAll30,minDeltaPhi30_eta5_noIdAll;
+  float ST, STeff, HT, HT30,HT20,MHT, MET, METphi, minDeltaPhi, minDeltaPhi30,minDeltaPhi20,minDeltaPhiAll, minDeltaPhiAll20,minDeltaPhi30_eta5_noIdAll;
   //  float correctedMET, correctedMETphi
   float caloMET,caloMETphi;
   float rawPFMET,rawPFMETphi;
@@ -8246,6 +8246,7 @@ void EventCalculator::reducedTree(TString outputpath) {
 
   reducedTree.Branch("HT",&HT,"HT/F");
   reducedTree.Branch("HT30",&HT30,"HT30/F");
+  reducedTree.Branch("HT20",&HT20,"HT20/F");
   reducedTree.Branch("ST",&ST,"ST/F"); //includes HT + leptons
   reducedTree.Branch("STeff",&STeff,"STeff/F"); //includes HT + leptons + MET
   reducedTree.Branch("MET",&MET,"MET/F");
@@ -8319,7 +8320,7 @@ void EventCalculator::reducedTree(TString outputpath) {
 
   reducedTree.Branch("minDeltaPhi",&minDeltaPhi,"minDeltaPhi/F");
   reducedTree.Branch("minDeltaPhiAll",&minDeltaPhiAll,"minDeltaPhiAll/F");
-  reducedTree.Branch("minDeltaPhiAll30",&minDeltaPhiAll30,"minDeltaPhiAll30/F");
+  reducedTree.Branch("minDeltaPhiAll20",&minDeltaPhiAll20,"minDeltaPhiAll20/F");
   reducedTree.Branch("minDeltaPhi20",&minDeltaPhi20,"minDeltaPhi20/F");
   reducedTree.Branch("minDeltaPhi30",&minDeltaPhi30,"minDeltaPhi30/F");
   reducedTree.Branch("minDeltaPhi30_eta5_noIdAll",&minDeltaPhi30_eta5_noIdAll,"minDeltaPhi30_eta5_noIdAll/F");
@@ -8347,6 +8348,31 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("deltaPhiStar_badjet_phi",&deltaPhiStar_badjet_phi,"deltaPhiStar_badjet_phi/F");
   reducedTree.Branch("deltaPhiStar_badjet_eta",&deltaPhiStar_badjet_eta,"deltaPhiStar_badjet_eta/F");
 
+  //new stuff
+  float deltaPhiStar_badjet_CSV,  deltaPhiStar_badjet_chEmE , deltaPhiStar_badjet_chHadE, deltaPhiStar_badjet_photonE,  deltaPhiStar_badjet_neuEmE,
+    deltaPhiStar_badjet_neuHadE,  deltaPhiStar_badjet_chMuE, deltaPhiStar_badjet_etaetaMoment, deltaPhiStar_badjet_etaphiMoment,
+    deltaPhiStar_badjet_phiphiMoment ,  deltaPhiStar_badjet_rawPt ,  deltaPhiStar_badjet_mass , deltaPhiStar_badjet_PUbeta ;
+  int  deltaPhiStar_badjet_chMult,  deltaPhiStar_badjet_neuMult,  deltaPhiStar_badjet_muMult ,   deltaPhiStar_badjet_n60 ,  deltaPhiStar_badjet_n90 ;
+  reducedTree.Branch("deltaPhiStar_badjet_CSV",&deltaPhiStar_badjet_CSV,"deltaPhiStar_badjet_CSV/F");
+  reducedTree.Branch("deltaPhiStar_badjet_chEmE",&deltaPhiStar_badjet_chEmE,"deltaPhiStar_badjet_chEmE/F");
+  reducedTree.Branch("deltaPhiStar_badjet_chHadE",&deltaPhiStar_badjet_chHadE,"deltaPhiStar_badjet_chHadE/F");
+  reducedTree.Branch("deltaPhiStar_badjet_photonE",&deltaPhiStar_badjet_photonE,"deltaPhiStar_badjet_photonE/F");
+  reducedTree.Branch("deltaPhiStar_badjet_neuEmE",&deltaPhiStar_badjet_neuEmE,"deltaPhiStar_badjet_neuEmE/F");
+  reducedTree.Branch("deltaPhiStar_badjet_neuHadE",&deltaPhiStar_badjet_neuHadE,"deltaPhiStar_badjet_neuHadE/F");
+  reducedTree.Branch("deltaPhiStar_badjet_chMuE",&deltaPhiStar_badjet_chMuE,"deltaPhiStar_badjet_chMuE/F");
+  reducedTree.Branch("deltaPhiStar_badjet_etaetaMoment",&deltaPhiStar_badjet_etaetaMoment,"deltaPhiStar_badjet_etaetaMoment/F");
+  reducedTree.Branch("deltaPhiStar_badjet_etaphiMoment",&deltaPhiStar_badjet_etaphiMoment,"deltaPhiStar_badjet_etaphiMoment/F");
+  reducedTree.Branch("deltaPhiStar_badjet_phiphiMoment",&deltaPhiStar_badjet_phiphiMoment,"deltaPhiStar_badjet_phiphiMoment/F");
+  reducedTree.Branch("deltaPhiStar_badjet_rawPt",&deltaPhiStar_badjet_rawPt,"deltaPhiStar_badjet_rawPt/F");
+  reducedTree.Branch("deltaPhiStar_badjet_mass",&deltaPhiStar_badjet_mass,"deltaPhiStar_badjet_mass/F");
+  reducedTree.Branch("deltaPhiStar_badjet_PUbeta",&deltaPhiStar_badjet_PUbeta,"deltaPhiStar_badjet_PUbeta/F");
+  reducedTree.Branch("deltaPhiStar_badjet_chMult",&deltaPhiStar_badjet_chMult,"deltaPhiStar_badjet_chMult/I");
+  reducedTree.Branch("deltaPhiStar_badjet_neuMult",&deltaPhiStar_badjet_neuMult,"deltaPhiStar_badjet_neuMult/I");
+  reducedTree.Branch("deltaPhiStar_badjet_muMult",&deltaPhiStar_badjet_muMult,"deltaPhiStar_badjet_muMult/I");
+  reducedTree.Branch("deltaPhiStar_badjet_n60",&deltaPhiStar_badjet_n60,"deltaPhiStar_badjet_n60/I");
+  reducedTree.Branch("deltaPhiStar_badjet_n90",&deltaPhiStar_badjet_n90,"deltaPhiStar_badjet_n90/I");
+
+   
   reducedTree.Branch("minDeltaPhiN", &minDeltaPhiN, "minDeltaPhiN/F");
   reducedTree.Branch("deltaPhiN1", &deltaPhiN1, "deltaPhiN1/F");
   reducedTree.Branch("deltaPhiN2", &deltaPhiN2, "deltaPhiN2/F");
@@ -8964,6 +8990,7 @@ void EventCalculator::reducedTree(TString outputpath) {
       nGoodPV = countGoodPV();
 
       HT30=getHT(30);
+      HT20=getHT(20);
       PUweight =  puReweightIs1D ? getPUWeight(*LumiWeights) : 1;
       PUweightSystVar =  puReweightIs1D ? getPUWeight(*LumiWeightsSystVar) : 1;
 
@@ -9489,7 +9516,7 @@ void EventCalculator::reducedTree(TString outputpath) {
 
       minDeltaPhi = getMinDeltaPhiMET(3);
       minDeltaPhiAll = getMinDeltaPhiMET(99);
-      minDeltaPhiAll30 = getMinDeltaPhiMET30(99);
+      minDeltaPhiAll20 = getMinDeltaPhiMET(99,20);
       minDeltaPhi20 = getMinDeltaPhiMET(3,20);
       minDeltaPhi30_eta5_noIdAll = getMinDeltaPhiMET30_eta5_noId(99);
       maxDeltaPhi = getMaxDeltaPhiMET(3);
@@ -9532,9 +9559,33 @@ void EventCalculator::reducedTree(TString outputpath) {
 
       int badjet;
       deltaPhiStar = getDeltaPhiStar(badjet);
-      deltaPhiStar_badjet_pt = (badjet>=0) ? jets_AK5PF_pt->at(badjet) : -1;
-      deltaPhiStar_badjet_phi = (badjet>=0) ? jets_AK5PF_phi->at(badjet) : -1;
-      deltaPhiStar_badjet_eta = (badjet>=0) ? jets_AK5PF_eta->at(badjet) : -1;
+      deltaPhiStar_badjet_pt = (badjet>=0) ? jets_AK5PF_pt->at(badjet) : -99;
+      deltaPhiStar_badjet_phi = (badjet>=0) ? jets_AK5PF_phi->at(badjet) : -99;
+      deltaPhiStar_badjet_eta = (badjet>=0) ? jets_AK5PF_eta->at(badjet) : -99;
+      //new stuff
+      deltaPhiStar_badjet_CSV = (badjet>=0) ? jets_AK5PF_btag_secVertexCombined->at(badjet) : -99;
+      deltaPhiStar_badjet_chEmE = (badjet>=0) ? jets_AK5PF_chgEmE->at(badjet) : -99;
+      deltaPhiStar_badjet_chHadE = (badjet>=0) ? jets_AK5PF_chgHadE->at(badjet) : -99;
+      //photonE and neutral EM E seem to be usually, but not always, identical. Not clear to me what the difference is
+      deltaPhiStar_badjet_photonE = (badjet>=0) ? jets_AK5PF_photonEnergy->at(badjet) : -99;
+      deltaPhiStar_badjet_neuEmE = (badjet>=0) ? jets_AK5PF_neutralEmE->at(badjet) : -99;
+      deltaPhiStar_badjet_neuHadE = (badjet>=0) ? jets_AK5PF_neutralHadE->at(badjet) : -99;
+      deltaPhiStar_badjet_chMuE = (badjet>=0) ? jets_AK5PF_chgMuE->at(badjet) : -99;
+      deltaPhiStar_badjet_chMult = (badjet>=0) ? jets_AK5PF_chg_Mult->at(badjet) : -99;
+      deltaPhiStar_badjet_neuMult = (badjet>=0) ? jets_AK5PF_neutral_Mult->at(badjet) : -99;
+      deltaPhiStar_badjet_muMult = (badjet>=0) ? jets_AK5PF_mu_Mult->at(badjet) : -99;
+
+      deltaPhiStar_badjet_n60 = (badjet>=0) ? jets_AK5PF_n60->at(badjet) : -99;
+      deltaPhiStar_badjet_n90 = (badjet>=0) ? jets_AK5PF_n90->at(badjet) : -99;
+
+      deltaPhiStar_badjet_etaetaMoment = (badjet>=0) ? jets_AK5PF_etaetaMoment->at(badjet) : -99;
+      deltaPhiStar_badjet_etaphiMoment = (badjet>=0) ? jets_AK5PF_etaphiMoment->at(badjet) : -99;
+      deltaPhiStar_badjet_phiphiMoment = (badjet>=0) ? jets_AK5PF_phiphiMoment->at(badjet) : -99;
+
+      deltaPhiStar_badjet_rawPt = (badjet>=0) ? jets_AK5PF_rawPt->at(badjet) : -99;
+      deltaPhiStar_badjet_mass = (badjet>=0) ? jets_AK5PF_mass->at(badjet) : -99;
+
+      deltaPhiStar_badjet_PUbeta = (badjet>=0) ? pujet_beta[badjet] : -99;
 
       if (isSampleQCD()) { //don't fill except for QCD MC
       maxJetMis=getMaxJetMis(1,3,50);
