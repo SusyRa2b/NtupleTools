@@ -757,7 +757,7 @@ float EventCalculator::getElectronRelIso(const unsigned int k, const bool use201
 }
 
 //this bool could be turned into a more powerful selector for N-1 studies. keep it simple for now
-bool EventCalculator::isGoodElectron(const unsigned int k, const bool disableRelIso, const float ptthreshold, const bool use2012id,int &lossCode) {
+bool EventCalculator::isGoodElectron(const unsigned int k, const bool disableRelIso, const float ptthreshold, const bool use2012id,const bool tkBugFix,int &lossCode) {
 
   //sanity check
   if ( k >= pf_els_pt->size() ) {lossCode=5; return false;}
@@ -808,7 +808,10 @@ bool EventCalculator::isGoodElectron(const unsigned int k, const bool disableRel
     cout<<"[isGoodElectron] I went through "<<ndone<<" of the barrel+endcap checks. Weird!"<<endl;
   }
 
-  float d0 = pf_els_d0dum->at(k) - beamx*sin(pf_els_tk_phi->at(k)) + beamy*cos(pf_els_tk_phi->at(k));
+
+  float d0 = tkBugFix ?
+    pf_els_d0dum->at(k) - beamx*sin(pf_els_tk_phi->at(k)) + beamy*cos(pf_els_tk_phi->at(k)) :
+    pf_els_d0dum->at(k) - beamx*sin(pf_els_phi->at(k)) + beamy*cos(pf_els_phi->at(k)) ;
   if ( fabs(d0) >= 0.04 ) { lossCode=3; return false; }
   if ( fabs(pf_els_vz->at(k) - pv_z->at(0) ) >= 0.2 )  { lossCode=3; return false; }
   
@@ -825,14 +828,14 @@ bool EventCalculator::isGoodElectron(const unsigned int k, const bool disableRel
 }
 
 
-unsigned int EventCalculator::countEle(const float ptthreshold, const bool use2012id, const bool disableRelIso, const int ttbarDecayCode,int & lostLeptonCode,const float genEta,const float genPhi) {
+unsigned int EventCalculator::countEle(const float ptthreshold, const bool use2012id,const bool tkBugFix, const bool disableRelIso, const int ttbarDecayCode,int & lostLeptonCode,const float genEta,const float genPhi) {
 
   //count good electrons.
 
   unsigned int ngoodele=0;
   for (unsigned int i=0; i <pf_els_pt->size() ; i++) {
     int whyLeptonLost=-1;
-    if (isGoodElectron(i,disableRelIso,ptthreshold,use2012id,whyLeptonLost))      ++ngoodele;
+    if (isGoodElectron(i,disableRelIso,ptthreshold,use2012id,tkBugFix,whyLeptonLost))      ++ngoodele;
     //if ttbarDecayCode is 3 (single e at gen level), then also return lostLeptonCode information
     if (ttbarDecayCode==3&& lostLeptonCode==5) {
       //check that this reco lepton is a loose DR match to the gen one
@@ -7584,7 +7587,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   //want a copy of triggerlist, for storing mc trigger results
   map<TString, triggerData > triggerlist_mc(triggerlist);
 
-  int njets, njets30, nbjets, nbjets30,ntruebjets, nElectrons,nElectrons2011, nMuons, nTightMuons,njets20,njets20_5p0,nbjets20;
+  int njets, njets30, nbjets, nbjets30,ntruebjets, nElectrons,nElectronsBug, nMuons, nTightMuons,njets20,njets20_5p0,nbjets20;
   int nPUjets20,nPUjets30;
   int nGluonsSplitToLF,nGluonsSplitToC,nGluonsSplitToB;
   int nlfjetsFromGluons,ncjetsFromGluons,nbjetsFromGluons;
@@ -8133,7 +8136,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("nbjetsFromGluons",&nbjetsFromGluons,"nbjetsFromGluons/I");
 
   reducedTree.Branch("nElectrons",&nElectrons,"nElectrons/I");
-  reducedTree.Branch("nElectrons2011",&nElectrons2011,"nElectrons2011/I");
+  reducedTree.Branch("nElectronsBug",&nElectronsBug,"nElectronsBug/I");
   reducedTree.Branch("nMuons",&nMuons,"nMuons/I");
   reducedTree.Branch("nElectrons5",&nElectrons5,"nElectrons5/I");
   reducedTree.Branch("nMuons5",&nMuons5,"nMuons5/I");
@@ -9506,8 +9509,8 @@ void EventCalculator::reducedTree(TString outputpath) {
 
 
       //count leptons
-      nElectrons = countEle(10,true,false,ttbarDecayCode,lostLeptonCode,leptonEta,leptonPhi);
-      nElectrons2011 = countEle(10,false);
+      nElectronsBug = countEle(10,true,false,false,ttbarDecayCode,lostLeptonCode,leptonEta,leptonPhi);
+      nElectrons = countEle(10,true,true,false,ttbarDecayCode,lostLeptonCode,leptonEta,leptonPhi);
       nMuons = countMu(10,false,ttbarDecayCode,lostLeptonCode,leptonEta,leptonPhi);
       nElectrons5 = countEle(5);
       nMuons5 = countMu(5);
@@ -9516,7 +9519,7 @@ void EventCalculator::reducedTree(TString outputpath) {
       nElectrons20 = countEle(20);
       nMuons20 = countMu(20);
       nTightMuons = countTightMu();
-      nElectronsNoRelIso = countEle(10,true,true);
+      nElectronsNoRelIso = countEle(10,true,true,true);
       nMuonsNoRelIso = countMu(10,true);
 
       //cout<<" ttbarDecayCode leptonEta leptonPt nE nMu lostLeptonCode "<<ttbarDecayCode<<" "<<leptonEta<<" "<<leptonPt<<" "<<nElectrons<<" "<<nMuons<<" "<<lostLeptonCode<<endl;
