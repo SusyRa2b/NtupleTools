@@ -7666,6 +7666,20 @@ void EventCalculator::reducedTree(TString outputpath) {
 
   int nGoodPV;
 
+  float PV0_x;
+  float PV0_xErr;
+  float PV0_y;
+  float PV0_yErr;
+  float PV0_z;
+  float PV0_zErr;
+
+  float BS0_x;
+  float BS0_xErr;
+  float BS0_y;
+  float BS0_yErr;
+  float BS0_z;
+  float BS0_zErr;
+
   int SUSY_nb;
   int SUSY_process;
   float SUSY_recoilPt;
@@ -8072,6 +8086,20 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("TOBTECjetChMult",&TOBTECjetChMult,"TOBTECjetChMult/I");
 
   reducedTree.Branch("nGoodPV",&nGoodPV,"nGoodPV/I");
+
+  reducedTree.Branch("PV0_x",&PV0_x,"PV0_x/F");
+  reducedTree.Branch("PV0_xErr",&PV0_xErr,"PV0_xErr/F");
+  reducedTree.Branch("PV0_y",&PV0_y,"PV0_y/F");
+  reducedTree.Branch("PV0_yErr",&PV0_yErr,"PV0_yErr/F");
+  reducedTree.Branch("PV0_z",&PV0_z,"PV0_z/F");
+  reducedTree.Branch("PV0_zErr",&PV0_zErr,"PV0_zErr/F");
+
+  reducedTree.Branch("BS0_x",&BS0_x,"BS0_x/F");
+  reducedTree.Branch("BS0_xErr",&BS0_xErr,"BS0_xErr/F");
+  reducedTree.Branch("BS0_y",&BS0_y,"BS0_y/F");
+  reducedTree.Branch("BS0_yErr",&BS0_yErr,"BS0_yErr/F");
+  reducedTree.Branch("BS0_z",&BS0_z,"BS0_z/F");
+  reducedTree.Branch("BS0_zErr",&BS0_zErr,"BS0_zErr/F");
 
   reducedTree.Branch("SUSY_nb",&SUSY_nb,"SUSY_nb/I");
   reducedTree.Branch("SUSY_process",&SUSY_process,"SUSY_process/I");
@@ -8996,6 +9024,36 @@ void EventCalculator::reducedTree(TString outputpath) {
       PUweightSystVar =  puReweightIs1D ? getPUWeight(*LumiWeightsSystVar) : 1;
 
       cutPV = passPV();
+
+      PV0_x = -99;
+      PV0_xErr = -99;
+      PV0_y = -99;
+      PV0_yErr = -99;
+      PV0_z = -99;
+      PV0_zErr = -99;
+      if ( passPV() ) {
+        PV0_x = pv_x->at(0);
+        PV0_xErr = pv_xErr->at(0);
+        PV0_y = pv_y->at(0);
+        PV0_yErr = pv_yErr->at(0);
+        PV0_z = pv_z->at(0);
+        PV0_zErr = pv_zErr->at(0);
+      } 
+
+      BS0_x = -99;
+      BS0_xErr = -99;
+      BS0_y = -99;
+      BS0_yErr = -99;
+      BS0_z = -99;
+      BS0_zErr = -99;
+      if ( NbeamSpot >= 1 ) {
+        BS0_x = beamSpot_x->at(0);
+        BS0_xErr = beamSpot_x0Error->at(0);
+        BS0_y = beamSpot_y->at(0);
+        BS0_yErr = beamSpot_y0Error->at(0);
+        BS0_z = beamSpot_z->at(0);
+        BS0_zErr = beamSpot_z0Error->at(0);
+      } 
 
       PIDweight=getBtagEffWeight();
       BTagWeight = getBtagWeight();
