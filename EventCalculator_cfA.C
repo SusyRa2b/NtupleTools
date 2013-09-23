@@ -1488,6 +1488,33 @@ bool EventCalculator::passPV() {
 
 }
 
+void EventCalculator::setPVvar(float (&pv)[100], TString which) {
+
+  //Initialize to obvious dummy value
+  for (unsigned int ipv = 0; ipv<100; ipv++) pv[ipv] = -49; 
+
+  for (unsigned int ipv = 0; ipv<pv_x->size(); ipv++) {
+    float res = 0;
+    if      ( which == "x" )          res = pv_x   ->at(ipv); 
+    else if ( which == "xErr" )       res = pv_xErr->at(ipv); 
+    else if ( which == "y" )          res = pv_y   ->at(ipv); 
+    else if ( which == "yErr" )       res = pv_yErr->at(ipv); 
+    else if ( which == "z" )          res = pv_z   ->at(ipv); 
+    else if ( which == "zErr" )       res = pv_zErr->at(ipv); 
+    else if ( which == "chi2" )       res = pv_chi2->at(ipv);
+    else if ( which == "ndof" )       res = pv_ndof->at(ipv);
+
+    else if ( which == "isFake" )     res = pv_isFake    ->at(ipv);
+    else if ( which == "isValid" )    res = pv_isValid   ->at(ipv);
+    else if ( which == "tracksSize" ) res = pv_tracksSize->at(ipv);
+    else if ( which == "isGood" )     { if ( isGoodPV(ipv) )  res = 1 ;} 
+    else assert(0); 
+
+    pv[ipv] = res;
+  } 
+
+}
+
 float EventCalculator::getHT(float ptthreshold) {
   float ht=0;
   for (unsigned int i=0; i<jets_AK5PF_pt->size(); i++) {
@@ -7676,6 +7703,19 @@ void EventCalculator::reducedTree(TString outputpath) {
   float PV0_z;
   float PV0_zErr;
 
+  float PV_x[100];
+  float PV_xErr[100];
+  float PV_y[100];
+  float PV_yErr[100];
+  float PV_z[100];
+  float PV_zErr[100];
+  float PV_chi2[100];
+  float PV_ndof[100];
+  float PV_isFake[100];
+  float PV_isGood[100];
+  float PV_isValid[100];
+  float PV_tracksSize[100];
+
   float BS0_x;
   float BS0_xErr;
   float BS0_y;
@@ -8096,6 +8136,19 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("PV0_yErr",&PV0_yErr,"PV0_yErr/F");
   reducedTree.Branch("PV0_z",&PV0_z,"PV0_z/F");
   reducedTree.Branch("PV0_zErr",&PV0_zErr,"PV0_zErr/F");
+
+  reducedTree.Branch("PV_x",&PV_x,"PV_x[100]/F");
+  reducedTree.Branch("PV_xErr",&PV_xErr,"PV_xErr[100]/F");
+  reducedTree.Branch("PV_y",&PV_y,"PV_y[100]/F");
+  reducedTree.Branch("PV_yErr",&PV_yErr,"PV_yErr[100]/F");
+  reducedTree.Branch("PV_z",&PV_z,"PV_z[100]/F");
+  reducedTree.Branch("PV_zErr",&PV_zErr,"PV_zErr[100]/F");
+  reducedTree.Branch("PV_chi2",&PV_chi2,"PV_chi2[100]/F");
+  reducedTree.Branch("PV_ndof",&PV_ndof,"PV_ndof[100]/F");
+  reducedTree.Branch("PV_isFake",&PV_isFake,"PV_isFake[100]/F");
+  reducedTree.Branch("PV_isGood",&PV_isGood,"PV_isGood[100]/F");
+  reducedTree.Branch("PV_isValid",&PV_isValid,"PV_isValid[100]/F");
+  reducedTree.Branch("PV_tracksSize",&PV_tracksSize,"PV_tracksSize[100]/F");
 
   reducedTree.Branch("BS0_x",&BS0_x,"BS0_x/F");
   reducedTree.Branch("BS0_xErr",&BS0_xErr,"BS0_xErr/F");
@@ -9042,6 +9095,19 @@ void EventCalculator::reducedTree(TString outputpath) {
         PV0_z = pv_z->at(0);
         PV0_zErr = pv_zErr->at(0);
       } 
+
+      setPVvar(PV_x,"x");
+      setPVvar(PV_xErr,"xErr");
+      setPVvar(PV_y,"y");
+      setPVvar(PV_yErr,"yErr");
+      setPVvar(PV_z,"z");
+      setPVvar(PV_zErr,"zErr");
+      setPVvar(PV_chi2,"chi2");
+      setPVvar(PV_ndof,"ndof");
+      setPVvar(PV_isFake,"isFake");
+      setPVvar(PV_isGood,"isGood");
+      setPVvar(PV_isValid,"isValid");
+      setPVvar(PV_tracksSize,"tracksSize");
 
       BS0_x = -99;
       BS0_xErr = -99;
