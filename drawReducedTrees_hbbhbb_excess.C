@@ -193,19 +193,21 @@ void makeplots1(TString todraw="mass 2b 3b 4b met0 met1 met2") {
       drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
   }
 
+    TCut sel1;
+      TCut sel2;
+
 
   for ( int i=2; i<=4; i++) {
-    TCut sel1;
-    if (i==2) sel1=sb2b;
-    else if (i==3) sel1=sb3b;
-    else if (i==4) sel1=sb4b;
-
-    if (!todraw.Contains("2b") && i==2) continue;
-    if (!todraw.Contains("3b") && i==3) continue;
-    if (!todraw.Contains("4b") && i==4) continue;
 
     for ( int j=0; j<=2; j++) {
-      TCut sel2;
+      if (i==2) sel1=sb2b;
+      else if (i==3) sel1=sb3b;
+      else if (i==4) sel1=sb4b;
+      
+      if (!todraw.Contains("2b") && i==2) continue;
+      if (!todraw.Contains("3b") && i==3) continue;
+      if (!todraw.Contains("4b") && i==4) continue;
+
       if (j==1) sel2=met1;
       else if (j==2) sel2=met2;
       else if (j==0) sel2=met0;
