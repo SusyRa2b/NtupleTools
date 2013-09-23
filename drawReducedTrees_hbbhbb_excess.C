@@ -11,7 +11,8 @@
 
 #include "drawReducedTrees_hbbhbb.C"
 
-void makeplots1() {
+//to draw everything use default argument
+void makeplots1(TString todraw="mass 2b 3b 4b met0 met1 met2") {
 
   //initHiggsSamples69(true,"ttbar znunu qcd wjets ttv vv singlet"); //all backgrounds
   initHiggsSamples69(true,"ttbar znunu bjets wjets ttv vv singlet"); //all backgrounds
@@ -78,7 +79,7 @@ void makeplots1() {
   TCut sb3bsl = baseline && trigger && sl && jets && btag2 && btag3  && !btag4&&mdp && higgsSB && drmax;
   TCut sb4bsl = baseline && trigger && sl && jets && btag2 && btag3  &&btag4 && mdp && higgsSB && drmax;
 
-
+  TCut met0 = "METsig>=15 && METsig<30";
   TCut met1 = "METsig>=30 && METsig<50";
   TCut met2 = "METsig>=50 && METsig<100";
       TString filename;
@@ -86,11 +87,12 @@ void makeplots1() {
   TString dm = "abs(higgsMbb1MassDiff-higgsMbb2MassDiff)";
   TString am = "0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)";
 
-//        - 3b, METsig bin 1, |delta_mjj| with no cut on ave_mjj
-      selection_= baseline && trigger && zl&& isotk && jets && btag2 && btag3  && !btag4&&mdp && drmax && met1;
-      nbins=40; low=0; high=100;
-      var=dm; xtitle=var; filename = "3b_METsig1_dm";
-      drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+  if (todraw.Contains("mass")) {
+    //        - 3b, METsig bin 1, |delta_mjj| with no cut on ave_mjj
+    selection_= baseline && trigger && zl&& isotk && jets && btag2 && btag3  && !btag4&&mdp && drmax && met1;
+    nbins=40; low=0; high=100;
+    var=dm; xtitle=var; filename = "3b_METsig1_dm";
+    drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
 
 //        - 3b, METsig bin 2, |delta_mjj| with no cut on ave_mjj
       selection_= baseline && trigger && zl&& isotk && jets && btag2 && btag3  && !btag4&&mdp && drmax && met2;
@@ -130,22 +132,22 @@ void makeplots1() {
       drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
 //        - 3b, METsig bin 1, ave_mjj excluding 90 < ave_mjj < 150 (for comparison with same for 4b)
       selection_= baseline && trigger && zl&& isotk && jets && btag2 && btag3  && !btag4&&mdp && drmax && met1 && (higgsSB_avl||higgsSB_avh);
-      nbins=40; low=0; high=100;
+      nbins=40; low=0; high=200;
       var=am; xtitle=var; filename = "3b_METsig1_amSB_am";
       drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
 //        - 3b, METsig bin 2, ave_mjj excluding 90 < ave_mjj < 150 (for comparison with same for 4b)
       selection_= baseline && trigger && zl&& isotk && jets && btag2 && btag3  && !btag4&&mdp && drmax && met2 && (higgsSB_avl||higgsSB_avh);
-      nbins=40; low=0; high=100;
+      nbins=40; low=0; high=200;
       var=am; xtitle=var; filename = "3b_METsig2_amSB_am";
       drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
 //        - 3b, METsig bin 1, ave_mjj excluding |delta_mjj|<30 (for comparison with same for 4b)
       selection_= baseline && trigger && zl&& isotk && jets && btag2 && btag3  && !btag4&&mdp && drmax && met1 && higgsSB_d;
-      nbins=40; low=0; high=100;
+      nbins=40; low=0; high=200;
       var=am; xtitle=var; filename = "3b_METsig1_dmSB_am";
       drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
 //        - 3b, METsig bin 2, ave_mjj excluding |delta_mjj|<30 (for comparison with same for 4b)
       selection_= baseline && trigger && zl&& isotk && jets && btag2 && btag3  && !btag4&&mdp && drmax && met2 && higgsSB_d;
-      nbins=40; low=0; high=100;
+      nbins=40; low=0; high=200;
       var=am; xtitle=var; filename = "3b_METsig2_dmSB_am";
       drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
 
@@ -171,26 +173,26 @@ void makeplots1() {
       drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
 //        - 4b, METsig bin 1, ave_mjj excluding 90 < ave_mjj < 150
       selection_= baseline && trigger && zl&& isotk && jets && btag2 && btag3  && btag4&&mdp && drmax && met1 && (higgsSB_avl||higgsSB_avh);
-      nbins=40; low=0; high=100;
+      nbins=40; low=0; high=200;
       var=am; xtitle=var; filename = "4b_METsig1_amSB_am";
       drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
 //        - 4b, METsig bin 2, ave_mjj excluding 90 < ave_mjj < 150
       selection_= baseline && trigger && zl&& isotk && jets && btag2 && btag3  && btag4&&mdp && drmax && met2 && (higgsSB_avl||higgsSB_avh);
-      nbins=40; low=0; high=100;
+      nbins=40; low=0; high=200;
       var=am; xtitle=var; filename = "4b_METsig2_amSB_am";
       drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
 //        - 4b, METsig bin 1, ave_mjj excluding |delta_mjj|<30
       selection_= baseline && trigger && zl&& isotk && jets && btag2 && btag3  && btag4&&mdp && drmax && met1 && higgsSB_d;
-      nbins=40; low=0; high=100;
+      nbins=40; low=0; high=200;
       var=am; xtitle=var; filename = "4b_METsig1_dmSB_am";
       drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
 //        - 4b, METsig bin 2, ave_mjj excluding |delta_mjj|<30
       selection_= baseline && trigger && zl&& isotk && jets && btag2 && btag3  && btag4&&mdp && drmax && met2 && higgsSB_d;
-      nbins=40; low=0; high=100;
+      nbins=40; low=0; high=200;
       var=am; xtitle=var; filename = "4b_METsig2_dmSB_am";
       drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+  }
 
-      const bool redoplots=true;
 
   for ( int i=2; i<=4; i++) {
     TCut sel1;
@@ -198,17 +200,25 @@ void makeplots1() {
     else if (i==3) sel1=sb3b;
     else if (i==4) sel1=sb4b;
 
-    for ( int j=1; j<=2; j++) {
+    if (!todraw.Contains("2b") && i==2) continue;
+    if (!todraw.Contains("3b") && i==3) continue;
+    if (!todraw.Contains("4b") && i==4) continue;
+
+    for ( int j=0; j<=2; j++) {
       TCut sel2;
       if (j==1) sel2=met1;
       else if (j==2) sel2=met2;
+      else if (j==0) sel2=met0;
+
+      if (!todraw.Contains("met0") && j==0) continue;
+      if (!todraw.Contains("met1") && j==1) continue;
+      if (!todraw.Contains("met2") && j==2) continue;
 
       selection_ = sel1&&sel2;
 
       //CSV output
       setLogY(false);
 
-      if (redoplots) { //1st round of plots
       nbins=10; low=0; high=1;
       var="CSVbest1"; xtitle=var;
       filename.Form("SB%db_METsig%d_%s",i,j,var.Data());
@@ -266,6 +276,25 @@ void makeplots1() {
       filename.Form("SB%db_METsig%d_%s",i,j,var.Data());
       drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
 
+      //HT
+      nbins=60; low=0; high=600;
+      var="HT20"; xtitle=var;
+      filename.Form("SB%db_METsig%d_%s",i,j,var.Data());
+      drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+
+      //HT+MET
+      nbins=60; low=0; high=800;
+      var="HT20+MET"; xtitle=var;
+      filename.Form("SB%db_METsig%d_%s",i,j,"HTplusMET");
+      drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+
+      //|MET-MHT|
+      nbins=20; low=0; high=200;
+      var="abs(MET-MHT)"; xtitle=var;
+      filename.Form("SB%db_METsig%d_%s",i,j,"METminusMHT");
+      drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+
+
 
       //max deltaPhi
       nbins=60; low=0; high=6;
@@ -273,10 +302,7 @@ void makeplots1() {
       filename.Form("SB%db_METsig%d_%s",i,j,var.Data());
       drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
 
-      } //1st round of plots
-
       // == 2nd round of plots ==
-      if (redoplots) {
       //deltaPhiStar
       nbins=30; low=0; high=3;
       var="deltaPhiStar"; xtitle=var;
@@ -297,6 +323,57 @@ void makeplots1() {
       var="deltaPhiStar_badjet_eta"; xtitle=var;
       filename.Form("SB%db_METsig%d_%s",i,j,var.Data());
       drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+
+      //some more properties
+      nbins=30; low=0; high=30;
+      var="deltaPhiStar_badjet_n60"; xtitle=var;
+      filename.Form("SB%db_METsig%d_%s",i,j,var.Data());
+      drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+
+      nbins=50; low=-100; high=100;
+      var="deltaPhiStar_badjet_chMult-deltaPhiStar_badjet_neuMult"; xtitle="charged - neutral mult";
+      filename.Form("SB%db_METsig%d_%s",i,j,"chMinusNeuMult");
+      drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+
+      nbins=20; low=0; high=1;
+      var="deltaPhiStar_badjet_PUbeta"; xtitle=var;
+      filename.Form("SB%db_METsig%d_%s",i,j,var.Data());
+      drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+
+      // charged energy fraction
+      nbins=20; low=0; high=1;
+      var="(deltaPhiStar_badjet_chHadE+deltaPhiStar_badjet_chEmE)/deltaPhiStar_badjet_energy"; xtitle="chHad+chEM energy fraction";
+      filename.Form("SB%db_METsig%d_%s",i,j,"chargedEnergyFraction");
+      drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+
+      //neutral energy fraction
+      nbins=20; low=0; high=1;
+      var="(deltaPhiStar_badjet_neuHadE+deltaPhiStar_badjet_neuEmE)/deltaPhiStar_badjet_energy"; xtitle="neuHad+neuEM energy fraction";
+      filename.Form("SB%db_METsig%d_%s",i,j,"neutralEnergyFraction");
+      drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+
+
+      // muon energy fraction
+      setLogY(true);
+      nbins=20; low=0; high=1;
+      var="deltaPhiStar_badjet_chMuE/deltaPhiStar_badjet_energy"; xtitle="muon energy fraction";
+      filename.Form("SB%db_METsig%d_%s",i,j,"muonEnergyFraction");
+      drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+      setLogY(false);
+
+      //slice it another way: HCAL only fractions
+      // charged 
+      nbins=20; low=0; high=1;
+      var="(deltaPhiStar_badjet_chHadE)/deltaPhiStar_badjet_energy"; xtitle="chHad energy fraction";
+      filename.Form("SB%db_METsig%d_%s",i,j,"chargedHadEnergyFraction");
+      drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+
+      //neutral
+      nbins=20; low=0; high=1;
+      var="(deltaPhiStar_badjet_neuHadE)/deltaPhiStar_badjet_energy"; xtitle="neuHad energy fraction";
+      filename.Form("SB%db_METsig%d_%s",i,j,"neutralHadEnergyFraction");
+      drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+
 
       //leptons without isolation
       nbins=4; low=0; high=4;
@@ -371,19 +448,95 @@ void makeplots1() {
 
       nbins=40; low=0; high=400;
       var="deltaPhiStar_badjet_pt"; xtitle=var;
-      filename.Form("SB%db_METsig%d_deltaPhiStarlt0.2_%s",i,j,var.Data());
+      filename.Form("SB%db_METsig%d_deltaPhiStarlt0p2_%s",i,j,var.Data());
       drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
 
       nbins=30; low=-TMath::Pi(); high=TMath::Pi();
       var="deltaPhiStar_badjet_phi"; xtitle=var;
-      filename.Form("SB%db_METsig%d_deltaPhiStarlt0.2_%s",i,j,var.Data());
+      filename.Form("SB%db_METsig%d_deltaPhiStarlt0p2_%s",i,j,var.Data());
       drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
 
       nbins=40; low=-4; high=4;
       var="deltaPhiStar_badjet_eta"; xtitle=var;
-      filename.Form("SB%db_METsig%d_deltaPhiStarlt0.2_%s",i,j,var.Data());
+      filename.Form("SB%db_METsig%d_deltaPhiStarlt0p2_%s",i,j,var.Data());
       drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
-      }
+
+      nbins=20; low=0; high=1;
+      var="deltaPhiStar_badjet_CSV"; xtitle=var;
+      filename.Form("SB%db_METsig%d_deltaPhiStarlt0p2_%s",i,j,var.Data());
+      drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+
+      nbins=20; low=0; high=1;
+      var="deltaPhiStar_badjet_PUbeta"; xtitle=var;
+      filename.Form("SB%db_METsig%d_deltaPhiStarlt0p2_%s",i,j,var.Data());
+      drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+
+      nbins=20; low=0; high=80;
+      var="deltaPhiStar_badjet_chMult"; xtitle=var;
+      filename.Form("SB%db_METsig%d_deltaPhiStarlt0p2_%s",i,j,var.Data());
+      drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+
+      nbins=20; low=0; high=80;
+      var="deltaPhiStar_badjet_neuMult"; xtitle=var;
+      filename.Form("SB%db_METsig%d_deltaPhiStarlt0p2_%s",i,j,var.Data());
+      drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+
+      nbins=50; low=-100; high=100;
+      var="deltaPhiStar_badjet_chMult-deltaPhiStar_badjet_neuMult"; xtitle="charged - neutral mult";
+      filename.Form("SB%db_METsig%d_deltaPhiStarlt0p2_%s",i,j,"chMinusNeuMult");
+      drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+
+      nbins=30; low=0; high=30;
+      var="deltaPhiStar_badjet_n60"; xtitle=var;
+      filename.Form("SB%db_METsig%d_deltaPhiStarlt0p2_%s",i,j,var.Data());
+      drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+
+      nbins=30; low=0; high=60;
+      var="deltaPhiStar_badjet_n90"; xtitle=var;
+      filename.Form("SB%db_METsig%d_deltaPhiStarlt0p2_%s",i,j,var.Data());
+      drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+
+
+      // charged energy fraction
+      nbins=20; low=0; high=1;
+      var="(deltaPhiStar_badjet_chHadE+deltaPhiStar_badjet_chEmE)/deltaPhiStar_badjet_energy"; xtitle="chHad+chEM energy fraction";
+      filename.Form("SB%db_METsig%d_deltaPhiStarlt0p2_%s",i,j,"chargedEnergyFraction");
+      drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+
+      //neutral energy fraction
+      nbins=20; low=0; high=1;
+      var="(deltaPhiStar_badjet_neuHadE+deltaPhiStar_badjet_neuEmE)/deltaPhiStar_badjet_energy"; xtitle="neuHad+neuEM energy fraction";
+      filename.Form("SB%db_METsig%d_deltaPhiStarlt0p2_%s",i,j,"neutralEnergyFraction");
+      drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+
+
+      // muon energy fraction
+      setLogY(true);
+      nbins=20; low=0; high=1;
+      var="deltaPhiStar_badjet_chMuE/deltaPhiStar_badjet_energy"; xtitle="muon energy fraction";
+      filename.Form("SB%db_METsig%d_deltaPhiStarlt0p2_%s",i,j,"muonEnergyFraction");
+      drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+      setLogY(false);
+
+      //slice it another way: HCAL only fractions
+      // charged 
+      nbins=20; low=0; high=1;
+      var="(deltaPhiStar_badjet_chHadE)/deltaPhiStar_badjet_energy"; xtitle="chHad energy fraction";
+      filename.Form("SB%db_METsig%d_deltaPhiStarlt0p2_%s",i,j,"chargedHadEnergyFraction");
+      drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+
+      //neutral
+      nbins=20; low=0; high=1;
+      var="(deltaPhiStar_badjet_neuHadE)/deltaPhiStar_badjet_energy"; xtitle="neuHad energy fraction";
+      filename.Form("SB%db_METsig%d_deltaPhiStarlt0p2_%s",i,j,"neutralHadEnergyFraction");
+      drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+
+      //max deltaPhi
+      nbins=60; low=0; high=6;
+      var="maxDeltaPhiAll30"; xtitle=var;
+      filename.Form("SB%db_METsig%d_deltaPhiStarlt0p2_%s",i,j,var.Data());
+      drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+
 
       //5th round 
       //look at SL sample
@@ -397,6 +550,22 @@ void makeplots1() {
       var="deltaPhiStar"; xtitle=var;
       filename.Form("SL_SB%db_METsig%d_%s",i,j,var.Data());
       drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+
+      nbins=30; low=0; high=30;
+      var="deltaPhiStar_badjet_n60"; xtitle=var;
+      filename.Form("SL_SB%db_METsig%d_%s",i,j,var.Data());
+      drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+
+      nbins=50; low=-100; high=100;
+      var="deltaPhiStar_badjet_chMult-deltaPhiStar_badjet_neuMult"; xtitle="charged - neutral mult";
+      filename.Form("SL_SB%db_METsig%d_%s",i,j,"chMinusNeuMult");
+      drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+
+      nbins=20; low=0; high=1;
+      var="deltaPhiStar_badjet_PUbeta"; xtitle=var;
+      filename.Form("SL_SB%db_METsig%d_%s",i,j,var.Data());
+      drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+
 
       //max deltaPhi
       nbins=60; low=0; high=6;
@@ -422,9 +591,7 @@ void makeplots2() {
   setSampleWeightFactor("TTJets_SemiLeptMGDecays_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7C-v1_AODSIM_UCSB1884ra2b_v71s","topPtWeight");
   setSampleWeightFactor("TTJets_HadronicMGDecays_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A_ext-v1_AODSIM_UCSB1880ra2b_v71s",   "topPtWeight");
 
-  int nbins;
-  float low,high;
-  TString var,xtitle;
+
 
   doOverflowAddition(true);
   doRatio_=true; ratioMin = 0; ratioMax = 2.2;
