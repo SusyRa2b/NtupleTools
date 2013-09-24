@@ -189,6 +189,7 @@ public:
   int countGoodPV();
   bool isGoodPV(unsigned int ipv);
   bool passPV() ;
+  void setPVvar(float (&pv)[100], TString which);
 
   float getHT(float ptthreshold=50);
   float getST(float jetthreshold=50,float leptonthreshold=10);
