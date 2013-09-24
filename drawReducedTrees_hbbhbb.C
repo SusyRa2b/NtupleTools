@@ -76,8 +76,8 @@ double lumiScale_ = 19399 ; //Run 2012 ABC+D
 
 void initHiggsSamples69(const bool useSkim=true,const TString samplelist="") { 
 
-  inputPath="/cu6/joshmt/reducedTrees/v71_3b/"; 
-  dataInputPath="/cu6/joshmt/reducedTrees/v71_3b/data/"; //for skimmed data
+  inputPath="/cu6/joshmt/reducedTrees/v71_4/"; 
+  dataInputPath="/cu6/joshmt/reducedTrees/v71_4/data/"; //for skimmed data
   if (!useSkim)   {
     inputPath+="unskimmed/";
     dataInputPath=inputPath;
