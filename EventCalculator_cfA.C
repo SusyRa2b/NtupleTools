@@ -1472,6 +1472,26 @@ bool EventCalculator::isGoodPV(unsigned int ipv) {
   return isgood;
 }
 
+int EventCalculator::findNearestPVinZ() {
+  //find the index of the PV nearest to PV0
+  //for now we do *not* check the quality of that PV
+  int index=-1;
+
+  if (!isGoodPV(0)) return index;
+
+  float z0 = pv_z->at(0);
+  //  cout<<" ==      "<<z0<<endl;
+  float mindz=1e9;
+  for (unsigned int ipv = 1; ipv<pv_z->size(); ipv++) {
+    if (fabs(pv_z->at(ipv) - z0)<mindz) {
+      mindz = fabs(pv_z->at(ipv) - z0);
+      index = ipv;
+      //      cout<<"new min: "<<pv_z->at(ipv)<<" "<<mindz<<endl;
+    }
+  }
+  return index;
+}
+
 int EventCalculator::countGoodPV() {
   
   int ngood=0;
@@ -7703,6 +7723,8 @@ void EventCalculator::reducedTree(TString outputpath) {
   float PV0_z;
   float PV0_zErr;
 
+  int PV_nearestZindex;
+
   float PV_x[100];
   float PV_xErr[100];
   float PV_y[100];
@@ -8150,6 +8172,10 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("PV_isGood",&PV_isGood,"PV_isGood[100]/F");
   reducedTree.Branch("PV_isValid",&PV_isValid,"PV_isValid[100]/F");
   reducedTree.Branch("PV_tracksSize",&PV_tracksSize,"PV_tracksSize[100]/F");
+
+  reducedTree.Branch("PV_nearestZindex",&PV_nearestZindex,"PV_nearestZindex/I");
+
+
 
   reducedTree.Branch("BS0_x",&BS0_x,"BS0_x/F");
   reducedTree.Branch("BS0_xErr",&BS0_xErr,"BS0_xErr/F");
@@ -9109,6 +9135,8 @@ void EventCalculator::reducedTree(TString outputpath) {
       setPVvar(PV_isGood,"isGood");
       setPVvar(PV_isValid,"isValid");
       setPVvar(PV_tracksSize,"tracksSize");
+
+      PV_nearestZindex = findNearestPVinZ();
 
       BS0_x = -99;
       BS0_xErr = -99;

@@ -190,6 +190,7 @@ public:
   bool isGoodPV(unsigned int ipv);
   bool passPV() ;
   void setPVvar(float (&pv)[100], TString which);
+  int findNearestPVinZ();
 
   float getHT(float ptthreshold=50);
   float getST(float jetthreshold=50,float leptonthreshold=10);
