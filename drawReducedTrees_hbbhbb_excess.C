@@ -12,7 +12,7 @@
 #include "drawReducedTrees_hbbhbb.C"
 
 //to draw everything use default argument
-void makeplots1(TString todraw="mass 2b 3b 4b met0 met1 met2") {
+void makeplots1(TString todraw="pv mass 2b 3b 4b met0 met1 met2") {
 
   //initHiggsSamples69(true,"ttbar znunu qcd wjets ttv vv singlet"); //all backgrounds
   initHiggsSamples69(true,"ttbar znunu bjets wjets ttv vv singlet"); //all backgrounds
@@ -192,6 +192,61 @@ void makeplots1(TString todraw="mass 2b 3b 4b met0 met1 met2") {
       var=am; xtitle=var; filename = "4b_METsig2_dmSB_am";
       drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
   }
+
+  //pv studies
+  if (todraw.Contains("pv")) {
+
+    //can i add the mean and rms to these plots?
+
+    setLogY(true);
+    setPlotMinimum(0.1);
+    // PV0 - beamspot in transverse plane
+    nbins=60; low=0; high=0.03;
+    var = "sqrt((PV0_x-BS0_x)*(PV0_x-BS0_x) + (PV0_y-BS0_y)*(PV0_y-BS0_y))"; xtitle="#sqrt{(PVx-BSx)^2 + (PVy-BSy)^2}";
+
+    // 4b SB METsig1
+    selection_ = sb4b && met1;
+    filename = "SB4b_METsig1_transversePVdisplacement";
+    drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+    // 4b SB METsig1 problematic events
+    selection_ = sb4b && met1 && TCut("deltaPhiStar<0.2");
+    filename = "SB4b_METsig1_deltaPhiStarlt0p2_transversePVdisplacement";
+    drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+    // 4b SB METsig1 SL
+    selection_ = sb4bsl && met1;
+    filename = "SL_SB4b_METsig1_transversePVdisplacement";
+    drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+    // 4b SB METsig2
+    selection_ = sb4b && met2;
+    filename = "SB4b_METsig2_transversePVdisplacement";
+    drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+    
+
+    // PV uncertainty
+    nbins=40; low=0; high=0.01;
+    var = "sqrt(PV0_xErr*PV0_xErr+PV0_yErr*PV0_yErr)"; xtitle="#sqrt{PVerrX^2 + PVerrY^2}";
+     // 4b SB METsig1
+    selection_ = sb4b && met1;
+    filename = "SB4b_METsig1_transversePVerr";
+    drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+    // 4b SB METsig1 problematic events
+    selection_ = sb4b && met1 && TCut("deltaPhiStar<0.2");
+    filename = "SB4b_METsig1_deltaPhiStarlt0p2_transversePVerr";
+    drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+    // 4b SB METsig1 SL
+    selection_ = sb4bsl && met1;
+    filename = "SL_SB4b_METsig1_transversePVerr";
+    drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+    // 4b SB METsig2
+    selection_ = sb4b && met2;
+    filename = "SB4b_METsig2_transversePVerr";
+    drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+
+
+    setLogY(false);
+    resetPlotMinimum();
+  }
+
 
     TCut sel1;
       TCut sel2;
@@ -673,3 +728,4 @@ void makeplots2() {
 
 
 }
+
