@@ -189,7 +189,7 @@ public:
   int countGoodPV();
   bool isGoodPV(unsigned int ipv);
   bool passPV() ;
-  void setPVvar(float (&pv)[100], TString which);
+  void setPVvar(float (&pv)[60], TString which);
   int findNearestPVinZ();
 
   float getHT(float ptthreshold=50);
