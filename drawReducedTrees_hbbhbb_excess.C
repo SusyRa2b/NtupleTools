@@ -12,7 +12,7 @@
 #include "drawReducedTrees_hbbhbb.C"
 
 //to draw everything use default argument
-void makeplots1(TString todraw="pv mass 2b 3b 4b met0 met1 met2") {
+void makeplots1(TString todraw="table pv mass 2b 3b 4b met0 met1 met2") {
 
   //initHiggsSamples69(true,"ttbar znunu qcd wjets ttv vv singlet"); //all backgrounds
   initHiggsSamples69(true,"ttbar znunu bjets wjets ttv vv singlet"); //all backgrounds
@@ -200,6 +200,7 @@ void makeplots1(TString todraw="pv mass 2b 3b 4b met0 met1 met2") {
 
     setLogY(true);
     setPlotMinimum(0.1);
+
     // PV0 - beamspot in transverse plane
     nbins=60; low=0; high=0.03;
     var = "sqrt((PV0_x-BS0_x)*(PV0_x-BS0_x) + (PV0_y-BS0_y)*(PV0_y-BS0_y))"; xtitle="#sqrt{(PVx-BSx)^2 + (PVy-BSy)^2}";
@@ -242,9 +243,105 @@ void makeplots1(TString todraw="pv mass 2b 3b 4b met0 met1 met2") {
     filename = "SB4b_METsig2_transversePVerr";
     drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
 
+    setLogY(false);    resetPlotMinimum();
 
-    setLogY(false);
-    resetPlotMinimum();
+    //distance from PV0 to the nearest PV in z
+    nbins=25; low=0; high=1;
+    var = "abs(PV0_z-PV_z[PV_nearestZindex])"; xtitle="| PV0_z - PVnearest_z |";
+     // 4b SB METsig1
+    selection_ = sb4b && met1;
+    filename = "SB4b_METsig1_PV01dz";
+    drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+    // 4b SB METsig1 problematic events
+    selection_ = sb4b && met1 && TCut("deltaPhiStar<0.2");
+    filename = "SB4b_METsig1_deltaPhiStarlt0p2_PV01dz";
+    drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+    // 4b SB METsig1 SL
+    selection_ = sb4bsl && met1;
+    filename = "SL_SB4b_METsig1_PV01dz";
+    drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+    // 4b SB METsig2
+    selection_ = sb4b && met2;
+    filename = "SB4b_METsig2_PV01dz";
+    drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+
+    //nGoodPV
+    nbins=10; low=0; high=30; //purposefully use a coarse binning
+    var = "nGoodPV"; xtitle=var;
+     // 4b SB METsig1
+    selection_ = sb4b && met1;
+    filename = "SB4b_METsig1_nGoodPV";
+    drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+    // 4b SB METsig1 problematic events
+    selection_ = sb4b && met1 && TCut("deltaPhiStar<0.2");
+    filename = "SB4b_METsig1_deltaPhiStarlt0p2_nGoodPV";
+    drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+    // 4b SB METsig1 SL
+    selection_ = sb4bsl && met1;
+    filename = "SL_SB4b_METsig1_nGoodPV";
+    drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+    // 4b SB METsig2
+    selection_ = sb4b && met2;
+    filename = "SB4b_METsig2_nGoodPV";
+    drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+     // 2b SB METsig1
+    selection_ = sb2b && met1;
+    filename = "SB2b_METsig1_nGoodPV";
+    drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+
+  }
+
+  if (todraw.Contains("table")) {
+    //quantitative study of the "excess" events in the SBs
+    savePlots_=false;
+    nbins=10; low=0; high=1000; var="MET"; //var choice not very important
+    xtitle="MET";
+ 
+    //count data events in SB with deltaPhiStar<0.2
+    //count non-QCD MC expectation
+    selection_=sb2b && met1 && TCut("deltaPhiStar<0.2");
+    drawPlots(var,nbins,low,high,xtitle,"Events", "dummy",0);
+    double data_sb_2b = getIntegral("data");
+    double data_sb_2b_err = sqrt(data_sb_2b);
+    double nonqcd_sb_2b = totalnonqcd->Integral();
+    double nonqcd_sb_2b_err = jmt::errOnIntegral(totalnonqcd);
+
+    selection_=sb3b && met1 && TCut("deltaPhiStar<0.2");
+    drawPlots(var,nbins,low,high,xtitle,"Events", "dummy",0);
+    double data_sb_3b = getIntegral("data");
+    double data_sb_3b_err = sqrt(data_sb_3b);
+    double nonqcd_sb_3b = totalnonqcd->Integral();
+    double nonqcd_sb_3b_err = jmt::errOnIntegral(totalnonqcd);
+
+    selection_=sb4b && met1 && TCut("deltaPhiStar<0.2");
+    drawPlots(var,nbins,low,high,xtitle,"Events", "dummy",0);
+    double data_sb_4b = getIntegral("data");
+    double data_sb_4b_err = sqrt(data_sb_4b);
+    double nonqcd_sb_4b = totalnonqcd->Integral();
+    double nonqcd_sb_4b_err = jmt::errOnIntegral(totalnonqcd);
+
+    //quantify "excess" from QCD (with error)
+
+    double excess_sb_2b = data_sb_2b - nonqcd_sb_2b;
+    double excess_sb_3b = data_sb_3b - nonqcd_sb_3b;
+    double excess_sb_4b = data_sb_4b - nonqcd_sb_4b;
+
+    //calculate excess/nonqcd with error
+    double ratio_sb_2b = excess_sb_2b / nonqcd_sb_2b;
+    double ratio_sb_3b = excess_sb_3b / nonqcd_sb_3b;
+    double ratio_sb_4b = excess_sb_4b / nonqcd_sb_4b;
+
+    // (data-nonqcd)/nonqcd = data/nonqcd - 1
+    double ratio_sb_2b_err = jmt::errAoverB(data_sb_2b,data_sb_2b_err,nonqcd_sb_2b,nonqcd_sb_2b_err);
+    double ratio_sb_3b_err = jmt::errAoverB(data_sb_3b,data_sb_3b_err,nonqcd_sb_3b,nonqcd_sb_3b_err);
+    double ratio_sb_4b_err = jmt::errAoverB(data_sb_4b,data_sb_4b_err,nonqcd_sb_4b,nonqcd_sb_4b_err);
+
+    //use printf (god forbid)
+    printf("2b  %d   %.1f   %.1f    %.2f +/- %.2f",int(data_sb_2b),nonqcd_sb_2b,excess_sb_2b,ratio_sb_2b,ratio_sb_2b_err);
+    printf("3b  %d   %.1f   %.1f    %.2f +/- %.2f",int(data_sb_3b),nonqcd_sb_3b,excess_sb_3b,ratio_sb_3b,ratio_sb_3b_err);
+    printf("4b  %d   %.1f   %.1f    %.2f +/- %.2f",int(data_sb_4b),nonqcd_sb_4b,excess_sb_4b,ratio_sb_4b,ratio_sb_4b_err);
+
+    savePlots_=true;
   }
 
 
