@@ -1508,12 +1508,14 @@ bool EventCalculator::passPV() {
 
 }
 
-void EventCalculator::setPVvar(float (&pv)[100], TString which) {
+void EventCalculator::setPVvar(float (&pv)[60], TString which) {
 
   //Initialize to obvious dummy value
-  for (unsigned int ipv = 0; ipv<100; ipv++) pv[ipv] = -49; 
+  for (unsigned int ipv = 0; ipv<60; ipv++) pv[ipv] = -49; 
 
   for (unsigned int ipv = 0; ipv<pv_x->size(); ipv++) {
+    if (ipv>=58) break; //safety valve
+
     float res = 0;
     if      ( which == "x" )          res = pv_x   ->at(ipv); 
     else if ( which == "xErr" )       res = pv_xErr->at(ipv); 
@@ -7723,27 +7725,22 @@ void EventCalculator::reducedTree(TString outputpath) {
   float PV0_z;
   float PV0_zErr;
 
-  int PV0_ntracks;
-  float PV0_chi2;
-  float PV0_ndof;
-  int PV1_ntracks;
-
   int PV_nearestZindex;
 
   float rho_kt6PFJetsForIsolation;
 
-  float PV_x[100];
-  float PV_xErr[100];
-  float PV_y[100];
-  float PV_yErr[100];
-  float PV_z[100];
-  float PV_zErr[100];
-  float PV_chi2[100];
-  float PV_ndof[100];
-  float PV_isFake[100];
-  float PV_isGood[100];
-  float PV_isValid[100];
-  float PV_tracksSize[100];
+  float PV_x[60];
+  float PV_xErr[60];
+  float PV_y[60];
+  float PV_yErr[60];
+  float PV_z[60];
+  float PV_zErr[60];
+  float PV_chi2[60];
+  float PV_ndof[60];
+  float PV_isFake[60];
+  float PV_isGood[60];
+  float PV_isValid[60];
+  float PV_tracksSize[60];
 
   float BS0_x;
   float BS0_xErr;
@@ -8167,23 +8164,18 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("PV0_z",&PV0_z,"PV0_z/F");
   reducedTree.Branch("PV0_zErr",&PV0_zErr,"PV0_zErr/F");
 
-  reducedTree.Branch("PV0_ntracks",&PV0_ntracks,"PV0_ntracks/I");
-  reducedTree.Branch("PV1_ntracks",&PV1_ntracks,"PV1_ntracks/I");
-  reducedTree.Branch("PV0_chi2",&PV0_chi2,"PV0_chi2/F");
-  reducedTree.Branch("PV0_ndof",&PV0_ndof,"PV0_ndof/F");
-
-  reducedTree.Branch("PV_x",&PV_x,"PV_x[100]/F");
-  reducedTree.Branch("PV_xErr",&PV_xErr,"PV_xErr[100]/F");
-  reducedTree.Branch("PV_y",&PV_y,"PV_y[100]/F");
-  reducedTree.Branch("PV_yErr",&PV_yErr,"PV_yErr[100]/F");
-  reducedTree.Branch("PV_z",&PV_z,"PV_z[100]/F");
-  reducedTree.Branch("PV_zErr",&PV_zErr,"PV_zErr[100]/F");
-  reducedTree.Branch("PV_chi2",&PV_chi2,"PV_chi2[100]/F");
-  reducedTree.Branch("PV_ndof",&PV_ndof,"PV_ndof[100]/F");
-  reducedTree.Branch("PV_isFake",&PV_isFake,"PV_isFake[100]/F");
-  reducedTree.Branch("PV_isGood",&PV_isGood,"PV_isGood[100]/F");
-  reducedTree.Branch("PV_isValid",&PV_isValid,"PV_isValid[100]/F");
-  reducedTree.Branch("PV_tracksSize",&PV_tracksSize,"PV_tracksSize[100]/F");
+  reducedTree.Branch("PV_x",&PV_x,"PV_x[60]/F");
+  reducedTree.Branch("PV_xErr",&PV_xErr,"PV_xErr[60]/F");
+  reducedTree.Branch("PV_y",&PV_y,"PV_y[60]/F");
+  reducedTree.Branch("PV_yErr",&PV_yErr,"PV_yErr[60]/F");
+  reducedTree.Branch("PV_z",&PV_z,"PV_z[60]/F");
+  reducedTree.Branch("PV_zErr",&PV_zErr,"PV_zErr[60]/F");
+  reducedTree.Branch("PV_chi2",&PV_chi2,"PV_chi2[60]/F");
+  reducedTree.Branch("PV_ndof",&PV_ndof,"PV_ndof[60]/F");
+  reducedTree.Branch("PV_isFake",&PV_isFake,"PV_isFake[60]/F");
+  reducedTree.Branch("PV_isGood",&PV_isGood,"PV_isGood[60]/F");
+  reducedTree.Branch("PV_isValid",&PV_isValid,"PV_isValid[60]/F");
+  reducedTree.Branch("PV_tracksSize",&PV_tracksSize,"PV_tracksSize[60]/F");
 
   reducedTree.Branch("PV_nearestZindex",&PV_nearestZindex,"PV_nearestZindex/I");
 
@@ -9126,10 +9118,6 @@ void EventCalculator::reducedTree(TString outputpath) {
       PV0_yErr = -99;
       PV0_z = -99;
       PV0_zErr = -99;
-      PV0_ntracks=-99;
-      PV1_ntracks=-99;
-      PV0_chi2=-99;
-      PV0_ndof=-99;
       if ( passPV() ) {
         PV0_x = pv_x->at(0);
         PV0_xErr = pv_xErr->at(0);
@@ -9137,12 +9125,7 @@ void EventCalculator::reducedTree(TString outputpath) {
         PV0_yErr = pv_yErr->at(0);
         PV0_z = pv_z->at(0);
         PV0_zErr = pv_zErr->at(0);
-
-	PV0_chi2=pv_chi2->at(0);
-	PV0_ndof=pv_ndof->at(0);
-	PV0_ntracks=TMath::Nint(pv_tracksSize->at(0));
       }
-      if (pv_tracksSize->size()>=2) PV1_ntracks=TMath::Nint(pv_tracksSize->at(1));
 
       rho_kt6PFJetsForIsolation = rho_kt6PFJetsForIsolation2012;
 
