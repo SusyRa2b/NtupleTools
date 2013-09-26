@@ -2306,11 +2306,11 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
       totalnonttbar->Add(histos_[samples_[isample]]);
       //      if (!quiet_) cout << "totalnonttbar: " << samples_[isample] << endl;
     }
-    if (!samples_[isample].Contains("QCD") && !samples_[isample].Contains("LM")&& !samples_[isample].Contains("SUGRA")){
+    if (!samples_[isample].Contains("QCD") && !samples_[isample].Contains("BJets") && !samples_[isample].Contains("LM")&& !samples_[isample].Contains("SUGRA")){
        totalnonqcd->Add(histos_[samples_[isample]]);
        //      if (!quiet_) cout << "totalnonqcd: " << samples_[isample] << endl;
     }
-    if (samples_[isample].Contains("QCD")){
+    if (samples_[isample].Contains("QCD")||samples_[isample].Contains("BJets")) {
        totalqcd->Add(histos_[samples_[isample]]);
        //      if (!quiet_) cout << "totalqcd: " << samples_[isample] << endl;
     }
