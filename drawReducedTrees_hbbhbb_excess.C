@@ -289,6 +289,156 @@ void makeplots1(TString todraw="table pv mass 2b 3b 4b met0 met1 met2") {
     filename = "SB2b_METsig1_nGoodPV";
     drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
 
+    //not sure about log scale or not
+    setLogY(false);    resetPlotMinimum();
+
+    //n tracks in PV0
+    nbins=40; low=0; high=200;
+    var="PV_tracksSize[0]"; xtitle=var;
+     // 4b SB METsig1
+    selection_ = sb4b && met1;
+    filename = "SB4b_METsig1_PV0ntracks";
+    drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+    // 4b SB METsig1 problematic events
+    selection_ = sb4b && met1 && TCut("deltaPhiStar<0.2");
+    filename = "SB4b_METsig1_deltaPhiStarlt0p2_PV0ntracks";
+    drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+    // 4b SB METsig1 SL
+    selection_ = sb4bsl && met1;
+    filename = "SL_SB4b_METsig1_PV0ntracks";
+    drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+    // 4b SB METsig2
+    selection_ = sb4b && met2;
+    filename = "SB4b_METsig2_PV0ntracks";
+    drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+     // 2b SB METsig1
+    selection_ = sb2b && met1;
+    filename = "SB2b_METsig1_PV0ntracks";
+    drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+
+
+    //n tracks in PV1
+    nbins=40; low=0; high=200;
+    var="PV_tracksSize[1]"; xtitle=var; // i think no special cut is needed. underflow will just not appear on plot
+     // 4b SB METsig1
+    selection_ = sb4b && met1 ;
+    filename = "SB4b_METsig1_PV1ntracks";
+    drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+    // 4b SB METsig1 problematic events
+    selection_ = sb4b && met1 && TCut("deltaPhiStar<0.2");
+    filename = "SB4b_METsig1_deltaPhiStarlt0p2_PV1ntracks";
+    drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+    // 4b SB METsig1 SL
+    selection_ = sb4bsl && met1;
+    filename = "SL_SB4b_METsig1_PV1ntracks";
+    drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+    // 4b SB METsig2
+    selection_ = sb4b && met2;
+    filename = "SB4b_METsig2_PV1ntracks";
+    drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+     // 2b SB METsig1
+    selection_ = sb2b && met1;
+    filename = "SB2b_METsig1_PV1ntracks";
+    drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+
+    //signed difference between the two
+    nbins=40; low=-100; high=100;
+    var="PV_tracksSize[0]-PV_tracksSize[1]"; xtitle=var;
+    TCut pv1exists = "PV_tracksSize[0]>=1 && PV_tracksSize[1]>=1"; //avoid weird results from dummy values
+     // 4b SB METsig1
+    selection_ = sb4b && met1 &&pv1exists;
+    filename = "SB4b_METsig1_PV0minus1ntracks";
+    drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+    // 4b SB METsig1 problematic events
+    selection_ = sb4b && met1 && TCut("deltaPhiStar<0.2")&&pv1exists;
+    filename = "SB4b_METsig1_deltaPhiStarlt0p2_PV0minus1ntracks";
+    drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+    // 4b SB METsig1 SL
+    selection_ = sb4bsl && met1&&pv1exists;
+    filename = "SL_SB4b_METsig1_PV0minus1ntracks";
+    drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+    // 4b SB METsig2
+    selection_ = sb4b && met2&&pv1exists;
+    filename = "SB4b_METsig2_PV0minus1ntracks";
+    drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+     // 2b SB METsig1
+    selection_ = sb2b && met1&&pv1exists;
+    filename = "SB2b_METsig1_PV0minus1ntracks";
+    drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+
+    //PV0 chi2
+
+    nbins=50; low=0; high=300;
+    var="PV_chi2[0]"; xtitle=var;
+     // 4b SB METsig1
+    selection_ = sb4b && met1;
+    filename = "SB4b_METsig1_PV0chi2";
+    drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+    // 4b SB METsig1 problematic events
+    selection_ = sb4b && met1 && TCut("deltaPhiStar<0.2");
+    filename = "SB4b_METsig1_deltaPhiStarlt0p2_PV0chi2";
+    drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+    // 4b SB METsig1 SL
+    selection_ = sb4bsl && met1;
+    filename = "SL_SB4b_METsig1_PV0chi2";
+    drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+    // 4b SB METsig2
+    selection_ = sb4b && met2;
+    filename = "SB4b_METsig2_PV0chi2";
+    drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+     // 2b SB METsig1
+    selection_ = sb2b && met1;
+    filename = "SB2b_METsig1_PV0chi2";
+    drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+
+    //PV0 ndof
+    nbins=50; low=0; high=300;
+    var="PV_ndof[0]"; xtitle=var;
+     // 4b SB METsig1
+    selection_ = sb4b && met1;
+    filename = "SB4b_METsig1_PV0ndof";
+    drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+    // 4b SB METsig1 problematic events
+    selection_ = sb4b && met1 && TCut("deltaPhiStar<0.2");
+    filename = "SB4b_METsig1_deltaPhiStarlt0p2_PV0ndof";
+    drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+    // 4b SB METsig1 SL
+    selection_ = sb4bsl && met1;
+    filename = "SL_SB4b_METsig1_PV0ndof";
+    drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+    // 4b SB METsig2
+    selection_ = sb4b && met2;
+    filename = "SB4b_METsig2_PV0ndof";
+    drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+     // 2b SB METsig1
+    selection_ = sb2b && met1;
+    filename = "SB2b_METsig1_PV0ndof";
+    drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+    //PV0 chi2/ndof
+    nbins=40; low=0; high=2;
+    var="PV_chi2[0]/PV_ndof[0]"; xtitle=var;
+    TCut div0protect="PV_ndof[0]>0";
+     // 4b SB METsig1
+    selection_ = sb4b && met1&&div0protect;
+    filename = "SB4b_METsig1_PV0chi2PerNdof";
+    drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+    // 4b SB METsig1 problematic events
+    selection_ = sb4b && met1&&div0protect && TCut("deltaPhiStar<0.2");
+    filename = "SB4b_METsig1_deltaPhiStarlt0p2_PV0chi2PerNdof";
+    drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+    // 4b SB METsig1 SL
+    selection_ = sb4bsl && met1&&div0protect;
+    filename = "SL_SB4b_METsig1_PV0chi2PerNdof";
+    drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+    // 4b SB METsig2
+    selection_ = sb4b && met2&&div0protect;
+    filename = "SB4b_METsig2_PV0chi2PerNdof";
+    drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+     // 2b SB METsig1
+    selection_ = sb2b && met1&&div0protect;
+    filename = "SB2b_METsig1_PV0chi2PerNdof";
+    drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+
   }
 
   if (todraw.Contains("table")) {
@@ -457,6 +607,12 @@ void makeplots1(TString todraw="table pv mass 2b 3b 4b met0 met1 met2") {
       drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
 
       // == 2nd round of plots ==
+      //minDeltaPhiAll20
+      nbins=30; low=0; high=3;
+      var="minDeltaPhiAll20"; xtitle=var;
+      filename.Form("SB%db_METsig%d_%s",i,j,var.Data());
+      drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+
       //deltaPhiStar
       nbins=30; low=0; high=3;
       var="deltaPhiStar"; xtitle=var;
@@ -600,6 +756,11 @@ void makeplots1(TString todraw="table pv mass 2b 3b 4b met0 met1 met2") {
       //look at deltaPhiStar<0.2
       selection_ = sel1&&sel2 && TCut("deltaPhiStar<0.2");
 
+      nbins=30; low=0; high=3;
+      var="minDeltaPhiAll20"; xtitle=var;
+      filename.Form("SB%db_METsig%d_deltaPhiStarlt0p2_%s",i,j,var.Data());
+      drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+
       nbins=40; low=0; high=400;
       var="deltaPhiStar_badjet_pt"; xtitle=var;
       filename.Form("SB%db_METsig%d_deltaPhiStarlt0p2_%s",i,j,var.Data());
@@ -727,6 +888,12 @@ void makeplots1(TString todraw="table pv mass 2b 3b 4b met0 met1 met2") {
       filename.Form("SL_SB%db_METsig%d_%s",i,j,var.Data());
       drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
 
+
+      //min deltaPhi
+      nbins=30; low=0; high=3;
+      var="minDeltaPhiAll20"; xtitle=var;
+      filename.Form("SL_SB%db_METsig%d_%s",i,j,var.Data());
+      drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
 
     }
   }
