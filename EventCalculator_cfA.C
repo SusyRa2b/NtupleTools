@@ -7723,6 +7723,11 @@ void EventCalculator::reducedTree(TString outputpath) {
   float PV0_z;
   float PV0_zErr;
 
+  int PV0_ntracks;
+  float PV0_chi2;
+  float PV0_ndof;
+  int PV1_ntracks;
+
   int PV_nearestZindex;
 
   float PV_x[100];
@@ -8159,6 +8164,11 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("PV0_yErr",&PV0_yErr,"PV0_yErr/F");
   reducedTree.Branch("PV0_z",&PV0_z,"PV0_z/F");
   reducedTree.Branch("PV0_zErr",&PV0_zErr,"PV0_zErr/F");
+
+  reducedTree.Branch("PV0_ntracks",&PV0_ntracks,"PV0_ntracks/I");
+  reducedTree.Branch("PV1_ntracks",&PV1_ntracks,"PV1_ntracks/I");
+  reducedTree.Branch("PV0_chi2",&PV0_chi2,"PV0_chi2/F");
+  reducedTree.Branch("PV0_ndof",&PV0_ndof,"PV0_ndof/F");
 
   reducedTree.Branch("PV_x",&PV_x,"PV_x[100]/F");
   reducedTree.Branch("PV_xErr",&PV_xErr,"PV_xErr[100]/F");
@@ -9114,6 +9124,10 @@ void EventCalculator::reducedTree(TString outputpath) {
       PV0_yErr = -99;
       PV0_z = -99;
       PV0_zErr = -99;
+      PV0_ntracks=-99;
+      PV1_ntracks=-99;
+      PV0_chi2=-99;
+      PV0_ndof=-99;
       if ( passPV() ) {
         PV0_x = pv_x->at(0);
         PV0_xErr = pv_xErr->at(0);
@@ -9121,7 +9135,12 @@ void EventCalculator::reducedTree(TString outputpath) {
         PV0_yErr = pv_yErr->at(0);
         PV0_z = pv_z->at(0);
         PV0_zErr = pv_zErr->at(0);
-      } 
+
+	PV0_chi2=pv_chi2->at(0);
+	PV0_ndof=pv_ndof->at(0);
+	PV0_ntracks=TMath::Nint(pv_tracksSize->at(0));
+      }
+      if (pv_tracksSize->size()>=2) PV1_ntracks=TMath::Nint(pv_tracksSize->at(1));
 
       setPVvar(PV_x,"x");
       setPVvar(PV_xErr,"xErr");
