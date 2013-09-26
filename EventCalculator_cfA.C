@@ -7730,6 +7730,8 @@ void EventCalculator::reducedTree(TString outputpath) {
 
   int PV_nearestZindex;
 
+  float rho_kt6PFJetsForIsolation;
+
   float PV_x[100];
   float PV_xErr[100];
   float PV_y[100];
@@ -8185,7 +8187,7 @@ void EventCalculator::reducedTree(TString outputpath) {
 
   reducedTree.Branch("PV_nearestZindex",&PV_nearestZindex,"PV_nearestZindex/I");
 
-
+  reducedTree.Branch("rho_kt6PFJetsForIsolation",&rho_kt6PFJetsForIsolation,"rho_kt6PFJetsForIsolation/F");
 
   reducedTree.Branch("BS0_x",&BS0_x,"BS0_x/F");
   reducedTree.Branch("BS0_xErr",&BS0_xErr,"BS0_xErr/F");
@@ -9141,6 +9143,8 @@ void EventCalculator::reducedTree(TString outputpath) {
 	PV0_ntracks=TMath::Nint(pv_tracksSize->at(0));
       }
       if (pv_tracksSize->size()>=2) PV1_ntracks=TMath::Nint(pv_tracksSize->at(1));
+
+      rho_kt6PFJetsForIsolation = rho_kt6PFJetsForIsolation2012;
 
       setPVvar(PV_x,"x");
       setPVvar(PV_xErr,"xErr");
