@@ -458,8 +458,13 @@ public:
   //Declare them global to use them as needed
   //Goes against the design, I know. Sorry Josh. 
   std::vector<float> pujet_beta;
+  std::vector<float> pujet_betaStar;
+  std::vector<float> pujet_betaClassic;
+  std::vector<float> pujet_betaStarClassic;
   std::vector<float> pujet_MVAfull;
+  std::vector<float> pujet_MVAcut;
   std::vector<int> pujet_MVAfullID;
+  std::vector<int> pujet_MVAcutID;
 
   void extractPUJetVars_Beta(std::vector<float> & beta, TString which ); 
   void extractPUJetVars_MVA(std::vector<float>  & bdt, std::vector<int> & discrim, TString which ); 

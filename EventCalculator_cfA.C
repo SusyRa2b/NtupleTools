@@ -8825,7 +8825,11 @@ void EventCalculator::reducedTree(TString outputpath) {
     // Should do this as soon as possible since we want to fill/extract beta values for jets before any function calls isGoodJet
 
     extractPUJetVars_Beta(pujet_beta,"beta");
+    extractPUJetVars_Beta(pujet_betaStar,"betaStar");
+    extractPUJetVars_Beta(pujet_betaClassic,"betaClassic");
+    extractPUJetVars_Beta(pujet_betaStarClassic,"betaStarClassic");
     extractPUJetVars_MVA(pujet_MVAfull,pujet_MVAfullID,"full");
+    extractPUJetVars_MVA(pujet_MVAcut,pujet_MVAcutID,"cutbased");
     //extractPUJetVars_Beta(pujet_betaClassic,"betaClassic"); //example
     //extractPUJetVars_MVA(pujet_MVAcutbased,pujet_MVAcutbasedID,"cutbased"); //example
 
