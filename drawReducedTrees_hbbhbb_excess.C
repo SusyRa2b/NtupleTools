@@ -75,6 +75,10 @@ void makeplots1(TString todraw="table pv mass 2b 3b 4b met0 met1 met2") {
   TCut sb3b = baseline && trigger && zl&& isotk && jets && btag2 && btag3  && !btag4&&mdp && higgsSB && drmax;
   TCut sb4b = baseline && trigger && zl&& isotk && jets && btag2 && btag3  &&btag4 && mdp && higgsSB && drmax;
 
+  TCut sb2bldp = baseline && trigger && zl&& isotk && jets && btag2 && !btag3 && !mdp && higgsSB && drmax;
+  TCut sb3bldp = baseline && trigger && zl&& isotk && jets && btag2 && btag3  && !btag4&&!mdp && higgsSB && drmax;
+  TCut sb4bldp = baseline && trigger && zl&& isotk && jets && btag2 && btag3  &&btag4 && !mdp && higgsSB && drmax;
+
   TCut sb2bsl = baseline && trigger && sl && jets && btag2 && !btag3 && mdp && higgsSB && drmax;
   TCut sb3bsl = baseline && trigger && sl && jets && btag2 && btag3  && !btag4&&mdp && higgsSB && drmax;
   TCut sb4bsl = baseline && trigger && sl && jets && btag2 && btag3  &&btag4 && mdp && higgsSB && drmax;
@@ -437,6 +441,14 @@ void makeplots1(TString todraw="table pv mass 2b 3b 4b met0 met1 met2") {
      // 2b SB METsig1
     selection_ = sb2b && met1&&div0protect;
     filename = "SB2b_METsig1_PV0chi2PerNdof";
+    drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+    //2b SB METsig1 LDP
+    selection_ = sb2bldp && met1&&div0protect;
+    filename = "LDP_SB2b_METsig1_PV0chi2PerNdof";
+    drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+    //4b SB METsig1 LDP
+    selection_ = sb4bldp && met1&&div0protect;
+    filename = "LDP_SB4b_METsig1_PV0chi2PerNdof";
     drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
 
   }
