@@ -7636,7 +7636,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   //want a copy of triggerlist, for storing mc trigger results
   map<TString, triggerData > triggerlist_mc(triggerlist);
 
-  int njets, njets30, nbjets, nbjets30,ntruebjets, nElectrons,nElectronsBug, nMuons, nTightMuons,njets20,njets20_5p0,nbjets20;
+  int njets, njets30, nbjets,nbjets30,ntruebjets, nElectrons,nElectronsBug, nMuons, nTightMuons,njets20,njets20_5p0;
   int nPUjets20,nPUjets30;
   int nGluonsSplitToLF,nGluonsSplitToC,nGluonsSplitToB;
   int nlfjetsFromGluons,ncjetsFromGluons,nbjetsFromGluons;
@@ -8206,9 +8206,8 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("njetsHiggsMatch20_eta5",&njetsHiggsMatch20_eta5,"njetsHiggsMatch20_eta5/I");
 
   reducedTree.Branch("nbjets",&nbjets,"nbjets/I");
-  reducedTree.Branch("nbjetsTweaked",&nbjetsTweaked,"nbjetsTweaked/I");
   reducedTree.Branch("nbjets30",&nbjets30,"nbjets30/I");
-  reducedTree.Branch("nbjets20",&nbjets20,"nbjets20/I");
+  reducedTree.Branch("nbjetsTweaked",&nbjetsTweaked,"nbjetsTweaked/I");
   reducedTree.Branch("ntruebjets",&ntruebjets,"ntruebjets/I");
 
   reducedTree.Branch("nGluonsSplitToLF",&nGluonsSplitToLF,"nGluonsSplitToLF/I");
@@ -9544,19 +9543,18 @@ void EventCalculator::reducedTree(TString outputpath) {
 	
       //count b jets
       ntruebjets = nTrueBJets();
-      nbjets = nGoodBJets();
-
+      nbjets = nGoodBJets(); //we use this one in RA2b so don't change the definition (still 50 GeV)
+      nbjets30 = nGoodBJets(30); 
       nbjetsTweaked = nGoodBJets_Tweaked();
-      nbjets30 = nGoodBJets(30);
-      nbjets20 = nGoodBJets(20);
-      nbjetsSSVM = nGoodBJets( 50, kSSVM);
-      nbjetsSSVHPT = nGoodBJets( 50, kSSVHPT);
-      nbjetsTCHET = nGoodBJets( 50, kTCHET);
-      nbjetsTCHPT = nGoodBJets( 50, kTCHPT);
-      nbjetsTCHPM = nGoodBJets( 50, kTCHPM);
-      nbjetsCSVT = nGoodBJets( 30, kCSVT);
-      nbjetsCSVM = nGoodBJets( 50, kCSVM);
-      nbjetsCSVL = nGoodBJets( 50, kCSVL);
+      //change all of these to 20 GeV thresholds
+      nbjetsSSVM = nGoodBJets( 20, kSSVM);
+      nbjetsSSVHPT = nGoodBJets( 20, kSSVHPT);
+      nbjetsTCHET = nGoodBJets( 20, kTCHET);
+      nbjetsTCHPT = nGoodBJets( 20, kTCHPT);
+      nbjetsTCHPM = nGoodBJets( 20, kTCHPM);
+      nbjetsCSVT = nGoodBJets( 20, kCSVT);
+      nbjetsCSVM = nGoodBJets( 20, kCSVM);
+      nbjetsCSVL = nGoodBJets( 20, kCSVL);
 
       //            printDecay();
 
@@ -10959,6 +10957,18 @@ TString EventCalculator::assembleBTagEffFilename(bool cutnametail) {
       for ( int ii=0;ii<sizetochop;ii++) basesamplename.Chop(); //chop off the end
     }
     delete basesamplenameSplit; //cleanup after tokenize
+
+    //now need to adjust names to remove skim/slim part
+    //eg
+    //convert "ZZ_TuneZ2star_8TeV_pythia6_tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1876ra2b_v71s" to
+    // "ZZ_TuneZ2star_8TeV_pythia6_tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1876_v71"
+    TRegexp tailr("ra2b_v[0-9][0-9]s");
+    if (basesamplename.Contains(tailr)) {
+      TString matched=basesamplename(tailr);
+      TRegexp vnum("_v[0-9][0-9]");
+      TString vstring = matched(vnum);
+      basesamplename.ReplaceAll(matched,vstring);
+    }
   }
   outfile+=basesamplename;
   outfile+=".root";
