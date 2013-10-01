@@ -75,6 +75,10 @@ void makeplots1(TString todraw="table pv mass 2b 3b 4b met0 met1 met2") {
   TCut sb3b = baseline && trigger && zl&& isotk && jets && btag2 && btag3  && !btag4&&mdp && higgsSB && drmax;
   TCut sb4b = baseline && trigger && zl&& isotk && jets && btag2 && btag3  &&btag4 && mdp && higgsSB && drmax;
 
+  TCut sb2bnodr = baseline && trigger && zl&& isotk && jets && btag2 && !btag3 && mdp && higgsSB;
+  TCut sb3bnodr = baseline && trigger && zl&& isotk && jets && btag2 && btag3  && !btag4&&mdp && higgsSB;
+  TCut sb4bnodr = baseline && trigger && zl&& isotk && jets && btag2 && btag3  &&btag4 && mdp && higgsSB;
+
   TCut sb2bldp = baseline && trigger && zl&& isotk && jets && btag2 && !btag3 && !mdp && higgsSB && drmax;
   TCut sb3bldp = baseline && trigger && zl&& isotk && jets && btag2 && btag3  && !btag4&&!mdp && higgsSB && drmax;
   TCut sb4bldp = baseline && trigger && zl&& isotk && jets && btag2 && btag3  &&btag4 && !mdp && higgsSB && drmax;
@@ -586,9 +590,33 @@ void makeplots1(TString todraw="table pv mass 2b 3b 4b met0 met1 met2") {
       filename.Form("SB%db_METsig%d_%s",i,j,var.Data());
       drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
 
+      //n b jets
+      nbins=7; low=0; high=7;
+      var="nbjetsCSVL"; xtitle=var;
+      filename.Form("SB%db_METsig%d_%s",i,j,var.Data());
+      drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+
+      //out to eta of 5
+      nbins=4; low=0; high=4;
+      var="njets20_5p0-njets20"; xtitle=var;
+      filename.Form("SB%db_METsig%d_%s",i,j,"nForwardJets");
+      drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+
+      //npujets
+      nbins=9; low=0; high=9;
+      var="nPUjets20"; xtitle=var;
+      filename.Form("SB%db_METsig%d_%s",i,j,var.Data());
+      drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+
       //MET spectrum
       nbins=40; low=0; high=400;
       var="MET"; xtitle=var;
+      filename.Form("SB%db_METsig%d_%s",i,j,var.Data());
+      drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+
+      //METsig spectrum
+      nbins=40; low=0; high=100;
+      var="METsig"; xtitle=var;
       filename.Form("SB%db_METsig%d_%s",i,j,var.Data());
       drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
 
@@ -610,6 +638,11 @@ void makeplots1(TString todraw="table pv mass 2b 3b 4b met0 met1 met2") {
       filename.Form("SB%db_METsig%d_%s",i,j,"METminusMHT");
       drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
 
+      //rho_kt6PFJetsForIsolation
+      nbins=20; low=0; high=40;
+      var="rho_kt6PFJetsForIsolation"; xtitle=var;
+      filename.Form("SB%db_METsig%d_%s",i,j,var.Data());
+      drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
 
 
       //max deltaPhi
@@ -622,6 +655,12 @@ void makeplots1(TString todraw="table pv mass 2b 3b 4b met0 met1 met2") {
       //minDeltaPhiAll20
       nbins=30; low=0; high=3;
       var="minDeltaPhiAll20"; xtitle=var;
+      filename.Form("SB%db_METsig%d_%s",i,j,var.Data());
+      drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+
+      //minDeltaPhiAll20; no eta cut, etc
+      nbins=30; low=0; high=3;
+      var="minDeltaPhi20_eta5_noIdAll"; xtitle=var;
       filename.Form("SB%db_METsig%d_%s",i,j,var.Data());
       drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
 
@@ -640,6 +679,13 @@ void makeplots1(TString todraw="table pv mass 2b 3b 4b met0 met1 met2") {
       var="deltaPhiStar_badjet_phi"; xtitle=var;
       filename.Form("SB%db_METsig%d_%s",i,j,var.Data());
       drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+
+      //angle between this phi and MET
+      nbins=30; low=0; high=TMath::Pi();
+      var="acos(cos(deltaPhiStar_badjet_phi-METphi))"; xtitle="Delta Phi(badjet,MET)";
+      filename.Form("SB%db_METsig%d_%s",i,j,"deltaPhiBadjetMET");
+      drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+
 
       nbins=40; low=-4; high=4;
       var="deltaPhiStar_badjet_eta"; xtitle=var;
@@ -764,12 +810,43 @@ void makeplots1(TString todraw="table pv mass 2b 3b 4b met0 met1 met2") {
       filename.Form("SB%db_METsig%d_maxDeltaPhiAll30gt2p9_%s",i,j,var.Data());
       drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
 
+      //N-1 plots of drmax
+     
+      if (i==2) selection_ = sb2bnodr && sel2;
+      else if (i==3) selection_ = sb3bnodr && sel2;
+      else if (i==4) selection_ = sb4bnodr && sel2;
+ 
+      //n b jets
+      nbins=40; low=0; high=6;
+      var="deltaRmax_hh"; xtitle=var;
+      filename.Form("SB%db_METsig%d_%s",i,j,var.Data());
+      drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+
+
       //4th round
       //look at deltaPhiStar<0.2
       selection_ = sel1&&sel2 && TCut("deltaPhiStar<0.2");
 
+      //n b jets
+      nbins=7; low=0; high=7;
+      var="nbjetsCSVL"; xtitle=var;
+      filename.Form("SB%db_METsig%d_deltaPhiStarlt0p2_%s",i,j,var.Data());
+      drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+
       nbins=30; low=0; high=3;
       var="minDeltaPhiAll20"; xtitle=var;
+      filename.Form("SB%db_METsig%d_deltaPhiStarlt0p2_%s",i,j,var.Data());
+      drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+
+    //rho_kt6PFJetsForIsolation
+      nbins=20; low=0; high=40;
+      var="rho_kt6PFJetsForIsolation"; xtitle=var;
+      filename.Form("SB%db_METsig%d_deltaPhiStarlt0p2_%s",i,j,var.Data());
+      drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+
+      //minDeltaPhiAll20; no eta cut, etc
+      nbins=30; low=0; high=3;
+      var="minDeltaPhi20_eta5_noIdAll"; xtitle=var;
       filename.Form("SB%db_METsig%d_deltaPhiStarlt0p2_%s",i,j,var.Data());
       drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
 
@@ -782,6 +859,13 @@ void makeplots1(TString todraw="table pv mass 2b 3b 4b met0 met1 met2") {
       var="deltaPhiStar_badjet_phi"; xtitle=var;
       filename.Form("SB%db_METsig%d_deltaPhiStarlt0p2_%s",i,j,var.Data());
       drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+
+      //angle between this phi and MET
+      nbins=30; low=0; high=TMath::Pi();
+      var="acos(cos(deltaPhiStar_badjet_phi-METphi))"; xtitle="Delta Phi(badjet,MET)";
+      filename.Form("SB%db_METsig%d_deltaPhiStarlt0p2_%s",i,j,"deltaPhiBadjetMET");
+      drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+
 
       nbins=40; low=-4; high=4;
       var="deltaPhiStar_badjet_eta"; xtitle=var;
@@ -864,6 +948,24 @@ void makeplots1(TString todraw="table pv mass 2b 3b 4b met0 met1 met2") {
       filename.Form("SB%db_METsig%d_deltaPhiStarlt0p2_%s",i,j,var.Data());
       drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
 
+      //npujets
+      nbins=9; low=0; high=9;
+      var="nPUjets20"; xtitle=var;
+      filename.Form("SB%db_METsig%d_deltaPhiStarlt0p2_%s",i,j,var.Data());
+      drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+
+      //out to eta of 5
+      nbins=4; low=0; high=4;
+      var="njets20_5p0-njets20"; xtitle=var;
+      filename.Form("SB%db_METsig%d_deltaPhiStarlt0p2_%s",i,j,"nForwardJets");
+      drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+
+      //METsig spectrum
+      nbins=40; low=0; high=100;
+      var="METsig"; xtitle=var;
+      filename.Form("SB%db_METsig%d_deltaPhiStarlt0p2_%s",i,j,var.Data());
+      drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+
 
       //5th round 
       //look at SL sample
@@ -900,12 +1002,49 @@ void makeplots1(TString todraw="table pv mass 2b 3b 4b met0 met1 met2") {
       filename.Form("SL_SB%db_METsig%d_%s",i,j,var.Data());
       drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
 
+      //min deltaPhi
+      nbins=30; low=0; high=3;
+      var="minDeltaPhi20_eta5_noIdAll"; xtitle=var;
+      filename.Form("SL_SB%db_METsig%d_%s",i,j,var.Data());
+      drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
 
       //min deltaPhi
       nbins=30; low=0; high=3;
       var="minDeltaPhiAll20"; xtitle=var;
       filename.Form("SL_SB%db_METsig%d_%s",i,j,var.Data());
       drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+
+
+      //npujets
+      nbins=9; low=0; high=9;
+      var="nPUjets20"; xtitle=var;
+      filename.Form("SL_SB%db_METsig%d_%s",i,j,var.Data());
+      drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+
+      //out to eta of 5
+      nbins=4; low=0; high=4;
+      var="njets20_5p0-njets20"; xtitle=var;
+      filename.Form("SL_SB%db_METsig%d_%s",i,j,"nForwardJets");
+      drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+
+      //METsig spectrum
+      nbins=40; low=0; high=100;
+      var="METsig"; xtitle=var;
+      filename.Form("SL_SB%db_METsig%d_%s",i,j,var.Data());
+      drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+
+      //n b jets
+      nbins=7; low=0; high=7;
+      var="nbjetsCSVL"; xtitle=var;
+      filename.Form("SL_SB%db_METsig%d_%s",i,j,var.Data());
+      drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+
+    //rho_kt6PFJetsForIsolation
+      nbins=20; low=0; high=40;
+      var="rho_kt6PFJetsForIsolation"; xtitle=var;
+      filename.Form("SL_SB%db_METsig%d_%s",i,j,var.Data());
+      drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+
 
     }
   }
@@ -1005,3 +1144,148 @@ void makeplots2() {
 
 }
 
+//duplicate a bit of the above -- special version that adds some signal curves
+void makeplots1signal() {
+
+  //initHiggsSamples69(true,"ttbar znunu qcd wjets ttv vv singlet"); //all backgrounds
+  initHiggsSamples69(true,"ttbar znunu bjets wjets ttv vv singlet hhmg200"); //all backgrounds
+
+  setOutputDirectory("plots_unblind");
+  stackSignal_=true;
+
+  //use top pT weights
+  setSampleWeightFactor("TTJets_FullLeptMGDecays_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7C-v2_AODSIM_UCSB1883ra2b_v71s","topPtWeight");
+  setSampleWeightFactor("TTJets_SemiLeptMGDecays_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7C-v1_AODSIM_UCSB1884ra2b_v71s","topPtWeight");
+  setSampleWeightFactor("TTJets_HadronicMGDecays_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A_ext-v1_AODSIM_UCSB1880ra2b_v71s",   "topPtWeight");
+
+  int nbins;
+  float low,high;
+  TString var,xtitle;
+
+  doOverflowAddition(true);
+  doRatio_=true; ratioMin = 0; ratioMax = 2.2;
+  dodata_=true;
+
+  //define useful cuts
+  TCut baseline = "cutPV==1 &&passCleaning==1 &&buggyEvent==0&& MET/caloMET<2 && maxTOBTECjetDeltaMult<40"; 
+
+  TCut triggerJetMET = "passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1||passMC_DiCentralPFJet30_PFMHT80==1";
+  TCut triggerMET = "passMC_PFMET150==1";
+  TCut trigger = triggerJetMET||triggerMET;
+
+  TCut zl = "nMuons==0&&nElectrons==0&&nTausLoose==0";
+  TCut isotk="nIsoPFcands10_010==0";
+
+  TCut sl = "nMuons+nElectrons==1 &&nTausLoose==0";
+
+  TCut njets4="njets20==4";
+  TCut njets5="njets20==5";
+  TCut jet2="jetpt2>50";
+  TCut jets=(njets4||njets5) &&jet2;
+  TCut btag2="CSVbest2>0.898";
+  TCut btag3="CSVbest3>0.679";
+  TCut btag4="CSVbest4>0.244";
+
+  TCut mdp = "minDeltaPhi20>0.5 || (minDeltaPhi20>0.3&&METsig>50)";
+
+  TCut higgsSR_av = "(0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)>100)&&(0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)<140)";
+  TCut higgsSR_d = "abs(higgsMbb1MassDiff-higgsMbb2MassDiff)<20";
+  TCut higgsSR = higgsSR_av && higgsSR_d;
+
+  TCut higgsSB_avl = "0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)<90";
+  TCut higgsSB_avh = "0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)>150";
+  TCut higgsSB_d = "abs(higgsMbb1MassDiff-higgsMbb2MassDiff)>30";
+  TCut higgsSB = higgsSB_avl||higgsSB_avh||higgsSB_d;
+
+  TCut metsigloose = "METsig>30";
+
+  TCut drmax = "deltaRmax_hh<2.2";
+
+  setStackMode(true,false,false); //stack,norm,label override
+  setLogY(false);
+
+  //define 2b, 3b, 4b SB
+  TCut sb2b = baseline && trigger && zl&& isotk && jets && btag2 && !btag3 && mdp && higgsSB && drmax;
+  TCut sb3b = baseline && trigger && zl&& isotk && jets && btag2 && btag3  && !btag4&&mdp && higgsSB && drmax;
+  TCut sb4b = baseline && trigger && zl&& isotk && jets && btag2 && btag3  &&btag4 && mdp && higgsSB && drmax;
+
+  TCut sb2bnodr = baseline && trigger && zl&& isotk && jets && btag2 && !btag3 && mdp && higgsSB;
+  TCut sb3bnodr = baseline && trigger && zl&& isotk && jets && btag2 && btag3  && !btag4&&mdp && higgsSB;
+  TCut sb4bnodr = baseline && trigger && zl&& isotk && jets && btag2 && btag3  &&btag4 && mdp && higgsSB;
+
+  TCut sb2bldp = baseline && trigger && zl&& isotk && jets && btag2 && !btag3 && !mdp && higgsSB && drmax;
+  TCut sb3bldp = baseline && trigger && zl&& isotk && jets && btag2 && btag3  && !btag4&&!mdp && higgsSB && drmax;
+  TCut sb4bldp = baseline && trigger && zl&& isotk && jets && btag2 && btag3  &&btag4 && !mdp && higgsSB && drmax;
+
+  TCut sb2bsl = baseline && trigger && sl && jets && btag2 && !btag3 && mdp && higgsSB && drmax;
+  TCut sb3bsl = baseline && trigger && sl && jets && btag2 && btag3  && !btag4&&mdp && higgsSB && drmax;
+  TCut sb4bsl = baseline && trigger && sl && jets && btag2 && btag3  &&btag4 && mdp && higgsSB && drmax;
+
+  TCut met0 = "METsig>=15 && METsig<30";
+  TCut met1 = "METsig>=30 && METsig<50";
+  TCut met2 = "METsig>=50 && METsig<100";
+      TString filename;
+
+  TString dm = "abs(higgsMbb1MassDiff-higgsMbb2MassDiff)";
+  TString am = "0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)";
+
+
+    TCut sel1;
+      TCut sel2;
+
+
+  for ( int i=2; i<=4; i++) {
+
+    for ( int j=0; j<=2; j++) {
+      if (i==2) sel1=sb2b;
+      else if (i==3) sel1=sb3b;
+      else if (i==4) sel1=sb4b;
+
+/*      
+      if (!todraw.Contains("2b") && i==2) continue;
+      if (!todraw.Contains("3b") && i==3) continue;
+      if (!todraw.Contains("4b") && i==4) continue;
+*/
+      if (j==1) sel2=met1;
+      else if (j==2) sel2=met2;
+      else if (j==0) sel2=met0;
+
+/*
+      if (!todraw.Contains("met0") && j==0) continue;
+      if (!todraw.Contains("met1") && j==1) continue;
+      if (!todraw.Contains("met2") && j==2) continue;
+*/
+
+      selection_ = sel1&&sel2;
+
+      //CSV output
+      setLogY(false);
+
+      nbins=10; low=0; high=1;
+      var="CSVbest4"; xtitle=var;
+      filename.Form("SB%db_METsig%d_%s-withSignal",i,j,var.Data());
+      drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+
+/* need new reducedTrees from Pawandeep
+      //HT
+      nbins=60; low=0; high=600;
+      var="HT20"; xtitle=var;
+      filename.Form("SB%db_METsig%d_%s-withSignal",i,j,var.Data());
+      drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+
+      //minDeltaPhiAll20
+      nbins=30; low=0; high=3;
+      var="minDeltaPhiAll20"; xtitle=var;
+      filename.Form("SB%db_METsig%d_%s-withSignal",i,j,var.Data());
+      drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+*/
+      //deltaPhiStar
+      nbins=50; low=0; high=2.5;
+      var="deltaPhiStar"; xtitle=var;
+      filename.Form("SB%db_METsig%d_%s-withSignal",i,j,var.Data());
+      drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
+
+    }
+  }
+
+}
