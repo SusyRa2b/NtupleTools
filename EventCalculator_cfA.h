@@ -242,7 +242,7 @@ public:
   double getMinDeltaPhiMET30(unsigned int maxjets, bool bjetsonly = false);
   double getMinDeltaPhiMET30_eta5(unsigned int maxjets);
   double getMinDeltaPhiMET30_eta5_noId(unsigned int maxjets);
-  double getMaxDeltaPhiMET(unsigned int maxjets);
+  double getMaxDeltaPhiMET(unsigned int maxjets,const float ptthreshold=50,const float etamax=2.4, const bool usejetid=true);
   double getMaxDeltaPhiMET30(unsigned int maxjets);
   double getMaxDeltaPhiMET30_eta5(unsigned int maxjets);
   double getMaxDeltaPhiMET30_eta5_noId(unsigned int maxjets);
@@ -256,9 +256,8 @@ public:
   float getMaxJetFracMis(unsigned int rank, unsigned int maxjets, float jetpt);
   float getDeltaPhiMETJetMaxMis(float jetpt);
 
-  float getDeltaPhiStar(int & badjet);
+  float getDeltaPhiStar(int & badjet,const float ptthreshold=30);
 
-  double getMinDeltaPhiMETTaus();
   double getMinDeltaPhiMETMuons(unsigned int maxmuons);
 
   void getCorrectedMET(float& correctedMET, float& correctedMETPhi);
@@ -275,7 +274,7 @@ public:
   bool isGoodJet(const unsigned int ijet, const float pTthreshold=50, const float etaMax=2.4, const bool jetid=true,const bool usebeta=true); //subset of isCleanJet
   bool isGoodJet10(unsigned int ijet) {return isGoodJet(ijet,10,2.4,true);}
   bool isGoodJet30(unsigned int ijet) {return isGoodJet(ijet,30,2.4,true);}
-  bool isGoodJetMHT(unsigned int ijet);
+  bool isGoodJetMHT(unsigned int ijet, const float ptthreshold=30);
   bool passBTagger(int ijet, BTaggerType btagger=Nbtaggers );
 
   float getCosHel( TLorentzVector  d1,  TLorentzVector  d2) ;

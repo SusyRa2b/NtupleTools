@@ -1618,13 +1618,13 @@ float EventCalculator::getMHTphi(int ignoredJet) {
 
 
 
-float EventCalculator::getDeltaPhiStar(int & badjet) {
+float EventCalculator::getDeltaPhiStar(int & badjet, const float ptthreshold) {
 
   float dpstar=1e9;
   badjet=-1;
 
   for (unsigned int i=0; i< jets_AK5PF_pt->size(); i++) {
-    if ( isGoodJetMHT(i) ) {
+    if ( isGoodJetMHT(i,ptthreshold) ) {
       float newmhtphi = getMHTphi(i);
       float thisdp = getDeltaPhi( jets_AK5PF_phi->at(i), newmhtphi);
       if ( thisdp < dpstar) {
@@ -2063,7 +2063,7 @@ double EventCalculator::getMinDeltaPhiMET30_eta5_noId(unsigned int maxjets) {
   return mindp;
 }
 
-double EventCalculator::getMaxDeltaPhiMET(unsigned int maxjets) {
+double EventCalculator::getMaxDeltaPhiMET(unsigned int maxjets,const float ptthreshold,const float etamax, const bool usejetid) {
 
   double maxdp=0;
 
@@ -2071,7 +2071,7 @@ double EventCalculator::getMaxDeltaPhiMET(unsigned int maxjets) {
   //get the minimum angle between the first n jets and MET
   for (unsigned int i=0; i< jets_AK5PF_pt->size(); i++) {
     
-    if (isGoodJet(i)) {
+    if (isGoodJet(i,ptthreshold,etamax,usejetid)) {
       ++ngood;
       double dp =  getDeltaPhi( jets_AK5PF_phi->at(i) , getMETphi());
       if (dp>maxdp) maxdp=dp;
@@ -2082,76 +2082,19 @@ double EventCalculator::getMaxDeltaPhiMET(unsigned int maxjets) {
   return maxdp;
 }
 double EventCalculator::getMaxDeltaPhiMET30(unsigned int maxjets) {
-
-  double maxdp=0;
-
-  unsigned int ngood=0;
-  //get the minimum angle between the first n jets and MET
-  for (unsigned int i=0; i< jets_AK5PF_pt->size(); i++) {
-    
-    if (isGoodJet30(i)) {
-      ++ngood;
-      double dp =  getDeltaPhi( jets_AK5PF_phi->at(i) , getMETphi());
-      if (dp>maxdp) maxdp=dp;
-      if (ngood >= maxjets) break;
-    }
-  }
-  
-  return maxdp;
+  return getMaxDeltaPhiMET(maxjets,30);
 }
 
 double EventCalculator::getMaxDeltaPhiMET30_eta5(unsigned int maxjets) {
+  return getMaxDeltaPhiMET(maxjets,30,5);
 
-  double maxdp=0;
-
-  unsigned int ngood=0;
-  //get the minimum angle between the first n jets and MET
-  for (unsigned int i=0; i< jets_AK5PF_pt->size(); i++) {
-    
-    if (getJetPt(i) > 30 && fabs(jets_AK5PF_eta->at(i)) < 5 && jetPassLooseID(i)) {
-      ++ngood;
-      double dp =  getDeltaPhi( jets_AK5PF_phi->at(i) , getMETphi());
-      if (dp>maxdp) maxdp=dp;
-      if (ngood >= maxjets) break;
-    }
-  }
-  
-  return maxdp;
 }
 double EventCalculator::getMaxDeltaPhiMET30_eta5_noId(unsigned int maxjets) {
+  return getMaxDeltaPhiMET(maxjets,30,5,false);
 
-  double maxdp=0;
-
-  unsigned int ngood=0;
-  //get the minimum angle between the first n jets and MET
-  for (unsigned int i=0; i< jets_AK5PF_pt->size(); i++) {
-    
-    if (getJetPt(i) > 30 && fabs(jets_AK5PF_eta->at(i)) < 5) {
-      ++ngood;
-      double dp =  getDeltaPhi( jets_AK5PF_phi->at(i) , getMETphi());
-      if (dp>maxdp) maxdp=dp;
-      if (ngood >= maxjets) break;
-    }
-  }
-  
-  return maxdp;
 }
 
 
-double EventCalculator::getMinDeltaPhiMETTaus() {
-
-  double mindp=99;
-
-/* //FIXME CFA
-  for (unsigned int i=0; i< taus_pt->size(); i++) {
-    if (taus_pt->at(i) > 30) {
-      double dp =  getDeltaPhi( taus_phi->at(i) , getMETphi());
-      if (dp<mindp) mindp=dp;
-    }
-  }
-*/
-  return mindp;
-}
 
 double EventCalculator::getMinDeltaPhiMETMuons(unsigned int maxmuons) {
 
@@ -2387,9 +2330,9 @@ bool EventCalculator::passBadJetFilter() {
   return true;
 }
 
-bool EventCalculator::isGoodJetMHT(unsigned int ijet) {
+bool EventCalculator::isGoodJetMHT(unsigned int ijet, const float ptthreshold) {
 
-  if ( getJetPt(ijet) <30) return false;
+  if ( getJetPt(ijet) <ptthreshold) return false;
   if ( fabs(jets_AK5PF_eta->at(ijet)) > 5) return false;
   //no jet id for MHT
 
@@ -7519,7 +7462,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   float rawPFMET,rawPFMETphi;
   float caloMETwithHO,caloMETwithHOphi;
   float unclusteredMET,unclusteredMETphi;
-  float maxDeltaPhi, maxDeltaPhiAll, maxDeltaPhiAll30, maxDeltaPhi30_eta5_noIdAll;
+  float maxDeltaPhi, maxDeltaPhiAll, maxDeltaPhiAll30, maxDeltaPhi20_eta5_noIdAll;
   float deltaPhi1, deltaPhi2, deltaPhi3;
   float deltaPhi1_20, deltaPhi2_20, deltaPhi3_20;
   float sumDeltaPhi, diffDeltaPhi;
@@ -7540,8 +7483,8 @@ void EventCalculator::reducedTree(TString outputpath) {
   float deltaPhiMETJetMaxMis, deltaPhiMETJetMaxMis30;
 
   float deltaPhiStar, deltaPhiStar_badjet_pt,deltaPhiStar_badjet_energy, deltaPhiStar_badjet_eta, deltaPhiStar_badjet_phi;
+  float deltaPhiStar_badjet_estimatedPt;
 
-  float minDeltaPhiMetTau;
 
   //items to investigate possible heavy flavor understimate in SIG -- looking at semi leptonic decays, bs, etc
   float CSVout1, CSVout2, CSVout3; //CSV tagger output for the lead three b-tagged jets
@@ -8439,8 +8382,6 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("minDeltaPhi30",&minDeltaPhi30,"minDeltaPhi30/F");
   reducedTree.Branch("minDeltaPhi20_eta5_noIdAll",&minDeltaPhi20_eta5_noIdAll,"minDeltaPhi20_eta5_noIdAll/F");
 
-  reducedTree.Branch("minDeltaPhiMetTau",&minDeltaPhiMetTau,"minDeltaPhiMetTau/F");
-
   reducedTree.Branch("deltaPhi1", &deltaPhi1, "deltaPhi1/F");
   reducedTree.Branch("deltaPhi2", &deltaPhi2, "deltaPhi2/F");
   reducedTree.Branch("deltaPhi3", &deltaPhi3, "deltaPhi3/F");
@@ -8452,13 +8393,14 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("maxDeltaPhi",&maxDeltaPhi,"maxDeltaPhi/F");
   reducedTree.Branch("maxDeltaPhiAll",&maxDeltaPhiAll,"maxDeltaPhiAll/F");
   reducedTree.Branch("maxDeltaPhiAll30",&maxDeltaPhiAll30,"maxDeltaPhiAll30/F");
-  reducedTree.Branch("maxDeltaPhi30_eta5_noIdAll",&maxDeltaPhi30_eta5_noIdAll,"maxDeltaPhi30_eta5_noIdAll/F");
+  reducedTree.Branch("maxDeltaPhi20_eta5_noIdAll",&maxDeltaPhi20_eta5_noIdAll,"maxDeltaPhi20_eta5_noIdAll/F");
 
   reducedTree.Branch("sumDeltaPhi",&sumDeltaPhi,"sumDeltaPhi/F");
   reducedTree.Branch("diffDeltaPhi",&diffDeltaPhi,"diffDeltaPhi/F");
 
   reducedTree.Branch("deltaPhiStar",&deltaPhiStar,"deltaPhiStar/F");
   reducedTree.Branch("deltaPhiStar_badjet_pt",&deltaPhiStar_badjet_pt,"deltaPhiStar_badjet_pt/F");
+  reducedTree.Branch("deltaPhiStar_badjet_estimatedPt",&deltaPhiStar_badjet_estimatedPt,"deltaPhiStar_badjet_estimatedPt/F");
   reducedTree.Branch("deltaPhiStar_badjet_energy",&deltaPhiStar_badjet_energy,"deltaPhiStar_badjet_energy/F");
   reducedTree.Branch("deltaPhiStar_badjet_phi",&deltaPhiStar_badjet_phi,"deltaPhiStar_badjet_phi/F");
   reducedTree.Branch("deltaPhiStar_badjet_eta",&deltaPhiStar_badjet_eta,"deltaPhiStar_badjet_eta/F");
@@ -9683,7 +9625,7 @@ void EventCalculator::reducedTree(TString outputpath) {
       maxDeltaPhi = getMaxDeltaPhiMET(3);
       maxDeltaPhiAll = getMaxDeltaPhiMET(99);
       maxDeltaPhiAll30 = getMaxDeltaPhiMET30(99);
-      maxDeltaPhi30_eta5_noIdAll = getMaxDeltaPhiMET30_eta5_noId(99);
+      maxDeltaPhi20_eta5_noIdAll = getMaxDeltaPhiMET(99,20,5,false);
       minDeltaPhi30=getMinDeltaPhiMET30(3,false);
       
       int j_index_1,j_index_2;
@@ -9719,8 +9661,15 @@ void EventCalculator::reducedTree(TString outputpath) {
       }
 
       int badjet;
-      deltaPhiStar = getDeltaPhiStar(badjet);
+      deltaPhiStar = getDeltaPhiStar(badjet,20); //important -- shift jet pt threshold to 20 from 30
       deltaPhiStar_badjet_pt = (badjet>=0) ? jets_AK5PF_pt->at(badjet) : -99;
+      deltaPhiStar_badjet_estimatedPt = -99;
+      if (badjet>=0) {
+	pair<float,float> mhtxy_without_badjet = getJERAdjustedMHTxy(badjet);
+	//this is the deltaPhiStar method's estimate of the true pT of the bad jet
+	deltaPhiStar_badjet_estimatedPt = sqrt( mhtxy_without_badjet.first*mhtxy_without_badjet.first + mhtxy_without_badjet.second*mhtxy_without_badjet.second);
+      //      if (deltaPhiStar<0.1&&MET>100)      cout<<" bad jet pt-mht wo bad jet, MET : "<<deltaPhiStar_badjet_pt-mht_without_badjet<<" "<<MET<<endl;
+      }
       deltaPhiStar_badjet_phi = (badjet>=0) ? jets_AK5PF_phi->at(badjet) : -99;
       deltaPhiStar_badjet_eta = (badjet>=0) ? jets_AK5PF_eta->at(badjet) : -99;
       //new stuff
@@ -9774,7 +9723,6 @@ void EventCalculator::reducedTree(TString outputpath) {
       if(maxJetFracMis2_tmp > getMaxJetFracMis(1,1,50)) maxJetFracMis_chosenJet=2;
       if(maxJetFracMis > maxJetFracMis2_tmp) maxJetFracMis_chosenJet=3;
 
-      minDeltaPhiMetTau = getMinDeltaPhiMETTaus();
 
       sumDeltaPhi = maxDeltaPhi + minDeltaPhi;
       diffDeltaPhi = maxDeltaPhi - minDeltaPhi;
