@@ -2426,6 +2426,8 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
 	//now clone the totalsm and add the signal to it
 	TH1D* newtotal = (TH1D*) totalsm->Clone(extrasignalname);
 	newtotal->Add( histos_[signals.at(isig)]);
+	//clean up the histo with signal only -- we're done with it
+	delete histos_[signals.at(isig)];
 	//now plop the newtotal into histos_
 	histos_[signals.at(isig)] = newtotal;
 	//FIXME need to adjust the plot max in case this is higher than the stack
