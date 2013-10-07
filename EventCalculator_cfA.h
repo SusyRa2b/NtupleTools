@@ -223,7 +223,7 @@ public:
   float getDeltaPhi_hb(int j_index_1,int j_index_2) ;
 
   unsigned int getNthGoodJet(unsigned int goodJetN, float mainpt, float maineta, bool mainid);
-  double getMinDeltaPhiMET(unsigned int maxjets,float ptthreshold=50,float etacut=2.4,bool useJetId=true);
+  double getMinDeltaPhiMET(unsigned int maxjets,float ptthreshold=50,float etacut=2.4,bool useJetId=true,bool usePUbeta=true);
   double getTransverseMETError(unsigned int thisJet);
   double getDeltaPhiMET(unsigned int n, float ptThreshold = 50, bool bjetsonly = false);
 

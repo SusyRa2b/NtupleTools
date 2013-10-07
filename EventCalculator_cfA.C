@@ -1753,7 +1753,7 @@ float EventCalculator::getMaxJetFracMis(unsigned int rank=1, unsigned int maxjet
   else { assert(0); }
 }
 
-double EventCalculator::getMinDeltaPhiMET(unsigned int maxjets,float ptthreshold,float etacut,bool useJetId) {
+double EventCalculator::getMinDeltaPhiMET(unsigned int maxjets,float ptthreshold,float etacut,bool useJetId,bool usePUbeta) {
 
   double mindp=99;
 
@@ -1761,7 +1761,7 @@ double EventCalculator::getMinDeltaPhiMET(unsigned int maxjets,float ptthreshold
   //get the minimum angle between the first n jets and MET
   for (unsigned int i=0; i< jets_AK5PF_pt->size(); i++) {
     
-    if (isGoodJet(i,ptthreshold,etacut,useJetId)) {
+    if (isGoodJet(i,ptthreshold,etacut,useJetId,usePUbeta)) {
       ++ngood;
       double dp =  getDeltaPhi( jets_AK5PF_phi->at(i) , getMETphi());
       if (dp<mindp) mindp=dp;
@@ -7496,6 +7496,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   ULong64_t lumiSection, eventNumber, runNumber;
   //  float METsig;
   float ST, STeff, HT, HT30,HT20,MHT, MET, METphi, minDeltaPhi, minDeltaPhi30,minDeltaPhi20,minDeltaPhiAll, minDeltaPhiAll20,minDeltaPhi20_eta5_noIdAll;
+  float minDeltaPhi20_eta5_noIdAll_nobeta;
   //  float correctedMET, correctedMETphi
   float caloMET,caloMETphi;
   float rawPFMET,rawPFMETphi;
@@ -8421,6 +8422,8 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("minDeltaPhi20",&minDeltaPhi20,"minDeltaPhi20/F");
   reducedTree.Branch("minDeltaPhi30",&minDeltaPhi30,"minDeltaPhi30/F");
   reducedTree.Branch("minDeltaPhi20_eta5_noIdAll",&minDeltaPhi20_eta5_noIdAll,"minDeltaPhi20_eta5_noIdAll/F");
+  reducedTree.Branch("minDeltaPhi20_eta5_noIdAll_nobeta",&minDeltaPhi20_eta5_noIdAll_nobeta,"minDeltaPhi20_eta5_noIdAll_nobeta/F");
+
 
   reducedTree.Branch("deltaPhi1", &deltaPhi1, "deltaPhi1/F");
   reducedTree.Branch("deltaPhi2", &deltaPhi2, "deltaPhi2/F");
@@ -9670,6 +9673,7 @@ void EventCalculator::reducedTree(TString outputpath) {
       minDeltaPhiAll20 = getMinDeltaPhiMET(99,20);
       minDeltaPhi20 = getMinDeltaPhiMET(3,20);
       minDeltaPhi20_eta5_noIdAll = getMinDeltaPhiMET(99,20,5,false);
+      minDeltaPhi20_eta5_noIdAll_nobeta = getMinDeltaPhiMET(99,20,5,false,false);
       maxDeltaPhi = getMaxDeltaPhiMET(3);
       maxDeltaPhiAll = getMaxDeltaPhiMET(99);
       maxDeltaPhiAll30 = getMaxDeltaPhiMET30(99);
