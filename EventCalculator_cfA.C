@@ -7483,7 +7483,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   float deltaPhiMETJetMaxMis, deltaPhiMETJetMaxMis30;
 
   float deltaPhiStar, deltaPhiStar_badjet_pt,deltaPhiStar_badjet_energy, deltaPhiStar_badjet_eta, deltaPhiStar_badjet_phi;
-  float deltaPhiStar_badjet_estimatedPt;
+  float deltaPhiStar_badjet_estimatedPt,deltaPhiStar_badjet_genPt;
 
 
   //items to investigate possible heavy flavor understimate in SIG -- looking at semi leptonic decays, bs, etc
@@ -8401,9 +8401,12 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("deltaPhiStar",&deltaPhiStar,"deltaPhiStar/F");
   reducedTree.Branch("deltaPhiStar_badjet_pt",&deltaPhiStar_badjet_pt,"deltaPhiStar_badjet_pt/F");
   reducedTree.Branch("deltaPhiStar_badjet_estimatedPt",&deltaPhiStar_badjet_estimatedPt,"deltaPhiStar_badjet_estimatedPt/F");
+  reducedTree.Branch("deltaPhiStar_badjet_genPt",&deltaPhiStar_badjet_genPt,"deltaPhiStar_badjet_genPt/F");
   reducedTree.Branch("deltaPhiStar_badjet_energy",&deltaPhiStar_badjet_energy,"deltaPhiStar_badjet_energy/F");
   reducedTree.Branch("deltaPhiStar_badjet_phi",&deltaPhiStar_badjet_phi,"deltaPhiStar_badjet_phi/F");
   reducedTree.Branch("deltaPhiStar_badjet_eta",&deltaPhiStar_badjet_eta,"deltaPhiStar_badjet_eta/F");
+
+  
 
   //new stuff
   float deltaPhiStar_badjet_CSV,  deltaPhiStar_badjet_chEmE , deltaPhiStar_badjet_chHadE, deltaPhiStar_badjet_photonE,  deltaPhiStar_badjet_neuEmE,
@@ -9668,11 +9671,13 @@ void EventCalculator::reducedTree(TString outputpath) {
       deltaPhiStar = getDeltaPhiStar(badjet,20); //important -- shift jet pt threshold to 20 from 30
       deltaPhiStar_badjet_pt = (badjet>=0) ? jets_AK5PF_pt->at(badjet) : -99;
       deltaPhiStar_badjet_estimatedPt = -99;
+      deltaPhiStar_badjet_genPt = -1e6;
       if (badjet>=0) {
 	pair<float,float> mhtxy_without_badjet = getJERAdjustedMHTxy(badjet);
 	//this is the deltaPhiStar method's estimate of the true pT of the bad jet
 	deltaPhiStar_badjet_estimatedPt = sqrt( mhtxy_without_badjet.first*mhtxy_without_badjet.first + mhtxy_without_badjet.second*mhtxy_without_badjet.second);
       //      if (deltaPhiStar<0.1&&MET>100)      cout<<" bad jet pt-mht wo bad jet, MET : "<<deltaPhiStar_badjet_pt-mht_without_badjet<<" "<<MET<<endl;
+	if ( !isSampleRealData()) deltaPhiStar_badjet_genPt = jets_AK5PF_gen_pt->at(badjet) ;
       }
       deltaPhiStar_badjet_phi = (badjet>=0) ? jets_AK5PF_phi->at(badjet) : -99;
       deltaPhiStar_badjet_eta = (badjet>=0) ? jets_AK5PF_eta->at(badjet) : -99;
