@@ -8455,6 +8455,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   float deltaPhiStar_badjet_CSV,  deltaPhiStar_badjet_chEmE , deltaPhiStar_badjet_chHadE, deltaPhiStar_badjet_photonE,  deltaPhiStar_badjet_neuEmE,
     deltaPhiStar_badjet_neuHadE,  deltaPhiStar_badjet_chMuE, deltaPhiStar_badjet_etaetaMoment, deltaPhiStar_badjet_etaphiMoment,
     deltaPhiStar_badjet_phiphiMoment ,  deltaPhiStar_badjet_rawPt ,  deltaPhiStar_badjet_mass , deltaPhiStar_badjet_PUbeta ;
+  float  deltaPhiStar_badjet_PUbetaStar,deltaPhiStar_badjet_PUbetaStarClassic ;
   int  deltaPhiStar_badjet_chMult,  deltaPhiStar_badjet_neuMult,  deltaPhiStar_badjet_muMult ,   deltaPhiStar_badjet_n60 ,  deltaPhiStar_badjet_n90 ;
   reducedTree.Branch("deltaPhiStar_badjet_CSV",&deltaPhiStar_badjet_CSV,"deltaPhiStar_badjet_CSV/F");
   reducedTree.Branch("deltaPhiStar_badjet_chEmE",&deltaPhiStar_badjet_chEmE,"deltaPhiStar_badjet_chEmE/F");
@@ -8469,13 +8470,19 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("deltaPhiStar_badjet_rawPt",&deltaPhiStar_badjet_rawPt,"deltaPhiStar_badjet_rawPt/F");
   reducedTree.Branch("deltaPhiStar_badjet_mass",&deltaPhiStar_badjet_mass,"deltaPhiStar_badjet_mass/F");
   reducedTree.Branch("deltaPhiStar_badjet_PUbeta",&deltaPhiStar_badjet_PUbeta,"deltaPhiStar_badjet_PUbeta/F");
+  reducedTree.Branch("deltaPhiStar_badjet_PUbetaStar",&deltaPhiStar_badjet_PUbetaStar,"deltaPhiStar_badjet_PUbetaStar/F");
+  reducedTree.Branch("deltaPhiStar_badjet_PUbetaStarClassic",&deltaPhiStar_badjet_PUbetaStarClassic,"deltaPhiStar_badjet_PUbetaStarClassic/F");
+
   reducedTree.Branch("deltaPhiStar_badjet_chMult",&deltaPhiStar_badjet_chMult,"deltaPhiStar_badjet_chMult/I");
   reducedTree.Branch("deltaPhiStar_badjet_neuMult",&deltaPhiStar_badjet_neuMult,"deltaPhiStar_badjet_neuMult/I");
   reducedTree.Branch("deltaPhiStar_badjet_muMult",&deltaPhiStar_badjet_muMult,"deltaPhiStar_badjet_muMult/I");
   reducedTree.Branch("deltaPhiStar_badjet_n60",&deltaPhiStar_badjet_n60,"deltaPhiStar_badjet_n60/I");
   reducedTree.Branch("deltaPhiStar_badjet_n90",&deltaPhiStar_badjet_n90,"deltaPhiStar_badjet_n90/I");
 
-   
+  float hh_mostPUlike_beta,hh_mostPUlike_betaStar;
+  reducedTree.Branch("hh_mostPUlike_beta",&hh_mostPUlike_beta,"hh_mostPUlike_beta/F");
+  reducedTree.Branch("hh_mostPUlike_betaStar",&hh_mostPUlike_betaStar,"hh_mostPUlike_betaStar/F");
+  
   reducedTree.Branch("minDeltaPhiN", &minDeltaPhiN, "minDeltaPhiN/F");
   reducedTree.Branch("deltaPhiN1", &deltaPhiN1, "deltaPhiN1/F");
   reducedTree.Branch("deltaPhiN2", &deltaPhiN2, "deltaPhiN2/F");
@@ -9181,6 +9188,8 @@ void EventCalculator::reducedTree(TString outputpath) {
       nPUjets20 = nPUJets(20);
       nPUjets30 = nPUJets(30);
 
+
+
       //look for jj resonances
       jjResonanceFinder(mjj1,mjj2, nCorrectRecoStop);
       mjjdiff=fabs(mjj1-mjj2);
@@ -9394,6 +9403,7 @@ void EventCalculator::reducedTree(TString outputpath) {
 	  deltaRmin_hhAll=-1;
 	}
 
+	hh_mostPUlike_beta=-1; hh_mostPUlike_betaStar=-1;
 	if (h1j1>=0 && h1j2>=0 && h2j1>=0 && h2j2>=0) {
 	  TLorentzVector vec_h1j1 = getLorentzVector(h1j1);
 	  TLorentzVector vec_h1j2 = getLorentzVector(h1j2);
@@ -9416,6 +9426,14 @@ void EventCalculator::reducedTree(TString outputpath) {
 	  }
 	  sumPt_hh =  vec_h1j1.Pt() + vec_h1j2.Pt() +  vec_h2j1.Pt() + vec_h2j2.Pt();
 	
+	  int hindices[4] = {h1j1,h1j2,h2j1,h2j2};
+	  hh_mostPUlike_beta=1; hh_mostPUlike_betaStar=0;
+	  for (unsigned int ih=0; ih<4; ih++) {
+	    int hindex = hindices[ih];
+	    if (  pujet_beta[hindex] < hh_mostPUlike_beta ) hh_mostPUlike_beta= pujet_beta[hindex];
+	    if (  pujet_betaStar[hindex] > hh_mostPUlike_betaStar ) hh_mostPUlike_betaStar= pujet_betaStar[hindex];
+	  }
+
 	  higgs1jetpt1 = vec_h1j1.Pt();
 	  higgs1jetpt2 = vec_h1j2.Pt();
 	  higgs2jetpt1 = vec_h2j1.Pt();
@@ -9753,6 +9771,9 @@ void EventCalculator::reducedTree(TString outputpath) {
       deltaPhiStar_badjet_mass = (badjet>=0) ? jets_AK5PF_mass->at(badjet) : -99;
 
       deltaPhiStar_badjet_PUbeta = (badjet>=0) ? pujet_beta[badjet] : -99;
+      deltaPhiStar_badjet_PUbetaStar = (badjet>=0) ? pujet_betaStar[badjet] : -99;
+      deltaPhiStar_badjet_PUbetaStarClassic = (badjet>=0) ? pujet_betaStarClassic[badjet] : -99;
+
 
       if (isSampleQCD()) { //don't fill except for QCD MC
       maxJetMis=getMaxJetMis(1,3,50);
