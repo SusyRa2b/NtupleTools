@@ -434,6 +434,7 @@ public:
 
   int nGoodBJets_Tweaked() ;
   float getTopPtWeight(float & topPt);
+  float getTopPtWeight_official();
 
   //the standard jet-tag probability method that we have been using  
   void calculateTagProb(float &Prob0, float &ProbGEQ1, float &Prob1, float &ProbGEQ2, float & Prob2, float &ProbGEQ3,

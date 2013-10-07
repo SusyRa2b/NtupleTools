@@ -230,6 +230,7 @@ float EventCalculator::getPDFweight(const int ipdfset, const int imember ) {
 }
 
 float EventCalculator::getTopPtWeight(float & topPt) {
+  //the "original recipe" from Darren Puigh (the ttH recipe)
   topPt=-1;
 
   //only for use with ttbar 
@@ -256,6 +257,44 @@ float EventCalculator::getTopPtWeight(float & topPt) {
   }
 
   return 1;
+}
+
+float EventCalculator::getTopPtWeight_official() {
+
+  float topweight=-1;
+
+  //official recipe from
+  // https://twiki.cern.ch/twiki/bin/viewauth/CMS/TopPtReweighting
+  //(2 string comparisons for every event is not so good for performance, but oh well)
+  if (sampleName_.BeginsWith("TTJets") || sampleName_.BeginsWith("TT_")) {
+
+    float topPt=-1;
+    float topbarPt=-1;
+    for ( unsigned int i=0; i< mc_doc_id->size(); i++ ) {
+      // look for the *top* (not antitop) pT
+      if ( mc_doc_id->at(i)== 6 ) { topPt = mc_doc_pt->at(i);  }
+      if ( mc_doc_id->at(i)== -6 ) { topbarPt = mc_doc_pt->at(i);  }
+
+      if (topPt>=0 && topbarPt >=0) break; //check to see if we're done
+    }
+
+    //SF(x)=exp(a+bx)
+    const double a = 0.156; //combined 8 TeV values
+    const double b =  -0.00137 ;
+
+    //important choice -- I've decided to use the 400 GeV value for values above 400 GeV
+    //an alternative would be to just blindly use the formula
+    if (topPt >400) topPt=400;
+    if (topbarPt >400) topbarPt=400;
+
+    double SFt = exp(a + b*topPt);
+    double SFtbar = exp(a + b*topbarPt);
+
+    topweight = sqrt( SFt * SFtbar );
+  }
+
+  if (topweight <0) topweight=1;
+  return topweight;
 }
 
 
@@ -7930,9 +7969,10 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("SUSY_topbar_pt",&SUSY_topbar_pt,"SUSY_topbar_pt[2]/F");
   reducedTree.Branch("SUSY_chi0_pt",&SUSY_chi0_pt,"SUSY_chi0_pt[2]/F");
 
-  float topPtWeight,topPt;
+  float topPtWeight,topPt,topPtWeightOfficial;
   reducedTree.Branch("topPtWeight",&topPtWeight,"topPtWeight/F");
   reducedTree.Branch("topPt",&topPt,"topPt/F");
+  reducedTree.Branch("topPtWeightOfficial",&topPtWeightOfficial,"topPtWeightOfficial/F");
 
   //Higgs related variables
   float higgs1b1pt=0, higgs1b1phi=0, higgs1b1eta=0;
@@ -9008,6 +9048,7 @@ void EventCalculator::reducedTree(TString outputpath) {
       }
 
       topPtWeight = getTopPtWeight(topPt); //topPt is the pT of the top quark (not antitop) in ttbar sample
+      topPtWeightOfficial = getTopPtWeight_official(); //new version
 
 
       //test
