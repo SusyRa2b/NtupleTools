@@ -76,8 +76,8 @@ double lumiScale_ = 19399 ; //Run 2012 ABC+D
 
 void initHiggsSamples69(const bool useSkim=true,const TString samplelist="") { 
 
-  inputPath="/cu6/joshmt/reducedTrees/v71_5/"; 
-  dataInputPath="/cu6/joshmt/reducedTrees/v71_5/data/"; //for skimmed data
+  inputPath="/cu6/joshmt/reducedTrees/v71_5b/"; 
+  dataInputPath="/cu6/joshmt/reducedTrees/v71_5b/data/"; //for skimmed data
   if (!useSkim)   {
     inputPath+="unskimmed/";
     dataInputPath=inputPath;
@@ -220,6 +220,8 @@ void initHiggsSamples69(const bool useSkim=true,const TString samplelist="") {
     addSample(bname,kGreen,"BJets");
     chainSamples(bname,TString("BJets_HT-1000ToInf_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1895ra2b_v71s"));
     chainSamples(bname,TString("BJets_HT-500To1000_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1894ra2b_v71s"));
+
+    setSampleScaleFactor(bname,1.3);
   }
 
   if (samplelist==""||samplelist.Contains("ttbar")) {
@@ -1375,11 +1377,86 @@ void higgs_dataMC_control_PUtests() {
 
 }
 
+void higgs_dataMC_SR() {
+
+  initHiggsSamples69(true,"ttbar znunu bjets wjets ttv vv singlet hhmg250 hhmg300 hhmg350 hhmg400");
+  setOutputDirectory("plots_Signal");
+
+  //use top pT weights
+  setSampleWeightFactor("TTJets_FullLeptMGDecays_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7C-v2_AODSIM_UCSB1883ra2b_v71s","topPtWeight");
+  setSampleWeightFactor("TTJets_SemiLeptMGDecays_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7C-v1_AODSIM_UCSB1884ra2b_v71s","topPtWeight");
+  setSampleWeightFactor("TTJets_HadronicMGDecays_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A_ext-v1_AODSIM_UCSB1880ra2b_v71s",   "topPtWeight");
+
+
+  int nbins;
+  float low,high;
+  TString var,xtitle;
+
+  doOverflowAddition(true);
+  doRatio_=true; ratioMin = 0; ratioMax = 2.2;
+  dodata_=true;
+
+  //define useful cuts
+  TCut baseline = "cutPV==1 &&passCleaning==1 &&buggyEvent==0&& MET/caloMET<2 && maxTOBTECjetDeltaMult<40"; 
+
+  TCut triggerJetMET = "passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1||passMC_DiCentralPFJet30_PFMHT80==1";
+  TCut triggerMET = "passMC_PFMET150==1";
+  TCut trigger = triggerJetMET||triggerMET;
+
+  TCut zl = "nMuons==0&&nElectrons==0&&nTausLoose==0";
+  TCut isotk="nIsoPFcands10_010==0";
+
+  TCut sl = "nMuons+nElectrons==1 &&nTausLoose==0";
+
+  TCut njets4="njets20==4";
+  TCut njets5="njets20==5";
+  TCut jet2="jetpt2>50";
+  TCut jets=(njets4||njets5) &&jet2;
+  TCut btag2="CSVbest2>0.898";
+  TCut btag3="CSVbest3>0.679";
+  TCut btag4="CSVbest4>0.244";
+
+  //  TCut mdp = "minDeltaPhi20>0.5 || (minDeltaPhi20>0.3&&METsig>50)";
+  TCut mdp = "minDeltaPhi20_eta5_noIdAll_nobeta>0.5 || (minDeltaPhi20_eta5_noIdAll_nobeta>0.3 && METsig>50)";
+
+  TCut higgsSR_av = "(0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)>100)&&(0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)<140)";
+  TCut higgsSR_d = "abs(higgsMbb1MassDiff-higgsMbb2MassDiff)<20";
+  TCut higgsSR = higgsSR_av && higgsSR_d;
+
+  TCut higgsSB_avl = "0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)<90";
+  TCut higgsSB_avh = "0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)>150";
+  TCut higgsSB_d = "abs(higgsMbb1MassDiff-higgsMbb2MassDiff)>30";
+  TCut higgsSB = higgsSB_avl||higgsSB_avh||higgsSB_d;
+
+
+  TCut drmax = "deltaRmax_hh<2.2";
+
+  //plot:
+  //DeltaPhi(jets,MET)
+
+  setStackMode(true,false,false); //stack,norm,label override
+  setLogY(false);
+
+  TCut metloose = "METsig>=30";
+  TCut met0 = "METsig>=15 && METsig<30";
+  TCut met1 = "METsig>=30 && METsig<50";
+  TCut met2 = "METsig>=50 && METsig<100";
+  TCut met3 = "METsig>=100 && METsig<150";
+  TCut met4 = "METsig>=150";
+
+  selection_ = baseline && trigger && zl && isotk && jets && btag2 && btag3 && btag4 && mdp && higgsSR && drmax && metloose;
+  nbins=20; low=0; high=200;
+  var="METsig"; xtitle = "MET significance";
+  drawPlots(var,nbins,low,high,xtitle,"Events","SR4b_allcuts_METsig",0);
+
+
+}
+
 void higgs_dataMC_control_QCD() {
 
   //goal: use 2-b sample to get a qcd control region. 
 
-  initHiggsSamples69(true,"ttbar znunu qcd wjets ttv vv singlet"); //all backgrounds
+  initHiggsSamples69(true,"ttbar znunu bjets wjets ttv vv singlet"); //all backgrounds
   //  initHiggsSamples69(true,"ttbar znunu bjets wjets ttv vv singlet"); //all backgrounds
 
   setOutputDirectory("plots_Control_QCD");
@@ -1419,7 +1496,8 @@ void higgs_dataMC_control_QCD() {
   TCut btag3="CSVbest3>0.679";
   TCut btag4="CSVbest4>0.244";
 
-  TCut mdp = "minDeltaPhi20>0.5 || (minDeltaPhi20>0.3&&METsig>50)";
+  //  TCut mdp = "minDeltaPhi20>0.5 || (minDeltaPhi20>0.3&&METsig>50)";
+  TCut mdp = "minDeltaPhi20_eta5_noIdAll_nobeta>0.5 || (minDeltaPhi20_eta5_noIdAll_nobeta>0.3 && METsig>50)";
 
   TCut higgsSR_av = "(0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)>100)&&(0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)<140)";
   TCut higgsSR_d = "abs(higgsMbb1MassDiff-higgsMbb2MassDiff)<20";
@@ -1627,22 +1705,23 @@ void higgs_dataMC_control_QCD() {
   selection_ = baseline && trigger && zl && isotk && jets && btag2 && !btag3 && metsigloose;
   nbins=30; low = 0; high=3;
   setLogY(false);
-  var="minDeltaPhi20"; xtitle="#Delta #phi_{min}(jet, MET)";
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_0l2bMETsig30_minDeltaPhi20",0);
+  var="minDeltaPhi20_eta5_noIdAll_nobeta"; xtitle="#Delta #phi_{min}(jet, MET)";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_0l2bMETsig30_minDeltaPhi20uber",0);
   //this plot is worrisome in that there are extra events outside of the veto region
 
   selection_ = baseline && trigger && zl && isotk && jets && btag2 && !btag3 && TCut("METsig>50 && METsig<=100");
   nbins=30; low = 0; high=3;
   setLogY(false);
-  var="minDeltaPhi20"; xtitle="#Delta #phi_{min}(jet, MET)";
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_0l2bMETsig50to100_minDeltaPhi20",0);
+  var="minDeltaPhi20_eta5_noIdAll_nobeta"; xtitle="#Delta #phi_{min}(jet, MET)";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_0l2bMETsig50to100_minDeltaPhi20uber",0);
 
   selection_ = baseline && trigger && zl && isotk && jets && btag2 && !btag3 && TCut("METsig>100 && METsig<=150");
   nbins=30; low = 0; high=3;
   setLogY(false);
-  var="minDeltaPhi20"; xtitle="#Delta #phi_{min}(jet, MET)";
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_0l2bMETsig100to150_minDeltaPhi20",0);
+  var="minDeltaPhi20_eta5_noIdAll_nobeta"; xtitle="#Delta #phi_{min}(jet, MET)";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_0l2bMETsig100to150_minDeltaPhi20uber",0);
 
+/* these were some studies...not really needed anymore
   nbins=30; low = 0; high=3;
   setLogY(false);
   var="deltaPhi1"; xtitle="#Delta #phi(jet 1 (50), MET)";
@@ -1668,29 +1747,29 @@ void higgs_dataMC_control_QCD() {
   setLogY(false);
   var="minDeltaPhi20"; xtitle="#Delta #phi_{min}(jet, MET)";
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_0l2bMETsig30_minDeltaPhi20-Dp2gt0p5",0);
+*/
 
   //now, we want: Data/MC minDeltaPhi distributions of 2b SB, 3b SB, 2b SIG; focus on 1st METsig bin
-
   nbins=30; low = 0; high=3;
   setLogY(false);
-  var="minDeltaPhi20"; xtitle="#Delta #phi_{min}(jet, MET)";
+  var="minDeltaPhi20_eta5_noIdAll_nobeta"; xtitle="#Delta #phi_{min}(jet, MET)";
 
   selection_=baseline&&trigger && zl && isotk && jets && btag2 && !btag3 && TCut("METsig>30 && METsig<=50") && drmax && higgsSB;
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_2bSB_minDeltaPhi20",0);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_2bSB_minDeltaPhi20uber",0);
   selection_=baseline&&trigger && zl && isotk && jets && btag2 && btag3&&!btag4 && TCut("METsig>30 && METsig<=50") && drmax && higgsSB;
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_3bSB_minDeltaPhi20",0);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_3bSB_minDeltaPhi20uber",0);
   selection_=baseline&&trigger && zl && isotk && jets && btag2 && !btag3 && TCut("METsig>30 && METsig<=50") && drmax && higgsSR;
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_2bSIG_minDeltaPhi20",0);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_2bSIG_minDeltaPhi20uber",0);
   //can't add 3b SIG, 4b SB, or 4b SIG until we're unblind
   selection_=baseline&&trigger && zl && isotk && jets && btag2 && btag3&&btag4 && TCut("METsig>30 && METsig<=50") && drmax && higgsSB;
-   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_4bSB_minDeltaPhi20",0);
+   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_4bSB_minDeltaPhi20uber",0);
 //   selection_=baseline&&trigger && zl && isotk && jets && btag2 && btag3&&!btag4 && TCut("METsig>30 && METsig<=50") && drmax && higgsSR;
-//   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_3bSIG_minDeltaPhi20",0);
+//   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_3bSIG_minDeltaPhi20uber",0);
 //   selection_=baseline&&trigger && zl && isotk && jets && btag2 && btag3&&btag4 && TCut("METsig>30 && METsig<=50") && drmax && higgsSR;
-//   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_4bSIG_minDeltaPhi20",0);
+//   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_4bSIG_minDeltaPhi20uber",0);
 
   selection_=baseline&&trigger && zl && isotk && jets && btag2 && btag3&&btag4 && TCut("METsig>30 && METsig<=50") && drmax && higgsSB && mdp;
-   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_4bSB_minDeltaPhi20-mdpcut",0);
+   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_4bSB_minDeltaPhi20uber-mdpcut",0);
 
   //LDP plot of maxDR (no higgs mass window)
   selection_ = baseline && trigger && zl && isotk && jets && btag2 && !btag3 && !mdp && metsigloose  ;
@@ -2404,7 +2483,7 @@ void higgs_dataMC_weightFactorTest_SL(TString options) {
 void higgs_dataMC_control_SL() {
 
   //goal do data / MC comparisons; use skim to save time. restricts what plots can be made.
-  initHiggsSamples69(true,"ttbar znunu qcd wjets ttv vv singlet"); //use all samples except signal
+  initHiggsSamples69(true,"ttbar znunu bjets wjets ttv vv singlet"); //use all samples except signal
 
   //use top pT weights
   setSampleWeightFactor("TTJets_FullLeptMGDecays_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7C-v2_AODSIM_UCSB1883ra2b_v71s","topPtWeight");
@@ -2420,7 +2499,6 @@ void higgs_dataMC_control_SL() {
   dodata_=true;
 
   setOutputDirectory("plots_Control_SL");
-
 
   //define useful cuts
   TCut baseline = "cutPV==1 &&passCleaning==1 &&buggyEvent==0&& MET/caloMET<2 && maxTOBTECjetDeltaMult<40"; 
@@ -2441,7 +2519,8 @@ void higgs_dataMC_control_SL() {
   TCut njets4="njets20==4"; //switch back to 20 GeV jets
   TCut njets5="njets20==5";
   TCut jet2="jetpt2>50";
-  TCut mdp = "minDeltaPhi20>0.5 || (minDeltaPhi20>0.3&&METsig>50)";
+  //  TCut mdp = "minDeltaPhi20>0.5 || (minDeltaPhi20>0.3&&METsig>50)";
+  TCut mdp = "minDeltaPhi20_eta5_noIdAll_nobeta>0.5 || (minDeltaPhi20_eta5_noIdAll_nobeta>0.3 && METsig>50)";
   TCut btag2="CSVbest2>0.898";
   TCut btag3="CSVbest3>0.679";
   TCut btag4="CSVbest4>0.244";
@@ -2583,14 +2662,14 @@ root [109] ratiosByPV[0]->SetMarkerColor(kMagenta+4)
   selection_ = baseline && trigger && sl && (njets4||njets5) &&jet2 && btag2;
   nbins=30; low=0; high=3;
   setLogY(false);
-  var="minDeltaPhi20"; xtitle=var;
+  var="minDeltaPhi20_eta5_noIdAll_nobeta"; xtitle=var;
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselectionNoMdpNoMETsig_minDeltaPhi20",0);
 
   //add the standard METsig cut
   selection_ = baseline && trigger && sl && (njets4||njets5) &&jet2 && btag2 &&metsigveryloose;
   nbins=30; low=0; high=3;
   setLogY(false);
-  var="minDeltaPhi20"; xtitle=var;
+  var="minDeltaPhi20_eta5_noIdAll_nobeta"; xtitle=var;
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselectionNoMdp_minDeltaPhi20",0);
 
   //CSV3
@@ -2780,7 +2859,7 @@ void higgs_ttbarjetmult_sbsig() {
   doRatio_=false; ratioMin = 0; ratioMax = 2.2;
   dodata_=false;
 
-  TCut baseline = "cutPV==1 &&passCleaning==1 &&buggyEvent==0"; 
+  TCut baseline = "cutPV==1 &&passCleaning==1 &&buggyEvent==0&& MET/caloMET<2 && maxTOBTECjetDeltaMult<40"; 
 
   TCut triggerJetMET = "passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1||passMC_DiCentralPFJet30_PFMHT80==1";
   //  TCut triggerJets = "passMC_DiPFJet80_DiPFJet30_BTagCSVd07d05==1";
@@ -2788,12 +2867,12 @@ void higgs_ttbarjetmult_sbsig() {
   TCut trigger = triggerJetMET||triggerMET;
 
   TCut zl = "nMuons==0&&nElectrons==0&&nTausLoose==0";
-  TCut isotk="nIsoTracks15_005_03==0";//&&nIsoTracks5_005_03<2";
-  TCut sl = "nMuons+nElectrons==1 &&nTausLoose==0 &&nIsoTracks15_005_03_lepcleaned==0";
+  TCut isotk="nIsoPFcands10_010==0";
+  TCut sl = "nMuons+nElectrons==1 &&nTausLoose==0";
 
   TCut njets4="njets20==4";
   TCut njets5="njets20==5";
-  TCut mdp = "minDeltaPhi20>0.5 || (minDeltaPhi20>0.3&&METsig>50)";
+  TCut mdp = "minDeltaPhi20_eta5_noIdAll_nobeta>0.5 || (minDeltaPhi20_eta5_noIdAll_nobeta>0.3 && METsig>50)";
   TCut jet2="jetpt2>50";
   TCut btag2="CSVbest2>0.898";
   TCut btag3="CSVbest3>0.679";
@@ -3438,7 +3517,6 @@ void higgs_whyLeptonLost() {
   doRatio_=false; ratioMin = 0; ratioMax = 2.2;
   dodata_=false;
 
-  //20 June -- update
   TCut baseline = "cutPV==1 &&passCleaning==1 &&buggyEvent==0 && MET/caloMET<2 && maxTOBTECjetDeltaMult<40";
   TCut triggers = "passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1||passMC_DiCentralPFJet30_PFMHT80==1||passMC_PFMET150==1";
   TCut zl = "nMuons==0&&nElectrons==0";
@@ -3451,7 +3529,7 @@ void higgs_whyLeptonLost() {
   TCut btag3="CSVbest3>0.679";
   TCut btag4="CSVbest4>0.244";
 
-  TCut mdp = "minDeltaPhi20>0.5 || (minDeltaPhi20>0.3&&METsig>50)";
+  TCut mdp = "minDeltaPhi20_eta5_noIdAll_nobeta>0.5 || (minDeltaPhi20_eta5_noIdAll_nobeta>0.3 && METsig>50)";
 
   TCut higgsmass = "(0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)>100)&&(0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)<140)";
   TCut higgsdiff = "abs(higgsMbb1MassDiff-higgsMbb2MassDiff)<20";
@@ -3548,7 +3626,8 @@ void higgs_Nminus1() {
   TCut btag3="CSVbest3>0.679";
   TCut btag4="CSVbest4>0.244";
 
-  TCut mdp = "minDeltaPhi20>0.5 || (minDeltaPhi20>0.3&&METsig>50)";
+  //  TCut mdp = "minDeltaPhi20>0.5 || (minDeltaPhi20>0.3&&METsig>50)";
+  TCut mdp = "minDeltaPhi20_eta5_noIdAll_nobeta>0.5 || (minDeltaPhi20_eta5_noIdAll_nobeta>0.3 && METsig>50)";
 
   TCut higgsmass = "(0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)>100)&&(0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)<140)";
   TCut higgsdiff = "abs(higgsMbb1MassDiff-higgsMbb2MassDiff)<20";
@@ -3567,13 +3646,6 @@ void higgs_Nminus1() {
   nbins=20; low= 0; high=400;
   setLogY(false);
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_Nm1_allcuts_bjetpt1",0,"GeV");
-
-
-  var="minDeltaPhi20_eta5_noIdAll"; xtitle="min #Delta #phi (all jets, MET)";
-  nbins=10; low= 0; high=3;
-  setLogY(false);
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_allcuts_deltaPhiMinAll",0);
-
 
   //still full selection
   var="jetpt1"; xtitle="lead jet pT";
@@ -3617,6 +3689,7 @@ void higgs_Nminus1() {
 
   //full selection except mdp
   selection_=baseline&&triggers && zl&& tauveto && isotk1 && njets&&jet2 && btag2 && btag3 && btag4 && higgsmass && higgsdiff && drmax && metsig;
+/* not very interesting anymore
   var="deltaPhi1"; xtitle="#Delta #phi (jet1,MET)";
   nbins=10; low= 0; high=4;
   setLogY(false);
@@ -3629,6 +3702,9 @@ void higgs_Nminus1() {
   nbins=10; low= 0; high=4;
   setLogY(false);
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_Nm1_allcuts_deltaPhi3",0);
+*/
+
+//these could be interesting -- shows how signal changes with the different versions
   var="minDeltaPhi20"; xtitle="min #Delta #phi (jet1..3,MET)";
   nbins=10; low= 0; high=3;
   setLogY(false);
@@ -3639,6 +3715,12 @@ void higgs_Nminus1() {
   setLogY(false);
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_Nm1_allcuts_deltaPhiMinAll",0);
 
+  var="minDeltaPhi20_eta5_noIdAll_nobeta"; xtitle="min #Delta #phi (all jets, MET)";
+  nbins=10; low= 0; high=3;
+  setLogY(false);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_Nm1_allcuts_deltaPhiMinUber",0);
+
+/* no longer interesting
   //3b sample; veto on 4th b
   selection_=baseline&&triggers && zl&& tauveto && isotk1 && njets&&jet2 && btag2 && btag3 && (!btag4) && higgsmass && higgsdiff && drmax && metsig;
   var="deltaPhi2"; xtitle="#Delta #phi (jet2,MET)";
@@ -3665,7 +3747,7 @@ void higgs_Nminus1() {
   nbins=40; low= 0; high=4;
   setLogY(false);
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_Nm1_2bT_deltaPhiMin",0);
-
+*/
 
   //n leptons
   selection_=baseline&&triggers &&  tauveto && isotk1 && njets&&jet2 && btag2 && btag3 && btag4&&mdp && higgsmass && higgsdiff && drmax && metsig;
@@ -3683,17 +3765,10 @@ void higgs_Nminus1() {
 
   //iso tracks
   selection_=baseline&&triggers && zl&& tauveto && njets&&jet2 && btag2 && btag3 && btag4&&mdp && higgsmass && higgsdiff && drmax && metsig;
-  var="nIsoTracks15_005_03"; xtitle="15 GeV iso tracks";
+  var="nIsoPFcands10_010"; xtitle="10 GeV iso tracks (PF)";
   nbins=4; low= 0; high=4;
   setLogY(false);
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_Nm1_isoTk15",0);
-
-  //iso tracks
-  selection_=baseline&&triggers && zl&& tauveto  && isotk1 && njets&&jet2 && btag2 && btag3 && btag4&&mdp && higgsmass && higgsdiff && drmax && metsig;
-  var="nIsoTracks5_005_03"; xtitle="5 GeV iso tracks";
-  nbins=4; low= 0; high=4;
-  setLogY(false);
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_Nm1_isoTk5",0);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_Nm1_isoPFtk10",0);
 
   //jet multiplicity
   selection_=baseline&&triggers && zl&& tauveto && isotk1&&jet2 && btag2 && btag3 && btag4&&mdp && higgsmass && higgsdiff && drmax  && metsig;
@@ -4286,7 +4361,7 @@ void higgsmbb_quickmbbPlots() {
   TCut btag3="CSVbest3>0.679";
   TCut btag4="CSVbest4>0.244";
 
-  TCut mdp = "minDeltaPhi20>0.5 || (minDeltaPhi20>0.3&&METsig>50)";
+  TCut mdp = "minDeltaPhi20_eta5_noIdAll_nobeta>0.5 || (minDeltaPhi20_eta5_noIdAll_nobeta>0.3 && METsig>50)";
 
   TCut higgsmass = "(0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)>100)&&(0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)<140)";
   TCut higgsdiff = "abs(higgsMbb1MassDiff-higgsMbb2MassDiff)<20";
