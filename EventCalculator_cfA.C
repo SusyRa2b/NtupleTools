@@ -136,7 +136,8 @@ EventCalculator::EventCalculator(const TString & sampleName, const vector<string
 	   sampleName_.Contains("TChiZH")||
 	   sampleName_.Contains("T6tthh")||
 	   sampleName_.Contains("T6cchh")||
-	   sampleName_.Contains("T6bbHH")
+	   sampleName_.Contains("T6bbHH")||
+	   sampleName_.Contains("T6ttHH")
 	   ) {
     theScanType_ = kSMS;
     std::cout<<"\tDetected that I'm running over an SMS scan!"<<std::endl;
@@ -7111,7 +7112,7 @@ float EventCalculator::bJetFastsimSF(const TString & what, int flavor,float pt) 
   if (what == "value") returnVal=1;
 
   //first check if we're in a FASTSIM model
-  if (theScanType_==kpmssm || sampleName_.Contains("TChihh") || sampleName_.Contains("TChiHH") || sampleName_.Contains("TChiZH") || sampleName_.Contains("T6bbHH") || sampleName_.Contains("T6tthh") || sampleName_.Contains("T6cchh")) {
+  if (theScanType_==kpmssm || sampleName_.Contains("TChihh") || sampleName_.Contains("TChiHH") || sampleName_.Contains("TChiZH") || sampleName_.Contains("T6bbHH") || sampleName_.Contains("T6tthh") || sampleName_.Contains("T6cchh") || sampleName_.Contains("T6ttHH")) {
     //DO NOTHING FOR NOW...this is rather dangerous!
   }
   else  if (theScanType_ != kNotScan ) {
@@ -7890,6 +7891,7 @@ void EventCalculator::reducedTree(TString outputpath) {
     else if (sampleName_.Contains("SMS-TChiZH")) MCDist.push_back(pu::Summer2012_S10[i]);
     else if (sampleName_.Contains("SMS-MadGraph") &&sampleName_.Contains("START52") ) MCDist.push_back(pu::Summer2012[i]);
     else if (sampleName_.Contains("SMS-T6bbHH") && sampleName_.Contains("START52"))  MCDist.push_back(pu::Summer2012[i]);
+    else if (sampleName_.Contains("SMS-T6ttHH") && sampleName_.Contains("START53"))  MCDist.push_back(pu::Summer2012[i]);
     else if (isSampleRealData() ) MCDist.push_back(pu::Summer2012[i]); //this won't be used for data
     else assert(0); //no more mistakes! //MCDist.push_back(pu::Summer2012[i]); //just a safety valve (but dangerous!)
   }
