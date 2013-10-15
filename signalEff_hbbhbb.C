@@ -22,7 +22,7 @@ void signalEff_hbbhbb::Loop()
 
 //this will define the order of the columns in the final output! (I think)
 
-  float metsedges[]={30,50,100,150,999};
+  float metsedges[]={30,50,100,150,9999};
   //float metsedges[]={0,30,50,100,150,500};
 
   vector<TString> pdfsets;
@@ -45,7 +45,8 @@ void signalEff_hbbhbb::Loop()
   vector<SearchRegion> searchregions;
 
   bool madgraphIsr=false;
-  if (filestub_.Contains("SMS-MadGraph") || (filestub_.Contains("SMS")&&filestub_.Contains("madgraph"))) {
+  if (!filestub_.Contains("Run2012")) { //as long as the sample is not data, apply the ISR weight
+    //and will use the isr systematic
     assert(theIsrMode_ != kNoIsrWeight);
     madgraphIsr=true;
     cout<<" madgraph Isr Mode enabled"<<endl;
@@ -61,11 +62,11 @@ void signalEff_hbbhbb::Loop()
         for (int ipdfindex=0; ipdfindex<pdfsetsize[pdfsets.at(ipdfset)]; ipdfindex++) {
 
           if (joinbtagbins_) 
-            searchregions.push_back( SearchRegion(1,99,metsedges[imets],metsedges[imets+1],thesb,pdfsets[ipdfset],ipdfindex));
+            searchregions.push_back( SearchRegion(0,metsedges[imets],metsedges[imets+1],thesb,pdfsets[ipdfset],ipdfindex));
           else {
-            searchregions.push_back( SearchRegion(2, 2,metsedges[imets],metsedges[imets+1],thesb,pdfsets[ipdfset],ipdfindex));
-            searchregions.push_back( SearchRegion(3, 3,metsedges[imets],metsedges[imets+1],thesb,pdfsets[ipdfset],ipdfindex));
-            searchregions.push_back( SearchRegion(4,99,metsedges[imets],metsedges[imets+1],thesb,pdfsets[ipdfset],ipdfindex));
+            searchregions.push_back( SearchRegion(2,metsedges[imets],metsedges[imets+1],thesb,pdfsets[ipdfset],ipdfindex));
+            searchregions.push_back( SearchRegion(3,metsedges[imets],metsedges[imets+1],thesb,pdfsets[ipdfset],ipdfindex));
+            searchregions.push_back( SearchRegion(4,metsedges[imets],metsedges[imets+1],thesb,pdfsets[ipdfset],ipdfindex));
           }
 
 	}//ipdfindex
@@ -126,7 +127,8 @@ void signalEff_hbbhbb::Loop()
 // METHOD1:
 //ra2b-jmt -- trying to speed things up -- be careful. 
 //failure to include a needed variable here leads to bogus results
-  if (dopdfs_)  fChain->SetBranchStatus("*",1);  //paranoia
+//for now do it the slow way
+  if (dopdfs_ ||true)  fChain->SetBranchStatus("*",1);  //paranoia
   else {
     fChain->SetBranchStatus("*",0);  // disable all branches
     //activate branches
@@ -136,13 +138,7 @@ void signalEff_hbbhbb::Loop()
     fChain->SetBranchStatus("weight3",1); 
     fChain->SetBranchStatus("PUweight",1); 
     fChain->SetBranchStatus("PUweightSystVar",1);
-    //   if (dopdfs_) {
-    //     fChain->SetBranchStatus("pdfWeightsCTEQ",1);
-    //     fChain->SetBranchStatus("pdfWeightsMSTW",1);
-    //     fChain->SetBranchStatus("pdfWeightsNNPDF",1);
-    //   }
     fChain->SetBranchStatus("njets20",1);
-    fChain->SetBranchStatus("nbjets",1);
     fChain->SetBranchStatus("jetpt2",1);
     fChain->SetBranchStatus("cutPV",1);
     fChain->SetBranchStatus("passCleaning",1);
@@ -154,14 +150,13 @@ void signalEff_hbbhbb::Loop()
     fChain->SetBranchStatus("nElectrons",1);
     fChain->SetBranchStatus("nTausLoose",1);
     fChain->SetBranchStatus("nIsoPFcands10_010",1);
-    fChain->SetBranchStatus("nIsoTracks15_005_03_lepcleaned",1);
-    fChain->SetBranchStatus("minDeltaPhi30",1);
+    fChain->SetBranchStatus("minDeltaPhi20_eta5_noIdAll_nobeta",1);
     fChain->SetBranchStatus("passMC_DiCentralPFJet30_PFMET80_BTagCSV07",1);
     fChain->SetBranchStatus("passMC_DiCentralPFJet30_PFMHT80",1);
     fChain->SetBranchStatus("passMC_PFMET150",1);
-    fChain->SetBranchStatus("CSVbest2",1);
-    fChain->SetBranchStatus("CSVbest3",1);
-    fChain->SetBranchStatus("CSVbest4",1);
+    fChain->SetBranchStatus("nbjetsCSVT",1);
+    fChain->SetBranchStatus("nbjetsCSVM",1);
+    fChain->SetBranchStatus("nbjetsCSVL",1);
     fChain->SetBranchStatus("higgsMbb1MassDiff",1);
     fChain->SetBranchStatus("higgsMbb2MassDiff",1);
     fChain->SetBranchStatus("deltaRmax_hh",1);
@@ -272,8 +267,10 @@ void signalEff_hbbhbb::Loop()
 	// == now apply cuts ==
 	
 	// First apply baseline selection
-	//cleaning and PV; for MC I will just not even bother to cut on trigger
-	if (!cutPV && !passCleaning) continue;	
+	if (!cutPV) continue;	
+	bool passtrigger = passMC_DiCentralPFJet30_PFMET80_BTagCSV07||passMC_DiCentralPFJet30_PFMHT80||passMC_PFMET150;
+	if (!passtrigger) continue;
+	if (!passCleaning) continue;
 
 	//new cleanup cut
 	if (! (MET/caloMET<2)) continue;
@@ -290,24 +287,46 @@ void signalEff_hbbhbb::Loop()
         if ( !(jetpt2>50) ) continue;
 
         //minDeltaPhi cuts
-        if ( !(minDeltaPhi20>0.5 || (minDeltaPhi20>0.3&&METsig>50)) ) continue;
+        if ( !((minDeltaPhi20_eta5_noIdAll_nobeta>0.5) || (minDeltaPhi20_eta5_noIdAll_nobeta>0.3&&METsig>50)) ) continue;
        
         //deltaR cut 
         if ( !(deltaRmax_hh<2.2) ) continue;
 	
-	//lepton veto or SL
+	//SB or SIG
 	if (searchregions[ii].isSB_) {
-          if ( !(0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)<90) ) continue;
-          if ( !(0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)>150) ) continue;
-          if ( !(abs(higgsMbb1MassDiff-higgsMbb2MassDiff)>30) ) continue;
+	  bool insb = 
+	    (0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)<90) ||
+	    (0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)>150) ||
+	    (fabs(higgsMbb1MassDiff-higgsMbb2MassDiff)>30);
+	  if (!insb) continue;
 	}
 	else { //signal region
           if ( !((0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)>100)&&(0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)<140)) ) continue;
-          if ( !(abs(higgsMbb1MassDiff-higgsMbb2MassDiff)<20) ) continue;
+          if ( !(fabs(higgsMbb1MassDiff-higgsMbb2MassDiff)<20) ) continue;
 	}
 
-	//note differing use of < versus <=. this is intentional
-        bool passb =  (nbjets >= searchregions[ii].minb_ && nbjets <= searchregions[ii].maxb_);	
+	bool passb=false;
+	if ( (searchregions[ii].nb_ == 4) //2 CSVT + 1 CSVM + 1 CSVL
+	     && ((nbjetsCSVT>=2)&&((nbjetsCSVM)>=3)&&((nbjetsCSVL)>=4))) passb=true;
+	else if ( (searchregions[ii].nb_ == 3) //2 CSVT + exactly 1 CSVM and 0 additional CSVL
+		  && (((nbjetsCSVT>=2)&&(nbjetsCSVM==3)&&nbjetsCSVL==3))) passb=true;
+	else if ( (searchregions[ii].nb_ == 2)
+		  && (nbjetsCSVT==2&&nbjetsCSVM==2)) passb=true;
+	else if ( (searchregions[ii].nb_ == 0) //special case defined as >=2 Tight b-tags
+		  && (nbjetsCSVT>=2)) passb=true;
+
+	bool passb2=false;
+	if ( (searchregions[ii].nb_ == 4) //2 CSVT + 1 CSVM + 1 CSVL
+	     && (CSVbest2>0.898 && CSVbest3>0.679 && CSVbest4>0.244)) passb2=true;
+	else if ( (searchregions[ii].nb_ == 3) //2 CSVT + exactly 1 CSVM and 0 additional CSVL
+		  && (CSVbest2>0.898 && CSVbest3>0.679 && CSVbest4<=0.244)) passb2=true;
+	else if ( (searchregions[ii].nb_ == 2)
+		  && (CSVbest2>0.898&& CSVbest3<=0.679)) passb2=true;
+	else if ( (searchregions[ii].nb_ == 0) //special case defined as >=2 Tight b-tags
+		  && (CSVbest2>0.898)) passb2=true;
+	
+	if (passb != passb2) cout<<" problem with btag counting!"<<endl;
+
 	bool passmets = (METsig >= searchregions[ii].minMETs_ &&  METsig < searchregions[ii].maxMETs_);
 
 	if ( passmets && passb ) eventcounts[ii]->Fill(m0,m12,thisweight);

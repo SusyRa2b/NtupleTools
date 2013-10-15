@@ -22,12 +22,11 @@ enum IsrMode { kNoIsrWeight, kIsr0, kIsrUp,kIsrDown };
 // Header file for the classes stored in the TTree if any.
 class SearchRegion { //a DIFFERENT class than my other SearchRegion class...oh well
 public:
-  SearchRegion(int minb, int maxb, float minMETs, float maxMETs, bool isSB, TString pdfset, int pdfindex);
+  SearchRegion(int nb, float minMETs, float maxMETs, bool isSB, TString pdfset, int pdfindex);
   ~SearchRegion();
   //  void Print() const;
 
-  int minb_;
-  int maxb_;
+  int nb_; //no min or max: use the mutually exclusive bins defined for the hbbhbb analysis
   float minMETs_;
   float maxMETs_;
   bool isSB_;
@@ -43,12 +42,9 @@ public:
 };
 
 
-SearchRegion::SearchRegion(int minb, int maxb, float minMETs, float maxMETs, bool isSB, TString pdfset, int pdfindex) :
-  minb_(minb), maxb_(maxb),minMETs_(minMETs),maxMETs_(maxMETs),isSB_(isSB),pdfset_(pdfset),pdfindex_(pdfindex)
+SearchRegion::SearchRegion(int nb, float minMETs, float maxMETs, bool isSB, TString pdfset, int pdfindex) :
+  nb_(nb),minMETs_(minMETs),maxMETs_(maxMETs),isSB_(isSB),pdfset_(pdfset),pdfindex_(pdfindex)
 {
-
-  assert( minb_ < 1 );
-
 }
 
 SearchRegion::~SearchRegion() {}
@@ -58,10 +54,7 @@ TString SearchRegion::id() const {
   TString sbstring = isSB_ ? "_SB" : "" ;
 
   TString theid;
-  if ((minb_==maxb_) || (maxb_>10))
-    theid.Form("b%d_MET%.0fto%.0f%s",minb_,minMETs_,maxMETs_,sbstring.Data());
-  else
-    theid.Form("b%dto%d_MET%.0fto%.0f%s",minb_,maxb_,minMETs_,maxMETs_,sbstring.Data());
+  theid.Form("b%d_MET%.0fto%.0f%s",nb_,minMETs_,maxMETs_,sbstring.Data());
 
   if (pdfset_ != "none") {
     TString suffix;
@@ -1321,7 +1314,9 @@ signalEff_hbbhbb::signalEff_hbbhbb(TString path, TString filestub,bool joinbtagb
 
       assert(scanSMSngen_==0); // something went wrong in production of the reducedTree
 
+      //jmt -- i don't understand what point this code has
       //Probably should clone scanSMSngen into member variable
+      /*
       for ( int ix = 1; ix<=scanSMSngen_->GetXaxis()->GetNbins(); ix++) {
         for ( int iy = 1; iy<=scanSMSngen_->GetYaxis()->GetNbins() ; iy++) {
           double val=scanSMSngen_->GetBinContent(ix,iy);
@@ -1330,6 +1325,7 @@ signalEff_hbbhbb::signalEff_hbbhbb(TString path, TString filestub,bool joinbtagb
 	  
 	}
       }
+      */
       //need to loop over the keys in the file and load all scan process totals histos
       //(this is now deprecated...but leave it in place just in case)
       for (int ih = 0; ih<f->GetListOfKeys()->GetEntries(); ih++) {
