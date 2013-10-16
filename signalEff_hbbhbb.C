@@ -127,8 +127,7 @@ void signalEff_hbbhbb::Loop()
 // METHOD1:
 //ra2b-jmt -- trying to speed things up -- be careful. 
 //failure to include a needed variable here leads to bogus results
-//for now do it the slow way
-  if (dopdfs_ ||true)  fChain->SetBranchStatus("*",1);  //paranoia
+  if (dopdfs_)  fChain->SetBranchStatus("*",1);  //paranoia
   else {
     fChain->SetBranchStatus("*",0);  // disable all branches
     //activate branches
@@ -157,6 +156,7 @@ void signalEff_hbbhbb::Loop()
     fChain->SetBranchStatus("nbjetsCSVT",1);
     fChain->SetBranchStatus("nbjetsCSVM",1);
     fChain->SetBranchStatus("nbjetsCSVL",1);
+    //will have to add new btag variables, once they exist
     fChain->SetBranchStatus("higgsMbb1MassDiff",1);
     fChain->SetBranchStatus("higgsMbb2MassDiff",1);
     fChain->SetBranchStatus("deltaRmax_hh",1);
@@ -222,7 +222,7 @@ void signalEff_hbbhbb::Loop()
 	  if (ii==0)  eventcountsTotalISR->Fill(m0,m12,theisrweight); //only fill once per event!
 	}
 
-	//TO DO -- add trigger efficiency
+	//TO DO -- add trigger efficiency (need to consult with Owen though)
 
 	double pdfweight=1;
 	//if this search region is a pdf variation then use pdf weight
@@ -311,27 +311,43 @@ void signalEff_hbbhbb::Loop()
 	//then load in the nbjetsCSVX values into them up here
 	//this will allow flexibility when we have SF variations
 
+	int nbT,nbM,nbL;
+	if ( theBTagMode_ == kBTag0 ) {
+	  nbT = nbjetsCSVT;
+	  nbM = nbjetsCSVM;
+	  nbL = nbjetsCSVL;
+	}
+/* TO DO
+	else if (theBTagMode_ == kBTagHfUp ) {	}
+	else if (theBTagMode_ == kBTagHfDown ) {	}
+	else if (theBTagMode_ == kBTagLfUp ) {	}
+	else if (theBTagMode_ == kBTagLfDown ) {	}
+*/
+	else assert(0);
+
 	bool passb=false;
 	if ( (searchregions[ii].nb_ == 4) //2 CSVT + 1 CSVM + 1 CSVL
-	     && ((nbjetsCSVT>=2)&&((nbjetsCSVM)>=3)&&((nbjetsCSVL)>=4))) passb=true;
+	     && ((nbT>=2)&&((nbM)>=3)&&((nbL)>=4))) passb=true;
 	else if ( (searchregions[ii].nb_ == 3) //2 CSVT + exactly 1 CSVM and 0 additional CSVL
-		  && (((nbjetsCSVT>=2)&&(nbjetsCSVM==3)&&nbjetsCSVL==3))) passb=true;
+		  && (((nbT>=2)&&(nbM==3)&&nbL==3))) passb=true;
 	else if ( (searchregions[ii].nb_ == 2)
-		  && (nbjetsCSVT==2&&nbjetsCSVM==2)) passb=true;
+		  && (nbT==2&&nbM==2)) passb=true;
 	else if ( (searchregions[ii].nb_ == 0) //special case defined as >=2 Tight b-tags
-		  && (nbjetsCSVT>=2)) passb=true;
+		  && (nbT>=2)) passb=true;
 
-	bool passb2=false;
-	if ( (searchregions[ii].nb_ == 4) //2 CSVT + 1 CSVM + 1 CSVL
-	     && (CSVbest2>0.898 && CSVbest3>0.679 && CSVbest4>0.244)) passb2=true;
-	else if ( (searchregions[ii].nb_ == 3) //2 CSVT + exactly 1 CSVM and 0 additional CSVL
-		  && (CSVbest2>0.898 && CSVbest3>0.679 && CSVbest4<=0.244)) passb2=true;
-	else if ( (searchregions[ii].nb_ == 2)
-		  && (CSVbest2>0.898&& CSVbest3<=0.679)) passb2=true;
-	else if ( (searchregions[ii].nb_ == 0) //special case defined as >=2 Tight b-tags
-		  && (CSVbest2>0.898)) passb2=true;
-	
-	if (passb != passb2) cout<<" problem with btag counting!"<<endl;
+	/* this code was used only as a test -- passed!
+	   bool passb2=false;
+	   if ( (searchregions[ii].nb_ == 4) //2 CSVT + 1 CSVM + 1 CSVL
+	   && (CSVbest2>0.898 && CSVbest3>0.679 && CSVbest4>0.244)) passb2=true;
+	   else if ( (searchregions[ii].nb_ == 3) //2 CSVT + exactly 1 CSVM and 0 additional CSVL
+	   && (CSVbest2>0.898 && CSVbest3>0.679 && CSVbest4<=0.244)) passb2=true;
+	   else if ( (searchregions[ii].nb_ == 2)
+	   && (CSVbest2>0.898&& CSVbest3<=0.679)) passb2=true;
+	   else if ( (searchregions[ii].nb_ == 0) //special case defined as >=2 Tight b-tags
+	   && (CSVbest2>0.898)) passb2=true;
+	   
+	   if (passb != passb2) cout<<" problem with btag counting!"<<endl;
+	*/
 
 	bool passmets = (METsig >= searchregions[ii].minMETs_ &&  METsig < searchregions[ii].maxMETs_);
 

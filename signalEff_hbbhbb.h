@@ -20,8 +20,9 @@
 enum IsrMode { kNoIsrWeight, kIsr0, kIsrUp,kIsrDown };
 /* TO DO
 enum TriggerMode { kNoTrigWeight, kTrig0, kTrigUp,kTrigDown };
-enum BTagMode {kBTag0,kBTagHfUp,kBTagHfDown,kBTagLfUp,kBTagLfDown};
 */
+enum BTagMode {kBTag0,kBTagHfUp,kBTagHfDown,kBTagLfUp,kBTagLfDown};
+
 
 // Header file for the classes stored in the TTree if any.
 class SearchRegion { //a DIFFERENT class than my other SearchRegion class...oh well
@@ -1371,6 +1372,7 @@ public :
    bool dopdfs_;
    bool pusyst_;
    IsrMode theIsrMode_;
+   BTagMode theBTagMode_;
    //END ra2b-jmt
 
 };
@@ -1387,6 +1389,7 @@ signalEff_hbbhbb::signalEff_hbbhbb(TString path, TString filestub,bool joinbtagb
 																	    ,dopdfs_(dopdfs)
 																	    ,pusyst_(pusyst)
 																	    ,theIsrMode_(kNoIsrWeight)
+																	    ,theBTagMode_(kBTag0)
 				  //END ra2b-jmt mod
 {
  //BEGIN ra2b-jmt
