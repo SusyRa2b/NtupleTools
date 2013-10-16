@@ -1419,7 +1419,7 @@ signalEff_hbbhbb::signalEff_hbbhbb(TString path, TString filestub,bool joinbtagb
       f->GetObject("reducedTree",tree);
       scanSMSngen_ = (TH2D*) f->Get("scanSMSngen"); //BEGIN  ra2b-jmt mod
 
-      assert(scanSMSngen_==0); // something went wrong in production of the reducedTree
+      assert(scanSMSngen_!=0); // something went wrong in production of the reducedTree
 
       //jmt -- i don't understand what point this code has
       //Probably should clone scanSMSngen into member variable
