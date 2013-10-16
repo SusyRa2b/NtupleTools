@@ -2710,7 +2710,11 @@ float EventCalculator::getJESUncertainty( unsigned int ijet, bool addL2L3toJES )
     JetCorrector_->setJetEta( jets_AK5PF_eta->at(ijet) );
     JetCorrector_->setJetPt( jets_AK5PF_rawPt->at(ijet) );
     JetCorrector_->setJetA( jets_AK5PF_area->at(ijet) );
-    JetCorrector_->setRho( rho_kt6PFJetsForIsolation2012 ); //FIXME CFA this may be right but i'm not sure
+    //jmt Oct 2013: this is dangerous. we didn't use the addL2L3 option for RA2b 2012.
+    //for hh we need to use it because we're using uncorrected MET. I suspect that this is not the same rho used
+    //for jets (hence the ForIsolation in the name) but I don't really know.
+    //basically, we need to try it out, see if our JEC systematic is sane, and then see what we have to do
+    JetCorrector_->setRho( rho_kt6PFJetsForIsolation2012 );
     std::vector<float> factors = JetCorrector_->getSubCorrections();
     float L2L3Residual = factors[3]/factors[2] - 1;
 
