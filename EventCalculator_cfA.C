@@ -7861,7 +7861,10 @@ void EventCalculator::reducedTree(TString outputpath) {
   TH2D* scanSMSngen=0; //legacy (but still important)
   TH3D* scanSMSngen3D=0;
   if (theScanType_==kSMS) {
-    scanSMSngen = new TH2D("scanSMSngen","number of generated events",84,0,2100,84,0,2100); //mgluino,mLSP
+    //for EWKino samples -- 5 GeV bins
+    if (sampleName_.Contains("TChi"))   scanSMSngen = new TH2D("scanSMSngen","number of generated events"120,0,600,120,0,600); //mgluino,mLSP
+    //default ra2b settings
+    else    scanSMSngen = new TH2D("scanSMSngen","number of generated events",84,0,2100,84,0,2100); //mgluino,mLSP
     scanSMSngen3D = new TH3D("scanSMSngen3D","number of generated events",84,0,2100,84,0,2100,84,0,2100); //mgluino,mLSP,mintermediate
   }
   else if (theScanType_==kpmssm) {
