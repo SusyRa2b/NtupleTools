@@ -2210,6 +2210,8 @@ void EventCalculator::getUncorrectedMET(float& uncorrectedMET, float& uncorrecte
   uncorrectedMET=pfmets_et->at(0);
   uncorrectedMETPhi = pfmets_phi->at(0);
 
+  //  cout<<" uncorrected MET starts at "<<uncorrectedMET<<endl;
+
   if (theJESType_==kJES0 && theJERType_==kJER0) return;
 
   double METx = uncorrectedMET * cos(uncorrectedMETPhi);
@@ -2230,6 +2232,7 @@ void EventCalculator::getUncorrectedMET(float& uncorrectedMET, float& uncorrecte
     }
   uncorrectedMET = sqrt(METx*METx + METy*METy);
   uncorrectedMETPhi = atan2(METy,METx);
+  //  cout<<" uncorrected MET  ends  at "<<uncorrectedMET<<endl;
 }
 
 int EventCalculator::doPBNR() {
@@ -7862,7 +7865,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   TH3D* scanSMSngen3D=0;
   if (theScanType_==kSMS) {
     //for EWKino samples -- 5 GeV bins
-    if (sampleName_.Contains("TChi"))   scanSMSngen = new TH2D("scanSMSngen","number of generated events"120,0,600,120,0,600); //mgluino,mLSP
+    if (sampleName_.Contains("TChi"))   scanSMSngen = new TH2D("scanSMSngen","number of generated events",120,0,600,120,0,600); //mgluino,mLSP
     //default ra2b settings
     else    scanSMSngen = new TH2D("scanSMSngen","number of generated events",84,0,2100,84,0,2100); //mgluino,mLSP
     scanSMSngen3D = new TH3D("scanSMSngen3D","number of generated events",84,0,2100,84,0,2100,84,0,2100); //mgluino,mLSP,mintermediate
@@ -9677,7 +9680,7 @@ void EventCalculator::reducedTree(TString outputpath) {
       }
 
       //for (old) METsig, if we're varying the jets, recompute (old) METsig using the varied jets
-      if (theJESType_!=kJES0) {
+      if (theJESType_!=kJES0 || theJERType_!=kJER0) {
 	TVectorD metvec(2);
 	metvec(0) = rawPFMET * cos(rawPFMETphi);
 	metvec(1) = rawPFMET * sin(rawPFMETphi);
