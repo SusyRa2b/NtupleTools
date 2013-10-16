@@ -2823,12 +2823,8 @@ float EventCalculator::getUncorrectedJetPt( unsigned int ijet, bool addL2L3toJES
   if ( theJERType_ != kJER0 ) {
     float genpt = jets_AK5PF_gen_pt->at(ijet);
     if (genpt > 15) {
-      float recopt = jets_AK5PF_pt->at(ijet); //use corrected jet pt here
-      float factor = getJERbiasFactor(ijet);
-      float deltapt = (recopt - genpt) * factor;
-      float frac = (recopt+deltapt)/recopt;
-      float ptscale = frac>0 ? frac : 0;
-      pt *= ptscale;
+      pt = genpt + (getJERbiasFactor(ijet))*(pt - genpt);
+      if (pt<=0) 	pt=0.1; //some code goes nuts with pT=0 so use 0.1 instead
     }
   }
   //then JES
