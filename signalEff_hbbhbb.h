@@ -18,6 +18,10 @@
 
 
 enum IsrMode { kNoIsrWeight, kIsr0, kIsrUp,kIsrDown };
+/* TO DO
+enum TriggerMode { kNoTrigWeight, kTrig0, kTrigUp,kTrigDown };
+enum BTagMode {kBTag0,kBTagHfUp,kBTagHfDown,kBTagLfUp,kBTagLfDown};
+*/
 
 // Header file for the classes stored in the TTree if any.
 class SearchRegion { //a DIFFERENT class than my other SearchRegion class...oh well
@@ -114,6 +118,7 @@ public :
    Float_t         SUSY_chi0_pt[2];
    Float_t         topPtWeight;
    Float_t         topPt;
+   Float_t         topPtWeightOfficial;
    Float_t         higgsMass[6];
    Float_t         higgsSumpt[6];
    Float_t         hhDeltaR;
@@ -215,6 +220,32 @@ public :
    Int_t           maxTOBTECjetDeltaMult;
    Int_t           TOBTECjetChMult;
    Int_t           nGoodPV;
+   Float_t         PV0_x;
+   Float_t         PV0_xErr;
+   Float_t         PV0_y;
+   Float_t         PV0_yErr;
+   Float_t         PV0_z;
+   Float_t         PV0_zErr;
+   Float_t         PV_x[60];
+   Float_t         PV_xErr[60];
+   Float_t         PV_y[60];
+   Float_t         PV_yErr[60];
+   Float_t         PV_z[60];
+   Float_t         PV_zErr[60];
+   Float_t         PV_chi2[60];
+   Float_t         PV_ndof[60];
+   Float_t         PV_isFake[60];
+   Float_t         PV_isGood[60];
+   Float_t         PV_isValid[60];
+   Float_t         PV_tracksSize[60];
+   Int_t           PV_nearestZindex;
+   Float_t         rho_kt6PFJetsForIsolation;
+   Float_t         BS0_x;
+   Float_t         BS0_xErr;
+   Float_t         BS0_y;
+   Float_t         BS0_yErr;
+   Float_t         BS0_z;
+   Float_t         BS0_zErr;
    Int_t           SUSY_nb;
    Int_t           SUSY_process;
    Float_t         SUSY_recoilPt;
@@ -230,9 +261,8 @@ public :
    Int_t           ncompleteHiggsReco20;
    Int_t           njetsHiggsMatch20_eta5;
    Int_t           nbjets;
-   Int_t           nbjetsTweaked;
    Int_t           nbjets30;
-   Int_t           nbjets20;
+   Int_t           nbjetsTweaked;
    Int_t           ntruebjets;
    Int_t           nGluonsSplitToLF;
    Int_t           nGluonsSplitToC;
@@ -241,7 +271,7 @@ public :
    Int_t           ncjetsFromGluons;
    Int_t           nbjetsFromGluons;
    Int_t           nElectrons;
-   Int_t           nElectrons2011;
+   Int_t           nElectronsBug;
    Int_t           nMuons;
    Int_t           nElectrons5;
    Int_t           nMuons5;
@@ -412,6 +442,7 @@ public :
    Bool_t          passMC_SixJet45;
    Float_t         HT;
    Float_t         HT30;
+   Float_t         HT20;
    Float_t         ST;
    Float_t         STeff;
    Float_t         MET;
@@ -468,11 +499,11 @@ public :
    Float_t         mjj_highptCSVT;
    Float_t         minDeltaPhi;
    Float_t         minDeltaPhiAll;
-   Float_t         minDeltaPhiAll30;
+   Float_t         minDeltaPhiAll20;
    Float_t         minDeltaPhi20;
    Float_t         minDeltaPhi30;
-   Float_t         minDeltaPhi30_eta5_noIdAll;
-   Float_t         minDeltaPhiMetTau;
+   Float_t         minDeltaPhi20_eta5_noIdAll;
+   Float_t         minDeltaPhi20_eta5_noIdAll_nobeta;
    Float_t         deltaPhi1;
    Float_t         deltaPhi2;
    Float_t         deltaPhi3;
@@ -482,13 +513,38 @@ public :
    Float_t         maxDeltaPhi;
    Float_t         maxDeltaPhiAll;
    Float_t         maxDeltaPhiAll30;
-   Float_t         maxDeltaPhi30_eta5_noIdAll;
+   Float_t         maxDeltaPhi20_eta5_noIdAll;
    Float_t         sumDeltaPhi;
    Float_t         diffDeltaPhi;
    Float_t         deltaPhiStar;
    Float_t         deltaPhiStar_badjet_pt;
+   Float_t         deltaPhiStar_badjet_estimatedPt;
+   Float_t         deltaPhiStar_badjet_genPt;
+   Float_t         deltaPhiStar_badjet_energy;
    Float_t         deltaPhiStar_badjet_phi;
    Float_t         deltaPhiStar_badjet_eta;
+   Float_t         deltaPhiStar_badjet_CSV;
+   Float_t         deltaPhiStar_badjet_chEmE;
+   Float_t         deltaPhiStar_badjet_chHadE;
+   Float_t         deltaPhiStar_badjet_photonE;
+   Float_t         deltaPhiStar_badjet_neuEmE;
+   Float_t         deltaPhiStar_badjet_neuHadE;
+   Float_t         deltaPhiStar_badjet_chMuE;
+   Float_t         deltaPhiStar_badjet_etaetaMoment;
+   Float_t         deltaPhiStar_badjet_etaphiMoment;
+   Float_t         deltaPhiStar_badjet_phiphiMoment;
+   Float_t         deltaPhiStar_badjet_rawPt;
+   Float_t         deltaPhiStar_badjet_mass;
+   Float_t         deltaPhiStar_badjet_PUbeta;
+   Float_t         deltaPhiStar_badjet_PUbetaStar;
+   Float_t         deltaPhiStar_badjet_PUbetaStarClassic;
+   Int_t           deltaPhiStar_badjet_chMult;
+   Int_t           deltaPhiStar_badjet_neuMult;
+   Int_t           deltaPhiStar_badjet_muMult;
+   Int_t           deltaPhiStar_badjet_n60;
+   Int_t           deltaPhiStar_badjet_n90;
+   Float_t         hh_mostPUlike_beta;
+   Float_t         hh_mostPUlike_betaStar;
    Float_t         minDeltaPhiN;
    Float_t         deltaPhiN1;
    Float_t         deltaPhiN2;
@@ -700,6 +756,7 @@ public :
    TBranch        *b_SUSY_chi0_pt;   //!
    TBranch        *b_topPtWeight;   //!
    TBranch        *b_topPt;   //!
+   TBranch        *b_topPtWeightOfficial;   //!
    TBranch        *b_higgsMass;   //!
    TBranch        *b_higgsSumpt;   //!
    TBranch        *b_hhDeltaR;   //!
@@ -801,6 +858,32 @@ public :
    TBranch        *b_maxTOBTECjetDeltaMult;   //!
    TBranch        *b_TOBTECjetChMult;   //!
    TBranch        *b_nGoodPV;   //!
+   TBranch        *b_PV0_x;   //!
+   TBranch        *b_PV0_xErr;   //!
+   TBranch        *b_PV0_y;   //!
+   TBranch        *b_PV0_yErr;   //!
+   TBranch        *b_PV0_z;   //!
+   TBranch        *b_PV0_zErr;   //!
+   TBranch        *b_PV_x;   //!
+   TBranch        *b_PV_xErr;   //!
+   TBranch        *b_PV_y;   //!
+   TBranch        *b_PV_yErr;   //!
+   TBranch        *b_PV_z;   //!
+   TBranch        *b_PV_zErr;   //!
+   TBranch        *b_PV_chi2;   //!
+   TBranch        *b_PV_ndof;   //!
+   TBranch        *b_PV_isFake;   //!
+   TBranch        *b_PV_isGood;   //!
+   TBranch        *b_PV_isValid;   //!
+   TBranch        *b_PV_tracksSize;   //!
+   TBranch        *b_PV_nearestZindex;   //!
+   TBranch        *b_rho_kt6PFJetsForIsolation;   //!
+   TBranch        *b_BS0_x;   //!
+   TBranch        *b_BS0_xErr;   //!
+   TBranch        *b_BS0_y;   //!
+   TBranch        *b_BS0_yErr;   //!
+   TBranch        *b_BS0_z;   //!
+   TBranch        *b_BS0_zErr;   //!
    TBranch        *b_SUSY_nb;   //!
    TBranch        *b_SUSY_process;   //!
    TBranch        *b_SUSY_recoilPt;   //!
@@ -816,9 +899,8 @@ public :
    TBranch        *b_ncompleteHiggsReco20;   //!
    TBranch        *b_njetsHiggsMatch20_eta5;   //!
    TBranch        *b_nbjets;   //!
-   TBranch        *b_nbjetsTweaked;   //!
    TBranch        *b_nbjets30;   //!
-   TBranch        *b_nbjets20;   //!
+   TBranch        *b_nbjetsTweaked;   //!
    TBranch        *b_ntruebjets;   //!
    TBranch        *b_nGluonsSplitToLF;   //!
    TBranch        *b_nGluonsSplitToC;   //!
@@ -827,7 +909,7 @@ public :
    TBranch        *b_ncjetsFromGluons;   //!
    TBranch        *b_nbjetsFromGluons;   //!
    TBranch        *b_nElectrons;   //!
-   TBranch        *b_nElectrons2011;   //!
+   TBranch        *b_nElectronsBug;   //!
    TBranch        *b_nMuons;   //!
    TBranch        *b_nElectrons5;   //!
    TBranch        *b_nMuons5;   //!
@@ -998,6 +1080,7 @@ public :
    TBranch        *b_passMC_SixJet45;   //!
    TBranch        *b_HT;   //!
    TBranch        *b_HT30;   //!
+   TBranch        *b_HT20;   //!
    TBranch        *b_ST;   //!
    TBranch        *b_STeff;   //!
    TBranch        *b_MET;   //!
@@ -1054,11 +1137,11 @@ public :
    TBranch        *b_mjj_highptCSVT;   //!
    TBranch        *b_minDeltaPhi;   //!
    TBranch        *b_minDeltaPhiAll;   //!
-   TBranch        *b_minDeltaPhiAll30;   //!
+   TBranch        *b_minDeltaPhiAll20;   //!
    TBranch        *b_minDeltaPhi20;   //!
    TBranch        *b_minDeltaPhi30;   //!
-   TBranch        *b_minDeltaPhi30_eta5_noIdAll;   //!
-   TBranch        *b_minDeltaPhiMetTau;   //!
+   TBranch        *b_minDeltaPhi20_eta5_noIdAll;   //!
+   TBranch        *b_minDeltaPhi20_eta5_noIdAll_nobeta;   //!
    TBranch        *b_deltaPhi1;   //!
    TBranch        *b_deltaPhi2;   //!
    TBranch        *b_deltaPhi3;   //!
@@ -1068,13 +1151,38 @@ public :
    TBranch        *b_maxDeltaPhi;   //!
    TBranch        *b_maxDeltaPhiAll;   //!
    TBranch        *b_maxDeltaPhiAll30;   //!
-   TBranch        *b_maxDeltaPhi30_eta5_noIdAll;   //!
+   TBranch        *b_maxDeltaPhi20_eta5_noIdAll;   //!
    TBranch        *b_sumDeltaPhi;   //!
    TBranch        *b_diffDeltaPhi;   //!
    TBranch        *b_deltaPhiStar;   //!
    TBranch        *b_deltaPhiStar_badjet_pt;   //!
+   TBranch        *b_deltaPhiStar_badjet_estimatedPt;   //!
+   TBranch        *b_deltaPhiStar_badjet_genPt;   //!
+   TBranch        *b_deltaPhiStar_badjet_energy;   //!
    TBranch        *b_deltaPhiStar_badjet_phi;   //!
    TBranch        *b_deltaPhiStar_badjet_eta;   //!
+   TBranch        *b_deltaPhiStar_badjet_CSV;   //!
+   TBranch        *b_deltaPhiStar_badjet_chEmE;   //!
+   TBranch        *b_deltaPhiStar_badjet_chHadE;   //!
+   TBranch        *b_deltaPhiStar_badjet_photonE;   //!
+   TBranch        *b_deltaPhiStar_badjet_neuEmE;   //!
+   TBranch        *b_deltaPhiStar_badjet_neuHadE;   //!
+   TBranch        *b_deltaPhiStar_badjet_chMuE;   //!
+   TBranch        *b_deltaPhiStar_badjet_etaetaMoment;   //!
+   TBranch        *b_deltaPhiStar_badjet_etaphiMoment;   //!
+   TBranch        *b_deltaPhiStar_badjet_phiphiMoment;   //!
+   TBranch        *b_deltaPhiStar_badjet_rawPt;   //!
+   TBranch        *b_deltaPhiStar_badjet_mass;   //!
+   TBranch        *b_deltaPhiStar_badjet_PUbeta;   //!
+   TBranch        *b_deltaPhiStar_badjet_PUbetaStar;   //!
+   TBranch        *b_deltaPhiStar_badjet_PUbetaStarClassic;   //!
+   TBranch        *b_deltaPhiStar_badjet_chMult;   //!
+   TBranch        *b_deltaPhiStar_badjet_neuMult;   //!
+   TBranch        *b_deltaPhiStar_badjet_muMult;   //!
+   TBranch        *b_deltaPhiStar_badjet_n60;   //!
+   TBranch        *b_deltaPhiStar_badjet_n90;   //!
+   TBranch        *b_hh_mostPUlike_beta;   //!
+   TBranch        *b_hh_mostPUlike_betaStar;   //!
    TBranch        *b_minDeltaPhiN;   //!
    TBranch        *b_deltaPhiN1;   //!
    TBranch        *b_deltaPhiN2;   //!
@@ -1244,7 +1352,7 @@ public :
    TBranch        *b_trackpt_15;   //!
    TBranch        *b_trackpt_20;   //!
 
-   signalEff_hbbhbb(TString path, TString filestub, bool joinbtagbins, bool usebtagsf, bool dopdfs, bool pusyst, int minnjets, int isrmode=99); //BEGIN END ra2b-jmt
+   signalEff_hbbhbb(TString path, TString filestub, bool joinbtagbins, bool usebtagsf, bool dopdfs, bool pusyst, int isrmode=99); //BEGIN END ra2b-jmt
    virtual ~signalEff_hbbhbb();
    virtual Int_t    Cut(Long64_t entry);
    virtual Int_t    GetEntry(Long64_t entry);
@@ -1271,15 +1379,15 @@ public :
 
 #ifdef signalEff_hbbhbb_cxx
 //BEGIN ra2b-jmt mod
-signalEff_hbbhbb::signalEff_hbbhbb(TString path, TString filestub,bool joinbtagbins, bool usebtagsf, bool dopdfs, bool pusyst, int minnjets, int isrmode) : fChain(0) 
-													    ,scanSMSngen_(0)
-													    ,filestub_(filestub)
-													    ,joinbtagbins_(joinbtagbins)
-													    ,usebtagsf_(usebtagsf)
-													    ,dopdfs_(dopdfs)
-													    ,pusyst_(pusyst)
-													    ,theIsrMode_(kNoIsrWeight)
-			    //END ra2b-jmt mod
+signalEff_hbbhbb::signalEff_hbbhbb(TString path, TString filestub,bool joinbtagbins, bool usebtagsf, bool dopdfs, bool pusyst, int isrmode) : fChain(0) 
+																	    ,scanSMSngen_(0)
+																	    ,filestub_(filestub)
+																	    ,joinbtagbins_(joinbtagbins)
+																	    ,usebtagsf_(usebtagsf)
+																	    ,dopdfs_(dopdfs)
+																	    ,pusyst_(pusyst)
+																	    ,theIsrMode_(kNoIsrWeight)
+				  //END ra2b-jmt mod
 {
  //BEGIN ra2b-jmt
   if (isrmode == -1)      theIsrMode_=kIsrDown;
@@ -1297,7 +1405,6 @@ signalEff_hbbhbb::signalEff_hbbhbb(TString path, TString filestub,bool joinbtagb
   std::cout<<" join b = "<<joinbtagbins<<std::endl;
   std::cout<<" b tag sf = "<<usebtagsf<<std::endl;
   std::cout<<" pdfs = "<<dopdfs<<std::endl;
-  std::cout<<" minnjets = "<<minnjets<<std::endl;
   std::cout<<" isrmode = "<<int(theIsrMode_)<<std::endl;
   //END ra2b-jmt
 
@@ -1422,6 +1529,7 @@ void signalEff_hbbhbb::Init(TTree *tree)
    fChain->SetBranchAddress("SUSY_chi0_pt", SUSY_chi0_pt, &b_SUSY_chi0_pt);
    fChain->SetBranchAddress("topPtWeight", &topPtWeight, &b_topPtWeight);
    fChain->SetBranchAddress("topPt", &topPt, &b_topPt);
+   fChain->SetBranchAddress("topPtWeightOfficial", &topPtWeightOfficial, &b_topPtWeightOfficial);
    fChain->SetBranchAddress("higgsMass", higgsMass, &b_higgsMass);
    fChain->SetBranchAddress("higgsSumpt", higgsSumpt, &b_higgsSumpt);
    fChain->SetBranchAddress("hhDeltaR", &hhDeltaR, &b_hhDeltaR);
@@ -1523,6 +1631,32 @@ void signalEff_hbbhbb::Init(TTree *tree)
    fChain->SetBranchAddress("maxTOBTECjetDeltaMult", &maxTOBTECjetDeltaMult, &b_maxTOBTECjetDeltaMult);
    fChain->SetBranchAddress("TOBTECjetChMult", &TOBTECjetChMult, &b_TOBTECjetChMult);
    fChain->SetBranchAddress("nGoodPV", &nGoodPV, &b_nGoodPV);
+   fChain->SetBranchAddress("PV0_x", &PV0_x, &b_PV0_x);
+   fChain->SetBranchAddress("PV0_xErr", &PV0_xErr, &b_PV0_xErr);
+   fChain->SetBranchAddress("PV0_y", &PV0_y, &b_PV0_y);
+   fChain->SetBranchAddress("PV0_yErr", &PV0_yErr, &b_PV0_yErr);
+   fChain->SetBranchAddress("PV0_z", &PV0_z, &b_PV0_z);
+   fChain->SetBranchAddress("PV0_zErr", &PV0_zErr, &b_PV0_zErr);
+   fChain->SetBranchAddress("PV_x", PV_x, &b_PV_x);
+   fChain->SetBranchAddress("PV_xErr", PV_xErr, &b_PV_xErr);
+   fChain->SetBranchAddress("PV_y", PV_y, &b_PV_y);
+   fChain->SetBranchAddress("PV_yErr", PV_yErr, &b_PV_yErr);
+   fChain->SetBranchAddress("PV_z", PV_z, &b_PV_z);
+   fChain->SetBranchAddress("PV_zErr", PV_zErr, &b_PV_zErr);
+   fChain->SetBranchAddress("PV_chi2", PV_chi2, &b_PV_chi2);
+   fChain->SetBranchAddress("PV_ndof", PV_ndof, &b_PV_ndof);
+   fChain->SetBranchAddress("PV_isFake", PV_isFake, &b_PV_isFake);
+   fChain->SetBranchAddress("PV_isGood", PV_isGood, &b_PV_isGood);
+   fChain->SetBranchAddress("PV_isValid", PV_isValid, &b_PV_isValid);
+   fChain->SetBranchAddress("PV_tracksSize", PV_tracksSize, &b_PV_tracksSize);
+   fChain->SetBranchAddress("PV_nearestZindex", &PV_nearestZindex, &b_PV_nearestZindex);
+   fChain->SetBranchAddress("rho_kt6PFJetsForIsolation", &rho_kt6PFJetsForIsolation, &b_rho_kt6PFJetsForIsolation);
+   fChain->SetBranchAddress("BS0_x", &BS0_x, &b_BS0_x);
+   fChain->SetBranchAddress("BS0_xErr", &BS0_xErr, &b_BS0_xErr);
+   fChain->SetBranchAddress("BS0_y", &BS0_y, &b_BS0_y);
+   fChain->SetBranchAddress("BS0_yErr", &BS0_yErr, &b_BS0_yErr);
+   fChain->SetBranchAddress("BS0_z", &BS0_z, &b_BS0_z);
+   fChain->SetBranchAddress("BS0_zErr", &BS0_zErr, &b_BS0_zErr);
    fChain->SetBranchAddress("SUSY_nb", &SUSY_nb, &b_SUSY_nb);
    fChain->SetBranchAddress("SUSY_process", &SUSY_process, &b_SUSY_process);
    fChain->SetBranchAddress("SUSY_recoilPt", &SUSY_recoilPt, &b_SUSY_recoilPt);
@@ -1538,9 +1672,8 @@ void signalEff_hbbhbb::Init(TTree *tree)
    fChain->SetBranchAddress("ncompleteHiggsReco20", &ncompleteHiggsReco20, &b_ncompleteHiggsReco20);
    fChain->SetBranchAddress("njetsHiggsMatch20_eta5", &njetsHiggsMatch20_eta5, &b_njetsHiggsMatch20_eta5);
    fChain->SetBranchAddress("nbjets", &nbjets, &b_nbjets);
-   fChain->SetBranchAddress("nbjetsTweaked", &nbjetsTweaked, &b_nbjetsTweaked);
    fChain->SetBranchAddress("nbjets30", &nbjets30, &b_nbjets30);
-   fChain->SetBranchAddress("nbjets20", &nbjets20, &b_nbjets20);
+   fChain->SetBranchAddress("nbjetsTweaked", &nbjetsTweaked, &b_nbjetsTweaked);
    fChain->SetBranchAddress("ntruebjets", &ntruebjets, &b_ntruebjets);
    fChain->SetBranchAddress("nGluonsSplitToLF", &nGluonsSplitToLF, &b_nGluonsSplitToLF);
    fChain->SetBranchAddress("nGluonsSplitToC", &nGluonsSplitToC, &b_nGluonsSplitToC);
@@ -1549,7 +1682,7 @@ void signalEff_hbbhbb::Init(TTree *tree)
    fChain->SetBranchAddress("ncjetsFromGluons", &ncjetsFromGluons, &b_ncjetsFromGluons);
    fChain->SetBranchAddress("nbjetsFromGluons", &nbjetsFromGluons, &b_nbjetsFromGluons);
    fChain->SetBranchAddress("nElectrons", &nElectrons, &b_nElectrons);
-   fChain->SetBranchAddress("nElectrons2011", &nElectrons2011, &b_nElectrons2011);
+   fChain->SetBranchAddress("nElectronsBug", &nElectronsBug, &b_nElectronsBug);
    fChain->SetBranchAddress("nMuons", &nMuons, &b_nMuons);
    fChain->SetBranchAddress("nElectrons5", &nElectrons5, &b_nElectrons5);
    fChain->SetBranchAddress("nMuons5", &nMuons5, &b_nMuons5);
@@ -1720,6 +1853,7 @@ void signalEff_hbbhbb::Init(TTree *tree)
    fChain->SetBranchAddress("passMC_SixJet45", &passMC_SixJet45, &b_passMC_SixJet45);
    fChain->SetBranchAddress("HT", &HT, &b_HT);
    fChain->SetBranchAddress("HT30", &HT30, &b_HT30);
+   fChain->SetBranchAddress("HT20", &HT20, &b_HT20);
    fChain->SetBranchAddress("ST", &ST, &b_ST);
    fChain->SetBranchAddress("STeff", &STeff, &b_STeff);
    fChain->SetBranchAddress("MET", &MET, &b_MET);
@@ -1776,11 +1910,11 @@ void signalEff_hbbhbb::Init(TTree *tree)
    fChain->SetBranchAddress("mjj_highptCSVT", &mjj_highptCSVT, &b_mjj_highptCSVT);
    fChain->SetBranchAddress("minDeltaPhi", &minDeltaPhi, &b_minDeltaPhi);
    fChain->SetBranchAddress("minDeltaPhiAll", &minDeltaPhiAll, &b_minDeltaPhiAll);
-   fChain->SetBranchAddress("minDeltaPhiAll30", &minDeltaPhiAll30, &b_minDeltaPhiAll30);
+   fChain->SetBranchAddress("minDeltaPhiAll20", &minDeltaPhiAll20, &b_minDeltaPhiAll20);
    fChain->SetBranchAddress("minDeltaPhi20", &minDeltaPhi20, &b_minDeltaPhi20);
    fChain->SetBranchAddress("minDeltaPhi30", &minDeltaPhi30, &b_minDeltaPhi30);
-   fChain->SetBranchAddress("minDeltaPhi30_eta5_noIdAll", &minDeltaPhi30_eta5_noIdAll, &b_minDeltaPhi30_eta5_noIdAll);
-   fChain->SetBranchAddress("minDeltaPhiMetTau", &minDeltaPhiMetTau, &b_minDeltaPhiMetTau);
+   fChain->SetBranchAddress("minDeltaPhi20_eta5_noIdAll", &minDeltaPhi20_eta5_noIdAll, &b_minDeltaPhi20_eta5_noIdAll);
+   fChain->SetBranchAddress("minDeltaPhi20_eta5_noIdAll_nobeta", &minDeltaPhi20_eta5_noIdAll_nobeta, &b_minDeltaPhi20_eta5_noIdAll_nobeta);
    fChain->SetBranchAddress("deltaPhi1", &deltaPhi1, &b_deltaPhi1);
    fChain->SetBranchAddress("deltaPhi2", &deltaPhi2, &b_deltaPhi2);
    fChain->SetBranchAddress("deltaPhi3", &deltaPhi3, &b_deltaPhi3);
@@ -1790,13 +1924,38 @@ void signalEff_hbbhbb::Init(TTree *tree)
    fChain->SetBranchAddress("maxDeltaPhi", &maxDeltaPhi, &b_maxDeltaPhi);
    fChain->SetBranchAddress("maxDeltaPhiAll", &maxDeltaPhiAll, &b_maxDeltaPhiAll);
    fChain->SetBranchAddress("maxDeltaPhiAll30", &maxDeltaPhiAll30, &b_maxDeltaPhiAll30);
-   fChain->SetBranchAddress("maxDeltaPhi30_eta5_noIdAll", &maxDeltaPhi30_eta5_noIdAll, &b_maxDeltaPhi30_eta5_noIdAll);
+   fChain->SetBranchAddress("maxDeltaPhi20_eta5_noIdAll", &maxDeltaPhi20_eta5_noIdAll, &b_maxDeltaPhi20_eta5_noIdAll);
    fChain->SetBranchAddress("sumDeltaPhi", &sumDeltaPhi, &b_sumDeltaPhi);
    fChain->SetBranchAddress("diffDeltaPhi", &diffDeltaPhi, &b_diffDeltaPhi);
    fChain->SetBranchAddress("deltaPhiStar", &deltaPhiStar, &b_deltaPhiStar);
    fChain->SetBranchAddress("deltaPhiStar_badjet_pt", &deltaPhiStar_badjet_pt, &b_deltaPhiStar_badjet_pt);
+   fChain->SetBranchAddress("deltaPhiStar_badjet_estimatedPt", &deltaPhiStar_badjet_estimatedPt, &b_deltaPhiStar_badjet_estimatedPt);
+   fChain->SetBranchAddress("deltaPhiStar_badjet_genPt", &deltaPhiStar_badjet_genPt, &b_deltaPhiStar_badjet_genPt);
+   fChain->SetBranchAddress("deltaPhiStar_badjet_energy", &deltaPhiStar_badjet_energy, &b_deltaPhiStar_badjet_energy);
    fChain->SetBranchAddress("deltaPhiStar_badjet_phi", &deltaPhiStar_badjet_phi, &b_deltaPhiStar_badjet_phi);
    fChain->SetBranchAddress("deltaPhiStar_badjet_eta", &deltaPhiStar_badjet_eta, &b_deltaPhiStar_badjet_eta);
+   fChain->SetBranchAddress("deltaPhiStar_badjet_CSV", &deltaPhiStar_badjet_CSV, &b_deltaPhiStar_badjet_CSV);
+   fChain->SetBranchAddress("deltaPhiStar_badjet_chEmE", &deltaPhiStar_badjet_chEmE, &b_deltaPhiStar_badjet_chEmE);
+   fChain->SetBranchAddress("deltaPhiStar_badjet_chHadE", &deltaPhiStar_badjet_chHadE, &b_deltaPhiStar_badjet_chHadE);
+   fChain->SetBranchAddress("deltaPhiStar_badjet_photonE", &deltaPhiStar_badjet_photonE, &b_deltaPhiStar_badjet_photonE);
+   fChain->SetBranchAddress("deltaPhiStar_badjet_neuEmE", &deltaPhiStar_badjet_neuEmE, &b_deltaPhiStar_badjet_neuEmE);
+   fChain->SetBranchAddress("deltaPhiStar_badjet_neuHadE", &deltaPhiStar_badjet_neuHadE, &b_deltaPhiStar_badjet_neuHadE);
+   fChain->SetBranchAddress("deltaPhiStar_badjet_chMuE", &deltaPhiStar_badjet_chMuE, &b_deltaPhiStar_badjet_chMuE);
+   fChain->SetBranchAddress("deltaPhiStar_badjet_etaetaMoment", &deltaPhiStar_badjet_etaetaMoment, &b_deltaPhiStar_badjet_etaetaMoment);
+   fChain->SetBranchAddress("deltaPhiStar_badjet_etaphiMoment", &deltaPhiStar_badjet_etaphiMoment, &b_deltaPhiStar_badjet_etaphiMoment);
+   fChain->SetBranchAddress("deltaPhiStar_badjet_phiphiMoment", &deltaPhiStar_badjet_phiphiMoment, &b_deltaPhiStar_badjet_phiphiMoment);
+   fChain->SetBranchAddress("deltaPhiStar_badjet_rawPt", &deltaPhiStar_badjet_rawPt, &b_deltaPhiStar_badjet_rawPt);
+   fChain->SetBranchAddress("deltaPhiStar_badjet_mass", &deltaPhiStar_badjet_mass, &b_deltaPhiStar_badjet_mass);
+   fChain->SetBranchAddress("deltaPhiStar_badjet_PUbeta", &deltaPhiStar_badjet_PUbeta, &b_deltaPhiStar_badjet_PUbeta);
+   fChain->SetBranchAddress("deltaPhiStar_badjet_PUbetaStar", &deltaPhiStar_badjet_PUbetaStar, &b_deltaPhiStar_badjet_PUbetaStar);
+   fChain->SetBranchAddress("deltaPhiStar_badjet_PUbetaStarClassic", &deltaPhiStar_badjet_PUbetaStarClassic, &b_deltaPhiStar_badjet_PUbetaStarClassic);
+   fChain->SetBranchAddress("deltaPhiStar_badjet_chMult", &deltaPhiStar_badjet_chMult, &b_deltaPhiStar_badjet_chMult);
+   fChain->SetBranchAddress("deltaPhiStar_badjet_neuMult", &deltaPhiStar_badjet_neuMult, &b_deltaPhiStar_badjet_neuMult);
+   fChain->SetBranchAddress("deltaPhiStar_badjet_muMult", &deltaPhiStar_badjet_muMult, &b_deltaPhiStar_badjet_muMult);
+   fChain->SetBranchAddress("deltaPhiStar_badjet_n60", &deltaPhiStar_badjet_n60, &b_deltaPhiStar_badjet_n60);
+   fChain->SetBranchAddress("deltaPhiStar_badjet_n90", &deltaPhiStar_badjet_n90, &b_deltaPhiStar_badjet_n90);
+   fChain->SetBranchAddress("hh_mostPUlike_beta", &hh_mostPUlike_beta, &b_hh_mostPUlike_beta);
+   fChain->SetBranchAddress("hh_mostPUlike_betaStar", &hh_mostPUlike_betaStar, &b_hh_mostPUlike_betaStar);
    fChain->SetBranchAddress("minDeltaPhiN", &minDeltaPhiN, &b_minDeltaPhiN);
    fChain->SetBranchAddress("deltaPhiN1", &deltaPhiN1, &b_deltaPhiN1);
    fChain->SetBranchAddress("deltaPhiN2", &deltaPhiN2, &b_deltaPhiN2);
@@ -1965,6 +2124,7 @@ void signalEff_hbbhbb::Init(TTree *tree)
    fChain->SetBranchAddress("trackpt_10", &trackpt_10, &b_trackpt_10);
    fChain->SetBranchAddress("trackpt_15", &trackpt_15, &b_trackpt_15);
    fChain->SetBranchAddress("trackpt_20", &trackpt_20, &b_trackpt_20);
+
    Notify();
 }
 

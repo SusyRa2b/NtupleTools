@@ -45,7 +45,7 @@ void signalEff_hbbhbb::Loop()
   vector<SearchRegion> searchregions;
 
   bool madgraphIsr=false;
-  if (!filestub_.Contains("Run2012")) { //as long as the sample is not data, apply the ISR weight
+  if (true) { //used to have some logic here based on sample name; let's just let it fly like this for now
     //and will use the isr systematic
     assert(theIsrMode_ != kNoIsrWeight);
     madgraphIsr=true;
@@ -222,6 +222,8 @@ void signalEff_hbbhbb::Loop()
 	  if (ii==0)  eventcountsTotalISR->Fill(m0,m12,theisrweight); //only fill once per event!
 	}
 
+	//TO DO -- add trigger efficiency
+
 	double pdfweight=1;
 	//if this search region is a pdf variation then use pdf weight
 	if ( searchregions[ii].pdfset_ == "CTEQ" ) { //for speed reasons i am scared of doing all of these string comparisons. still outweighed by i/o speed?
@@ -304,6 +306,10 @@ void signalEff_hbbhbb::Loop()
           if ( !((0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)>100)&&(0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)<140)) ) continue;
           if ( !(fabs(higgsMbb1MassDiff-higgsMbb2MassDiff)<20) ) continue;
 	}
+
+	//TO DO -- change the nbjetsCSMX variables to other names,
+	//then load in the nbjetsCSVX values into them up here
+	//this will allow flexibility when we have SF variations
 
 	bool passb=false;
 	if ( (searchregions[ii].nb_ == 4) //2 CSVT + 1 CSVM + 1 CSVL
