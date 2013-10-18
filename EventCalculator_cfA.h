@@ -442,6 +442,8 @@ public:
 			float extraSFb=1, float extraSFc=1, float extraSFl=1, BTagEffModifier modifier=kBTagModifier0);
   void calculateTagProb_ewk(float &Prob2b, float &Prob3b, float &Prob4b);
 
+  void BTagSF_recipe2a(float &Prob2b, float &Prob3b, float &Prob4b, int &nbjet);
+
   //btag stuff
   float jetTagEff(unsigned int ijet, TH1D* h_btageff, TH1D* h_ctageff, TH1D* h_ltageff,
 		  const float extraSFb, const float extraSFc, const float extraSFl,const BTagEffModifier modifier=kBTagModifier0);
@@ -3509,3 +3511,4 @@ private:
 };
 
 #endif
+

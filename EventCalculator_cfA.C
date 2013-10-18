@@ -6662,6 +6662,142 @@ Use the b-tag algorithm output and calculate a weight for the _event_ based on t
 
 }
 
+
+//Function still in development
+void EventCalculator::BTagSF_recipe2a(float &Prob2b, float &Prob3b, float &Prob4b, int &nbjet){ 
+
+  //Init
+  Prob2b = 0;
+  Prob3b = 0;
+  Prob4b = 0;
+
+  if (f_tageff_ == 0) {
+    Prob2b = -2; 
+    Prob3b = -2; 
+    Prob4b = -2;
+    cout << "WHATT" << endl; 
+  } 
+
+  TRandom3 seed(getRunNumber()+getLumiSection()+getEventNumber());
+
+  const float pTthresh = minHiggsJetPt_; //use Higg jet threshold 
+  const int csvt = 3; //Tight
+  const int csvm = 2; //Medium
+  const int csvl = 1; //Loose
+  const int csvn = 0; //No tag
+  unsigned int jetsize = jets_AK5PF_pt->size();
+  int thetags[4];
+  int orig[4];
+  thetags[0] = 0;  thetags[1] = 0;  thetags[2] = 0;  thetags[3] = 0;  
+  orig[0] = 0;  orig[1] = 0;  orig[2] = 0;  orig[3] = 0;  
+  
+  for (unsigned int ijet=0; ijet<jetsize; ++ijet) {
+    if(!isGoodJet(ijet,pTthresh)) continue; //apply threshold
+    int jflavi  = fabs(jets_AK5PF_partonFlavour->at(ijet));
+    float jpti  = getJetPt(ijet);
+    float jetai = fabs(jets_AK5PF_eta->at(ijet));
+    int jetTag = getJetTagCatIndex(ijet); //3-T,2-M,1-L,0-No Tag
+    double efft = getBtagEffMC(jflavi,jpti,jetai,csvt); 
+    double effm = getBtagEffMC(jflavi,jpti,jetai,csvm);
+    double effl = getBtagEffMC(jflavi,jpti,jetai,csvl);
+    double sft  = getBtagSF(jflavi,jpti,jetai,csvt,kBTagModifier0);
+    double sfm  = getBtagSF(jflavi,jpti,jetai,csvm,kBTagModifier0);
+    double sfl  = getBtagSF(jflavi,jpti,jetai,csvl,kBTagModifier0);
+
+    orig[jetTag]++;
+    double sfefft = sft*efft;
+    double sfeffm = sfm*effm;
+    double sfeffl = sfl*effl;
+   
+    //if ( sfl <= 1.0 )  
+    //cout << "Eff " << efft << " " << effm << " " << effl << "   SF " << sft << " " << sfm << " " << sfl << "  SfEff " << sfefft << " " << sfeffm << " " << sfeffl << endl;
+
+    //Ensure 0 <= eff_T <= eff_M <= eff_L <= 1
+    //Logic works as long as eff_? variables are not all negative (they shouldn't) 
+    if ( effl > 1.0  ) effl = 1.0;
+    if ( effm > effl ) effm = effl; 
+    if ( efft > effm ) efft = effm;
+    if ( efft < 0.0  ) efft = 0.0;
+
+    //
+    sfefft = sft*efft;
+    sfeffm = sfm*effm;
+    sfeffl = sfl*effl;
+
+    //Ensure 0 <= SF_T*eff_T <= SF_M*eff_M <= SF_L*eff_L <= 1
+    if ( sfeffl > 1.0    ) sfl = 1.0/effl;
+    if ( sfeffm > sfeffl ) sfm = sfeffl/effm; 
+    if ( sfefft > sfeffm ) sft = sfeffm/efft;
+    if ( sfefft < 0.0    ) sft = 0.0;
+    
+    int newtag = jetTag;
+    //Determine the 8 outcomes
+    if ( (sft<1)&&(sfm<1)&&(sfl<1) ) {
+      if ((newtag==csvt) && (seed.Rndm() < (1-sft)) ) newtag--; 
+      if ((newtag==csvm) && (seed.Rndm() < ((1-sfm)/(1-sft*(efft/effm)))) ) newtag--; 
+      if ((newtag==csvl) && (seed.Rndm() < ((1-sfl)/(1-sfm*(effm/effl)))) ) newtag--;
+    }//1 
+    else if ( (sft<1)&&(sfm<1)&&(sfl>1) ) {
+      if ((newtag==csvt) && (seed.Rndm() < (1-sft)) ) newtag--; 
+      if ((newtag==csvm) && (seed.Rndm() < ((1-sfm)/(1-sft*(efft/effm)))) ) newtag--; 
+      if ((newtag==csvn) && (seed.Rndm() < ((sfl-1)/((1./effl)-1))) ) newtag++;
+    }//2
+    else if ( (sft>1)&&(sfm<1)&&(sfl<1) ) {
+      if ((newtag==csvm) && (seed.Rndm() < ((sft-1)/((effm/efft)-1))) ) newtag++; 
+      if ((newtag==csvm) && (seed.Rndm() < ((1-sfm)/(1-sft*(efft/effm)))) ) newtag--; 
+      if ((newtag==csvl) && (seed.Rndm() < ((1-sfl)/(1-sfm*(effm/effl)))) ) newtag--;
+    }//3
+    else if ( (sft>1)&&(sfm<1)&&(sfl>1) ) {
+      if ((newtag==csvm) && (seed.Rndm() < ((sft-1)/((effm/efft)-1))) ) newtag++; 
+      if ((newtag==csvm) && (seed.Rndm() < ((1-sfm)/(1-sft*(efft/effm)))) ) newtag--; 
+      if ((newtag==csvn) && (seed.Rndm() < ((sfl-1)/((1./effl)-1))) ) newtag++;
+    }//4
+    else if ( (sft<1)&&(sfm>1)&&(sfl<1) ) {
+      if ((newtag==csvt) && (seed.Rndm() < (1-sft)) ) newtag--; 
+      if ((newtag==csvl) && (seed.Rndm() < ((sfm-1)/((effl/effm)-1))) ) newtag++; 
+      if ((newtag==csvl) && (seed.Rndm() < ((1-sfl)/(1-sfm*(effm/effl)))) ) newtag--;
+    }//5
+    else if ( (sft<1)&&(sfm>1)&&(sfl>1) ) {
+      if ((newtag==csvt) && (seed.Rndm() < (1-sft)) ) newtag--; 
+      if ((newtag==csvn) && (seed.Rndm() < ((sfl-1)/((1./effl)-1))) ) newtag++; 
+      if ((newtag==csvl) && (seed.Rndm() < ((sfm-1)/(sfl*(effl/effm)-1))) ) newtag++;
+    }//6
+    else if ( (sft>1)&&(sfm>1)&&(sfl<1) ) {
+      if ((newtag==csvl) && (seed.Rndm() < (sfm-1)/((effl/effm)-1)) ) newtag++; 
+      if ((newtag==csvm) && (seed.Rndm() < ((sft-1)/(sfm*(effm/efft)-1))) ) newtag++; 
+      if ((newtag==csvl) && (seed.Rndm() < ((1-sfl)/(1-sfm*(effm/effl)))) ) newtag--;
+    }//7
+    else if ( (sft>1)&&(sfm>1)&&(sfl>1) ) {
+      if ((newtag==csvn) && (seed.Rndm() < (sfl-1)/((1./effl)-1)) ) newtag++; 
+      if ((newtag==csvl) && (seed.Rndm() < ((sfm-1)/(sfl*(effl/effm)-1))) ) newtag++; 
+      if ((newtag==csvm) && (seed.Rndm() < ((sft-1)/(sfm*(effm/efft)-1))) ) newtag++;
+    }//8
+
+    if ( newtag < 0 || newtag > 3 ) assert(0);
+    thetags[newtag]++;
+
+
+  }//i loop
+
+
+  if ( (orig[csvt] == 2) && (orig[csvm] == 0) ) cout << "Orig Prob2b  - " ; 
+  else if ( (orig[csvt] >= 2) && ((orig[csvt]+orig[csvm]) == 3) && (orig[csvl] == 0) ) cout << "Orig Prob3b  - ";
+  else if ( (orig[csvt] >= 2) && ((orig[csvt]+orig[csvm]) >= 3) && ((orig[csvt]+orig[csvm]+orig[csvl] >= 4)) ) cout << "Orig Prob4b - ";
+  else cout << "Orig None  - " ;
+
+  if ( (thetags[csvt] == 2) && (thetags[csvm] == 0) ) cout << "Prob2b" << endl; 
+  else if ( (thetags[csvt] >= 2) && ((thetags[csvt]+thetags[csvm]) == 3) && (thetags[csvl] == 0) ) cout << "Prob3b" << endl;
+  else if ( (thetags[csvt] >= 2) && ((thetags[csvt]+thetags[csvm]) >= 3) && ((thetags[csvt]+thetags[csvm]+thetags[csvl] >= 4)) ) cout << "Prob4b" << endl;
+  else cout << "None " << endl;
+
+  if ( (thetags[csvt] == 2) && (thetags[csvm] == 0) ) { Prob2b = 1; nbjet = 2; }
+  else if ( (thetags[csvt] >= 2) && ((thetags[csvt]+thetags[csvm]) == 3) && (thetags[csvl] == 0) ) { Prob3b = 1; nbjet = 3; }
+  else if ( (thetags[csvt] >= 2) && ((thetags[csvt]+thetags[csvm]) >= 3) && ((thetags[csvt]+thetags[csvm]+thetags[csvl] >= 4)) ) { Prob4b = 1; nbjet = 4; }
+  else nbjet = 0;
+
+}//end method
+
+
 //Function still in development
 void EventCalculator::calculateTagProb_ewk(float &Prob2b, float &Prob3b, float &Prob4b){ 
 
@@ -7837,6 +7973,8 @@ void EventCalculator::reducedTree(TString outputpath) {
 
   float BTagWeightLMT,BTagWeightLMT_HFplus,BTagWeightLMT_HFminus,BTagWeightLMT_LFplus,BTagWeightLMT_LFminus;
 
+  int nbjets_btagsf;
+
   float prob0_HFplus,probge1_HFplus,prob1_HFplus,probge2_HFplus,probge3_HFplus,prob2_HFplus,probge4_HFplus,prob3_HFplus;
   float prob0_HFminus,probge1_HFminus,prob1_HFminus,probge2_HFminus,probge3_HFminus,prob2_HFminus,probge4_HFminus,prob3_HFminus;
   float prob0_LFplus,probge1_LFplus,prob1_LFplus,probge2_LFplus,probge3_LFplus,prob2_LFplus,probge4_LFplus,prob3_LFplus;
@@ -8079,6 +8217,8 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("prob2b",&prob2b,"prob2b/F");
   reducedTree.Branch("prob3b",&prob2b,"prob3b/F");
   reducedTree.Branch("prob4b",&prob2b,"prob4b/F");
+
+  reducedTree.Branch("nbjets_btagsf",&nbjets_btagsf,"nbjets_btagsf/F");
 
   reducedTree.Branch("prob0",&prob0,"prob0/F");
   reducedTree.Branch("probge1",&probge1,"probge1/F");
@@ -9171,7 +9311,8 @@ void EventCalculator::reducedTree(TString outputpath) {
 
       calculateTagProb(prob0,probge1,prob1,probge2,prob2,probge3,prob3,probge4);
 
-      calculateTagProb_ewk(prob2b,prob3b,prob4b);
+      //calculateTagProb_ewk(prob2b,prob3b,prob4b);
+      BTagSF_recipe2a(prob2b,prob3b,prob4b,nbjets_btagsf); //just reuse the variables...
 
       calculateTagProb(prob0_HFplus,probge1_HFplus,prob1_HFplus,probge2_HFplus,prob2_HFplus,probge3_HFplus,prob3_HFplus,probge4_HFplus,1,1,1,kHFup);
       calculateTagProb(prob0_HFminus,probge1_HFminus,prob1_HFminus,probge2_HFminus,prob2_HFminus,probge3_HFminus,prob3_HFminus,probge4_HFminus,1,1,1,kHFdown);
