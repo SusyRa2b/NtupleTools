@@ -10,32 +10,24 @@
 #into
 #eventcounts.Isr0.CSVM_PF2PATjets_JES0_JER0_PFMETTypeI_METunc0_PUunc0_BTagEff05_HLTEff0.T1bbbbMG.root
 
-sampleid='SMS-MadGraph_Pythia6Zstar_8TeV_T1ttcc_2J_mGo-1000_mStop'
-sampleidout='T1ttcc'
+sampleid='SMS-TChiHH'
+sampleidout='TChiHH'
 #sampleid='pMSSM12_MCMC1_120mh130_batch4_'
 #sampleidout='pMSSM4'
-finaldir='/home/joshmt/rootfiles_6June2013/hadded'
-inputdir='/home/joshmt/rootfiles_6June2013'
+finaldir='TChiHH'
+inputdir='.'
 
 mkdir -p $finaldir
 
 #this is for the samples with ISR (madgraph)
-stub[0]='eventcounts.Isr0.CSVM_PF2PATjets_JES0_JER0_PFMETTypeI_METunc0_PUunc0_BTagEff05_HLTEff0'
-stub[1]='eventcounts.mergebbins.Isr0.CSVM_PF2PATjets_JES0_JER0_PFMETTypeI_METunc0_PUunc0_BTagEff05_HLTEff0'
-stub[2]='eventcounts.mergebbins.IsrDown.CSVM_PF2PATjets_JES0_JER0_PFMETTypeI_METunc0_PUunc0_BTagEff05_HLTEff0'
-stub[3]='eventcounts.mergebbins.IsrUp.CSVM_PF2PATjets_JES0_JER0_PFMETTypeI_METunc0_PUunc0_BTagEff05_HLTEff0'
-stub[4]='eventcounts.mergebbins.withpdfs.Isr0.CSVM_PF2PATjets_JES0_JER0_PFMETTypeI_METunc0_PUunc0_BTagEff05_HLTEff0'
-stub[5]='eventcounts.pusyst.Isr0.CSVM_PF2PATjets_JES0_JER0_PFMETTypeI_METunc0_PUunc0_BTagEff05_HLTEff0'
-stub[6]='eventcounts.mergebbins.Isr0.CSVM_PF2PATjets_JESup_JER0_PFMETTypeI_METunc0_PUunc0_BTagEff05_HLTEff0'
-stub[7]='eventcounts.mergebbins.Isr0.CSVM_PF2PATjets_JESdown_JER0_PFMETTypeI_METunc0_PUunc0_BTagEff05_HLTEff0'
-
-#this is for samples without ISR (pythia)
-#stub[0]='eventcounts.CSVM_PF2PATjets_JES0_JER0_PFMETTypeI_METunc0_PUunc0_BTagEff05_HLTEff0'
-#stub[1]='eventcounts.mergebbins.CSVM_PF2PATjets_JES0_JER0_PFMETTypeI_METunc0_PUunc0_BTagEff05_HLTEff0'
-#stub[2]='eventcounts.mergebbins.withpdfs.CSVM_PF2PATjets_JES0_JER0_PFMETTypeI_METunc0_PUunc0_BTagEff05_HLTEff0'
-#stub[3]='eventcounts.pusyst.CSVM_PF2PATjets_JES0_JER0_PFMETTypeI_METunc0_PUunc0_BTagEff05_HLTEff0'
-#stub[4]='eventcounts.mergebbins.CSVM_PF2PATjets_JESup_JER0_PFMETTypeI_METunc0_PUunc0_BTagEff05_HLTEff0'
-#stub[5]='eventcounts.mergebbins.CSVM_PF2PATjets_JESdown_JER0_PFMETTypeI_METunc0_PUunc0_BTagEff05_HLTEff0'
+stub[0]='eventcounts.Isr0.JES0_JER0_PFMETTypeI_METunc0_PUunc0_hpt20'
+stub[1]='eventcounts.mergebbins.Isr0.JES0_JER0_PFMETTypeI_METunc0_PUunc0_hpt20'
+stub[2]='eventcounts.mergebbins.IsrDown.JES0_JER0_PFMETTypeI_METunc0_PUunc0_hpt20'
+stub[3]='eventcounts.mergebbins.IsrUp.JES0_JER0_PFMETTypeI_METunc0_PUunc0_hpt20'
+stub[4]='eventcounts.mergebbins.withpdfs.Isr0.JES0_JER0_PFMETTypeI_METunc0_PUunc0_hpt20'
+stub[5]='eventcounts.pusyst.Isr0.JES0_JER0_PFMETTypeI_METunc0_PUunc0_hpt20'
+stub[6]='eventcounts.mergebbins.Isr0.JESup_JER0_PFMETTypeI_METunc0_PUunc0_hpt20'
+stub[7]='eventcounts.mergebbins.Isr0.JESdown_JER0_PFMETTypeI_METunc0_PUunc0_hpt20'
 
 for t in "${stub[@]}"
 do
