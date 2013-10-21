@@ -6664,54 +6664,68 @@ Use the b-tag algorithm output and calculate a weight for the _event_ based on t
 
 
 //Function still in development
-void EventCalculator::BTagSF_recipe2a(float &Prob2b, float &Prob3b, float &Prob4b, int &nbjet){ 
+void EventCalculator::BTagSF_recipe2a(int &nbtag0, int &nbtag2, int &nbtag3, int &nbtag4, BTagEffModifier modifier, bool raw){ 
 
   //Init
-  Prob2b = 0;
-  Prob3b = 0;
-  Prob4b = 0;
+  nbtag0 = 0; 
+  nbtag2 = 0; 
+  nbtag3 = 0;
+  nbtag4 = 0;
 
+  //Make it obvious btag histo wasn't used
   if (f_tageff_ == 0) {
-    Prob2b = -2; 
-    Prob3b = -2; 
-    Prob4b = -2;
-    cout << "WHATT" << endl; 
+    nbtag0 = -2; 
+    nbtag2 = -2; 
+    nbtag3 = -2;
+    nbtag4 = -2;
+    return;
   } 
 
+  //Get unique, but repeatable random numbers
   TRandom3 seed(getRunNumber()+getLumiSection()+getEventNumber());
 
+  unsigned int jetsize = jets_AK5PF_pt->size();//number of jets in event
   const float pTthresh = minHiggsJetPt_; //use Higg jet threshold 
+
+  //Jet b-tag status definitions
   const int csvt = 3; //Tight
   const int csvm = 2; //Medium
   const int csvl = 1; //Loose
   const int csvn = 0; //No tag
-  unsigned int jetsize = jets_AK5PF_pt->size();
-  int thetags[4];
-  int orig[4];
-  thetags[0] = 0;  thetags[1] = 0;  thetags[2] = 0;  thetags[3] = 0;  
-  orig[0] = 0;  orig[1] = 0;  orig[2] = 0;  orig[3] = 0;  
-  
+
+  //Counters whose indices are the b-tag statuses
+  int newtags[4];
+  int origtags[4];
+  newtags[0] = 0;  newtags[1] = 0;  newtags[2] = 0;  newtags[3] = 0;  
+  origtags[0] = 0;  origtags[1] = 0;  origtags[2] = 0;  origtags[3] = 0;  
+
+  //Loop over all jets  
   for (unsigned int ijet=0; ijet<jetsize; ++ijet) {
     if(!isGoodJet(ijet,pTthresh)) continue; //apply threshold
     int jflavi  = fabs(jets_AK5PF_partonFlavour->at(ijet));
     float jpti  = getJetPt(ijet);
     float jetai = fabs(jets_AK5PF_eta->at(ijet));
-    int jetTag = getJetTagCatIndex(ijet); //3-T,2-M,1-L,0-No Tag
+    int jettag = getJetTagCatIndex(ijet); //3-T,2-M,1-L,0-No Tag
+    
+    //Categorize original tags
+    origtags[jettag]++;
+    if ( raw ) continue;   
+ 
+    //Get eff_MC and SF
     double efft = getBtagEffMC(jflavi,jpti,jetai,csvt); 
     double effm = getBtagEffMC(jflavi,jpti,jetai,csvm);
     double effl = getBtagEffMC(jflavi,jpti,jetai,csvl);
-    double sft  = getBtagSF(jflavi,jpti,jetai,csvt,kBTagModifier0);
-    double sfm  = getBtagSF(jflavi,jpti,jetai,csvm,kBTagModifier0);
-    double sfl  = getBtagSF(jflavi,jpti,jetai,csvl,kBTagModifier0);
+    double sft  = getBtagSF(jflavi,jpti,jetai,csvt,modifier);
+    double sfm  = getBtagSF(jflavi,jpti,jetai,csvm,modifier);
+    double sfl  = getBtagSF(jflavi,jpti,jetai,csvl,modifier);
+    //double sft  = getBtagSF(jflavi,jpti,jetai,csvt,kBTagModifier0);
+    //double sfm  = getBtagSF(jflavi,jpti,jetai,csvm,kBTagModifier0);
+    //double sfl  = getBtagSF(jflavi,jpti,jetai,csvl,kBTagModifier0);
 
-    orig[jetTag]++;
     double sfefft = sft*efft;
     double sfeffm = sfm*effm;
     double sfeffl = sfl*effl;
    
-    //if ( sfl <= 1.0 )  
-    //cout << "Eff " << efft << " " << effm << " " << effl << "   SF " << sft << " " << sfm << " " << sfl << "  SfEff " << sfefft << " " << sfeffm << " " << sfeffl << endl;
-
     //Ensure 0 <= eff_T <= eff_M <= eff_L <= 1
     //Logic works as long as eff_? variables are not all negative (they shouldn't) 
     if ( effl > 1.0  ) effl = 1.0;
@@ -6730,71 +6744,80 @@ void EventCalculator::BTagSF_recipe2a(float &Prob2b, float &Prob3b, float &Prob4
     if ( sfefft > sfeffm ) sft = sfeffm/efft;
     if ( sfefft < 0.0    ) sft = 0.0;
     
-    int newtag = jetTag;
+    //Now apply procedure and determine the new tag
+    //
+    int newtag = jettag;
+
+    //Get random numbers
+    double rn1 = seed.Rndm();
+    double rn2 = seed.Rndm();
+    double rn3 = seed.Rndm();
+
     //Determine the 8 outcomes
     if ( (sft<1)&&(sfm<1)&&(sfl<1) ) {
-      if ((newtag==csvt) && (seed.Rndm() < (1-sft)) ) newtag--; 
-      if ((newtag==csvm) && (seed.Rndm() < ((1-sfm)/(1-sft*(efft/effm)))) ) newtag--; 
-      if ((newtag==csvl) && (seed.Rndm() < ((1-sfl)/(1-sfm*(effm/effl)))) ) newtag--;
+      if ((newtag==csvt) && (rn1 < (1-sft)) ) newtag--; 
+      if ((newtag==csvm) && (rn2 < ((1-sfm)/(1-sft*(efft/effm)))) ) newtag--; 
+      if ((newtag==csvl) && (rn3 < ((1-sfl)/(1-sfm*(effm/effl)))) ) newtag--;
     }//1 
     else if ( (sft<1)&&(sfm<1)&&(sfl>1) ) {
-      if ((newtag==csvt) && (seed.Rndm() < (1-sft)) ) newtag--; 
-      if ((newtag==csvm) && (seed.Rndm() < ((1-sfm)/(1-sft*(efft/effm)))) ) newtag--; 
-      if ((newtag==csvn) && (seed.Rndm() < ((sfl-1)/((1./effl)-1))) ) newtag++;
+      if ((newtag==csvt) && (rn1 < (1-sft)) ) newtag--; 
+      if ((newtag==csvm) && (rn2 < ((1-sfm)/(1-sft*(efft/effm)))) ) newtag--; 
+      if ((newtag==csvn) && (rn3 < ((sfl-1)/((1./effl)-1))) ) newtag++;
     }//2
     else if ( (sft>1)&&(sfm<1)&&(sfl<1) ) {
-      if ((newtag==csvm) && (seed.Rndm() < ((sft-1)/((effm/efft)-1))) ) newtag++; 
-      if ((newtag==csvm) && (seed.Rndm() < ((1-sfm)/(1-sft*(efft/effm)))) ) newtag--; 
-      if ((newtag==csvl) && (seed.Rndm() < ((1-sfl)/(1-sfm*(effm/effl)))) ) newtag--;
+      if ((newtag==csvm) && (rn1 < ((sft-1)/((effm/efft)-1))) ) newtag++; 
+      if ((newtag==csvm) && (rn2 < ((1-sfm)/(1-sft*(efft/effm)))) ) newtag--; 
+      if ((newtag==csvl) && (rn3 < ((1-sfl)/(1-sfm*(effm/effl)))) ) newtag--;
     }//3
     else if ( (sft>1)&&(sfm<1)&&(sfl>1) ) {
-      if ((newtag==csvm) && (seed.Rndm() < ((sft-1)/((effm/efft)-1))) ) newtag++; 
-      if ((newtag==csvm) && (seed.Rndm() < ((1-sfm)/(1-sft*(efft/effm)))) ) newtag--; 
-      if ((newtag==csvn) && (seed.Rndm() < ((sfl-1)/((1./effl)-1))) ) newtag++;
+      if ((newtag==csvm) && (rn1 < ((sft-1)/((effm/efft)-1))) ) newtag++; 
+      if ((newtag==csvm) && (rn2 < ((1-sfm)/(1-sft*(efft/effm)))) ) newtag--; 
+      if ((newtag==csvn) && (rn3 < ((sfl-1)/((1./effl)-1))) ) newtag++;
     }//4
     else if ( (sft<1)&&(sfm>1)&&(sfl<1) ) {
-      if ((newtag==csvt) && (seed.Rndm() < (1-sft)) ) newtag--; 
-      if ((newtag==csvl) && (seed.Rndm() < ((sfm-1)/((effl/effm)-1))) ) newtag++; 
-      if ((newtag==csvl) && (seed.Rndm() < ((1-sfl)/(1-sfm*(effm/effl)))) ) newtag--;
+      if ((newtag==csvt) && (rn1 < (1-sft)) ) newtag--; 
+      if ((newtag==csvl) && (rn2 < ((sfm-1)/((effl/effm)-1))) ) newtag++; 
+      if ((newtag==csvl) && (rn3 < ((1-sfl)/(1-sfm*(effm/effl)))) ) newtag--;
     }//5
     else if ( (sft<1)&&(sfm>1)&&(sfl>1) ) {
-      if ((newtag==csvt) && (seed.Rndm() < (1-sft)) ) newtag--; 
-      if ((newtag==csvn) && (seed.Rndm() < ((sfl-1)/((1./effl)-1))) ) newtag++; 
-      if ((newtag==csvl) && (seed.Rndm() < ((sfm-1)/(sfl*(effl/effm)-1))) ) newtag++;
+      if ((newtag==csvt) && (rn1 < (1-sft)) ) newtag--; 
+      if ((newtag==csvn) && (rn2 < ((sfl-1)/((1./effl)-1))) ) newtag++; 
+      if ((newtag==csvl) && (rn3 < ((sfm-1)/(sfl*(effl/effm)-1))) ) newtag++;
     }//6
     else if ( (sft>1)&&(sfm>1)&&(sfl<1) ) {
-      if ((newtag==csvl) && (seed.Rndm() < (sfm-1)/((effl/effm)-1)) ) newtag++; 
-      if ((newtag==csvm) && (seed.Rndm() < ((sft-1)/(sfm*(effm/efft)-1))) ) newtag++; 
-      if ((newtag==csvl) && (seed.Rndm() < ((1-sfl)/(1-sfm*(effm/effl)))) ) newtag--;
+      if ((newtag==csvl) && (rn1 < (sfm-1)/((effl/effm)-1)) ) newtag++; 
+      if ((newtag==csvm) && (rn2 < ((sft-1)/(sfm*(effm/efft)-1))) ) newtag++; 
+      if ((newtag==csvl) && (rn3 < ((1-sfl)/(1-sfm*(effm/effl)))) ) newtag--;
     }//7
     else if ( (sft>1)&&(sfm>1)&&(sfl>1) ) {
-      if ((newtag==csvn) && (seed.Rndm() < (sfl-1)/((1./effl)-1)) ) newtag++; 
-      if ((newtag==csvl) && (seed.Rndm() < ((sfm-1)/(sfl*(effl/effm)-1))) ) newtag++; 
-      if ((newtag==csvm) && (seed.Rndm() < ((sft-1)/(sfm*(effm/efft)-1))) ) newtag++;
+      if ((newtag==csvn) && (rn1 < (sfl-1)/((1./effl)-1)) ) newtag++; 
+      if ((newtag==csvl) && (rn2 < ((sfm-1)/(sfl*(effl/effm)-1))) ) newtag++; 
+      if ((newtag==csvm) && (rn3 < ((sft-1)/(sfm*(effm/efft)-1))) ) newtag++;
     }//8
 
     if ( newtag < 0 || newtag > 3 ) assert(0);
-    thetags[newtag]++;
+    //Categorize new jet tag
+    newtags[newtag]++;
 
 
   }//i loop
 
+  //Get totals
 
-  if ( (orig[csvt] == 2) && (orig[csvm] == 0) ) cout << "Orig Prob2b  - " ; 
-  else if ( (orig[csvt] >= 2) && ((orig[csvt]+orig[csvm]) == 3) && (orig[csvl] == 0) ) cout << "Orig Prob3b  - ";
-  else if ( (orig[csvt] >= 2) && ((orig[csvt]+orig[csvm]) >= 3) && ((orig[csvt]+orig[csvm]+orig[csvl] >= 4)) ) cout << "Orig Prob4b - ";
-  else cout << "Orig None  - " ;
+  if ( raw ) {
+    if ( (origtags[csvt] == 2) && (origtags[csvm] == 0) ) { nbtag2 = 1; }
+    else if ( (origtags[csvt] >= 2) && ((origtags[csvt]+origtags[csvm]) == 3) && (origtags[csvl] == 0) ) { nbtag3 = 1; }
+    else if ( (origtags[csvt] >= 2) && ((origtags[csvt]+origtags[csvm]) >= 3) && ((origtags[csvt]+origtags[csvm]+origtags[csvl] >= 4)) ) { nbtag4 = 1; }
+    else nbtag0 = 1;
+  }
+  else {
+    if ( (newtags[csvt] == 2) && (newtags[csvm] == 0) ) { nbtag2 = 1; }
+    else if ( (newtags[csvt] >= 2) && ((newtags[csvt]+newtags[csvm]) == 3) && (newtags[csvl] == 0) ) { nbtag3 = 1; }
+    else if ( (newtags[csvt] >= 2) && ((newtags[csvt]+newtags[csvm]) >= 3) && ((newtags[csvt]+newtags[csvm]+newtags[csvl] >= 4)) ) { nbtag4 = 1; }
+    else nbtag0 = 1;
+  }
 
-  if ( (thetags[csvt] == 2) && (thetags[csvm] == 0) ) cout << "Prob2b" << endl; 
-  else if ( (thetags[csvt] >= 2) && ((thetags[csvt]+thetags[csvm]) == 3) && (thetags[csvl] == 0) ) cout << "Prob3b" << endl;
-  else if ( (thetags[csvt] >= 2) && ((thetags[csvt]+thetags[csvm]) >= 3) && ((thetags[csvt]+thetags[csvm]+thetags[csvl] >= 4)) ) cout << "Prob4b" << endl;
-  else cout << "None " << endl;
-
-  if ( (thetags[csvt] == 2) && (thetags[csvm] == 0) ) { Prob2b = 1; nbjet = 2; }
-  else if ( (thetags[csvt] >= 2) && ((thetags[csvt]+thetags[csvm]) == 3) && (thetags[csvl] == 0) ) { Prob3b = 1; nbjet = 3; }
-  else if ( (thetags[csvt] >= 2) && ((thetags[csvt]+thetags[csvm]) >= 3) && ((thetags[csvt]+thetags[csvm]+thetags[csvl] >= 4)) ) { Prob4b = 1; nbjet = 4; }
-  else nbjet = 0;
-
+  return;
 }//end method
 
 
@@ -7967,13 +7990,16 @@ void EventCalculator::reducedTree(TString outputpath) {
 
   float prob0,probge1,prob1,probge2,probge3,prob2, prob3, probge4;
   float prob2b, prob3b, prob4b; 
+
+  int nbtag0_rawMC,nbtag2_rawMC,nbtag3_rawMC,nbtag4_rawMC;
+  int nbtag0_nomSF,nbtag2_nomSF,nbtag3_nomSF,nbtag4_nomSF;
+  int nbtag0_SFp1sig,nbtag2_SFp1sig,nbtag3_SFp1sig,nbtag4_SFp1sig;
+  int nbtag0_SFm1sig,nbtag2_SFm1sig,nbtag3_SFm1sig,nbtag4_SFm1sig;
  
   float PIDweight;
   float BTagWeight;
 
   float BTagWeightLMT,BTagWeightLMT_HFplus,BTagWeightLMT_HFminus,BTagWeightLMT_LFplus,BTagWeightLMT_LFminus;
-
-  int nbjets_btagsf;
 
   float prob0_HFplus,probge1_HFplus,prob1_HFplus,probge2_HFplus,probge3_HFplus,prob2_HFplus,probge4_HFplus,prob3_HFplus;
   float prob0_HFminus,probge1_HFminus,prob1_HFminus,probge2_HFminus,probge3_HFminus,prob2_HFminus,probge4_HFminus,prob3_HFminus;
@@ -8215,10 +8241,25 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("higgsDeltaPhiRmaxWrong2",&higgsDeltaPhiRmaxWrong2,"higgsDeltaPhiRmaxWrong2/F");
 
   reducedTree.Branch("prob2b",&prob2b,"prob2b/F");
-  reducedTree.Branch("prob3b",&prob2b,"prob3b/F");
-  reducedTree.Branch("prob4b",&prob2b,"prob4b/F");
+  reducedTree.Branch("prob3b",&prob3b,"prob3b/F");
+  reducedTree.Branch("prob4b",&prob4b,"prob4b/F");
 
-  reducedTree.Branch("nbjets_btagsf",&nbjets_btagsf,"nbjets_btagsf/F");
+  reducedTree.Branch("nbtag0_rawMC",&nbtag0_rawMC,"nbtag0_rawMC/I");
+  reducedTree.Branch("nbtag2_rawMC",&nbtag2_rawMC,"nbtag2_rawMC/I");
+  reducedTree.Branch("nbtag3_rawMC",&nbtag3_rawMC,"nbtag3_rawMC/I");
+  reducedTree.Branch("nbtag4_rawMC",&nbtag4_rawMC,"nbtag4_rawMC/I");
+  reducedTree.Branch("nbtag0_nomSF",&nbtag0_nomSF,"nbtag0_nomSF/I");
+  reducedTree.Branch("nbtag2_nomSF",&nbtag2_nomSF,"nbtag2_nomSF/I");
+  reducedTree.Branch("nbtag3_nomSF",&nbtag3_nomSF,"nbtag3_nomSF/I");
+  reducedTree.Branch("nbtag4_nomSF",&nbtag4_nomSF,"nbtag4_nomSF/I");
+  reducedTree.Branch("nbtag0_SFp1sig",&nbtag0_SFp1sig,"nbtag0_SFp1sig/I");
+  reducedTree.Branch("nbtag2_SFp1sig",&nbtag2_SFp1sig,"nbtag2_SFp1sig/I");
+  reducedTree.Branch("nbtag3_SFp1sig",&nbtag3_SFp1sig,"nbtag3_SFp1sig/I");
+  reducedTree.Branch("nbtag4_SFp1sig",&nbtag4_SFp1sig,"nbtag4_SFp1sig/I");
+  reducedTree.Branch("nbtag0_SFm1sig",&nbtag0_SFm1sig,"nbtag0_SFm1sig/I");
+  reducedTree.Branch("nbtag2_SFm1sig",&nbtag2_SFm1sig,"nbtag2_SFm1sig/I");
+  reducedTree.Branch("nbtag3_SFm1sig",&nbtag3_SFm1sig,"nbtag3_SFm1sig/I");
+  reducedTree.Branch("nbtag4_SFm1sig",&nbtag4_SFm1sig,"nbtag4_SFm1sig/I");
 
   reducedTree.Branch("prob0",&prob0,"prob0/F");
   reducedTree.Branch("probge1",&probge1,"probge1/F");
@@ -9312,7 +9353,10 @@ void EventCalculator::reducedTree(TString outputpath) {
       calculateTagProb(prob0,probge1,prob1,probge2,prob2,probge3,prob3,probge4);
 
       //calculateTagProb_ewk(prob2b,prob3b,prob4b);
-      BTagSF_recipe2a(prob2b,prob3b,prob4b,nbjets_btagsf); //just reuse the variables...
+      BTagSF_recipe2a(nbtag0_nomSF,nbtag2_nomSF,nbtag3_nomSF,nbtag4_nomSF,kBTagModifier0);
+      BTagSF_recipe2a(nbtag0_SFp1sig,nbtag2_SFp1sig,nbtag3_SFp1sig,nbtag4_SFp1sig,kLFdown);
+      BTagSF_recipe2a(nbtag0_SFm1sig,nbtag2_SFm1sig,nbtag3_SFm1sig,nbtag4_SFm1sig,kHFdown);
+      BTagSF_recipe2a(nbtag0_rawMC,nbtag2_rawMC,nbtag3_rawMC,nbtag4_rawMC,kBTagModifier0,true);
 
       calculateTagProb(prob0_HFplus,probge1_HFplus,prob1_HFplus,probge2_HFplus,prob2_HFplus,probge3_HFplus,prob3_HFplus,probge4_HFplus,1,1,1,kHFup);
       calculateTagProb(prob0_HFminus,probge1_HFminus,prob1_HFminus,probge2_HFminus,prob2_HFminus,probge3_HFminus,prob3_HFminus,probge4_HFminus,1,1,1,kHFdown);
