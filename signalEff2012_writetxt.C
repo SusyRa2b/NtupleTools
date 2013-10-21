@@ -17,7 +17,6 @@
 /*
 .L signalEff2012_writetxt.C+
 
-combineScanBins(TString) --  takes an eventcounts file and generates an eventcounts2x2 file with blocks of 4 bins combined
 
 writetxt() -- takes eventcounts files and writes out text files
 
@@ -37,84 +36,6 @@ root [1] writetxt("JES","eventcounts2x2.")
 
 */
 
-void combineScanBins(TString infilename) {
-
-  TFile infile(infilename);
-
-  TH2D* scanSMSngen = (TH2D*) infile.Get("scanSMSngen");
-  TH2D* eventsTotalIsr = (TH2D*) infile.Get("eventstotalisr");//a clone of scanSMSngen, but with different values!
-  //first we have to load the histograms from the input file
-  vector<TH2D*> vh0;
-  for (int ih = 0; ih<infile.GetListOfKeys()->GetEntries(); ih++) {
-    TString histname = infile.GetListOfKeys()->At(ih)->GetName();
-    if (! (histname.BeginsWith("events_") ||histname.BeginsWith("eventstotal_") ||histname=="eventstotalisr") ) continue;
-    TH2D* h0 = (TH2D*) infile.Get(histname);
-    vh0.push_back(h0);
-  }
-
-  //now  new histograms for output
-  TString outfilename = infilename;
-  outfilename.ReplaceAll("eventcounts.","eventcounts2x2.");
-  TFile outfile(outfilename,"RECREATE");
-
-
-  vector<TH2D*> vh2x2;
-  for (unsigned int ih=0; ih<vh0.size(); ih++) {
-    TString histname = vh0[ih]->GetName();
-    TString newname = histname+"_2x2";
-    TH2D* hnew = (TH2D*) vh0[ih]->Clone(newname);    //make the new histograms exact clones of the old
-    hnew->Reset();
-    vh2x2.push_back(hnew);
-  }
-
-
-  //loop from low to high in both x and y, skipping every other bin in the loop
-  //for each bin that we do not skip, combine:
-  //  (ix,iy) (ix+1, iy) (ix+1,iy+1) (ix,iy+1)
-
-  for (int ix=1; ix<= scanSMSngen->GetNbinsX(); ix+=2) {
-    for (int iy=1; iy<=scanSMSngen->GetNbinsY(); iy+=2) {
-      double ngentotal = 
-	scanSMSngen->GetBinContent(ix,iy) +
-	scanSMSngen->GetBinContent(ix+1,iy) +
-	scanSMSngen->GetBinContent(ix,iy+1) +
-	scanSMSngen->GetBinContent(ix+1,iy+1);
-      scanSMSngen->SetBinContent(ix,iy,ngentotal);
-      scanSMSngen->SetBinContent(ix+1,iy,0);
-      scanSMSngen->SetBinContent(ix,iy+1,0);
-      scanSMSngen->SetBinContent(ix+1,iy+1,0);
-
-      if (eventsTotalIsr!=0) {
-	double ngentotalisr = 
-	  eventsTotalIsr->GetBinContent(ix,iy) +
-	  eventsTotalIsr->GetBinContent(ix+1,iy) +
-	  eventsTotalIsr->GetBinContent(ix,iy+1) +
-	  eventsTotalIsr->GetBinContent(ix+1,iy+1);
-	eventsTotalIsr->SetBinContent(ix,iy,ngentotalisr);
-	eventsTotalIsr->SetBinContent(ix+1,iy,0);
-	eventsTotalIsr->SetBinContent(ix,iy+1,0);
-	eventsTotalIsr->SetBinContent(ix+1,iy+1,0);
-      }
-
-      //now loop over all of the event count histos
-      for (unsigned int ih=0; ih<vh0.size(); ih++) {
-	double ntotal = 
-	  vh0[ih]->GetBinContent(ix,iy) +
-	  vh0[ih]->GetBinContent(ix+1,iy) +
-	  vh0[ih]->GetBinContent(ix,iy+1) +
-	  vh0[ih]->GetBinContent(ix+1,iy+1);
-	vh2x2[ih]->SetBinContent(ix,iy,ntotal);
-      }
-
-    }
-  }
-
-  if (eventsTotalIsr!=0) eventsTotalIsr->Write();
-  scanSMSngen->Write();
-  outfile.Write();
-  outfile.Close();
-
-}
 
 void writetxt(TString which, const TString sample, const TString prefix="eventcounts.",const bool useISR=false) {
 
@@ -124,9 +45,9 @@ void writetxt(TString which, const TString sample, const TString prefix="eventco
 
   //this should be the 'unvaried' (eg JES0) stub.
   //this differentiation between JER0 and JERbias here is a stopgap measure
-  TString stub0 = "CSVM_PF2PATjets_JES0_JER0_PFMETTypeI_METunc0_PUunc0_BTagEff05_HLTEff0." ;
+  TString stub0 = "JES0_JER0_PFMETTypeI_METunc0_PUunc0_hpt20." ;
   //for JER, need to compare variations with JERbias
-  if (which=="JER") stub0= "CSVM_PF2PATjets_JES0_JERbias_PFMETTypeI_METunc0_PUunc0_BTagEff05_HLTEff0.";
+  if (which=="JER") stub0= "JES0_JERbias_PFMETTypeI_METunc0_PUunc0_hpt20.";
 
   stub0+=sample;
 
@@ -151,9 +72,9 @@ void writetxt(TString which, const TString sample, const TString prefix="eventco
   TString outfilename = (which=="counts") ? "sigcounts." : "sigsystematics.";
   outfilename += stub0.Tokenize(".")->At(1)->GetName(); //fyi -- this leaks memory (no big deal here)
 
-  if (prefix.Contains("minnjets5")) {
-    outfilename+=".minnjets5";
-  }
+//   if (prefix.Contains("minnjets5")) {
+//     outfilename+=".minnjets5";
+//   }
 
   if (which=="counts")   outfilename+=".txt";
   else if (which=="JES") outfilename += ".JES.txt";
