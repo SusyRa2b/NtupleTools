@@ -9,10 +9,14 @@
 #include "TText.h"
 #include "TMath.h"
 
+#include "TSystem.h"
+
 #include "TCanvas.h"
 #include "TLegend.h"
 
 #include "MiscUtil.cxx"
+
+#include "CrossSectionTable.h"
 
 /*
 .L signalEff2012_writetxt.C+
@@ -53,9 +57,11 @@ signal strength and absolute cross section for the units of the limit variable.
 
 
 void writetxt(TString which, const TString sample, const TString prefix="eventcounts.",const bool useISR=false,bool rawcounts=true) {
+  gSystem->Load("CrossSectionTable_cxx.so");
   const double integratedLumi =19399;
 
   CrossSectionTable * xs_higgsino = 0;
+
 
   assert( which=="counts" || which=="JES"||which=="MET" ||which=="JER" ||which=="ISR");
 
