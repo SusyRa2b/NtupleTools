@@ -36,12 +36,32 @@ root [1] writetxt("JES","eventcounts2x2.")
 
 */
 
+/*
+21 oct, jmt -- i removed the combineBins() function, which means that this code doesn't work for RA2b anymore (at least not the default
+way that we did ra2b; it does work if we don't mind calculating the systematics in every bin)
 
-void writetxt(TString which, const TString sample, const TString prefix="eventcounts.",const bool useISR=false) {
+For hh, owen wants a slightly different output than Ale did. So we'll add a flag to indicate this: rawcounts
+true by default (ra2b mode). if false, then use owen's proposed output format for counts:
+
+  mass1 mass2  predicted-xsec*BF(H->bb)^2  dataLumi  count1 count2 count3 ...
+
+with predicted-xsec*BF(H->bb)^2 in units of pb, dataLumi in units of 1/pb,
+and count* in units of selectedEvents*xsec*BF^2*dataLumi/ngen.
+That way, we can easily switch back and forth inside the fit code between
+signal strength and absolute cross section for the units of the limit variable.
+*/
+
+
+void writetxt(TString which, const TString sample, const TString prefix="eventcounts.",const bool useISR=false,bool rawcounts=true) {
+  const double integratedLumi =19399;
+
+  CrossSectionTable * xs_higgsino = 0;
 
   assert( which=="counts" || which=="JES"||which=="MET" ||which=="JER" ||which=="ISR");
 
   if (which=="ISR") assert(useISR);
+
+  if (!rawcounts && which=="counts") xs_higgsino = new CrossSectionTable("CrossSectionsHiggsino.txt","simplesms");
 
   //this should be the 'unvaried' (eg JES0) stub.
   //this differentiation between JER0 and JERbias here is a stopgap measure
@@ -164,8 +184,19 @@ void writetxt(TString which, const TString sample, const TString prefix="eventco
       txtfile<<vh0[0]->GetXaxis()->GetBinLowEdge(ix)<<" "
 	     <<vh0[0]->GetYaxis()->GetBinLowEdge(iy)<<" ";
 
-      if (which=="counts" && !useISR) txtfile<<scanSMSngen->GetBinContent(ix,iy)<<" ";
-      else if (which=="counts" && useISR) txtfile<<eventsTotalIsr->GetBinContent(ix,iy)<<" ";
+      double ngen=0; //only needed for !rawcounts mode
+      const double hbbbb=0.561*0.561; //H->bb * H->bb
+      double xs=0;
+
+      if (which=="counts" && !useISR &&rawcounts) txtfile<<scanSMSngen->GetBinContent(ix,iy)<<" ";
+      else if (which=="counts" && useISR &&rawcounts) txtfile<<eventsTotalIsr->GetBinContent(ix,iy)<<" ";
+      else if (which=="counts" && !rawcounts &&useISR) {
+      // mass1 mass2  predicted-xsec*BF(H->bb)^2  dataLumi  count1 count2 count3 ..
+	xs=xs_higgsino->getSMSCrossSection(vh0[0]->GetXaxis()->GetBinLowEdge(ix));
+	ngen = eventsTotalIsr->GetBinContent(ix,iy); //use isr weight
+	txtfile<<xs * hbbbb<<" "<<integratedLumi<<" ";
+      }
+      else if (which=="counts" && !rawcounts && !useISR) assert(0);
 
       cout<<" == "<<vh0[0]->GetXaxis()->GetBinLowEdge(ix)<<" "
 	  <<vh0[0]->GetYaxis()->GetBinLowEdge(iy)<<" =="<<endl;
@@ -223,8 +254,11 @@ void writetxt(TString which, const TString sample, const TString prefix="eventco
 	  hjesU->SetBinError(ih+1,vhu[ih]->GetBinError(ix,iy)/denomU); 
 	  hjesD->SetBinError(ih+1,vhd[ih]->GetBinError(ix,iy)/denomD);
 	}
-	else {
-	  txtfile<< vh0[ih]->GetBinContent(ix,iy)<<" ";
+	else { //if counts mode
+	  if (rawcounts)  txtfile<< vh0[ih]->GetBinContent(ix,iy)<<" ";
+	  else { // sigma x Lumi x Ncounted / Ngen = sigma x Lumi x efficiency
+	    txtfile<< xs*hbbbb *integratedLumi *  vh0[ih]->GetBinContent(ix,iy) / ngen;
+	  }
 	}
 	double denom0= (which=="ISR") ? eventsTotalIsr->GetBinContent(ix,iy) : 1;
 	hjes0->SetBinContent(ih+1,vh0[ih]->GetBinContent(ix,iy)/denom0);
@@ -241,7 +275,8 @@ void writetxt(TString which, const TString sample, const TString prefix="eventco
 
       if (which=="counts") { //need to also print the stat errors
 	for (int ih=0; ih<nhist; ih++) {
-	  txtfile<< vh0[ih]->GetBinError(ix,iy)<<" ";
+	  if (rawcounts)	  txtfile<< vh0[ih]->GetBinError(ix,iy)<<" ";
+	  else  	  txtfile<< vh0[ih]->GetBinError(ix,iy) *hbbbb*xs*integratedLumi / ngen<<" ";
 	}
       }
 
