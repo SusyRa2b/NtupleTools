@@ -61,7 +61,7 @@ void signalEff_hbbhbb::Loop()
       for (unsigned int ipdfset = 0; ipdfset<pdfsets.size();ipdfset++) {
         for (int ipdfindex=0; ipdfindex<pdfsetsize[pdfsets.at(ipdfset)]; ipdfindex++) {
 
-          if (joinbtagbins_) 
+	  if (joinbtagbins_) 
             searchregions.push_back( SearchRegion(99,metsedges[imets],metsedges[imets+1],thesb,pdfsets[ipdfset],ipdfindex));
           else {
             searchregions.push_back( SearchRegion(0,metsedges[imets],metsedges[imets+1],thesb,pdfsets[ipdfset],ipdfindex));
@@ -87,6 +87,10 @@ void signalEff_hbbhbb::Loop()
   outfilename += filestub_;
   outfilename += ".root";
   TFile fout(outfilename,"RECREATE");
+
+  //         m0,m12      searchregion index, TH2
+  map< pair<int,int>, vector<TH2D*> > transferMatrixMinus;
+  map< pair<int,int>, vector<TH2D*> > transferMatrixPlus;
 
 
   //same indexing as searchregions
@@ -152,11 +156,31 @@ void signalEff_hbbhbb::Loop()
     fChain->SetBranchStatus("nIsoPFcands10_010",1);
     fChain->SetBranchStatus("minDeltaPhi20_eta5_noIdAll_nobeta",1);
     fChain->SetBranchStatus("passMC_DiCentralPFJet30_PFMET80_BTagCSV07",1);
+    fChain->SetBranchStatus("passMC_DiCentralPFJet30_PFMET80",1); //going to use this trigger!
     fChain->SetBranchStatus("passMC_DiCentralPFJet30_PFMHT80",1);
     fChain->SetBranchStatus("passMC_PFMET150",1);
+    //these are probably not needed anymore
     fChain->SetBranchStatus("nbjetsCSVT",1);
     fChain->SetBranchStatus("nbjetsCSVM",1);
     fChain->SetBranchStatus("nbjetsCSVL",1);
+    //new b-tag vars
+    fChain->SetBranchStatus("nbtag0_rawMC",1);
+    fChain->SetBranchStatus("nbtag2_rawMC",1);
+    fChain->SetBranchStatus("nbtag3_rawMC",1);
+    fChain->SetBranchStatus("nbtag4_rawMC",1);
+    fChain->SetBranchStatus("nbtag0_nomSF",1);
+    fChain->SetBranchStatus("nbtag2_nomSF",1);
+    fChain->SetBranchStatus("nbtag3_nomSF",1);
+    fChain->SetBranchStatus("nbtag4_nomSF",1);
+    fChain->SetBranchStatus("nbtag0_SFp1sig",1);
+    fChain->SetBranchStatus("nbtag2_SFp1sig",1);
+    fChain->SetBranchStatus("nbtag3_SFp1sig",1);
+    fChain->SetBranchStatus("nbtag4_SFp1sig",1);
+    fChain->SetBranchStatus("nbtag0_SFm1sig",1);
+    fChain->SetBranchStatus("nbtag2_SFm1sig",1);
+    fChain->SetBranchStatus("nbtag3_SFm1sig",1);
+    fChain->SetBranchStatus("nbtag4_SFm1sig",1);
+
     //will have to add new btag variables, once they exist
     fChain->SetBranchStatus("higgsMbb1MassDiff",1);
     fChain->SetBranchStatus("higgsMbb2MassDiff",1);
@@ -271,7 +295,8 @@ void signalEff_hbbhbb::Loop()
 	
 	// First apply baseline selection
 	if (!cutPV) continue;	
-	bool passtrigger = passMC_DiCentralPFJet30_PFMET80_BTagCSV07||passMC_DiCentralPFJet30_PFMHT80||passMC_PFMET150;
+	//	bool passtrigger = passMC_DiCentralPFJet30_PFMET80_BTagCSV07||passMC_DiCentralPFJet30_PFMHT80||passMC_PFMET150;
+	bool passtrigger = passMC_DiCentralPFJet30_PFMET80;//special mod for signal eff only. Use BTag-less trigger ONLY
 	if (!passtrigger) continue;
 	if (!passCleaning) continue;
 
@@ -312,41 +337,89 @@ void signalEff_hbbhbb::Loop()
 	//then load in the nbjetsCSVX values into them up here
 	//this will allow flexibility when we have SF variations
 
-	int nbT,nbM,nbL;
-	if ( theBTagMode_ == kBTag0 ) {
-	  nbT = nbjetsCSVT;
-	  nbM = nbjetsCSVM;
-	  nbL = nbjetsCSVL;
-	}
-/* TO DO
-	else if (theBTagMode_ == kBTagHfUp ) {	}
-	else if (theBTagMode_ == kBTagHfDown ) {	}
-	else if (theBTagMode_ == kBTagLfUp ) {	}
-	else if (theBTagMode_ == kBTagLfDown ) {	}
-*/
-	else assert(0);
-
+	//evaluate whether the event passes the b-tag cut based on either raw or SF-corrected MC
 	bool passb=false;
-	if ( (searchregions[ii].nb_ == 4) //2 CSVT + 1 CSVM + 1 CSVL
-	     && ((nbT>=2)&&((nbM)>=3)&&((nbL)>=4))) passb=true;
-	else if ( (searchregions[ii].nb_ == 3) //2 CSVT + exactly 1 CSVM and 0 additional CSVL
-		  && (((nbT>=2)&&(nbM==3)&&nbL==3))) passb=true;
-	else if ( (searchregions[ii].nb_ == 2)
-		  && (nbT==2&&nbM==2)) passb=true;
-	else if ( (searchregions[ii].nb_ == 0) 
-		  && ( nbT<2 ) ) passb==true; // i think this is right
-	else if ( (searchregions[ii].nb_ == 99) //special case defined as >=2 Tight b-tags
-		  && (nbT>=2)) passb=true;
-
+	if (usebtagsf_) {
+	  if      ( searchregions[ii].nb_ == 4 && nbtag4_nomSF==1) passb=true;
+	  else if ( searchregions[ii].nb_ == 3 && nbtag3_nomSF==1) passb=true;
+	  else if ( searchregions[ii].nb_ == 2 && nbtag2_nomSF==1) passb=true;
+	  else if ( searchregions[ii].nb_ == 0 && nbtag0_nomSF==1) passb=true;
+	  else if ( searchregions[ii].nb_ ==99 && (nbtag2_nomSF==1 ||nbtag3_nomSF==1||nbtag4_nomSF==1 )) passb=true; //this is the special >=2Tight category
+	}
+	else {
+	  if      ( searchregions[ii].nb_ == 4 && nbtag4_rawMC==1) passb=true;
+	  else if ( searchregions[ii].nb_ == 3 && nbtag3_rawMC==1) passb=true;
+	  else if ( searchregions[ii].nb_ == 2 && nbtag2_rawMC==1) passb=true;
+	  else if ( searchregions[ii].nb_ == 0 && nbtag0_rawMC==1) passb=true;
+	  else if ( searchregions[ii].nb_ ==99 && (nbtag2_rawMC==1 ||nbtag3_rawMC==1||nbtag4_rawMC==1 )) passb=true; //this is the special >=2Tight category
+	}
 	bool passmets = (METsig >= searchregions[ii].minMETs_ &&  METsig < searchregions[ii].maxMETs_);
 
+	//count the event if it passes this search region's b-tag and met requirements
 	if ( passmets && passb ) eventcounts[ii]->Fill(m0,m12,thisweight);
-	
-      }
 
+	//if desired fill the transfer matrices
+	if (joinbtagbins_ && passmets) { //MET cut but no b-tag cut
+	  //in this case we have a search region for each SB/SIG, METsig bin but not b-tag bins. Perfect!
+	  int catNom=-1;
+	  if      ( nbtag4_nomSF==1) catNom=4;
+	  else if ( nbtag3_nomSF==1) catNom=3;
+	  else if ( nbtag2_nomSF==1) catNom=2;
+	  else if ( nbtag0_nomSF==1) catNom=1;
+	  else assert(0);
+
+	  int catP=-1;
+	  if      ( nbtag4_SFp1sig==1) catP=4;
+	  else if ( nbtag3_SFp1sig==1) catP=3;
+	  else if ( nbtag2_SFp1sig==1) catP=2;
+	  else if ( nbtag0_SFp1sig==1) catP=1;
+	  else assert(0);
+
+	  int catM=-1;
+	  if      ( nbtag4_SFm1sig==1) catM=4;
+	  else if ( nbtag3_SFm1sig==1) catM=3;
+	  else if ( nbtag2_SFm1sig==1) catM=2;
+	  else if ( nbtag0_SFm1sig==1) catM=1;
+	  else assert(0);
+
+	  //check if matrices have been created for this mass point
+	  if (	  transferMatrixPlus.count(make_pair(m0,m12))==0 ) {
+	    //if not, create them all 
+	    vector<TH2D*> tmatricesp;
+	    vector<TH2D*> tmatricesm;
+	    for ( size_t icreate = 0; icreate<searchregions.size(); icreate++) {
+	      TString hnamep,hnamem;
+	      hnamep.Form("tmatrixplus_%d_%d_%s",m0,m12,searchregions[icreate].id().Data());
+	      hnamem.Form("tmatrixminus_%d_%d_%s",m0,m12,searchregions[icreate].id().Data());
+	      tmatricesp.push_back( new TH2D(hnamep,hnamep,4,0.5,4.5,4,0.5,4.5));
+	      tmatricesm.push_back( new TH2D(hnamem,hnamem,4,0.5,4.5,4,0.5,4.5));
+	    }
+	    transferMatrixPlus [make_pair(m0,m12)] = tmatricesp;
+	    transferMatrixMinus[make_pair(m0,m12)] = tmatricesm;
+	  }
+
+	  transferMatrixPlus[make_pair(m0,m12)][ii]->Fill(catNom,catP,thisweight);
+	  transferMatrixMinus[make_pair(m0,m12)][ii]->Fill(catNom,catM,thisweight);
+	}
+
+      } //end loop over search regions
+
+
+   } //end loop over events
+   watch.Stop();
+
+   //loop over the transfer matrices and divide each column by the total number of events in that column
+   for (  map< pair<int,int>, vector<TH2D*> >::iterator imasses=transferMatrixMinus.begin(); imasses!=transferMatrixMinus.end(); ++imasses) {
+     vector<TH2D*> mats = imasses->second;
+     for (size_t imat = 0; imat<mats.size(); imat++) {
+
+       TH2D* thematrix = mats.at(imat);
+
+     }
 
    }
-   watch.Stop();
+
+
    scanSMSngen_->Write();
    for (unsigned int ih=0;ih<scanProcessTotals_.size();ih++)   scanProcessTotals_[ih]->Write();
    fout.Write();
