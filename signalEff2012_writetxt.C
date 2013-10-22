@@ -9,15 +9,18 @@
 #include "TText.h"
 #include "TMath.h"
 
+#include "TSystem.h"
+
 #include "TCanvas.h"
 #include "TLegend.h"
 
 #include "MiscUtil.cxx"
 
+#include "CrossSectionTable.h"
+
 /*
 .L signalEff2012_writetxt.C+
 
-combineScanBins(TString) --  takes an eventcounts file and generates an eventcounts2x2 file with blocks of 4 bins combined
 
 writetxt() -- takes eventcounts files and writes out text files
 
@@ -37,96 +40,40 @@ root [1] writetxt("JES","eventcounts2x2.")
 
 */
 
-void combineScanBins(TString infilename) {
+/*
+21 oct, jmt -- i removed the combineBins() function, which means that this code doesn't work for RA2b anymore (at least not the default
+way that we did ra2b; it does work if we don't mind calculating the systematics in every bin)
 
-  TFile infile(infilename);
+For hh, owen wants a slightly different output than Ale did. So we'll add a flag to indicate this: rawcounts
+true by default (ra2b mode). if false, then use owen's proposed output format for counts:
 
-  TH2D* scanSMSngen = (TH2D*) infile.Get("scanSMSngen");
-  TH2D* eventsTotalIsr = (TH2D*) infile.Get("eventstotalisr");//a clone of scanSMSngen, but with different values!
-  //first we have to load the histograms from the input file
-  vector<TH2D*> vh0;
-  for (int ih = 0; ih<infile.GetListOfKeys()->GetEntries(); ih++) {
-    TString histname = infile.GetListOfKeys()->At(ih)->GetName();
-    if (! (histname.BeginsWith("events_") ||histname.BeginsWith("eventstotal_") ||histname=="eventstotalisr") ) continue;
-    TH2D* h0 = (TH2D*) infile.Get(histname);
-    vh0.push_back(h0);
-  }
+  mass1 mass2  predicted-xsec*BF(H->bb)^2  dataLumi  count1 count2 count3 ...
 
-  //now  new histograms for output
-  TString outfilename = infilename;
-  outfilename.ReplaceAll("eventcounts.","eventcounts2x2.");
-  TFile outfile(outfilename,"RECREATE");
+with predicted-xsec*BF(H->bb)^2 in units of pb, dataLumi in units of 1/pb,
+and count* in units of selectedEvents*xsec*BF^2*dataLumi/ngen.
+That way, we can easily switch back and forth inside the fit code between
+signal strength and absolute cross section for the units of the limit variable.
+*/
 
 
-  vector<TH2D*> vh2x2;
-  for (unsigned int ih=0; ih<vh0.size(); ih++) {
-    TString histname = vh0[ih]->GetName();
-    TString newname = histname+"_2x2";
-    TH2D* hnew = (TH2D*) vh0[ih]->Clone(newname);    //make the new histograms exact clones of the old
-    hnew->Reset();
-    vh2x2.push_back(hnew);
-  }
+void writetxt(TString which, const TString sample, const TString prefix="eventcounts.",const bool useISR=false,bool rawcounts=true) {
+  gSystem->Load("CrossSectionTable_cxx.so");
+  const double integratedLumi =19399;
 
+  CrossSectionTable * xs_higgsino = 0;
 
-  //loop from low to high in both x and y, skipping every other bin in the loop
-  //for each bin that we do not skip, combine:
-  //  (ix,iy) (ix+1, iy) (ix+1,iy+1) (ix,iy+1)
-
-  for (int ix=1; ix<= scanSMSngen->GetNbinsX(); ix+=2) {
-    for (int iy=1; iy<=scanSMSngen->GetNbinsY(); iy+=2) {
-      double ngentotal = 
-	scanSMSngen->GetBinContent(ix,iy) +
-	scanSMSngen->GetBinContent(ix+1,iy) +
-	scanSMSngen->GetBinContent(ix,iy+1) +
-	scanSMSngen->GetBinContent(ix+1,iy+1);
-      scanSMSngen->SetBinContent(ix,iy,ngentotal);
-      scanSMSngen->SetBinContent(ix+1,iy,0);
-      scanSMSngen->SetBinContent(ix,iy+1,0);
-      scanSMSngen->SetBinContent(ix+1,iy+1,0);
-
-      if (eventsTotalIsr!=0) {
-	double ngentotalisr = 
-	  eventsTotalIsr->GetBinContent(ix,iy) +
-	  eventsTotalIsr->GetBinContent(ix+1,iy) +
-	  eventsTotalIsr->GetBinContent(ix,iy+1) +
-	  eventsTotalIsr->GetBinContent(ix+1,iy+1);
-	eventsTotalIsr->SetBinContent(ix,iy,ngentotalisr);
-	eventsTotalIsr->SetBinContent(ix+1,iy,0);
-	eventsTotalIsr->SetBinContent(ix,iy+1,0);
-	eventsTotalIsr->SetBinContent(ix+1,iy+1,0);
-      }
-
-      //now loop over all of the event count histos
-      for (unsigned int ih=0; ih<vh0.size(); ih++) {
-	double ntotal = 
-	  vh0[ih]->GetBinContent(ix,iy) +
-	  vh0[ih]->GetBinContent(ix+1,iy) +
-	  vh0[ih]->GetBinContent(ix,iy+1) +
-	  vh0[ih]->GetBinContent(ix+1,iy+1);
-	vh2x2[ih]->SetBinContent(ix,iy,ntotal);
-      }
-
-    }
-  }
-
-  if (eventsTotalIsr!=0) eventsTotalIsr->Write();
-  scanSMSngen->Write();
-  outfile.Write();
-  outfile.Close();
-
-}
-
-void writetxt(TString which, const TString sample, const TString prefix="eventcounts.",const bool useISR=false) {
 
   assert( which=="counts" || which=="JES"||which=="MET" ||which=="JER" ||which=="ISR");
 
   if (which=="ISR") assert(useISR);
 
+  if (!rawcounts && which=="counts") xs_higgsino = new CrossSectionTable("CrossSectionsHiggsino.txt","simplesms");
+
   //this should be the 'unvaried' (eg JES0) stub.
   //this differentiation between JER0 and JERbias here is a stopgap measure
-  TString stub0 = "CSVM_PF2PATjets_JES0_JER0_PFMETTypeI_METunc0_PUunc0_BTagEff05_HLTEff0." ;
+  TString stub0 = "JES0_JER0_PFMETTypeI_METunc0_PUunc0_hpt20." ;
   //for JER, need to compare variations with JERbias
-  if (which=="JER") stub0= "CSVM_PF2PATjets_JES0_JERbias_PFMETTypeI_METunc0_PUunc0_BTagEff05_HLTEff0.";
+  if (which=="JER") stub0= "JES0_JERbias_PFMETTypeI_METunc0_PUunc0_hpt20.";
 
   stub0+=sample;
 
@@ -151,9 +98,9 @@ void writetxt(TString which, const TString sample, const TString prefix="eventco
   TString outfilename = (which=="counts") ? "sigcounts." : "sigsystematics.";
   outfilename += stub0.Tokenize(".")->At(1)->GetName(); //fyi -- this leaks memory (no big deal here)
 
-  if (prefix.Contains("minnjets5")) {
-    outfilename+=".minnjets5";
-  }
+//   if (prefix.Contains("minnjets5")) {
+//     outfilename+=".minnjets5";
+//   }
 
   if (which=="counts")   outfilename+=".txt";
   else if (which=="JES") outfilename += ".JES.txt";
@@ -243,8 +190,19 @@ void writetxt(TString which, const TString sample, const TString prefix="eventco
       txtfile<<vh0[0]->GetXaxis()->GetBinLowEdge(ix)<<" "
 	     <<vh0[0]->GetYaxis()->GetBinLowEdge(iy)<<" ";
 
-      if (which=="counts" && !useISR) txtfile<<scanSMSngen->GetBinContent(ix,iy)<<" ";
-      else if (which=="counts" && useISR) txtfile<<eventsTotalIsr->GetBinContent(ix,iy)<<" ";
+      double ngen=0; //only needed for !rawcounts mode
+      const double hbbbb=0.561*0.561; //H->bb * H->bb
+      double xs=0;
+
+      if (which=="counts" && !useISR &&rawcounts) txtfile<<scanSMSngen->GetBinContent(ix,iy)<<" ";
+      else if (which=="counts" && useISR &&rawcounts) txtfile<<eventsTotalIsr->GetBinContent(ix,iy)<<" ";
+      else if (which=="counts" && !rawcounts &&useISR) {
+      // mass1 mass2  predicted-xsec*BF(H->bb)^2  dataLumi  count1 count2 count3 ..
+	xs=xs_higgsino->getSMSCrossSection(vh0[0]->GetXaxis()->GetBinLowEdge(ix));
+	ngen = eventsTotalIsr->GetBinContent(ix,iy); //use isr weight
+	txtfile<<xs * hbbbb<<" "<<integratedLumi<<" ";
+      }
+      else if (which=="counts" && !rawcounts && !useISR) assert(0);
 
       cout<<" == "<<vh0[0]->GetXaxis()->GetBinLowEdge(ix)<<" "
 	  <<vh0[0]->GetYaxis()->GetBinLowEdge(iy)<<" =="<<endl;
@@ -302,8 +260,11 @@ void writetxt(TString which, const TString sample, const TString prefix="eventco
 	  hjesU->SetBinError(ih+1,vhu[ih]->GetBinError(ix,iy)/denomU); 
 	  hjesD->SetBinError(ih+1,vhd[ih]->GetBinError(ix,iy)/denomD);
 	}
-	else {
-	  txtfile<< vh0[ih]->GetBinContent(ix,iy)<<" ";
+	else { //if counts mode
+	  if (rawcounts)  txtfile<< vh0[ih]->GetBinContent(ix,iy)<<" ";
+	  else { // sigma x Lumi x Ncounted / Ngen = sigma x Lumi x efficiency
+	    txtfile<< xs*hbbbb *integratedLumi *  vh0[ih]->GetBinContent(ix,iy) / ngen;
+	  }
 	}
 	double denom0= (which=="ISR") ? eventsTotalIsr->GetBinContent(ix,iy) : 1;
 	hjes0->SetBinContent(ih+1,vh0[ih]->GetBinContent(ix,iy)/denom0);
@@ -320,7 +281,8 @@ void writetxt(TString which, const TString sample, const TString prefix="eventco
 
       if (which=="counts") { //need to also print the stat errors
 	for (int ih=0; ih<nhist; ih++) {
-	  txtfile<< vh0[ih]->GetBinError(ix,iy)<<" ";
+	  if (rawcounts)	  txtfile<< vh0[ih]->GetBinError(ix,iy)<<" ";
+	  else  	  txtfile<< vh0[ih]->GetBinError(ix,iy) *hbbbb*xs*integratedLumi / ngen<<" ";
 	}
       }
 

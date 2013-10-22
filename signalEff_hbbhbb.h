@@ -1353,7 +1353,7 @@ public :
    TBranch        *b_trackpt_15;   //!
    TBranch        *b_trackpt_20;   //!
 
-   signalEff_hbbhbb(TString path, TString filestub, bool joinbtagbins, bool usebtagsf, bool dopdfs, bool pusyst, int isrmode=99); //BEGIN END ra2b-jmt
+   signalEff_hbbhbb(TString path, TString filestub, bool joinbtagbins, bool usebtagsf, bool dopdfs, bool pusyst, IsrMode isrmode, BTagMode btagmode); //BEGIN END ra2b-jmt
    virtual ~signalEff_hbbhbb();
    virtual Int_t    Cut(Long64_t entry);
    virtual Int_t    GetEntry(Long64_t entry);
@@ -1381,23 +1381,18 @@ public :
 
 #ifdef signalEff_hbbhbb_cxx
 //BEGIN ra2b-jmt mod
-signalEff_hbbhbb::signalEff_hbbhbb(TString path, TString filestub,bool joinbtagbins, bool usebtagsf, bool dopdfs, bool pusyst, int isrmode) : fChain(0) 
+signalEff_hbbhbb::signalEff_hbbhbb(TString path, TString filestub,bool joinbtagbins, bool usebtagsf, bool dopdfs,bool pusyst, IsrMode isrmode, BTagMode btagmode) : fChain(0) 
 																	    ,scanSMSngen_(0)
 																	    ,filestub_(filestub)
 																	    ,joinbtagbins_(joinbtagbins)
 																	    ,usebtagsf_(usebtagsf)
 																	    ,dopdfs_(dopdfs)
 																	    ,pusyst_(pusyst)
-																	    ,theIsrMode_(kNoIsrWeight)
-																	    ,theBTagMode_(kBTag0)
+																		      ,theIsrMode_(isrmode)
+																	    ,theBTagMode_(btagmode)
 				  //END ra2b-jmt mod
 {
  //BEGIN ra2b-jmt
-  if (isrmode == -1)      theIsrMode_=kIsrDown;
-  else if (isrmode ==  1) theIsrMode_=kIsrUp;
-  else if (isrmode ==  0) theIsrMode_=kIsr0;
-  else theIsrMode_=kNoIsrWeight;
-
   TTree* tree=0;
   TString filename = path;
   filename+="reducedTree.";

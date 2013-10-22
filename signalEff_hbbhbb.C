@@ -62,8 +62,9 @@ void signalEff_hbbhbb::Loop()
         for (int ipdfindex=0; ipdfindex<pdfsetsize[pdfsets.at(ipdfset)]; ipdfindex++) {
 
           if (joinbtagbins_) 
-            searchregions.push_back( SearchRegion(0,metsedges[imets],metsedges[imets+1],thesb,pdfsets[ipdfset],ipdfindex));
+            searchregions.push_back( SearchRegion(99,metsedges[imets],metsedges[imets+1],thesb,pdfsets[ipdfset],ipdfindex));
           else {
+            searchregions.push_back( SearchRegion(0,metsedges[imets],metsedges[imets+1],thesb,pdfsets[ipdfset],ipdfindex));
             searchregions.push_back( SearchRegion(2,metsedges[imets],metsedges[imets+1],thesb,pdfsets[ipdfset],ipdfindex));
             searchregions.push_back( SearchRegion(3,metsedges[imets],metsedges[imets+1],thesb,pdfsets[ipdfset],ipdfindex));
             searchregions.push_back( SearchRegion(4,metsedges[imets],metsedges[imets+1],thesb,pdfsets[ipdfset],ipdfindex));
@@ -332,22 +333,10 @@ void signalEff_hbbhbb::Loop()
 		  && (((nbT>=2)&&(nbM==3)&&nbL==3))) passb=true;
 	else if ( (searchregions[ii].nb_ == 2)
 		  && (nbT==2&&nbM==2)) passb=true;
-	else if ( (searchregions[ii].nb_ == 0) //special case defined as >=2 Tight b-tags
+	else if ( (searchregions[ii].nb_ == 0) 
+		  && ( nbT<2 ) ) passb==true; // i think this is right
+	else if ( (searchregions[ii].nb_ == 99) //special case defined as >=2 Tight b-tags
 		  && (nbT>=2)) passb=true;
-
-	/* this code was used only as a test -- passed!
-	   bool passb2=false;
-	   if ( (searchregions[ii].nb_ == 4) //2 CSVT + 1 CSVM + 1 CSVL
-	   && (CSVbest2>0.898 && CSVbest3>0.679 && CSVbest4>0.244)) passb2=true;
-	   else if ( (searchregions[ii].nb_ == 3) //2 CSVT + exactly 1 CSVM and 0 additional CSVL
-	   && (CSVbest2>0.898 && CSVbest3>0.679 && CSVbest4<=0.244)) passb2=true;
-	   else if ( (searchregions[ii].nb_ == 2)
-	   && (CSVbest2>0.898&& CSVbest3<=0.679)) passb2=true;
-	   else if ( (searchregions[ii].nb_ == 0) //special case defined as >=2 Tight b-tags
-	   && (CSVbest2>0.898)) passb2=true;
-	   
-	   if (passb != passb2) cout<<" problem with btag counting!"<<endl;
-	*/
 
 	bool passmets = (METsig >= searchregions[ii].minMETs_ &&  METsig < searchregions[ii].maxMETs_);
 
