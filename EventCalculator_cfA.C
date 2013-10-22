@@ -6682,6 +6682,8 @@ void EventCalculator::BTagSF_recipe2a(int &nbtag0, int &nbtag2, int &nbtag3, int
   } 
 
   //Get unique, but repeatable random numbers
+  //note that on repeated calls in the same event (for different values of BTagModifier), this means the randoms
+  //generated will be identical, which is what we want
   TRandom3 seed(getRunNumber()+getLumiSection()+getEventNumber());
 
   unsigned int jetsize = jets_AK5PF_pt->size();//number of jets in event
