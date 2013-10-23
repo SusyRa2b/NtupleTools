@@ -7,12 +7,7 @@ root -b -l -q "signalEff_writetxt_run.C(\"JES\",\"TChiHH\")"
 root -b -l -q "signalEff_writetxt_run.C(\"JER\",\"TChiHH\")"
 root -b -l -q "signalEff_writetxt_run.C(\"ISR\",\"TChiHH\")"
 #pdf uncertainties
-###these need some cleaning up
-#root -b -l -q "signalEff2012_PDF_details.C++(\"CTEQMSTW\",\"TChiHH\")" 
-#root -b -l -q "signalEff2012_PDF_details.C++(\"CTEQNNPDF\",\"TChiHH\")" 
-#root -b -l -q "signalEff2012_PDF_details_writetxt.C++(\"TChiHH\")"
-
-
-
-
-
+##for hh search, the 3 is just a dummy argument. doesn't mean anything but needs to be there.
+root -b -l -q "signalEff2012_PDF_details.C++(\"CTEQMSTW\",\"TChiHH\",3,true)" 
+root -b -l -q "signalEff2012_PDF_details.C++(\"CTEQNNPDF\",\"TChiHH\",3,true)" 
+root -b -l -q "signalEff2012_PDF_details_writetxt.C++(\"TChiHH\")"
