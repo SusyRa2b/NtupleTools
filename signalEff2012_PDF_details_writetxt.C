@@ -12,6 +12,7 @@ bool isNormalBin(const TString & name) {
 
   if (name.Contains("LDP")) return false;
   if (name.Contains("SL")) return false;//catches SLsig as well
+  if (name.Contains("SB")) return false; //for hh search
 
   return true;
 }
@@ -97,10 +98,11 @@ void signalEff2012_PDF_details_writetxt(const TString sample,const int minnjets=
 	  //	if ( fabs(syst1)>fabs(syst2) ) syst= syst1;
 	  //	else syst=syst2;
 
-	//ignore syst2 for the moment
+	//repeat for the 3 (or 4) b-tag bins
 	txtfile<<syst<<" ";
 	txtfile<<syst<<" ";
 	txtfile<<syst<<" ";
+	if (sample.Contains("TChi")) txtfile<<syst<<" ";
 
 	cout<<syst<<" ";
 	//logic here assumes that the *first* bins are not LDP
