@@ -408,17 +408,8 @@ void signalEff_hbbhbb::Loop()
    } //end loop over events
    watch.Stop();
 
-   //loop over the transfer matrices and divide each column by the total number of events in that column
-   for (  map< pair<int,int>, vector<TH2D*> >::iterator imasses=transferMatrixMinus.begin(); imasses!=transferMatrixMinus.end(); ++imasses) {
-     vector<TH2D*> mats = imasses->second;
-     for (size_t imat = 0; imat<mats.size(); imat++) {
-
-       TH2D* thematrix = mats.at(imat);
-
-     }
-
-   }
-
+   normalizeByColumn( &transferMatrixPlus);
+   normalizeByColumn( &transferMatrixMinus);
 
    scanSMSngen_->Write();
    for (unsigned int ih=0;ih<scanProcessTotals_.size();ih++)   scanProcessTotals_[ih]->Write();
@@ -431,3 +422,26 @@ void signalEff_hbbhbb::Loop()
 }
 
 
+void signalEff_hbbhbb::normalizeByColumn( map< pair<int,int>, vector<TH2D*> > * tmatrix) {
+
+  //loop over the transfer matrices and divide each column by the total number of events in that column
+   for (  map< pair<int,int>, vector<TH2D*> >::iterator imasses=tmatrix->begin(); imasses!=tmatrix->end(); ++imasses) {
+     vector<TH2D*> mats = imasses->second;
+     for (size_t imat = 0; imat<mats.size(); imat++) {
+
+       TH2D* thematrix = mats.at(imat);
+
+       for (int icol=1; icol<=4; icol++) {
+
+	 double columntotal=0;
+	 //sum up the total events in the column
+	 for (int iy=1;iy<=4;iy++) 	   columntotal+= thematrix->GetBinContent(icol,iy);
+	 //divide each element in the column by the total
+	 for (int iy=1;iy<=4;iy++)  thematrix->SetBinContent(icol,iy, thematrix->GetBinContent(icol,iy) / columntotal);
+
+       }
+     }
+   }
+
+
+}
