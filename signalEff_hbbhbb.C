@@ -247,8 +247,6 @@ void signalEff_hbbhbb::Loop()
 	  if (ii==0)  eventcountsTotalISR->Fill(m0,m12,theisrweight); //only fill once per event!
 	}
 
-	//TO DO -- add trigger efficiency (need to consult with Owen though)
-
 	double pdfweight=1;
 	//if this search region is a pdf variation then use pdf weight
 	if ( searchregions[ii].pdfset_ == "CTEQ" ) { //for speed reasons i am scared of doing all of these string comparisons. still outweighed by i/o speed?
@@ -332,10 +330,6 @@ void signalEff_hbbhbb::Loop()
           if ( !((0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)>100)&&(0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)<140)) ) continue;
           if ( !(fabs(higgsMbb1MassDiff-higgsMbb2MassDiff)<20) ) continue;
 	}
-
-	//TO DO -- change the nbjetsCSMX variables to other names,
-	//then load in the nbjetsCSVX values into them up here
-	//this will allow flexibility when we have SF variations
 
 	//evaluate whether the event passes the b-tag cut based on either raw or SF-corrected MC
 	bool passb=false;
