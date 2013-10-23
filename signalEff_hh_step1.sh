@@ -3,9 +3,8 @@
 #first compile the macro to count events
 root -b -l -q signalEff_hh_compile.C
 
-files=`ls /cu6/joshmt/reducedTrees/v71_5b/reducedTree.*.SMS-TChiHH*.root`
+files=`ls /cu6/joshmt/reducedTrees/v71_5c/reducedTree.*.SMS-TChiHH*.root`
 
-#JES0_JER0_PFMETTypeI_METunc0_PUunc0_hpt20
 
 for j in $files;
 do 
@@ -20,7 +19,8 @@ do
   root -b -l -q "signalEff_hh_step1.C(\"$j\",\"joinbtag\")" >& eventcounts.${filename}_b.log &
 
 #find the "nominal" sample and do extra event counting there
-  if [[ $j = *JES0_JER0_PFMETTypeI_METunc0_PUunc0_hpt20* ]]
+#note that we're calling JERbias "nominal" now
+  if [[ $j = *JES0_JERbias_PFMETTypeI_METunc0_PUunc0_hpt20* ]]
     then
 #with PU systematic shift (nominal sample only)
       root -b -l -q "signalEff_hh_step1.C(\"$j\",\"pushift\")" >& eventcounts.${filename}_c.log &
