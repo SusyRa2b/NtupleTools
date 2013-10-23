@@ -249,6 +249,8 @@ void writetxt(TString which, const TString sample, const TString prefix="eventco
 	  txtfile<<delta<<" ";
 	  //if we're merging the 3 b bins, then repeat the number twice more
 	  if (prefix.Contains("mergebbins")) txtfile<<delta<<" "<<delta<<" ";
+	  //for hh search, repeat once more since there are 4 b-bins
+	  if (prefix.Contains("mergebbins") && sample.Contains("TChi")) txtfile<<delta<<" ";
 
 	  double denomU=1,denomD=1;
 	  if (which=="ISR") {
