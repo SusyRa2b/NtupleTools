@@ -63,7 +63,7 @@ void writetxt(TString which, const TString sample, const TString prefix="eventco
   CrossSectionTable * xs_higgsino = 0;
 
 
-  assert( which=="counts" || which=="JES"||which=="MET" ||which=="JER" ||which=="ISR");
+  assert( which=="counts" || which=="JES"||which=="MET" ||which=="JER" ||which=="ISR" ||which=="PU");
 
   if (which=="ISR") assert(useISR);
 
@@ -93,7 +93,7 @@ void writetxt(TString which, const TString sample, const TString prefix="eventco
     stub_down.ReplaceAll("JERbias","JERdown");
   }
   //for ISR, the 'stub's do not change; the 'prefix' needs to be tweaked (see below)
-
+  //same for PU
 
   TString outfilename = (which=="counts") ? "sigcounts." : "sigsystematics.";
   outfilename += stub0.Tokenize(".")->At(1)->GetName(); //fyi -- this leaks memory (no big deal here)
@@ -103,11 +103,11 @@ void writetxt(TString which, const TString sample, const TString prefix="eventco
 //   }
 
   if (which=="counts")   outfilename+=".txt";
-  else if (which=="JES") outfilename += ".JES.txt";
-  else if (which=="JER") outfilename += ".JER.txt";
-  else if (which=="MET") outfilename += ".MET.txt";
-  else if (which=="ISR") outfilename += ".ISR.txt";
-
+  else {
+    outfilename += ".";
+    outfilename += which;
+    outfilename += ".txt";
+  }
 
   ofstream txtfile( outfilename.Data());
 
@@ -121,11 +121,17 @@ void writetxt(TString which, const TString sample, const TString prefix="eventco
     fnu+="IsrUp.";
     fnd+="IsrDown.";
   }
+  else if (which=="PU" && useISR) { //special case. only have nominal and +1 sigma
+    fn0+="Isr0.";
+    fnu+="pusyst.Isr0.";
+    fnd+="Isr0."; //we won't use this one
+  }
   else if (useISR) { //we're using isr but we're not doing the ISR variation systematic
     fn0+="Isr0.";
     fnu+="Isr0.";
     fnd+="Isr0.";
-  } //else we're not doing isr at all. do nothing
+  }
+  //else we're not doing isr at all. do nothing
   fn0 += stub0;
   fnu += stub_up;
   fnd += stub_down;
@@ -142,7 +148,7 @@ void writetxt(TString which, const TString sample, const TString prefix="eventco
   TFile* fd=0;
   if (which!="counts") {
     fu=new TFile(fnu);
-    fd=new TFile(fnd);
+    if (which!="PU")    fd=new TFile(fnd);
   }
 
   TH2D* scanSMSngen = (TH2D*) f0->Get("scanSMSngen");
@@ -164,7 +170,7 @@ void writetxt(TString which, const TString sample, const TString prefix="eventco
     vh0.push_back(h0);
     if (fu!=0) {
       TH2D* hu = (TH2D*) fu->Get(histname);
-      TH2D* hd = (TH2D*) fd->Get(histname);
+      TH2D* hd = (which=="PU") ? 0 : (TH2D*) fd->Get(histname);
       vhu.push_back(hu);
       vhd.push_back(hd);
     }
@@ -233,12 +239,15 @@ void writetxt(TString which, const TString sample, const TString prefix="eventco
 	if (fu!=0) {
 	  //signed symmetrization of the up and down errors
 	  const double cutoff=10; //enforce some sanity check to get rid of NaNs and crazy values
-	  bool notok= vhu[ih]->GetBinContent(ix,iy)<cutoff || vhd[ih]->GetBinContent(ix,iy)<cutoff || vh0[ih]->GetBinContent(ix,iy)<cutoff;
+	  bool notok= vhu[ih]->GetBinContent(ix,iy)<cutoff || vh0[ih]->GetBinContent(ix,iy)<cutoff;
+	  if (which!="PU" && vhd[ih]->GetBinContent(ix,iy)<cutoff ) notok=true;
 	  double delta = 0;
 	  if (!notok) {
 	    //for ISR, we need to compute the DeltaEff, not the DeltaCounts
 	    if (which=="ISR") delta = 0.5*( (vhu[ih]->GetBinContent(ix,iy)/eventsTotalIsrU->GetBinContent(ix,iy)) - (vhd[ih]->GetBinContent(ix,iy)/ eventsTotalIsrD->GetBinContent(ix,iy))) 
 	      / ( vh0[ih]->GetBinContent(ix,iy)/eventsTotalIsr->GetBinContent(ix,iy) );
+	    //for PU, we've only got one variation
+	    else if (which=="PU") delta = (vhu[ih]->GetBinContent(ix,iy) -vh0[ih]->GetBinContent(ix,iy))/vh0[ih]->GetBinContent(ix,iy);
 	    else  delta = 0.5*(vhu[ih]->GetBinContent(ix,iy) - vhd[ih]->GetBinContent(ix,iy)) / vh0[ih]->GetBinContent(ix,iy);
 	  }
 	  
@@ -258,9 +267,11 @@ void writetxt(TString which, const TString sample, const TString prefix="eventco
 	    denomD = eventsTotalIsrD->GetBinContent(ix,iy);
 	  }
 	  hjesU->SetBinContent(ih+1,vhu[ih]->GetBinContent(ix,iy)/denomU);
-	  hjesD->SetBinContent(ih+1,vhd[ih]->GetBinContent(ix,iy)/denomD);
 	  hjesU->SetBinError(ih+1,vhu[ih]->GetBinError(ix,iy)/denomU); 
-	  hjesD->SetBinError(ih+1,vhd[ih]->GetBinError(ix,iy)/denomD);
+	  if (which!="PU") {
+	    hjesD->SetBinContent(ih+1,vhd[ih]->GetBinContent(ix,iy)/denomD);
+	    hjesD->SetBinError(ih+1,vhd[ih]->GetBinError(ix,iy)/denomD);
+	  }
 	}
 	else { //if counts mode
 	  if (rawcounts)  txtfile<< vh0[ih]->GetBinContent(ix,iy)<<" ";
