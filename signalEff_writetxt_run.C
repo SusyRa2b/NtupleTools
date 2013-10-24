@@ -1,5 +1,7 @@
 void signalEff_writetxt_run(TString what, TString sample) {
 
+  gSystem->Load("CrossSectionTable_cxx.so");
+
   gSystem->Load("signalEff2012_writetxt_C.so");
 
   TString prefix = "eventcounts.";

@@ -9,10 +9,11 @@
 #include "TText.h"
 #include "TMath.h"
 
-#include "TSystem.h"
+#include "TGraph.h"
 
 #include "TCanvas.h"
 #include "TLegend.h"
+#include "TLatex.h"
 
 #include "MiscUtil.cxx"
 
@@ -57,7 +58,6 @@ signal strength and absolute cross section for the units of the limit variable.
 
 
 void writetxt(TString which, const TString sample, const TString prefix="eventcounts.",const bool useISR=false,bool rawcounts=true) {
-  gSystem->Load("CrossSectionTable_cxx.so");
   const double integratedLumi =19399;
 
   CrossSectionTable * xs_higgsino = 0;
@@ -71,7 +71,7 @@ void writetxt(TString which, const TString sample, const TString prefix="eventco
 
   //this should be the 'unvaried' (eg JES0) stub.
   //this differentiation between JER0 and JERbias here is a stopgap measure
-  TString stub0 = "JES0_JER0_PFMETTypeI_METunc0_PUunc0_hpt20." ;
+  TString stub0 = "JES0_JERbias_PFMETTypeI_METunc0_PUunc0_hpt20." ; //switch to using JERbias as nominal
   //for JER, need to compare variations with JERbias
   if (which=="JER") stub0= "JES0_JERbias_PFMETTypeI_METunc0_PUunc0_hpt20.";
 
@@ -265,7 +265,7 @@ void writetxt(TString which, const TString sample, const TString prefix="eventco
 	else { //if counts mode
 	  if (rawcounts)  txtfile<< vh0[ih]->GetBinContent(ix,iy)<<" ";
 	  else { // sigma x Lumi x Ncounted / Ngen = sigma x Lumi x efficiency
-	    txtfile<< xs*hbbbb *integratedLumi *  vh0[ih]->GetBinContent(ix,iy) / ngen;
+	    txtfile<< xs*hbbbb *integratedLumi *  vh0[ih]->GetBinContent(ix,iy) / ngen<<" ";
 	  }
 	}
 	double denom0= (which=="ISR") ? eventsTotalIsr->GetBinContent(ix,iy) : 1;
@@ -502,5 +502,97 @@ void compEff(int mgl,int mlsp,TString sample1,TString sample2) {
   delete theleg;
   delete text;
   delete effcomp;
+
+}
+
+void drawHHeff() {
+
+  gROOT->SetStyle("CMS");
+
+  TFile f("eventcounts.Isr0.JES0_JERbias_PFMETTypeI_METunc0_PUunc0_hpt20.TChiHH.root");
+  TH2D* hgen = (TH2D*) f.Get("eventstotalisr");
+
+  std::vector<TH2D*> hevents;
+  hevents.push_back ( (TH2D*) f.Get("events_b4_MET30to50"));
+  hevents.push_back ( (TH2D*) f.Get("events_b4_MET50to100"));
+  hevents.push_back ( (TH2D*) f.Get("events_b4_MET100to150"));
+  hevents.push_back ( (TH2D*) f.Get("events_b4_MET150to9999"));
+  std::vector<TGraph*> effgraphs;
+
+  int markerstyles[4]={3,4,21,25};
+  int linecolors[4]={kGreen+3,kBlue,kMagenta+1,kRed+1};
+
+  float trigEffFactors[4]={0.804,0.897,0.944,0.944};
+
+  TCanvas * ceff = new TCanvas("ceff","hh sig eff",600,600);
+
+  TLegend * theleg = new TLegend(0.2,0.5,0.5,0.9);
+  theleg->SetBorderSize(0);
+  theleg->SetLineStyle(0);
+  theleg->SetTextFont(42);
+  theleg->SetFillStyle(0);
+
+
+  TLatex*  text1 = new TLatex(5,23.08044,"CMS Simulation");
+  text1->SetNDC();
+  text1->SetTextAlign(13);
+  text1->SetX(0.2);
+  text1->SetY(0.97);
+  text1->SetTextFont(42);
+  text1->SetTextSizePixels(24);
+
+  TLatex*  text2 = new TLatex(5,23.08044,"#sqrt{s} = 8 TeV");
+  text2->SetNDC();
+  text2->SetTextAlign(13);
+  text2->SetX(0.7);
+  text2->SetY(0.97);
+  text2->SetTextFont(42);
+  text2->SetTextSizePixels(24);
+
+  double max=0;
+
+  const int ibiny=1;
+  for ( unsigned int ih=0; ih<hevents.size();ih++) {
+
+    TGraph * geff = new TGraph();  
+    int nbinsx=  hevents[ih]->GetNbinsX();
+    for (int ibinx=1; ibinx<=nbinsx; ibinx++) {
+      double nevents =   hevents[ih]->GetBinContent(ibinx,ibiny);
+      if (nevents==0) continue;
+      double ngen = hgen->GetBinContent(ibinx,ibiny);
+      double eff = 100*nevents/ngen;
+      double massval = hgen->GetXaxis()->GetBinLowEdge(ibinx);
+
+      eff *= trigEffFactors[ih]; //apply trigger efficiency correction
+
+      geff->SetPoint(geff->GetN(),massval,eff);
+      if (eff>max) max = eff;
+    }
+    effgraphs.push_back(geff);
+
+    if (ih==0)    geff->Draw("PAL");
+    else geff->Draw("PL");
+    geff->SetMarkerColor(linecolors[ih]);
+    geff->SetLineColor(linecolors[ih]);
+    geff->SetMarkerStyle(markerstyles[ih]);
+    geff->SetFillColor(0);
+    geff->SetLineWidth(2);
+    geff->SetMaximum(max*1.1);
+    if (ih!=0)  effgraphs.at(0)->SetMaximum(1.1*max);
+    geff->SetMinimum(0);
+    geff->GetHistogram()->SetYTitle("Efficiency (%)");
+    geff->GetHistogram()->SetXTitle("Higgsino mass (GeV)");
+    TString legentry;
+    legentry.Form("#it{S} bin %d",ih+1);
+    theleg->AddEntry(geff,legentry);
+  }
+  theleg->Draw();
+
+  ceff->cd()->SetTopMargin(0.08); //test
+
+  text1->Draw();
+  text2->Draw();
+
+  ceff->SaveAs("efficiency_4bSIG.pdf");
 
 }
