@@ -120,4 +120,16 @@
   t0.Draw("METsig>>hmetsig_pusyst(30,0,300)",masscutw,"sames");
   hmetsig_pusyst->SetLineColor(kMagenta);
 
+  // == check LMT versus the "tweaking" implementation
+  tjerb.Draw("2*(nbtag2_nomSF==1)+3*(nbtag3_nomSF==1)+4*(nbtag4_nomSF==1)>>hNomTweak(4,0.5,4.5)","m0==325&&m12==1&&njets20>=4&&njets20<=5&&METsig>=30&&jetpt2>=50 && nbtag0_nomSF==0");
+  tjerb.Draw("2*(nbtag2_rawMC==1)+3*(nbtag3_rawMC==1)+4*(nbtag4_rawMC==1)>>hRaw(4,0.5,4.5)","m0==325&&m12==1&&njets20>=4&&njets20<=5&&METsig>=30&&jetpt2>=50 &&nbtag0_rawMC==0");
+  tjerb.Draw("2*(nbtag2_rawMC==1)+3*(nbtag3_rawMC==1)+4*(nbtag4_rawMC==1)>>hLMT(4,0.5,4.5)","BTagWeightLMT*(m0==325&&m12==1&&njets20>=4&&njets20<=5&&METsig>=30&&jetpt2>=50 &&nbtag0_rawMC==0)");
+
+  hRaw->Draw();
+  hRaw->SetLineColor(kBlack);
+  hNomTweak->SetLineColor(kGreen);
+  hLMT->SetLineColor(kBlue);
+  hNomTweak->Draw("SAME");
+  hLMT->Draw("SAME");
+
 }
