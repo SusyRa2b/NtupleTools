@@ -481,7 +481,7 @@ void SimpleABCDcheck() {
 
   float varbinsmetsig[6] = {0,30,50,100,150,500};
   nbins=5; low=0; high=500;
-  var="METsig"; xtitle="MET significance";
+  var="METsig"; xtitle="E^{miss}_{T} significance #it{S}";
 
   selection_ = SIG_4b;
   drawPlots(var,nbins,low,high,xtitle,"Events", "dummy",varbinsmetsig);
@@ -566,7 +566,7 @@ void wjetsCompare() {
   selection_=baseline&&zl&&isotk&&(njets4||njets5)&&jet2&&mdp&&btag2;
 
   nbins=30; low=0; high=300;
-  var="METsig"; xtitle="MET significance";
+  var="METsig"; xtitle="E^{miss}_{T} significance #it{S}";
   drawPlots(var,nbins,low,high,xtitle,"Events", "wjets_validation_METsig",0);
 
   selection_=baseline&&jet2&&btag2;
@@ -1205,7 +1205,7 @@ void higgs_dataMC_control_QCD_noskim(TString options="") {
   addVerticalLine(30);
   nbins=40; low=0; high=400;
   setLogY(false);
-  var="METsig"; xtitle="MET significance";
+  var="METsig"; xtitle="E^{miss}_{T} significance #it{S}";
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_lt3bLDP_trigMET150_METsig",0);
   setLogY(true);
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_lt3bLDP_trigMET150_METsig",0);
@@ -1224,7 +1224,7 @@ void higgs_dataMC_control_QCD_noskim(TString options="") {
    addVerticalLine(30);
  nbins=40; low=0; high=400;
   setLogY(false);
-  var="METsig"; xtitle="MET significance";
+  var="METsig"; xtitle="E^{miss}_{T} significance #it{S}";
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_lt3bLDP_trigMET150-MET230_METsig",0);
   setLogY(true);
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_lt3bLDP_trigMET150-MET230_METsig",0);
@@ -1237,7 +1237,7 @@ void higgs_dataMC_control_QCD_noskim(TString options="") {
 
   nbins=40; low=0; high=400;
   setLogY(false);
-  var="METsig"; xtitle="MET significance";
+  var="METsig"; xtitle="E^{miss}_{T} significance #it{S}";
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_lt3bLDP_trigJetMET_METsig",0);
   setLogY(true);
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_lt3bLDP_trigJetMET_METsig",0);
@@ -1257,7 +1257,7 @@ void higgs_dataMC_control_QCD_noskim(TString options="") {
 
    nbins=40; low=0; high=400;
   setLogY(false);
-  var="METsig"; xtitle="MET significance";
+  var="METsig"; xtitle="E^{miss}_{T} significance #it{S}";
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_lt3bLDP_trigJetMET-MET160_METsig",0);
   setLogY(true);
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_lt3bLDP_trigJetMET-MET160_METsig",0);
@@ -1279,7 +1279,7 @@ void higgs_dataMC_control_QCD_noskim(TString options="") {
 
   nbins=40; low=0; high=400;
   setLogY(false);
-  var="METsig"; xtitle="MET significance";
+  var="METsig"; xtitle="E^{miss}_{T} significance #it{S}";
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_weird_trigJetMET_METsig",0);
   setLogY(true);
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_weird_trigJetMET_METsig",0);
@@ -1300,7 +1300,7 @@ void higgs_dataMC_control_QCD_noskim(TString options="") {
 
   nbins=40; low=0; high=400;
   setLogY(false);
-  var="METsig"; xtitle="MET significance";
+  var="METsig"; xtitle="E^{miss}_{T} significance #it{S}";
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_junk_trigJetMET_METsig",0);
   setLogY(true);
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_junk_trigJetMET_METsig",0);
@@ -1553,7 +1553,7 @@ void higgs_dataMC_SR() {
 
   selection_ = baseline && trigger && zl && isotk && jets && btag2 && btag3 && btag4 && mdp && higgsSR && drmax && metloose;
   nbins=20; low=0; high=200;
-  var="METsig"; xtitle = "MET significance";
+  var="METsig"; xtitle = "E^{miss}_{T} significance #it{S}";
   drawPlots(var,nbins,low,high,xtitle,"Events","SR4b_allcuts_METsig",0);
 
 
@@ -1630,7 +1630,7 @@ void higgs_dataMC_control_QCD() {
   //no higgs mass cuts, but do use DRmax
   addVerticalLine(30);
   nbins=80; low=0; high=400;
-  var="METsig"; xtitle="MET significance";
+  var="METsig"; xtitle="E^{miss}_{T} significance #it{S}";
   setLogY(true);
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_0l2bWithDrMax_METsig",0);
   resetVerticalLine();
@@ -1641,19 +1641,39 @@ void higgs_dataMC_control_QCD() {
   addVerticalLine(30);
   nbins=30; low=0; high=300;
   setLogY(false);
-  var="METsig"; xtitle="MET significance";
+  var="METsig"; xtitle="E^{miss}_{T} significance #it{S}";
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_preselection_METsig",0);
-  setLogY(true);
+  setLogY(true); setPlotMinimum(0.5);
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_preselection_METsig",0);
   resetVerticalLine();
+  resetPlotMinimum();
 
   nbins=30; low=0; high=400;
   setLogY(false);
   var="MET"; xtitle="MET (GeV)";
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_preselection_MET",0);
-  setLogY(true);
+  setLogY(true); setPlotMinimum(0.5);
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_preselection_MET",0);
+  resetPlotMinimum();
 
+  //let's see what these look like with a loose METsig cut
+  selection_ = baseline && trigger && zl&&isotk && jets && btag2 && !btag3 && metsigloose;
+
+  addVerticalLine(30);
+  nbins=30; low=0; high=300;
+  var="METsig"; xtitle="E^{miss}_{T} significance #it{S}";
+  setLogY(true); setPlotMinimum(0.5);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_preselectionMETsig30_METsig",0);
+  resetVerticalLine();
+  resetPlotMinimum();
+
+  nbins=30; low=0; high=400;
+  var="MET"; xtitle="MET (GeV)";
+  setLogY(true); setPlotMinimum(0.5);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_preselectionMETsig30_MET",0);
+  resetPlotMinimum();
+
+  
   //nPV
   nbins=20; low=0; high=40;
   setLogY(false);
@@ -1675,7 +1695,7 @@ void higgs_dataMC_control_QCD() {
   addVerticalLine(30);
   nbins=30; low=0; high=300;
   setLogY(false);
-  var="METsig"; xtitle="MET significance";
+  var="METsig"; xtitle="E^{miss}_{T} significance #it{S}";
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_preselectionMDP_METsig",0);
   setLogY(true);
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_preselectionMDP_METsig",0);
@@ -1739,7 +1759,7 @@ void higgs_dataMC_control_QCD() {
   nbins=13; low=0; high=300;
   float varbinsmetsig[14] = {0,10,20,30,40,50,60,70,80,100,120,140,180,300};
   setLogY(false);
-  var="METsig"; xtitle="MET significance";
+  var="METsig"; xtitle="E^{miss}_{T} significance #it{S}";
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_preselectionLDP_METsig",varbinsmetsig);
   setLogY(true);
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_preselectionLDP_METsig",varbinsmetsig);
@@ -1771,7 +1791,7 @@ void higgs_dataMC_control_QCD() {
   addVerticalLine(30);
   nbins=30; low=0; high=300;
   setLogY(false);
-  var="METsig"; xtitle="MET significance";
+  var="METsig"; xtitle="E^{miss}_{T} significance #it{S}";
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_preselectionMDP-MET125_METsig",0);
   setLogY(true);
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_preselectionMDP-MET125_METsig",0);
@@ -1791,7 +1811,7 @@ void higgs_dataMC_control_QCD() {
 
   nbins=13; low=0; high=300;
   setLogY(false);
-  var="METsig"; xtitle="MET significance";
+  var="METsig"; xtitle="E^{miss}_{T} significance #it{S}";
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_preselectionLDP-MET125_METsig",varbinsmetsig);
   setLogY(true);
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_preselectionLDP-MET125_METsig",varbinsmetsig);
@@ -1922,21 +1942,21 @@ void higgs_dataMC_control_QCD() {
   selection_ = baseline && trigger && zl && isotk && jets && btag2 && !btag3 && mdp && metsigloose && higgsSR_av;
   nbins=20; low = 0; high=100;
   setLogY(false);
-  var="abs(higgsMbb1MassDiff-higgsMbb2MassDiff)"; xtitle="|#Delta m_{jj}| (GeV)";
+  var="abs(higgsMbb1MassDiff-higgsMbb2MassDiff)"; xtitle="|#Deltam_{jj}| (GeV)";
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_0l2bN-2_higgsMassDiff",0);
 
   //now make it N-1
   selection_ = baseline && trigger && zl && isotk && jets && btag2 && !btag3 && mdp && metsigloose && higgsSR_av &&drmax;
   nbins=20; low = 0; high=100;
   setLogY(false);
-  var="abs(higgsMbb1MassDiff-higgsMbb2MassDiff)"; xtitle="|#Delta m_{jj}| (GeV)";
+  var="abs(higgsMbb1MassDiff-higgsMbb2MassDiff)"; xtitle="|#Deltam_{jj}| (GeV)";
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_0l2bN-1_higgsMassDiff",0);
 
   //N-1 plot of maxDR
   selection_ = baseline && trigger && zl && isotk && jets && btag2 && !btag3 && mdp && metsigloose && higgsSR ;
   nbins=20; low = 0; high=5;
   setLogY(false);
-  var="deltaRmax_hh"; xtitle="#Delta R_{max}";
+  var="deltaRmax_hh"; xtitle="#DeltaR_{max}";
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_0l2bN-1_dRmax",0);
 
   //apply full selection with 2b && !3b
@@ -2564,7 +2584,7 @@ void higgs_dataMC_weightFactorTest_SL(TString options) {
 
     float varbinsmetsig[6] = {0,30,50,100,150,500};
     nbins=5; low=0; high=500;
-    var="METsig"; xtitle="MET significance";
+    var="METsig"; xtitle="E^{miss}_{T} significance #it{S}";
     filename.Form("SL_SB%db_METsig_%s",ib,jmt::fortranize(weightfactor).Data());
     drawPlots(var,nbins,low,high,xtitle,"Events", filename,varbinsmetsig);
     
@@ -2655,10 +2675,11 @@ void higgs_dataMC_control_SL() {
   addVerticalLine(30);
   nbins=30; low=0; high=300;
   setLogY(false);
-  var="METsig"; xtitle="MET significance";
+  var="METsig"; xtitle="E^{miss}_{T} significance #it{S}";
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselection_METsig",0);
-  setLogY(true);
+  setLogY(true); setPlotMinimum(0.5);
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselection_METsig",0);
+  resetPlotMinimum();
   resetVerticalLine();
   //MET, for completeness
   nbins=30; low=0; high=500;
@@ -2673,7 +2694,7 @@ void higgs_dataMC_control_SL() {
   nbins=30; low=0; high=300;
   setLogY(false);
   addVerticalLine(30);
-  var="METsig"; xtitle="MET significance";
+  var="METsig"; xtitle="E^{miss}_{T} significance #it{S}";
 
   double fullLumi = lumiScale_;
 
@@ -2728,7 +2749,7 @@ void higgs_dataMC_control_SL() {
 //     drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselection_METsig2012_"+pvdesc,0);
 
     nbins=30; low=0; high=300;
-    var="METsig"; xtitle="MET significance";
+    var="METsig"; xtitle="E^{miss}_{T} significance #it{S}";
     setLogY(true);
     drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselection_METsig_"+pvdesc,0);
 
@@ -2812,7 +2833,7 @@ root [109] ratiosByPV[0]->SetMarkerColor(kMagenta+4)
   addVerticalLine(30);
   nbins=15; low=0; high=300;
   setLogY(false);
-  var="METsig"; xtitle="MET significance";
+  var="METsig"; xtitle="E^{miss}_{T} significance #it{S}";
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_4bPreselection_METsig",0);
   setLogY(true);
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_4bPreselection_METsig",0);
@@ -2829,14 +2850,14 @@ root [109] ratiosByPV[0]->SetMarkerColor(kMagenta+4)
   selection_ = baseline && trigger && sl && (njets4||njets5) &&jet2&&mdp && btag2 &&btag3&&btag4 &&metsigveryloose;
   nbins=10; low=0; high=100;
   setLogY(false);
-  var="abs(higgsMbb1MassDiff-higgsMbb2MassDiff)"; xtitle="|#Delta m_{jj}|";
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_4bMETsig30_DeltaMbb",0);
+  var="abs(higgsMbb1MassDiff-higgsMbb2MassDiff)"; xtitle="|#Deltam_{jj}| (GeV)";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_4bMETsig30_DeltaMbb",0,"GeV");
 
   //higgs mass
   nbins=20; low=0; high=200;
   setLogY(false);
-  var="0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)"; xtitle="<m_{jj}>";
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_4bMETsig30_AvMbb",0);
+  var="0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)"; xtitle="<m_{jj}> (GeV)";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_4bMETsig30_AvMbb",0,"GeV");
 
   //now add the higgs SR
   selection_ = baseline && trigger && sl && (njets4||njets5)&&jet2&&mdp && btag2 &&btag3&&btag4 &&metsigveryloose &&higgsSR;
@@ -2856,7 +2877,7 @@ root [109] ratiosByPV[0]->SetMarkerColor(kMagenta+4)
   selection_ = baseline && trigger && sl && (njets4||njets5)&&jet2&&mdp && btag2 &&btag3&&btag4 &&metsigveryloose &&higgsSR_av &&drmax;
   nbins=10; low=0; high=100;
   setLogY(false);
-  var="abs(higgsMbb1MassDiff-higgsMbb2MassDiff)"; xtitle="|#Delta m_{jj}|";
+  var="abs(higgsMbb1MassDiff-higgsMbb2MassDiff)"; xtitle="|#Deltam_{jj}|";
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_Nm1METsig30_DeltaMbb",0);
 
   //
@@ -2864,7 +2885,7 @@ root [109] ratiosByPV[0]->SetMarkerColor(kMagenta+4)
   selection_ = baseline && trigger && sl && (njets4||njets5)&&jet2&&mdp && btag2 &&btag3&&btag4  &&higgsSR &&drmax;
   nbins=30; low=0; high=300;
   setLogY(true);
-  var="METsig"; xtitle="MET significance";
+  var="METsig"; xtitle="E^{miss}_{T} significance #it{S}";
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_Nm1_METsig",0);
   setLogY(false);
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_Nm1_METsig",0);
@@ -3664,7 +3685,7 @@ void higgs_whyLeptonLost() {
 
   //all cuts except metsig
   selection_=baseline&&triggers && zl&& tauveto && isotk1 && njets&&jet2&&mdp && btag2 && btag3 && btag4  && higgsdiff&&higgsmass && drmax ;
-  var="METsig"; xtitle="MET significance";
+  var="METsig"; xtitle="E^{miss}_{T} significance #it{S}";
   nbins=8; low= 0; high=160;
   setLogY(false);
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_METsig_splitTtbar",0);
@@ -3705,7 +3726,7 @@ void higgs_Nminus1(bool plotdata=false) {
   useTrigEff_=plotdata; //use trig eff correction only if we're plotting data
   usePUweight_=true; 
 
-  if (plotdata)  setOutputDirectory("plots_higgs_Nminus1_unblind");
+  if (plotdata)  {setOutputDirectory("plots_higgs_Nminus1_unblind"); drawDataZeroes_=false;}
   else   setOutputDirectory("plots_higgs_Nminus1");
 
   lumiScale_=19399;
@@ -3909,21 +3930,24 @@ void higgs_Nminus1(bool plotdata=false) {
 
   //higgs mass
   selection_=baseline&&triggers && zl&& tauveto && isotk1 && njets&&jet2 && btag2 && btag3 && btag4 &&mdp && higgsdiff && drmax && metsig;
-  var="0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)"; xtitle="<m_{jj}>";
+  var="0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)"; xtitle="<m_{jj}> (GeV)";
   nbins=20; low= 0; high=200;
   setLogY(false);
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_Nm1_higgsmass",0,"GeV");
+  //try with fewer bins too
+  nbins=10; low= 0; high=200;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_Nm1_higgsmass_coarse",0,"GeV");
 
   //higgs mass difference
   selection_=baseline&&triggers && zl&& tauveto && isotk1 && njets&&jet2 && btag2 && btag3 && btag4&&mdp && higgsmass  && drmax && metsig;
-  var="abs(higgsMbb1MassDiff-higgsMbb2MassDiff)"; xtitle="#Delta higgs mass";
-  nbins=20; low= 0; high=80;
+  var="abs(higgsMbb1MassDiff-higgsMbb2MassDiff)"; xtitle="|#Deltam_{jj}| (GeV)";
+  nbins=8; low= 0; high=80;
   setLogY(false);
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_Nm1_higgsmassdiff",0);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_Nm1_higgsmassdiff",0,"GeV");
 
   //drmax
   selection_=baseline&&triggers && zl&& tauveto && isotk1 && njets&&jet2 && btag2 && btag3 && btag4&&mdp && higgsmass && higgsdiff && metsig;
-  var="deltaRmax_hh"; xtitle="max #Delta R";
+  var="deltaRmax_hh"; xtitle="#DeltaR_{max}";
   nbins=30; low= 0; high=6;
   setLogY(false);
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_Nm1_maxDR",0);
@@ -3949,9 +3973,14 @@ void higgs_Nminus1(bool plotdata=false) {
 
   //full selection except METsig
   selection_=baseline&&triggers && zl&& tauveto && isotk1&& njets&&jet2 && btag2 && btag3 && btag4 &&mdp&& higgsmass && higgsdiff && drmax;
-  var="METsig"; xtitle="MET significance";
+  var="METsig"; xtitle="E^{miss}_{T} significance #it{S}";
   nbins=20; low= 0; high=200;
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_Nm1_METsig",0);
+
+  //just a different number of bins
+  nbins=12; low= 0; high=180;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_Nm1_METsig_coarse",0);
+
 
   //full selection except METsig
   selection_=baseline&&triggers && zl&& tauveto && isotk1 && njets&&jet2 && btag2 && btag3 && btag4&&mdp && higgsmass && higgsdiff && drmax;
@@ -4433,7 +4462,7 @@ void higgmb_cutflowE_bbangles() {
 
 void higgsmbb_quickmbbPlots() {
 
-  initHiggsSamples69(true,"hhmg200 hhmg350");
+  initHiggsSamples69(true,"hhmg200 hhmg400");
   setOutputDirectory("quickmbbPlots");
 
   int nbins;
@@ -4474,37 +4503,40 @@ void higgsmbb_quickmbbPlots() {
   TCut metsig = "METsig>30";
 
   //no higgs mass cut
-  selection_=baseline&&triggers && zl&& tauveto && isotk1 && njets&&jet2 && btag2 && btag3 && btag4 && higgsdiff && drmax && metsig;
+  selection_=baseline&&triggers && zl&& tauveto && isotk1 && njets&&jet2 && mdp && btag2 && btag3 && btag4 && higgsdiff && drmax && metsig;
 
   clearSamples(); 
-  addSample("SMS-TChiHH_2b2b_2J_mChargino-350to500_mLSP-1to370_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1871_v71$350$1:higgsMbb1MassDiff_correct==0",kRed,"hh 350 (0)");
-  addSample("SMS-TChiHH_2b2b_2J_mChargino-350to500_mLSP-1to370_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1871_v71$350$1:higgsMbb1MassDiff_correct==1",kBlue,"hh 350 (1)");
-  addSample("SMS-TChiHH_2b2b_2J_mChargino-350to500_mLSP-1to370_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1871_v71$350$1:higgsMbb1MassDiff_correct==2",kGreen+4,"hh 350 (2)");
+  addSample("SMS-TChiHH_2b2b_2J_mChargino-350to500_mLSP-1to370_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1871_v71$400$1:higgsMbb1MassDiff_correct==0",kRed,"0 correct");
+  addSample("SMS-TChiHH_2b2b_2J_mChargino-350to500_mLSP-1to370_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1871_v71$400$1:higgsMbb1MassDiff_correct==1",kBlue,"1 correct");
+  addSample("SMS-TChiHH_2b2b_2J_mChargino-350to500_mLSP-1to370_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1871_v71$400$1:higgsMbb1MassDiff_correct==2",kGreen+4,"2 correct");
+  selectionLabel_ = "m_{#tilde{H}} = 400 GeV";
 
   var="0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)"; xtitle="<m_{jj}> (GeV)";
   nbins=20; low= 0; high=200;
   setStackMode(false,false,false); 
-  drawPlots(var,nbins,low,high,xtitle,"Events", "ewkhh_massshape_mbb_350",0,"GeV");
- //make the same plots but requiring that it is possible to reconstruct the higgs (all 4 b from higgs were reconstructed)
-  selection_=baseline&&triggers && zl&& tauveto && isotk1 && njets&&jet2 && btag2 && btag3 && btag4 && higgsdiff && drmax && metsig &&TCut("njetsHiggsMatch20==4");
-  drawPlots(var,nbins,low,high,xtitle,"Events", "ewkhh_massshape_mbb_350_4possible",0,"GeV");
-  //another iteration but this time requiring that all 4 b from higgs are reco'd with eta<5
-  selection_=baseline&&triggers && zl&& tauveto && isotk1 && njets&&jet2 && btag2 && btag3 && btag4 && higgsdiff && drmax && metsig &&TCut("njetsHiggsMatch20_eta5==4");
-  drawPlots(var,nbins,low,high,xtitle,"Events", "ewkhh_massshape_mbb_350_4possible_eta5",0,"GeV");
+  drawPlots(var,nbins,low,high,xtitle,"Events", "ewkhh_massshape_mbb_400",0,"GeV");
 
-  selection_=baseline&&triggers && zl&& tauveto && isotk1 && njets&&jet2 && btag2 && btag3 && btag4 && higgsdiff && drmax && metsig;
+ //make the same plots but requiring that it is possible to reconstruct the higgs (all 4 b from higgs were reconstructed)
+  selection_=baseline&&triggers && zl&& tauveto && isotk1 && njets&&jet2 && mdp && btag2 && btag3 && btag4 && higgsdiff && drmax && metsig &&TCut("njetsHiggsMatch20==4");
+  drawPlots(var,nbins,low,high,xtitle,"Events", "ewkhh_massshape_mbb_400_4possible",0,"GeV");
+  //another iteration but this time requiring that all 4 b from higgs are reco'd with eta<5
+  selection_=baseline&&triggers && zl&& tauveto && isotk1 && njets&&jet2 && mdp && btag2 && btag3 && btag4 && higgsdiff && drmax && metsig &&TCut("njetsHiggsMatch20_eta5==4");
+  drawPlots(var,nbins,low,high,xtitle,"Events", "ewkhh_massshape_mbb_400_4possible_eta5",0,"GeV");
+
+  selection_=baseline&&triggers && zl&& tauveto && isotk1 && njets&&jet2 && mdp && btag2 && btag3 && btag4 && higgsdiff && drmax && metsig;
   clearSamples(); 
-  addSample("SMS-TChiHH_2b2b_2J_mChargino-130to325_mLSP-1to195_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1872_v71$200$1:higgsMbb1MassDiff_correct==0",kRed,"hh 200 (0)");
-  addSample("SMS-TChiHH_2b2b_2J_mChargino-130to325_mLSP-1to195_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1872_v71$200$1:higgsMbb1MassDiff_correct==1",kBlue,"hh 200 (1)");
-  addSample("SMS-TChiHH_2b2b_2J_mChargino-130to325_mLSP-1to195_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1872_v71$200$1:higgsMbb1MassDiff_correct==2",kGreen+4,"hh 200 (2)");
+  addSample("SMS-TChiHH_2b2b_2J_mChargino-130to325_mLSP-1to195_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1872_v71$200$1:higgsMbb1MassDiff_correct==0",kRed,"0 correct");
+  addSample("SMS-TChiHH_2b2b_2J_mChargino-130to325_mLSP-1to195_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1872_v71$200$1:higgsMbb1MassDiff_correct==1",kBlue,"1 correct");
+  addSample("SMS-TChiHH_2b2b_2J_mChargino-130to325_mLSP-1to195_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1872_v71$200$1:higgsMbb1MassDiff_correct==2",kGreen+4,"2 correct");
+  selectionLabel_ = "m_{#tilde{H}} = 200 GeV";
 
   drawPlots(var,nbins,low,high,xtitle,"Events", "ewkhh_massshape_mbb_200",0,"GeV");
 
   //make the same plots but requiring that it is possible to reconstruct the higgs (all 4 b from higgs were reconstructed)
-  selection_=baseline&&triggers && zl&& tauveto && isotk1 && njets&&jet2 && btag2 && btag3 && btag4 && higgsdiff && drmax && metsig &&TCut("njetsHiggsMatch20==4");
+  selection_=baseline&&triggers && zl&& tauveto && isotk1 && njets&&jet2 && mdp && btag2 && btag3 && btag4 && higgsdiff && drmax && metsig &&TCut("njetsHiggsMatch20==4");
   drawPlots(var,nbins,low,high,xtitle,"Events", "ewkhh_massshape_mbb_200_4possible",0,"GeV");
   //now with eta5
-  selection_=baseline&&triggers && zl&& tauveto && isotk1 && njets&&jet2 && btag2 && btag3 && btag4 && higgsdiff && drmax && metsig &&TCut("njetsHiggsMatch20_eta5==4");
+  selection_=baseline&&triggers && zl&& tauveto && isotk1 && njets&&jet2 && mdp && btag2 && btag3 && btag4 && higgsdiff && drmax && metsig &&TCut("njetsHiggsMatch20_eta5==4");
   drawPlots(var,nbins,low,high,xtitle,"Events", "ewkhh_massshape_mbb_200_4possible_eta5",0,"GeV");
 
 
@@ -4585,7 +4617,7 @@ void higgsmbb_backgroundStudies2() { //this time split the off-mbb peak into a c
     
     //    fitRatio_="pol1";
     selection_=baseline && triggers &&zl &&isotk&&njets&&btag&&mdp &&metsigVLoose;
-    var="METsig"; xtitle="MET significance";
+    var="METsig"; xtitle="E^{miss}_{T} significance #it{S}";
     nbins=15; low= 0; high=300;
     setStackMode(false,false,false); //no stack
     setLogY(true);
@@ -4819,7 +4851,7 @@ void higgsmbb_cutflowDtry2_illustration() {
   drawEffVRej("TChihh250","TTbarJets0","hh250","ttbar",true);
 
 
-  var="METsig"; xtitle="MET significance";
+  var="METsig"; xtitle="E^{miss}_{T} significance #it{S}";
   nbins=15; low= 0; high=300;
   setStackMode(false,false,false); //no stack
   setPlotMinimum(0.1);
