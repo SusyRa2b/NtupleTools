@@ -608,8 +608,14 @@ void makeplots1(TString todraw="table pv mass 2b 3b 4b met0 met1 met2 met3 met4 
 
       selection_ = sel1&&sel2&&sel3;
 
-      //CSV output
+      setLogY(true);
+      nbins = 30; low=0; high=TMath::Pi();
+      var="abs(min(abs(METphi-caloMETphi),abs(2*3.14159-METphi+caloMETphi))-3.14159)"; xtitle="| |#Delta #phi_{PF,calo}| - #pi |";
+      filename.Form("%s%db_METsig%d_%s",sel3name.Data(),i,j,"RazorNoise");
+      drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
       setLogY(false);
+
+      //CSV output
 
       nbins=10; low=0; high=1;
       var="CSVbest1"; xtitle=var;
