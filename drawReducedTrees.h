@@ -269,6 +269,7 @@ bool dostack_=true;
 bool stackSignal_=true;
 bool doleg_=true;
 bool dodata_=true;
+bool drawDataZeroes_=true;
 bool addOverflow_=true;
 //bool doSubtraction_=false;
 bool drawMCErrors_=false;
@@ -307,6 +308,7 @@ double customPlotMin_=0;
 
 float maxScaleFactor_ = 1.05;
 float xlabeloffset_=0.015;
+float xtitleoffset_=0.97;
 
 bool splitTTbar_ = false;
 bool splitWJets_ = false;
@@ -319,9 +321,26 @@ bool splitSingleTopForClosureTest_ = false;
 bool splitZinvisible_ = false;
 bool vAccepMuon_ = false; //true(false) = muon(electron) definition of acceptance
 
-//this is for plotting headers and also for dd estimates
-bool is2011Data_ = false;
-bool isPreliminary_ = (is2011Data_) ? false : true;
+//revamp the plot header options
+/*
+desired logic:
+
+plotting data ?
+
+if yes, write CMS [Preliminary], lumi, sqrt(s) = X TeV
+
+if no, write CMS Simulation
+lumi is optional
+energy is mandatory
+
+options needed:
+bool isPreliminary_
+energy
+when to write lumi? if not normalized, then yes
+*/
+bool isPreliminary_ = true;
+int cmEnergy_=8; //let's see if we ever need to change this to float!
+
 
 bool plotSelectionLabel_ = true;
 TString selectionLabel_="";
@@ -703,7 +722,8 @@ void loadSusyScanHistograms() {
   loadedSusyHistos_=true;
 }
 
-void drawPlotHeaderInside(TString displaytext="") {
+//oct 13 -- not sure this function is really in use anymore, but leave it here for now
+void drawPlotHeaderInside(TString displaytext="",float xNDC=0.6,float yNDC=0.9) {
   if (text1 != 0 ) delete text1;
 
   if ( displaytext=="") displaytext = "CMS Simulation";
@@ -711,63 +731,47 @@ void drawPlotHeaderInside(TString displaytext="") {
   text1 = new TLatex(5,23.08044,displaytext);
   text1->SetNDC();
   text1->SetTextAlign(13);
-  text1->SetX(0.6);
-  text1->SetY(.9);
+  text1->SetX(xNDC);
+  text1->SetY(yNDC);
   text1->SetTextFont(42);
   text1->SetTextSizePixels(24);
   text1->Draw();
 }
 
-void drawPlotHeader(double xoffset = 0) {
+void drawPlotHeader() {
+  //Oct 2013 -- cleaned up the cruft that had accumulated in here. hopefully didn't break anything
 
-  const  bool publicationFormat = true; //to switch on the format suggested by Bill for the paper
-
-  //  return;
-  float ypos = 0.97;
-  //  if(doRatio_) ypos=ypos+0.012;
-  // i'm gonna leave this out for now
   if (text1 != 0 ) delete text1;
-  if(isPreliminary_){
-    text1 = new TLatex(3.570061,23.08044,"CMS Preliminary"); 
-    text1->SetX(0.68 + xoffset ); //add 0.2 if you get rid of the "Preliminary"
-  }
-  else{ 
-    text1 = new TLatex(3.570061,23.08044,"CMS"); //no more preliminary!
-    text1->SetX(0.68 + xoffset +0.2); 
-  }
-  text1->SetNDC();
-  text1->SetTextAlign(13);
-  text1->SetY(ypos+0.007);
-  text1->SetTextFont(42);
-  text1->SetTextSizePixels(24);
-  text1->SetTextSize(0.045); //copied from ben's code. maybe needs a switch so it is only used for AN2011()
-  if (!publicationFormat)  text1->Draw();
+  TString cmsString="CMS";
 
-  if (normalized_ == false) {
-    TString astring;
-    if(is2011Data_){
-      //astring.Form("%.0f pb^{-1} at #sqrt{s} = 7 TeV",lumiScale_);
-      //astring.Form("%.1f fb^{-1} at #sqrt{s} = 7 TeV",lumiScale_/1000.);      
-      if (publicationFormat)    astring.Form("CMS, #sqrt{s} = 7 TeV, L_{int} = %.2f fb^{-1}",lumiScale_/1000.);
-      else     astring.Form("L_{int} = %.2f fb^{-1}, #sqrt{s} = 7 TeV",lumiScale_/1000.);
+  //if no data, it is Simulation
+  if (!dodata_) cmsString += " Simulation";
+  //if data, then add Preliminary if desired
+  else if (isPreliminary_) cmsString += " Preliminary";
 
-      astring.Form("CMS, #sqrt{s} = 7 TeV, L_{int} = %.2f fb^{-1}",lumiScale_/1000.);
-
-    }
-    else astring.Form("CMS Preliminary, L_{int} = %.2f fb^{-1}, #sqrt{s} = 8 TeV",lumiScale_/1000.);
-    if(lumiScale_>33. && lumiScale_<34.) astring.Form("L_{int} = %.2f fb^{-1}, #sqrt{s} = 7 TeV", 4982.91/1000.);//hardcoded, but don't know what else to do for this...
-    if (text2 != 0 ) delete text2;
-    text2 = new TLatex(3.570061,23.08044,astring);
-    text2->SetNDC();
-    text2->SetTextAlign(13);
-    text2->SetX(0.17);
-    const float extray= publicationFormat ? 0.01: 0;
-    text2->SetY(ypos+0.015 + extray);
-    text2->SetTextFont(42);
-    text2->SetTextSizePixels(24);
-    text2->SetTextSize(0.045); //copied from ben's code. maybe needs a switch so it is only used for AN2011()
-    text2->Draw();
+  //add lumi if there is data or if it is a lumi-normalized MC plot
+  if ( dodata_ || !normalized_) {
+    TString lumiString;
+    lumiString.Form(", L = %.1f fb^{-1}",lumiScale_/1000.); //removed _{int} from L
+    cmsString += lumiString;
   }
+
+  //always add energy
+  TString energyString;
+  energyString.Form(", #sqrt{s} = %d TeV",cmEnergy_);
+  cmsString += energyString;
+
+  if (text2 != 0 ) delete text2;
+  text2 = new TLatex(3.570061,23.08044,cmsString);
+  text2->SetNDC();
+  text2->SetTextAlign(13);
+  text2->SetX(0.17);
+  text2->SetY(0.985 );
+  text2->SetTextFont(42);
+  text2->SetTextSizePixels(24);
+  text2->SetTextSize(0.044); //was 0.045
+  text2->Draw();
+  
 
   if(plotSelectionLabel_){
     if (text4 != 0 ) delete text4;
@@ -908,7 +912,7 @@ double findOverallMax(const TH1D* hh) {
   double max=-1e9;
 
   for (int i=1; i<= hh->GetNbinsX(); i++) {
-    double val = hh->GetBinContent(i) + hh->GetBinError(i);
+    double val = hh->GetBinContent(i) + hh->GetBinErrorUp(i);
     if (val>max) max=val;
   }
   return max;
@@ -2292,6 +2296,7 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
     histos_[samples_[isample]]->SetXTitle(xtitle);
     histos_[samples_[isample]]->SetYTitle(ytitle);
     histos_[samples_[isample]]->GetXaxis()->SetLabelOffset(xlabeloffset_);
+    histos_[samples_[isample]]->GetXaxis()->SetTitleOffset(xtitleoffset_);
 
     hinteractive = histos_[samples_[isample]];// hinteractive will point to the last sample's histo
 
@@ -2372,8 +2377,6 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
   }
 
   if (!dostack_) {
-    //this is all a re-implemenataion of stuff done is HistHolder. Oh well.
-
     //also unit normalize the totalsm
     if (normalized_ && totalsm->Integral()>0) totalsm->Scale(1.0/totalsm->Integral()); //15 Jan 2013
 
@@ -2398,7 +2401,7 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
     thestack->GetHistogram()->GetXaxis()->SetTitle(xtitle);    
     thestack->GetHistogram()->GetXaxis()->SetLabelOffset(xlabeloffset_);
     thestack->GetHistogram()->GetYaxis()->SetTitle(ytitle);
-    thestack->GetHistogram()->GetXaxis()->SetTitleOffset(0.93);
+    thestack->GetHistogram()->GetXaxis()->SetTitleOffset(xtitleoffset_);
 
     //drawverticalline used to be called here but i've now moved it lower
 
@@ -2475,7 +2478,8 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
     leg->AddEntry(hdata,"Data");
 
     if (!quiet_)    cout<<"Data underflow: " <<hdata->GetBinContent(0)<<endl;//BEN
-    hdata->Draw("SAME E0");
+    TString dataDrawOpt = drawDataZeroes_ ? "SAME E0" : "SAME E";
+    hdata->Draw(dataDrawOpt);
     if (!doCustomPlotMax_) {
       double mymax=-1e9;
       if (dostack_) mymax = thestack->GetMaximum();
@@ -2735,7 +2739,7 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
     gPad->Modified();
     hinteractive = hdata;
     hdata->Draw();
-    drawPlotHeader(-.1);
+    drawPlotHeader();
     if (doleg_)  leg->Draw();
     if (extratext_!="") {
       extraText->DrawLatex(.5,.5,extratext_);
@@ -2839,7 +2843,7 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
       leg->AddEntry(histos_[hnameR], sampleLabel_[samples_[isample]]);
     }
      
-    if(dodata_) drawPlotHeader(-.1);
+    if(dodata_) drawPlotHeader();
     else{
       drawPlotHeaderInside(); //for qcd only plots, this works.
     }
