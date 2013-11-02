@@ -1670,7 +1670,7 @@ void higgs_dataMC_control_QCD() {
   nbins=30; low=0; high=400;
   var="MET"; xtitle="MET (GeV)";
   setLogY(true); setPlotMinimum(0.5);
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_preselectionMETsig30_MET",0);
+  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_preselectionMETsig30_MET",0,"GeV");
   resetPlotMinimum();
 
   
