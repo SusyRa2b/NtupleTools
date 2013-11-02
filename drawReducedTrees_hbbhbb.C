@@ -68,7 +68,7 @@ The paths to the reducedTrees are defined at the top of initHiggsSamples69()
 TString inputPath = "";
 TString dataInputPath =  "";
 
-double lumiScale_ = 19399 ; //Run 2012 ABC+D
+double lumiScale_ = 19306.647; //updated with pixel lumi (oct 2013)
 
 //make a symlink that point from this name to drawReducedTree.h
 //this is to make the ROOT dictionary generation work correctly
@@ -3726,10 +3726,8 @@ void higgs_Nminus1(bool plotdata=false) {
   useTrigEff_=plotdata; //use trig eff correction only if we're plotting data
   usePUweight_=true; 
 
-  if (plotdata)  {setOutputDirectory("plots_higgs_Nminus1_unblind"); drawDataZeroes_=false;}
+  if (plotdata)  setOutputDirectory("plots_higgs_Nminus1_unblind");
   else   setOutputDirectory("plots_higgs_Nminus1");
-
-  lumiScale_=19399;
 
   int nbins;
   float low,high;
