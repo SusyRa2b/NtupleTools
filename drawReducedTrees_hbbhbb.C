@@ -78,6 +78,7 @@ void initHiggsSamples69(const bool useSkim=true,const TString samplelist="") {
 
   inputPath="/cu6/joshmt/reducedTrees/v71_5b/"; 
   dataInputPath="/cu6/joshmt/reducedTrees/v71_5b/data/"; //for skimmed data
+
   if (!useSkim)   {
     inputPath+="unskimmed/";
     dataInputPath=inputPath;
@@ -88,7 +89,6 @@ void initHiggsSamples69(const bool useSkim=true,const TString samplelist="") {
   samplesAll_.clear(); // hack to suppress the amount of output we get. not needed for proper functioning.
 
   if (!useSkim) {
-    
     addToSamplesAll("QCD_Pt-1000to1400_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1903_v71");
     addToSamplesAll("QCD_Pt-120to170_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v3_AODSIM_UCSB1897_v71");
     addToSamplesAll("QCD_Pt-1400to1800_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1904_v71");
@@ -106,7 +106,15 @@ void initHiggsSamples69(const bool useSkim=true,const TString samplelist="") {
     addToSamplesAll("W4JetsToLNu_TuneZ2Star_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1879_v71");
     addToSamplesAll("ZJetsToNuNu_100_HT_200_TuneZ2Star_8TeV_madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1887_v71");
     addToSamplesAll("ZJetsToNuNu_200_HT_400_TuneZ2Star_8TeV_madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1888_v71");
+    addToSamplesAll("ZJetsToNuNu_200_HT_400_TuneZ2Star_8TeV_madgraph_ext_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1889_v71");
     addToSamplesAll("ZJetsToNuNu_400_HT_inf_TuneZ2Star_8TeV_madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1890_v71");
+    addToSamplesAll("ZJetsToNuNu_400_HT_inf_TuneZ2Star_8TeV_madgraph_ext_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1891_v71");
+    addToSamplesAll("T_s-channel_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1860_v71");
+    addToSamplesAll("T_t-channel_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1861_v71");
+    addToSamplesAll("T_tW-channel-DR_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1862_v71");
+    addToSamplesAll("Tbar_s-channel_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1864_v71");
+    addToSamplesAll("Tbar_t-channel_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1865_v71");
+    addToSamplesAll("Tbar_tW-channel-DR_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1866_v71");
   }
 
   //official MG signal
@@ -190,6 +198,8 @@ void initHiggsSamples69(const bool useSkim=true,const TString samplelist="") {
   clearSamples();
   resetChains(); //important in the case that we call initHiggsSamples() more than once
 
+  std::cout << "clear samples reset chains chainsamples" << std::endl;
+
   if (samplelist=="" || samplelist.Contains("qcd")) {
     if (useSkim) {
       TString baseqcdname = TString("QCD_Pt-120to170_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v3_AODSIM_UCSB1897ra2b_v71s");
@@ -251,13 +261,24 @@ void initHiggsSamples69(const bool useSkim=true,const TString samplelist="") {
 
   //no unskimmed version right now
   if (samplelist==""||samplelist.Contains("singlet")) {
-    TString  stname="T_s-channel_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1860ra2b_v71s";
-    addSample(stname,kBlue,"Single Top");
-    chainSamples(stname,"T_t-channel_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1861ra2b_v71s");
-    chainSamples(stname,"T_tW-channel-DR_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1862ra2b_v71s");
-    chainSamples(stname,"Tbar_s-channel_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1864ra2b_v71s");
-    chainSamples(stname,"Tbar_t-channel_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1865ra2b_v71s");
-    chainSamples(stname,"Tbar_tW-channel-DR_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1866ra2b_v71s");
+    if (useSkim) {
+      TString  stname="T_s-channel_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1860ra2b_v71s";
+      addSample(stname,kBlue,"Single Top");
+      chainSamples(stname,"T_t-channel_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1861ra2b_v71s");
+      chainSamples(stname,"T_tW-channel-DR_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1862ra2b_v71s");
+      chainSamples(stname,"Tbar_s-channel_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1864ra2b_v71s");
+      chainSamples(stname,"Tbar_t-channel_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1865ra2b_v71s");
+      chainSamples(stname,"Tbar_tW-channel-DR_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1866ra2b_v71s");
+    }
+    else {
+      TString  stname="T_s-channel_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1860_v71";
+      addSample(stname,kBlue,"Single Top");
+      chainSamples(stname,"T_t-channel_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1861_v71");
+      chainSamples(stname,"T_tW-channel-DR_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1862_v71");
+      chainSamples(stname,"Tbar_s-channel_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1864_v71");
+      chainSamples(stname,"Tbar_t-channel_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1865_v71");
+      chainSamples(stname,"Tbar_tW-channel-DR_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1866_v71");
+    }
   }
 
 
@@ -284,12 +305,22 @@ void initHiggsSamples69(const bool useSkim=true,const TString samplelist="") {
 
   //unskimmed is partial
   if (samplelist==""||samplelist.Contains("znunu")) {
-    TString basezname = TString("ZJetsToNuNu_100_HT_200_TuneZ2Star_8TeV_madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1887ra2b_v71s");
-    addSample(basezname,kOrange,"Z #rightarrow #nu#nu");
-    chainSamples(basezname,TString("ZJetsToNuNu_200_HT_400_TuneZ2Star_8TeV_madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1888ra2b_v71s"));
-    chainSamples(basezname,TString("ZJetsToNuNu_200_HT_400_TuneZ2Star_8TeV_madgraph_ext_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1889ra2b_v71s"));
-    chainSamples(basezname,TString("ZJetsToNuNu_400_HT_inf_TuneZ2Star_8TeV_madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1890ra2b_v71s"));
-    chainSamples(basezname,TString("ZJetsToNuNu_400_HT_inf_TuneZ2Star_8TeV_madgraph_ext_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1891ra2b_v71s"));
+    if (useSkim) {
+      TString basezname = TString("ZJetsToNuNu_100_HT_200_TuneZ2Star_8TeV_madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1887ra2b_v71s");
+      addSample(basezname,kOrange,"Z #rightarrow #nu#nu");
+      chainSamples(basezname,TString("ZJetsToNuNu_200_HT_400_TuneZ2Star_8TeV_madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1888ra2b_v71s"));
+      chainSamples(basezname,TString("ZJetsToNuNu_200_HT_400_TuneZ2Star_8TeV_madgraph_ext_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1889ra2b_v71s"));
+      chainSamples(basezname,TString("ZJetsToNuNu_400_HT_inf_TuneZ2Star_8TeV_madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1890ra2b_v71s"));
+      chainSamples(basezname,TString("ZJetsToNuNu_400_HT_inf_TuneZ2Star_8TeV_madgraph_ext_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1891ra2b_v71s"));
+    }
+    else {
+      TString basezname = TString("ZJetsToNuNu_100_HT_200_TuneZ2Star_8TeV_madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1887_v71");
+      addSample(basezname,kOrange,"Z #rightarrow #nu#nu");
+      chainSamples(basezname,TString("ZJetsToNuNu_200_HT_400_TuneZ2Star_8TeV_madgraph_ext_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1889_v71"));
+      chainSamples(basezname,TString("ZJetsToNuNu_200_HT_400_TuneZ2Star_8TeV_madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1888_v71"));
+      chainSamples(basezname,TString("ZJetsToNuNu_400_HT_inf_TuneZ2Star_8TeV_madgraph_ext_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1891_v71"));
+      chainSamples(basezname,TString("ZJetsToNuNu_400_HT_inf_TuneZ2Star_8TeV_madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1890_v71"));
+    }
   }
 
 
@@ -396,7 +427,6 @@ if (samplelist.Contains("hhmg200"))     addSample("HiggsinoNLSP_chargino130_to_5
   overrideSMSlabels_=true; //don't use the auto-labels for SMS
 
   setDatasetToDraw("MET"); //when plotting data, use the MET PD
-
 }
 
 void compareWbcMassShape() {
@@ -1123,7 +1153,7 @@ void higgs_ttbar_sculpt() {
 void higgs_dataMC_control_QCD_noskim(TString options="") {
   //plots that are looser than the skim
 
-  initHiggsSamples69(false,"ttbar qcd wjets"); //must remove znunu for now
+  initHiggsSamples69(false,"ttbar qcd wjets znunu singlet"); //must remove znunu for now
 
   //use top pT weights
   setSampleWeightFactor("TTJets_FullLeptMGDecays_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7C-v2_AODSIM_UCSB1883_v71","topPtWeight");
@@ -1173,7 +1203,8 @@ void higgs_dataMC_control_QCD_noskim(TString options="") {
   TCut btag3="CSVbest3>0.679";
   TCut btag4="CSVbest4>0.244";
 
-  TCut mdp = "minDeltaPhi20>0.5 || (minDeltaPhi20>0.3&&METsig>50)";
+  //TCut mdp = "minDeltaPhi20>0.5 || (minDeltaPhi20>0.3&&METsig>50)";
+  TCut mdp = "minDeltaPhi20_eta5_noIdAll_nobeta>0.5 || (minDeltaPhi20_eta5_noIdAll_nobeta>0.3&&METsig>50)";
 
   TCut higgsSR_av = "(0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)>100)&&(0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)<140)";
   TCut higgsSR_d = "abs(higgsMbb1MassDiff-higgsMbb2MassDiff)<20";
@@ -1210,6 +1241,7 @@ void higgs_dataMC_control_QCD_noskim(TString options="") {
   setLogY(true);
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_lt3bLDP_trigMET150_METsig",0);
   resetVerticalLine();
+
 
   nbins=40; low=0; high=700;
   setLogY(false);
@@ -2411,7 +2443,7 @@ void higgs_dataMC_control_SL_JERtest() {
 void higgs_dataMC_control_SL_noskim() {
 
   //goal do data / MC comparisons for plots that can't be made with the skim
-  initHiggsSamples69(false,"ttbar wjets qcd"); 
+  initHiggsSamples69(false,"ttbar wjets qcd znunu singlet"); 
 
   //use top pT weights
   setSampleWeightFactor("TTJets_FullLeptMGDecays_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7C-v2_AODSIM_UCSB1883_v71","topPtWeight");
@@ -2445,7 +2477,8 @@ void higgs_dataMC_control_SL_noskim() {
   TCut njets4="njets20==4"; //switch back to 20 GeV jets
   TCut njets5="njets20==5";
   TCut jet2="jetpt2>50";
-  TCut mdp = "minDeltaPhi20>0.5 || (minDeltaPhi20>0.3&&METsig>50)";
+  //TCut mdp = "minDeltaPhi20>0.5 || (minDeltaPhi20>0.3&&METsig>50)";
+  TCut mdp = "minDeltaPhi20_eta5_noIdAll_nobeta>0.5 || (minDeltaPhi20_eta5_noIdAll_nobeta>0.3&&METsig>50)";
   TCut btag2="CSVbest2>0.898";
   TCut btag3="CSVbest3>0.679";
   TCut btag4="CSVbest4>0.244";
