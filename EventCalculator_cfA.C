@@ -6381,7 +6381,7 @@ float EventCalculator::getBtagSF(const int flavor,const float pt,const float jet
       else if (variation==kHFup)   SF += SFerr;
     }
     //FASTSIM corrections and errors not implemented at the moment
-
+    //    cout<<" [getBtagSF] variation = "<<int(variation)<<" sf = "<<SF<<endl;
   } //if heavy flavor
   else { //light flavor SFs
     float x = pt;
@@ -9356,9 +9356,10 @@ void EventCalculator::reducedTree(TString outputpath) {
 
       //calculateTagProb_ewk(prob2b,prob3b,prob4b);
       BTagSF_recipe2a(nbtag0_nomSF,nbtag2_nomSF,nbtag3_nomSF,nbtag4_nomSF,kBTagModifier0);
-      BTagSF_recipe2a(nbtag0_SFp1sig,nbtag2_SFp1sig,nbtag3_SFp1sig,nbtag4_SFp1sig,kLFdown);
+      BTagSF_recipe2a(nbtag0_SFp1sig,nbtag2_SFp1sig,nbtag3_SFp1sig,nbtag4_SFp1sig,kHFup);
       BTagSF_recipe2a(nbtag0_SFm1sig,nbtag2_SFm1sig,nbtag3_SFm1sig,nbtag4_SFm1sig,kHFdown);
       BTagSF_recipe2a(nbtag0_rawMC,nbtag2_rawMC,nbtag3_rawMC,nbtag4_rawMC,kBTagModifier0,true);
+
 
       calculateTagProb(prob0_HFplus,probge1_HFplus,prob1_HFplus,probge2_HFplus,prob2_HFplus,probge3_HFplus,prob3_HFplus,probge4_HFplus,1,1,1,kHFup);
       calculateTagProb(prob0_HFminus,probge1_HFminus,prob1_HFminus,probge2_HFminus,prob2_HFminus,probge3_HFminus,prob3_HFminus,probge4_HFminus,1,1,1,kHFdown);

@@ -18,11 +18,6 @@
 
 
 enum IsrMode { kNoIsrWeight, kIsr0, kIsrUp,kIsrDown };
-/* TO DO
-enum TriggerMode { kNoTrigWeight, kTrig0, kTrigUp,kTrigDown };
-*/
-enum BTagMode {kBTag0,kBTagHfUp,kBTagHfDown,kBTagLfUp,kBTagLfDown};
-
 
 // Header file for the classes stored in the TTree if any.
 class SearchRegion { //a DIFFERENT class than my other SearchRegion class...oh well
@@ -31,7 +26,7 @@ public:
   ~SearchRegion();
   //  void Print() const;
 
-  int nb_; //no min or max: use the mutually exclusive bins defined for the hbbhbb analysis
+  int nb_;
   float minMETs_;
   float maxMETs_;
   bool isSB_;
@@ -59,7 +54,7 @@ TString SearchRegion::id() const {
   TString sbstring = isSB_ ? "_SB" : "" ;
 
   TString theid;
-  theid.Form("b%d_MET%.0fto%.0f%s",nb_,minMETs_,maxMETs_,sbstring.Data());
+ theid.Form("b%d_MET%.0fto%.0f%s",nb_,minMETs_,maxMETs_,sbstring.Data());
 
   if (pdfset_ != "none") {
     TString suffix;
@@ -163,6 +158,22 @@ public :
    Float_t         prob2b;
    Float_t         prob3b;
    Float_t         prob4b;
+   Int_t           nbtag0_rawMC;
+   Int_t           nbtag2_rawMC;
+   Int_t           nbtag3_rawMC;
+   Int_t           nbtag4_rawMC;
+   Int_t           nbtag0_nomSF;
+   Int_t           nbtag2_nomSF;
+   Int_t           nbtag3_nomSF;
+   Int_t           nbtag4_nomSF;
+   Int_t           nbtag0_SFp1sig;
+   Int_t           nbtag2_SFp1sig;
+   Int_t           nbtag3_SFp1sig;
+   Int_t           nbtag4_SFp1sig;
+   Int_t           nbtag0_SFm1sig;
+   Int_t           nbtag2_SFm1sig;
+   Int_t           nbtag3_SFm1sig;
+   Int_t           nbtag4_SFm1sig;
    Float_t         prob0;
    Float_t         probge1;
    Float_t         prob1;
@@ -801,6 +812,22 @@ public :
    TBranch        *b_prob2b;   //!
    TBranch        *b_prob3b;   //!
    TBranch        *b_prob4b;   //!
+   TBranch        *b_nbtag0_rawMC;   //!
+   TBranch        *b_nbtag2_rawMC;   //!
+   TBranch        *b_nbtag3_rawMC;   //!
+   TBranch        *b_nbtag4_rawMC;   //!
+   TBranch        *b_nbtag0_nomSF;   //!
+   TBranch        *b_nbtag2_nomSF;   //!
+   TBranch        *b_nbtag3_nomSF;   //!
+   TBranch        *b_nbtag4_nomSF;   //!
+   TBranch        *b_nbtag0_SFp1sig;   //!
+   TBranch        *b_nbtag2_SFp1sig;   //!
+   TBranch        *b_nbtag3_SFp1sig;   //!
+   TBranch        *b_nbtag4_SFp1sig;   //!
+   TBranch        *b_nbtag0_SFm1sig;   //!
+   TBranch        *b_nbtag2_SFm1sig;   //!
+   TBranch        *b_nbtag3_SFm1sig;   //!
+   TBranch        *b_nbtag4_SFm1sig;   //!
    TBranch        *b_prob0;   //!
    TBranch        *b_probge1;   //!
    TBranch        *b_prob1;   //!
@@ -1353,15 +1380,16 @@ public :
    TBranch        *b_trackpt_15;   //!
    TBranch        *b_trackpt_20;   //!
 
-   signalEff_hbbhbb(TString path, TString filestub, bool joinbtagbins, bool usebtagsf, bool dopdfs, bool pusyst, IsrMode isrmode, BTagMode btagmode); //BEGIN END ra2b-jmt
+   signalEff_hbbhbb(TString path, TString filestub, bool joinbtagbins, bool usebtagsf, bool dopdfs, bool pusyst, IsrMode isrmode); //BEGIN END ra2b-jmt
    virtual ~signalEff_hbbhbb();
    virtual Int_t    Cut(Long64_t entry);
    virtual Int_t    GetEntry(Long64_t entry);
    virtual Long64_t LoadTree(Long64_t entry);
    virtual void     Init(TTree *tree);
-   virtual void     Loop();
+   virtual void     Loop(); 
    virtual Bool_t   Notify();
    virtual void     Show(Long64_t entry = -1);
+   void normalizeByColumn( map< pair<int,int>, vector<TH2D*> > * tmatrix);
 
    //BEGIN ra2b-jmt
    TH2D* scanSMSngen_;
@@ -1372,7 +1400,6 @@ public :
    bool dopdfs_;
    bool pusyst_;
    IsrMode theIsrMode_;
-   BTagMode theBTagMode_;
    //END ra2b-jmt
 
 };
@@ -1381,7 +1408,7 @@ public :
 
 #ifdef signalEff_hbbhbb_cxx
 //BEGIN ra2b-jmt mod
-signalEff_hbbhbb::signalEff_hbbhbb(TString path, TString filestub,bool joinbtagbins, bool usebtagsf, bool dopdfs,bool pusyst, IsrMode isrmode, BTagMode btagmode) : fChain(0) 
+signalEff_hbbhbb::signalEff_hbbhbb(TString path, TString filestub,bool joinbtagbins, bool usebtagsf, bool dopdfs,bool pusyst, IsrMode isrmode) : fChain(0) 
 																	    ,scanSMSngen_(0)
 																	    ,filestub_(filestub)
 																	    ,joinbtagbins_(joinbtagbins)
@@ -1389,7 +1416,6 @@ signalEff_hbbhbb::signalEff_hbbhbb(TString path, TString filestub,bool joinbtagb
 																	    ,dopdfs_(dopdfs)
 																	    ,pusyst_(pusyst)
 																		      ,theIsrMode_(isrmode)
-																	    ,theBTagMode_(btagmode)
 				  //END ra2b-jmt mod
 {
  //BEGIN ra2b-jmt
@@ -1486,6 +1512,7 @@ void signalEff_hbbhbb::Init(TTree *tree)
    fCurrent = -1;
    fChain->SetMakeClass(1);
 
+
    fChain->SetBranchAddress("weight", &weight, &b_weight);
    fChain->SetBranchAddress("weight2", &weight2, &b_weight2);
    fChain->SetBranchAddress("weight3", &weight3, &b_weight3);
@@ -1571,6 +1598,22 @@ void signalEff_hbbhbb::Init(TTree *tree)
    fChain->SetBranchAddress("prob2b", &prob2b, &b_prob2b);
    fChain->SetBranchAddress("prob3b", &prob3b, &b_prob3b);
    fChain->SetBranchAddress("prob4b", &prob4b, &b_prob4b);
+   fChain->SetBranchAddress("nbtag0_rawMC", &nbtag0_rawMC, &b_nbtag0_rawMC);
+   fChain->SetBranchAddress("nbtag2_rawMC", &nbtag2_rawMC, &b_nbtag2_rawMC);
+   fChain->SetBranchAddress("nbtag3_rawMC", &nbtag3_rawMC, &b_nbtag3_rawMC);
+   fChain->SetBranchAddress("nbtag4_rawMC", &nbtag4_rawMC, &b_nbtag4_rawMC);
+   fChain->SetBranchAddress("nbtag0_nomSF", &nbtag0_nomSF, &b_nbtag0_nomSF);
+   fChain->SetBranchAddress("nbtag2_nomSF", &nbtag2_nomSF, &b_nbtag2_nomSF);
+   fChain->SetBranchAddress("nbtag3_nomSF", &nbtag3_nomSF, &b_nbtag3_nomSF);
+   fChain->SetBranchAddress("nbtag4_nomSF", &nbtag4_nomSF, &b_nbtag4_nomSF);
+   fChain->SetBranchAddress("nbtag0_SFp1sig", &nbtag0_SFp1sig, &b_nbtag0_SFp1sig);
+   fChain->SetBranchAddress("nbtag2_SFp1sig", &nbtag2_SFp1sig, &b_nbtag2_SFp1sig);
+   fChain->SetBranchAddress("nbtag3_SFp1sig", &nbtag3_SFp1sig, &b_nbtag3_SFp1sig);
+   fChain->SetBranchAddress("nbtag4_SFp1sig", &nbtag4_SFp1sig, &b_nbtag4_SFp1sig);
+   fChain->SetBranchAddress("nbtag0_SFm1sig", &nbtag0_SFm1sig, &b_nbtag0_SFm1sig);
+   fChain->SetBranchAddress("nbtag2_SFm1sig", &nbtag2_SFm1sig, &b_nbtag2_SFm1sig);
+   fChain->SetBranchAddress("nbtag3_SFm1sig", &nbtag3_SFm1sig, &b_nbtag3_SFm1sig);
+   fChain->SetBranchAddress("nbtag4_SFm1sig", &nbtag4_SFm1sig, &b_nbtag4_SFm1sig);
    fChain->SetBranchAddress("prob0", &prob0, &b_prob0);
    fChain->SetBranchAddress("probge1", &probge1, &b_probge1);
    fChain->SetBranchAddress("prob1", &prob1, &b_prob1);

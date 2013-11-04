@@ -9,10 +9,11 @@
 #include "TText.h"
 #include "TMath.h"
 
-#include "TSystem.h"
+#include "TGraph.h"
 
 #include "TCanvas.h"
 #include "TLegend.h"
+#include "TLatex.h"
 
 #include "MiscUtil.cxx"
 
@@ -57,13 +58,12 @@ signal strength and absolute cross section for the units of the limit variable.
 
 
 void writetxt(TString which, const TString sample, const TString prefix="eventcounts.",const bool useISR=false,bool rawcounts=true) {
-  gSystem->Load("CrossSectionTable_cxx.so");
   const double integratedLumi =19399;
 
   CrossSectionTable * xs_higgsino = 0;
 
 
-  assert( which=="counts" || which=="JES"||which=="MET" ||which=="JER" ||which=="ISR");
+  assert( which=="counts" || which=="JES"||which=="MET" ||which=="JER" ||which=="ISR" ||which=="PU");
 
   if (which=="ISR") assert(useISR);
 
@@ -71,7 +71,7 @@ void writetxt(TString which, const TString sample, const TString prefix="eventco
 
   //this should be the 'unvaried' (eg JES0) stub.
   //this differentiation between JER0 and JERbias here is a stopgap measure
-  TString stub0 = "JES0_JER0_PFMETTypeI_METunc0_PUunc0_hpt20." ;
+  TString stub0 = "JES0_JERbias_PFMETTypeI_METunc0_PUunc0_hpt20." ; //switch to using JERbias as nominal
   //for JER, need to compare variations with JERbias
   if (which=="JER") stub0= "JES0_JERbias_PFMETTypeI_METunc0_PUunc0_hpt20.";
 
@@ -93,7 +93,7 @@ void writetxt(TString which, const TString sample, const TString prefix="eventco
     stub_down.ReplaceAll("JERbias","JERdown");
   }
   //for ISR, the 'stub's do not change; the 'prefix' needs to be tweaked (see below)
-
+  //same for PU
 
   TString outfilename = (which=="counts") ? "sigcounts." : "sigsystematics.";
   outfilename += stub0.Tokenize(".")->At(1)->GetName(); //fyi -- this leaks memory (no big deal here)
@@ -103,11 +103,11 @@ void writetxt(TString which, const TString sample, const TString prefix="eventco
 //   }
 
   if (which=="counts")   outfilename+=".txt";
-  else if (which=="JES") outfilename += ".JES.txt";
-  else if (which=="JER") outfilename += ".JER.txt";
-  else if (which=="MET") outfilename += ".MET.txt";
-  else if (which=="ISR") outfilename += ".ISR.txt";
-
+  else {
+    outfilename += ".";
+    outfilename += which;
+    outfilename += ".txt";
+  }
 
   ofstream txtfile( outfilename.Data());
 
@@ -121,11 +121,17 @@ void writetxt(TString which, const TString sample, const TString prefix="eventco
     fnu+="IsrUp.";
     fnd+="IsrDown.";
   }
+  else if (which=="PU" && useISR) { //special case. only have nominal and +1 sigma
+    fn0+="Isr0.";
+    fnu+="pusyst.Isr0.";
+    fnd+="Isr0."; //we won't use this one
+  }
   else if (useISR) { //we're using isr but we're not doing the ISR variation systematic
     fn0+="Isr0.";
     fnu+="Isr0.";
     fnd+="Isr0.";
-  } //else we're not doing isr at all. do nothing
+  }
+  //else we're not doing isr at all. do nothing
   fn0 += stub0;
   fnu += stub_up;
   fnd += stub_down;
@@ -142,7 +148,7 @@ void writetxt(TString which, const TString sample, const TString prefix="eventco
   TFile* fd=0;
   if (which!="counts") {
     fu=new TFile(fnu);
-    fd=new TFile(fnd);
+    if (which!="PU")    fd=new TFile(fnd);
   }
 
   TH2D* scanSMSngen = (TH2D*) f0->Get("scanSMSngen");
@@ -164,7 +170,7 @@ void writetxt(TString which, const TString sample, const TString prefix="eventco
     vh0.push_back(h0);
     if (fu!=0) {
       TH2D* hu = (TH2D*) fu->Get(histname);
-      TH2D* hd = (TH2D*) fd->Get(histname);
+      TH2D* hd = (which=="PU") ? 0 : (TH2D*) fd->Get(histname);
       vhu.push_back(hu);
       vhd.push_back(hd);
     }
@@ -233,12 +239,15 @@ void writetxt(TString which, const TString sample, const TString prefix="eventco
 	if (fu!=0) {
 	  //signed symmetrization of the up and down errors
 	  const double cutoff=10; //enforce some sanity check to get rid of NaNs and crazy values
-	  bool notok= vhu[ih]->GetBinContent(ix,iy)<cutoff || vhd[ih]->GetBinContent(ix,iy)<cutoff || vh0[ih]->GetBinContent(ix,iy)<cutoff;
+	  bool notok= vhu[ih]->GetBinContent(ix,iy)<cutoff || vh0[ih]->GetBinContent(ix,iy)<cutoff;
+	  if (which!="PU" && vhd[ih]->GetBinContent(ix,iy)<cutoff ) notok=true;
 	  double delta = 0;
 	  if (!notok) {
 	    //for ISR, we need to compute the DeltaEff, not the DeltaCounts
 	    if (which=="ISR") delta = 0.5*( (vhu[ih]->GetBinContent(ix,iy)/eventsTotalIsrU->GetBinContent(ix,iy)) - (vhd[ih]->GetBinContent(ix,iy)/ eventsTotalIsrD->GetBinContent(ix,iy))) 
 	      / ( vh0[ih]->GetBinContent(ix,iy)/eventsTotalIsr->GetBinContent(ix,iy) );
+	    //for PU, we've only got one variation
+	    else if (which=="PU") delta = (vhu[ih]->GetBinContent(ix,iy) -vh0[ih]->GetBinContent(ix,iy))/vh0[ih]->GetBinContent(ix,iy);
 	    else  delta = 0.5*(vhu[ih]->GetBinContent(ix,iy) - vhd[ih]->GetBinContent(ix,iy)) / vh0[ih]->GetBinContent(ix,iy);
 	  }
 	  
@@ -249,6 +258,8 @@ void writetxt(TString which, const TString sample, const TString prefix="eventco
 	  txtfile<<delta<<" ";
 	  //if we're merging the 3 b bins, then repeat the number twice more
 	  if (prefix.Contains("mergebbins")) txtfile<<delta<<" "<<delta<<" ";
+	  //for hh search, repeat once more since there are 4 b-bins
+	  if (prefix.Contains("mergebbins") && sample.Contains("TChi")) txtfile<<delta<<" ";
 
 	  double denomU=1,denomD=1;
 	  if (which=="ISR") {
@@ -256,14 +267,16 @@ void writetxt(TString which, const TString sample, const TString prefix="eventco
 	    denomD = eventsTotalIsrD->GetBinContent(ix,iy);
 	  }
 	  hjesU->SetBinContent(ih+1,vhu[ih]->GetBinContent(ix,iy)/denomU);
-	  hjesD->SetBinContent(ih+1,vhd[ih]->GetBinContent(ix,iy)/denomD);
 	  hjesU->SetBinError(ih+1,vhu[ih]->GetBinError(ix,iy)/denomU); 
-	  hjesD->SetBinError(ih+1,vhd[ih]->GetBinError(ix,iy)/denomD);
+	  if (which!="PU") {
+	    hjesD->SetBinContent(ih+1,vhd[ih]->GetBinContent(ix,iy)/denomD);
+	    hjesD->SetBinError(ih+1,vhd[ih]->GetBinError(ix,iy)/denomD);
+	  }
 	}
 	else { //if counts mode
 	  if (rawcounts)  txtfile<< vh0[ih]->GetBinContent(ix,iy)<<" ";
 	  else { // sigma x Lumi x Ncounted / Ngen = sigma x Lumi x efficiency
-	    txtfile<< xs*hbbbb *integratedLumi *  vh0[ih]->GetBinContent(ix,iy) / ngen;
+	    txtfile<< xs*hbbbb *integratedLumi *  vh0[ih]->GetBinContent(ix,iy) / ngen<<" ";
 	  }
 	}
 	double denom0= (which=="ISR") ? eventsTotalIsr->GetBinContent(ix,iy) : 1;
@@ -500,5 +513,97 @@ void compEff(int mgl,int mlsp,TString sample1,TString sample2) {
   delete theleg;
   delete text;
   delete effcomp;
+
+}
+
+void drawHHeff() {
+
+  gROOT->SetStyle("CMS");
+
+  TFile f("eventcounts.Isr0.JES0_JERbias_PFMETTypeI_METunc0_PUunc0_hpt20.TChiHH.root");
+  TH2D* hgen = (TH2D*) f.Get("eventstotalisr");
+
+  std::vector<TH2D*> hevents;
+  hevents.push_back ( (TH2D*) f.Get("events_b4_MET30to50"));
+  hevents.push_back ( (TH2D*) f.Get("events_b4_MET50to100"));
+  hevents.push_back ( (TH2D*) f.Get("events_b4_MET100to150"));
+  hevents.push_back ( (TH2D*) f.Get("events_b4_MET150to9999"));
+  std::vector<TGraph*> effgraphs;
+
+  int markerstyles[4]={3,4,21,25};
+  int linecolors[4]={kGreen+3,kBlue,kMagenta+1,kRed+1};
+
+  float trigEffFactors[4]={0.804,0.897,0.944,0.944};
+
+  TCanvas * ceff = new TCanvas("ceff","hh sig eff",600,600);
+
+  TLegend * theleg = new TLegend(0.2,0.5,0.5,0.9);
+  theleg->SetBorderSize(0);
+  theleg->SetLineStyle(0);
+  theleg->SetTextFont(42);
+  theleg->SetFillStyle(0);
+
+
+  TLatex*  text1 = new TLatex(5,23.08044,"CMS Simulation");
+  text1->SetNDC();
+  text1->SetTextAlign(13);
+  text1->SetX(0.2);
+  text1->SetY(0.97);
+  text1->SetTextFont(42);
+  text1->SetTextSizePixels(24);
+
+  TLatex*  text2 = new TLatex(5,23.08044,"#sqrt{s} = 8 TeV");
+  text2->SetNDC();
+  text2->SetTextAlign(13);
+  text2->SetX(0.7);
+  text2->SetY(0.97);
+  text2->SetTextFont(42);
+  text2->SetTextSizePixels(24);
+
+  double max=0;
+
+  const int ibiny=1;
+  for ( unsigned int ih=0; ih<hevents.size();ih++) {
+
+    TGraph * geff = new TGraph();  
+    int nbinsx=  hevents[ih]->GetNbinsX();
+    for (int ibinx=1; ibinx<=nbinsx; ibinx++) {
+      double nevents =   hevents[ih]->GetBinContent(ibinx,ibiny);
+      if (nevents==0) continue;
+      double ngen = hgen->GetBinContent(ibinx,ibiny);
+      double eff = 100*nevents/ngen;
+      double massval = hgen->GetXaxis()->GetBinLowEdge(ibinx);
+
+      eff *= trigEffFactors[ih]; //apply trigger efficiency correction
+
+      geff->SetPoint(geff->GetN(),massval,eff);
+      if (eff>max) max = eff;
+    }
+    effgraphs.push_back(geff);
+
+    if (ih==0)    geff->Draw("PAL");
+    else geff->Draw("PL");
+    geff->SetMarkerColor(linecolors[ih]);
+    geff->SetLineColor(linecolors[ih]);
+    geff->SetMarkerStyle(markerstyles[ih]);
+    geff->SetFillColor(0);
+    geff->SetLineWidth(2);
+    geff->SetMaximum(max*1.1);
+    if (ih!=0)  effgraphs.at(0)->SetMaximum(1.1*max);
+    geff->SetMinimum(0);
+    geff->GetHistogram()->SetYTitle("Efficiency (%)");
+    geff->GetHistogram()->SetXTitle("Higgsino mass (GeV)");
+    TString legentry;
+    legentry.Form("#it{S} bin %d",ih+1);
+    theleg->AddEntry(geff,legentry);
+  }
+  theleg->Draw();
+
+  ceff->cd()->SetTopMargin(0.08); //test
+
+  text1->Draw();
+  text2->Draw();
+
+  ceff->SaveAs("efficiency_4bSIG.pdf");
 
 }

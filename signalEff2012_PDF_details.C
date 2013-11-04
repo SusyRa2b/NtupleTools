@@ -21,7 +21,7 @@ void signalEff2012_PDF_details(const TString what="CTEQMSTW",const TString sampl
   }
 
   TString stub1="eventcounts2x2.mergebbins";
-  if (sample.Contains("pMSSM") ||sample.Contains("T1ttcc") ||sample.Contains("14TeV")) stub1="eventcounts.mergebbins";
+  if (sample.Contains("pMSSM") ||sample.Contains("T1ttcc") ||sample.Contains("14TeV")||sample.Contains("TChi")) stub1="eventcounts.mergebbins";
 
   TString stub2=stub1;
   stub2+=".withpdfs";
@@ -31,8 +31,10 @@ void signalEff2012_PDF_details(const TString what="CTEQMSTW",const TString sampl
     stub2+=".Isr0";
   }
 
-  TString f0file = stub1+njetsstring+"CSVM_PF2PATjets_JES0_JER0_PFMETTypeI_METunc0_PUunc0_BTagEff05_HLTEff0."+sample+".root";
-  TString fpdffile = stub2+njetsstring+"CSVM_PF2PATjets_JES0_JER0_PFMETTypeI_METunc0_PUunc0_BTagEff05_HLTEff0."+sample+".root";
+  //  TString nominalstub="CSVM_PF2PATjets_JES0_JER0_PFMETTypeI_METunc0_PUunc0_BTagEff05_HLTEff0."; //old
+  TString nominalstub="JES0_JERbias_PFMETTypeI_METunc0_PUunc0_hpt20."; //new, and with JERbias
+  TString f0file = stub1+njetsstring+nominalstub+sample+".root";
+  TString fpdffile = stub2+njetsstring+nominalstub+sample+".root";
 
   TFile f0(f0file);
   TFile fpdf(fpdffile);

@@ -20,14 +20,25 @@ inputdir='.'
 mkdir -p $finaldir
 
 #this is for the samples with ISR (madgraph)
-stub[0]='eventcounts.Isr0.JES0_JER0_PFMETTypeI_METunc0_PUunc0_hpt20'
-stub[1]='eventcounts.mergebbins.Isr0.JES0_JER0_PFMETTypeI_METunc0_PUunc0_hpt20'
-stub[2]='eventcounts.mergebbins.IsrDown.JES0_JER0_PFMETTypeI_METunc0_PUunc0_hpt20'
-stub[3]='eventcounts.mergebbins.IsrUp.JES0_JER0_PFMETTypeI_METunc0_PUunc0_hpt20'
-stub[4]='eventcounts.mergebbins.withpdfs.Isr0.JES0_JER0_PFMETTypeI_METunc0_PUunc0_hpt20'
-stub[5]='eventcounts.pusyst.Isr0.JES0_JER0_PFMETTypeI_METunc0_PUunc0_hpt20'
-stub[6]='eventcounts.mergebbins.Isr0.JESup_JER0_PFMETTypeI_METunc0_PUunc0_hpt20'
-stub[7]='eventcounts.mergebbins.Isr0.JESdown_JER0_PFMETTypeI_METunc0_PUunc0_hpt20'
+#stub[0]='eventcounts.Isr0.JES0_JER0_PFMETTypeI_METunc0_PUunc0_hpt20'
+#stub[1]='eventcounts.mergebbins.Isr0.JES0_JER0_PFMETTypeI_METunc0_PUunc0_hpt20'
+#stub[2]='eventcounts.mergebbins.IsrDown.JES0_JER0_PFMETTypeI_METunc0_PUunc0_hpt20'
+#stub[3]='eventcounts.mergebbins.IsrUp.JES0_JER0_PFMETTypeI_METunc0_PUunc0_hpt20'
+#stub[4]='eventcounts.mergebbins.withpdfs.Isr0.JES0_JER0_PFMETTypeI_METunc0_PUunc0_hpt20'
+#stub[5]='eventcounts.pusyst.Isr0.JES0_JER0_PFMETTypeI_METunc0_PUunc0_hpt20'
+#stub[6]='eventcounts.mergebbins.Isr0.JESup_JER0_PFMETTypeI_METunc0_PUunc0_hpt20'
+#stub[7]='eventcounts.mergebbins.Isr0.JESdown_JER0_PFMETTypeI_METunc0_PUunc0_hpt20'
+
+stub[0]='eventcounts.Isr0.JES0_JERbias_PFMETTypeI_METunc0_PUunc0_hpt20'
+stub[1]='eventcounts.mergebbins.Isr0.JES0_JERbias_PFMETTypeI_METunc0_PUunc0_hpt20'
+stub[2]='eventcounts.mergebbins.IsrDown.JES0_JERbias_PFMETTypeI_METunc0_PUunc0_hpt20'
+stub[3]='eventcounts.mergebbins.IsrUp.JES0_JERbias_PFMETTypeI_METunc0_PUunc0_hpt20'
+stub[4]='eventcounts.mergebbins.withpdfs.Isr0.JES0_JERbias_PFMETTypeI_METunc0_PUunc0_hpt20'
+stub[5]='eventcounts.pusyst.Isr0.JES0_JERbias_PFMETTypeI_METunc0_PUunc0_hpt20'
+stub[6]='eventcounts.mergebbins.Isr0.JESup_JERbias_PFMETTypeI_METunc0_PUunc0_hpt20'
+stub[7]='eventcounts.mergebbins.Isr0.JESdown_JERbias_PFMETTypeI_METunc0_PUunc0_hpt20'
+stub[8]='eventcounts.mergebbins.Isr0.JES0_JERup_PFMETTypeI_METunc0_PUunc0_hpt20'
+stub[9]='eventcounts.mergebbins.Isr0.JES0_JERdown_PFMETTypeI_METunc0_PUunc0_hpt20'
 
 for t in "${stub[@]}"
 do
