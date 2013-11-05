@@ -3753,7 +3753,7 @@ void higgs_whyLeptonLost() {
 }
 
 
-void higgs_Nminus1(bool plotdata=false) {
+void higgs_Nminus1(bool plotdata=false,TString options="4b") {
   initHiggsSamples69(true,"bjets wjets ttv vv singlet ttbar znunu hhmg200 hhmg400");
 
   useTrigEff_=plotdata; //use trig eff correction only if we're plotting data
@@ -3797,89 +3797,97 @@ void higgs_Nminus1(bool plotdata=false) {
 
   TCut metsig = "METsig>30";
 
+  TCut btagcut = btag2;
+  if ( options.Contains("3b")) btagcut = btag2&&btag3&&!btag4;
+  else if (options.Contains("4b")) btagcut = btag2&&btag3&&btag4;
+
   setStackMode(true,false,false); //stack, norm, labels
 
   stackSignal_=false; //let's unstack signal
 
+  TString nm1label="higgs_Nm1";
+  if (options.Contains("3b")) nm1label+= "-3b";
+  nm1label+="_";
+
   //full selection 
-  selection_=baseline&&triggers && zl&& tauveto && isotk1 && njets&&jet2 && btag2 && btag3 && btag4 &&mdp && higgsmass && higgsdiff && drmax && metsig;
+  selection_=baseline&&triggers && zl&& tauveto && isotk1 && njets&&jet2 &&btagcut &&mdp && higgsmass && higgsdiff && drmax && metsig;
   var="bjetpt1"; xtitle="lead b jet pT";
   nbins=20; low= 0; high=400;
   setLogY(false);
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_Nm1_allcuts_bjetpt1",0,"GeV");
+  drawPlots(var,nbins,low,high,xtitle,"Events", nm1label+"allcuts_bjetpt1",0,"GeV");
 
   //still full selection
   var="jetpt1"; xtitle="lead jet pT";
   nbins=30; low= 0; high=300; //need 10 GeV Bins
   setLogY(false);
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_Nm1_allcuts_jetpt1",0,"GeV");
+  drawPlots(var,nbins,low,high,xtitle,"Events", nm1label+"allcuts_jetpt1",0,"GeV");
 
   var="jetpt2"; xtitle="2nd jet pT";
   nbins=30; low= 0; high=200; //need 10 GeV Bins
   setLogY(false);
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_Nm1_allcuts_jetpt2",0,"GeV");
+  drawPlots(var,nbins,low,high,xtitle,"Events", nm1label+"allcuts_jetpt2",0,"GeV");
 
   var="jetpt3"; xtitle="3rd jet pT";
   nbins=20; low= 0; high=200; //need 10 GeV Bins
   setLogY(false);
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_Nm1_allcuts_jetpt3",0,"GeV");
+  drawPlots(var,nbins,low,high,xtitle,"Events", nm1label+"allcuts_jetpt3",0,"GeV");
 
   var="jetpt4"; xtitle="4th jet pT";
   nbins=20; low= 0; high=200; //need 10 GeV Bins
   setLogY(false);
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_Nm1_allcuts_jetpt4",0,"GeV");
+  drawPlots(var,nbins,low,high,xtitle,"Events", nm1label+"allcuts_jetpt4",0,"GeV");
 
   //not too interesting
   var="higgsWCandMass"; xtitle="W Candidate mass (GeV)";
   nbins=40; low= 0; high=200;
   setLogY(false);
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_Nm1_allcuts_WcandMass",0,"GeV");
+  drawPlots(var,nbins,low,high,xtitle,"Events", nm1label+"allcuts_WcandMass",0,"GeV");
 
 
-  selection_=baseline&&triggers && zl&& tauveto && isotk1 && njets&&jet2 && btag2 && btag3 && btag4&&mdp && higgsmass && higgsdiff && drmax && metsig;
+  selection_=baseline&&triggers && zl&& tauveto && isotk1 && njets&&jet2 &&btagcut&&mdp && higgsmass && higgsdiff && drmax && metsig;
   var="njets20_5p0-njets20"; xtitle="number of forward jets (pT>20)";
   nbins=4; low= 0; high=4;
   setLogY(false);
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_Nm1_allcuts_njets20forward",0);
+  drawPlots(var,nbins,low,high,xtitle,"Events", nm1label+"allcuts_njets20forward",0);
 
-  selection_=baseline&&triggers && zl&& tauveto && isotk1 && njets&&jet2 && btag2 && btag3 && btag4&&mdp && higgsmass && higgsdiff && drmax && metsig;
+  selection_=baseline&&triggers && zl&& tauveto && isotk1 && njets&&jet2 &&btagcut&&mdp && higgsmass && higgsdiff && drmax && metsig;
   var="deltaPhi_hh"; xtitle="#Delta #phi (h,h)";
   nbins=10; low= 0; high=4;
   setLogY(false);
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_Nm1_allcuts_hhDeltaPhi",0);
+  drawPlots(var,nbins,low,high,xtitle,"Events", nm1label+"allcuts_hhDeltaPhi",0);
 
   //full selection except mdp
-  selection_=baseline&&triggers && zl&& tauveto && isotk1 && njets&&jet2 && btag2 && btag3 && btag4 && higgsmass && higgsdiff && drmax && metsig;
+  selection_=baseline&&triggers && zl&& tauveto && isotk1 && njets&&jet2 &&btagcut && higgsmass && higgsdiff && drmax && metsig;
 /* not very interesting anymore
   var="deltaPhi1"; xtitle="#Delta #phi (jet1,MET)";
   nbins=10; low= 0; high=4;
   setLogY(false);
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_Nm1_allcuts_deltaPhi1",0);
+  drawPlots(var,nbins,low,high,xtitle,"Events", nm1label+"allcuts_deltaPhi1",0);
   var="deltaPhi2"; xtitle="#Delta #phi (jet2,MET)";
   nbins=10; low= 0; high=4;
   setLogY(false);
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_Nm1_allcuts_deltaPhi2",0);
+  drawPlots(var,nbins,low,high,xtitle,"Events", nm1label+"allcuts_deltaPhi2",0);
   var="deltaPhi3"; xtitle="#Delta #phi (jet3,MET)";
   nbins=10; low= 0; high=4;
   setLogY(false);
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_Nm1_allcuts_deltaPhi3",0);
+  drawPlots(var,nbins,low,high,xtitle,"Events", nm1label+"allcuts_deltaPhi3",0);
 */
 
 //these could be interesting -- shows how signal changes with the different versions
   var="minDeltaPhi20"; xtitle="min #Delta #phi (jet1..3,MET)";
   nbins=10; low= 0; high=3;
   setLogY(false);
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_Nm1_allcuts_deltaPhiMin",0);
+  drawPlots(var,nbins,low,high,xtitle,"Events", nm1label+"allcuts_deltaPhiMin",0);
 
   var="minDeltaPhi20_eta5_noIdAll"; xtitle="min #Delta #phi (all jets, MET)";
   nbins=10; low= 0; high=3;
   setLogY(false);
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_Nm1_allcuts_deltaPhiMinAll",0);
+  drawPlots(var,nbins,low,high,xtitle,"Events", nm1label+"allcuts_deltaPhiMinAll",0);
 
   var="minDeltaPhi20_eta5_noIdAll_nobeta"; xtitle="min #Delta #phi (all jets, MET)";
   nbins=10; low= 0; high=3;
   setLogY(false);
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_Nm1_allcuts_deltaPhiMinUber",0);
+  drawPlots(var,nbins,low,high,xtitle,"Events", nm1label+"allcuts_deltaPhiMinUber",0);
 
 /* no longer interesting
   //3b sample; veto on 4th b
@@ -3911,41 +3919,41 @@ void higgs_Nminus1(bool plotdata=false) {
 */
 
   //n leptons
-  selection_=baseline&&triggers &&  tauveto && isotk1 && njets&&jet2 && btag2 && btag3 && btag4&&mdp && higgsmass && higgsdiff && drmax && metsig;
+  selection_=baseline&&triggers &&  tauveto && isotk1 && njets&&jet2 &&btagcut &&mdp && higgsmass && higgsdiff && drmax && metsig;
   var="nMuons+nElectrons"; xtitle="e + #mu";
   nbins=4; low= 0; high=4;
   setLogY(false);
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_Nm1_ePlusMu",0);
+  drawPlots(var,nbins,low,high,xtitle,"Events", nm1label+"ePlusMu",0);
 
   //POG taus
-  selection_=baseline&&triggers && zl&&  isotk1 && njets&&jet2 && btag2 && btag3 && btag4&&mdp && higgsmass && higgsdiff && drmax && metsig;
+  selection_=baseline&&triggers && zl&&  isotk1 && njets&&jet2 && btagcut &&mdp && higgsmass && higgsdiff && drmax && metsig;
   var="nTausLoose"; xtitle="Loose taus";
   nbins=3; low= 0; high=3;
   setLogY(false);
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_Nm1_looseTaus",0);
+  drawPlots(var,nbins,low,high,xtitle,"Events", nm1label+"looseTaus",0);
 
   //iso tracks
-  selection_=baseline&&triggers && zl&& tauveto && njets&&jet2 && btag2 && btag3 && btag4&&mdp && higgsmass && higgsdiff && drmax && metsig;
+  selection_=baseline&&triggers && zl&& tauveto && njets&&jet2 && btagcut &&mdp && higgsmass && higgsdiff && drmax && metsig;
   var="nIsoPFcands10_010"; xtitle="10 GeV iso tracks (PF)";
   nbins=4; low= 0; high=4;
   setLogY(false);
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_Nm1_isoPFtk10",0);
+  drawPlots(var,nbins,low,high,xtitle,"Events", nm1label+"isoPFtk10",0);
 
   //jet multiplicity
-  selection_=baseline&&triggers && zl&& tauveto && isotk1&&jet2 && btag2 && btag3 && btag4&&mdp && higgsmass && higgsdiff && drmax  && metsig;
+  selection_=baseline&&triggers && zl&& tauveto && isotk1&&jet2 && btagcut &&mdp && higgsmass && higgsdiff && drmax  && metsig;
   var="njets20"; xtitle="jet multiplicity (20 GeV)";
   nbins=9; low= 0; high=9;
   setLogY(false);
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_Nm1_njets20",0);
+  drawPlots(var,nbins,low,high,xtitle,"Events", nm1label+"njets20",0);
 
-  //3rd b tag
+  //3rd b tag -- override btagcut
   selection_=baseline&&triggers && zl&& tauveto && isotk1 && njets&&jet2 && btag2&&mdp  && higgsmass && higgsdiff && drmax && metsig;
   var="CSVbest3"; xtitle="3rd CSV value";
   nbins=20; low= 0; high=1;
   setLogY(false);
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_Nm1_CSVbest3",0);
 
-  //4th btag
+  //4th btag -- override btagcut
   selection_=baseline&&triggers && zl&& tauveto && isotk1 && njets&&jet2 && btag2 && btag3&&mdp && higgsmass && higgsdiff && drmax && metsig;
   var="CSVbest4"; xtitle="4th CSV value";
   nbins=20; low= 0; high=1;
@@ -3960,64 +3968,64 @@ void higgs_Nminus1(bool plotdata=false) {
 
 
   //higgs mass
-  selection_=baseline&&triggers && zl&& tauveto && isotk1 && njets&&jet2 && btag2 && btag3 && btag4 &&mdp && higgsdiff && drmax && metsig;
+  selection_=baseline&&triggers && zl&& tauveto && isotk1 && njets&&jet2 && btagcut &&mdp && higgsdiff && drmax && metsig;
   var="0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)"; xtitle="<m_{jj}> (GeV)";
   nbins=20; low= 0; high=200;
   setLogY(false);
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_Nm1_higgsmass",0,"GeV");
+  drawPlots(var,nbins,low,high,xtitle,"Events", nm1label+"higgsmass",0,"GeV");
   //try with fewer bins too
   nbins=10; low= 0; high=200;
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_Nm1_higgsmass_coarse",0,"GeV");
+  drawPlots(var,nbins,low,high,xtitle,"Events", nm1label+"higgsmass_coarse",0,"GeV");
 
   //higgs mass difference
-  selection_=baseline&&triggers && zl&& tauveto && isotk1 && njets&&jet2 && btag2 && btag3 && btag4&&mdp && higgsmass  && drmax && metsig;
+  selection_=baseline&&triggers && zl&& tauveto && isotk1 && njets&&jet2 && btagcut&&mdp && higgsmass  && drmax && metsig;
   var="abs(higgsMbb1MassDiff-higgsMbb2MassDiff)"; xtitle="|#Deltam_{jj}| (GeV)";
   nbins=8; low= 0; high=80;
   setLogY(false);
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_Nm1_higgsmassdiff",0,"GeV");
+  drawPlots(var,nbins,low,high,xtitle,"Events", nm1label+"higgsmassdiff",0,"GeV");
 
   //drmax
-  selection_=baseline&&triggers && zl&& tauveto && isotk1 && njets&&jet2 && btag2 && btag3 && btag4&&mdp && higgsmass && higgsdiff && metsig;
+  selection_=baseline&&triggers && zl&& tauveto && isotk1 && njets&&jet2 && btagcut &&mdp && higgsmass && higgsdiff && metsig;
   var="deltaRmax_hh"; xtitle="#DeltaR_{max}";
   nbins=30; low= 0; high=6;
   setLogY(false);
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_Nm1_maxDR",0);
+  drawPlots(var,nbins,low,high,xtitle,"Events", nm1label+"maxDR",0);
 
   //2d plot
-  //draw2d(var,15,low,high,"deltaRmin_hh",15,0,4,xtitle,"min #Delta R","higgs_Nm1_maxDRminDR_hh200",0,0,"SMS-HbbHbb_mHiggsino-200_mLSP-1_8TeV-Pythia6Z_jgsmith_UCSB1807_v69");
-  //draw2d(var,15,low,high,"deltaRmin_hh",15,0,4,xtitle,"min #Delta R","higgs_Nm1_maxDRminDR_hh350",0,0,"SMS-HbbHbb_mHiggsino-350_mLSP-1_8TeV-Pythia6Z_jgsmith_UCSB1811_v69");
+  //draw2d(var,15,low,high,"deltaRmin_hh",15,0,4,xtitle,"min #Delta R",nm1label+"maxDRminDR_hh200",0,0,"SMS-HbbHbb_mHiggsino-200_mLSP-1_8TeV-Pythia6Z_jgsmith_UCSB1807_v69");
+  //draw2d(var,15,low,high,"deltaRmin_hh",15,0,4,xtitle,"min #Delta R",nm1label+"maxDRminDR_hh350",0,0,"SMS-HbbHbb_mHiggsino-350_mLSP-1_8TeV-Pythia6Z_jgsmith_UCSB1811_v69");
 
   //linear combination
-  selection_=baseline&&triggers && zl&& tauveto && isotk1 && njets&&jet2 && btag2 && btag3 && btag4&&mdp && higgsmass && higgsdiff && metsig;
+  selection_=baseline&&triggers && zl&& tauveto && isotk1 && njets&&jet2 && btagcut &&mdp && higgsmass && higgsdiff && metsig;
   var="3.318-0.139*deltaRmax_hh-0.622*deltaRmin_hh"; xtitle="#DeltaR Fisher";
   nbins=30; low= 0; high=4;
   setLogY(false);
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_Nm1_DRF",0);
+  drawPlots(var,nbins,low,high,xtitle,"Events", nm1label+"DRF",0);
 
 
   //drmin
-  selection_=baseline&&triggers && zl&& tauveto && isotk1 && njets&&jet2 && btag2 && btag3 && btag4&&mdp && higgsmass && higgsdiff  && drmax && metsig;
+  selection_=baseline&&triggers && zl&& tauveto && isotk1 && njets&&jet2 && btagcut &&mdp && higgsmass && higgsdiff  && drmax && metsig;
   var="deltaRmin_hh"; xtitle="min #Delta R";
   nbins=40; low= 0; high=4;
   setLogY(false);
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_Nm1_minDR",0);
+  drawPlots(var,nbins,low,high,xtitle,"Events", nm1label+"minDR",0);
 
   //full selection except METsig
-  selection_=baseline&&triggers && zl&& tauveto && isotk1&& njets&&jet2 && btag2 && btag3 && btag4 &&mdp&& higgsmass && higgsdiff && drmax;
+  selection_=baseline&&triggers && zl&& tauveto && isotk1&& njets&&jet2 && btagcut &&mdp&& higgsmass && higgsdiff && drmax;
   var="METsig"; xtitle="E^{miss}_{T} significance #it{S}";
   nbins=20; low= 0; high=200;
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_Nm1_METsig",0);
+  drawPlots(var,nbins,low,high,xtitle,"Events", nm1label+"METsig",0);
 
   //just a different number of bins
   nbins=12; low= 0; high=180;
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_Nm1_METsig_coarse",0);
+  drawPlots(var,nbins,low,high,xtitle,"Events", nm1label+"METsig_coarse",0);
 
 
   //full selection except METsig
-  selection_=baseline&&triggers && zl&& tauveto && isotk1 && njets&&jet2 && btag2 && btag3 && btag4&&mdp && higgsmass && higgsdiff && drmax;
+  selection_=baseline&&triggers && zl&& tauveto && isotk1 && njets&&jet2 && btagcut &&mdp && higgsmass && higgsdiff && drmax;
   var="MET"; xtitle="MET";
   nbins=20; low= 0; high=300;
-  drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_Nm1_MET",0);
+  drawPlots(var,nbins,low,high,xtitle,"Events", nm1label+"MET",0);
 
 }
 
