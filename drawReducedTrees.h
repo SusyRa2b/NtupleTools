@@ -279,6 +279,8 @@ bool owenColor_ = false;
 bool drawFilenameOnPlot_=false;
 bool dataPoissonError_=true;
 
+float unstackedLineWidth_ = 3;
+
 int m0_=0;
 int m12_=0;
 int mIntermediate_=0;
@@ -2338,12 +2340,12 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
       if (!drawMarkers_) histos_[samples_[isample]]->SetMarkerSize(0);
 
       //ad hoc additions
-      histos_[samples_[isample]]->SetLineWidth(2);
+      histos_[samples_[isample]]->SetLineWidth(unstackedLineWidth_);
     }
     else {
       if ( isSampleSM(samples_[isample]))   histos_[samples_[isample]]->SetFillColor(getSampleColor(samples_[isample]));
       if ( !isSampleSM(samples_[isample]))  {
-	histos_[samples_[isample]]->SetLineWidth(2);
+	histos_[samples_[isample]]->SetLineWidth(unstackedLineWidth_);
 	histos_[samples_[isample]]->SetLineColor(getSampleColor(samples_[isample]));
 	histos_[samples_[isample]]->SetLineStyle(sampleLineStyle_[samples_[isample]]);
       }
