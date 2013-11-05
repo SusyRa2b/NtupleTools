@@ -353,8 +353,8 @@ void initHiggsSamples69(const bool useSkim=true,const TString samplelist="") {
   if (samplelist.Contains("hhmg175") || samplelist=="")
     addSample("SMS-TChiHH_2b2b_2J_mChargino-130to325_mLSP-1to195_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1872_v71$175$1",kRed-5,"hh MG 175");
 
-  if (samplelist.Contains("hhmg200") || samplelist=="")
-    addSample("SMS-TChiHH_2b2b_2J_mChargino-130to325_mLSP-1to195_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1872_v71$200$1",kRed-9,"hh MG 200");
+  if (samplelist.Contains("hhmg200") || samplelist=="") //used to be kRed-9
+    addSample("SMS-TChiHH_2b2b_2J_mChargino-130to325_mLSP-1to195_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1872_v71$200$1",kRed,"hh MG 200");
 
   if (samplelist.Contains("hhmg250") || samplelist=="")
     addSample("SMS-TChiHH_2b2b_2J_mChargino-130to325_mLSP-1to195_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1872_v71$250$1",kRed-7,"hh MG 250");
