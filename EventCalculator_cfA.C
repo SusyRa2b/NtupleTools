@@ -4978,6 +4978,8 @@ Long64_t EventCalculator::getNEventsGeneratedExtended() {
   if ( sampleName_.Contains("UCSB1526") || sampleName_.Contains("UCSB1608"))   return getNEventsGenerated("UCSB1526")+getNEventsGenerated("UCSB1608"); //DY 200-400
   if ( sampleName_.Contains("UCSB1535") || sampleName_.Contains("UCSB1595"))   return getNEventsGenerated("UCSB1535")+getNEventsGenerated("UCSB1595"); //DY 400-inf
 
+  if ( sampleName_.Contains("UCSB1962") || sampleName_.Contains("UCSB1959") || sampleName_.Contains("UCSB1884"))   return getNEventsGenerated("UCSB1962")+getNEventsGenerated("UCSB1959")+getNEventsGenerated("UCSB1884"); //TTJets MG 1l
+
   //if we make it here, then it is not an extended sample
   return getNEventsGenerated();
 }
@@ -5209,6 +5211,9 @@ Long64_t EventCalculator::getNEventsGenerated( TString sample) {
   if (sample.Contains("UCSB1894")) return 6650243; //BJets500 
   if (sample.Contains("UCSB1895")) return 3137949; //BJets1000 
   if (sample.Contains("UCSB1896")) return 2193582; //T6bbHH
+  if (sample.Contains("UCSB1959")) return 30856876; //TTJets MG 1l ext2
+  if (sample.Contains("UCSB1962")) return 30999167; //TTJets MG 1l ext1
+  if (sample.Contains("UCSB1966")) return 276156; //TTJets MG W->bc
 
   cout<<"[getNEventsGenerated] unknown sample "<<sample<<endl;
   assert(0);
@@ -5302,6 +5307,7 @@ double EventCalculator::getCrossSection(){
   //these lines are redundant with the ones below, but that's ok
   if (sampleName_.BeginsWith("TTJets_FullLeptMGDecays_8TeV-madgraph-tauola")) return 13.43*(ttbarxsec / (13.43+53.4+53.2)) ; //PREP corrected to approx NNLO
   if (sampleName_.BeginsWith("TTJets_SemiLeptMGDecays_8TeV-madgraph-tauola")) return 53.2 *(ttbarxsec / (13.43+53.4+53.2)) ; //PREP corrected to approx NNLO
+  if (sampleName_.BeginsWith("TTJets_WToBC_8TeV-madgraph-tauola")) return ttbarxsec * 0.0008405; //ttbar xsec * W->bc BF
 
   if (sampleName_.BeginsWith("TTTo2L2Nu2B_8TeV-powheg-pythia6_Summer12")) return 22.14 *(ttbarxsec / 136.3); //PREP corrected to NNLO
 
