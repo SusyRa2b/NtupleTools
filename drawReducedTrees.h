@@ -273,6 +273,7 @@ bool drawDataZeroes_=false;
 bool addOverflow_=true;
 //bool doSubtraction_=false;
 bool drawMCErrors_=false;
+bool drawBTagErrors_=false; // ONLY works for HH analysis 2b,3b,4b bins
 bool renormalizeBins_=false;//no setter function
 double renormalizeWidth_=1;
 bool owenColor_ = false;
@@ -359,7 +360,9 @@ THStack* thestack=0;
 TLatex* extraText=0;
 TString extratext_="";
 double rLine = -1;
-TH1D* totalsm=0;
+TH1D* totalsm=0; 
+TH1D* totalsm_btagP1=0;
+TH1D* totalsm_btagM1=0;
 TH1D* totalsmsusy=0;
 TH1D* totalewk=0;
 TH1D* totalqcdttbar=0;
@@ -591,6 +594,8 @@ bool isSampleSM(const TString & name) {
   if (name.Contains("sbottom")) return false;
 
   if (name.Contains("TChihh")) return false;
+
+  if (name.Contains("HbbHbb")) return false;
 
   if (name.Contains("Higgsino")) return false;
 
@@ -937,6 +942,22 @@ void renormBins( TH1D* hp ) {
 
 }
 
+double getSystematicError(const TH1D* h0,const TH1D* hp1,const TH1D* hm1,int bin) {
+
+  //in bin, compare the nominal histogram to the other 2 and return a symmetrized error
+  double nominal = h0->GetBinContent(bin);
+  double p1 = hp1->GetBinContent(bin);
+  double m1 = hm1->GetBinContent(bin);
+
+  double deltap = p1 - nominal;
+  double deltam = nominal - m1;
+
+  //if ( (deltap>0) != (deltam>0) ) cout<<"[getBTagError] sign disagreement in bin "<<bin<<"\t "<<h0->GetName() <<endl;
+
+  //average the two. the fabs() is mostly paranoia -- the output is going to be squared anyway
+  return 0.5*( fabs(deltap) + fabs(deltam) );
+
+}
 
 //jmt Dec 2012 -- clearly this function is stylistically awful, but it does the job and I don't want to mess with it right now
 //try to bring some rationality to the options passed to getcutstring....
@@ -2223,6 +2244,14 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
   if (totalsm!=0) delete totalsm;
   totalsm = (varbins==0) ? new TH1D("totalsm","",nbins,low,high) : new TH1D("totalsm","",nbins,varbins);
   totalsm->Sumw2();
+
+  if (totalsm_btagP1!=0) delete totalsm_btagP1;
+  totalsm_btagP1 = (varbins==0) ? new TH1D("totalsm_btagP1","",nbins,low,high) : new TH1D("totalsm_btagP1","",nbins,varbins);
+  totalsm_btagP1->Sumw2();
+  if (totalsm_btagM1!=0) delete totalsm_btagM1;
+  totalsm_btagM1 = (varbins==0) ? new TH1D("totalsm_btagM1","",nbins,low,high) : new TH1D("totalsm_btagM1","",nbins,varbins);
+  totalsm_btagM1->Sumw2();
+
   if (totalsmsusy!=0) delete totalsmsusy;
   totalsmsusy = (varbins==0) ? new TH1D("totalsmsusy","",nbins,low,high) : new TH1D("totalsmsusy","",nbins,varbins);
   totalsmsusy->Sumw2();
@@ -2292,6 +2321,31 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
     //fill the histogram!
     tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),getSampleWeightFactor(samples_[isample]),selection_,extractExtraCut(samples_[isample]),0,"",-1,getSampleScaleFactor(samples_[isample])).Data());
 
+    if (drawBTagErrors_) {
+      //make histograms to hold
+      TString hnameplus = hname;
+      hnameplus += "_btagplus";
+      histos_[samples_[isample]+"_btagplus"] = (varbins==0) ? new TH1D(hnameplus,"",nbins,low,high) : new TH1D(hnameplus,"",nbins,varbins);
+
+      TString hnameminus = hname;
+      hnameminus += "_btagminus";
+      histos_[samples_[isample]+"_btagminus"] = (varbins==0) ? new TH1D(hnameminus,"",nbins,low,high) : new TH1D(hnameminus,"",nbins,varbins);
+
+      TString thisSelectionPlus = selection_;
+      thisSelectionPlus.ReplaceAll("nomSF","SFp1sig");
+      tree->Project(hnameplus,var,getCutString( getSampleType(samples_[isample],"point"),getSampleWeightFactor(samples_[isample]),thisSelectionPlus,extractExtraCut(samples_[isample]),0,"",-1,getSampleScaleFactor(samples_[isample])).Data());
+
+      TString thisSelectionMinus = selection_;
+      thisSelectionMinus.ReplaceAll("nomSF","SFm1sig");
+      tree->Project(hnameminus,var,getCutString( getSampleType(samples_[isample],"point"),getSampleWeightFactor(samples_[isample]),thisSelectionMinus,extractExtraCut(samples_[isample]),0,"",-1,getSampleScaleFactor(samples_[isample])).Data());
+
+      if (addOverflow_)  addOverflowBin(histos_[samples_[isample]+"_btagplus"]  ); //manipulates the TH1D
+      if (addOverflow_)  addOverflowBin(histos_[samples_[isample]+"_btagminus"]  ); //manipulates the TH1D
+
+
+      //now we have extra histograms, varied by btag SF +/-1 sigma
+    }
+
     //now the histo is filled
     if (renormalizeBins_) renormBins(histos_[samples_[isample]] ); //manipulates the TH1D 
     if (addOverflow_)  addOverflowBin( histos_[samples_[isample]] ); //manipulates the TH1D
@@ -2304,27 +2358,25 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
 
     if (isSampleSM(samples_[isample])) {
       totalsm->Add(histos_[samples_[isample]]);
-      //      if (!quiet_)    cout << "totalsm: " << samples_[isample] << endl;
+      if (drawBTagErrors_) { //special totals for btag +/- 1 sigma
+	totalsm_btagP1->Add(histos_[samples_[isample]+"_btagplus"]);
+	totalsm_btagM1->Add(histos_[samples_[isample]+"_btagminus"]);
+      }
     }
     if (!samples_[isample].Contains("LM") && !samples_[isample].Contains("QCD") && !samples_[isample].Contains("TTbar") && !samples_[isample].Contains("SUGRA")) {
       totalewk->Add(histos_[samples_[isample]]);
-      //      if (!quiet_) cout << "totalewk: " << samples_[isample] << endl;
     }
     if (samples_[isample].Contains("QCD") || samples_[isample].Contains("TTbar")){
       totalqcdttbar->Add(histos_[samples_[isample]]);
-      //      if (!quiet_) cout << "totalqcdttbar: " << samples_[isample] << endl;
     }
     if (!samples_[isample].Contains("TTbar") && !samples_[isample].Contains("LM") && !samples_[isample].Contains("SUGRA")) {
       totalnonttbar->Add(histos_[samples_[isample]]);
-      //      if (!quiet_) cout << "totalnonttbar: " << samples_[isample] << endl;
     }
     if (!samples_[isample].Contains("QCD") && !samples_[isample].Contains("BJets") && !samples_[isample].Contains("LM")&& !samples_[isample].Contains("SUGRA")){
        totalnonqcd->Add(histos_[samples_[isample]]);
-       //      if (!quiet_) cout << "totalnonqcd: " << samples_[isample] << endl;
     }
     if (samples_[isample].Contains("QCD")||samples_[isample].Contains("BJets")) {
        totalqcd->Add(histos_[samples_[isample]]);
-       //      if (!quiet_) cout << "totalqcd: " << samples_[isample] << endl;
     }
     if (!isSampleSM(samples_[isample]))    signals.push_back(samples_[isample]);
     //add everything! (but only the 1st signal)
@@ -2415,6 +2467,14 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
       //ack. TGraphs and TH1s use different conventions for numbering.
       for ( int ibin=1; ibin<=totalsm->GetNbinsX(); ibin++) {
 	double yerr = mcerrors->GetErrorY(ibin-1);
+	//optionally add mc stat error in quadrature with the b-tag sf uncertainty
+	if (drawBTagErrors_) {
+	  yerr = sqrt( yerr*yerr + pow(getSystematicError(totalsm,totalsm_btagP1,totalsm_btagM1,ibin),2));
+	  totalsm->SetBinError(ibin,yerr); //propagate back into totalsm. this is relevant for the ratio plot
+	  //nb: could take a different strategy, and instead of combining the total data and MC errors into one error bar on 
+	  //on the ratio plot, could plot *only* data stat error on the point on the ratio plot, and plot all MC errors on a shaded band
+	  //on the ratio plot. but i won't do that for now
+	}
 	double xerr = totalsm->GetBinCenter(ibin) - totalsm->GetBinLowEdge(ibin);
 	mcerrors->SetPointError(ibin-1,xerr,yerr);
       }
@@ -2594,8 +2654,12 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
     int ns=0;
     for (unsigned int isample=0; isample<samples_.size(); isample++) {
       if (!isSampleSM( samples_[isample])) ns++;
-      if ( isSampleSM( samples_[isample]) || ns<=1 || !dostack_ ||(dostack_&&!stackSignal_)) 
-	cout<<samples_[isample]<<" =\t "<<histos_[samples_[isample]]->Integral()<<" +/- "<<jmt::errOnIntegral(histos_[samples_[isample]])<<endl;
+      if ( isSampleSM( samples_[isample]) || ns<=1 || !dostack_ ||(dostack_&&!stackSignal_)) {
+	cout<<samples_[isample]<<" =\t "<<histos_[samples_[isample]]->Integral()<<" +/- "<<jmt::errOnIntegral(histos_[samples_[isample]]);
+	if ( drawBTagErrors_ ) 
+	  cout<< " +/- "<<( histos_[samples_[isample]+"_btagplus"]->Integral() - histos_[samples_[isample]+"_btagminus"]->Integral() )*0.5 <<" (btag) ";
+	cout<<endl;
+      }
       else  //starting with the 2nd signal, the total sm will be included, so we need to get rid of it (only for dostack_ true)
 	cout<<samples_[isample]<<" =\t "<<histos_[samples_[isample]]->Integral()-totalsm->Integral()<<endl;
     }
