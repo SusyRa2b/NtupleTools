@@ -6672,6 +6672,9 @@ Use the b-tag algorithm output and calculate a weight for the _event_ based on t
 //Function still in development
 void EventCalculator::BTagSF_recipe2a(int &nbtag0, int &nbtag2, int &nbtag3, int &nbtag4, BTagEffModifier modifier, bool raw){ 
 
+  //for real data, classify events according to the raw tagger output
+  if (isSampleRealData()) raw=true;
+
   //Init
   nbtag0 = 0; 
   nbtag2 = 0; 
