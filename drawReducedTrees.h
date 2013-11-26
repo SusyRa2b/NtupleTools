@@ -274,6 +274,7 @@ bool addOverflow_=true;
 //bool doSubtraction_=false;
 bool drawMCErrors_=false;
 bool drawBTagErrors_=false; // ONLY works for HH analysis 2b,3b,4b bins
+bool drawTopPtErrors_=false; //
 bool renormalizeBins_=false;//no setter function
 double renormalizeWidth_=1;
 bool owenColor_ = false;
@@ -361,8 +362,12 @@ TLatex* extraText=0;
 TString extratext_="";
 double rLine = -1;
 TH1D* totalsm=0; 
+//special histos for systematics
 TH1D* totalsm_btagP1=0;
 TH1D* totalsm_btagM1=0;
+TH1D* totalsm_topptP1=0;
+TH1D* totalsm_topptM1=0;
+//special histos for counting different combinations of events (a bit old-fashioned at this point)
 TH1D* totalsmsusy=0;
 TH1D* totalewk=0;
 TH1D* totalqcdttbar=0;
@@ -953,6 +958,8 @@ double getSystematicError(const TH1D* h0,const TH1D* hp1,const TH1D* hm1,int bin
   double deltam = nominal - m1;
 
   //if ( (deltap>0) != (deltam>0) ) cout<<"[getBTagError] sign disagreement in bin "<<bin<<"\t "<<h0->GetName() <<endl;
+
+  cout<<"[getSystematicError] "<<hp1->GetName()<<" "<<hm1->GetName()<<" "<<deltap<<" "<<deltam<<endl;
 
   //average the two. the fabs() is mostly paranoia -- the output is going to be squared anyway
   return 0.5*( fabs(deltap) + fabs(deltam) );
@@ -2252,6 +2259,13 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
   totalsm_btagM1 = (varbins==0) ? new TH1D("totalsm_btagM1","",nbins,low,high) : new TH1D("totalsm_btagM1","",nbins,varbins);
   totalsm_btagM1->Sumw2();
 
+  if (totalsm_topptP1!=0) delete totalsm_topptP1;
+  totalsm_topptP1 = (varbins==0) ? new TH1D("totalsm_topptP1","",nbins,low,high) : new TH1D("totalsm_topptP1","",nbins,varbins);
+  totalsm_topptP1->Sumw2();
+  if (totalsm_topptM1!=0) delete totalsm_topptM1;
+  totalsm_topptM1 = (varbins==0) ? new TH1D("totalsm_topptM1","",nbins,low,high) : new TH1D("totalsm_topptM1","",nbins,varbins);
+  totalsm_topptM1->Sumw2();
+
   if (totalsmsusy!=0) delete totalsmsusy;
   totalsmsusy = (varbins==0) ? new TH1D("totalsmsusy","",nbins,low,high) : new TH1D("totalsmsusy","",nbins,varbins);
   totalsmsusy->Sumw2();
@@ -2300,7 +2314,7 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
     if (!quiet_)   cout <<samples_[isample]<<endl;
 
     gROOT->cd();
-    //ive each histo have a different name
+    //give each histo have a different name
     TString hname = jmt::fortranize(var); hname += "_"; hname += jmt::fortranize(samples_[isample]);
     histos_[samples_[isample]] = (varbins==0) ? new TH1D(hname,"",nbins,low,high) : new TH1D(hname,"",nbins,varbins);
     histos_[samples_[isample]]->Sumw2();
@@ -2320,6 +2334,33 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
 
     //fill the histogram!
     tree->Project(hname,var,getCutString( getSampleType(samples_[isample],"point"),getSampleWeightFactor(samples_[isample]),selection_,extractExtraCut(samples_[isample]),0,"",-1,getSampleScaleFactor(samples_[isample])).Data());
+
+    if ( drawTopPtErrors_ ) {
+      //so this logic is pretty fragile. if the sampleWeightFactor is exactly the top pt weight, it will work. otherwise it will not
+      TString sampleweightfactor = getSampleWeightFactor(samples_[isample]);
+      if ( sampleweightfactor=="topPtWeightOfficial" || sampleweightfactor=="topPtWeight") { //only do this when appropriate
+	
+	//make histograms to hold
+	TString hnameplus = hname;
+	hnameplus += "_topptplus";
+	histos_[samples_[isample]+"_topptplus"] = (varbins==0) ? new TH1D(hnameplus,"",nbins,low,high) : new TH1D(hnameplus,"",nbins,varbins);
+	
+	TString hnameminus = hname;
+	hnameminus += "_topptminus";
+	histos_[samples_[isample]+"_topptminus"] = (varbins==0) ? new TH1D(hnameminus,"",nbins,low,high) : new TH1D(hnameminus,"",nbins,varbins);
+
+	// + 1 sigma corresponds to no top pt weight, so pass 1 as the sample weight factor
+	tree->Project(hnameplus,var,getCutString( getSampleType(samples_[isample],"point"),"1",selection_,extractExtraCut(samples_[isample]),0,"",-1,getSampleScaleFactor(samples_[isample])).Data());
+	
+	//-1 sigma -- twice the weight, where the "weight" is the deviation of the weight from 1
+	TString swf;
+	swf.Form("1.0-2.0*(1.0-%s)",sampleweightfactor.Data());
+	tree->Project(hnameminus,var,getCutString( getSampleType(samples_[isample],"point"),swf,selection_,extractExtraCut(samples_[isample]),0,"",-1,getSampleScaleFactor(samples_[isample])).Data());
+	
+	if (addOverflow_)  addOverflowBin(histos_[samples_[isample]+"_topptplus"]  ); //manipulates the TH1D
+	if (addOverflow_)  addOverflowBin(histos_[samples_[isample]+"_topptminus"]  ); //manipulates the TH1D
+      }
+    }
 
     if (drawBTagErrors_) {
       //make histograms to hold
@@ -2361,6 +2402,17 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
       if (drawBTagErrors_) { //special totals for btag +/- 1 sigma
 	totalsm_btagP1->Add(histos_[samples_[isample]+"_btagplus"]);
 	totalsm_btagM1->Add(histos_[samples_[isample]+"_btagminus"]);
+      }
+      if (drawTopPtErrors_) {
+	//if this sample is varied (topptplus histo exists) then include that one in the sum
+	//otherwise just use the unvaried one
+	TH1D* topP1sigma = ( histos_.count(samples_[isample]+"_topptplus")==1)  ? histos_[samples_[isample]+"_topptplus"]  : histos_[samples_[isample]];
+	TH1D* topM1sigma = ( histos_.count(samples_[isample]+"_topptminus")==1) ? histos_[samples_[isample]+"_topptminus"] : histos_[samples_[isample]];
+	
+	cout<<"Adding to the topPt systematic stacks: "<<endl<<"\t"<<topP1sigma->GetName()<<endl<<"\t"<<topM1sigma->GetName()<<endl;
+
+	totalsm_topptP1->Add(topP1sigma);
+	totalsm_topptM1->Add(topM1sigma);
       }
     }
     if (!samples_[isample].Contains("LM") && !samples_[isample].Contains("QCD") && !samples_[isample].Contains("TTbar") && !samples_[isample].Contains("SUGRA")) {
@@ -2467,14 +2519,15 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
       //ack. TGraphs and TH1s use different conventions for numbering.
       for ( int ibin=1; ibin<=totalsm->GetNbinsX(); ibin++) {
 	double yerr = mcerrors->GetErrorY(ibin-1);
-	//optionally add mc stat error in quadrature with the b-tag sf uncertainty
-	if (drawBTagErrors_) {
-	  yerr = sqrt( yerr*yerr + pow(getSystematicError(totalsm,totalsm_btagP1,totalsm_btagM1,ibin),2));
-	  totalsm->SetBinError(ibin,yerr); //propagate back into totalsm. this is relevant for the ratio plot
-	  //nb: could take a different strategy, and instead of combining the total data and MC errors into one error bar on 
-	  //on the ratio plot, could plot *only* data stat error on the point on the ratio plot, and plot all MC errors on a shaded band
-	  //on the ratio plot. but i won't do that for now
-	}
+	//optionally add mc stat error in quadrature with the b-tag sf uncertainty and top pt weight uncertainty
+	if (drawTopPtErrors_) yerr = sqrt( yerr*yerr + pow(getSystematicError(totalsm,totalsm_topptP1,totalsm_topptM1,ibin),2));
+	if (drawBTagErrors_)  yerr = sqrt( yerr*yerr + pow(getSystematicError(totalsm,totalsm_btagP1 ,totalsm_btagM1 ,ibin),2));
+	//propagate back into totalsm. this is relevant for the ratio plot
+	if (drawTopPtErrors_||drawBTagErrors_)	  totalsm->SetBinError(ibin,yerr);
+	//nb: could take a different strategy, and instead of combining the total data and MC errors into one error bar on 
+	//on the ratio plot, could plot *only* data stat error on the point on the ratio plot, and plot all MC errors on a shaded band
+	//on the ratio plot. but i won't do that for now
+
 	double xerr = totalsm->GetBinCenter(ibin) - totalsm->GetBinLowEdge(ibin);
 	mcerrors->SetPointError(ibin-1,xerr,yerr);
       }
