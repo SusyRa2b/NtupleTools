@@ -7859,6 +7859,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   float rl,rMET;
 
   float METsig,METsig00,METsig10,METsig11;
+  float rawMETsumEt;
   float METsig_2012,METsig00_2012,METsig10_2012,METsig11_2012;
 
   int MT_bestCSV_gencode;
@@ -8551,6 +8552,7 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("METphi",&METphi,"METphi/F");
   reducedTree.Branch("MHT",&MHT,"MHT/F");
 
+  reducedTree.Branch("rawMETsumEt",&rawMETsumEt,"rawMETsumEt/F");
   reducedTree.Branch("METsig",&METsig,"METsig/F");
   reducedTree.Branch("METsig00",&METsig00,"METsig00/F");
   reducedTree.Branch("METsig10",&METsig10,"METsig10/F");
@@ -9863,6 +9865,8 @@ void EventCalculator::reducedTree(TString outputpath) {
       METsig00_2012 = cfAversion_>=69 ? pfmets_fullSignifCov00_2012 : -1;
       METsig10_2012 = cfAversion_>=69 ? pfmets_fullSignifCov10_2012 : -1;
       METsig11_2012 = cfAversion_>=69 ? pfmets_fullSignifCov11_2012 : -1;
+
+      rawMETsumEt=pfmets_sumEt->at(0);
 
       caloMET = mets_AK5_et->at(0);
       caloMETphi = mets_AK5_phi->at(0);
