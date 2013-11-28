@@ -74,132 +74,105 @@ double lumiScale_ = 19306.647; //updated with pixel lumi (oct 2013)
 //this is to make the ROOT dictionary generation work correctly
 #include "drawReducedTrees_hbbhbb.h"
 
+TString addEnding(const TString & samplename, bool useSkim) {
+
+  const int version =71;
+  const  TString skimType="owen"; // are we using the owen skim or the david skim/slim?
+
+  TString cfAskim="";
+  if (skimType=="david" && useSkim) cfAskim="ra2b";
+
+  TString tailpiece="";
+  if (useSkim && skimType=="owen") tailpiece = "-skim";
+  else if (useSkim && skimType=="david") tailpiece = "s";
+
+  TString out;
+  out.Form("%s%s_v%d%s",samplename.Data(),cfAskim.Data(),version,tailpiece.Data());
+  return out;
+}
+
 void initHiggsSamples69(const bool useSkim=true,const TString samplelist="") { 
+  
+  //  inputPath="/cu6/joshmt/reducedTrees/v71_5b/"; 
+  //  dataInputPath="/cu6/joshmt/reducedTrees/v71_5b/data/"; //for skimmed data
 
-  inputPath="/cu6/joshmt/reducedTrees/v71_5b/"; 
-  dataInputPath="/cu6/joshmt/reducedTrees/v71_5b/data/"; //for skimmed data
+  inputPath="/cu2/ra2b/reducedTrees/v71_5_pj/";
+  dataInputPath=inputPath;
 
-
-  //for test of b-tag sf
-    inputPath="/cu2/ra2b/reducedTrees/v71_5_pj/";//for a test
+  if (useSkim)   {
+    inputPath+="skimmed/";
     dataInputPath=inputPath;
-
-    /*
-  if (!useSkim)   {
-    inputPath+="unskimmed/"; //comment out for test
-    dataInputPath=inputPath;
-    dataInputPath+="data/";
   }
-    */
+    
 
   samplesAll_.clear(); // hack to suppress the amount of output we get. not needed for proper functioning.
 
-  if (!useSkim) {
-    addToSamplesAll("BJets_HT-1000ToInf_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1895_v71");
-    addToSamplesAll("BJets_HT-250To500_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1893_v71");
-    addToSamplesAll("BJets_HT-500To1000_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1894_v71");
+  //go back to using the unskimmed cfA+Owen's skim
+  //i'm going to try to make this more modular
+  addToSamplesAll(addEnding("BJets_HT-1000ToInf_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1895",useSkim));
+  addToSamplesAll(addEnding("BJets_HT-250To500_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1893",useSkim));
+  addToSamplesAll(addEnding("BJets_HT-500To1000_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1894",useSkim));
+  
+  addToSamplesAll(addEnding("QCD_Pt-1000to1400_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1903",useSkim));
+  addToSamplesAll(addEnding("QCD_Pt-120to170_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v3_AODSIM_UCSB1897",useSkim));
+  addToSamplesAll(addEnding("QCD_Pt-1400to1800_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1904",useSkim));
+  addToSamplesAll(addEnding("QCD_Pt-170to300_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v2_AODSIM_UCSB1898",useSkim));
+  addToSamplesAll(addEnding("QCD_Pt-1800_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1905",useSkim));
+  addToSamplesAll(addEnding("QCD_Pt-300to470_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v2_AODSIM_UCSB1899",useSkim));
+  addToSamplesAll(addEnding("QCD_Pt-470to600_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v2_AODSIM_UCSB1900",useSkim));
+  addToSamplesAll(addEnding("QCD_Pt-600to800_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v2_AODSIM_UCSB1901",useSkim));
+  addToSamplesAll(addEnding("QCD_Pt-800to1000_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v2_AODSIM_UCSB1902",useSkim));
+  addToSamplesAll(addEnding("TTJets_FullLeptMGDecays_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7C-v2_AODSIM_UCSB1883",useSkim));
+  addToSamplesAll(addEnding("TTJets_HadronicMGDecays_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A_ext-v1_AODSIM_UCSB1880",useSkim));
+  addToSamplesAll(addEnding("TTJets_SemiLeptMGDecays_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7C-v1_AODSIM_UCSB1884",useSkim));
+  addToSamplesAll(addEnding("TTJets_SemiLeptMGDecays_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V19_ext1-v1_AODSIM_UCSB1962",useSkim));
+  addToSamplesAll(addEnding("TTJets_SemiLeptMGDecays_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V19_ext2-v1_AODSIM_UCSB1959",useSkim));
+  
+  addToSamplesAll(addEnding("W2JetsToLNu_TuneZ2Star_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1877",useSkim));
+  addToSamplesAll(addEnding("W3JetsToLNu_TuneZ2Star_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1878",useSkim));
+  addToSamplesAll(addEnding("W4JetsToLNu_TuneZ2Star_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1879",useSkim));
+  addToSamplesAll(addEnding("ZJetsToNuNu_100_HT_200_TuneZ2Star_8TeV_madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1887",useSkim));
+  addToSamplesAll(addEnding("ZJetsToNuNu_200_HT_400_TuneZ2Star_8TeV_madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1888",useSkim));
+  addToSamplesAll(addEnding("ZJetsToNuNu_200_HT_400_TuneZ2Star_8TeV_madgraph_ext_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1889",useSkim));
+  addToSamplesAll(addEnding("ZJetsToNuNu_400_HT_inf_TuneZ2Star_8TeV_madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1890",useSkim));
+  addToSamplesAll(addEnding("ZJetsToNuNu_400_HT_inf_TuneZ2Star_8TeV_madgraph_ext_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1891",useSkim));
+  addToSamplesAll(addEnding("T_s-channel_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1860",useSkim));
+  addToSamplesAll(addEnding("T_t-channel_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1861",useSkim));
+  addToSamplesAll(addEnding("T_tW-channel-DR_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1862",useSkim));
+  addToSamplesAll(addEnding("Tbar_s-channel_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1864",useSkim));
+  addToSamplesAll(addEnding("Tbar_t-channel_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1865",useSkim));
+  addToSamplesAll(addEnding("Tbar_tW-channel-DR_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1866",useSkim));
 
-    addToSamplesAll("QCD_Pt-1000to1400_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1903_v71");
-    addToSamplesAll("QCD_Pt-120to170_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v3_AODSIM_UCSB1897_v71");
-    addToSamplesAll("QCD_Pt-1400to1800_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1904_v71");
-    addToSamplesAll("QCD_Pt-170to300_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v2_AODSIM_UCSB1898_v71");
-    addToSamplesAll("QCD_Pt-1800_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1905_v71");
-    addToSamplesAll("QCD_Pt-300to470_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v2_AODSIM_UCSB1899_v71");
-    addToSamplesAll("QCD_Pt-470to600_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v2_AODSIM_UCSB1900_v71");
-    addToSamplesAll("QCD_Pt-600to800_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v2_AODSIM_UCSB1901_v71");
-    addToSamplesAll("QCD_Pt-800to1000_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v2_AODSIM_UCSB1902_v71");
-    addToSamplesAll("TTJets_FullLeptMGDecays_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7C-v2_AODSIM_UCSB1883_v71");
-    addToSamplesAll("TTJets_HadronicMGDecays_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A_ext-v1_AODSIM_UCSB1880_v71");
-    addToSamplesAll("TTJets_SemiLeptMGDecays_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7C-v1_AODSIM_UCSB1884_v71");
-    addToSamplesAll("TTJets_SemiLeptMGDecays_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V19_ext1-v1_AODSIM_UCSB1962_v71");
-    addToSamplesAll("TTJets_SemiLeptMGDecays_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V19_ext2-v1_AODSIM_UCSB1959_v71");
-
-    addToSamplesAll("W2JetsToLNu_TuneZ2Star_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1877_v71");
-    addToSamplesAll("W3JetsToLNu_TuneZ2Star_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1878_v71");
-    addToSamplesAll("W4JetsToLNu_TuneZ2Star_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1879_v71");
-    addToSamplesAll("ZJetsToNuNu_100_HT_200_TuneZ2Star_8TeV_madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1887_v71");
-    addToSamplesAll("ZJetsToNuNu_200_HT_400_TuneZ2Star_8TeV_madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1888_v71");
-    addToSamplesAll("ZJetsToNuNu_200_HT_400_TuneZ2Star_8TeV_madgraph_ext_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1889_v71");
-    addToSamplesAll("ZJetsToNuNu_400_HT_inf_TuneZ2Star_8TeV_madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1890_v71");
-    addToSamplesAll("ZJetsToNuNu_400_HT_inf_TuneZ2Star_8TeV_madgraph_ext_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1891_v71");
-    addToSamplesAll("T_s-channel_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1860_v71");
-    addToSamplesAll("T_t-channel_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1861_v71");
-    addToSamplesAll("T_tW-channel-DR_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1862_v71");
-    addToSamplesAll("Tbar_s-channel_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1864_v71");
-    addToSamplesAll("Tbar_t-channel_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1865_v71");
-    addToSamplesAll("Tbar_tW-channel-DR_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1866_v71");
-
-  }
-
-  //official MG signal
-  addToSamplesAll("SMS-TChiHH_2b2b_2J_mChargino-130to325_mLSP-1to195_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1872_v71");
-  addToSamplesAll("SMS-TChiHH_2b2b_2J_mChargino-350to500_mLSP-1to370_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1871_v71");
-  addToSamplesAll("SMS-TChiZH_ZccbbHbb_2J_mChargino-130to500_mLSP-1to370_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1873_v71");
+    //official MG signal
+  addToSamplesAll(addEnding("SMS-TChiHH_2b2b_2J_mChargino-130to325_mLSP-1to195_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1872",useSkim));
+  addToSamplesAll(addEnding("SMS-TChiHH_2b2b_2J_mChargino-350to500_mLSP-1to370_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1871",useSkim));
+		  //  addToSamplesAll("SMS-TChiZH_ZccbbHbb_2J_mChargino-130to500_mLSP-1to370_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1873",useSkim));
 
   //fullsim signal
   addToSamplesAll("HbbHbb_FullSim_400_v71");
   addToSamplesAll("HbbHbb_FullSim_250_v71");
 
-  //MG ttbar  
-  addToSamplesAll("TTJets_SemiLeptMGDecays_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7C-v1_AODSIM_UCSB1884ra2b_v71s");
-  addToSamplesAll("TTJets_FullLeptMGDecays_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7C-v2_AODSIM_UCSB1883ra2b_v71s");
-  addToSamplesAll(TString("TTJets_HadronicMGDecays_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A_ext-v1_AODSIM_UCSB1880ra2b_v71s"));
-
-  addToSamplesAll("TT_8TeV-mcatnlo_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1885ra2b_v71s");
+  //  addToSamplesAll("TT_8TeV-mcatnlo_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1885ra2b_v71s");
 
   //sherpa
-  addToSamplesAll("TTJets_SemiLeptDecays_8TeV-sherpa_Summer12_DR53X-PU_S10_START53_V19-v1_AODSIM_UCSB1892ra2b_v71s");
+  //  addToSamplesAll("TTJets_SemiLeptDecays_8TeV-sherpa_Summer12_DR53X-PU_S10_START53_V19-v1_AODSIM_UCSB1892ra2b_v71s");
   //  addToSamplesAll(TString("TTJets_DileptDecays_8TeV-sherpa_Summer12_DR53X-PU_S10_START53_V19-v1_AODSIM_UCSB1804_v69"));
 
-  //QCD
-  addToSamplesAll("QCD_Pt-120to170_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v3_AODSIM_UCSB1897ra2b_v71s");
-  addToSamplesAll("QCD_Pt-1000to1400_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1903ra2b_v71s");
-  addToSamplesAll("QCD_Pt-1400to1800_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1904ra2b_v71s");
-  addToSamplesAll("QCD_Pt-170to300_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v2_AODSIM_UCSB1898ra2b_v71s");
-  addToSamplesAll("QCD_Pt-1800_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1905ra2b_v71s");
-  addToSamplesAll("QCD_Pt-300to470_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v2_AODSIM_UCSB1899ra2b_v71s");
-  addToSamplesAll("QCD_Pt-470to600_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v2_AODSIM_UCSB1900ra2b_v71s");
-  addToSamplesAll("QCD_Pt-600to800_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v2_AODSIM_UCSB1901ra2b_v71s");
-  addToSamplesAll("QCD_Pt-800to1000_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v2_AODSIM_UCSB1902ra2b_v71s");
-
-
-  addToSamplesAll("BJets_HT-250To500_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1893ra2b_v71s");
-  addToSamplesAll("BJets_HT-1000ToInf_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1895ra2b_v71s");
-  addToSamplesAll("BJets_HT-500To1000_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1894ra2b_v71s");
- 
-
   //ttV
-  addToSamplesAll("TTWJets_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1857ra2b_v71s");
-  addToSamplesAll("TTZJets_8TeV-madgraph_v2_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1856ra2b_v71s");
-  addToSamplesAll("TTH_HToBB_M-125_8TeV-pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1855ra2b_v71s");
+  //  addToSamplesAll("TTWJets_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1857ra2b_v71s");
+  //  addToSamplesAll("TTZJets_8TeV-madgraph_v2_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1856ra2b_v71s");
+  //  addToSamplesAll("TTH_HToBB_M-125_8TeV-pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1855ra2b_v71s");
 
-  //Znunu
-  addToSamplesAll("ZJetsToNuNu_100_HT_200_TuneZ2Star_8TeV_madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1887ra2b_v71s");
-  addToSamplesAll("ZJetsToNuNu_200_HT_400_TuneZ2Star_8TeV_madgraph_ext_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1889ra2b_v71s");
-  addToSamplesAll("ZJetsToNuNu_200_HT_400_TuneZ2Star_8TeV_madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1888ra2b_v71s");
-  addToSamplesAll("ZJetsToNuNu_400_HT_inf_TuneZ2Star_8TeV_madgraph_ext_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1891ra2b_v71s");
-  addToSamplesAll("ZJetsToNuNu_400_HT_inf_TuneZ2Star_8TeV_madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1890ra2b_v71s");
-
-  //W in njets bins
-  addToSamplesAll("W2JetsToLNu_TuneZ2Star_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1877ra2b_v71s");
-  addToSamplesAll("W3JetsToLNu_TuneZ2Star_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1878ra2b_v71s");
-  addToSamplesAll("W4JetsToLNu_TuneZ2Star_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1879ra2b_v71s");
-
-  addToSamplesAll("WbbJetsToLNu_Massive_TuneZ2star_8TeV-madgraph-pythia6_tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1859ra2b_v71s");
+  //  addToSamplesAll("WbbJetsToLNu_Massive_TuneZ2star_8TeV-madgraph-pythia6_tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1859ra2b_v71s");
 
   //vv
-  addToSamplesAll("WW_TuneZ2star_8TeV_pythia6_tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1874ra2b_v71s");
-  addToSamplesAll("WZ_TuneZ2star_8TeV_pythia6_tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1875ra2b_v71s");
-  addToSamplesAll("ZZ_TuneZ2star_8TeV_pythia6_tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1876ra2b_v71s");
-  addToSamplesAll("WH_WToLNu_HToBB_M-125_8TeV-powheg-herwigpp_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1858ra2b_v71s");
+  //  addToSamplesAll("WW_TuneZ2star_8TeV_pythia6_tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1874ra2b_v71s");
+  //  addToSamplesAll("WZ_TuneZ2star_8TeV_pythia6_tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1875ra2b_v71s");
+  //  addToSamplesAll("ZZ_TuneZ2star_8TeV_pythia6_tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1876ra2b_v71s");
+  //  addToSamplesAll("WH_WToLNu_HToBB_M-125_8TeV-powheg-herwigpp_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1858ra2b_v71s");
 
-  //single top
-  addToSamplesAll("T_s-channel_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1860ra2b_v71s");
-  addToSamplesAll("T_t-channel_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1861ra2b_v71s");
-  addToSamplesAll("T_tW-channel-DR_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1862ra2b_v71s");
-  addToSamplesAll("Tbar_s-channel_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1864ra2b_v71s");
-  addToSamplesAll("Tbar_t-channel_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1865ra2b_v71s");
-  addToSamplesAll("Tbar_tW-channel-DR_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1866ra2b_v71s");
+  //fastsim ttbar
+  //  addToSamplesAll("TTJets_MassiveBinDECAY_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V7C_FSIM-v1_AODSIM_UCSB1882ra2b_v71s");
 
   nameOfEventWeight_="weight3"; 
 
@@ -219,56 +192,31 @@ void initHiggsSamples69(const bool useSkim=true,const TString samplelist="") {
   std::cout << "clear samples reset chains chainsamples" << std::endl;
 
   if (samplelist=="" || samplelist.Contains("qcd")) {
-    if (useSkim) {
-      TString baseqcdname = TString("QCD_Pt-120to170_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v3_AODSIM_UCSB1897ra2b_v71s");
+      TString baseqcdname = addEnding("QCD_Pt-120to170_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v3_AODSIM_UCSB1897",useSkim);
       addSample(baseqcdname,kGreen,"QCD");
-      chainSamples(baseqcdname,TString("QCD_Pt-170to300_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v2_AODSIM_UCSB1898ra2b_v71s"));
-      chainSamples(baseqcdname,TString("QCD_Pt-300to470_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v2_AODSIM_UCSB1899ra2b_v71s"));
-      chainSamples(baseqcdname,TString("QCD_Pt-470to600_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v2_AODSIM_UCSB1900ra2b_v71s"));
-      chainSamples(baseqcdname,TString("QCD_Pt-600to800_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v2_AODSIM_UCSB1901ra2b_v71s"));
-      chainSamples(baseqcdname,TString("QCD_Pt-800to1000_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v2_AODSIM_UCSB1902ra2b_v71s"));
-      chainSamples(baseqcdname,TString("QCD_Pt-1000to1400_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1903ra2b_v71s"));
-      chainSamples(baseqcdname,TString("QCD_Pt-1400to1800_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1904ra2b_v71s"));
-      chainSamples(baseqcdname,TString("QCD_Pt-1800_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1905ra2b_v71s"));
-    }
-    else {
-      TString baseqcdname = TString("QCD_Pt-120to170_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v3_AODSIM_UCSB1897_v71");
-      addSample(baseqcdname,kGreen,"QCD");
-      chainSamples(baseqcdname,TString("QCD_Pt-170to300_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v2_AODSIM_UCSB1898_v71"));
-      chainSamples(baseqcdname,TString("QCD_Pt-300to470_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v2_AODSIM_UCSB1899_v71"));
-      chainSamples(baseqcdname,TString("QCD_Pt-470to600_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v2_AODSIM_UCSB1900_v71"));
-      chainSamples(baseqcdname,TString("QCD_Pt-600to800_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v2_AODSIM_UCSB1901_v71"));
-      chainSamples(baseqcdname,TString("QCD_Pt-800to1000_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v2_AODSIM_UCSB1902_v71"));
-      chainSamples(baseqcdname,TString("QCD_Pt-1000to1400_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1903_v71"));
-      chainSamples(baseqcdname,TString("QCD_Pt-1400to1800_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1904_v71"));
-      chainSamples(baseqcdname,TString("QCD_Pt-1800_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1905_v71"));
-    }
+      chainSamples(baseqcdname,addEnding("QCD_Pt-170to300_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v2_AODSIM_UCSB1898",useSkim));
+      chainSamples(baseqcdname,addEnding("QCD_Pt-300to470_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v2_AODSIM_UCSB1899",useSkim));
+      chainSamples(baseqcdname,addEnding("QCD_Pt-470to600_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v2_AODSIM_UCSB1900",useSkim));
+      chainSamples(baseqcdname,addEnding("QCD_Pt-600to800_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v2_AODSIM_UCSB1901",useSkim));
+      chainSamples(baseqcdname,addEnding("QCD_Pt-800to1000_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v2_AODSIM_UCSB1902",useSkim));
+      chainSamples(baseqcdname,addEnding("QCD_Pt-1000to1400_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1903",useSkim));
+      chainSamples(baseqcdname,addEnding("QCD_Pt-1400to1800_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1904",useSkim));
+      chainSamples(baseqcdname,addEnding("QCD_Pt-1800_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1905",useSkim));
   }
 
   if (samplelist.Contains("bjets")) {
-    TString bname="";
-    if (useSkim) {
-      bname = TString("BJets_HT-250To500_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1893ra2b_v71s");
-      addSample(bname,kGreen,"QCD"); //used to be called 'BJets'
-      chainSamples(bname,TString("BJets_HT-1000ToInf_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1895ra2b_v71s"));
-      chainSamples(bname,TString("BJets_HT-500To1000_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1894ra2b_v71s"));
-    }
-    else {
-      bname="BJets_HT-250To500_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1893_v71";
-      addSample(bname,kGreen,"QCD"); //used to be called 'BJets'
-      chainSamples(bname,"BJets_HT-1000ToInf_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1895_v71");
-      chainSamples(bname,"BJets_HT-500To1000_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1894_v71");
-    }
+    TString     bname=addEnding("BJets_HT-250To500_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1893",useSkim);
+    addSample(bname,kGreen,"QCD"); //used to be called 'BJets'
+    chainSamples(bname,addEnding("BJets_HT-1000ToInf_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1895",useSkim));
+    chainSamples(bname,addEnding("BJets_HT-500To1000_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1894",useSkim));
     setSampleScaleFactor(bname,1.3);
   }
 
   if (samplelist==""||samplelist.Contains("ttbar")) {
-    if (useSkim)
-      addSample(TString("TTJets_HadronicMGDecays_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A_ext-v1_AODSIM_UCSB1880ra2b_v71s"),kGreen-9,"t#bar{t} (0l)");
-    else
-      addSample(TString("TTJets_HadronicMGDecays_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A_ext-v1_AODSIM_UCSB1880_v71"),kGreen-9,"t#bar{t} (0l)");
+    addSample(addEnding("TTJets_HadronicMGDecays_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A_ext-v1_AODSIM_UCSB1880",useSkim),kGreen-9,"t#bar{t} (0l)");
   }
 
+/*
   //no unskimmed version right now
   if (samplelist==""||samplelist.Contains("ttv")) {
     TString  ttvname="TTWJets_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1857ra2b_v71s";
@@ -284,146 +232,78 @@ void initHiggsSamples69(const bool useSkim=true,const TString samplelist="") {
     chainSamples(vvname,"ZZ_TuneZ2star_8TeV_pythia6_tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1876ra2b_v71s");
     chainSamples(vvname,"WH_WToLNu_HToBB_M-125_8TeV-powheg-herwigpp_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1858ra2b_v71s");
   }
+*/
 
-  //no unskimmed version right now
   if (samplelist==""||samplelist.Contains("singlet")) {
-    if (useSkim) {
-      TString  stname="T_s-channel_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1860ra2b_v71s";
-      addSample(stname,kBlue,"Single Top");
-      chainSamples(stname,"T_t-channel_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1861ra2b_v71s");
-      chainSamples(stname,"T_tW-channel-DR_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1862ra2b_v71s");
-      chainSamples(stname,"Tbar_s-channel_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1864ra2b_v71s");
-      chainSamples(stname,"Tbar_t-channel_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1865ra2b_v71s");
-      chainSamples(stname,"Tbar_tW-channel-DR_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1866ra2b_v71s");
-    }
-    else {
-      TString  stname="T_s-channel_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1860_v71";
-      addSample(stname,kBlue,"Single Top");
-      chainSamples(stname,"T_t-channel_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1861_v71");
-      chainSamples(stname,"T_tW-channel-DR_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1862_v71");
-      chainSamples(stname,"Tbar_s-channel_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1864_v71");
-      chainSamples(stname,"Tbar_t-channel_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1865_v71");
-      chainSamples(stname,"Tbar_tW-channel-DR_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1866_v71");
-    }
+    TString  stname=addEnding("T_s-channel_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1860",useSkim);
+    addSample(stname,kBlue,"Single Top");
+    chainSamples(stname,addEnding("T_t-channel_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1861",useSkim));
+    chainSamples(stname,addEnding("T_tW-channel-DR_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1862",useSkim));
+    chainSamples(stname,addEnding("Tbar_s-channel_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1864",useSkim));
+    chainSamples(stname,addEnding("Tbar_t-channel_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1865",useSkim));
+    chainSamples(stname,addEnding("Tbar_tW-channel-DR_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1866",useSkim));
   }
 
 
   if (samplelist=="" ||samplelist.Contains("wjets")) {
-    if (useSkim) {
-      TString w2=TString("W2JetsToLNu_TuneZ2Star_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1877ra2b_v71s");
-      addSample(w2,kViolet,"W+jets");
-      chainSamples(w2,TString("W3JetsToLNu_TuneZ2Star_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1878ra2b_v71s"));
-      chainSamples(w2,TString("W4JetsToLNu_TuneZ2Star_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1879ra2b_v71s"));
-    }
-    else {
-      TString w2=TString("W2JetsToLNu_TuneZ2Star_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1877_v71");
-      addSample(w2,kViolet,"W+jets");
-      chainSamples(w2,TString("W3JetsToLNu_TuneZ2Star_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1878_v71"));
-      chainSamples(w2,TString("W4JetsToLNu_TuneZ2Star_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1879_v71"));
-    }
+    TString w2=addEnding("W2JetsToLNu_TuneZ2Star_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1877",useSkim);
+    addSample(w2,kViolet,"W+jets");
+    chainSamples(w2,addEnding("W3JetsToLNu_TuneZ2Star_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1878",useSkim));
+    chainSamples(w2,addEnding("W4JetsToLNu_TuneZ2Star_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1879",useSkim));
   }
 
+/*
   //no unskimmed version right now
   if (samplelist.Contains("wbb")) {
     addSample("WbbJetsToLNu_Massive_TuneZ2star_8TeV-madgraph-pythia6_tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1859ra2b_v71s",kViolet+2,"W+bb");
   }
+*/
 
-
-  //unskimmed is partial
   if (samplelist==""||samplelist.Contains("znunu")) {
-    if (useSkim) {
-      TString basezname = TString("ZJetsToNuNu_100_HT_200_TuneZ2Star_8TeV_madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1887ra2b_v71s");
-      addSample(basezname,kOrange,"Z #rightarrow #nu#nu");
-      chainSamples(basezname,TString("ZJetsToNuNu_200_HT_400_TuneZ2Star_8TeV_madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1888ra2b_v71s"));
-      chainSamples(basezname,TString("ZJetsToNuNu_200_HT_400_TuneZ2Star_8TeV_madgraph_ext_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1889ra2b_v71s"));
-      chainSamples(basezname,TString("ZJetsToNuNu_400_HT_inf_TuneZ2Star_8TeV_madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1890ra2b_v71s"));
-      chainSamples(basezname,TString("ZJetsToNuNu_400_HT_inf_TuneZ2Star_8TeV_madgraph_ext_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1891ra2b_v71s"));
-    }
-    else {
-      TString basezname = TString("ZJetsToNuNu_100_HT_200_TuneZ2Star_8TeV_madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1887_v71");
-      addSample(basezname,kOrange,"Z #rightarrow #nu#nu");
-      chainSamples(basezname,TString("ZJetsToNuNu_200_HT_400_TuneZ2Star_8TeV_madgraph_ext_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1889_v71"));
-      chainSamples(basezname,TString("ZJetsToNuNu_200_HT_400_TuneZ2Star_8TeV_madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1888_v71"));
-      chainSamples(basezname,TString("ZJetsToNuNu_400_HT_inf_TuneZ2Star_8TeV_madgraph_ext_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1891_v71"));
-      chainSamples(basezname,TString("ZJetsToNuNu_400_HT_inf_TuneZ2Star_8TeV_madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1890_v71"));
-    }
+    TString basezname = addEnding("ZJetsToNuNu_100_HT_200_TuneZ2Star_8TeV_madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1887",useSkim);
+    addSample(basezname,kOrange,"Z #rightarrow #nu#nu");
+    chainSamples(basezname,addEnding("ZJetsToNuNu_200_HT_400_TuneZ2Star_8TeV_madgraph_ext_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1889",useSkim));
+    chainSamples(basezname,addEnding("ZJetsToNuNu_200_HT_400_TuneZ2Star_8TeV_madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1888",useSkim));
+    chainSamples(basezname,addEnding("ZJetsToNuNu_400_HT_inf_TuneZ2Star_8TeV_madgraph_ext_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1891",useSkim));
+    chainSamples(basezname,addEnding("ZJetsToNuNu_400_HT_inf_TuneZ2Star_8TeV_madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1890",useSkim));
+
   }
 
 
   if (samplelist==""||samplelist.Contains("ttbar")) {
-    if (useSkim) {
-      addSample("TTJets_FullLeptMGDecays_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7C-v2_AODSIM_UCSB1883ra2b_v71s",kBlue-10,"t#bar{t} (2l)");
-      addSample("TTJets_SemiLeptMGDecays_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7C-v1_AODSIM_UCSB1884ra2b_v71s",kAzure-3,"t#bar{t} (1l)");
-    }
-    else {
-      addSample("TTJets_FullLeptMGDecays_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7C-v2_AODSIM_UCSB1883_v71",kBlue-10,"t#bar{t} (2l)");
-      TString tslname = "TTJets_SemiLeptMGDecays_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7C-v1_AODSIM_UCSB1884_v71";
-      addSample(tslname,kAzure-3,"t#bar{t} (1l)");
-      chainSamples(tslname,"TTJets_SemiLeptMGDecays_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V19_ext1-v1_AODSIM_UCSB1962_v71");
-      chainSamples(tslname,"TTJets_SemiLeptMGDecays_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V19_ext2-v1_AODSIM_UCSB1959_v71");
-    }
+    addSample(addEnding("TTJets_FullLeptMGDecays_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7C-v2_AODSIM_UCSB1883",useSkim),kBlue-10,"t#bar{t} (2l)");
+    TString tslname = addEnding("TTJets_SemiLeptMGDecays_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7C-v1_AODSIM_UCSB1884",useSkim);
+    addSample(tslname,kAzure-3,"t#bar{t} (1l)");
+    chainSamples(tslname,addEnding("TTJets_SemiLeptMGDecays_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V19_ext1-v1_AODSIM_UCSB1962",useSkim));
+    chainSamples(tslname,addEnding("TTJets_SemiLeptMGDecays_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V19_ext2-v1_AODSIM_UCSB1959",useSkim));
   }
 
 
   const float hbbbb=0.561*0.561;
-/*
-  if (samplelist==""||samplelist.Contains("hh200")) 
-    //    addSample("TChihh-HbbHbb_mHiggsino-200_mLSP-1_8TeV-Pythia6Z_jgsmith-SMS-HbbHbb_mHiggsino-200_mLSP-1_1_UCSB1807_v69",kRed-7,"hh 200");
-    addSample("SMS-HbbHbb_mHiggsino-200_mLSP-1_8TeV-Pythia6Z_jgsmith_UCSB1807_v69",kRed-9,"hh 200");
-  if (samplelist==""||samplelist.Contains("hh250"))
-    addSample("SMS-HbbHbb_mHiggsino-250_mLSP-1_8TeV-Pythia6Z_jgsmith_UCSB1809_v69",kRed-7,"hh 250");
-  if (samplelist==""||samplelist.Contains("hh300"))
-    addSample("SMS-HbbHbb_mHiggsino-300_mLSP-1_8TeV-Pythia6Z_jgsmith_UCSB1810_v69",kRed-4,"hh 300");
-  if (samplelist==""||samplelist.Contains("hh350"))
-    //    addSample("TChihh-HbbHbb_mHiggsino-350_mLSP-1_8TeV-Pythia6Z_jgsmith-SMS-HbbHbb_mHiggsino-350_mLSP-1_1_UCSB1811_v69",kRed+2,"hh 350");
-    addSample("SMS-HbbHbb_mHiggsino-350_mLSP-1_8TeV-Pythia6Z_jgsmith_UCSB1811_v69",kRed+1,"hh 350");
-  if (samplelist==""||samplelist.Contains("hh400"))
-    addSample("SMS-HbbHbb_mHiggsino-400_mLSP-1_8TeV-Pythia6Z_jgsmith_UCSB1812_v69",kRed+2,"hh 400");
-  if (samplelist==""||samplelist.Contains("hh450"))
-    addSample("SMS-HbbHbb_mHiggsino-450_mLSP-1_8TeV-Pythia6Z_jgsmith_UCSB1808_v69",kRed+3,"hh 450");
-*/
-
-  //https://twiki.cern.ch/twiki/bin/view/CMS/Electrohiggs#Prospino_NLO_Cross_Sections
-/* 
-  //sigma x BF / ngen
-  if (samplelist==""||samplelist.Contains("hh200"))
-    setSampleScaleFactor("SMS-HbbHbb_mHiggsino-200_mLSP-1_8TeV-Pythia6Z_jgsmith_UCSB1807_v69", 0.608 *hbbbb/ getTree("SMS-HbbHbb_mHiggsino-200_mLSP-1_8TeV-Pythia6Z_jgsmith_UCSB1807_v69")->GetEntries());
-  if (samplelist==""||samplelist.Contains("hh250"))
-    setSampleScaleFactor("SMS-HbbHbb_mHiggsino-250_mLSP-1_8TeV-Pythia6Z_jgsmith_UCSB1809_v69", 0.244 *hbbbb/ getTree("SMS-HbbHbb_mHiggsino-250_mLSP-1_8TeV-Pythia6Z_jgsmith_UCSB1809_v69")->GetEntries());
-  if (samplelist==""||samplelist.Contains("hh300"))
-    setSampleScaleFactor("SMS-HbbHbb_mHiggsino-300_mLSP-1_8TeV-Pythia6Z_jgsmith_UCSB1810_v69", 0.111  *hbbbb/ getTree("SMS-HbbHbb_mHiggsino-300_mLSP-1_8TeV-Pythia6Z_jgsmith_UCSB1810_v69")->GetEntries());
-  if (samplelist==""||samplelist.Contains("hh350"))
-    setSampleScaleFactor("SMS-HbbHbb_mHiggsino-350_mLSP-1_8TeV-Pythia6Z_jgsmith_UCSB1811_v69", 0.0553 *hbbbb/getTree("SMS-HbbHbb_mHiggsino-350_mLSP-1_8TeV-Pythia6Z_jgsmith_UCSB1811_v69")->GetEntries());
-  if (samplelist==""||samplelist.Contains("hh400"))
-    setSampleScaleFactor("SMS-HbbHbb_mHiggsino-400_mLSP-1_8TeV-Pythia6Z_jgsmith_UCSB1812_v69",  0.0294 *hbbbb/getTree("SMS-HbbHbb_mHiggsino-400_mLSP-1_8TeV-Pythia6Z_jgsmith_UCSB1812_v69")->GetEntries());
-  if (samplelist==""||samplelist.Contains("hh450"))
-    setSampleScaleFactor("SMS-HbbHbb_mHiggsino-450_mLSP-1_8TeV-Pythia6Z_jgsmith_UCSB1808_v69",   0.0163 *hbbbb/getTree("SMS-HbbHbb_mHiggsino-450_mLSP-1_8TeV-Pythia6Z_jgsmith_UCSB1808_v69")->GetEntries());
-*/
-
 
   if (samplelist.Contains("hhmg175") || samplelist=="")
-    addSample("SMS-TChiHH_2b2b_2J_mChargino-130to325_mLSP-1to195_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1872_v71$175$1",kRed-5,"m_{#tilde{H}} = 175 GeV");
+    addSample(addEnding("SMS-TChiHH_2b2b_2J_mChargino-130to325_mLSP-1to195_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1872",useSkim)+"$175$1",kRed-5,"m_{#tilde{H}} = 175 GeV");
 
   if (samplelist.Contains("hhmg200") || samplelist=="") //used to be kRed-9
-    addSample("SMS-TChiHH_2b2b_2J_mChargino-130to325_mLSP-1to195_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1872_v71$200$1",kRed,"m_{#tilde{H}} = 200 GeV");
+    addSample(addEnding("SMS-TChiHH_2b2b_2J_mChargino-130to325_mLSP-1to195_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1872",useSkim)+"$200$1",kRed  ,"m_{#tilde{H}} = 200 GeV");
 
   if (samplelist.Contains("hhmg250") || samplelist=="")
-    addSample("SMS-TChiHH_2b2b_2J_mChargino-130to325_mLSP-1to195_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1872_v71$250$1",kRed-7,"m_{#tilde{H}} = 250 GeV");
+    addSample(addEnding("SMS-TChiHH_2b2b_2J_mChargino-130to325_mLSP-1to195_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1872",useSkim)+"$250$1",kRed-7,"m_{#tilde{H}} = 250 GeV");
 
   if (samplelist.Contains("hhmg300") || samplelist=="")
-    addSample("SMS-TChiHH_2b2b_2J_mChargino-130to325_mLSP-1to195_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1872_v71$300$1",kRed-4,"m_{#tilde{H}} = 300 GeV");
+    addSample(addEnding("SMS-TChiHH_2b2b_2J_mChargino-130to325_mLSP-1to195_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1872",useSkim)+"$300$1",kRed-4,"m_{#tilde{H}} = 300 GeV");
 
   if (samplelist.Contains("hhmg350") || samplelist=="")
-    addSample("SMS-TChiHH_2b2b_2J_mChargino-350to500_mLSP-1to370_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1871_v71$350$1",kRed+1,"m_{#tilde{H}} = 350 GeV");
+    addSample(addEnding("SMS-TChiHH_2b2b_2J_mChargino-350to500_mLSP-1to370_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1871",useSkim)+"$350$1",kRed+1,"m_{#tilde{H}} = 350 GeV");
 
   if (samplelist.Contains("hhmg400") || samplelist=="")
-    addSample("SMS-TChiHH_2b2b_2J_mChargino-350to500_mLSP-1to370_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1871_v71$400$1",kRed+2,"m_{#tilde{H}} = 400 GeV");
+    addSample(addEnding("SMS-TChiHH_2b2b_2J_mChargino-350to500_mLSP-1to370_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1871",useSkim)+"$400$1",kRed+2,"m_{#tilde{H}} = 400 GeV");
 
   if (samplelist.Contains("hhmg450") || samplelist=="")
-    addSample("SMS-TChiHH_2b2b_2J_mChargino-350to500_mLSP-1to370_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1871_v71$450$1",kRed+3,"m_{#tilde{H}} = 450 GeV");
+    addSample(addEnding("SMS-TChiHH_2b2b_2J_mChargino-350to500_mLSP-1to370_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1871",useSkim)+"$450$1",kRed+3,"m_{#tilde{H}} = 450 GeV");
 
   if (samplelist.Contains("hhmg500") || samplelist=="")
-    addSample("SMS-TChiHH_2b2b_2J_mChargino-350to500_mLSP-1to370_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1871_v71$500$1",kRed+4,"m_{#tilde{H}} = 500 GeV");
+    addSample(addEnding("SMS-TChiHH_2b2b_2J_mChargino-350to500_mLSP-1to370_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1871",useSkim)+"$500$1",kRed+4,"m_{#tilde{H}} = 500 GeV");
 
 
   if (samplelist.Contains("hhfull250")) {
@@ -441,21 +321,11 @@ void initHiggsSamples69(const bool useSkim=true,const TString samplelist="") {
     setSampleScaleFactor("HbbHbb_FullSim_400_v71",sf400);
   }
 
-/*
-//special colors for comparisons between mg and pythia  
-if (samplelist.Contains("hhmg200"))     addSample("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69$200$1",kBlue-9,"hh MG 200");
-  if (samplelist.Contains("hhmg250"))     addSample("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69$250$1",kBlue-7,"hh MG 250");
-  if (samplelist.Contains("hhmg300"))     addSample("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69$300$1",kBlue-4,"hh MG 300");
-  if (samplelist.Contains("hhmg350"))     addSample("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69$350$1",kBlue+1,"hh MG 350");
-  if (samplelist.Contains("hhmg400"))     addSample("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69$400$1",kBlue+2,"hh MG 400");
-  if (samplelist.Contains("hhmg450"))     addSample("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69$450$1",kBlue+3,"hh MG 450");
-  if (samplelist.Contains("hhmg500"))     addSample("HiggsinoNLSP_chargino130_to_500_bino1-PU_S10-TChihh_v69$500$1",kBlue+4,"hh MG 500");
-*/
 
   //scale by h->bb squared factor
   if (samplelist.Contains("hhmg") || samplelist=="") {
-    setSampleScaleFactor("SMS-TChiHH_2b2b_2J_mChargino-130to325_mLSP-1to195_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1872_v71",hbbbb);
-    setSampleScaleFactor("SMS-TChiHH_2b2b_2J_mChargino-350to500_mLSP-1to370_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1871_v71",hbbbb);
+    setSampleScaleFactor(addEnding("SMS-TChiHH_2b2b_2J_mChargino-130to325_mLSP-1to195_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1872",useSkim),hbbbb);
+    setSampleScaleFactor(addEnding("SMS-TChiHH_2b2b_2J_mChargino-350to500_mLSP-1to370_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1871",useSkim),hbbbb);
   }
 
   overrideSMSlabels_=true; //don't use the auto-labels for SMS
@@ -492,15 +362,149 @@ void compareWbcMassShape() {
 
 }
 
-void SimpleABCDcheck() {
-  initHiggsSamples69(true,"qcd znunu ttbar");
+void SLtoZLbackgroundCheck() {
+
+  const  bool useSkim=true;
+  initHiggsSamples69(useSkim,"ttbar znunu bjets wjets singlet"); //use all samples except signal
+
+
+  //use top pT weights
+  setSampleWeightFactor(addEnding("TTJets_FullLeptMGDecays_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7C-v2_AODSIM_UCSB1883",useSkim),"topPtWeightOfficial");
+  setSampleWeightFactor(addEnding("TTJets_SemiLeptMGDecays_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7C-v1_AODSIM_UCSB1884",useSkim),"topPtWeightOfficial");
+  setSampleWeightFactor(addEnding("TTJets_HadronicMGDecays_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A_ext-v1_AODSIM_UCSB1880",useSkim),   "topPtWeightOfficial");
+
+
+  int nbins;
+  float low,high;
+  TString var,xtitle;
+
+  doOverflowAddition(true);
+  doRatio_=false; ratioMin = 0; ratioMax = 2.2;
+  dodata_=true;
+
+  //define useful cuts
+  TCut baseline = "cutPV==1 &&passCleaning==1 &&buggyEvent==0&& MET/caloMET<2 && maxTOBTECjetDeltaMult<40"; 
+
+  TCut triggerJetMET = "passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1||passMC_DiCentralPFJet30_PFMHT80==1";
+  TCut triggerMET = "passMC_PFMET150==1";
+  TCut trigger = triggerJetMET||triggerMET;
+
+  TCut zl = "nMuons==0&&nElectrons==0&&nTausLoose==0";
+  TCut isotk="nIsoPFcands10_010==0";
+
+  TCut sl = "nMuons+nElectrons==1 &&nTausLoose==0";
+
+  TCut njets4="njets20==4"; //switch back to 20 GeV jets
+  TCut njets5="njets20==5";
+  TCut jet2="jetpt2>50";
+
+  TCut jets = (njets4||njets5) && jet2;
+
+  //  TCut mdp = "minDeltaPhi20>0.5 || (minDeltaPhi20>0.3&&METsig>50)";
+  TCut mdp = "minDeltaPhi20_eta5_noIdAll_nobeta>0.5 || (minDeltaPhi20_eta5_noIdAll_nobeta>0.3 && METsig>50)";
+
+  TCut higgsSR_av = "(0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)>100)&&(0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)<140)";
+  TCut higgsSR_d = "abs(higgsMbb1MassDiff-higgsMbb2MassDiff)<20";
+  TCut higgsSR = higgsSR_av && higgsSR_d;
+
+  TCut higgsSB_avl = "0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)<90";
+  TCut higgsSB_avh = "0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)>150";
+  TCut higgsSB_d = "abs(higgsMbb1MassDiff-higgsMbb2MassDiff)>30";
+  TCut higgsSB = higgsSB_avl||higgsSB_avh||higgsSB_d;
+
+  TCut metsig[4];
+  metsig[0]="METsig>=30&&METsig<50";
+  metsig[1]="METsig>=50&&METsig<100";
+  metsig[2]="METsig>=100&&METsig<150";
+  metsig[3]="METsig>=150";
+
+  TCut drmax = "deltaRmax_hh<2.2";
+
+  setStackMode(true,false,false); //stack,norm,label override
+  setLogY(false);
+
+  TCut btag2sf="nbtag2_nomSF==1";
+  TCut btag3sf="nbtag3_nomSF==1";
+  TCut btag4sf="nbtag4_nomSF==1";
+
+  setLogY(false);
+  savePlots_=false;
+  /* 
+
+-- in each METsig bin --
+
+compute in MC: R01 = (4b ZL)/(4b SL) 
+count in data: 4b SL
+compute: Npred = R01 * (4b SL)_data
+
+compare to Nobs (4b ZL)_data
+
+  */
+
+  double nSL_MC[3][4];
+  double nZL_MC[3][4];
+  double nSL_MC_err[3][4];
+  double nZL_MC_err[3][4];
+  double nSL_data[3][4];
+  double nZL_data[3][4];
+
+  TCut btagcuts[3];
+  btagcuts[0] = btag2sf;
+  btagcuts[1] = btag3sf;
+  btagcuts[2] = btag4sf;
+
+  for (int ib = 0; ib<3; ib++) {
+    for (int imet = 0; imet<4; imet++) {
+      
+      nbins=10; low=0; high=1e6;
+      var="HT"; xtitle="HT";
+ 
+      // SL selection ; 4b SIG
+      selection_ = baseline && trigger&& sl && jets && mdp && higgsSR && metsig[imet] && btagcuts[ib] && drmax;
+      
+      drawPlots(var,nbins,low,high,xtitle,"Events", "blah",0);
+      nSL_MC[ib][imet] = getIntegral("totalsm");
+      nSL_MC_err[ib][imet] = getIntegralErr("totalsm");
+      nSL_data[ib][imet] = getIntegral("data");
+      
+      // ZL selection ; 4b SIG
+      selection_ = baseline && trigger&& zl && isotk && jets && mdp && higgsSR && metsig[imet] && btagcuts[ib] && drmax;
+      drawPlots(var,nbins,low,high,xtitle,"Events", "blah",0);
+      nZL_MC[ib][imet] = getIntegral("totalsm");
+      nZL_MC_err[ib][imet] = getIntegralErr("totalsm");
+      nZL_data[ib][imet] = getIntegral("data");
+      
+    }
+  }
+
+  printf("nb ; S bin ; ZL MC / SL MC ; R01  ; SL data ; prediction  ; observed\n");
+  for (int ib = 0; ib<3; ib++) {
+    cout<< " --------------------------------------------"<<endl;
+    for (int imet = 0; imet<4; imet++) {
+      //compute R01
+    double R01 = nZL_MC[ib][imet] / nSL_MC[ib][imet];
+    double R01_err = jmt::errAoverB( nZL_MC[ib][imet],nZL_MC_err[ib][imet],nSL_MC[ib][imet],nSL_MC_err[ib][imet]);
+
+    double prediction = R01 * nSL_data[ib][imet];
+    double prediction_err = jmt::errAtimesB( R01,R01_err,nSL_data[ib][imet],sqrt(nSL_data[ib][imet]));
+
+    cout<<ib+2<<" "<<imet+1<<" ;  "<<nZL_MC[ib][imet]<< " / "<<nSL_MC[ib][imet]<<" = "<<R01<<" +/- "<<R01_err<<" ; "<<nSL_data[ib][imet]<<" ; "<<jmt::format_nevents(prediction,prediction_err,true)<<" ; "<<nZL_data[ib][imet]<<endl;
+    
+    }
+  }
+
+
+}
+
+void SimpleABCDcheck(bool usedata=false) {
+  initHiggsSamples69(true,"bjets znunu ttbar");
   int nbins;
   float low,high;
   TString var,xtitle;
 
   doOverflowAddition(true);
   doRatio_=false; ratioMin = 0.4; ratioMax = 1.6;
-  dodata_=false;
+  dodata_=usedata;
   useTrigEff_=false;
   usePUweight_=true; 
   savePlots_=false;
@@ -515,15 +519,19 @@ void SimpleABCDcheck() {
   TCut zl = "nMuons==0&&nElectrons==0&&nTausLoose==0";
   TCut isotk="nIsoPFcands10_010==0";
 
-  TCut sl = "nMuons+nElectrons==1 &&nTausLoose==0 &&nIsoTracks15_005_03_lepcleaned==0";
+  TCut sl = "nMuons+nElectrons==1 &&nTausLoose==0";
 
   TCut njets4="njets20==4";
   TCut njets5="njets20==5";
   TCut jet2="jetpt2>50";
-  TCut mdp = "minDeltaPhi20>0.5 || (minDeltaPhi20>0.3&&METsig>50)";
+  TCut mdp = "minDeltaPhi20_eta5_noIdAll_nobeta>0.5 || (minDeltaPhi20_eta5_noIdAll_nobeta>0.3 && METsig>50)";
   TCut btag2="CSVbest2>0.898";
   TCut btag3="CSVbest3>0.679";
   TCut btag4="CSVbest4>0.244";
+
+  TCut btag2sf="nbtag2_nomSF==1";
+  TCut btag3sf="nbtag3_nomSF==1";
+  TCut btag4sf="nbtag4_nomSF==1";
 
   TCut higgsSR_av = "(0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)>100)&&(0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)<140)";
   TCut higgsSR_d = "abs(higgsMbb1MassDiff-higgsMbb2MassDiff)<20";
@@ -538,30 +546,50 @@ void SimpleABCDcheck() {
 
   TCut drmax = "deltaRmax_hh<2.2";
 
-  TCut SIG_4b = baseline&&trigger&&zl&&isotk&&(njets4||njets5)&&jet2&&mdp&&drmax&&btag2 && btag3&&btag4 && higgsSR;
-  TCut SB_4b = baseline&&trigger&&zl&&isotk&&(njets4||njets5)&&jet2&&mdp&&drmax&&btag2 && btag3&&btag4 && higgsSB;
-  TCut SIG_2b = baseline&&trigger&&zl&&isotk&&(njets4||njets5)&&jet2&&mdp&&drmax&&btag2 && !btag3 && higgsSR;
-  TCut SB_2b = baseline&&trigger&&zl&&isotk&&(njets4||njets5)&&jet2&&mdp&&drmax&&btag2 && !btag3 && higgsSB;
+  TCut SIG_4b = baseline&&trigger&&zl&&isotk&&(njets4||njets5)&&jet2&&mdp&&drmax&&btag4sf && higgsSR;
+  TCut SB_4b = baseline&&trigger&&zl&&isotk&&(njets4||njets5)&&jet2&&mdp&&drmax&& btag4sf && higgsSB;
+  TCut SIG_3b = baseline&&trigger&&zl&&isotk&&(njets4||njets5)&&jet2&&mdp&&drmax&&btag3sf && higgsSR;
+  TCut SB_3b = baseline&&trigger&&zl&&isotk&&(njets4||njets5)&&jet2&&mdp&&drmax&& btag3sf && higgsSB;
+  TCut SIG_2b = baseline&&trigger&&zl&&isotk&&(njets4||njets5)&&jet2&&mdp&&drmax&&btag2sf  && higgsSR;
+  TCut SB_2b = baseline&&trigger&&zl&&isotk&&(njets4||njets5)&&jet2&&mdp&&drmax&&btag2sf  && higgsSB;
 
   float varbinsmetsig[6] = {0,30,50,100,150,500};
   nbins=5; low=0; high=500;
   var="METsig"; xtitle="E^{miss}_{T} significance #it{S}";
 
+  TH1D* h1=0;
+
   selection_ = SIG_4b;
   drawPlots(var,nbins,low,high,xtitle,"Events", "dummy",varbinsmetsig);
-  TH1D* h_SIG_4b = (TH1D*) totalsm->Clone("h_SIG_4b");
+  h1 = usedata ? hdata : totalsm;
+  TH1D* h_SIG_4b = (TH1D*) h1->Clone("h_SIG_4b");
 
   selection_ = SB_4b;
   drawPlots(var,nbins,low,high,xtitle,"Events", "dummy",varbinsmetsig);
-  TH1D* h_SB_4b = (TH1D*) totalsm->Clone("h_SB_4b");
+  h1 = usedata ? hdata : totalsm;
+  TH1D* h_SB_4b = (TH1D*) h1->Clone("h_SB_4b");
+
+  selection_ = SIG_3b;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "dummy",varbinsmetsig);
+  h1 = usedata ? hdata : totalsm;
+  TH1D* h_SIG_3b = (TH1D*) h1->Clone("h_SIG_3b");
+
+  selection_ = SB_3b;
+  drawPlots(var,nbins,low,high,xtitle,"Events", "dummy",varbinsmetsig);
+  h1 = usedata ? hdata : totalsm;
+  TH1D* h_SB_3b = (TH1D*) h1->Clone("h_SB_3b");
 
   selection_ = SIG_2b;
   drawPlots(var,nbins,low,high,xtitle,"Events", "dummy",varbinsmetsig);
-  TH1D* h_SIG_2b = (TH1D*) totalsm->Clone("h_SIG_2b");
+  h1 = usedata ? hdata : totalsm;
+  TH1D* h_SIG_2b = (TH1D*) h1->Clone("h_SIG_2b");
 
   selection_ = SB_2b;
   drawPlots(var,nbins,low,high,xtitle,"Events", "dummy",varbinsmetsig);
-  TH1D* h_SB_2b = (TH1D*) totalsm->Clone("h_SB_2b");
+  h1 = usedata ? hdata : totalsm;
+  TH1D* h_SB_2b = (TH1D*) h1->Clone("h_SB_2b");
+
+  TString truthlabel = dodata_ ? " Observed = " : " Truth      = ";
 
   // pred = SB_4b * SIG_2b / SB_2b
   for (int ibin =2; ibin<=5; ibin++) { //skip first bin
@@ -573,7 +601,20 @@ void SimpleABCDcheck() {
     double err = jmt::errAtimesB(h_SB_4b->GetBinContent(ibin),h_SB_4b->GetBinError(ibin),h_SIG_2b->GetBinContent(ibin) / h_SB_2b->GetBinContent(ibin),Rerr);
     cout<<err<<endl;
     
-    cout<<" Truth      = "<<h_SIG_4b->GetBinContent(ibin)<<" +/- "<<h_SIG_4b->GetBinError(ibin)<<endl;
+    cout<<truthlabel<<h_SIG_4b->GetBinContent(ibin)<<" +/- "<<h_SIG_4b->GetBinError(ibin)<<endl;
+  }
+
+  // pred = SB_3b * SIG_2b / SB_2b
+  for (int ibin =2; ibin<=5; ibin++) { //skip first bin
+    cout<<" == ABCD for bin starting at "<<h_SIG_3b->GetBinLowEdge(ibin)<<endl;
+
+    cout<<" Prediction = "<<h_SB_3b->GetBinContent(ibin) * h_SIG_2b->GetBinContent(ibin) / h_SB_2b->GetBinContent(ibin);
+    cout<<" +/- ";
+    double Rerr=jmt::errAoverB(h_SIG_2b->GetBinContent(ibin),h_SIG_2b->GetBinError(ibin), h_SB_2b->GetBinContent(ibin),h_SB_2b->GetBinError(ibin));
+    double err = jmt::errAtimesB(h_SB_3b->GetBinContent(ibin),h_SB_3b->GetBinError(ibin),h_SIG_2b->GetBinContent(ibin) / h_SB_2b->GetBinContent(ibin),Rerr);
+    cout<<err<<endl;
+    
+    cout<<truthlabel<<h_SIG_3b->GetBinContent(ibin)<<" +/- "<<h_SIG_3b->GetBinError(ibin)<<endl;
   }
 
 }
