@@ -27,8 +27,16 @@
       TTree* inReducedTree = (TTree*) infile->Get("reducedTree") ;
 
       Long64_t nentries = inReducedTree -> GetEntries() ;
+      Long64_t nselected=0;
 
       printf("\n\n Number of entries: %llu\n\n", nentries ) ;
+
+      TString filename(infile_name);
+      bool isHiggsinoSignal = filename.Contains("SMS-TChiHH");
+      if (isHiggsinoSignal) {
+	cout<<"This file is a Higgsino signal. Will not skim but will drop point with non-zero LSP mass!"<<endl<<endl;
+	doSlim=false;
+      }
 
       if ( doSlim ) {
 
@@ -126,7 +134,7 @@
      //--- Vars needed to decide whether or not to save the event.
       bool trig1, trig2, trig3 ;
       inReducedTree -> SetBranchAddress("passMC_DiCentralPFJet30_PFMET80_BTagCSV07", &trig1 ) ;
-      inReducedTree -> SetBranchAddress("passMC_DiPFJet80_DiPFJet30_BTagCSVd07d05", &trig2 ) ;
+      inReducedTree -> SetBranchAddress("passMC_DiCentralPFJet30_PFMHT80", &trig2 ) ;
       inReducedTree -> SetBranchAddress("passMC_PFMET150", &trig3 ) ;
 
       int njets20 ;
@@ -134,15 +142,38 @@
       int njets30 ;
       inReducedTree -> SetBranchAddress("njets30", &njets30 ) ;
 
-      float CSVbest2 ;
-      inReducedTree -> SetBranchAddress("CSVbest2", &CSVbest2) ;
+      //      float CSVbest2 ;
+      //      inReducedTree -> SetBranchAddress("CSVbest2", &CSVbest2) ;
+
+      int nbtag2_rawMC,nbtag3_rawMC,nbtag4_rawMC;
+      int nbtag2_nomSF,nbtag3_nomSF,nbtag4_nomSF;
+      int nbtag2_SFp1sig,nbtag3_SFp1sig,nbtag4_SFp1sig;
+      int nbtag2_SFm1sig,nbtag3_SFm1sig,nbtag4_SFm1sig;
+      inReducedTree -> SetBranchAddress("nbtag2_rawMC", &nbtag2_rawMC) ;
+      inReducedTree -> SetBranchAddress("nbtag3_rawMC", &nbtag3_rawMC) ;
+      inReducedTree -> SetBranchAddress("nbtag4_rawMC", &nbtag4_rawMC) ;
+
+      inReducedTree -> SetBranchAddress("nbtag2_nomSF", &nbtag2_nomSF) ;
+      inReducedTree -> SetBranchAddress("nbtag3_nomSF", &nbtag3_nomSF) ;
+      inReducedTree -> SetBranchAddress("nbtag4_nomSF", &nbtag4_nomSF) ;
+
+      inReducedTree -> SetBranchAddress("nbtag2_SFp1sig", &nbtag2_SFp1sig) ;
+      inReducedTree -> SetBranchAddress("nbtag3_SFp1sig", &nbtag3_SFp1sig) ;
+      inReducedTree -> SetBranchAddress("nbtag4_SFp1sig", &nbtag4_SFp1sig) ;
+
+      inReducedTree -> SetBranchAddress("nbtag2_SFm1sig", &nbtag2_SFm1sig) ;
+      inReducedTree -> SetBranchAddress("nbtag3_SFm1sig", &nbtag3_SFm1sig) ;
+      inReducedTree -> SetBranchAddress("nbtag4_SFm1sig", &nbtag4_SFm1sig) ;
+
 
       bool cutPV, passCleaning, buggyEvent ;
       inReducedTree -> SetBranchAddress("cutPV", &cutPV ) ;
       inReducedTree -> SetBranchAddress("passCleaning", &passCleaning ) ;
       inReducedTree -> SetBranchAddress("buggyEvent", &buggyEvent ) ;
 
-
+      //for signal only
+      int m12;
+      inReducedTree -> SetBranchAddress("m12", &m12 ) ;
 
 
      //--- Open output file
@@ -212,22 +243,42 @@
 
          inReducedTree -> GetEntry(ievt) ;
 
-         if ( !cutPV ) continue ;
-         if ( !passCleaning ) continue ;
-         if ( buggyEvent ) continue ;
-         if ( !(trig1 || trig2 || trig3) ) continue ;
-         //-----------
-         // Owen: make njets cut safe for pt>20 or pt>30.
-         //       this means you must cut on the appropriate njets variable when using the skim output.
-         if ( njets20<4 || njets30>5 ) continue ;
-         //-----------
-         if ( CSVbest2 < 0.898 ) continue ;
+	 if (isHiggsinoSignal ) {
+	   //signal -- only skim cut is on the LSP mass
+	   //we only want massless LSP
+	   if (m12 >=5) continue;
+	 }
+	 else { //normal skim
 
+	   if ( !cutPV ) continue ;
+	   if ( !passCleaning ) continue ;
+	   if ( buggyEvent ) continue ;
+	   if ( !(trig1 || trig2 || trig3) ) continue ;
+	   //-----------
+	   // Owen: make njets cut safe for pt>20 or pt>30.
+	   //       this means you must cut on the appropriate njets variable when using the skim output.
+	   if ( njets20<4 || njets30>5 ) continue ;
+	   //-----------
+	   // Use new b-tag variables instead of CSVbestN, in order to account for the case where the SF has shifted something
+	   //         if ( CSVbest2 < 0.898 ) continue ;
+	   
+	   int rawMCsum = nbtag2_rawMC+nbtag3_rawMC+nbtag4_rawMC;
+	   int nomSFsum  = nbtag2_nomSF+nbtag3_nomSF+nbtag4_nomSF;
+	   int sfp1sum =  nbtag2_SFp1sig+nbtag3_SFp1sig+nbtag4_SFp1sig;
+	   int sfm1sum = nbtag2_SFm1sig+nbtag3_SFm1sig+nbtag4_SFm1sig;
+	   
+	   int grandSum = rawMCsum+nomSFsum+sfp1sum+sfm1sum;
+	   if (grandSum == 0) continue;
+	 }
+	 
+	 ++nselected;
          outReducedTree->Fill() ;
 
       } // ievt.
 
       printf("\n\n\n Done.\n\n\n") ;
+
+      printf("%.2f percent selected by skim\n",100*double(nselected) / double(nentries));
 
       printf("\n\n Output file:  %s\n\n\n", outfile_name.Data() ) ;
 
