@@ -6,6 +6,9 @@
 #include "TStopwatch.h"
 #include "TMath.h"
 
+#include "TH2.h"
+#include "TH3.h"
+
 #include <iostream>
 
 //
@@ -33,9 +36,18 @@
 
       TString filename(infile_name);
       bool isHiggsinoSignal = filename.Contains("SMS-TChiHH");
+      TH2D* scanSMSngen=0;
+      TH3D* scanSMSngen3D=0;
       if (isHiggsinoSignal) {
+	//NOPE...this isn't effective until I also copy over the scanSMSngen histograms
 	cout<<"This file is a Higgsino signal. Will not skim but will drop point with non-zero LSP mass!"<<endl<<endl;
 	doSlim=false;
+	scanSMSngen = (TH2D*) infile->Get("scanSMSngen");
+	scanSMSngen3D = (TH3D*) infile->Get("scanSMSngen3D");
+	if (scanSMSngen!=0 && scanSMSngen3D!=0) {
+	  cout<<"Found scanSMSngen[2D/3D]"<<endl;
+	}
+	else assert(0);
       }
 
       if ( doSlim ) {
@@ -205,6 +217,8 @@
          gSystem->Exec( command ) ;
       }
       TFile* outfile = new TFile( outfile_name, "recreate" ) ;
+      scanSMSngen->Write();
+      scanSMSngen3D->Write();
       TTree* outReducedTree = inReducedTree->CloneTree(0) ;
 
 
