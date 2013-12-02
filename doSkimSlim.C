@@ -39,7 +39,6 @@
       TH2D* scanSMSngen=0;
       TH3D* scanSMSngen3D=0;
       if (isHiggsinoSignal) {
-	//NOPE...this isn't effective until I also copy over the scanSMSngen histograms
 	cout<<"This file is a Higgsino signal. Will not skim but will drop point with non-zero LSP mass!"<<endl<<endl;
 	doSlim=false;
 	scanSMSngen = (TH2D*) infile->Get("scanSMSngen");
@@ -217,8 +216,10 @@
          gSystem->Exec( command ) ;
       }
       TFile* outfile = new TFile( outfile_name, "recreate" ) ;
-      scanSMSngen->Write();
-      scanSMSngen3D->Write();
+      if (isHiggsinoSignal) {
+	scanSMSngen->Write();
+	scanSMSngen3D->Write();
+      }
       TTree* outReducedTree = inReducedTree->CloneTree(0) ;
 
 
