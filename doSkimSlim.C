@@ -22,7 +22,7 @@
 //          .L doSkimSlim.C+
 //
 
-  void doSkimSlim( const char* infile_name, bool doSlim = false  ) {
+void doSkimSlim( const char* infile_name, bool doSlim = false ) {
 
       TFile* infile = new TFile( infile_name ) ;
       if ( ! (infile->IsOpen()) ) return ;
@@ -153,8 +153,8 @@
       int njets30 ;
       inReducedTree -> SetBranchAddress("njets30", &njets30 ) ;
 
-      //      float CSVbest2 ;
-      //      inReducedTree -> SetBranchAddress("CSVbest2", &CSVbest2) ;
+      float CSVbest2 ;
+      inReducedTree -> SetBranchAddress("CSVbest2", &CSVbest2) ;
 
       int nbtag2_rawMC,nbtag3_rawMC,nbtag4_rawMC;
       int nbtag2_nomSF,nbtag3_nomSF,nbtag4_nomSF;
@@ -266,7 +266,7 @@
 	 else { //normal skim
 
 	   if ( !cutPV ) continue ;
-	   if ( !passCleaning ) continue ;
+	   //	   if ( !passCleaning ) continue ;
 	   if ( buggyEvent ) continue ;
 	   if ( !(trig1 || trig2 || trig3) ) continue ;
 	   //-----------
@@ -275,15 +275,16 @@
 	   if ( njets20<4 || njets30>5 ) continue ;
 	   //-----------
 	   // Use new b-tag variables instead of CSVbestN, in order to account for the case where the SF has shifted something
-	   //         if ( CSVbest2 < 0.898 ) continue ;
-	   
+	   bool passOldSkim = CSVbest2 >= 0.898;
 	   int rawMCsum = nbtag2_rawMC+nbtag3_rawMC+nbtag4_rawMC;
 	   int nomSFsum  = nbtag2_nomSF+nbtag3_nomSF+nbtag4_nomSF;
 	   int sfp1sum =  nbtag2_SFp1sig+nbtag3_SFp1sig+nbtag4_SFp1sig;
 	   int sfm1sum = nbtag2_SFm1sig+nbtag3_SFm1sig+nbtag4_SFm1sig;
 	   
 	   int grandSum = rawMCsum+nomSFsum+sfp1sum+sfm1sum;
-	   if (grandSum == 0) continue;
+	   bool passNewSkim = (grandSum != 0);
+
+	   if (!(passNewSkim || passOldSkim)) continue;
 	 }
 	 
 	 ++nselected;
