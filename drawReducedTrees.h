@@ -312,7 +312,7 @@ double customPlotMin_=0;
 
 float maxScaleFactor_ = 1.05;
 float xlabeloffset_=0.015;
-float xtitleoffset_=0.97;
+float xtitleoffset_=1.16; //was 0.97
 
 bool splitTTbar_ = false;
 bool splitWJets_ = false;
@@ -868,6 +868,8 @@ void renewCanvas(const TString opt="",const int ncol=1) {
       if (logy_) thecanvas->SetLogy(); 
       if (logx_) thecanvas->SetLogx();
     }
+
+    thecanvas->GetPad(0)->SetBottomMargin(0.16); //default 0.13
 
   }
 
@@ -2473,15 +2475,6 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
     }
   } //loop over samples and fill histograms
 
-  //fill legend
-  if (drawTotalSMSusy_) leg->AddEntry(totalsmsusy, sampleLabel_["Total"],"F");
-  if (drawTotalSM_) leg->AddEntry(totalsm, sampleLabel_["TotalSM"],"F");
-  for (int isample=int(samples_.size())-1; isample>=0; isample--) {
-    if (dostack_ || (!drawSusyOnly_ || samples_[isample].Contains("LM")|| samples_[isample].Contains("SUGRA"))) { //drawSusyOnly_ means don't draw SM
-      leg->AddEntry(histos_[samples_[isample]], getSampleLabel(samples_[isample]),"F");
-    }
-  }
-
   if (!dostack_) {
     //also unit normalize the totalsm
     if (normalized_ && totalsm->Integral()>0) totalsm->Scale(1.0/totalsm->Integral()); //15 Jan 2013
@@ -2617,6 +2610,17 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
       MCIntegral_ = totalsm->IntegralAndError(totalsm->GetXaxis()->GetFirst(),totalsm->GetXaxis()->GetLast(),MCIntegralErr_);
     }
   } //if dodata_
+
+
+  //fill legend (moved to after data is drawn so that data comes first in legend)
+  if (drawTotalSMSusy_) leg->AddEntry(totalsmsusy, sampleLabel_["Total"],"F");
+  if (drawTotalSM_) leg->AddEntry(totalsm, sampleLabel_["TotalSM"],"F");
+  for (int isample=int(samples_.size())-1; isample>=0; isample--) {
+    if (dostack_ || (!drawSusyOnly_ || samples_[isample].Contains("LM")|| samples_[isample].Contains("SUGRA"))) { //drawSusyOnly_ means don't draw SM
+      leg->AddEntry(histos_[samples_[isample]], getSampleLabel(samples_[isample]),"F");
+    }
+  }
+
   if (doRatio_) {
       TString ratioytitle = "Data/MC ";
       thecanvas->cd(2);
