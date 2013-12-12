@@ -511,6 +511,19 @@ float EventCalculator::getPUWeight( reweight::LumiReWeighting lumiWeights ) {
 }
 
 
+float EventCalculator::PU_sumpt(int index,bool highpt) {
+
+  std::vector<std::vector<float> > * my_sumpt = highpt ? PU_sumpT_highpT : PU_sumpT_lowpT;
+
+  float sum=0;
+  size_t npu=my_sumpt->at(index).size();
+  for (size_t i=0; i<npu; ++i) {
+    sum += my_sumpt->at(index).at(i);
+  }
+
+  return sum;
+}
+
 //3d pu reweighting deprecated for 2012
 
 
@@ -7875,6 +7888,16 @@ void EventCalculator::reducedTree(TString outputpath) {
   float maxDeltaPhi_bb_bb;
 
   int nGoodPV;
+  //more pileup info
+  int PU_numInterations_Minus1;
+  int PU_numInterations_0;
+  int PU_numInterations_Plus1;
+  float PU_sumHighPtTotal_Minus1;
+  float PU_sumHighPtTotal_0;
+  float PU_sumHighPtTotal_Plus1;
+  float PU_sumLowPtTotal_Minus1;
+  float PU_sumLowPtTotal_0;
+  float PU_sumLowPtTotal_Plus1;
 
   float PV0_x;
   float PV0_xErr;
@@ -8341,6 +8364,18 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("TOBTECjetChMult",&TOBTECjetChMult,"TOBTECjetChMult/I");
 
   reducedTree.Branch("nGoodPV",&nGoodPV,"nGoodPV/I");
+  reducedTree.Branch("PU_numInterations_Minus1",&PU_numInterations_Minus1,"PU_numInterations_Minus1/I");
+  reducedTree.Branch("PU_numInterations_0",&PU_numInterations_0,"PU_numInterations_0/I");
+  reducedTree.Branch("PU_numInterations_Plus1",&PU_numInterations_Plus1,"PU_numInterations_Plus1/I");
+
+  reducedTree.Branch("PU_sumHighPtTotal_Minus1",&PU_sumHighPtTotal_Minus1,"PU_sumHighPtTotal_Minus1/F");
+  reducedTree.Branch("PU_sumHighPtTotal_0",&PU_sumHighPtTotal_0,"PU_sumHighPtTotal_0/F");
+  reducedTree.Branch("PU_sumHighPtTotal_Plus1",&PU_sumHighPtTotal_Plus1,"PU_sumHighPtTotal_Plus1/F");
+
+  reducedTree.Branch("PU_sumLowPtTotal_Minus1",&PU_sumLowPtTotal_Minus1,"PU_sumLowPtTotal_Minus1/F");
+  reducedTree.Branch("PU_sumLowPtTotal_0",&PU_sumLowPtTotal_0,"PU_sumLowPtTotal_0/F");
+  reducedTree.Branch("PU_sumLowPtTotal_Plus1",&PU_sumLowPtTotal_Plus1,"PU_sumLowPtTotal_Plus1/F");
+
 
   reducedTree.Branch("PV0_x",&PV0_x,"PV0_x/F");
   reducedTree.Branch("PV0_xErr",&PV0_xErr,"PV0_xErr/F");
@@ -9310,6 +9345,31 @@ void EventCalculator::reducedTree(TString outputpath) {
       HT20=getHT(20);
       PUweight =  puReweightIs1D ? getPUWeight(*LumiWeights) : 1;
       PUweightSystVar =  puReweightIs1D ? getPUWeight(*LumiWeightsSystVar) : 1;
+      
+      //init everything to good default values
+      PU_numInterations_Minus1 = -1;      PU_numInterations_0      = -1;      PU_numInterations_Plus1  = -1;
+      PU_sumHighPtTotal_Minus1 = 0;      PU_sumHighPtTotal_0 = 0;      PU_sumHighPtTotal_Plus1 = 0;
+      PU_sumLowPtTotal_Minus1 = 0;      PU_sumLowPtTotal_0= 0;      PU_sumLowPtTotal_Plus1= 0;
+      if (!isSampleRealData() ) {
+	for (size_t ipu = 0; ipu<PU_NumInteractions->size(); ++ipu) {
+	  int thisbx = PU_bunchCrossing->at(ipu);
+	  if      (thisbx == -1 ) {
+	    PU_numInterations_Minus1 = PU_NumInteractions->at(ipu);
+	    PU_sumHighPtTotal_Minus1 = PU_sumpt(ipu,true);
+	    PU_sumLowPtTotal_Minus1= PU_sumpt(ipu,false);
+	  }
+	  else if (thisbx ==  0 ) {
+	    PU_numInterations_0 = PU_NumInteractions->at(ipu);
+	    PU_sumHighPtTotal_0 = PU_sumpt(ipu,true);
+	    PU_sumLowPtTotal_0= PU_sumpt(ipu,false);
+	  }
+	  else if (thisbx ==  1 ) {
+	    PU_numInterations_Plus1 = PU_NumInteractions->at(ipu);
+	    PU_sumHighPtTotal_Plus1 = PU_sumpt(ipu,true);
+	    PU_sumLowPtTotal_Plus1= PU_sumpt(ipu,false);
+	  }
+	}
+      }
 
       cutPV = passPV();
 

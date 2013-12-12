@@ -135,6 +135,9 @@ public:
   Long64_t getNEventsGeneratedExtended();
   float getPUWeight(reweight::LumiReWeighting lumiWeights);
 
+  float PU_sumpt(int index,bool highpt);
+
+
   float getMuonRelIso(const unsigned int k);
   float getElectronRelIso(const unsigned int k, const bool use2012id);
  
