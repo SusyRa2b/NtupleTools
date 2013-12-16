@@ -1,4 +1,11 @@
 /*
+16 Dec -- warning -- update to use btag SFs does not account for the fact that
+one cannot use the b-tag leg of the trigger when one uses the btag SFs
+
+experience shows that this is a small effect though
+*/
+
+/*
 
 .L TSelectorMultiDraw.C+
 .L CrossSectionTable.cxx+
@@ -14,15 +21,17 @@
 //to draw everything use default argument
 void makeplots1(TString todraw="table pv mass 2b 3b 4b met0 met1 met2 met3 met4 sb sig") {
 
+  const bool useskim=true;
+
   //initHiggsSamples69(true,"ttbar znunu qcd wjets ttv vv singlet"); //all backgrounds
-  initHiggsSamples69(true,"ttbar znunu bjets wjets ttv vv singlet hhmg300"); //all backgrounds
+  initHiggsSamples69(useskim,"ttbar znunu bjets wjets ttv vv singlet hhmg300"); //all backgrounds
 
   setOutputDirectory("plots_unblind");
 
   //use top pT weights
-  setSampleWeightFactor("TTJets_FullLeptMGDecays_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7C-v2_AODSIM_UCSB1883ra2b_v71s","topPtWeight");
-  setSampleWeightFactor("TTJets_SemiLeptMGDecays_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7C-v1_AODSIM_UCSB1884ra2b_v71s","topPtWeight");
-  setSampleWeightFactor("TTJets_HadronicMGDecays_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A_ext-v1_AODSIM_UCSB1880ra2b_v71s",   "topPtWeight");
+  setSampleWeightFactor(addEnding("TTJets_FullLeptMGDecays_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7C-v2_AODSIM_UCSB1883",useskim),"topPtWeightOfficial");
+  setSampleWeightFactor(addEnding("TTJets_SemiLeptMGDecays_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7C-v1_AODSIM_UCSB1884",useskim),"topPtWeightOfficial");
+  setSampleWeightFactor(addEnding("TTJets_HadronicMGDecays_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A_ext-v1_AODSIM_UCSB1880",useskim),   "topPtWeightOfficial");
 
   int nbins;
   float low,high;
@@ -52,7 +61,10 @@ void makeplots1(TString todraw="table pv mass 2b 3b 4b met0 met1 met2 met3 met4 
   TCut btag3="CSVbest3>0.679";
   TCut btag4="CSVbest4>0.244";
 
-  //  TCut mdp = "minDeltaPhi20>0.5 || (minDeltaPhi20>0.3&&METsig>50)";
+  TCut btag2sf="nbtag2_nomSF==1";
+  TCut btag3sf="nbtag3_nomSF==1";
+  TCut btag4sf="nbtag4_nomSF==1";
+
   TCut mdp = "minDeltaPhi20_eta5_noIdAll_nobeta>0.5 || (minDeltaPhi20_eta5_noIdAll_nobeta>0.3 && METsig>50)";
 
   TCut higgsSR_av = "(0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)>100)&&(0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)<140)";
@@ -72,27 +84,26 @@ void makeplots1(TString todraw="table pv mass 2b 3b 4b met0 met1 met2 met3 met4 
   setLogY(false);
 
   //define 2b, 3b, 4b SB
-  TCut nb2b = baseline && trigger && zl&& isotk && jets && btag2 && !btag3  && mdp && drmax;
-  TCut nb3b = baseline && trigger && zl&& isotk && jets && btag2 && btag3  && !btag4&&mdp && drmax;
-  TCut nb4b = baseline && trigger && zl&& isotk && jets && btag2 && btag3  &&btag4 && mdp  && drmax;
+  TCut nb2b = baseline && trigger && zl&& isotk && jets && btag2sf  && mdp && drmax;
+  TCut nb3b = baseline && trigger && zl&& isotk && jets && btag3sf  && mdp && drmax;
+  TCut nb4b = baseline && trigger && zl&& isotk && jets && btag4sf  && mdp && drmax;
 
   TCut sb2b = nb2b && higgsSB;
   TCut sb3b = nb3b && higgsSB;
   TCut sb4b = nb4b && higgsSB;
 
 
-  TCut nb2bnodr = baseline && trigger && zl&& isotk && jets && btag2 && !btag3 && mdp ;
-  TCut nb3bnodr = baseline && trigger && zl&& isotk && jets && btag2 && btag3  && !btag4&&mdp ;
-  TCut nb4bnodr = baseline && trigger && zl&& isotk && jets && btag2 && btag3  &&btag4 && mdp ;
+  TCut nb2bnodr = baseline && trigger && zl&& isotk && jets && btag2sf && mdp ;
+  TCut nb3bnodr = baseline && trigger && zl&& isotk && jets && btag3sf && mdp ;
+  TCut nb4bnodr = baseline && trigger && zl&& isotk && jets && btag4sf && mdp ;
 
-  TCut nb2bldp = baseline && trigger && zl&& isotk && jets && btag2 && !btag3 && !mdp  && drmax;
-  TCut nb3bldp = baseline && trigger && zl&& isotk && jets && btag2 && btag3  && !btag4&&!mdp  && drmax;
-  TCut nb4bldp = baseline && trigger && zl&& isotk && jets && btag2 && btag3  &&btag4 && !mdp  && drmax;
+  TCut nb2bldp = baseline && trigger && zl&& isotk && jets && btag2sf && !mdp  && drmax;
+  TCut nb3bldp = baseline && trigger && zl&& isotk && jets && btag3sf && !mdp  && drmax;
+  TCut nb4bldp = baseline && trigger && zl&& isotk && jets && btag4sf && !mdp  && drmax;
 
-  TCut nb2bsl = baseline && trigger && sl && jets && btag2 && !btag3 && mdp && drmax;
-  TCut nb3bsl = baseline && trigger && sl && jets && btag2 && btag3  && !btag4&&mdp && drmax;
-  TCut nb4bsl = baseline && trigger && sl && jets && btag2 && btag3  &&btag4 && mdp && drmax;
-
+  TCut nb2bsl = baseline && trigger && sl && jets && btag2sf && mdp && drmax;
+  TCut nb3bsl = baseline && trigger && sl && jets && btag3sf && mdp && drmax;
+  TCut nb4bsl = baseline && trigger && sl && jets && btag4sf && mdp && drmax;
 
   TCut met0 = "METsig>=15 && METsig<30";
   TCut met1 = "METsig>=30 && METsig<50";
@@ -109,50 +120,50 @@ void makeplots1(TString todraw="table pv mass 2b 3b 4b met0 met1 met2 met3 met4 
     // --- unblinded plots ---
     // average mass, in METsig bins, after making all other cuts
     //4b METsig1
-    selection_= baseline && trigger && zl&& isotk && jets && btag2 && btag3  && btag4&&mdp && drmax && met1 && higgsSR_d;
+    selection_= baseline && trigger && zl&& isotk && jets && btag4sf &&mdp && drmax && met1 && higgsSR_d;
     nbins=40; low=0; high=200;
     var=am; xtitle=var; filename = "4b_METsig1_dmSR_am";
     drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
     //4b METsig2
-    selection_= baseline && trigger && zl&& isotk && jets && btag2 && btag3  && btag4&&mdp && drmax && met2 && higgsSR_d;
+    selection_= baseline && trigger && zl&& isotk && jets && btag4sf &&mdp && drmax && met2 && higgsSR_d;
     nbins=40; low=0; high=200;
     var=am; xtitle=var; filename = "4b_METsig2_dmSR_am";
     drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
     //4b METsig3
-    selection_= baseline && trigger && zl&& isotk && jets && btag2 && btag3  && btag4&&mdp && drmax && met3 && higgsSR_d;
+    selection_= baseline && trigger && zl&& isotk && jets && btag4sf &&mdp && drmax && met3 && higgsSR_d;
     nbins=40; low=0; high=200;
     var=am; xtitle=var; filename = "4b_METsig3_dmSR_am";
     drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
     //4b METsig4
-    selection_= baseline && trigger && zl&& isotk && jets && btag2 && btag3  && btag4&&mdp && drmax && met4 && higgsSR_d;
+    selection_= baseline && trigger && zl&& isotk && jets && btag4sf &&mdp && drmax && met4 && higgsSR_d;
     nbins=40; low=0; high=200;
     var=am; xtitle=var; filename = "4b_METsig4_dmSR_am";
     drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
     
    //2b METsig1
-    selection_= baseline && trigger && zl&& isotk && jets && btag2 && !btag3  &&mdp && drmax && met1 && higgsSR_d;
+    selection_= baseline && trigger && zl&& isotk && jets && btag2sf &&mdp && drmax && met1 && higgsSR_d;
     nbins=40; low=0; high=200;
     var=am; xtitle=var; filename = "2b_METsig1_dmSR_am";
     drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
     //2b METsig2
-    selection_= baseline && trigger && zl&& isotk && jets && btag2 && !btag3  &&mdp && drmax && met2 && higgsSR_d;
+    selection_= baseline && trigger && zl&& isotk && jets && btag2sf &&mdp && drmax && met2 && higgsSR_d;
     nbins=40; low=0; high=200;
     var=am; xtitle=var; filename = "2b_METsig2_dmSR_am";
     drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
     //2b METsig3
-    selection_= baseline && trigger && zl&& isotk && jets && btag2 && !btag3  &&mdp && drmax && met3 && higgsSR_d;
+    selection_= baseline && trigger && zl&& isotk && jets && btag2sf &&mdp && drmax && met3 && higgsSR_d;
     nbins=40; low=0; high=200;
     var=am; xtitle=var; filename = "2b_METsig3_dmSR_am";
     drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
     //2b METsig4
-    selection_= baseline && trigger && zl&& isotk && jets && btag2 && !btag3  &&mdp && drmax && met4 && higgsSR_d;
+    selection_= baseline && trigger && zl&& isotk && jets && btag2sf &&mdp && drmax && met4 && higgsSR_d;
     nbins=40; low=0; high=200;
     var=am; xtitle=var; filename = "2b_METsig4_dmSR_am";
     drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
     
 
     // -- old blind plots ---
-    
+    /*
     //        - 3b, METsig bin 1, |delta_mjj| with no cut on ave_mjj
     selection_= baseline && trigger && zl&& isotk && jets && btag2 && btag3  && !btag4&&mdp && drmax && met1;
     nbins=40; low=0; high=100;
@@ -256,10 +267,11 @@ void makeplots1(TString todraw="table pv mass 2b 3b 4b met0 met1 met2 met3 met4 
       nbins=40; low=0; high=200;
       var=am; xtitle=var; filename = "4b_METsig2_dmSB_am";
       drawPlots(var,nbins,low,high,xtitle,"Events", filename,0);
-
+*/
   }
 
   //pv studies
+  //not updated to use btag SFs
   if (todraw.Contains("pv")) {
 
     //can i add the mean and rms to these plots?
