@@ -294,6 +294,9 @@ bool usePUweight_=false;
 bool useTrigEff_ = false;
 TString trigEffWeight_="*hlteff";
 
+TString triggerSelectionMC_="";
+TString triggerSelectionData_="";
+
 TString btagSFweight_="1";
 
 bool savePlots_ = true; //no setter function
@@ -578,6 +581,7 @@ bool isSampleSMS(const TString & name ) {
 
   if (name.BeginsWith("HiggsinoNLSP")) return true;
   if (name.BeginsWith("SMS-TChiHH")) return true;
+  if (name.BeginsWith("SMS-TChiZH")) return true;
 
   return false;
 }
@@ -1081,6 +1085,19 @@ for legacy purposes I am keeping all of the weight and selection TStrings, altho
     }
     weightedcut+=")";
   }
+
+  //special handling of global trigger cuts
+  if (type == kData && triggerSelectionData_!="") {
+    weightedcut += "*(";
+    weightedcut +=triggerSelectionData_;
+    weightedcut += ")";
+  }
+  else if (type!=kData && triggerSelectionMC_!="") {
+    weightedcut += "*(";
+    weightedcut +=triggerSelectionMC_;
+    weightedcut += ")";
+  }
+
 
   //the easy part is done above -- keep only events at the current scan point
   //the hard part is to properly weight the events according to NLO cross sections
@@ -1960,6 +1977,9 @@ sampleType getSampleType(const TString & sample , const TString & planeOrPoint="
 
   else if (sample.Contains("SMS-TChiHH") && planeOrPoint=="point") return kSMSPointHiggsino;
   else if (sample.Contains("SMS-TChiHH") && planeOrPoint=="plane") return kSMSPlane;
+
+  else if (sample.Contains("SMS-TChiZH") && planeOrPoint=="point") return kSMSPointHiggsino;
+  else if (sample.Contains("SMS-TChiZH") && planeOrPoint=="plane") return kSMSPlane;
 
   return kMC;
 
