@@ -1911,7 +1911,7 @@ void higgs_ttbar_sculpt() {
 void higgs_dataMC_control_QCD_noskim(TString options="") {
   //plots that are looser than the skim
 
-  initHiggsSamples69(false,"ttbar qcd wjets znunu singlet ttv vv");
+  initHiggsSamples69(false,"tthad ttbar qcd wjets znunu singlet ttv vv");
 
   //use top pT weights
   setSampleWeightFactor(addEnding("TTJets_FullLeptMGDecays_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7C-v2_AODSIM_UCSB1883",false),"topPtWeightOfficial");
@@ -1995,6 +1995,8 @@ void higgs_dataMC_control_QCD_noskim(TString options="") {
   //look at multiplicity differences
   //remove TOBTEC cut
 
+  if (false) {
+
   // non b-jets using Medium
   selection_ = TCut("cutPV==1 && passCleaning==1 && buggyEvent==0 && MET/caloMET<2")&& trigger && zl&&isotk && jet2&&mdp  && TCut("abs(jeteta1)<0.9&&CSVout1<0.679")&&metsigmed;
 
@@ -2044,10 +2046,7 @@ void higgs_dataMC_control_QCD_noskim(TString options="") {
   setLogY(true); setPlotMinimum(0.1);
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_0l_preselection_DeltaMult_jet3etalt0p9_csvm",0);
 
-
-  return;
-
-
+  }
   //we want to study loose (or no) b-tagging. QCD dominated sample
 
   //first look at MET-only trigger
@@ -2162,19 +2161,22 @@ void higgs_dataMC_control_QCD_noskim(TString options="") {
   // == now other plots (non-LDP)
   doRatio_=true; ratioMin = 0; ratioMax = 2.2;
 
-  selection_ = baseline && trigger && zl && isotk && jet2&& btag2sf && mdp && metsigloose;
+  //using b-tagged selection with SFs and the normal trigger -- must adjust to using non-btagged version of trigger for MC only
+  triggerSelectionData_="passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1||passMC_DiCentralPFJet30_PFMHT80==1||passMC_PFMET150==1";
+  triggerSelectionMC_="passMC_DiCentralPFJet30_PFMET80==1||passMC_PFMET150==1";
+
+  //set above variables and remove trigger from cuts
+  selection_ = baseline && zl && isotk && jet2&& btag2sf && mdp && metsigloose;
   nbins=10; low = 0; high=10;
   setLogY(false);
   var="njets20"; xtitle="jet multiplicity (p_{T} > 20 GeV)";
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_0l2bMETsig30mdp_njets20",0);
 
-  selection_ = baseline && trigger && zl && isotk && jet2&& btag2sf && mdp && metsigloose;
+  selection_ = baseline && zl && isotk && jet2&& btag2sf && mdp && metsigloose;
   nbins=4; low = 0; high=4;
   setLogY(true);
   var="nPUjets20"; xtitle="pileup jets (p_{T} > 20 GeV)";
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_0l2bMETsig30mdp_nPUjets20",0);
-
-
 
 
 }
@@ -2481,6 +2483,11 @@ void higgs_dataMC_control_QCD() {
   setLogY(false);
 
   // === convert to using b-tag SF
+  //these settings are needed when using the b-tag SF
+  trigger="(1)";
+  triggerSelectionData_="passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1||passMC_DiCentralPFJet30_PFMHT80==1||passMC_PFMET150==1";
+  triggerSelectionMC_="passMC_DiCentralPFJet30_PFMET80==1||passMC_PFMET150==1";
+
 
   //a plot to compare to owen's selection
   selection_ = baseline && trigger && zl && isotk && jets && btag2sf && mdp && drmax;
@@ -3286,8 +3293,6 @@ void higgs_dataMC_control_SL_noskim() {
   TCut baseline = "cutPV==1 &&passCleaning==1 &&buggyEvent==0&& MET/caloMET<2 && maxTOBTECjetDeltaMult<40"; 
 
   TCut triggerJetMET = "passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1||passMC_DiCentralPFJet30_PFMHT80==1";
-  //cannot use this with MET PD only
-  //  TCut triggerJets = "passMC_DiPFJet80_DiPFJet30_BTagCSVd07d05==1";
   TCut triggerMET = "passMC_PFMET150==1";
   TCut trigger = triggerJetMET||triggerMET;
 
@@ -3322,10 +3327,16 @@ void higgs_dataMC_control_SL_noskim() {
   TCut drmax = "deltaRmax_hh<2.2";
   //  TCut drmin = "deltaRmin_hh<1.9";
 
+  //these settings are needed when using the b-tag SF
+  trigger="(1)";
+  triggerSelectionData_="passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1||passMC_DiCentralPFJet30_PFMHT80==1||passMC_PFMET150==1";
+  triggerSelectionMC_="passMC_DiCentralPFJet30_PFMET80==1||passMC_PFMET150==1";
+
 
   setStackMode(true,false,false); //stack,norm,label override
   setLogY(false);
 
+  if (false) {
   //look at multiplicity differences
   //remove TOBTEC cut
 
@@ -3378,8 +3389,7 @@ void higgs_dataMC_control_SL_noskim() {
   setLogY(true); setPlotMinimum(0.1);
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselection_DeltaMult_jet3etalt0p9_csvm",0);
 
-
-  return;
+  }
 
   //2b pre-selection: 
   selection_ = baseline && trigger && sl && jet2&&mdp && btagge2;
@@ -3685,11 +3695,15 @@ void higgs_dataMC_control_SL() {
   setStackMode(true,false,false); //stack,norm,label override
   setLogY(false);
 
+  //these settings are needed when using the b-tag SF
+  trigger="(1)";
+  triggerSelectionData_="passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1||passMC_DiCentralPFJet30_PFMHT80==1||passMC_PFMET150==1";
+  triggerSelectionMC_="passMC_DiCentralPFJet30_PFMET80==1||passMC_PFMET150==1";
+
   TCut btagge2="nbtag2_nomSF==1||nbtag3_nomSF==1||nbtag4_nomSF==1";
   TCut btagge3="nbtag3_nomSF==1||nbtag4_nomSF==1";
   TCut btag4sf="nbtag4_nomSF==1";
   //2b pre-selection ; basically the minimum required by the trigger, plus SL
-  //  selection_ = baseline && trigger && sl && (njets4||njets5) &&jet2&&mdp && btag2;
   //switch to using btag SF
   selection_ = baseline && trigger && sl && (njets4||njets5) &&jet2&&mdp && btagge2;
   addVerticalLine(30);
@@ -4965,6 +4979,10 @@ void higgs_Nminus1(bool plotdata=false,TString options="4b") {
   drawPlots(var,nbins,low,high,xtitle,"Events", nm1label+"njets20",0);
 
   //3rd b tag -- override btagcut (and thus do not use b-tag SFs)
+  if (!options.Contains("rawbtag")) {
+    triggerSelectionMC_="passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1||passMC_DiCentralPFJet30_PFMHT80==1||passMC_PFMET150==1";
+    triggerSelectionMC_="passMC_DiCentralPFJet30_PFMET80==1||passMC_PFMET150==1";
+  }
   selection_=baseline&&triggers && zl&& tauveto && isotk1 && njets&&jet2 && btag2&&mdp  && higgsmass && higgsdiff && drmax && metsig;
   var="CSVbest3"; xtitle="3rd CSV value";
   nbins=20; low= 0; high=1;
@@ -4984,6 +5002,9 @@ void higgs_Nminus1(bool plotdata=false,TString options="4b") {
   setLogY(false);
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_Nm1_CSVbest4-METsig100",0);
 
+  if (!options.Contains("rawbtag")) {
+    triggerSelectionMC_="passMC_DiCentralPFJet30_PFMET80==1||passMC_PFMET150==1";
+  }
 
   //higgs mass
   selection_=baseline&&triggers && zl&& tauveto && isotk1 && njets&&jet2 && btagcut &&mdp && higgsdiff && drmax && metsig;
@@ -5718,6 +5739,12 @@ void higgsmbb_quickmbbPlots() {
   TCut drmax = "deltaRmax_hh<2.2";
 
   TCut metsig = "METsig>30";
+
+  //these settings are needed when using the b-tag SF
+  triggers="(1)";
+  triggerSelectionData_="passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1||passMC_DiCentralPFJet30_PFMHT80==1||passMC_PFMET150==1";
+  triggerSelectionMC_="passMC_DiCentralPFJet30_PFMET80==1||passMC_PFMET150==1";
+
 
   //no higgs mass cut
   selection_=baseline&&triggers && zl&& tauveto && isotk1 && njets&&jet2 && mdp && btag4sf && higgsdiff && drmax && metsig;
