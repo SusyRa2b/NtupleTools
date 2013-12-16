@@ -35,7 +35,7 @@ void doSkimSlim( const char* infile_name, bool doSlim = false ) {
       printf("\n\n Number of entries: %llu\n\n", nentries ) ;
 
       TString filename(infile_name);
-      bool isHiggsinoSignal = filename.Contains("SMS-TChiHH");
+      bool isHiggsinoSignal = filename.Contains("SMS-TChi");
       TH2D* scanSMSngen=0;
       TH3D* scanSMSngen3D=0;
       if (isHiggsinoSignal) {
