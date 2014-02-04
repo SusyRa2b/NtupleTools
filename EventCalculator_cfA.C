@@ -137,7 +137,11 @@ EventCalculator::EventCalculator(const TString & sampleName, const vector<string
 	   sampleName_.Contains("T6tthh")||
 	   sampleName_.Contains("T6cchh")||
 	   sampleName_.Contains("T6bbHH")||
-	   sampleName_.Contains("T6ttHH")
+           sampleName_.Contains("T6ttHH")||
+           sampleName_.Contains("T1tbbb")||
+           sampleName_.Contains("T1ttbb")||
+           sampleName_.Contains("T1tttb")||
+           sampleName_.Contains("T2tb")
 	   ) {
     theScanType_ = kSMS;
     std::cout<<"\tDetected that I'm running over an SMS scan!"<<std::endl;
@@ -5209,7 +5213,7 @@ Long64_t EventCalculator::getNEventsGenerated( TString sample) {
   if (sample.Contains("UCSB1879")) return 13382803; //W4Jets  
   if (sample.Contains("UCSB1880")) return 31223821; //TTJets Had  
   if (sample.Contains("UCSB1881")) return 21675970; //TT powheg 
-  if (sample.Contains("UCSB1882")) return 7303732; //TTJets MG FSIM  
+  if (sample.Contains("UCSB1882")) return 7303732; //TTJets MG FSIM v1 -- invalid 
   if (sample.Contains("UCSB1883")) return 12011428; //TTJets MG 2l   
   if (sample.Contains("UCSB1884")) return 24953451; //TTJets MG 1l 
   if (sample.Contains("UCSB1885")) return 32852589; //TT mc@nlo 
@@ -5227,6 +5231,8 @@ Long64_t EventCalculator::getNEventsGenerated( TString sample) {
   if (sample.Contains("UCSB1959")) return 30856876; //TTJets MG 1l ext2
   if (sample.Contains("UCSB1962")) return 30999167; //TTJets MG 1l ext1
   if (sample.Contains("UCSB1966")) return 276156; //TTJets MG W->bc
+  if (sample.Contains("UCSB1976")) return 7299862; //TTJets MG FSIM v2
+
 
   cout<<"[getNEventsGenerated] unknown sample "<<sample<<endl;
   assert(0);
@@ -7298,7 +7304,7 @@ float EventCalculator::bJetFastsimSF(const TString & what, int flavor,float pt) 
   if (what == "value") returnVal=1;
 
   //first check if we're in a FASTSIM model
-  if (theScanType_==kpmssm || sampleName_.Contains("TChihh") || sampleName_.Contains("TChiHH") || sampleName_.Contains("TChiZH") || sampleName_.Contains("T6bbHH") || sampleName_.Contains("T6tthh") || sampleName_.Contains("T6cchh") || sampleName_.Contains("T6ttHH")) {
+if (theScanType_==kpmssm || sampleName_.Contains("TChihh") || sampleName_.Contains("TChiHH") || sampleName_.Contains("TChiZH") || sampleName_.Contains("T6bbHH") || sampleName_.Contains("T6tthh") || sampleName_.Contains("T6cchh") || sampleName_.Contains("T6ttHH") || sampleName_.Contains("T1tttb") || sampleName_.Contains("T1tbbb") || sampleName_.Contains("T1ttbb") || sampleName_.Contains("T2tb") ) {
     //DO NOTHING FOR NOW...this is rather dangerous!
   }
   else  if (theScanType_ != kNotScan ) {
@@ -8098,6 +8104,11 @@ void EventCalculator::reducedTree(TString outputpath) {
     else if (sampleName_.Contains("SMS-MadGraph") &&sampleName_.Contains("START52") ) MCDist.push_back(pu::Summer2012[i]);
     else if (sampleName_.Contains("SMS-T6bbHH") && sampleName_.Contains("START52"))  MCDist.push_back(pu::Summer2012[i]);
     else if (sampleName_.Contains("SMS-T6ttHH") && sampleName_.Contains("START53"))  MCDist.push_back(pu::Summer2012[i]);
+    else if (sampleName_.Contains("SMS-T1tbbb") && sampleName_.Contains("START53"))  MCDist.push_back(pu::Summer2012_S10[i]);
+    else if (sampleName_.Contains("SMS-T1ttbb") && sampleName_.Contains("START53"))  MCDist.push_back(pu::Summer2012_S10[i]);
+    else if (sampleName_.Contains("SMS-T1tttb") && sampleName_.Contains("START53"))  MCDist.push_back(pu::Summer2012_S10[i]);
+    else if (sampleName_.Contains("SMS-T2tb") && sampleName_.Contains("START53"))  MCDist.push_back(pu::Summer2012_S10[i]);
+    else if (sampleName_.Contains("TTJets") && sampleName_.Contains("FSIM") && sampleName_.Contains("START53"))  MCDist.push_back(pu::Summer2012_S10[i]);
     else if (isSampleRealData() ) MCDist.push_back(pu::Summer2012[i]); //this won't be used for data
     else assert(0); //no more mistakes! //MCDist.push_back(pu::Summer2012[i]); //just a safety valve (but dangerous!)
   }
