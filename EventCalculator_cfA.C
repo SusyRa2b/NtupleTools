@@ -7889,6 +7889,7 @@ void EventCalculator::reducedTree(TString outputpath) {
 
   int nGoodPV;
   //more pileup info
+  // argh...spelling mistake of 'interactions' is now baked into some reducedTrees. oh well
   int PU_numInterations_Minus1;
   int PU_numInterations_0;
   int PU_numInterations_Plus1;
