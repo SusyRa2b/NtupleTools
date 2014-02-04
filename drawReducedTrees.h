@@ -346,6 +346,7 @@ energy
 when to write lumi? if not normalized, then yes
 */
 bool isPreliminary_ = true;
+bool isTwikiOnly_ = false;
 int cmEnergy_=8; //let's see if we ever need to change this to float!
 
 
@@ -756,12 +757,14 @@ void drawPlotHeaderInside(TString displaytext="",float xNDC=0.6,float yNDC=0.9) 
 
 void drawPlotHeader() {
   //Oct 2013 -- cleaned up the cruft that had accumulated in here. hopefully didn't break anything
+  //2014 -- new rules demand that certain plots be labeled 'CMS Unpublished'
 
   if (text1 != 0 ) delete text1;
   TString cmsString="CMS";
 
   //if no data, it is Simulation
-  if (!dodata_) cmsString += " Simulation";
+  if (isTwikiOnly_) cmsString += " Unpublished";
+  else  if (!dodata_) cmsString += " Simulation";
   //if data, then add Preliminary if desired
   else if (isPreliminary_) cmsString += " Preliminary";
 
@@ -2446,10 +2449,10 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
     if (!samples_[isample].Contains("TTbar") && !samples_[isample].Contains("LM") && !samples_[isample].Contains("SUGRA")) {
       totalnonttbar->Add(histos_[samples_[isample]]);
     }
-    if (!samples_[isample].Contains("QCD") && !samples_[isample].Contains("BJets") && !samples_[isample].Contains("LM")&& !samples_[isample].Contains("SUGRA")){
+    if (!samples_[isample].Contains("QCD") && !samples_[isample].Contains("BJets") && !samples_[isample].Contains("LM")&& !samples_[isample].Contains("SUGRA") && !samples_[isample].Contains("TTJets_HadronicMGDecays")) {
        totalnonqcd->Add(histos_[samples_[isample]]);
     }
-    if (samples_[isample].Contains("QCD")||samples_[isample].Contains("BJets")) {
+    if (samples_[isample].Contains("QCD")||samples_[isample].Contains("BJets")||samples_[isample].Contains("TTJets_HadronicMGDecays")) {
        totalqcd->Add(histos_[samples_[isample]]);
     }
     if (!isSampleSM(samples_[isample]))    signals.push_back(samples_[isample]);

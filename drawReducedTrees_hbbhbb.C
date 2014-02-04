@@ -151,6 +151,7 @@ void initHiggsSamples69(const bool useSkim=true,const TString samplelist="") {
   addToSamplesAll(addEnding("SMS-TChiZH_ZccbbHbb_2J_mChargino-130to500_mLSP-1to370_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1873",useSkim));
 
   //fullsim signal
+  addToSamplesAll(addEnding("SMS-TChiHH_2b2b_2J_mChargino-130to500_mLSP-1_TuneZ2star_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V19-v1_AODSIM_UCSB1992",useSkim));
   addToSamplesAll("HbbHbb_FullSim_400_v71");
   addToSamplesAll("HbbHbb_FullSim_250_v71");
 
@@ -207,30 +208,55 @@ void initHiggsSamples69(const bool useSkim=true,const TString samplelist="") {
 
   setSampleScaleFactor( addEnding("SMS-TChiZH_ZccbbHbb_2J_mChargino-130to500_mLSP-1to370_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1873",useSkim),0.561 * 0.2715);
   
-
-  if (samplelist.Contains("hhmg175") || samplelist=="")
+  // fastsim - not much needed anymore
+  if (samplelist.Contains("hhmgfast175") || samplelist=="")
     addSample(addEnding("SMS-TChiHH_2b2b_2J_mChargino-130to325_mLSP-1to195_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1872",useSkim)+"$175$1",kRed-5,"m_{#tilde{#chi}_{1}^{0}} = 175 GeV");
 
-  if (samplelist.Contains("hhmg200") || samplelist=="") //used to be kRed-9
+  if (samplelist.Contains("hhmgfast200") || samplelist=="") //used to be kRed-9
     addSample(addEnding("SMS-TChiHH_2b2b_2J_mChargino-130to325_mLSP-1to195_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1872",useSkim)+"$200$1",kRed  ,"m_{#tilde{#chi}_{1}^{0}} = 200 GeV");
 
-  if (samplelist.Contains("hhmg250") || samplelist=="")
+  if (samplelist.Contains("hhmgfast250") || samplelist=="")
     addSample(addEnding("SMS-TChiHH_2b2b_2J_mChargino-130to325_mLSP-1to195_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1872",useSkim)+"$250$1",kRed-7,"m_{#tilde{#chi}_{1}^{0}} = 250 GeV");
 
-  if (samplelist.Contains("hhmg300") || samplelist=="")
+  if (samplelist.Contains("hhmgfast300") || samplelist=="")
     addSample(addEnding("SMS-TChiHH_2b2b_2J_mChargino-130to325_mLSP-1to195_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1872",useSkim)+"$300$1",kRed-4,"m_{#tilde{#chi}_{1}^{0}} = 300 GeV");
 
-  if (samplelist.Contains("hhmg350") || samplelist=="")
+  if (samplelist.Contains("hhmgfast350") || samplelist=="")
     addSample(addEnding("SMS-TChiHH_2b2b_2J_mChargino-350to500_mLSP-1to370_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1871",useSkim)+"$350$1",kRed+1,"m_{#tilde{#chi}_{1}^{0}} = 350 GeV");
 
-  if (samplelist.Contains("hhmg400") || samplelist=="")
+  if (samplelist.Contains("hhmgfast400") || samplelist=="")
     addSample(addEnding("SMS-TChiHH_2b2b_2J_mChargino-350to500_mLSP-1to370_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1871",useSkim)+"$400$1",kRed+2,"m_{#tilde{#chi}_{1}^{0}} = 400 GeV");
 
-  if (samplelist.Contains("hhmg450") || samplelist=="")
+  if (samplelist.Contains("hhmgfast450") || samplelist=="")
     addSample(addEnding("SMS-TChiHH_2b2b_2J_mChargino-350to500_mLSP-1to370_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1871",useSkim)+"$450$1",kRed+3,"m_{#tilde{#chi}_{1}^{0}} = 450 GeV");
 
-  if (samplelist.Contains("hhmg500") || samplelist=="")
+  if (samplelist.Contains("hhmgfast500") || samplelist=="")
     addSample(addEnding("SMS-TChiHH_2b2b_2J_mChargino-350to500_mLSP-1to370_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1871",useSkim)+"$500$1",kRed+4,"m_{#tilde{#chi}_{1}^{0}} = 500 GeV");
+
+  if (samplelist.Contains("hhmg175") || samplelist=="")
+    addSample(addEnding("SMS-TChiHH_2b2b_2J_mChargino-130to500_mLSP-1_TuneZ2star_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V19-v1_AODSIM_UCSB1992",useSkim)+"$175$1",kRed-5,"m_{#tilde{#chi}_{1}^{0}} = 175 GeV");
+
+  if (samplelist.Contains("hhmg200") || samplelist=="") //used to be kRed-9
+    addSample(addEnding("SMS-TChiHH_2b2b_2J_mChargino-130to500_mLSP-1_TuneZ2star_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V19-v1_AODSIM_UCSB1992",useSkim)+"$200$1",kRed  ,"m_{#tilde{#chi}_{1}^{0}} = 200 GeV");
+
+  if (samplelist.Contains("hhmg250") || samplelist=="")
+    addSample(addEnding("SMS-TChiHH_2b2b_2J_mChargino-130to500_mLSP-1_TuneZ2star_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V19-v1_AODSIM_UCSB1992",useSkim)+"$250$1",kRed-7,"m_{#tilde{#chi}_{1}^{0}} = 250 GeV");
+
+  if (samplelist.Contains("hhmg300") || samplelist=="")
+    addSample(addEnding("SMS-TChiHH_2b2b_2J_mChargino-130to500_mLSP-1_TuneZ2star_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V19-v1_AODSIM_UCSB1992",useSkim)+"$300$1",kRed-4,"m_{#tilde{#chi}_{1}^{0}} = 300 GeV");
+
+  if (samplelist.Contains("hhmg350") || samplelist=="")
+    addSample(addEnding("SMS-TChiHH_2b2b_2J_mChargino-130to500_mLSP-1_TuneZ2star_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V19-v1_AODSIM_UCSB1992",useSkim)+"$350$1",kRed+1,"m_{#tilde{#chi}_{1}^{0}} = 350 GeV");
+
+  if (samplelist.Contains("hhmg400") || samplelist=="")
+    addSample(addEnding("SMS-TChiHH_2b2b_2J_mChargino-130to500_mLSP-1_TuneZ2star_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V19-v1_AODSIM_UCSB1992",useSkim)+"$400$1",kRed+2,"m_{#tilde{#chi}_{1}^{0}} = 400 GeV");
+
+  if (samplelist.Contains("hhmg450") || samplelist=="")
+    addSample(addEnding("SMS-TChiHH_2b2b_2J_mChargino-130to500_mLSP-1_TuneZ2star_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V19-v1_AODSIM_UCSB1992",useSkim)+"$450$1",kRed+3,"m_{#tilde{#chi}_{1}^{0}} = 450 GeV");
+
+  if (samplelist.Contains("hhmg500") || samplelist=="")
+    addSample(addEnding("SMS-TChiHH_2b2b_2J_mChargino-130to500_mLSP-1_TuneZ2star_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V19-v1_AODSIM_UCSB1992",useSkim)+"$500$1",kRed+4,"m_{#tilde{#chi}_{1}^{0}} = 500 GeV");
+
 
 
   if (samplelist=="" || samplelist.Contains("qcd")) {
@@ -351,13 +377,251 @@ void initHiggsSamples69(const bool useSkim=true,const TString samplelist="") {
 
   //scale by h->bb squared factor
   if (samplelist.Contains("hhmg") || samplelist=="") {
+    //official fastsim
     setSampleScaleFactor(addEnding("SMS-TChiHH_2b2b_2J_mChargino-130to325_mLSP-1to195_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1872",useSkim),hbbbb);
     setSampleScaleFactor(addEnding("SMS-TChiHH_2b2b_2J_mChargino-350to500_mLSP-1to370_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1871",useSkim),hbbbb);
+    //official fullsim
+    setSampleScaleFactor(addEnding("SMS-TChiHH_2b2b_2J_mChargino-130to500_mLSP-1_TuneZ2star_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V19-v1_AODSIM_UCSB1992",useSkim),hbbbb);
   }
 
   overrideSMSlabels_=true; //don't use the auto-labels for SMS
 
   setDatasetToDraw("MET"); //when plotting data, use the MET PD
+}
+
+void ANFig61() { //reproduce owen's figure, but with improved style
+  initHiggsSamples69(true,"bjets tthad ttbar znunu"); 
+
+
+  setOutputDirectory("plots_QcdRejection");
+
+  useTrigEff_=false;
+
+  int nbins;
+  float low,high;
+  TString var,xtitle;
+
+  doOverflowAddition(true);
+  doRatio_=false;   dodata_=false;
+
+
+  //define useful cuts
+  TCut baseline = "cutPV==1 &&passCleaning==1 &&buggyEvent==0&& MET/caloMET<2 && maxTOBTECjetDeltaMult<40"; 
+
+  TCut triggerJetMET = "passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1||passMC_DiCentralPFJet30_PFMHT80==1";
+  TCut triggerMET = "passMC_PFMET150==1";
+  TCut trigger = triggerJetMET||triggerMET;
+
+  TCut zl = "nMuons==0&&nElectrons==0&&nTausLoose==0";
+  TCut isotk="nIsoPFcands10_010==0";
+
+  TCut sl = "nMuons+nElectrons==1 &&nTausLoose==0";
+
+  TCut njets4="njets20==4";
+  TCut njets5="njets20==5";
+  TCut jet2="jetpt2>50";
+  TCut jets=(njets4||njets5) &&jet2;
+  TCut btag2="CSVbest2>0.898";
+  TCut btag3="CSVbest3>0.679";
+  TCut btag4="CSVbest4>0.244";
+
+  TCut btag2sf="nbtag2_nomSF==1";
+  TCut btag3sf="nbtag3_nomSF==1";
+  TCut btag4sf="nbtag4_nomSF==1";
+
+  //  TCut mdp = "minDeltaPhi20>0.5 || (minDeltaPhi20>0.3&&METsig>50)";
+  TCut mdp = "minDeltaPhi20_eta5_noIdAll_nobeta>0.5 || (minDeltaPhi20_eta5_noIdAll_nobeta>0.3 && METsig>50)";
+
+  TCut higgsSR_av = "(0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)>100)&&(0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)<140)";
+  TCut higgsSR_d = "abs(higgsMbb1MassDiff-higgsMbb2MassDiff)<20";
+  TCut higgsSR = higgsSR_av && higgsSR_d;
+
+  TCut higgsSB_avl = "0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)<90";
+  TCut higgsSB_avh = "0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)>150";
+  TCut higgsSB_d = "abs(higgsMbb1MassDiff-higgsMbb2MassDiff)>30";
+  TCut higgsSB = higgsSB_avl||higgsSB_avh||higgsSB_d;
+
+  TCut metsigloose = "METsig>30";
+
+  TCut drmax = "deltaRmax_hh<2.2";
+
+  setStackMode(true,false,false); //stack,norm,label override
+  setLogY(false);
+
+  //nothing fancy -- no b-tag or trigger eff corrections
+
+  savePlots_=false;
+
+  //i think owen's selection removes mdp cut but nothing else
+  selection_ = baseline && trigger && zl && isotk && jets && btag2 && drmax;
+  nbins=5; low=0; high=400;
+  float varbins_metsig[] = {0,30,50,100,150,200}; 
+  float varbins_met[] = {0,106,133,190,250,400}; 
+
+  var="METsig"; xtitle="E^{miss}_{T}-significance #it{S}_{MET}";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "dummy",varbins_metsig);
+
+  TH1D* metsig_fake = (TH1D*) totalqcd->Clone("metsig_fake");
+  TH1D* metsig_real = (TH1D*) totalnonqcd->Clone("metsig_real");
+
+
+  var="MET"; xtitle="E^{miss}_{T}";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "dummy",varbins_met);
+
+  TH1D* met_fake = (TH1D*) totalqcd->Clone("met_fake");
+  TH1D* met_real = (TH1D*) totalnonqcd->Clone("met_real");
+
+  
+  TGraphErrors* gmetsig_fake = new TGraphErrors(nbins);
+  TGraphErrors* gmetsig_real = new TGraphErrors(nbins);
+  TGraphErrors* gmet_fake = new TGraphErrors(nbins);
+  TGraphErrors* gmet_real = new TGraphErrors(nbins);
+
+  //copy histograms to graphs
+  for (int ibin=1; ibin<=nbins;ibin++) {
+
+    gmetsig_fake->SetPoint(ibin-1,ibin-1,metsig_fake->GetBinContent(ibin));
+    gmetsig_real->SetPoint(ibin-1,ibin-1,metsig_real->GetBinContent(ibin));
+    gmet_fake->SetPoint(ibin-1,ibin-1,met_fake->GetBinContent(ibin));
+    gmet_real->SetPoint(ibin-1,ibin-1,met_real->GetBinContent(ibin));
+
+    gmetsig_fake->SetPointError(ibin-1,0,metsig_fake->GetBinError(ibin));
+    gmetsig_real->SetPointError(ibin-1,0,metsig_real->GetBinError(ibin));
+    gmet_fake->SetPointError(ibin-1,0,met_fake->GetBinError(ibin));
+    gmet_real->SetPointError(ibin-1,0,met_real->GetBinError(ibin));
+
+  }
+
+  setLogY(true);
+  isTwikiOnly_=true; //needs to be CMS Unpublished
+  renewCanvas();
+
+  //copied from own
+  TH2F* hdummy = new TH2F( "hdummy", "" ,5, -0.5, 4.5, 2, 1., 55000. ) ;
+  
+  hdummy -> SetYTitle( "Events" ) ;
+  
+  TAxis* xaxis = hdummy -> GetXaxis() ;
+  xaxis -> SetBinLabel( 1, "Bin 0" ) ;
+  xaxis -> SetBinLabel( 2, "Bin 1" ) ;
+  xaxis -> SetBinLabel( 3, "Bin 2" ) ;
+  xaxis -> SetBinLabel( 4, "Bin 3" ) ;
+  xaxis -> SetBinLabel( 5, "Bin 4" ) ;
+  hdummy -> SetLabelSize( 0.06, "x" ) ;
+
+  hdummy->Draw("axis");
+
+  gmetsig_fake->Draw("PL");
+  gmetsig_real->Draw("PL");
+  gmet_fake->Draw("PL");
+  gmet_real->Draw("PL");
+
+  gmetsig_fake->SetMarkerColor(kRed);
+  gmetsig_fake->SetLineColor(kRed);
+  gmetsig_fake->SetMinimum(1);
+
+  gmetsig_real->SetMarkerColor(kBlue);
+  gmetsig_real->SetLineColor(kBlue);
+
+  gmet_fake->SetMarkerColor(kRed);
+  gmet_fake->SetLineColor(kRed);
+
+  gmet_real->SetMarkerColor(kBlue);
+  gmet_real->SetLineColor(kBlue);
+
+  gmetsig_real -> SetLineStyle(1) ;
+  gmetsig_fake -> SetLineStyle(1) ;
+  
+  gmet_real -> SetLineStyle(2) ;
+  gmet_fake -> SetLineStyle(2) ;
+  
+  gmetsig_real -> SetLineWidth(2) ;
+  gmetsig_fake -> SetLineWidth(2) ;
+  
+  gmet_real -> SetLineWidth(2) ;
+  gmet_fake -> SetLineWidth(2) ;
+  
+  gmetsig_real -> SetMarkerStyle( 20 ) ;
+  gmetsig_fake -> SetMarkerStyle( 20 ) ;
+  
+  gmet_real -> SetMarkerStyle( 25 ) ;
+  gmet_fake -> SetMarkerStyle( 25 ) ;
+  
+  gmet_real -> SetMarkerSize( 1.5 ) ;
+  gmet_fake -> SetMarkerSize( 1.5 ) ;
+
+
+  gmetsig_fake->SetFillColor(kWhite);
+    gmetsig_real->SetFillColor(kWhite);
+    gmet_fake->SetFillColor(kWhite);
+    gmet_real->SetFillColor(kWhite);
+
+  thecanvas->GetPad(0)->SetGridy(1);
+
+  leg_x1=0.62;
+  leg_x2=0.93;
+  leg_y1=0.65;
+  leg_y2=0.89;
+  renewLegend();
+  leg->AddEntry(gmet_real,"E^{miss}_{T}, true E^{miss}_{T}");
+  leg->AddEntry(gmetsig_real,"#it{S}_{MET}, true E^{miss}_{T}");
+  leg->AddEntry(gmet_fake,"E^{miss}_{T}, fake E^{miss}_{T}");
+  leg->AddEntry(gmetsig_fake,"#it{S}_{MET}, fake E^{miss}_{T}");
+  leg->Draw();
+  drawPlotHeader();
+
+  //x values, in NDC, for the met and metsig labels
+  double xval[]   = {0.22,0.355705 ,0.513423,0.673,0.84};
+  double xval_ms[]= {0.22,0.369128 ,0.526846,0.673,0.84};
+  
+  double mety=0.065;
+  TLatex* metlabeltext1=new TLatex(0.04,mety,"E^{miss}_{T} (GeV)");
+  metlabeltext1->SetNDC();
+  metlabeltext1->SetTextFont(42);
+  metlabeltext1->SetTextSize(0.03);
+  metlabeltext1->Draw();
+  TLatex * metlabel[6];
+  { 
+    for (int ibin=1; ibin<=nbins; ibin++) {
+      double metvallow = met_fake->GetBinLowEdge(ibin);
+      double metvalhigh = met_fake->GetBinLowEdge(ibin+1);
+      TString thislabeltext;
+      if (ibin!=nbins)  thislabeltext.Form("%.0f-%.0f",metvallow,metvalhigh);
+      else              thislabeltext.Form("%.0f-",metvallow);
+      metlabel[ibin-1] = new TLatex(xval[ibin-1],mety,thislabeltext);
+      metlabel[ibin-1]->SetNDC(kTRUE);
+      metlabel[ibin-1]->SetTextFont(42);
+      metlabel[ibin-1]->SetTextSize(0.03);
+      metlabel[ibin-1]->Draw();
+    } 
+  }
+
+
+  double metsigy=0.035;
+  TLatex* metsiglabeltext1=new TLatex(0.04,metsigy,"#it{S}_{MET}");
+  metsiglabeltext1->SetNDC();
+  metsiglabeltext1->SetTextFont(42);
+  metsiglabeltext1->SetTextSize(0.03);
+  metsiglabeltext1->Draw();
+  TLatex * metsiglabel[6];
+  { 
+    for (int ibin=1; ibin<=nbins; ibin++) {
+      double metsigvallow = metsig_fake->GetBinLowEdge(ibin);
+      double metsigvalhigh = metsig_fake->GetBinLowEdge(ibin+1);
+      TString thislabeltext;
+      if (ibin!=nbins)  thislabeltext.Form("%.0f-%.0f",metsigvallow,metsigvalhigh);
+      else              thislabeltext.Form("%.0f-",metsigvallow);
+      metsiglabel[ibin-1] = new TLatex(xval_ms[ibin-1],metsigy,thislabeltext);
+      metsiglabel[ibin-1]->SetNDC(kTRUE);
+      metsiglabel[ibin-1]->SetTextFont(42);
+      metsiglabel[ibin-1]->SetTextSize(0.03);
+      metsiglabel[ibin-1]->Draw();
+    } 
+  }
+
+  thecanvas->SaveAs("met-vs-fakemet-2b-control.pdf");
+  thecanvas->SaveAs("met-vs-fakemet-2b-control.png");
+
 }
 
 void compareWbcMassShape() {
@@ -866,6 +1130,95 @@ void ABCD_PU() {
 
 
 }
+
+/* not finished and not debugged
+void fastFullMetSigRecale() {
+
+  initHiggsSamples69(false,"hhmg200 hhmg300 hhmg400 hhmgfast200 hhmgfast300 hhmgfast400");
+
+  int nbins;
+  float low,high;
+  TString var,xtitle;
+
+  doOverflowAddition(true);
+  doRatio_=false; ratioMin = 0; ratioMax = 2.2;
+  dodata_=false;
+
+  usePUweight_=true;
+
+  setOutputDirectory("FastFullValidation");
+
+
+  //define useful cuts
+  TCut baseline = "cutPV==1 &&passCleaning==1 &&buggyEvent==0&& MET/caloMET<2 && maxTOBTECjetDeltaMult<40"; 
+  TCut triggerJetMET = "passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1||passMC_DiCentralPFJet30_PFMHT80==1";
+  TCut triggerMET = "passMC_PFMET150==1";
+  TCut trigger = triggerJetMET||triggerMET;
+
+  TCut zl = "nMuons==0&&nElectrons==0&&nTausLoose==0";
+  TCut isotk="nIsoPFcands10_010==0";
+
+  TCut njets4="njets20==4";
+  TCut njets5="njets20==5";
+  TCut jet2="jetpt2>50";
+  TCut jet2high="jetpt2>70";
+  TCut jets=(njets4||njets5) &&jet2;
+
+  TCut btag4sf="nbtag4_nomSF==1";
+
+  TCut mdp = "minDeltaPhi20_eta5_noIdAll_nobeta>0.5 || (minDeltaPhi20_eta5_noIdAll_nobeta>0.3&&METsig>50)";
+  TCut mdp_rescaled = "minDeltaPhi20_eta5_noIdAll_nobeta>0.5 || (minDeltaPhi20_eta5_noIdAll_nobeta>0.3&& METsig*((403.01 +  26.227 *PU_numInterations_0)/(403.01+35.7*PU_numInterations_0))>50)";
+
+  TCut higgsSR_av = "(0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)>100)&&(0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)<140)";
+  TCut higgsSR_d = "abs(higgsMbb1MassDiff-higgsMbb2MassDiff)<20";
+  TCut higgsSR = higgsSR_av && higgsSR_d;
+
+  TCut drmax = "deltaRmax_hh<2.2";
+  TCut metsigloose = "METsig>30";
+
+  savePlots_=false;
+
+  //these settings are needed when using the b-tag SF
+  trigger="(1)";
+  triggerSelectionData_="passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1||passMC_DiCentralPFJet30_PFMHT80==1||passMC_PFMET150==1";
+  triggerSelectionMC_="passMC_DiCentralPFJet30_PFMET80==1||passMC_PFMET150==1";
+
+  bool useSkim=false;
+
+  float varbinsmetsig[6] = {30,50,100,150,200};
+  nbins=4; low=0; high=200;
+
+  clearSamples();
+  addSample(addEnding("SMS-TChiHH_2b2b_2J_mChargino-130to325_mLSP-1to195_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1872",useSkim)+"$200$1",kRed  ,"m_{#tilde{#chi}_{1}^{0}} = 200 GeV");
+  selection_ = trigger&& baseline && zl && isotk && jets2 && btag4sf && mdp && higgsSR && drmax && metsigloose;
+  var="METsig"; xtitle="E^{miss}_{T}-significance #it{S}_{MET}";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "dummy",varbinsmetsig);
+  TH1D* metsig_fast_200 = getHist(addEnding("SMS-TChiHH_2b2b_2J_mChargino-130to325_mLSP-1to195_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1872",useSkim)+"$200$1")->Clone("metsig_fast_200");
+
+  selection_ = trigger&& baseline && zl && isotk && jets2 && btag4sf && mdp_rescaled && higgsSR && drmax && metsigloose;
+  var="METsig*((403.01 +  26.227 *PU_numInterations_0)/(403.01+35.7*PU_numInterations_0))"; xtitle="E^{miss}_{T}-significance #it{S}_{MET}";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "dummy",varbinsmetsig);
+  TH1D* metsig_rescaled_200 = getHist(addEnding("SMS-TChiHH_2b2b_2J_mChargino-130to325_mLSP-1to195_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1872",useSkim)+"$200$1")->Clone("metsig_rescaled_200");
+
+  clearSamples();
+  addSample(addEnding("SMS-TChiHH_2b2b_2J_mChargino-130to500_mLSP-1_TuneZ2star_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V19-v1_AODSIM_UCSB1992",useSkim)+"$200$1",kRed  ,"m_{#tilde{#chi}_{1}^{0}} = 200 GeV");
+  selection_ = trigger&& baseline && zl && isotk && jets2 && btag4sf && mdp && higgsSR && drmax && metsigloose;
+  var="METsig"; xtitle="E^{miss}_{T}-significance #it{S}_{MET}";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "dummy",varbinsmetsig);
+  TH1D* metsig_full_200 = getHist(addEnding("SMS-TChiHH_2b2b_2J_mChargino-130to325_mLSP-1to195_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1872",useSkim)+"$200$1")->Clone("metsig_full_200");
+
+  metsig_fast_200->SetLineColor(kRed);
+  metsig_full_200->SetLineColor(kBlack);
+  metsig_rescaled_200->SetLineColor(kBlue);
+
+  renewCanvas();
+  metsig_full_200->Draw();
+  metsig_fast_200->Draw("SAME");
+  metsig_rescaled_200->Draw("SAME");
+
+
+}
+*/
 
 void fastAndFullSLcheck(bool useFast) {
 
@@ -5068,6 +5421,7 @@ void higgs_Nminus1(bool plotdata=false,TString options="4b") {
 
 }
 
+
 void specialCutflow() {
   const bool doCutEff=true;
   initHiggsSamples69(false,"smalltt fasttt");
@@ -5182,13 +5536,30 @@ void specialCutflow() {
 }
 
 
-void higgs_printCutflowTable(const bool latexMode=false,TString region="4bSR", const  bool unweighted=false, const bool makePlot=false,const bool doCutEff=false) {
+void higgs_printCutflowTable(const bool latexMode=false,TString region="4bSR", const  bool unweighted=false, const bool makePlot=false,const bool doCutEff=false,const TString drcut="2.2") {
 
-/*
-  if (unweighted)  initHiggsSamples69(true,"ttbar wbb"); //reduced list of samples
-  else initHiggsSamples69(true);
-*/
-  initHiggsSamples69(true,"hhmg250 hhfull250");
+  bool useSkim=true;
+
+  if (unweighted)  initHiggsSamples69(useSkim,"ttbar wbb"); //reduced list of samples
+  else initHiggsSamples69(useSkim,"ttbar znunu bjets wjets ttv vv singlet hhmg200 hhmg300 hhmg400");
+
+  // unfortunately for plotting reasons, I had to *reverse* the order of signal samples and background
+  //but this code is fragile and expects the signals to be last. so we've got to manually arrange this:
+  clearSamples();
+  //the chains should still be intact
+  addSample(addEnding("TTJets_FullLeptMGDecays_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7C-v2_AODSIM_UCSB1883",useSkim),kBlue-10,"t#bar{t} (2l)");
+  addSample(addEnding("TTJets_SemiLeptMGDecays_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7C-v1_AODSIM_UCSB1884",useSkim),kAzure-3,"t#bar{t} (1l)");
+  addSample(addEnding("ZJetsToNuNu_100_HT_200_TuneZ2Star_8TeV_madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1887",useSkim),kOrange,"Z+jets");
+  addSample(addEnding("BJets_HT-250To500_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1893",useSkim),kGreen,"QCD");
+  addSample(addEnding("W2JetsToLNu_TuneZ2Star_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1877",useSkim),kViolet,"W+jets");
+  addSample(addEnding("TTWJets_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1857",useSkim),kCyan-7,"t#bar{t}V");
+  addSample(addEnding("WW_TuneZ2star_8TeV_pythia6_tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1874",useSkim),kCyan+3,"VV");
+  addSample(addEnding("T_s-channel_TuneZ2star_8TeV-powheg-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1860",useSkim),kBlue,"Single top");
+  addSample(addEnding("SMS-TChiHH_2b2b_2J_mChargino-130to500_mLSP-1_TuneZ2star_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V19-v1_AODSIM_UCSB1992",useSkim)+"$200$1",kRed  ,"m_{#tilde{#chi}_{1}^{0}} = 200 GeV");
+  addSample(addEnding("SMS-TChiHH_2b2b_2J_mChargino-130to500_mLSP-1_TuneZ2star_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V19-v1_AODSIM_UCSB1992",useSkim)+"$300$1",kRed-4,"m_{#tilde{#chi}_{1}^{0}} = 300 GeV");
+  addSample(addEnding("SMS-TChiHH_2b2b_2J_mChargino-130to500_mLSP-1_TuneZ2star_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V19-v1_AODSIM_UCSB1992",useSkim)+"$400$1",kRed+2,"m_{#tilde{#chi}_{1}^{0}} = 400 GeV");
+
+//  initHiggsSamples69(true,"hhmg250 hhfull250");
   //   initHiggsSamples69(true,"hhmg400 hhfull400");
 
   if (!(region.Contains("4bSR")||region.Contains("2bSR")||region.Contains("4bSB")||region.Contains("2bSB")||region.Contains("special"))) {cout<<"check region!"<<endl;return;}
@@ -5205,7 +5576,12 @@ void higgs_printCutflowTable(const bool latexMode=false,TString region="4bSR", c
     resetSampleWeightFactors();
     resetSampleScaleFactors();
   }
-
+  else {
+    //use "official" top pT weights
+    setSampleWeightFactor(addEnding("TTJets_FullLeptMGDecays_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7C-v2_AODSIM_UCSB1883",true),"topPtWeightOfficial");
+    setSampleWeightFactor(addEnding("TTJets_SemiLeptMGDecays_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7C-v1_AODSIM_UCSB1884",true),"topPtWeightOfficial");
+    setSampleWeightFactor(addEnding("TTJets_HadronicMGDecays_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A_ext-v1_AODSIM_UCSB1880",true),   "topPtWeightOfficial");
+  }
   if (region.Contains("special")) {
     usePUweight_=false;
     useTrigEff_=false;
@@ -5232,7 +5608,9 @@ void higgs_printCutflowTable(const bool latexMode=false,TString region="4bSR", c
 
   TCut baseline = "cutPV==1"; 
   TCut cleaning = "passCleaning==1 &&buggyEvent==0&& MET/caloMET<2 && maxTOBTECjetDeltaMult<40";
-  TCut triggers = "passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1||passMC_DiCentralPFJet30_PFMHT80==1||passMC_PFMET150==1";
+  //in conjunction with b-tag SFs, use non-btag triggers
+  // TCut triggers = "passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1||passMC_DiCentralPFJet30_PFMHT80==1||passMC_PFMET150==1";
+  TCut triggers = "passMC_DiCentralPFJet30_PFMET80==1||passMC_PFMET150==1";
   TCut zl = "nMuons==0&&nElectrons==0&&nTausLoose==0";
   TCut isotk="nIsoPFcands10_010==0";
 
@@ -5243,6 +5621,7 @@ void higgs_printCutflowTable(const bool latexMode=false,TString region="4bSR", c
   TCut btagpre="CSVbest2>0.898";
   TCut btag3 = "CSVbest3>0.679";
   TCut btag4 = "CSVbest4>0.244"; 
+  TCut btag4sf="nbtag4_nomSF==1";
   //  TCut btag4 = "CSVbest4>0.679";
 
   TCut higgsmass = "((0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)>100)&&(0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)<140)) && abs(higgsMbb1MassDiff-higgsMbb2MassDiff)<20";
@@ -5252,11 +5631,14 @@ void higgs_printCutflowTable(const bool latexMode=false,TString region="4bSR", c
   TCut higgsSB_d = "abs(higgsMbb1MassDiff-higgsMbb2MassDiff)>30";
   TCut higgsSB = higgsSB_avl||higgsSB_avh||higgsSB_d;
 
-  TCut drmax = "deltaRmax_hh<2.2"; //owen's been using 2.2
+  TString drmaxstring = "deltaRmax_hh<";
+  drmaxstring += drcut;
+  TCut drmax = drmaxstring.Data();
 
   TCut metsigloose = "METsig>30";
 
-  TCut skim = baseline&&triggers&&njets&&btagpre;
+  //  TCut skim = baseline&&triggers&&njets&&btagpre;
+  TCut skim = baseline&&triggers&&njets;
 
   std::vector<pair<TString, TCut> > cuts;
   if (unweighted) {
@@ -5284,8 +5666,8 @@ void higgs_printCutflowTable(const bool latexMode=false,TString region="4bSR", c
   cuts.push_back(make_pair( "iso tk veto",isotk)); 
 
   if (region.Contains("4b")) {
-    cuts.push_back(make_pair( "3rd btag",btag3));
-    cuts.push_back(make_pair( "4th btag",btag4));
+    //    cuts.push_back(make_pair( "3rd btag",btag3));
+    cuts.push_back(make_pair( "4th btag",btag4sf));
   }
   else if (region.Contains("special")) {}//do nothing
   else {
@@ -5750,9 +6132,9 @@ void higgsmbb_quickmbbPlots() {
   selection_=baseline&&triggers && zl&& tauveto && isotk1 && njets&&jet2 && mdp && btag4sf && higgsdiff && drmax && metsig;
 
   clearSamples(); 
-  addSample("SMS-TChiHH_2b2b_2J_mChargino-350to500_mLSP-1to370_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1871_v71$400$1:higgsMbb1MassDiff_correct==0",kRed,"0 correct");
-  addSample("SMS-TChiHH_2b2b_2J_mChargino-350to500_mLSP-1to370_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1871_v71$400$1:higgsMbb1MassDiff_correct==1",kBlue,"1 correct");
-  addSample("SMS-TChiHH_2b2b_2J_mChargino-350to500_mLSP-1to370_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1871_v71$400$1:higgsMbb1MassDiff_correct==2",kGreen+4,"2 correct");
+  addSample("SMS-TChiHH_2b2b_2J_mChargino-130to500_mLSP-1_TuneZ2star_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V19-v1_AODSIM_UCSB1992_v71$400$1:higgsMbb1MassDiff_correct==0",kRed,"0 correct");
+  addSample("SMS-TChiHH_2b2b_2J_mChargino-130to500_mLSP-1_TuneZ2star_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V19-v1_AODSIM_UCSB1992_v71$400$1:higgsMbb1MassDiff_correct==1",kBlue,"1 correct");
+  addSample("SMS-TChiHH_2b2b_2J_mChargino-130to500_mLSP-1_TuneZ2star_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V19-v1_AODSIM_UCSB1992_v71$400$1:higgsMbb1MassDiff_correct==2",kGreen+4,"2 correct");
   selectionLabel_ = "m_{#tilde{#chi}_{1}^{0}} = 400 GeV";
 
   var="0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)"; xtitle="#LTm_{jj}#GT (GeV)";
@@ -5769,9 +6151,9 @@ void higgsmbb_quickmbbPlots() {
 
   selection_=baseline&&triggers && zl&& tauveto && isotk1 && njets&&jet2 && mdp && btag4sf && higgsdiff && drmax && metsig;
   clearSamples(); 
-  addSample("SMS-TChiHH_2b2b_2J_mChargino-130to325_mLSP-1to195_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1872_v71$200$1:higgsMbb1MassDiff_correct==0",kRed,"0 correct");
-  addSample("SMS-TChiHH_2b2b_2J_mChargino-130to325_mLSP-1to195_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1872_v71$200$1:higgsMbb1MassDiff_correct==1",kBlue,"1 correct");
-  addSample("SMS-TChiHH_2b2b_2J_mChargino-130to325_mLSP-1to195_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1872_v71$200$1:higgsMbb1MassDiff_correct==2",kGreen+4,"2 correct");
+  addSample("SMS-TChiHH_2b2b_2J_mChargino-130to500_mLSP-1_TuneZ2star_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V19-v1_AODSIM_UCSB1992_v71$200$1:higgsMbb1MassDiff_correct==0",kRed,"0 correct");
+  addSample("SMS-TChiHH_2b2b_2J_mChargino-130to500_mLSP-1_TuneZ2star_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V19-v1_AODSIM_UCSB1992_v71$200$1:higgsMbb1MassDiff_correct==1",kBlue,"1 correct");
+  addSample("SMS-TChiHH_2b2b_2J_mChargino-130to500_mLSP-1_TuneZ2star_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V19-v1_AODSIM_UCSB1992_v71$200$1:higgsMbb1MassDiff_correct==2",kGreen+4,"2 correct");
   selectionLabel_ = "m_{#tilde{#chi}_{1}^{0}} = 200 GeV";
 
   drawPlots(var,nbins,low,high,xtitle,"Events", "ewkhh_massshape_mbb_200",0,"GeV");
