@@ -458,7 +458,7 @@ void ANFig61() { //reproduce owen's figure, but with improved style
   float varbins_metsig[] = {0,30,50,100,150,200}; 
   float varbins_met[] = {0,106,133,190,250,400}; 
 
-  var="METsig"; xtitle="E^{miss}_{T}-significance #it{S}_{MET}";
+  var="METsig"; xtitle="#it{S}_{MET}";
   drawPlots(var,nbins,low,high,xtitle,"Events", "dummy",varbins_metsig);
 
   TH1D* metsig_fake = (TH1D*) totalqcd->Clone("metsig_fake");
@@ -563,12 +563,19 @@ void ANFig61() { //reproduce owen's figure, but with improved style
   leg_y1=0.65;
   leg_y2=0.89;
   renewLegend();
+  /*
   leg->AddEntry(gmet_real,"E^{miss}_{T}, true E^{miss}_{T}");
   leg->AddEntry(gmetsig_real,"#it{S}_{MET}, true E^{miss}_{T}");
   leg->AddEntry(gmet_fake,"E^{miss}_{T}, fake E^{miss}_{T}");
   leg->AddEntry(gmetsig_fake,"#it{S}_{MET}, fake E^{miss}_{T}");
+  */
+  leg->AddEntry(gmet_real,"E^{miss}_{T}, genuine E^{miss}_{T}");
+  leg->AddEntry(gmetsig_real,"#it{S}_{MET}, genuine E^{miss}_{T}");
+  leg->AddEntry(gmet_fake,"E^{miss}_{T}, spurious E^{miss}_{T}");
+  leg->AddEntry(gmetsig_fake,"#it{S}_{MET}, spurious E^{miss}_{T}");
   leg->Draw();
   drawPlotHeader();
+  drawPlotHeaderInside("CMS Simulation",0.199664,0.881226);
 
   //x values, in NDC, for the met and metsig labels
   double xval[]   = {0.22,0.355705 ,0.513423,0.673,0.84};
@@ -846,7 +853,7 @@ void SimpleABCDcheck(bool usedata=false) {
 
   float varbinsmetsig[6] = {0,30,50,100,150,500};
   nbins=5; low=0; high=500;
-  var="METsig"; xtitle="E^{miss}_{T}-significance #it{S}_{MET}";
+  var="METsig"; xtitle="#it{S}_{MET}";
 
   TH1D* h1=0;
 
@@ -962,7 +969,7 @@ void wjetsCompare() {
   selection_=baseline&&zl&&isotk&&(njets4||njets5)&&jet2&&mdp&&btag2;
 
   nbins=30; low=0; high=300;
-  var="METsig"; xtitle="E^{miss}_{T}-significance #it{S}_{MET}";
+  var="METsig"; xtitle="#it{S}_{MET}";
   drawPlots(var,nbins,low,high,xtitle,"Events", "wjets_validation_METsig",0);
 
   selection_=baseline&&jet2&&btag2;
@@ -1191,19 +1198,19 @@ void fastFullMetSigRecale() {
   clearSamples();
   addSample(addEnding("SMS-TChiHH_2b2b_2J_mChargino-130to325_mLSP-1to195_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1872",useSkim)+"$200$1",kRed  ,"m_{#tilde{#chi}_{1}^{0}} = 200 GeV");
   selection_ = trigger&& baseline && zl && isotk && jets2 && btag4sf && mdp && higgsSR && drmax && metsigloose;
-  var="METsig"; xtitle="E^{miss}_{T}-significance #it{S}_{MET}";
+  var="METsig"; xtitle="#it{S}_{MET}";
   drawPlots(var,nbins,low,high,xtitle,"Events", "dummy",varbinsmetsig);
   TH1D* metsig_fast_200 = getHist(addEnding("SMS-TChiHH_2b2b_2J_mChargino-130to325_mLSP-1to195_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1872",useSkim)+"$200$1")->Clone("metsig_fast_200");
 
   selection_ = trigger&& baseline && zl && isotk && jets2 && btag4sf && mdp_rescaled && higgsSR && drmax && metsigloose;
-  var="METsig*((403.01 +  26.227 *PU_numInterations_0)/(403.01+35.7*PU_numInterations_0))"; xtitle="E^{miss}_{T}-significance #it{S}_{MET}";
+  var="METsig*((403.01 +  26.227 *PU_numInterations_0)/(403.01+35.7*PU_numInterations_0))"; xtitle="#it{S}_{MET}";
   drawPlots(var,nbins,low,high,xtitle,"Events", "dummy",varbinsmetsig);
   TH1D* metsig_rescaled_200 = getHist(addEnding("SMS-TChiHH_2b2b_2J_mChargino-130to325_mLSP-1to195_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1872",useSkim)+"$200$1")->Clone("metsig_rescaled_200");
 
   clearSamples();
   addSample(addEnding("SMS-TChiHH_2b2b_2J_mChargino-130to500_mLSP-1_TuneZ2star_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V19-v1_AODSIM_UCSB1992",useSkim)+"$200$1",kRed  ,"m_{#tilde{#chi}_{1}^{0}} = 200 GeV");
   selection_ = trigger&& baseline && zl && isotk && jets2 && btag4sf && mdp && higgsSR && drmax && metsigloose;
-  var="METsig"; xtitle="E^{miss}_{T}-significance #it{S}_{MET}";
+  var="METsig"; xtitle="#it{S}_{MET}";
   drawPlots(var,nbins,low,high,xtitle,"Events", "dummy",varbinsmetsig);
   TH1D* metsig_full_200 = getHist(addEnding("SMS-TChiHH_2b2b_2J_mChargino-130to325_mLSP-1to195_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1872",useSkim)+"$200$1")->Clone("metsig_full_200");
 
@@ -1293,7 +1300,7 @@ void fastAndFullSLcheck(bool useFast) {
   selection_ = baseline && trigger && sl && (njets4||njets5) &&jet2 &&mdp && btag2;
 
   nbins=30; low=0; high=300;
-  var="METsig"; xtitle="E^{miss}_{T}-significance #it{S}_{MET}";
+  var="METsig"; xtitle="#it{S}_{MET}";
   setLogY(true); setPlotMinimum(0.5);
   desc.Form("dataMC_SL_%s_%s",fastfulldesc.Data(),"2bPreselection_METsig");
   drawPlots(var,nbins,low,high,xtitle,"Events",desc.Data(),0);
@@ -1310,7 +1317,7 @@ void fastAndFullSLcheck(bool useFast) {
 
   selection_ = baseline && trigger && sl && (njets4||njets5) &&jet2 &&mdp && btag2 &&triggermet;
   nbins=30; low=0; high=300;
-  var="METsig"; xtitle="E^{miss}_{T}-significance #it{S}_{MET}";
+  var="METsig"; xtitle="#it{S}_{MET}";
   setLogY(true); setPlotMinimum(0.5);
   desc.Form("dataMC_SL_%s_%s",fastfulldesc.Data(),"2bPreselection_MET125_METsig");
   drawPlots(var,nbins,low,high,xtitle,"Events",desc.Data(),0);
@@ -1494,11 +1501,15 @@ void fullfastTtbarCheck() {
   setLogY(true);
   drawPlots(var,nbins,low,high,xtitle,"Events", "ttbar_FullFast_sumEt",0);
 
+
   //METsig spectrum
   nbins=30; low=0; high=200;
   var="METsig"; xtitle="METsig";
 
   setStackMode(false,false,false); //stack,norm,label override
+  setLogY(true);setPlotMinimum(0.1);
+  drawPlots(var,nbins,low,high,xtitle,"Events","ttbar_FullFast_METsig");
+
   setLogY(false);setPlotMinimum(0);
   drawPlots(var,5,low,high,xtitle,"Events","ttbar_FullFast_METsig_bins",metsigbins);
   resetPlotMinimum();
@@ -2408,7 +2419,7 @@ void higgs_dataMC_control_QCD_noskim(TString options="") {
   addVerticalLine(30);
   nbins=40; low=0; high=400;
   setLogY(false);
-  var="METsig"; xtitle="E^{miss}_{T}-significance #it{S}_{MET}";
+  var="METsig"; xtitle="#it{S}_{MET}";
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_lt3bLDP_trigMET150_METsig",0);
   setLogY(true);
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_lt3bLDP_trigMET150_METsig",0);
@@ -2428,7 +2439,7 @@ void higgs_dataMC_control_QCD_noskim(TString options="") {
    addVerticalLine(30);
  nbins=40; low=0; high=400;
   setLogY(false);
-  var="METsig"; xtitle="E^{miss}_{T}-significance #it{S}_{MET}";
+  var="METsig"; xtitle="#it{S}_{MET}";
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_lt3bLDP_trigMET150-MET230_METsig",0);
   setLogY(true);
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_lt3bLDP_trigMET150-MET230_METsig",0);
@@ -2441,7 +2452,7 @@ void higgs_dataMC_control_QCD_noskim(TString options="") {
 
   nbins=40; low=0; high=400;
   setLogY(false);
-  var="METsig"; xtitle="E^{miss}_{T}-significance #it{S}_{MET}";
+  var="METsig"; xtitle="#it{S}_{MET}";
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_lt3bLDP_trigJetMET_METsig",0);
   setLogY(true);
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_lt3bLDP_trigJetMET_METsig",0);
@@ -2461,7 +2472,7 @@ void higgs_dataMC_control_QCD_noskim(TString options="") {
 
    nbins=40; low=0; high=400;
   setLogY(false);
-  var="METsig"; xtitle="E^{miss}_{T}-significance #it{S}_{MET}";
+  var="METsig"; xtitle="#it{S}_{MET}";
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_lt3bLDP_trigJetMET-MET160_METsig",0);
   setLogY(true);
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_lt3bLDP_trigJetMET-MET160_METsig",0);
@@ -2483,7 +2494,7 @@ void higgs_dataMC_control_QCD_noskim(TString options="") {
 
   nbins=40; low=0; high=400;
   setLogY(false);
-  var="METsig"; xtitle="E^{miss}_{T}-significance #it{S}_{MET}";
+  var="METsig"; xtitle="#it{S}_{MET}";
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_weird_trigJetMET_METsig",0);
   setLogY(true);
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_weird_trigJetMET_METsig",0);
@@ -2504,7 +2515,7 @@ void higgs_dataMC_control_QCD_noskim(TString options="") {
 
   nbins=40; low=0; high=400;
   setLogY(false);
-  var="METsig"; xtitle="E^{miss}_{T}-significance #it{S}_{MET}";
+  var="METsig"; xtitle="#it{S}_{MET}";
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_junk_trigJetMET_METsig",0);
   setLogY(true);
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_junk_trigJetMET_METsig",0);
@@ -2760,7 +2771,7 @@ void higgs_dataMC_SR() {
 
   selection_ = baseline && trigger && zl && isotk && jets && btag2 && btag3 && btag4 && mdp && higgsSR && drmax && metloose;
   nbins=20; low=0; high=200;
-  var="METsig"; xtitle = "E^{miss}_{T}-significance #it{S}_{MET}";
+  var="METsig"; xtitle = "#it{S}_{MET}";
   drawPlots(var,nbins,low,high,xtitle,"Events","SR4b_allcuts_METsig",0);
 
 
@@ -2847,7 +2858,7 @@ void higgs_dataMC_control_QCD() {
   //no higgs mass cuts, but do use DRmax
   addVerticalLine(30);
   nbins=80; low=0; high=400;
-  var="METsig"; xtitle="E^{miss}_{T}-significance #it{S}_{MET}";
+  var="METsig"; xtitle="#it{S}_{MET}";
   setLogY(true);
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_0l2bWithDrMax_METsig",0);
   resetVerticalLine();
@@ -2858,7 +2869,7 @@ void higgs_dataMC_control_QCD() {
   addVerticalLine(30);
   nbins=30; low=0; high=300;
   setLogY(false);
-  var="METsig"; xtitle="E^{miss}_{T}-significance #it{S}_{MET}";
+  var="METsig"; xtitle="#it{S}_{MET}";
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_preselection_METsig",0);
   setLogY(true); setPlotMinimum(0.5);
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_preselection_METsig",0);
@@ -2880,7 +2891,7 @@ void higgs_dataMC_control_QCD() {
 
   addVerticalLine(30);
   nbins=30; low=0; high=300;
-  var="METsig"; xtitle="E^{miss}_{T}-significance #it{S}_{MET}";
+  var="METsig"; xtitle="#it{S}_{MET}";
   setLogY(true); setPlotMinimum(0.5);
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_preselectionMETsig30_METsig",0);
   resetVerticalLine();
@@ -2905,7 +2916,7 @@ void higgs_dataMC_control_QCD() {
   addVerticalLine(30);
   nbins=30; low=0; high=300;
   setLogY(false);
-  var="METsig"; xtitle="E^{miss}_{T}-significance #it{S}_{MET}";
+  var="METsig"; xtitle="#it{S}_{MET}";
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_preselectionMDP_METsig",0);
   setLogY(true);
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_preselectionMDP_METsig",0);
@@ -2969,7 +2980,7 @@ void higgs_dataMC_control_QCD() {
   nbins=13; low=0; high=300;
   float varbinsmetsig[14] = {0,10,20,30,40,50,60,70,80,100,120,140,180,300};
   setLogY(false);
-  var="METsig"; xtitle="E^{miss}_{T}-significance #it{S}_{MET}";
+  var="METsig"; xtitle="#it{S}_{MET}";
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_preselectionLDP_METsig",varbinsmetsig);
   setLogY(true);
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_preselectionLDP_METsig",varbinsmetsig);
@@ -3001,7 +3012,7 @@ void higgs_dataMC_control_QCD() {
   addVerticalLine(30);
   nbins=30; low=0; high=300;
   setLogY(false);
-  var="METsig"; xtitle="E^{miss}_{T}-significance #it{S}_{MET}";
+  var="METsig"; xtitle="#it{S}_{MET}";
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_preselectionMDP-MET125_METsig",0);
   setLogY(true);
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_preselectionMDP-MET125_METsig",0);
@@ -3021,7 +3032,7 @@ void higgs_dataMC_control_QCD() {
 
   nbins=13; low=0; high=300;
   setLogY(false);
-  var="METsig"; xtitle="E^{miss}_{T}-significance #it{S}_{MET}";
+  var="METsig"; xtitle="#it{S}_{MET}";
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_preselectionLDP-MET125_METsig",varbinsmetsig);
   setLogY(true);
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_QCDcontrol_preselectionLDP-MET125_METsig",varbinsmetsig);
@@ -3860,7 +3871,7 @@ void higgs_dataMC_weightFactorTest_SL(TString options) {
 
     float varbinsmetsig[6] = {0,30,50,100,150,500};
     nbins=5; low=0; high=500;
-    var="METsig"; xtitle="E^{miss}_{T}-significance #it{S}_{MET}";
+    var="METsig"; xtitle="#it{S}_{MET}";
     filename.Form("SL_SB%db_METsig_%s",ib,jmt::fortranize(weightfactor).Data());
     drawPlots(var,nbins,low,high,xtitle,"Events", filename,varbinsmetsig);
     
@@ -4062,7 +4073,7 @@ void higgs_dataMC_control_SL() {
   addVerticalLine(30);
   nbins=30; low=0; high=300;
   setLogY(false);
-  var="METsig"; xtitle="E^{miss}_{T}-significance #it{S}_{MET}";
+  var="METsig"; xtitle="#it{S}_{MET}";
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselection_METsig",0);
   setLogY(true); setPlotMinimum(0.5);
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselection_METsig",0);
@@ -4081,7 +4092,7 @@ void higgs_dataMC_control_SL() {
   nbins=30; low=0; high=300;
   setLogY(false);
   addVerticalLine(30);
-  var="METsig"; xtitle="E^{miss}_{T}-significance #it{S}_{MET}";
+  var="METsig"; xtitle="#it{S}_{MET}";
 
   double fullLumi = lumiScale_;
 
@@ -4126,7 +4137,7 @@ void higgs_dataMC_control_SL() {
     TString pvdesc=jmt::fortranize(pvcut[ipv].GetTitle());
 
     nbins=30; low=0; high=300;
-    var="METsig"; xtitle="E^{miss}_{T}-significance #it{S}_{MET}";
+    var="METsig"; xtitle="#it{S}_{MET}";
     setLogY(true);
     drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_preselection_METsig_"+pvdesc,0);
 
@@ -4204,7 +4215,7 @@ root [109] ratiosByPV[0]->SetMarkerColor(kMagenta+4)
   addVerticalLine(30);
   nbins=15; low=0; high=300;
   setLogY(false);
-  var="METsig"; xtitle="E^{miss}_{T}-significance #it{S}_{MET}";
+  var="METsig"; xtitle="#it{S}_{MET}";
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_4bPreselection_METsig",0);
   setLogY(true);
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_4bPreselection_METsig",0);
@@ -4256,7 +4267,7 @@ root [109] ratiosByPV[0]->SetMarkerColor(kMagenta+4)
   selection_ = baseline && trigger && sl && (njets4||njets5)&&jet2&&mdp && btag4sf  &&higgsSR &&drmax;
   nbins=30; low=0; high=300;
   setLogY(true);
-  var="METsig"; xtitle="E^{miss}_{T}-significance #it{S}_{MET}";
+  var="METsig"; xtitle="#it{S}_{MET}";
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_Nm1_METsig",0);
   setLogY(false);
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_dataMC_SL_Nm1_METsig",0);
@@ -5061,7 +5072,7 @@ void higgs_whyLeptonLost() {
 
   //all cuts except metsig
   selection_=baseline&&triggers && zl&& tauveto && isotk1 && njets&&jet2&&mdp && btag4sf && higgsdiff&&higgsmass && drmax ;
-  var="METsig"; xtitle="E^{miss}_{T}-significance #it{S}_{MET}";
+  var="METsig"; xtitle="#it{S}_{MET}";
   nbins=8; low= 0; high=160;
   setLogY(false);
   drawPlots(var,nbins,low,high,xtitle,"Events", "higgs_METsig_splitTtbar",0);
@@ -5404,7 +5415,7 @@ void higgs_Nminus1(bool plotdata=false,TString options="4b") {
 
   //full selection except METsig
   selection_=baseline&&triggers && zl&& tauveto && isotk1&& njets&&jet2 && btagcut &&mdp&& higgsmass && higgsdiff && drmax;
-  var="METsig"; xtitle="E^{miss}_{T}-significance #it{S}_{MET}";
+  var="METsig"; xtitle="#it{S}_{MET}";
   nbins=20; low= 0; high=200;
   drawPlots(var,nbins,low,high,xtitle,"Events", nm1label+"METsig",0);
 
@@ -5535,6 +5546,130 @@ void specialCutflow() {
 
 }
 
+void higgs_printCutflowTable_forPublication() {
+  initHiggsSamples69(false,"hhmg200 hhmg300");
+
+  int nbins;
+  float low,high;
+  TString var,xtitle;
+
+  savePlots_=false;
+  setQuiet(true);
+  //dummy plot
+  var="METsig"; xtitle="metsig";
+  nbins=5; low= 0; high=1e9;
+  float metsigbins[6]={0,30,50,100,150,1e9};
+  setStackMode(false,false,false); //no stack
+  setLogY(false);
+
+  doOverflowAddition(true);
+  doRatio_=false; ratioMin = 0; ratioMax = 2.2;
+  dodata_=false;
+
+  /*
+do cut flow in METsig bins: 0-30, 30-50, 50-100, 100-150, 150-X
+  */
+
+  TCut nocut = "(1)";
+  TCut baseline = "cutPV==1"; 
+  TCut cleaning = "passCleaning==1 &&buggyEvent==0&& MET/caloMET<2 && maxTOBTECjetDeltaMult<40";
+  //in conjunction with b-tag SFs, use non-btag triggers
+  TCut triggers = "passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1||passMC_DiCentralPFJet30_PFMHT80==1||passMC_PFMET150==1";
+  TCut triggersNoBtag = "passMC_DiCentralPFJet30_PFMET80==1||passMC_PFMET150==1";
+
+  TCut njets="njets20>=4&&njets20<=5";
+  TCut secondjet="jetpt2>50";
+
+  TCut zl = "nMuons==0&&nElectrons==0&&nTausLoose==0";
+  TCut isotk="nIsoPFcands10_010==0";
+
+  TCut btag4sf="nbtag4_nomSF==1";
+
+  TCut higgsmass = "((0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)>100)&&(0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)<140)) && abs(higgsMbb1MassDiff-higgsMbb2MassDiff)<20";
+
+  TString drmaxstring = "deltaRmax_hh<2.2";
+  TCut drmax = drmaxstring.Data();
+
+  std::vector<pair<TString, TCut> > cuts;
+
+  cuts.push_back(make_pair("No selection",nocut));
+  cuts.push_back(make_pair("Primary vertex",baseline));
+  cuts.push_back(make_pair("Lead two jets > 50 GeV",secondjet));
+  cuts.push_back(make_pair("4-5 jets",njets));
+  cuts.push_back(make_pair("minDeltaPhi",  TCut("minDeltaPhi20_eta5_noIdAll_nobeta>0.5 || (minDeltaPhi20_eta5_noIdAll_nobeta>0.3 && METsig>50)")));
+  cuts.push_back(make_pair("4 b tags",btag4sf));
+
+  cuts.push_back(make_pair( "Lepton vetoes",zl)); 
+  cuts.push_back(make_pair( "iso tk veto",isotk)); 
+  cuts.push_back(make_pair("Higgs SIG",higgsmass));
+  cuts.push_back(make_pair("DRmax",drmax));
+  cuts.push_back(make_pair("Trigger emulation",triggersNoBtag));
+  cuts.push_back(make_pair("MET cleaning",cleaning));
+
+
+  //what about trigger eff correction?
+  useTrigEff_=false; //for now only!
+
+
+  bool latexMode=true;
+  const TString dividerHead = latexMode ? " & ":" *|* ";
+  const TString divider = latexMode ? " & ":" | ";
+  const TString sampleDivider = latexMode ? " , ":" , ";
+  const TString lineEnd=latexMode ? "\\\\":" |";
+  if (!latexMode) cout<<"|* ";
+  cout<<"Cut \t\t"<<dividerHead;
+
+  /*
+  for (unsigned int isample = 0; isample<samples_.size(); isample++) {
+
+    cout<<sampleLabel_[samples_.at(isample)];
+
+    
+    if (isample==samples_.size()-1) cout<<lineEnd;
+    else   cout<<dividerHead;
+  }
+  */
+  for (int ibin = 1; ibin<=5; ibin++) { //metsig bins
+    cout<<" METsig "<<ibin-1;
+    if (ibin==5) cout<<lineEnd;
+    else   cout<<dividerHead;
+    
+  }
+  cout<<endl;
+
+
+  TCut totalcut = cuts.at(0).second;
+  for (unsigned int icut=0; icut<cuts.size(); icut++) {
+    //accumulate cuts -- but doesn't work for btag cuts
+    if (icut != 0) totalcut = totalcut&&cuts.at(icut).second;
+    selection_=totalcut;
+
+    drawPlots(var,nbins,low,high,xtitle,"Events", "dummy",metsigbins);
+    cout<<cuts.at(icut).first<<" \t\t"<<divider;
+
+    if ( cuts.at(icut).first == "Trigger emulation") {
+      useTrigEff_=true;
+      cout<<"Turning on trigger efficiency!"<<endl;
+    }
+
+    for (int ibin = 1; ibin<=5; ibin++) { //metsig bins
+
+      for (unsigned int isample = 0; isample<samples_.size(); isample++) {
+	TString thissamplename = samples_.at(isample);
+	double n = getHist(thissamplename)->GetBinContent(ibin);// getIntegral(thissamplename);
+	double e = getHist(thissamplename)->GetBinError(ibin);//getIntegralErr(thissamplename); 
+	cout<<jmt::format_nevents(n,e,false,latexMode);
+	
+	//      if (isample==samples_.size()-1) cout<<lineEnd<<endl;
+	if (ibin<5) cout<<sampleDivider;// else
+      }
+      if (ibin==5) cout<<lineEnd<<endl;
+      else cout<<divider;
+    }
+
+  }
+
+}
 
 void higgs_printCutflowTable(const bool latexMode=false,TString region="4bSR", const  bool unweighted=false, const bool makePlot=false,const bool doCutEff=false,const TString drcut="2.2") {
 
@@ -6243,7 +6378,7 @@ void higgsmbb_backgroundStudies2() { //this time split the off-mbb peak into a c
     
     //    fitRatio_="pol1";
     selection_=baseline && triggers &&zl &&isotk&&njets&&btag&&mdp &&metsigVLoose;
-    var="METsig"; xtitle="E^{miss}_{T}-significance #it{S}_{MET}";
+    var="METsig"; xtitle="#it{S}_{MET}";
     nbins=15; low= 0; high=300;
     setStackMode(false,false,false); //no stack
     setLogY(true);
@@ -6477,7 +6612,7 @@ void higgsmbb_cutflowDtry2_illustration() {
   drawEffVRej("TChihh250","TTbarJets0","hh250","ttbar",true);
 
 
-  var="METsig"; xtitle="E^{miss}_{T}-significance #it{S}_{MET}";
+  var="METsig"; xtitle="#it{S}_{MET}";
   nbins=15; low= 0; high=300;
   setStackMode(false,false,false); //no stack
   setPlotMinimum(0.1);
