@@ -380,6 +380,9 @@ public:
   float getISRweight(float isrpt,int sigmavar);
   //  std::pair<int,int> getSMSmasses();
   smsMasses getSMSmasses();
+  float getLeadingSoftLeptonPt() ;
+  int getNquarksFromSusy(unsigned int quarkFlavor,unsigned int SusyParentId);
+
   double checkPdfWeightSanity( double a) ;
   //  void getPdfWeights(const TString & pdfset, Float_t * pdfWeights, TH1D * sumofweights) ;
   int findTop(int& top1, int& top2);

@@ -4706,6 +4706,44 @@ void EventCalculator::genLevelHiggs(TLorentzVector (&bbbb)[2][2] ) {
 
 }
 
+int EventCalculator::getNquarksFromSusy(unsigned int quarkFlavor,unsigned int SusyParentId) {
+  //count the number of quarks of a given flavor that come *directly* from the SUSY parent specified
+
+  int nfound = 0;
+
+  for (unsigned int k = 0; k<mc_doc_id->size(); k++) {
+    if ( abs(mc_doc_id->at(k))==quarkFlavor && abs(mc_doc_mother_id->at(k))== SusyParentId) nfound++;
+  }
+  return nfound;
+}
+
+float EventCalculator::getLeadingSoftLeptonPt() {
+
+  if (!( sampleName_.Contains("T1tbbb")||
+	 sampleName_.Contains("T1ttbb")||
+	 sampleName_.Contains("T1tttb")   )) return -1;
+
+  //look for leptons coming from  ~chi_1 --> W* ~chi_0 decay
+  //return the pT of the leading one
+
+  //cout<<" ==== decays ===="<<endl;
+  float leadSoftLeptonPt = -1;
+  for (unsigned int k = 0; k<mc_doc_id->size(); k++) {
+    // cout<<setprecision(8)<<mc_doc_id->at(k)<<"\tmom, gmom, ggmom "<<mc_doc_mother_id->at(k)<<", "<<mc_doc_grandmother_id->at(k)<<", "<<mc_doc_ggrandmother_id->at(k)<<endl;
+    if (abs(mc_doc_mother_id->at(k)) == 1000024) { //found the daughter of the chargino
+      if ( abs(mc_doc_id->at(k)) >=1 && abs(mc_doc_id->at(k))<=6) {
+	if ( 0 > leadSoftLeptonPt) leadSoftLeptonPt=0; //for quarks, in case there is no leptonic decay in the event
+      }
+      else if ( abs(mc_doc_id->at(k)) ==11 || abs(mc_doc_id->at(k))== 13) { //look only for e, mu (ignore taus)
+	if ( mc_doc_pt->at(k) > leadSoftLeptonPt) leadSoftLeptonPt = mc_doc_pt->at(k); 
+      }
+
+    }
+  }
+  //  cout<<" ==== end "<< leadSoftLeptonPt<<endl;
+  return leadSoftLeptonPt;
+}
+
 unsigned int EventCalculator::getSUSYnb() {
 
   unsigned int SUSY_nb=0;
@@ -7939,6 +7977,8 @@ void EventCalculator::reducedTree(TString outputpath) {
 
   int SUSY_nb;
   int SUSY_process;
+  int nTopFromGluino;
+  int nBottomFromGluino;
   float SUSY_recoilPt;
   float SUSY_ISRweight,SUSY_ISRweightSystDown;
 
@@ -8150,6 +8190,9 @@ void EventCalculator::reducedTree(TString outputpath) {
   reducedTree.Branch("genTopPtHad",&genTopPtHad,"genTopPtHad/F");
   reducedTree.Branch("genWPtLep",&genWPtLep,"genWPtLep/F");
   reducedTree.Branch("genWPtHad",&genWPtHad,"genWPtHad/F");
+
+  float genPtLeadingSoftLepton=-1; //special variable for study of T1ttbb
+  reducedTree.Branch("genPtLeadingSoftLepton",&genPtLeadingSoftLepton,"genPtLeadingSoftLepton/F");
 
   float minDeltaRLeptonJet=-1, minDeltaRLeptonJetReco=-1;
   reducedTree.Branch("minDeltaRLeptonJet",&minDeltaRLeptonJet,"minDeltaRLeptonJet/F");
@@ -8422,6 +8465,10 @@ void EventCalculator::reducedTree(TString outputpath) {
 
   reducedTree.Branch("SUSY_nb",&SUSY_nb,"SUSY_nb/I");
   reducedTree.Branch("SUSY_process",&SUSY_process,"SUSY_process/I");
+
+  reducedTree.Branch("nTopFromGluino",&nTopFromGluino,"nTopFromGluino/I");
+  reducedTree.Branch("nBottomFromGluino",&nBottomFromGluino,"nBottomFromGluino/I");
+
   reducedTree.Branch("SUSY_recoilPt",&SUSY_recoilPt,"SUSY_recoilPt/F");
   reducedTree.Branch("SUSY_ISRweight",&SUSY_ISRweight,"SUSY_ISRweight/F");
   //  reducedTree.Branch("SUSY_ISRweightSystUp",&SUSY_ISRweightSystUp,"SUSY_ISRweightSystUp/F");
@@ -9101,6 +9148,8 @@ void EventCalculator::reducedTree(TString outputpath) {
     m12=thispoint.second();
     mIntermediate= thispoint.mintermediate;
 
+    genPtLeadingSoftLepton = theScanType_==kSMS ? getLeadingSoftLeptonPt() : -1;
+
     float susy_px1 = susy_pt1 * cos(susy_phi1);
     float susy_py1 = susy_pt1 * sin(susy_phi1);
     float susy_px2 = susy_pt2 * cos(susy_phi2);
@@ -9454,6 +9503,9 @@ void EventCalculator::reducedTree(TString outputpath) {
 
 
       SUSY_nb = sampleIsSignal_ ? getSUSYnb() : 0;
+      nTopFromGluino    = sampleIsSignal_ ? getNquarksFromSusy(6,1000021) : 0;
+      nBottomFromGluino = sampleIsSignal_ ? getNquarksFromSusy(5,1000021) : 0;
+
       //      bjetSumSUSY[thispoint] += SUSY_nb;
       //if(SUSY_process==NotFound) cout<<"SUSY_nb = "<<SUSY_nb<<endl;
 
