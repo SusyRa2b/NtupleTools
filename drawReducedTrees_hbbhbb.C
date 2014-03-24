@@ -155,6 +155,9 @@ void initHiggsSamples69(const bool useSkim=true,const TString samplelist="") {
   addToSamplesAll("HbbHbb_FullSim_400_v71");
   addToSamplesAll("HbbHbb_FullSim_250_v71");
 
+  //T1ttbb -- for a special test
+  addToSamplesAll(addEnding("SMS-T1ttbb_2J_mGo-1050to1350_mLSP-1to550_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM_PU_S12-v2_AODSIM_UCSB1968reshuf",useSkim));
+
   //  addToSamplesAll("TT_8TeV-mcatnlo_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1885ra2b_v71s");
 
   //sherpa
@@ -198,6 +201,11 @@ void initHiggsSamples69(const bool useSkim=true,const TString samplelist="") {
 
 
   //signal needs to come first so that it is at the bottom of the legend
+
+  if (samplelist.Contains("T1ttbb")) {
+    addSample(addEnding("SMS-T1ttbb_2J_mGo-1050to1350_mLSP-1to550_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM_PU_S12-v2_AODSIM_UCSB1968reshuf",useSkim)+"$1000$50",kMagenta,"ttbb 1000,50");
+
+  }
 
   if (samplelist.Contains("zh250")) 
     addSample( addEnding("SMS-TChiZH_ZccbbHbb_2J_mChargino-130to500_mLSP-1to370_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1873",useSkim)+"$250$1",kMagenta,"TChiZH 250");
@@ -5546,8 +5554,16 @@ void specialCutflow() {
 
 }
 
-void higgs_printCutflowTable_forPublication() {
-  initHiggsSamples69(false,"hhmg200 hhmg300");
+void higgs_printCutflowTable_forPublication_original(const TString sampleForTable="hhmg300") {
+  //very specific variation of a cutflow table, showing bins of METsig for each step
+  //best used with exactly one sample at a time
+
+  //update 24 March
+  //Bill Gary has asked for a very specific order of the cuts.
+  //instead of adding more bells and whistles here, i'm going to copy and paste this into a new function
+  //this one _original will remain the original version that i put in v9 of the AN
+
+  initHiggsSamples69(false,sampleForTable);
 
   int nbins;
   float low,high;
@@ -5583,6 +5599,8 @@ do cut flow in METsig bins: 0-30, 30-50, 50-100, 100-150, 150-X
   TCut zl = "nMuons==0&&nElectrons==0&&nTausLoose==0";
   TCut isotk="nIsoPFcands10_010==0";
 
+  TCut btag2sf="nbtag2_nomSF==1";
+  TCut btag3sf="nbtag3_nomSF==1";
   TCut btag4sf="nbtag4_nomSF==1";
 
   TCut higgsmass = "((0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)>100)&&(0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)<140)) && abs(higgsMbb1MassDiff-higgsMbb2MassDiff)<20";
@@ -5592,19 +5610,20 @@ do cut flow in METsig bins: 0-30, 30-50, 50-100, 100-150, 150-X
 
   std::vector<pair<TString, TCut> > cuts;
 
-  cuts.push_back(make_pair("No selection",nocut));
+  cuts.push_back(make_pair("All events",nocut));
   cuts.push_back(make_pair("Primary vertex",baseline));
-  cuts.push_back(make_pair("Lead two jets > 50 GeV",secondjet));
+  cuts.push_back(make_pair("Lead two jets > 50\\gev",secondjet));
   cuts.push_back(make_pair("4-5 jets",njets));
-  cuts.push_back(make_pair("minDeltaPhi",  TCut("minDeltaPhi20_eta5_noIdAll_nobeta>0.5 || (minDeltaPhi20_eta5_noIdAll_nobeta>0.3 && METsig>50)")));
-  cuts.push_back(make_pair("4 b tags",btag4sf));
-
-  cuts.push_back(make_pair( "Lepton vetoes",zl)); 
-  cuts.push_back(make_pair( "iso tk veto",isotk)); 
-  cuts.push_back(make_pair("Higgs SIG",higgsmass));
-  cuts.push_back(make_pair("DRmax",drmax));
+  cuts.push_back(make_pair("$\\mdp$",  TCut("minDeltaPhi20_eta5_noIdAll_nobeta>0.5 || (minDeltaPhi20_eta5_noIdAll_nobeta>0.3 && METsig>50)")));
+  cuts.push_back(make_pair("$\\ge 2$ \\b tags",btag2sf||btag3sf||btag4sf));
+  cuts.push_back(make_pair("$\\ge 3$ \\b tags",btag3sf||btag4sf));
+  cuts.push_back(make_pair("4 \\b tags",btag4sf));
+  cuts.push_back(make_pair("Lepton vetoes",zl)); 
+  cuts.push_back(make_pair("Isolated track veto",isotk)); 
+  cuts.push_back(make_pair("Higgs SIG region",higgsmass));
+  cuts.push_back(make_pair("$\\dRmax < 2.2$",drmax));
   cuts.push_back(make_pair("Trigger emulation",triggersNoBtag));
-  cuts.push_back(make_pair("MET cleaning",cleaning));
+  cuts.push_back(make_pair("Anomalous \\met cleaning",cleaning));
 
 
   //what about trigger eff correction?
@@ -5637,11 +5656,19 @@ do cut flow in METsig bins: 0-30, 30-50, 50-100, 100-150, 150-X
   }
   cout<<endl;
 
-
+  TCut totalcut_old;
   TCut totalcut = cuts.at(0).second;
   for (unsigned int icut=0; icut<cuts.size(); icut++) {
-    //accumulate cuts -- but doesn't work for btag cuts
-    if (icut != 0) totalcut = totalcut&&cuts.at(icut).second;
+    //accumulate cut;  but doesn't work for btag cuts -- need to add a dirty hack for that case
+    if (icut != 0) { //rather obscure logic -- picks out the 3b and 4b bins
+      if (TString(cuts.at(icut).second.GetTitle()).Contains("nbtag") && !TString(cuts.at(icut).second.GetTitle()).Contains("nbtag2")) {
+	totalcut = totalcut_old && cuts.at(icut).second;
+      }
+      else {
+	totalcut_old = totalcut;
+	totalcut = totalcut&&cuts.at(icut).second;
+      }
+    }
     selection_=totalcut;
 
     drawPlots(var,nbins,low,high,xtitle,"Events", "dummy",metsigbins);
@@ -5649,7 +5676,7 @@ do cut flow in METsig bins: 0-30, 30-50, 50-100, 100-150, 150-X
 
     if ( cuts.at(icut).first == "Trigger emulation") {
       useTrigEff_=true;
-      cout<<"Turning on trigger efficiency!"<<endl;
+      //      cout<<"Turning on trigger efficiency!"<<endl;
     }
 
     for (int ibin = 1; ibin<=5; ibin++) { //metsig bins
@@ -5661,10 +5688,172 @@ do cut flow in METsig bins: 0-30, 30-50, 50-100, 100-150, 150-X
 	cout<<jmt::format_nevents(n,e,false,latexMode);
 	
 	//      if (isample==samples_.size()-1) cout<<lineEnd<<endl;
-	if (ibin<5) cout<<sampleDivider;// else
+	if (ibin<5 && isample!=samples_.size()-1) cout<<sampleDivider;// else
       }
       if (ibin==5) cout<<lineEnd<<endl;
       else cout<<divider;
+    }
+
+  }
+
+} // end of higgs_printCutflowTable_forPublication_original()
+
+void higgs_printCutflowTable_forPublication(const TString sampleForTable="hhmg300", const TString toPrint="head") {
+  assert(toPrint == "head" || toPrint=="3b" || toPrint=="4b");
+
+  //very specific variation of a cutflow table, showing bins of METsig for each step
+  //best used with exactly one sample at a time
+
+  //update 24 March
+  //Bill Gary has asked for a very specific order of the cuts.
+  //_original version preserves my old implementation. this function has his request
+
+  /*
+    masses 250 and 400 GeV
+    "Baseline" = PV and MET cleaning
+
+    o pT>50 GeV for lead 2 jets
+    o Number of jets = 4 or 5
+    o lepton vetos
+    o isolated track veto
+    o Dphimin requirement
+
+    and then there would be two independent sections
+    o 4b sample
+    o DR < 2.2
+    o SIG region
+    o Trigger
+    o 3b sample
+    o DR < 2.2
+    o SIG region
+    o Trigger
+
+  */
+
+  initHiggsSamples69(false,sampleForTable);
+
+  int nbins;
+  float low,high;
+  TString var,xtitle;
+
+  savePlots_=false;
+  setQuiet(true);
+  //dummy plot
+  var="METsig"; xtitle="metsig";
+  nbins=5; low= 0; high=1e9;
+  float metsigbins[6]={0,30,50,100,150,1e9};
+  setStackMode(false,false,false); //no stack
+  setLogY(false);
+
+  doOverflowAddition(true);
+  doRatio_=false; ratioMin = 0; ratioMax = 2.2;
+  dodata_=false;
+
+  /*
+do cut flow in METsig bins: 0-30, 30-50, 50-100, 100-150, 150-X
+  */
+
+  TCut nocut = "(1)";
+  TCut pv = "cutPV==1"; 
+  TCut cleaning = "passCleaning==1 &&buggyEvent==0&& MET/caloMET<2 && maxTOBTECjetDeltaMult<40";
+  TCut baseline = pv&&cleaning;
+
+  //in conjunction with b-tag SFs, use non-btag triggers
+  TCut triggers = "passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1||passMC_DiCentralPFJet30_PFMHT80==1||passMC_PFMET150==1";
+  TCut triggersNoBtag = "passMC_DiCentralPFJet30_PFMET80==1||passMC_PFMET150==1";
+
+  TCut njets="njets20>=4&&njets20<=5";
+  TCut secondjet="jetpt2>50";
+
+  TCut zl = "nMuons==0&&nElectrons==0&&nTausLoose==0";
+  TCut isotk="nIsoPFcands10_010==0";
+
+  TCut btag2sf="nbtag2_nomSF==1";
+  TCut btag3sf="nbtag3_nomSF==1";
+  TCut btag4sf="nbtag4_nomSF==1";
+
+  TCut higgsmass = "((0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)>100)&&(0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)<140)) && abs(higgsMbb1MassDiff-higgsMbb2MassDiff)<20";
+
+  TCut mdp =  "minDeltaPhi20_eta5_noIdAll_nobeta>0.5 || (minDeltaPhi20_eta5_noIdAll_nobeta>0.3 && METsig>50)";
+
+  TString drmaxstring = "deltaRmax_hh<2.2";
+  TCut drmax = drmaxstring.Data();
+
+  std::vector<pair<TString, TCut> > cuts;
+
+  cuts.push_back(make_pair("All events",nocut));
+  cuts.push_back(make_pair("Baseline",baseline));
+  cuts.push_back(make_pair("Lead two jets > 50\\gev",secondjet));
+  cuts.push_back(make_pair("4-5 jets",njets));
+
+  cuts.push_back(make_pair("Lepton vetoes",zl)); 
+  cuts.push_back(make_pair("Isolated track veto",isotk)); 
+  cuts.push_back(make_pair("$\\mdp$", mdp));
+
+  if (toPrint!= "head") {
+    if (toPrint=="3b")      cuts.push_back(make_pair("3 \\b tags",btag3sf));
+    else if (toPrint=="4b") cuts.push_back(make_pair("4 \\b tags",btag4sf));
+    
+    cuts.push_back(make_pair("$\\dRmax < 2.2$",drmax));
+    cuts.push_back(make_pair("Higgs SIG region",higgsmass));
+    cuts.push_back(make_pair("Trigger emulation",triggersNoBtag));
+  }
+
+  //turn off correction for trig eff *until* we apply the trigger!
+  useTrigEff_=false;
+
+
+  bool latexMode=true;
+  const TString dividerHead = latexMode ? " & ":" *|* ";
+  const TString divider = latexMode ? " & ":" | ";
+  const TString sampleDivider = latexMode ? " , ":" , ";
+  const TString lineEnd=latexMode ? "\\\\":" |";
+  if (!latexMode) cout<<"|* ";
+
+  //print header
+  if (toPrint=="head") {
+    cout<<"Cut \t\t"<<dividerHead;
+    for (int ibin = 1; ibin<=5; ibin++) { //metsig bins
+      cout<<" METsig "<<ibin-1;
+      if (ibin==5) cout<<lineEnd;
+      else   cout<<dividerHead;
+    }
+  }
+  cout<<endl;
+
+  bool foundBtagCut=false;
+  TCut totalcut = cuts.at(0).second;
+  for (unsigned int icut=0; icut<cuts.size(); icut++) {
+    //are we going to print this?
+    // in 'head' mode, print everything; in non-head mode, print only after finding b-tag line
+    if (cuts.at(icut).first.Contains("tags")) foundBtagCut=true;
+    bool printMe = (toPrint=="head") || foundBtagCut;
+
+    //accumulate cut, except for the first iteration
+    if (icut!=0)	totalcut = totalcut&&cuts.at(icut).second;
+    selection_=totalcut;
+
+    if ( cuts.at(icut).first == "Trigger emulation")       useTrigEff_=true;
+
+    if (printMe) { 
+      //if we're not printing then we really don't need to do anything other than accumulate the cut string
+
+      drawPlots(var,nbins,low,high,xtitle,"Events", "dummy",metsigbins);
+      cout<<cuts.at(icut).first<<" \t\t"<<divider;
+      
+      for (int ibin = 1; ibin<=5; ibin++) { //metsig bins
+	for (unsigned int isample = 0; isample<samples_.size(); isample++) {
+	  TString thissamplename = samples_.at(isample);
+	  double n = getHist(thissamplename)->GetBinContent(ibin);// getIntegral(thissamplename);
+	  double e = getHist(thissamplename)->GetBinError(ibin);//getIntegralErr(thissamplename); 
+	  cout<<jmt::format_nevents(n,e,false,latexMode);
+	  
+	  //      if (isample==samples_.size()-1) cout<<lineEnd<<endl;
+	  if (ibin<5 && isample!=samples_.size()-1) cout<<sampleDivider;// else
+	}
+	if (ibin==5) cout<<lineEnd<<endl;
+	else cout<<divider;
+      }
     }
 
   }
