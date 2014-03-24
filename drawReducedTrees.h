@@ -752,6 +752,7 @@ void drawPlotHeaderInside(TString displaytext="",float xNDC=0.6,float yNDC=0.9) 
   text1->SetY(yNDC);
   text1->SetTextFont(42);
   text1->SetTextSizePixels(24);
+  text1->SetTextSize(0.044);
   text1->Draw();
 }
 
@@ -769,13 +770,13 @@ void drawPlotHeader() {
   else if (isPreliminary_) cmsString += " Preliminary";
 
   //add lumi if there is data or if it is a lumi-normalized MC plot
-  if ( dodata_ || !normalized_) {
+  if ( dodata_ || !normalized_ ) {
     TString lumiString;
     lumiString.Form(", L = %.1f fb^{-1}",lumiScale_/1000.); //removed _{int} from L
     cmsString += lumiString;
   }
 
-  //always add energy
+  // always add energy
   TString energyString;
   energyString.Form(", #sqrt{s} = %d TeV",cmEnergy_);
   cmsString += energyString;
