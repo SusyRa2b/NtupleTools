@@ -282,6 +282,7 @@ bool drawFilenameOnPlot_=false;
 bool dataPoissonError_=true;
 
 float unstackedLineWidth_ = 3;
+float dataMarkerSize_=1; //my default
 
 int m0_=0;
 int m12_=0;
@@ -347,6 +348,7 @@ when to write lumi? if not normalized, then yes
 */
 bool isPreliminary_ = true;
 bool isTwikiOnly_ = false;
+bool billGaryHeader_ = false;
 int cmEnergy_=8; //let's see if we ever need to change this to float!
 
 
@@ -772,14 +774,19 @@ void drawPlotHeader() {
   //add lumi if there is data or if it is a lumi-normalized MC plot
   if ( dodata_ || !normalized_ ) {
     TString lumiString;
-    lumiString.Form(", L = %.1f fb^{-1}",lumiScale_/1000.); //removed _{int} from L
+    if (billGaryHeader_) lumiString.Form("      L = %.1f fb^{-1}",lumiScale_/1000.);//bill asked for no commas and a lot of space
+    else                 lumiString.Form(", L = %.1f fb^{-1}",lumiScale_/1000.);
     cmsString += lumiString;
   }
 
   // always add energy
   TString energyString;
-  energyString.Form(", #sqrt{s} = %d TeV",cmEnergy_);
+  if (billGaryHeader_) energyString.Form("      #sqrt{s} = %d TeV",cmEnergy_);//bill asked for no commas and a lot of space
+  else                 energyString.Form(", #sqrt{s} = %d TeV",cmEnergy_);
   cmsString += energyString;
+
+  //bill asked for the text to be "centered" above the figure
+  if (billGaryHeader_)  cmsString.Prepend("           ");
 
   if (text2 != 0 ) delete text2;
   text2 = new TLatex(3.570061,23.08044,cmsString);
@@ -2604,7 +2611,7 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
     hdata->SetMarkerColor(kBlack);
     hdata->SetLineWidth(2);
     hdata->SetMarkerStyle(kFullCircle);
-    hdata->SetMarkerSize(1);
+    hdata->SetMarkerSize(dataMarkerSize_);
     if (renormalizeBins_) renormBins(hdata ); //manipulates the histogram 
     if (addOverflow_)     addOverflowBin(hdata); // manipulates the histogram!
     leg->AddEntry(hdata,"Data");
@@ -2641,7 +2648,8 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
   if (drawTotalSM_) leg->AddEntry(totalsm, sampleLabel_["TotalSM"],"F");
   for (int isample=int(samples_.size())-1; isample>=0; isample--) {
     if (dostack_ || (!drawSusyOnly_ || samples_[isample].Contains("LM")|| samples_[isample].Contains("SUGRA"))) { //drawSusyOnly_ means don't draw SM
-      leg->AddEntry(histos_[samples_[isample]], getSampleLabel(samples_[isample]),"F");
+      TString legOption = isSampleSM(samples_[isample]) ? "F" : "L";
+      leg->AddEntry(histos_[samples_[isample]], getSampleLabel(samples_[isample]),legOption);
     }
   }
 
@@ -2866,7 +2874,7 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
     hdata->SetMarkerColor(kBlack);
     hdata->SetLineWidth(2);
     hdata->SetMarkerStyle(kFullCircle);
-    hdata->SetMarkerSize(1);
+    hdata->SetMarkerSize(dataMarkerSize_);
     hdata->SetYTitle(ytitle);
     hdata->SetXTitle(xtitle);
     
