@@ -226,7 +226,7 @@ void initHiggsSamples69_brief() {
   //it presents a technical problem and qcd is invisible on these plots anyway
 
   TString  bname=addEnding("BJets_HT-250To500_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1893",useSkim);
-  addSample(bname,29,"Non-t#bar{t}"); //color tbd
+  addSample(bname,31,"Non-t#bar{t}"); //color from Vince
   chainSamples(bname,addEnding("BJets_HT-1000ToInf_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1895",useSkim));
   chainSamples(bname,addEnding("BJets_HT-500To1000_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1894",useSkim));
   //  setSampleScaleFactor(bname,1.3); //see above; don't use this line
