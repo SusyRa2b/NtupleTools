@@ -5324,7 +5324,10 @@ void higgs_Nminus1(bool plotdata=false,TString options="4b") {
     if (options.Contains("zh")) initHiggsSamples69(true,"bjets wjets ttv vv singlet ttbar znunu hhmg200 zh250 zh350 hhmg400");
     else                        initHiggsSamples69(true,"bjets wjets ttv vv singlet ttbar znunu hhmg200 hhmg400");
   }
-  else if (options.Contains("brief")) initHiggsSamples69_brief();
+  else if (options.Contains("brief")) {
+    initHiggsSamples69_brief();
+    setSampleLineStyle(addEnding("SMS-TChiHH_2b2b_2J_mChargino-130to500_mLSP-1_TuneZ2star_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V19-v1_AODSIM_UCSB1992",true)+"$200$1",2); //bill asks to use a dashed line here
+  }
   else   initHiggsSamples69(true,"bjets wjets ttv vv singlet ttbar znunu hhmg200 hhmg400");
 
   //use "official" top pT weights

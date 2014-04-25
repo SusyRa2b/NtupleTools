@@ -2240,7 +2240,7 @@ TString appendBinWidth(const TString & ytitle, const double low,const double hig
   if (unit!="") unit.Prepend(" "); //if and only if unit is not null, prepend a space
 
   int ndecimals= (w>=1) ? 0 : 1; //small improvement i hope
-  TString formstring="%s/%.";
+  TString formstring="%s / %.";
   formstring += ndecimals;
   formstring +="f%s";
 
