@@ -281,7 +281,7 @@ bool owenColor_ = false;
 bool drawFilenameOnPlot_=false;
 bool dataPoissonError_=true;
 
-float unstackedLineWidth_ = 3;
+float unstackedLineWidth_ = 4;
 float dataMarkerSize_=1; //my default
 
 int m0_=0;
@@ -1151,7 +1151,7 @@ for legacy purposes I am keeping all of the weight and selection TStrings, altho
     else if (type == kSMSPointHiggsino) xs = CrossSectionTable_higgsino_->getSMSCrossSection(m0_);
     else assert(0); //have not yet implemented sbottom
     char xsweight[100];
-    sprintf(xsweight,"*(%f/%f)",xs,ngen);
+    sprintf(xsweight,"*(%.11g/%.3f)",xs,ngen);
     weightedcut += xsweight;
   }
   else if (type == kmSugraPlane && susySubProcess<0) { //sanity check
