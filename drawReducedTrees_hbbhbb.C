@@ -195,22 +195,8 @@ void initHiggsSamples69_brief() {
 
   std::cout << "clear samples reset chains chainsamples" << std::endl;
 
-  const TString samplelist="hhmg200 hhmg400";
+  const TString samplelist="hhmg250 hhmg400"; //used to be 200
   //signal needs to come first so that it is at the bottom of the legend
-  if (samplelist.Contains("hhmg175") || samplelist=="")
-    addSample(addEnding("SMS-TChiHH_2b2b_2J_mChargino-130to500_mLSP-1_TuneZ2star_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V19-v1_AODSIM_UCSB1992",useSkim)+"$175$1",kRed-5,"m_{#tilde{#chi}_{1}^{0}} = 175 GeV");
-
-  if (samplelist.Contains("hhmg200") || samplelist=="") //used to be kRed-9
-    addSample(addEnding("SMS-TChiHH_2b2b_2J_mChargino-130to500_mLSP-1_TuneZ2star_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V19-v1_AODSIM_UCSB1992",useSkim)+"$200$1",kRed ,"m_{#tilde{#chi}_{1}^{0}} = 200 GeV");
-
-  if (samplelist.Contains("hhmg250") || samplelist=="")
-    addSample(addEnding("SMS-TChiHH_2b2b_2J_mChargino-130to500_mLSP-1_TuneZ2star_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V19-v1_AODSIM_UCSB1992",useSkim)+"$250$1",kRed-7,"m_{#tilde{#chi}_{1}^{0}} = 250 GeV");
-
-  if (samplelist.Contains("hhmg300") || samplelist=="")
-    addSample(addEnding("SMS-TChiHH_2b2b_2J_mChargino-130to500_mLSP-1_TuneZ2star_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V19-v1_AODSIM_UCSB1992",useSkim)+"$300$1",kRed-4,"m_{#tilde{#chi}_{1}^{0}} = 300 GeV");
-
-  if (samplelist.Contains("hhmg350") || samplelist=="")
-    addSample(addEnding("SMS-TChiHH_2b2b_2J_mChargino-130to500_mLSP-1_TuneZ2star_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V19-v1_AODSIM_UCSB1992",useSkim)+"$350$1",kRed+1,"m_{#tilde{#chi}_{1}^{0}} = 350 GeV");
 
   if (samplelist.Contains("hhmg400") || samplelist=="")
     addSample(addEnding("SMS-TChiHH_2b2b_2J_mChargino-130to500_mLSP-1_TuneZ2star_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V19-v1_AODSIM_UCSB1992",useSkim)+"$400$1",kBlue,"m_{#tilde{#chi}_{1}^{0}} = 400 GeV");
@@ -218,9 +204,11 @@ void initHiggsSamples69_brief() {
   if (samplelist.Contains("hhmg450") || samplelist=="")
     addSample(addEnding("SMS-TChiHH_2b2b_2J_mChargino-130to500_mLSP-1_TuneZ2star_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V19-v1_AODSIM_UCSB1992",useSkim)+"$450$1",kRed+3,"m_{#tilde{#chi}_{1}^{0}} = 450 GeV");
 
-  if (samplelist.Contains("hhmg500") || samplelist=="")
-    addSample(addEnding("SMS-TChiHH_2b2b_2J_mChargino-130to500_mLSP-1_TuneZ2star_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V19-v1_AODSIM_UCSB1992",useSkim)+"$500$1",kRed+4,"m_{#tilde{#chi}_{1}^{0}} = 500 GeV");
+  if (samplelist.Contains("hhmg250") || samplelist=="")
+    addSample(addEnding("SMS-TChiHH_2b2b_2J_mChargino-130to500_mLSP-1_TuneZ2star_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V19-v1_AODSIM_UCSB1992",useSkim)+"$250$1",kRed,"m_{#tilde{#chi}_{1}^{0}} = 250 GeV");
 
+  if (samplelist.Contains("hhmg200") || samplelist=="") //used to be kRed-9
+    addSample(addEnding("SMS-TChiHH_2b2b_2J_mChargino-130to500_mLSP-1_TuneZ2star_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V19-v1_AODSIM_UCSB1992",useSkim)+"$200$1",kRed ,"m_{#tilde{#chi}_{1}^{0}} = 200 GeV");
 
   //note: i'm not going to bother with the factor 1.3 scaling of QCD here.
   //it presents a technical problem and qcd is invisible on these plots anyway
@@ -5326,7 +5314,7 @@ void higgs_Nminus1(bool plotdata=false,TString options="4b") {
   }
   else if (options.Contains("brief")) {
     initHiggsSamples69_brief();
-    setSampleLineStyle(addEnding("SMS-TChiHH_2b2b_2J_mChargino-130to500_mLSP-1_TuneZ2star_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V19-v1_AODSIM_UCSB1992",true)+"$200$1",2); //bill asks to use a dashed line here
+    setSampleLineStyle(addEnding("SMS-TChiHH_2b2b_2J_mChargino-130to500_mLSP-1_TuneZ2star_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V19-v1_AODSIM_UCSB1992",true)+"$250$1",2); //bill asks to use a dashed line here
   }
   else   initHiggsSamples69(true,"bjets wjets ttv vv singlet ttbar znunu hhmg200 hhmg400");
 
