@@ -349,6 +349,7 @@ when to write lumi? if not normalized, then yes
 bool isPreliminary_ = true;
 bool isTwikiOnly_ = false;
 bool billGaryHeader_ = false;
+TString dataLegendDrawOptions_ = "lpf";
 int cmEnergy_=8; //let's see if we ever need to change this to float!
 
 
@@ -2614,7 +2615,7 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
     hdata->SetMarkerSize(dataMarkerSize_);
     if (renormalizeBins_) renormBins(hdata ); //manipulates the histogram 
     if (addOverflow_)     addOverflowBin(hdata); // manipulates the histogram!
-    leg->AddEntry(hdata,"Data");
+    leg->AddEntry(hdata,"Data",dataLegendDrawOptions_);
 
     if (!quiet_)    cout<<"Data underflow: " <<hdata->GetBinContent(0)<<endl;//BEN
     TString dataDrawOpt = drawDataZeroes_ ? "SAME E0" : "SAME E";
@@ -2878,7 +2879,7 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
     hdata->SetYTitle(ytitle);
     hdata->SetXTitle(xtitle);
     
-    leg->AddEntry(hdata,"Data");
+    leg->AddEntry(hdata,"Data",dataLegendDrawOptions_);
   }
   if(dataOnly){
     if(doRatio_ || dodata_) cout << "drawR inconsistent arguments" << endl;
