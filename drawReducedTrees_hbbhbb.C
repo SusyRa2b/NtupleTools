@@ -276,6 +276,7 @@ void initHiggsSamples69_brief() {
     dataMarkerSize_=1.4; // bill asked for larger data markers
     billGaryHeader_=true;
     leg_x1 = 0.67;
+    dataLegendDrawOptions_= "p"; //request from Bill
     //    leg_x2 = 0.93;
 }
 
@@ -5408,12 +5409,12 @@ void higgs_Nminus1(bool plotdata=false,TString options="4b") {
 
   //full selection 
   selection_=baseline&&triggers && zl&& tauveto && isotk1 && njets&&jet2 &&btagcut &&mdp && higgsmass && higgsdiff && drmax && metsig;
+  if (!options.Contains("brief")) {
   var="bjetpt1"; xtitle="lead b jet pT";
   nbins=20; low= 0; high=400;
   setLogY(false);
   drawPlots(var,nbins,low,high,xtitle,"Events", nm1label+"allcuts_bjetpt1",0,"GeV");
 
-  if (!options.Contains("brief")) {
   //still full selection
   var="jetpt1"; xtitle="lead jet pT";
   nbins=30; low= 0; high=300; //need 10 GeV Bins
@@ -5453,7 +5454,7 @@ void higgs_Nminus1(bool plotdata=false,TString options="4b") {
   nbins=10; low= 0; high=4;
   setLogY(false);
   drawPlots(var,nbins,low,high,xtitle,"Events", nm1label+"allcuts_hhDeltaPhi",0);
-  }
+  } //end !brief
 
   //full selection except mdp
   selection_=baseline&&triggers && zl&& tauveto && isotk1 && njets&&jet2 &&btagcut && higgsmass && higgsdiff && drmax && metsig;
@@ -5473,6 +5474,7 @@ void higgs_Nminus1(bool plotdata=false,TString options="4b") {
 */
 
 //these could be interesting -- shows how signal changes with the different versions
+  if (!options.Contains("brief")) {
   var="minDeltaPhi20"; xtitle="min #Delta #phi (jet1..3,MET)";
   nbins=10; low= 0; high=3;
   setLogY(false);
@@ -5487,7 +5489,7 @@ void higgs_Nminus1(bool plotdata=false,TString options="4b") {
   nbins=10; low= 0; high=3;
   setLogY(false);
   drawPlots(var,nbins,low,high,xtitle,"Events", nm1label+"allcuts_deltaPhiMinUber",0);
-
+  } //end !brief
 /* no longer interesting
   //3b sample; veto on 4th b
   selection_=baseline&&triggers && zl&& tauveto && isotk1 && njets&&jet2 && btag2 && btag3 && (!btag4) && higgsmass && higgsdiff && drmax && metsig;
