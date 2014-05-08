@@ -281,7 +281,7 @@ bool owenColor_ = false;
 bool drawFilenameOnPlot_=false;
 bool dataPoissonError_=true;
 
-float unstackedLineWidth_ = 4;
+float unstackedLineWidth_ = 2; //for line-only plots, i don't like a thicker width
 float dataMarkerSize_=1; //my default
 
 int m0_=0;
@@ -614,6 +614,8 @@ bool isSampleSM(const TString & name) {
 
   if (name.Contains("SUGRA")) return false;
   if (isSampleSMS(name)) return false;
+
+  if (name.Contains("susyhit"))return false; //Delphes Upgrade sample
 
   return true;
 }
@@ -1607,6 +1609,10 @@ void loadSamples( TString signalEffMode="") {
   else if (signalEffMode=="hbbhbb") { //new slightly more compact format
      configDescriptions_.setDefault("JES0_JER0_PFMETTypeI_METunc0_PUunc0_hpt20");
      configDescriptions_.setCorrected("JES0_JERbias_PFMETTypeI_METunc0_PUunc0_hpt20");
+  }
+  else if (signalEffMode=="delphes") {
+    configDescriptions_.setDefault("def");
+    configDescriptions_.setCorrected("corrected");//does not exist
   }
   else if (signalEffMode=="stop") {
     configDescriptions_.setDefault("default");
