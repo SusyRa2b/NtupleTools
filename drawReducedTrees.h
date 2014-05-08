@@ -318,6 +318,9 @@ float maxScaleFactor_ = 1.05;
 float xlabeloffset_=0.015;
 float xtitleoffset_=1.16; //was 0.97
 
+int customDivisionsVal_ = 505;
+bool customDivisions_=false;
+
 bool splitTTbar_ = false;
 bool splitWJets_ = false;
 //the next three are automatically configured in slABCD()
@@ -2268,7 +2271,9 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
   //  TH1D* thestackH=0;
 
   gROOT->SetStyle("CMS");
-  //gStyle->SetHatchesLineWidth(1);
+  if (customDivisions_) {
+    gROOT->GetStyle("CMS")->SetNdivisions(customDivisionsVal_);//x axis
+  }
 
   TString canvasOpt = doRatio_ ? "ratio" : "";
   const int mainPadIndex = doRatio_ ? 1 : 0;
