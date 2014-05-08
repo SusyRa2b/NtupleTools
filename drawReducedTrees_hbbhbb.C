@@ -275,8 +275,9 @@ void initHiggsSamples69_brief() {
     //special formatting
     dataMarkerSize_=1.4; // bill asked for larger data markers
     billGaryHeader_=true;
+    unstackedLineWidth_ = 4; //thicker line width for print
     leg_x1 = 0.67;
-    dataLegendDrawOptions_= "p"; //request from Bill
+    dataLegendDrawOptions_= "pe"; //request from Bill
     //    leg_x2 = 0.93;
 }
 
