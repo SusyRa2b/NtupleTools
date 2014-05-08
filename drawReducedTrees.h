@@ -1181,6 +1181,25 @@ TString getCutString(bool isData, TString extraSelection="",TString extraWeight=
   return    getCutString(st, extraWeight, selection_,extraSelection, pdfWeightIndex,pdfSet,susySubProcess) ;
 }
 
+void addOverflowBin(TH2D* hh) { //2d version of addOverflowBin
+
+  const  int nbinsx = hh->GetNbinsX();
+  const  int nbinsy = hh->GetNbinsY();
+
+  //ignoring bin errors for now!
+  for (int ii=1; ii<nbinsx;ii++) {
+    double oflow = hh->GetBinContent(ii,nbinsy+1);
+    double v = hh->GetBinContent(ii,nbinsy);
+    hh->SetBinContent(ii,nbinsy,v+oflow);
+  }
+
+  for (int ii=1; ii<nbinsy;ii++) {
+    double oflow = hh->GetBinContent(nbinsx+1,ii);
+    double v = hh->GetBinContent(nbinsx,ii);
+    hh->SetBinContent(nbinsx,ii,v+oflow);
+  }
+
+}
 
 void addOverflowBin(TH1D* theHist) {
 
@@ -2107,7 +2126,7 @@ void draw2d(const TString var, const int nbins, const float low, const float hig
 use cases:
 1) compare totalsm to data  -- already implemented; user sets dodata_ to true
 2) plot just one component (totalsm, signal, etc) -- not now
-3) compare totalsm to signal -- to do; user sets signalname to 
+3) compare totalsm to signal -- implemented; user sets signalname to signal to plot in comparison to totalsm
 
 the plots with multiple components basically only work in the case of a box plot
 the plots with one component might be good as COLZ
@@ -2175,12 +2194,16 @@ the plots with one component might be good as COLZ
   h2d->SetXTitle(xtitle);
   h2d->SetYTitle(ytitle);
   h2d->SetLineColor(getSampleColor("TotalSM"));
+
+  if (addOverflow_) addOverflowBin(h2d);
+
   double zmax = h2d->GetMaximum();
 
   if (dodata_) {
     dtree->Project("hdata2d",drawstring, getCutString(true));
     hdata2d->SetLineColor(kBlack);
   }
+  if (addOverflow_) addOverflowBin(hdata2d);
   if ((dodata_||signalname!="") && hdata2d->GetMaximum() > zmax) zmax= hdata2d->GetMaximum();
 
 
