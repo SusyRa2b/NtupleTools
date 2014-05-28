@@ -306,6 +306,8 @@ bool drawTotalSMSusy_=false;//no setter function
 bool drawSusyOnly_=false;//no setter function
 bool drawMarkers_=true;//no setter function
 
+bool treatAllAsSM_=false;
+
 bool useMassInLegend_=true;
 
 bool doCustomPlotMax_=false;
@@ -320,17 +322,6 @@ float xtitleoffset_=1.16; //was 0.97
 
 int customDivisionsVal_ = 505;
 bool customDivisions_=false;
-
-bool splitTTbar_ = false;
-bool splitWJets_ = false;
-//the next three are automatically configured in slABCD()
-bool splitTTbarForClosureTest_ = false;
-bool splitWJetsForClosureTest_ = false;
-bool splitSingleTopForClosureTest_ = false;
-
-//split the Zinvisible sample according to the neutrino acceptance categories
-bool splitZinvisible_ = false;
-bool vAccepMuon_ = false; //true(false) = muon(electron) definition of acceptance
 
 //revamp the plot header options
 /*
@@ -604,6 +595,8 @@ bool isSampleScan(const TString & name ) {
 }
 
 bool isSampleSM(const TString & name) {
+
+  if (treatAllAsSM_) return true;
 
   if (name.Contains("LM")) return false;
 
@@ -1414,8 +1407,6 @@ void removeSample(const TString & sample) {
 
 void setColorScheme(const TString & name) {
   if (name == "stack") {
-    sampleColor_["LM13"] = kGray;
-    sampleColor_["LM9"] =kGray;
     sampleColor_["sbottom-185-250"]=kRed-7;
     sampleColor_["sbottom-189-270"]=kRed-3;
     sampleColor_["sbottom-217-300"]=kRed+2;
@@ -1432,7 +1423,6 @@ void setColorScheme(const TString & name) {
     sampleColor_["TTbarJets0"]=kAzure-3;
     sampleColor_["TTbarJetsPowheg"]=kAzure-3;
     sampleColor_["TTbarJetsMCNLO"]=kAzure-3;
-    sampleColor_["TTbarSingleTopWJetsCombined"]=kAzure-3;
     sampleColor_["ttbar"]=kAzure-3;
     sampleColor_["SingleTop"] = kMagenta;
     sampleColor_["TTV"] =kBlue+3 ;
@@ -1458,7 +1448,6 @@ void setColorScheme(const TString & name) {
     sampleColor_["QCD"] = 2;
     sampleColor_["PythiaQCD"] = 2;
     sampleColor_["PythiaPUQCD"] =2;
-    sampleColor_["PythiaPUQCDFlat"] =2;
     sampleColor_["TTbarJets"]=kBlue;
     sampleColor_["TTV"] =kBlue+4 ;
     sampleColor_["TTbarJets0"]=kCyan;
@@ -1471,7 +1460,6 @@ void setColorScheme(const TString & name) {
     sampleColor_["TotalSM"] =kGreen+1; //owen requested 3
     sampleColor_["Total"] = 6;
     sampleColor_["VV"] = kOrange-3;
-    sampleColor_["HerwigQCDFlat"] = 2;
   }
   else {
     cout<<"Sorry, color scheme "<<name<<" is not known!"<<endl;
@@ -1496,10 +1484,7 @@ void resetSamples() {
   //order of this vector controls order of samples in stack
 
   //careful -- QCD must have 'QCD' in its name somewhere.
-  //samples_.push_back("QCD"); //madgraph
-  //samples_.push_back("PythiaQCD");
   samples_.push_back("PythiaPUQCD"); 
-  //samples_.push_back("PythiaPUQCDFlat");
 
   samples_.push_back("TTbarJets");
 
@@ -1508,8 +1493,6 @@ void resetSamples() {
   samples_.push_back("ZJets");
   samples_.push_back("VV");
   samples_.push_back("Zinvisible");
-  //samples_.push_back("HerwigQCDFlat");
-  //  samples_.push_back("LM9");
 
 }
 
@@ -1581,42 +1564,19 @@ void loadSamples( TString signalEffMode="") {
   //also note that there's no harm in failing to load one of these samples, 
   //as long as you don't actually try to draw it
 
-  samplesAll_.insert("QCD1000");
-  samplesAll_.insert("QCD120");
-  samplesAll_.insert("QCD1400");
-  samplesAll_.insert("QCD170");
-  samplesAll_.insert("QCD1800");
-  samplesAll_.insert("QCD300");
-  samplesAll_.insert("QCD470");
-  samplesAll_.insert("QCD600");
-  samplesAll_.insert("QCD800");
-  samplesAll_.insert("WJets_HT250To300");
-  samplesAll_.insert("WJets_HT300To400");
-  samplesAll_.insert("WJets_HT400ToInf");
+
   samplesAll_.insert("WW");
   samplesAll_.insert("WZ");
   samplesAll_.insert("ZZ");
-  samplesAll_.insert("ZJets_HT200To400");
-  samplesAll_.insert("ZJets_HT400ToInf");
-  samplesAll_.insert("Zinvisible_HT100To200");
-  samplesAll_.insert("Zinvisible_HT200To400");
-  samplesAll_.insert("Zinvisible_HT400ToInf");
 
   samplesAll_.insert("PythiaPUQCD");
   samplesAll_.insert("TTbarJets");
-  samplesAll_.insert("TTbarJetsPowheg");
-  samplesAll_.insert("TTbarJetsMCNLO");
   samplesAll_.insert("ZJets");
-  samplesAll_.insert("ZJetsInc");
   samplesAll_.insert("Zinvisible");
   samplesAll_.insert("SingleTop");
   samplesAll_.insert("VV");
   samplesAll_.insert("TTV");
 
-  samplesAll_.insert("T1bbbb");
-  samplesAll_.insert("T1tttt");
-  samplesAll_.insert("T2bb");
-  samplesAll_.insert("T2tt");
 
   //since we don't use JERbias anymore this is basically irrelevant, but let's keep this framework
   ////////////
@@ -1676,18 +1636,14 @@ void loadSamples( TString signalEffMode="") {
   //no need to ever comment these out
   setColorScheme("stack");
 
-  sampleLabel_["mSUGRAtanb40"] = "tan #beta = 40";
   sampleLabel_["T1bbbb"] = "T1bbbb";
   sampleLabel_["T1tttt"] = "T1tttt";
   sampleLabel_["T2bb"] = "T2bb";
   sampleLabel_["T2tt"] = "T2tt";
-  sampleLabel_["LM13"] = "LM13";
-  sampleLabel_["LM9"] = "LM9";
   sampleLabel_["sbottom-185-250"]="sbottom185-250";
   sampleLabel_["sbottom-189-270"]="sbottom189-270";
   sampleLabel_["sbottom-217-300"]="sbottom217-300";
   sampleLabel_["QCD"] = "QCD";
-  sampleLabel_["PythiaQCD"] = "QCD (no PU)";
   sampleLabel_["PythiaPUQCDFlat"] = "QCD"; 
   sampleLabel_["PythiaPUQCD"] = "QCD";
   sampleLabel_["TTbarJets"]="t#bar{t}";
@@ -1700,17 +1656,7 @@ void loadSamples( TString signalEffMode="") {
   sampleLabel_["WJets"] = "W#rightarrowl#nu";
   sampleLabel_["WJetsInc"] = "W#rightarrowl#nu (all HT)";
   sampleLabel_["WJets-mu"] = "W#rightarrow#mu#nu";
-  sampleLabel_["WJets-muGood"] = "W#rightarrow#mu#nu - good";
-  sampleLabel_["WJets-muFailEta"] = "W#rightarrow#mu#nu - faileta";
-  sampleLabel_["WJets-muFailPt"] = "W#rightarrow#mu#nu - failpt";
-  sampleLabel_["WJets-muFailRecoIso"] = "W#rightarrow#mu#nu - failrecoiso";
-  sampleLabel_["WJets-muFailOther"] = "W#rightarrow#mu#nu - failother";
   sampleLabel_["WJets-ele"] = "W#rightarrow e#nu";
-  sampleLabel_["WJets-eleGood"] = "W#rightarrow e#nu - good";
-  sampleLabel_["WJets-eleFailEta"] = "W#rightarrow e#nu - faileta";
-  sampleLabel_["WJets-eleFailPt"] = "W#rightarrow e#nu - failpt";
-  sampleLabel_["WJets-eleFailRecoIso"] = "W#rightarrow e#nu - failrecoiso";
-  sampleLabel_["WJets-eleFailOther"] = "W#rightarrow e#nu - failother";
   sampleLabel_["WJets-tauHad"] = "W#rightarrow#tau(#rightarrow had)#nu";
   sampleLabel_["WJetsZ2"] = "W#rightarrowl#nu (Z2)";
   sampleLabel_["ZJets"] = "Z/#gamma*#rightarrowl^{+}l^{-}";
@@ -1760,27 +1706,8 @@ void loadSamples( TString signalEffMode="") {
 
   sampleMarkerStyle_["SingleTop"] = kOpenSquare;
   sampleMarkerStyle_["WJets"] = kMultiply;
-  sampleMarkerStyle_["WJetsInc"] = kMultiply;
-  sampleMarkerStyle_["WJets-mu"] = kMultiply;
-  sampleMarkerStyle_["WJets-muGood"] = kMultiply;
-  sampleMarkerStyle_["WJets-muFailEta"] = kMultiply;
-  sampleMarkerStyle_["WJets-muFailPt"] = kMultiply;
-  sampleMarkerStyle_["WJets-muFailRecoIso"] = kMultiply;
-  sampleMarkerStyle_["WJets-muFailOther"] = kMultiply;
-  sampleMarkerStyle_["WJets-ele"] = kMultiply;
-  sampleMarkerStyle_["WJets-eleGood"] = kMultiply;
-  sampleMarkerStyle_["WJets-eleFailEta"] = kMultiply;
-  sampleMarkerStyle_["WJets-eleFailPt"] = kMultiply;
-  sampleMarkerStyle_["WJets-eleFailRecoIso"] = kMultiply;
-  sampleMarkerStyle_["WJets-eleFailOther"] = kMultiply;
-  sampleMarkerStyle_["WJets-tauHad"] = kMultiply;
-  sampleMarkerStyle_["WJetsZ2"] = kMultiply;
   sampleMarkerStyle_["ZJets"] = kFullTriangleUp;
-  sampleMarkerStyle_["ZJetsInc"] = kFullTriangleDown;
   sampleMarkerStyle_["Zinvisible"] = kFullTriangleDown;
-  sampleMarkerStyle_["Zinvisible-2vAcc"] = kFullTriangleDown;
-  sampleMarkerStyle_["Zinvisible-1vAcc"] = kFullTriangleDown;
-  sampleMarkerStyle_["Zinvisible-0vAcc"] = kFullTriangleDown;
   sampleMarkerStyle_["HerwigQCDFlat"] = kFullCircle;
   sampleMarkerStyle_["VV"] = kOpenCross;
   sampleMarkerStyle_["SingleTop-sChannel"] = kOpenSquare;
@@ -1814,8 +1741,10 @@ void loadSamples( TString signalEffMode="") {
       TChain* dummyp2=0;
 
       files_[thisconfig][*isample] = make_pair(dummyp1,dummyp2);
-      files_[thisconfig][*isample].first = new TFile(fname);
-      if (files_[thisconfig][*isample].first->IsZombie() ) {cout<<"file error with "<<*isample<<endl; files_[thisconfig][*isample].first=0;}
+      //swtich to TFile::Open in order to support files on EOS
+      files_[thisconfig][*isample].first = TFile::Open(fname);//new TFile(fname);
+      if (files_[thisconfig][*isample].first == 0 ||
+	  files_[thisconfig][*isample].first->IsZombie() ) {cout<<"file error with "<<*isample<<endl; files_[thisconfig][*isample].first=0;}
       else { if (!quiet_)    cout<<"Added sample: "<<thisconfig<<"\t"<<*isample<<endl;}
     }
   }
@@ -2125,7 +2054,7 @@ void draw2d(const TString var, const int nbins, const float low, const float hig
   /*
 use cases:
 1) compare totalsm to data  -- already implemented; user sets dodata_ to true
-2) plot just one component (totalsm, signal, etc) -- not now
+2) plot just one component (totalsm, signal, etc) -- should be ok
 3) compare totalsm to signal -- implemented; user sets signalname to signal to plot in comparison to totalsm
 
 the plots with multiple components basically only work in the case of a box plot
@@ -2136,7 +2065,7 @@ the plots with one component might be good as COLZ
   if (signalname!="" && dodata_) {cout<<"Problem in draw2d(). Can't plot signal and data at the same time."<<endl; return;}
 
   //let's tell the user what we're doing
-  if (!quiet_) cout<<"[draw2d] 2d comparison of totalsm and ";
+  if (!quiet_ && (dodata_||signalname!="")) cout<<"[draw2d] 2d comparison of totalsm and ";
   if (!quiet_ && dodata_) cout<<"data"<<endl;
   else if (!quiet_ && signalname!="") cout<<signalname<<endl;
 
@@ -2203,7 +2132,7 @@ the plots with one component might be good as COLZ
     dtree->Project("hdata2d",drawstring, getCutString(true));
     hdata2d->SetLineColor(kBlack);
   }
-  if (addOverflow_) addOverflowBin(hdata2d);
+  if (addOverflow_ && (dodata_ ||signalname!="")) addOverflowBin(hdata2d);
   if ((dodata_||signalname!="") && hdata2d->GetMaximum() > zmax) zmax= hdata2d->GetMaximum();
 
 
@@ -2217,9 +2146,11 @@ the plots with one component might be good as COLZ
     h2d->Draw(opt);
     
     h2d->SetMaximum(zmax*1.1);
-    hdata2d->SetMaximum(zmax*1.1);
     
-    if (dodata_ ||signalname!="")  hdata2d->Draw("box same");
+    if (dodata_ ||signalname!="") {
+      hdata2d->SetMaximum(zmax*1.1);
+      hdata2d->Draw("box same");
+    }
   }
 
   TString savename = filename;
