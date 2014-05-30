@@ -26,7 +26,7 @@ void  drawDelphes_signalOnly(TString plotsToMake="all") {
 
   stackSignal_=false;
 
-  setStackMode(false,true,false); //stack,norm,label override
+  setStackMode(false,false,false); //stack,norm,label override
   selection_ = "(1)"; //no cuts!
   nbins=8; low=1; high=9;
   //slepton, ewkino, stop, sbottom, gluino, gluino+squark, sq/sq
@@ -135,10 +135,10 @@ void  drawDelphes_signalOnly(TString plotsToMake="all") {
   nbins=40; low=0; high=200;
   var="mll"; xtitle="m_{l+l-}";
 
-  selection_="mll>20 && njets40eta3p0>=2 && MET>150"; //one search region
+  selection_="mll>20&&isSF==1 && njets40eta3p0>=2 && MET>150"; //one search region
   if (plotsToMake.Contains("all")||plotsToMake.Contains("005"))  drawPlots(var,nbins,low,high,xtitle,"Events", "Sc1_sel1_mll",0,"");
 
-  selection_="mll>20 && njets40eta3p0>=3 && MET>100"; //the other search region
+  selection_="mll>20&&isSF==1 && njets40eta3p0>=3 && MET>100"; //the other search region
   if (plotsToMake.Contains("all")||plotsToMake.Contains("005"))  drawPlots(var,nbins,low,high,xtitle,"Events", "Sc1_sel2_mll",0,"");
 
   //do it again, but split by SUSY production mode and stack ; integrate over maxEta
@@ -154,10 +154,10 @@ void  drawDelphes_signalOnly(TString plotsToMake="all") {
   nbins=40; low=0; high=200;
   var="mll"; xtitle="m_{l+l-}";
 
-  selection_="mll>20 && njets40eta3p0>=2 && MET>150"; //one search region
+  selection_="mll>20&&isSF==1 && njets40eta3p0>=2 && MET>150"; //one search region
   if (plotsToMake.Contains("all")||plotsToMake.Contains("005"))  drawPlots(var,nbins,low,high,xtitle,"Events", "Sc1_sel1_byMode_mll",0,"");
 
-  selection_="mll>20 && njets40eta3p0>=3 && MET>100"; //the other search region
+  selection_="mll>20&&isSF==1 && njets40eta3p0>=3 && MET>100"; //the other search region
   if (plotsToMake.Contains("all")||plotsToMake.Contains("005"))  drawPlots(var,nbins,low,high,xtitle,"Events", "Sc1_sel2_byMode_mll",0,"");
 
 }
