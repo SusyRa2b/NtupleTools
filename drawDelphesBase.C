@@ -117,7 +117,9 @@ void initSamples(TString option="all") {
 
   if (option.Contains("signal")) {
     addSample(signal1,kRed,"Scenario 1");
-    setSampleScaleFactor(signal1,0.1547 ); //from Isabell (to be updated?)
+    double Nsig = getTree(signal1)->GetEntries();
+    setSampleScaleFactor(signal1,0.1547/Nsig ); //from Isabell (to be updated?)
+    setSampleWeightFactor(signal1,"1.0/weight"); //cancel out weighting stored in tree
   }
 
   if (option.Contains("combinesm")) {
