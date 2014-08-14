@@ -612,6 +612,8 @@ bool isSampleSM(const TString & name) {
   if (isSampleSMS(name)) return false;
 
   if (name.Contains("susyhit"))return false; //Delphes Upgrade sample
+  if (name.Contains("naturalModel"))return false; //Delphes Upgrade sample
+  if (name.Contains("stoc"))return false; //Delphes Upgrade sample
 
   return true;
 }
@@ -773,19 +775,22 @@ void drawPlotHeader() {
   //add lumi if there is data or if it is a lumi-normalized MC plot
   if ( dodata_ || !normalized_ ) {
     TString lumiString;
-    if (billGaryHeader_) lumiString.Form("      L = %.1f fb^{-1}",lumiScale_/1000.);//bill asked for no commas and a lot of space
+    //    if (billGaryHeader_&&isPreliminary_)lumiString.Form("      L = %.1f fb^{-1}",lumiScale_/1000.);//bill asked for no commas and a lot of space
+    if (billGaryHeader_ ) lumiString.Form("      L = %.1f fb^{-1}",lumiScale_/1000.);//bill asked for no commas and a lot of space
+    else if (lumiScale_/1000.0 > 49) lumiString.Form(", L = %.0f fb^{-1}",lumiScale_/1000.);
     else                 lumiString.Form(", L = %.1f fb^{-1}",lumiScale_/1000.);
     cmsString += lumiString;
   }
 
   // always add energy
   TString energyString;
-  if (billGaryHeader_) energyString.Form("      #sqrt{s} = %d TeV",cmEnergy_);//bill asked for no commas and a lot of space
+  if (billGaryHeader_ ) energyString.Form("      #sqrt{s} = %d TeV",cmEnergy_);//bill asked for no commas and a lot of space
   else                 energyString.Form(", #sqrt{s} = %d TeV",cmEnergy_);
   cmsString += energyString;
 
   //bill asked for the text to be "centered" above the figure
-  if (billGaryHeader_)  cmsString.Prepend("           ");
+  if (billGaryHeader_ && (isPreliminary_ || !dodata_))  cmsString.Prepend(" ");
+  if (billGaryHeader_ && !isPreliminary_) cmsString.Prepend("           ");
 
   if (text2 != 0 ) delete text2;
   text2 = new TLatex(3.570061,23.08044,cmsString);
@@ -858,7 +863,7 @@ void renewCanvas(const TString opt="",const int ncol=1) {
     gPad->SetBottomMargin(small);
     gPad->Modified();
 
-    if (!quiet_)  cout<< thecanvas->GetPad(1)->GetXlowNDC() <<"\t"
+    if (false)  cout<< thecanvas->GetPad(1)->GetXlowNDC() <<"\t" //no need to see this anymore
 		      << thecanvas->GetPad(1)->GetWNDC() <<"\t"
 		      << thecanvas->GetPad(1)->GetYlowNDC() <<"\t"
 		      << thecanvas->GetPad(1)->GetHNDC() <<endl;
@@ -904,14 +909,15 @@ void setPadDimensions(int x, int y) {
   mainpadHeight= y;
 }
 
-void renewLegend() {
+void renewLegend(int fillstyle=0) {
 
   if (leg!=0) delete leg;
   leg = new TLegend(leg_x1, leg_y1, leg_x2, leg_y2);
   leg->SetBorderSize(0);
   leg->SetLineStyle(0);
   leg->SetTextFont(42);
-  leg->SetFillStyle(0);
+  leg->SetFillStyle(fillstyle);
+  if (fillstyle!=0) leg->SetFillColor(0);
 
 }
 
@@ -944,6 +950,17 @@ double findOverallMax(const TH1D* hh) {
     if (val>max) max=val;
   }
   return max;
+}
+
+double findOverallMin(const TH1D* hh) {
+
+  double min=1e9;
+
+  for (int i=1; i<= hh->GetNbinsX(); i++) {
+    double val = hh->GetBinContent(i) - hh->GetBinErrorLow(i);
+    if (val<min) min=val;
+  }
+  return min;
 }
 
 //code originally lifted from Owen
@@ -2423,8 +2440,12 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
     if (!samples_[isample].Contains("TTbar") && !samples_[isample].Contains("LM") && !samples_[isample].Contains("SUGRA")) {
       totalnonttbar->Add(histos_[samples_[isample]]);
     }
-    if (!samples_[isample].Contains("QCD") && !samples_[isample].Contains("BJets") && !samples_[isample].Contains("LM")&& !samples_[isample].Contains("SUGRA") && !samples_[isample].Contains("TTJets_HadronicMGDecays")) {
-       totalnonqcd->Add(histos_[samples_[isample]]);
+    if ( ( !samples_[isample].Contains("QCD") && 
+	   !samples_[isample].Contains("BJets") && 
+	   !samples_[isample].Contains("TTJets_HadronicMGDecays"))
+	 && isSampleSM(samples_[isample]) //don't include susy in the non-qcd contribution
+	 ) {
+      totalnonqcd->Add(histos_[samples_[isample]]);
     }
     if (samples_[isample].Contains("QCD")||samples_[isample].Contains("BJets")||samples_[isample].Contains("TTJets_HadronicMGDecays")) {
        totalqcd->Add(histos_[samples_[isample]]);
@@ -2542,7 +2563,7 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
       }
       //if not stacking signal, just draw the signals without the addition of totalsm
       //now draw
-      cout<<"drawing "<<signals.at(isig)<<endl;
+      if (!quiet_)      cout<<"drawing "<<signals.at(isig)<<endl;
       histos_[signals.at(isig)]->SetLineColor(getSampleColor(signals.at(isig)));
       histos_[signals.at(isig)]->SetLineStyle(sampleLineStyle_[signals.at(isig)]);
       histos_[signals.at(isig)]->Draw("SAME HIST");
@@ -2733,6 +2754,8 @@ TH1D* getHist(const TString & sample) {
   if (sample=="totalsm") h=totalsm;
   else if (sample=="data") h=hdata;
   else h = histos_[sample];
+
+  if (h==0) cout<<"WARNING -- pointer is null for "<<sample<<endl;
 
   return h;
 }
