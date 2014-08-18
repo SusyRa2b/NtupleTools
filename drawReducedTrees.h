@@ -15,12 +15,23 @@
 
 #include <utility>
 
+//New (2014) CMS Style
+#include "tdrstyle.C"
+#include "CMS_lumi.C"
+
 //CMS style
+bool useNewStyle_=false; //default to old CMS Style
 TStyle *theStyle =0;
+TString theStyleName_;
 void initStyle() {
 
+  if (useNewStyle_) {
+    setTDRStyle();
+    theStyleName_="tdrStyle";
+  }
+  else if (theStyle==0 && gROOT->GetStyle("CMS")==0) {
   //check if the style is already defined
-  if (theStyle==0 && gROOT->GetStyle("CMS")==0) {
+    theStyleName_="CMS";
     theStyle = new TStyle("CMS","Style for P-TDR");
 
 
@@ -164,6 +175,7 @@ void initStyle() {
     //end CMS style
     
   }
+  else     theStyleName_="CMS";
 
 }
 
@@ -214,20 +226,26 @@ TString nameOfEventWeight_="weight";
 TString reducedTreeName_="reducedTree";
 
 float leg_x1 , leg_x2, leg_y1, leg_y2;
-void resetLegendPosition() {
-  leg_x1 = 0.696;
-  leg_x2=0.94;
-  leg_y1=0.5;
-  leg_y2=0.9;
-}
+
 void resetLegendPositionR() {
   leg_x1 = 0.2;
   leg_x2=0.45;
   leg_y1=0.65;
   leg_y2=0.9;
 }
-
-
+void resetLegendPositionNewStyle() {
+  leg_x1 = 0.67;
+  leg_x2=0.92;
+  leg_y1=0.42;
+  leg_y2=0.84;
+}
+void resetLegendPosition() {
+  if (useNewStyle_) {resetLegendPositionNewStyle(); return;}
+  leg_x1 = 0.696;
+  leg_x2=0.94;
+  leg_y1=0.5;
+  leg_y2=0.9;
+}
 ConfigurationDescriptions configDescriptions_;
 
 
@@ -359,7 +377,7 @@ TCanvas* thecanvas=0;
 //TCanvas* cratio=0;
 TLegend* leg=0;
 THStack* thestack=0;
-TLatex* extraText=0;
+TLatex* extraTextLatex=0;
 TString extratext_="";
 double rLine = -1;
 TH1D* totalsm=0; 
@@ -763,6 +781,42 @@ void drawPlotHeader() {
   //Oct 2013 -- cleaned up the cruft that had accumulated in here. hopefully didn't break anything
   //2014 -- new rules demand that certain plots be labeled 'CMS Unpublished'
 
+  //summer 2014 -- new plot style code is supposed to take the place of this!
+  //testing it out
+  if (useNewStyle_) {
+
+    if (isTwikiOnly_) {
+      extraText="Unpublished"; writeExtraText=true;
+    }
+    else if (!dodata_ && cmEnergy_<12) {
+      //don't write simulation for 14 TeV Upgrade studies
+      extraText="Simulation"; writeExtraText=true;
+    }
+    else if (isPreliminary_) {
+      extraText="Preliminary"; writeExtraText=true;
+    }
+    else writeExtraText=false;
+
+    TString lumiString;
+    if (lumiScale_/1000.0 > 49) lumiString.Form("%.0f fb^{-1}",lumiScale_/1000.);
+    else lumiString.Form("%.1f fb^{-1}",lumiScale_/1000.);
+    lumi_8TeV = lumiString;
+    lumi_7TeV = lumiString;
+    lumi_14TeV = lumiString;
+
+    lumi_14TeV += ", PU = 140";
+
+    int iPeriod=1;
+    if (cmEnergy_==7) iPeriod = 1;
+    else if (cmEnergy_==8) iPeriod=2;
+    else if (cmEnergy_==14) iPeriod=14;
+    CMS_lumi( thecanvas, iPeriod, 11 ); //see https://twiki.cern.ch/twiki/pub/CMS/TpRootStyle/myMacro.C
+
+    //leaves out option to plotSelectionLabel_
+    //also seems like it isn't smart when it comes to printing the lumi or not
+    return;
+  }
+
   if (text1 != 0 ) delete text1;
   TString cmsString="CMS";
 
@@ -922,14 +976,14 @@ void renewLegend(int fillstyle=0) {
 }
 
 void renewExtraText() {
-  if (extraText!=0) delete extraText;
-  extraText = new TLatex();
-  extraText->SetNDC();
-  extraText->SetTextAlign(13);
-  extraText->SetX(0.5);
-  extraText->SetY(.85);
-  extraText->SetTextFont(42);
-  extraText->SetTextSizePixels(24);
+  if (extraTextLatex!=0) delete extraTextLatex;
+  extraTextLatex = new TLatex();
+  extraTextLatex->SetNDC();
+  extraTextLatex->SetTextAlign(13);
+  extraTextLatex->SetX(0.5);
+  extraTextLatex->SetY(.85);
+  extraTextLatex->SetTextFont(42);
+  extraTextLatex->SetTextSizePixels(24);
 }
 
 void resetHistos() {
@@ -1566,7 +1620,8 @@ void addToSamplesAll(const TString & name) {
   samplesAll_.insert(name);
 }
 
-
+//this serves as a pseudo-constructor for this non-class
+//before calling this, set global options the way you want them
 void loadSamples( TString signalEffMode="") {
   if (loaded_) return;
   loaded_=true; //implies that loadSamples() can only be called once per session
@@ -2001,7 +2056,7 @@ float drawSimple(const TString var, const int nbins, const double low, const dou
 		 const TString xtitle="",const TString ytitle="") {
 
   loadSamples();
-  gROOT->SetStyle("CMS");
+  gROOT->SetStyle(theStyleName_);
 //I would rather implement this functionality via drawPlots(), but I think it will be simpler
 //to just write something simple
 
@@ -2088,7 +2143,7 @@ the plots with one component might be good as COLZ
 
   loadSamples();
   if (filename=="")     filename.Form("%s_%s",var.Data(),vary.Data());
-  gROOT->SetStyle("CMS");
+  gROOT->SetStyle(theStyleName_);
 
   renewCanvas();
 
@@ -2241,9 +2296,9 @@ void drawPlots(const TString var, const int nbins, const float low, const float 
 
   //  TH1D* thestackH=0;
 
-  gROOT->SetStyle("CMS");
+  gROOT->SetStyle(theStyleName_);
   if (customDivisions_) {
-    gROOT->GetStyle("CMS")->SetNdivisions(customDivisionsVal_);//x axis
+    gROOT->GetStyle(theStyleName_)->SetNdivisions(customDivisionsVal_);//x axis
   }
 
   TString canvasOpt = doRatio_ ? "ratio" : "";
@@ -2826,7 +2881,7 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
 
   loadSamples();
   
-  gROOT->SetStyle("CMS");
+  gROOT->SetStyle(theStyleName_);
   
   TString opt=doRatio_? "ratio":"";
   renewCanvas(opt);
@@ -2886,8 +2941,8 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
     drawPlotHeader();
     if (doleg_)  leg->Draw();
     if (extratext_!="") {
-      extraText->DrawLatex(.5,.5,extratext_);
-      extraText->Draw();
+      extraTextLatex->DrawLatex(.5,.5,extratext_);
+      extraTextLatex->Draw();
     }
     thecanvas->SaveAs("mindpPassOverFail-"+savename+".eps");
     thecanvas->SaveAs("mindpPassOverFail-"+savename+".pdf");
@@ -3060,8 +3115,8 @@ void drawR(const TString vary, const float cutVal, const TString var, const int 
   if (doRatio_)  thecanvas->cd(1);
   if (doleg_)  leg->Draw();
   if (extratext_!="") {
-      extraText->DrawLatex(.5,.85,extratext_);
-      extraText->Draw();
+      extraTextLatex->DrawLatex(.5,.85,extratext_);
+      extraTextLatex->Draw();
   }
   TLine* myRline = 0;
   if (rLine>0) { //this should actually be allowed to go negative
