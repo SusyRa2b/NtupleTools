@@ -51,15 +51,27 @@ ln -s drawReducedTrees.h drawDelphes.h
 TString inputPath = "";
 TString dataInputPath =  "";
 
-double lumiScale_ = 300e3;//300 fb-1
+double lumiScale_ = 3000e3;//300 fb-1
 
 #include "drawReducedTrees.h"
 
-void initSamples(TString option="all") {
+void initSamples(TString option="all skimmed") {
 
-  if (option.Contains("all")) option = "tt bj signal";
+  option.ReplaceAll("all","tt bj nm1 nm2 nm3 stoc");
+  option.ReplaceAll("signal","nm1 nm2 nm3 stoc");
 
-  inputPath = "/cu3/joshmt/Upgrade/PhaseII_Configuration4v2_140PileUp/v02/"; //delcmscornell
+  //v10 is the first version with New samples (including new b-tagging)
+  //v09 is the latest and greatest (old samples)
+  //pre-approval was with v07
+
+  if (option.Contains("skimmed"))
+    inputPath = "/cu3/joshmt/Upgrade/PhaseII_Configuration4v2_140PileUp/v10/skimmed/"; //delcmscornell
+  else if (option.Contains("htskim"))
+    inputPath = "/cu3/joshmt/Upgrade/PhaseII_Configuration4v2_140PileUp/v10/ht1000/"; //delcmscornell
+  else if (option=="comp7to10")
+    inputPath = "/cu3/joshmt/Upgrade/PhaseII_Configuration4v2_140PileUp/comp7to10/";
+  else 
+    inputPath = "/cu3/joshmt/Upgrade/PhaseII_Configuration4v2_140PileUp/v10/"; //delcmscornell
     //inputPath = "/cu3/joshmt/Upgrade/PhaseI_Configuration0_140PileUp/v01/";
   //inputPath = "root://eoscms.cern.ch//eos/cms/store/user/joshmt/upgrade/v01/PhaseI/Configuration0/140PileUp/"; //direct from EOS
   dodata_=false; //no data for upgrade studies!
@@ -92,6 +104,28 @@ void initSamples(TString option="all") {
   addToSamplesAll("LL-4p-900-1400-v1510_14TEV");
   addToSamplesAll("LL-4p-1400-100000-v1510_14TEV");
 
+  addToSamplesAll("ttB-4p-0-900-v1510_14TEV");
+  addToSamplesAll("ttB-4p-1600-2500-v1510_14TEV");
+  addToSamplesAll("ttB-4p-2500-100000-v1510_14TEV");
+  addToSamplesAll("ttB-4p-900-1600-v1510_14TEV");
+  addToSamplesAll("LLB-4p-0-400-v1510_14TEV");
+  addToSamplesAll("LLB-4p-400-900-v1510_14TEV");
+  addToSamplesAll("LLB-4p-900-100000-v1510_14TEV");
+  addToSamplesAll("Bjj-vbf-4p-0-700-v1510_14TEV");
+  addToSamplesAll("Bjj-vbf-4p-1400-2300-v1510_14TEV");
+  //  addToSamplesAll("Bjj-vbf-4p-2300-3400_14TEV");
+  addToSamplesAll("Bjj-vbf-4p-2300-3400-v1510_14TEV");
+  addToSamplesAll("Bjj-vbf-4p-700-1400-v1510_14TEV");
+  addToSamplesAll("BB-4p-0-300-v1510_14TEV");
+  addToSamplesAll("BB-4p-1300-2100-v1510_14TEV");
+  addToSamplesAll("BB-4p-2100-100000-v1510_14TEV");
+  addToSamplesAll("BB-4p-300-700-v1510_14TEV");
+  addToSamplesAll("BB-4p-700-1300-v1510_14TEV");
+  addToSamplesAll("BBB-4p-0-600-v1510_14TEV");
+  addToSamplesAll("BBB-4p-1300-100000-v1510_14TEV");
+  addToSamplesAll("BBB-4p-600-1300-v1510_14TEV");
+
+
   addToSamplesAll("Bj-4p-0-300-v1510_14TEV");
   addToSamplesAll("Bj-4p-1100-1800-v1510_14TEV");
   addToSamplesAll("Bj-4p-1800-2700-v1510_14TEV");
@@ -102,25 +136,40 @@ void initSamples(TString option="all") {
 
   addToSamplesAll("B-4p-0-1-v1510_14TEV");
 
-  TString signal1 = "susyhit_Scenario1_v02";
+  TString signal1 = "naturalModel1";//old name: "susyhit_Scenario1_v02";
+  TString signal2 = "naturalModel2";
+  TString signal3 = "naturalModel3";
+  TString signal4 = "stoc";
   addToSamplesAll(signal1);
+  addToSamplesAll(signal2);
+  addToSamplesAll(signal3);
+  addToSamplesAll(signal4);
 
+
+  if (option=="comp7to10") {
+
+    addToSamplesAll("tt-4p-0-600-v1510_14TEV_v07");
+    addToSamplesAll("tt-4p-600-1100-v1510_14TEV_v07");
+    addToSamplesAll("tt-4p-1100-1700-v1510_14TEV_v07");
+    addToSamplesAll("tt-4p-1700-2500-v1510_14TEV_v07");
+    addToSamplesAll("tt-4p-2500-100000-v1510_14TEV_v07");
+
+    addToSamplesAll("tt-4p-0-600-v1510_14TEV_v10");
+    addToSamplesAll("tt-4p-600-1100-v1510_14TEV_v10");
+    addToSamplesAll("tt-4p-1100-1700-v1510_14TEV_v10");
+    addToSamplesAll("tt-4p-1700-2500-v1510_14TEV_v10");
+    addToSamplesAll("tt-4p-2500-100000-v1510_14TEV_v10");
+
+  }
 
   loadSamples("delphes");
   usePUweight_=false;
   useTrigEff_=false;
 
-
+  isPreliminary_=false;
   currentConfig_=configDescriptions_.getDefault();
  clearSamples();
   resetChains(); //important in the case that we call initHiggsSamples() more than once
-
-  if (option.Contains("signal")) {
-    addSample(signal1,kRed,"Scenario 1");
-    double Nsig = getTree(signal1)->GetEntries();
-    setSampleScaleFactor(signal1,0.1547/Nsig ); //from Isabell (to be updated?)
-    setSampleWeightFactor(signal1,"1.0/weight"); //cancel out weighting stored in tree
-  }
 
   if (option.Contains("combinesm")) {
     TString smname = "tt-4p-0-600-v1510_14TEV";
@@ -137,15 +186,13 @@ void initSamples(TString option="all") {
     chainSamples(smname,"tj-4p-1600-2400-v1510_14TEV");
     chainSamples(smname,"tj-4p-2400-100000-v1510_14TEV");
 
-    /*    
     TString tb_name = "tB-4p-0-500-v1510_14TEV"; 
     chainSamples(smname,tb_name);
     chainSamples(smname,"tB-4p-500-900-v1510_14TEV");
     chainSamples(smname,"tB-4p-900-1500-v1510_14TEV");
     chainSamples(smname,"tB-4p-1500-2200-v1510_14TEV");
     chainSamples(smname,"tB-4p-2200-100000-v1510_14TEV");
-    */
-
+    
     TString ll_name = "LL-4p-0-100-v1510_14TEV";
     chainSamples(smname,ll_name);
     chainSamples(smname,"LL-4p-100-200-v1510_14TEV");
@@ -165,6 +212,119 @@ void initSamples(TString option="all") {
 
     chainSamples(smname,"B-4p-0-1-v1510_14TEV");
 
+    chainSamples(smname,"BB-4p-0-300-v1510_14TEV");
+    chainSamples(smname,"BB-4p-1300-2100-v1510_14TEV");
+    chainSamples(smname,"BB-4p-2100-100000-v1510_14TEV");
+    chainSamples(smname,"BB-4p-300-700-v1510_14TEV");
+    chainSamples(smname,"BB-4p-700-1300-v1510_14TEV");
+    chainSamples(smname,"BBB-4p-0-600-v1510_14TEV");
+    chainSamples(smname,"BBB-4p-1300-100000-v1510_14TEV");
+    chainSamples(smname,"BBB-4p-600-1300-v1510_14TEV");
+    chainSamples(smname,"Bjj-vbf-4p-0-700-v1510_14TEV");
+    chainSamples(smname,"Bjj-vbf-4p-1400-2300-v1510_14TEV");
+    //    chainSamples(smname,"Bjj-vbf-4p-2300-3400_14TEV");
+    chainSamples(smname,"Bjj-vbf-4p-2300-3400-v1510_14TEV");
+    chainSamples(smname,"Bjj-vbf-4p-700-1400-v1510_14TEV");
+    chainSamples(smname,"LLB-4p-0-400-v1510_14TEV");
+    chainSamples(smname,"LLB-4p-400-900-v1510_14TEV");
+    chainSamples(smname,"LLB-4p-900-100000-v1510_14TEV");
+    chainSamples(smname,"ttB-4p-0-900-v1510_14TEV");
+    chainSamples(smname,"ttB-4p-1600-2500-v1510_14TEV");
+    chainSamples(smname,"ttB-4p-2500-100000-v1510_14TEV");
+    chainSamples(smname,"ttB-4p-900-1600-v1510_14TEV");
+
+  }
+  else if (option.Contains("combinefs")) {
+   TString smname = "tt-4p-0-600-v1510_14TEV";
+    addSample(smname,kAzure-3,"Total SM");
+    chainSamples(smname,"tt-4p-600-1100-v1510_14TEV");
+    chainSamples(smname,"tt-4p-1100-1700-v1510_14TEV");
+    chainSamples(smname,"tt-4p-1700-2500-v1510_14TEV");
+    chainSamples(smname,"tt-4p-2500-100000-v1510_14TEV");
+    
+    TString tj_name = "tj-4p-0-500-v1510_14TEV"; 
+    chainSamples(smname,tj_name);
+    chainSamples(smname,"tj-4p-500-1000-v1510_14TEV");
+    chainSamples(smname,"tj-4p-1000-1600-v1510_14TEV");
+    chainSamples(smname,"tj-4p-1600-2400-v1510_14TEV");
+    chainSamples(smname,"tj-4p-2400-100000-v1510_14TEV");
+
+    TString tb_name = "tB-4p-0-500-v1510_14TEV"; 
+    chainSamples(smname,tb_name);
+    chainSamples(smname,"tB-4p-500-900-v1510_14TEV");
+    chainSamples(smname,"tB-4p-900-1500-v1510_14TEV");
+    chainSamples(smname,"tB-4p-1500-2200-v1510_14TEV");
+    chainSamples(smname,"tB-4p-2200-100000-v1510_14TEV");
+    /*
+    chainSamples(smname,"ttB-4p-0-900-v1510_14TEV");
+    chainSamples(smname,"ttB-4p-1600-2500-v1510_14TEV");
+    chainSamples(smname,"ttB-4p-2500-100000-v1510_14TEV");
+    chainSamples(smname,"ttB-4p-900-1600-v1510_14TEV");
+    */
+    if (option.Contains("combinefssig")) { //chain signal
+      cout<<"Adding signal to SM chain!"<<endl;
+      chainSamples(smname,signal1);
+    }
+  }
+  else if (option.Contains("combinenonfs")) {
+ 
+    TString smname = "LL-4p-0-100-v1510_14TEV";
+    addSample(smname,kGreen,"Total non-FS");
+    chainSamples(smname,"LL-4p-100-200-v1510_14TEV");
+    chainSamples(smname,"LL-4p-200-500-v1510_14TEV");
+    chainSamples(smname,"LL-4p-500-900-v1510_14TEV");
+    chainSamples(smname,"LL-4p-900-1400-v1510_14TEV");
+    chainSamples(smname,"LL-4p-1400-100000-v1510_14TEV");
+
+    TString bj_name = "Bj-4p-0-300-v1510_14TEV";
+    chainSamples(smname,bj_name);
+    chainSamples(smname,"Bj-4p-1100-1800-v1510_14TEV");
+    chainSamples(smname,"Bj-4p-1800-2700-v1510_14TEV");
+    chainSamples(smname,"Bj-4p-2700-3700-v1510_14TEV");
+    chainSamples(smname,"Bj-4p-300-600-v1510_14TEV");
+    chainSamples(smname,"Bj-4p-3700-100000-v1510_14TEV");
+    chainSamples(smname,"Bj-4p-600-1100-v1510_14TEV");
+
+    chainSamples(smname,"B-4p-0-1-v1510_14TEV");
+
+    chainSamples(smname,"BB-4p-0-300-v1510_14TEV");
+    chainSamples(smname,"BB-4p-1300-2100-v1510_14TEV");
+    chainSamples(smname,"BB-4p-2100-100000-v1510_14TEV");
+    chainSamples(smname,"BB-4p-300-700-v1510_14TEV");
+    chainSamples(smname,"BB-4p-700-1300-v1510_14TEV");
+    chainSamples(smname,"BBB-4p-0-600-v1510_14TEV");
+    chainSamples(smname,"BBB-4p-1300-100000-v1510_14TEV");
+    chainSamples(smname,"BBB-4p-600-1300-v1510_14TEV");
+    chainSamples(smname,"Bjj-vbf-4p-0-700-v1510_14TEV");
+    chainSamples(smname,"Bjj-vbf-4p-1400-2300-v1510_14TEV");
+    //    chainSamples(smname,"Bjj-vbf-4p-2300-3400_14TEV");
+    chainSamples(smname,"Bjj-vbf-4p-2300-3400-v1510_14TEV");
+    chainSamples(smname,"Bjj-vbf-4p-700-1400-v1510_14TEV");
+    chainSamples(smname,"LLB-4p-0-400-v1510_14TEV");
+    chainSamples(smname,"LLB-4p-400-900-v1510_14TEV");
+    chainSamples(smname,"LLB-4p-900-100000-v1510_14TEV");
+
+    //    chainSamples(smname,"ttB-4p-0-900-v1510_14TEV");
+    //    chainSamples(smname,"ttB-4p-1600-2500-v1510_14TEV");
+    //    chainSamples(smname,"ttB-4p-2500-100000-v1510_14TEV");
+    //    chainSamples(smname,"ttB-4p-900-1600-v1510_14TEV");
+
+  }
+  else if (option=="comp7to10") {
+    TString tt_name = "tt-4p-0-600-v1510_14TEV_v07";
+    addSample(tt_name,kRed,"v07 tt");
+    chainSamples(tt_name,"tt-4p-600-1100-v1510_14TEV_v07");
+    chainSamples(tt_name,"tt-4p-1100-1700-v1510_14TEV_v07");
+    chainSamples(tt_name,"tt-4p-1700-2500-v1510_14TEV_v07");
+    chainSamples(tt_name,"tt-4p-2500-100000-v1510_14TEV_v07");
+    
+    tt_name = "tt-4p-0-600-v1510_14TEV_v10";
+    addSample(tt_name,kBlue,"v10 tt");
+    chainSamples(tt_name,"tt-4p-600-1100-v1510_14TEV_v10");
+    chainSamples(tt_name,"tt-4p-1100-1700-v1510_14TEV_v10");
+    chainSamples(tt_name,"tt-4p-1700-2500-v1510_14TEV_v10");
+    chainSamples(tt_name,"tt-4p-2500-100000-v1510_14TEV_v10");
+   
   }
   else {
     if (option.Contains("tt") ) {
@@ -175,41 +335,76 @@ void initSamples(TString option="all") {
       chainSamples(tt_name,"tt-4p-1700-2500-v1510_14TEV");
       chainSamples(tt_name,"tt-4p-2500-100000-v1510_14TEV");
     
-      TString tj_name = "tj-4p-0-500-v1510_14TEV"; 
-      addSample(tj_name,kMagenta,"tj");
-      chainSamples(tj_name,"tj-4p-500-1000-v1510_14TEV");
-      chainSamples(tj_name,"tj-4p-1000-1600-v1510_14TEV");
-      chainSamples(tj_name,"tj-4p-1600-2400-v1510_14TEV");
-      chainSamples(tj_name,"tj-4p-2400-100000-v1510_14TEV");
-      /*      
       TString tb_name = "tB-4p-0-500-v1510_14TEV"; 
-      addSample(tb_name,kBlue-3,"tB");
+      addSample(tb_name,kBlue-3,"tj+tB+ttB");
       chainSamples(tb_name,"tB-4p-500-900-v1510_14TEV");
       chainSamples(tb_name,"tB-4p-900-1500-v1510_14TEV");
       chainSamples(tb_name,"tB-4p-1500-2200-v1510_14TEV");
       chainSamples(tb_name,"tB-4p-2200-100000-v1510_14TEV");
-      */
+
+      chainSamples(tb_name,"ttB-4p-0-900-v1510_14TEV");
+      chainSamples(tb_name,"ttB-4p-1600-2500-v1510_14TEV");
+      chainSamples(tb_name,"ttB-4p-2500-100000-v1510_14TEV");
+      chainSamples(tb_name,"ttB-4p-900-1600-v1510_14TEV");
+     
+      chainSamples(tb_name,"tj-4p-0-500-v1510_14TEV");
+      chainSamples(tb_name,"tj-4p-500-1000-v1510_14TEV");
+      chainSamples(tb_name,"tj-4p-1000-1600-v1510_14TEV");
+      chainSamples(tb_name,"tj-4p-1600-2400-v1510_14TEV");
+      chainSamples(tb_name,"tj-4p-2400-100000-v1510_14TEV");
+ 
+ 
     }
     if (option.Contains("bj")) {
-      TString ll_name = "LL-4p-0-100-v1510_14TEV";
-      addSample(ll_name,kGreen,"LL");
-      chainSamples(ll_name,"LL-4p-100-200-v1510_14TEV");
-      chainSamples(ll_name,"LL-4p-200-500-v1510_14TEV");
-      chainSamples(ll_name,"LL-4p-500-900-v1510_14TEV");
-      chainSamples(ll_name,"LL-4p-900-1400-v1510_14TEV");
-      chainSamples(ll_name,"LL-4p-1400-100000-v1510_14TEV");
-      
+//       TString ll_name = "LL-4p-0-100-v1510_14TEV";
+//       addSample(ll_name,kGreen,"LL+LLB");
+
+
       TString bj_name = "Bj-4p-0-300-v1510_14TEV";
-      addSample(bj_name,kOrange,"Bj");
+      addSample(bj_name,kOrange,"B+Bj+Bjj");
       chainSamples(bj_name,"Bj-4p-1100-1800-v1510_14TEV");
       chainSamples(bj_name,"Bj-4p-1800-2700-v1510_14TEV");
       chainSamples(bj_name,"Bj-4p-2700-3700-v1510_14TEV");
       chainSamples(bj_name,"Bj-4p-300-600-v1510_14TEV");
       chainSamples(bj_name,"Bj-4p-3700-100000-v1510_14TEV");
       chainSamples(bj_name,"Bj-4p-600-1100-v1510_14TEV");
+      chainSamples(bj_name,"Bjj-vbf-4p-0-700-v1510_14TEV");
+      chainSamples(bj_name,"Bjj-vbf-4p-1400-2300-v1510_14TEV");
+      //      chainSamples(bj_name,"Bjj-vbf-4p-2300-3400_14TEV");
+      chainSamples(bj_name,"Bjj-vbf-4p-2300-3400-v1510_14TEV");
+      chainSamples(bj_name,"Bjj-vbf-4p-700-1400-v1510_14TEV");
+      chainSamples(bj_name,"B-4p-0-1-v1510_14TEV"); //      addSample("B-4p-0-1-v1510_14TEV",kOrange+3,"B");
 
-      addSample("B-4p-0-1-v1510_14TEV",kOrange+3,"B");
+      TString bb_name = "BB-4p-0-300-v1510_14TEV";
+      addSample(bb_name,kOrange+2,"LL+LLB+BB+BBB");
+      chainSamples(bb_name,"BB-4p-1300-2100-v1510_14TEV");
+      chainSamples(bb_name,"BB-4p-2100-100000-v1510_14TEV");
+      chainSamples(bb_name,"BB-4p-300-700-v1510_14TEV");
+      chainSamples(bb_name,"BB-4p-700-1300-v1510_14TEV");
+      chainSamples(bb_name,"BBB-4p-0-600-v1510_14TEV");
+      chainSamples(bb_name,"BBB-4p-1300-100000-v1510_14TEV");
+      chainSamples(bb_name,"BBB-4p-600-1300-v1510_14TEV");
+
+      chainSamples(bb_name,"LL-4p-0-100-v1510_14TEV");
+      chainSamples(bb_name,"LL-4p-100-200-v1510_14TEV");
+      chainSamples(bb_name,"LL-4p-200-500-v1510_14TEV");
+      chainSamples(bb_name,"LL-4p-500-900-v1510_14TEV");
+      chainSamples(bb_name,"LL-4p-900-1400-v1510_14TEV");
+      chainSamples(bb_name,"LL-4p-1400-100000-v1510_14TEV");
+      
+      chainSamples(bb_name,"LLB-4p-0-400-v1510_14TEV");
+      chainSamples(bb_name,"LLB-4p-400-900-v1510_14TEV");
+      chainSamples(bb_name,"LLB-4p-900-100000-v1510_14TEV");
+      
     }
   }
+  //add signal last so that it sits on top of the stack
+  if (option.Contains("nm1")) addSample(signal1,kRed,"NM1");
+  //add signal last so that it sits on top of the stack
+  if (option.Contains("nm2"))   addSample(signal2,kRed+2,"NM2");  
+  if (option.Contains("nm3"))   addSample(signal3,kRed+4,"NM3");  
+  if (option.Contains("stoc"))  addSample(signal4,kPink+8,"STOC");  
+
+
 }
 
