@@ -1438,7 +1438,7 @@ void setSampleWeightFactor(const TString & sample, const TString & factor) {
   for (std::vector<TString>::iterator isample=samples_.begin(); isample!=samples_.end(); ++isample) {
     if (*isample == sample) {sampleWeightFactor_[*isample] = factor; done=true;}
   }
-  if (!done) cout<<"Failed to find the sample "<<sample<<endl;
+  if (!done) cout<<"[setSampleWeightFactor] Failed to find the sample "<<sample<<endl;
 }
 
 void printSampleWeightFactors() {
