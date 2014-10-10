@@ -587,7 +587,7 @@ void initHiggsSamples69(const bool useSkim=true,const TString samplelist="") {
 }
 
 void ANFig61() { //reproduce owen's figure, but with improved style
-  initHiggsSamples69(true,"bjets tthad ttbar znunu"); 
+  initHiggsSamples69(true,"bjets tthad ttbar znunu hhmg400"); 
 
 
   setOutputDirectory("plots_QcdRejection");
@@ -655,46 +655,55 @@ void ANFig61() { //reproduce owen's figure, but with improved style
   float varbins_metsig[] = {0,30,50,100,150,200}; 
   float varbins_met[] = {0,106,133,190,250,400}; 
 
+  TString signalname = "SMS-TChiHH_2b2b_2J_mChargino-130to500_mLSP-1_TuneZ2star_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V19-v1_AODSIM_UCSB1992_v71-skim$400$1";
+
   var="METsig"; xtitle="#it{S}_{MET}";
   drawPlots(var,nbins,low,high,xtitle,"Events", "dummy",varbins_metsig);
 
   TH1D* metsig_fake = (TH1D*) totalqcd->Clone("metsig_fake");
   TH1D* metsig_real = (TH1D*) totalnonqcd->Clone("metsig_real");
-
+  TH1D* metsig_susy = (TH1D*) getHist(signalname)->Clone("metsig_susy");
 
   var="MET"; xtitle="E^{miss}_{T}";
   drawPlots(var,nbins,low,high,xtitle,"Events", "dummy",varbins_met);
 
   TH1D* met_fake = (TH1D*) totalqcd->Clone("met_fake");
   TH1D* met_real = (TH1D*) totalnonqcd->Clone("met_real");
-
+  TH1D* met_susy = (TH1D*) getHist(signalname)->Clone("metsig_susy");
   
   TGraphErrors* gmetsig_fake = new TGraphErrors(nbins);
   TGraphErrors* gmetsig_real = new TGraphErrors(nbins);
+  TGraphErrors* gmetsig_susy = new TGraphErrors(nbins);
   TGraphErrors* gmet_fake = new TGraphErrors(nbins);
   TGraphErrors* gmet_real = new TGraphErrors(nbins);
+  TGraphErrors* gmet_susy = new TGraphErrors(nbins);
 
   //copy histograms to graphs
   for (int ibin=1; ibin<=nbins;ibin++) {
 
     gmetsig_fake->SetPoint(ibin-1,ibin-1,metsig_fake->GetBinContent(ibin));
     gmetsig_real->SetPoint(ibin-1,ibin-1,metsig_real->GetBinContent(ibin));
+    gmetsig_susy->SetPoint(ibin-1,ibin-1,metsig_susy->GetBinContent(ibin));
     gmet_fake->SetPoint(ibin-1,ibin-1,met_fake->GetBinContent(ibin));
     gmet_real->SetPoint(ibin-1,ibin-1,met_real->GetBinContent(ibin));
+    gmet_susy->SetPoint(ibin-1,ibin-1,met_susy->GetBinContent(ibin));
 
     gmetsig_fake->SetPointError(ibin-1,0,metsig_fake->GetBinError(ibin));
     gmetsig_real->SetPointError(ibin-1,0,metsig_real->GetBinError(ibin));
+    gmetsig_susy->SetPointError(ibin-1,0,metsig_susy->GetBinError(ibin));
     gmet_fake->SetPointError(ibin-1,0,met_fake->GetBinError(ibin));
     gmet_real->SetPointError(ibin-1,0,met_real->GetBinError(ibin));
+    gmet_susy->SetPointError(ibin-1,0,met_susy->GetBinError(ibin));
 
   }
 
   setLogY(true);
-  isTwikiOnly_=true; //needs to be CMS Unpublished
+  isTwikiOnly_=false; //needs to be CMS Unpublished -- not anymore!
+  billGaryHeader_=true;
   renewCanvas();
 
-  //copied from own
-  TH2F* hdummy = new TH2F( "hdummy", "" ,5, -0.5, 4.5, 2, 1., 55000. ) ;
+  //copied from owen
+  TH2F* hdummy = new TH2F( "hdummy", "" ,5, -0.5, 4.5, 2, 1., 5e6 ) ;
   
   hdummy -> SetYTitle( "Events" ) ;
   
@@ -710,8 +719,10 @@ void ANFig61() { //reproduce owen's figure, but with improved style
 
   gmetsig_fake->Draw("PL");
   gmetsig_real->Draw("PL");
+  gmetsig_susy->Draw("PL");
   gmet_fake->Draw("PL");
   gmet_real->Draw("PL");
+  gmet_susy->Draw("PL");
 
   gmetsig_fake->SetMarkerColor(kRed);
   gmetsig_fake->SetLineColor(kRed);
@@ -720,70 +731,89 @@ void ANFig61() { //reproduce owen's figure, but with improved style
   gmetsig_real->SetMarkerColor(kBlue);
   gmetsig_real->SetLineColor(kBlue);
 
+  gmetsig_susy->SetMarkerColor(kMagenta);
+  gmetsig_susy->SetLineColor(kMagenta);
+
   gmet_fake->SetMarkerColor(kRed);
   gmet_fake->SetLineColor(kRed);
 
   gmet_real->SetMarkerColor(kBlue);
   gmet_real->SetLineColor(kBlue);
 
+  gmet_susy->SetMarkerColor(kMagenta);
+  gmet_susy->SetLineColor(kMagenta);
+
   gmetsig_real -> SetLineStyle(1) ;
+  gmetsig_susy -> SetLineStyle(1) ;
   gmetsig_fake -> SetLineStyle(1) ;
   
   gmet_real -> SetLineStyle(2) ;
+  gmet_susy -> SetLineStyle(2) ;
   gmet_fake -> SetLineStyle(2) ;
   
   gmetsig_real -> SetLineWidth(2) ;
+  gmetsig_susy -> SetLineWidth(2) ;
   gmetsig_fake -> SetLineWidth(2) ;
   
   gmet_real -> SetLineWidth(2) ;
+  gmet_susy -> SetLineWidth(2) ;
   gmet_fake -> SetLineWidth(2) ;
   
   gmetsig_real -> SetMarkerStyle( 20 ) ;
+  gmetsig_susy -> SetMarkerStyle( 20 ) ;
   gmetsig_fake -> SetMarkerStyle( 20 ) ;
   
   gmet_real -> SetMarkerStyle( 25 ) ;
+  gmet_susy -> SetMarkerStyle( 25 ) ;
   gmet_fake -> SetMarkerStyle( 25 ) ;
   
   gmet_real -> SetMarkerSize( 1.5 ) ;
+  gmet_susy -> SetMarkerSize( 1.5 ) ;
   gmet_fake -> SetMarkerSize( 1.5 ) ;
 
 
   gmetsig_fake->SetFillColor(kWhite);
     gmetsig_real->SetFillColor(kWhite);
+    gmetsig_susy->SetFillColor(kWhite);
     gmet_fake->SetFillColor(kWhite);
     gmet_real->SetFillColor(kWhite);
+    gmet_susy->SetFillColor(kWhite);
 
   thecanvas->GetPad(0)->SetGridy(1);
 
-  leg_x1=0.62;
+  leg_x1=0.50;//0.62
   leg_x2=0.93;
-  leg_y1=0.65;
+  leg_y1=0.55; //0.65
   leg_y2=0.89;
-  renewLegend();
+  renewLegend(1001);
   /*
   leg->AddEntry(gmet_real,"E^{miss}_{T}, true E^{miss}_{T}");
   leg->AddEntry(gmetsig_real,"#it{S}_{MET}, true E^{miss}_{T}");
   leg->AddEntry(gmet_fake,"E^{miss}_{T}, fake E^{miss}_{T}");
   leg->AddEntry(gmetsig_fake,"#it{S}_{MET}, fake E^{miss}_{T}");
   */
-  leg->AddEntry(gmet_real,"E^{miss}_{T}, genuine E^{miss}_{T}");
-  leg->AddEntry(gmetsig_real,"#it{S}_{MET}, genuine E^{miss}_{T}");
+  leg->AddEntry(gmet_real,"E^{miss}_{T}, genuine E^{miss}_{T} (SM)");
+  leg->AddEntry(gmetsig_real,"#it{S}_{MET}, genuine E^{miss}_{T} (SM)");
+  leg->AddEntry(gmet_susy,"E^{miss}_{T}, genuine E^{miss}_{T} (SUSY)");
+  leg->AddEntry(gmetsig_susy,"#it{S}_{MET}, genuine E^{miss}_{T} (SUSY)");
   leg->AddEntry(gmet_fake,"E^{miss}_{T}, spurious E^{miss}_{T}");
   leg->AddEntry(gmetsig_fake,"#it{S}_{MET}, spurious E^{miss}_{T}");
   leg->Draw();
   drawPlotHeader();
-  drawPlotHeaderInside("CMS Simulation",0.199664,0.881226);
+  //  drawPlotHeaderInside("CMS Simulation",0.199664,0.881226);
 
   //x values, in NDC, for the met and metsig labels
   double xval[]   = {0.22,0.355705 ,0.513423,0.673,0.84};
   double xval_ms[]= {0.22,0.369128 ,0.526846,0.673,0.84};
   
-  double mety=0.065;
+  double mety=0.065+0.01; //add 0.01 offset
+  float xtextsize=0.04; //was 0.03
   TLatex* metlabeltext1=new TLatex(0.04,mety,"E^{miss}_{T} (GeV)");
   metlabeltext1->SetNDC();
   metlabeltext1->SetTextFont(42);
-  metlabeltext1->SetTextSize(0.03);
+  metlabeltext1->SetTextSize(xtextsize);
   metlabeltext1->Draw();
+
   TLatex * metlabel[6];
   { 
     for (int ibin=1; ibin<=nbins; ibin++) {
@@ -791,11 +821,11 @@ void ANFig61() { //reproduce owen's figure, but with improved style
       double metvalhigh = met_fake->GetBinLowEdge(ibin+1);
       TString thislabeltext;
       if (ibin!=nbins)  thislabeltext.Form("%.0f-%.0f",metvallow,metvalhigh);
-      else              thislabeltext.Form("%.0f-",metvallow);
+      else              thislabeltext.Form(">%.0f",metvallow);
       metlabel[ibin-1] = new TLatex(xval[ibin-1],mety,thislabeltext);
       metlabel[ibin-1]->SetNDC(kTRUE);
       metlabel[ibin-1]->SetTextFont(42);
-      metlabel[ibin-1]->SetTextSize(0.03);
+      metlabel[ibin-1]->SetTextSize(xtextsize); //was 0.03
       metlabel[ibin-1]->Draw();
     } 
   }
@@ -805,7 +835,7 @@ void ANFig61() { //reproduce owen's figure, but with improved style
   TLatex* metsiglabeltext1=new TLatex(0.04,metsigy,"#it{S}_{MET}");
   metsiglabeltext1->SetNDC();
   metsiglabeltext1->SetTextFont(42);
-  metsiglabeltext1->SetTextSize(0.03);
+  metsiglabeltext1->SetTextSize(xtextsize);
   metsiglabeltext1->Draw();
   TLatex * metsiglabel[6];
   { 
@@ -814,17 +844,17 @@ void ANFig61() { //reproduce owen's figure, but with improved style
       double metsigvalhigh = metsig_fake->GetBinLowEdge(ibin+1);
       TString thislabeltext;
       if (ibin!=nbins)  thislabeltext.Form("%.0f-%.0f",metsigvallow,metsigvalhigh);
-      else              thislabeltext.Form("%.0f-",metsigvallow);
+      else              thislabeltext.Form(">%.0f",metsigvallow);
       metsiglabel[ibin-1] = new TLatex(xval_ms[ibin-1],metsigy,thislabeltext);
       metsiglabel[ibin-1]->SetNDC(kTRUE);
       metsiglabel[ibin-1]->SetTextFont(42);
-      metsiglabel[ibin-1]->SetTextSize(0.03);
+      metsiglabel[ibin-1]->SetTextSize(xtextsize);
       metsiglabel[ibin-1]->Draw();
     } 
   }
 
-  thecanvas->SaveAs("met-vs-fakemet-2b-control.pdf");
-  thecanvas->SaveAs("met-vs-fakemet-2b-control.png");
+  thecanvas->SaveAs("met-vs-fakemet-2b-control-withsusy.pdf");
+  thecanvas->SaveAs("met-vs-fakemet-2b-control-withsusy.png");
 
 }
 
@@ -1777,6 +1807,73 @@ void fullfastTtbarCheck() {
   var="deltaRmax_hh"; xtitle="DRmax";
   drawPlots(var,nbins,low,high,xtitle,"Events", "ttbar_FullFast_deltaRmax",0);
 
+
+
+}
+
+void njetsSignalCheck_CWR() {
+
+
+  initHiggsSamples69(false,"hhmg350");
+  int nbins;
+  float low,high;
+  TString var,xtitle;
+
+  doOverflowAddition(true);
+  doRatio_=false; ratioMin = 0; ratioMax = 2.2;
+  dodata_=false;
+
+  usePUweight_=true; 
+
+  useTrigEff_=true;
+  TCut baseline = "cutPV==1 &&passCleaning==1 &&buggyEvent==0&& MET/caloMET<2 && maxTOBTECjetDeltaMult<40"; 
+
+  TCut triggerJetMET = "passMC_DiCentralPFJet30_PFMET80_BTagCSV07==1||passMC_DiCentralPFJet30_PFMHT80==1";
+  TCut triggerMET = "passMC_PFMET150==1";
+  TCut trigger = triggerJetMET||triggerMET;
+
+  TCut zl = "nMuons==0&&nElectrons==0&&nTausLoose==0";
+  TCut isotk="nIsoTracks15_005_03==0";//&&nIsoTracks5_005_03<2";
+
+  //  TCut njets4="njets20==4";
+  //  TCut njets5="njets20==5";
+  TCut jet2="jetpt2>50";
+
+    TCut mdp = "minDeltaPhi20>0.5 || (minDeltaPhi20>0.3&&METsig>50)";
+  TCut btag2="CSVbest2>0.898";
+  TCut btag3="CSVbest3>0.679";
+  TCut btag4="CSVbest4>0.244";
+
+  TCut higgsSR_av = "(0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)>100)&&(0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)<140)";
+  TCut higgsSR_d = "abs(higgsMbb1MassDiff-higgsMbb2MassDiff)<20";
+  TCut higgsSR = higgsSR_av && higgsSR_d;
+
+  TCut higgsSB_avl = "0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)<90";
+  TCut higgsSB_avh = "0.5*(higgsMbb1MassDiff+higgsMbb2MassDiff)>150";
+  TCut higgsSB_d = "abs(higgsMbb1MassDiff-higgsMbb2MassDiff)>30";
+  TCut higgsSB = higgsSB_avl||higgsSB_avh||higgsSB_d;
+
+  TCut metsig="METsig>30";
+
+  TCut drmax = "deltaRmax_hh<2.2";
+
+  selection_ = baseline && trigger && zl && isotk && jet2 &&metsig;
+  nbins=10; low=0; high=10;
+  var="njets20"; xtitle="njets";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "cwrcheck_njets1",0);
+
+  double toolow =  totalsmsusy->Integral(1,4);
+  double insidecut = totalsmsusy->Integral(5,6);
+  double toohigh = totalsmsusy->Integral(7,10);
+
+  double total = totalsmsusy->Integral();
+
+  cout<<toolow <<" \t "<<
+    insidecut <<" \t "<<
+    toohigh<<" \t "<<endl;
+  cout<<toolow/total <<" \t "<<
+    insidecut/total <<" \t "<<
+    toohigh/total <<" \t "<<endl;
 
 
 }
@@ -5306,7 +5403,7 @@ void higgs_whyLeptonLost() {
 
 void higgs_Nminus1(bool plotdata=false,TString options="4b") {
 
-  isPreliminary_ = false; // remove Preliminary from plots
+  isPreliminary_ =true; // remove Preliminary from plots
 
   //for zh plots, use options="4b rawbtag zh"
 
