@@ -382,6 +382,7 @@ public:
   smsMasses getSMSmasses();
   float getLeadingSoftLeptonPt() ;
   int getNquarksFromSusy(unsigned int quarkFlavor,unsigned int SusyParentId);
+  std::vector<float> getGenWbInvMass();
 
   double checkPdfWeightSanity( double a) ;
   //  void getPdfWeights(const TString & pdfset, Float_t * pdfWeights, TH1D * sumofweights) ;
