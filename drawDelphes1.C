@@ -61,9 +61,9 @@ void  drawDelphes1(TString plotsToMake="all") {
   TCut mettight = "MET>150";
 
   selection_ = dileptons&&sf&&jetsloose&&mettight; //Edge selection 1
-  nbins=50; low=0; high=300;
+  nbins=60; low=0; high=300;
   var="mll"; xtitle="m_{l+l-} (GeV)";
-  if (plotsToMake.Contains("all")||plotsToMake.Contains("006"))   drawPlots(var,nbins,low,high,xtitle,"Events", "edge_sel1_mll",0,"GeV");
+  if (plotsToMake.Contains("all")||plotsToMake.Contains("006"))   drawPlots(var,nbins,low,high,xtitle,"Events", "edge_sel1_mll",0,"GefV");
 
   //same plot, zoom on low mass region
   nbins=100; low=0; high=100;
@@ -182,5 +182,71 @@ void  drawDelphes1(TString plotsToMake="all") {
   selection_ = noleptons && TCut("HT>800") && TCut("MT2>200") && tighterjets;
   if (plotsToMake.Contains("all")||plotsToMake.Contains("018")) 
     draw2d("MT2",15,200,500,"HT",15,800,3000,"MT2","HT", "hadronic_mt2sel5_mt2Vht",0,0,"susyhit_slhaScenario1_v02");
+
+
+}
+
+
+void comp7to10() {
+
+  initSamples("comp7to10");
+  setOutputDirectory("DelphesV07toV10");
+
+  int nbins;
+  float low,high;
+  TString var,xtitle;
+
+  doOverflowAddition(true);
+  doRatio_=false;  
+
+  setStackMode(false,false,false); //stack,norm,label override
+  stackSignal_=false;
+
+  selection_ = "(1)"; //no cuts!
+ 
+  nbins=40; low=0; high=1000;
+  var="MET"; xtitle="MET (GeV)";
+  //  if (plotsToMake.Contains("all")||plotsToMake.Contains("001"))
+    drawPlots(var,nbins,low,high,xtitle,"Events", "MET",0,"GeV");
+
+
+  nbins=40; low=0; high=2000;
+  var="HT"; xtitle="HT (GeV)";
+  //  if (plotsToMake.Contains("all")||plotsToMake.Contains("001"))
+    drawPlots(var,nbins,low,high,xtitle,"Events", "HT",0,"GeV");
+
+
+  nbins=10; low=0; high=10;
+  var="njets40"; xtitle=var;
+  //  if (plotsToMake.Contains("all")||plotsToMake.Contains("001"))
+    drawPlots(var,nbins,low,high,xtitle,"Events", "njets40",0,"GeV");
+
+  //nbjets is not trivial to plot
+  removeSample("tt-4p-0-600-v1510_14TEV_v10"); //plot only v07
+  savePlots_=false;
+  nbins=4; low=0; high=4;
+  var="nbjets40tight"; xtitle=var;
+  //  if (plotsToMake.Contains("all")||plotsToMake.Contains("002"))
+    drawPlots(var,nbins,low,high,xtitle,"Events", var,0,"");
+  TH1D* bjets_v07=(TH1D*)  totalsm->Clone("bjets_v07");
+
+  addSample("tt-4p-0-600-v1510_14TEV_v10",kBlue,"v10 tt");
+  removeSample("tt-4p-0-600-v1510_14TEV_v07"); //plot only v10
+  var="nbjets40medium"; xtitle=var;
+  // if (plotsToMake.Contains("all")||plotsToMake.Contains("002"))
+    drawPlots(var,nbins,low,high,xtitle,"Events", var,0,"");
+  TH1D* bjets_v10=(TH1D*)  totalsm->Clone("bjets_v10");
+
+  renewCanvas();
+  bjets_v07->SetLineColor(kRed);
+  bjets_v10->SetLineColor(kBlue);
+  bjets_v10->Draw("e hist");
+  bjets_v07->Draw("e hist same");
+  thecanvas->SaveAs("DelphesV07toV10/bjets.pdf");
+
+  cout<<"Fraction of events in 0 b-tag bin (v07) = "<<bjets_v07->GetBinContent(1) / bjets_v07->Integral()<<endl;
+  cout<<"Fraction of events in 0 b-tag bin (v10) = "<<bjets_v10->GetBinContent(1) / bjets_v10->Integral()<<endl;
+
+  savePlots_=true;
 
 }
