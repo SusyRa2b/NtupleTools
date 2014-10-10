@@ -51,9 +51,9 @@ void drawVSPT() {
 void  drawDelphes_MT2(TString plotsToMake="all") {
   useNewStyle_=true;  
 
-  initSamples("all htskim");
+  initSamples("nm1 nm2 nm3 bj tt htskim");
   setOutputDirectory("DelphesMT2");
-  lumiScale_=300e3; //discovery point
+  lumiScale_=3000e3; //request is to use 3000fb-1
   //  treatAllAsSM_=true; //don't treat signal as signal
 
   int nbins;
@@ -87,23 +87,23 @@ void  drawDelphes_MT2(TString plotsToMake="all") {
   if (plotsToMake.Contains("all")||plotsToMake.Contains("002"))   drawPlots(var,nbins,low,high,xtitle,"Events", "hadronic_mt2tightNoCleanup_minDeltaPhi",0,"");
 
   //now the full selection
+  setPadDimensions(800,600);
   selection_ = cleanup && noleptons && ht2000 && tightermt2 && tighterjets ;
  //nbjets
   nbins=9; low=0; high=9;
-  var="nbjets40medium"; xtitle="n medium b tags";
+  var="nbjets40medium"; xtitle="b tag multiplicity";
   if (plotsToMake.Contains("all")||plotsToMake.Contains("003"))   drawPlots(var,nbins,low,high,xtitle,"Events", "hadronic_mt2tight1_nbjets",0,"");
-
-//   nbins=4; low=0; high=4;
-//   var="nTaus"; xtitle="nTaus";
-//   if (plotsToMake.Contains("all")||plotsToMake.Contains("001"))   drawPlots(var,nbins,low,high,xtitle,"Events", "hadronic_mt2tight1_ntaus",0,"");
 
   TCut loosermt2 = "MT2>=200";
   TCut btags = "nbjets40medium>=3";
   selection_ = cleanup && noleptons && ht2000 && loosermt2 && tighterjets&&btags;
   nbins=24; low=200; high=800;
-  var="MT2"; xtitle="MT2 (GeV)";
+  var="MT2"; xtitle="M_{T2} (GeV)";
   if (plotsToMake.Contains("all")||plotsToMake.Contains("003"))   drawPlots(var,nbins,low,high,xtitle,"Events", "hadronic_mt2-3b_mt2",0,"GeV");
 
+  //request: remake this plot with longer MT2 range
+  nbins=20; low=200; high=1200;
+  if (plotsToMake.Contains("all")||plotsToMake.Contains("003"))   drawPlots(var,nbins,low,high,xtitle,"Events", "hadronic_mt2-3b_mt2_wide",0,"GeV");
 }
 
 void make_cutflowtable(bool useTauVeto,float htCutValue,int nbtags,int njets=8) {
@@ -196,13 +196,15 @@ HT>2500
 
 
 
-void make_cutflowtable_fancy(bool useTauVeto=false,float htCutValue=2000,int nbtags=3,int njets=8) {
+void make_cutflowtable_fancy(bool useTauVeto=false,float htCutValue=2000,int nbtags=3,int njets=8,bool PhaseII=true) {
 
-  initSamples("bj tt nm1 nm2 nm3");
+  TString samples="bj tt nm1 nm2 nm3";
+  if (!PhaseII) samples+= " PhaseI_50";
+  initSamples(samples);
   //initSamples("signal");
   setOutputDirectory("DelphesMT2");
-  lumiScale_=300e3; //'discovery' point
-  //  treatAllAsSM_=true; //don't treat signal as signal
+  lumiScale_=3000e3; //request to use 3000
+  if (!PhaseII) lumiScale_ = 300e3; //except in the PhaseI case
 
   int nbins;
   float low,high;
@@ -255,9 +257,9 @@ void make_cutflowtable_fancy(bool useTauVeto=false,float htCutValue=2000,int nbt
 
   savePlots_=false;
   cout<<"Fractional error on background assumed to be "<<dB<<endl;
-  for (unsigned int k=0;k<samples_.size();k++) if (isSampleSM(samples_.at(k))) cout<<" & "; //one divider per SM sample
+  for (int k=(int)samples_.size()-1;k>=0;k--) if (isSampleSM(samples_.at(k))) cout<<" & "; //one divider per SM sample
   cout<<"   & \\multicolumn{c}{S/\\sqrt{S+B+\\deltaB^2}} & \\multicolumn{c}{Zbi} \\\\"<<endl;
-  for (unsigned int k=0;k<samples_.size();k++) if (isSampleSM(samples_.at(k))) cout<<samples_.at(k)<<" & "; //one divider per SM sample
+  for (int k=(int)samples_.size()-1;k>=0;k--) if (isSampleSM(samples_.at(k))) cout<<samples_.at(k)<<" & "; //one divider per SM sample
   cout<<"  SM & NM1 & NM2 & NM3 & NM1 & NM2 & NM3 & NM1 & NM2 & NM3 \\\\"<<endl;
   for (unsigned int k=0; k<cut_list.size() ; k++) {
     selection_ = cut_list.at(k);
@@ -266,7 +268,7 @@ void make_cutflowtable_fancy(bool useTauVeto=false,float htCutValue=2000,int nbt
     nbins=1; low=0; high=1e9;
     var="MT2"; xtitle="MT2 (GeV)";
     drawPlots(var,nbins,low,high,xtitle,"Events", "dummy",0,"");
-    for (unsigned int isample=0;isample<samples_.size();isample++) {
+    for (int isample=(int)samples_.size()-1;isample>=0;isample--) {
       if (isSampleSM(samples_.at(isample))) {
 	TString o;
 	o.Form("%.2f &",getIntegral(samples_.at(isample)));
@@ -279,7 +281,7 @@ void make_cutflowtable_fancy(bool useTauVeto=false,float htCutValue=2000,int nbt
     double S3 = getIntegral("naturalModel3");
 
     TString output;
-    output.Form(" %.1f & %.1f & %.1f & %.1f & %.1f & %.1f & %.1f & %.1f &%.1f & %.1f \\\\",
+    output.Form(" %.2f & %.1f & %.1f & %.1f & %.1f & %.1f & %.1f & %.1f &%.1f & %.1f \\\\",
 		///		selection_.GetTitle(),
 		B,
 		S1,S2,S3,
