@@ -13,6 +13,8 @@
 
 void  drawDelphes_Edge(TString plotsToMake="all") {
 
+  useNewStyle_=true;
+
   initSamples("tt bj nm1 skimmed");
   setOutputDirectory("DelphesEdge"); 
 
@@ -31,7 +33,7 @@ void  drawDelphes_Edge(TString plotsToMake="all") {
   stackSignal_=true;
   setStackMode(true,false,false); //stack,norm,label override
   removeSample("naturalModel1");
-  addSample("naturalModel1:leptonsMatchChi2ToChi1!=1",kRed-9,"Misc Signal");
+  addSample("naturalModel1:leptonsMatchChi2ToChi1!=1",kRed-9,"Other SUSY");
   addSample("naturalModel1:leptonsMatchChi2ToChi1==1",kRed,"True Edge Signal");
 
   //edge selection cuts
@@ -129,7 +131,7 @@ void  drawDelphes_Edge(TString plotsToMake="all") {
 
   removeSample("naturalModel1:leptonsMatchChi2ToChi1!=1");
   removeSample("naturalModel1:leptonsMatchChi2ToChi1==1");
-  addSample("naturalModel1:leptonsMatchChi2ToChi1_loose!=1",kRed-9,"Misc Signal");
+  addSample("naturalModel1:leptonsMatchChi2ToChi1_loose!=1",kRed-9,"Other SUSY");
   addSample("naturalModel1:leptonsMatchChi2ToChi1_loose==1",kRed,"True Edge Signal");
   selection_ = dileptons_loose && sf_loose && TCut("njets40eta3p0>=4") && TCut("MET>400")  && TCut("nbjets40tight>=1");
   var="mll_loose"; xtitle="m_{l+l-} (GeV)";
@@ -148,7 +150,7 @@ void  drawDelphes_Edge(TString plotsToMake="all") {
 
   removeSample("naturalModel1:leptonsMatchChi2ToChi1_loose!=1");
   removeSample("naturalModel1:leptonsMatchChi2ToChi1_loose==1");
-  addSample("naturalModel1:leptonsMatchChi2ToChi1!=1",kRed-9,"Misc Signal");
+  addSample("naturalModel1:leptonsMatchChi2ToChi1!=1",kRed-9,"Other SUSY");
   addSample("naturalModel1:leptonsMatchChi2ToChi1==1",kRed,"True Edge Signal");
 
   TCut mll_signal = "mll>=20 && mll<70";
@@ -173,36 +175,30 @@ void  drawDelphes_Edge(TString plotsToMake="all") {
 
   removeSample("naturalModel1:leptonsMatchChi2ToChi1!=1");
   removeSample("naturalModel1:leptonsMatchChi2ToChi1==1");
-  addSample("naturalModel1:leptonsMatchChi2ToChi1_loose!=1",kRed-9,"Misc Signal");
-  addSample("naturalModel1:leptonsMatchChi2ToChi1_loose==1",kRed,"True Edge Signal");
-  selection_ = dileptons_loose && sf_loose && TCut("njets40eta3p0>=4") && TCut("MET>400")  && TCut("nbjets40tight>=1")&&TCut("HT>1500"); //old NOMINAL SELECTION, used at pre-approval time
+  addSample("naturalModel1:leptonsMatchChi2ToChi1_loose!=1&&leptonsMatchChi4ToChi1_loose!=1",kRed-9,"Other NM1");
+  addSample("naturalModel1:leptonsMatchChi4ToChi1_loose==1",kGreen+2,"#tilde{#chi}_{4}^{0} #rightarrow #tilde{l}l #rightarrow l^{+}l^{-} #tilde{#chi}_{1}^{0}");
+  addSample("naturalModel1:leptonsMatchChi2ToChi1_loose==1",kRed,"#tilde{#chi}_{2}^{0} #rightarrow #tilde{l}l #rightarrow l^{+}l^{-} #tilde{#chi}_{1}^{0}");
+
+  setPadDimensions(800,600);
+
+  selection_ = dileptons_loose && sf_loose && TCut("njets40>=6") && TCut("MET>450")  && TCut("nbjets40medium>=1")&&TCut("HT>1250"); //updated NOMINAL SELECTION
   var="mll_loose"; xtitle="m_{l+l-} (GeV)";
   resetPlotMaximum();
+  doOverflowAddition(false);//jeff's request
   if (plotsToMake.Contains("all")||plotsToMake.Contains("009")) 
-    drawPlots(var,nbins,low,high,xtitle,"Events", "edge_new2HT1500_mllLoose",0,"GeV");
+    drawPlots(var,nbins,low,high,xtitle,"Events", "edge_new7_mllLoose",0,"GeV");
 
 
   //now plot OF (but otherwise the same cuts)
-  selection_ = dileptons_loose && !sf_loose && TCut("njets40eta3p0>=4") && TCut("MET>400")  && TCut("nbjets40tight>=1")&&TCut("HT>1500");
+  selection_ = dileptons_loose && !sf_loose && TCut("njets40>=6") && TCut("MET>450")  && TCut("nbjets40medium>=1")&&TCut("HT>1250");
   resetPlotMaximum();
   if (plotsToMake.Contains("all")||plotsToMake.Contains("009")) 
-    drawPlots(var,nbins,low,high,xtitle,"Events", "edge_new2HT1500_mllLoose_OF",0,"GeV");
+    drawPlots(var,nbins,low,high,xtitle,"Events", "edge_new7_mllLoose_OF",0,"GeV");
 
-  selection_ = dileptons_loose && sf_loose && TCut("njets40>=4") && TCut("MET>400")  && TCut("nbjets40tight>=1")&&TCut("HT>1500"); //NOMINAL SELECTION
-  var="mll_loose"; xtitle="m_{l+l-} (GeV)";
-  resetPlotMaximum();
-  if (plotsToMake.Contains("all")||plotsToMake.Contains("009")) 
-    drawPlots(var,nbins,low,high,xtitle,"Events", "edge_new2HT1500_mllLoose",0,"GeV");
+  resetPadDimensions();
+  doOverflowAddition(true);
 
-
-  //now plot OF (but otherwise the same cuts)
-  selection_ = dileptons_loose && !sf_loose && TCut("njets40>=4") && TCut("MET>400")  && TCut("nbjets40tight>=1")&&TCut("HT>1500");
-  resetPlotMaximum();
-  if (plotsToMake.Contains("all")||plotsToMake.Contains("009")) 
-    drawPlots(var,nbins,low,high,xtitle,"Events", "edge_new2HT1500_mllLoose_OF",0,"GeV");
-
-
-  //repeat previous plots but with finer binning
+  //some old plots with very fine binning
   nbins=100; low=0; high=200;
 
   //for SF-OF
@@ -281,15 +277,20 @@ void  drawDelphes_Edge(TString plotsToMake="all") {
 
 }
 
-void print_zbi() {     //let's try to spit out Zbi for 10% systematic
+void print_zbi() {     //let's try to spit out Zbi 
   //assumes histos are already drawn, and assumes the name of the edge signal
 
     double ntotal = totalsm->Integral();//contains SUSY because we see treatAllAsSM_ flag
     double ntrueedge = getIntegral("naturalModel1:leptonsMatchChi2ToChi1_loose==1");
     double nbackground = ntotal - ntrueedge;
-    double zbi = jmt::zbi( ntotal, nbackground, 0.1*nbackground);
-    cout<<"Zbi = "<<zbi<<endl;
 
+    //assume that all background is FS, and that error on FS background is driven by sqrt(N) on OF sample
+    //plus a term for a systematic, which we will take as 4%
+    //first term is sqrt(N) squared
+    double err = sqrt( nbackground + pow(0.04*nbackground,2));
+
+    double zbi = jmt::zbi( ntotal, nbackground, err);
+    cout<<"Zbi = "<<zbi<<endl;
 
 }
 
@@ -310,7 +311,8 @@ void drawDelphes_Edge_CutAndCount(TString plotsToMake="all") {
   stackSignal_=false;
   setStackMode(true,false,false); //stack,norm,label override
   removeSample("naturalModel1");
-  addSample("naturalModel1:leptonsMatchChi2ToChi1_loose!=1",kRed-9,"Misc Signal");
+  addSample("naturalModel1:leptonsMatchChi2ToChi1_loose!=1&&leptonsMatchChi4ToChi1_loose!=1",kRed-9,"Other SUSY");
+  addSample("naturalModel1:leptonsMatchChi4ToChi1_loose==1",kGreen+2,"True 2nd Edge");
   addSample("naturalModel1:leptonsMatchChi2ToChi1_loose==1",kRed,"True Edge Signal");
 
   //edge selection cuts
@@ -436,14 +438,27 @@ void drawDelphes_Edge_CutAndCount(TString plotsToMake="all") {
     drawPlots(var,nbins,low,high,xtitle,"Events", "edge_new6_cutncount1",0,"");
     print_zbi();} 
 
+ // so-called new7 -- i.e. post pre-approval retuning
+  selection_ = dileptons_loose && sf_loose && cutncount && TCut("njets40>=6") && TCut("MET>450")  && TCut("nbjets40medium>=1")&&TCut("HT>1250");
+  nbins=50; low=0; high=100;
+  var="mll_loose"; xtitle="mll";
+  if (plotsToMake.Contains("all")||plotsToMake.Contains("010")) {
+    drawPlots(var,nbins,low,high,xtitle,"Events", "edge_new7_cutncount1",0,"");
+    print_zbi();} 
+
+
   if (plotsToMake.Contains("cutflowtest")) {
     savePlots_=false;
+    assert( TString(gSystem->Getenv("NBJETSCUT"))!="" && TString(gSystem->Getenv("NJETSCUT"))!="");
+    cout<<"Cutflow "<<gSystem->Getenv("NJETSCUT")<<" "<<gSystem->Getenv("NBJETSCUT")<<endl;
     for (int htcut = 1000; htcut<2250; htcut+=250) {
-      for (int metcut = 250; metcut<750; metcut+=50) {
-	TString metcutstring,htcutstring;
+      for (int metcut = 250; metcut<700; metcut+=50) {
+	TString metcutstring,htcutstring,njetsstring,nbstring;
 	metcutstring.Form("MET> %d",metcut);
 	htcutstring.Form("HT> %d",htcut);
-	selection_ = dileptons_loose && sf_loose && cutncount && TCut("njets40>=6") && TCut(metcutstring.Data())  && TCut("nbjets40medium>=2")&&TCut(htcutstring.Data());
+	njetsstring.Form("njets40>= %d",TString(gSystem->Getenv("NJETSCUT")).Atoi() );
+	nbstring.Form("nbjets40medium>= %d",TString(gSystem->Getenv("NBJETSCUT")).Atoi() );
+	selection_ = dileptons_loose && sf_loose && cutncount && TCut(njetsstring.Data()) && TCut(metcutstring.Data())  && TCut(nbstring.Data())&&TCut(htcutstring.Data());
 	drawPlots(var,nbins,low,high,xtitle,"Events", "blah",0,"");
 	cout<<"Cutflow "<<htcut<<" "<<metcut<<" "; print_zbi();
       }
@@ -467,6 +482,8 @@ void drawDelphes_Edge_CutAndCount(TString plotsToMake="all") {
     print_zbi();
   }
 
+
+
 }
 
 void ewkino(TString plotsToMake="all") {
@@ -486,7 +503,7 @@ void ewkino(TString plotsToMake="all") {
   stackSignal_=true;
   setStackMode(true,false,false); //stack,norm,label override
   removeSample("naturalModel1");
-  addSample("naturalModel1:leptonsMatchChi2ToChi1_loose!=1",kRed-9,"Misc Signal");
+  addSample("naturalModel1:leptonsMatchChi2ToChi1_loose!=1",kRed-9,"Other SUSY");
   addSample("naturalModel1:leptonsMatchChi2ToChi1_loose==1",kRed,"True Edge Signal");
 
   //edge selection cuts
@@ -622,7 +639,7 @@ void ewkino_signalonly(TString plotsToMake="all") {
   setStackMode(true,false,false); //stack,norm,label override
   /*
   removeSample("naturalModel1");
-  addSample("naturalModel1:leptonsMatchChi2ToChi1_loose!=1",kRed-9,"Misc Signal");
+  addSample("naturalModel1:leptonsMatchChi2ToChi1_loose!=1",kRed-9,"Other SUSY");
   addSample("naturalModel1:leptonsMatchChi2ToChi1_loose==1",kRed,"True Edge Signal");
   */
 
@@ -694,7 +711,7 @@ void preselection(TString plotsToMake="all") {
 
   setStackMode(false,true,false); //stack,norm,label override
   removeSample("naturalModel1");
-  addSample("naturalModel1:leptonsMatchChi2ToChi1!=1",kRed-9,"Misc Signal");
+  addSample("naturalModel1:leptonsMatchChi2ToChi1!=1",kRed-9,"Other SUSY");
   addSample("naturalModel1:leptonsMatchChi2ToChi1==1",kRed,"True Edge Signal");
 
   //edge selection cuts
@@ -754,6 +771,8 @@ void preselection(TString plotsToMake="all") {
 
 void compareOFSF(TString option="combinesm") { //
   //compare SF/OF
+  useNewStyle_=true;
+
   setOutputDirectory("DelphesEdge");
 
   if (option.Contains("combinesm")) {
@@ -775,7 +794,7 @@ void compareOFSF(TString option="combinesm") { //
     initSamples("signal");
     
     clearSamples();
-    addSample("naturalModel1:isSF_loose==1&&leptonsMatchChi2ToChi1_loose!=1",kRed,"SF (signal; no edge)");
+    addSample("naturalModel1:isSF_loose==1&&leptonsMatchChi2ToChi1_loose!=1",kRed,"SF (signal; no edges)");
     addSample("naturalModel1:isSF_loose==0",kBlue,"OF (signal)");
   }
   //  else if (option=="total") {
@@ -801,26 +820,254 @@ void compareOFSF(TString option="combinesm") { //
 
   //edge selection cuts
   TCut dileptons="mll_loose>20";
-  TCut btag="nbjets40tight>=1";
+  TCut btag="nbjets40medium>=1";
   TCut rejectedge="leptonsMatchChi2ToChi1_loose!=1";
   //tightened selection without b-tags (remove SF cut)
-  selection_ = dileptons && TCut("njets40eta3p0>=4") && TCut("HT>1500") && TCut("MET>400") &&rejectedge&&btag;
+  selection_ = dileptons && TCut("njets40>=6") && TCut("HT>1250") && TCut("MET>450") &&rejectedge&&btag;
   nbins=60; low=20; high=200;
   var="mll_loose"; xtitle="m_{l+l-} (GeV)";
   doRatio_=true;  
-  if (option.Contains("001")) drawPlots(var,nbins,low,high,xtitle,"Events", "edge_new2HT1500_mllloose_OFSFr_"+jmt::fortranize(option),0,"GeV");
+  if (option.Contains("all"))  drawPlots(var,nbins,low,high,xtitle,"Events", "edge_new7_mllloose_OFSFr_"+jmt::fortranize(option),0,"GeV");
   doRatio_=false;  
-  if (option.Contains("001")) drawPlots(var,nbins,low,high,xtitle,"Events", "edge_new2HT1500_mllloose_OFSF_"+jmt::fortranize(option),0,"GeV");
+  if (option.Contains("all"))  drawPlots(var,nbins,low,high,xtitle,"Events", "edge_new7_mllloose_OFSF_"+jmt::fortranize(option),0,"GeV");
 
   //plot only dilepton ttbar events
-  selection_ = dileptons && TCut("njets40eta3p0>=4") && TCut("HT>1500") && TCut("MET>400") &&TCut("ttbarDecayCode==1")&&btag;
-  nbins=60; low=20; high=200;
+  selection_ = dileptons && TCut("njets40>=6") && TCut("HT>1250") && TCut("MET>450") &&TCut("ttbarDecayCode==11||ttbarDecayCode==12||ttbarDecayCode==13")&&btag;
+  nbins=12; low=20; high=200;
   var="mll_loose"; xtitle="m_{l+l-} (GeV)";
-  doRatio_=true;  ratioMin=0.5; ratioMax = 1.5;
-  if (option.Contains("002")) drawPlots(var,nbins,low,high,xtitle,"Events", "edge_new2HT1500-genTt2l_mllloose_OFSFr_"+jmt::fortranize(option),0,"GeV");
+  doRatio_=true;  ratioMin=0.0; ratioMax = 2.0;
+  if (option.Contains("combinesm"))  drawPlots(var,nbins,low,high,xtitle,"Events", "edge_new7-genTt2l_mllloose_OFSFr_"+jmt::fortranize(option),0,"GeV");
 
 }
 
+void edge_eff() {
+  //plot eff of true edge signal as a function of mll
+  setOutputDirectory("DelphesEdge");
+
+  initSamples("nm1");
+  
+  doRatio_=false;  
+  int nbins;
+  float low,high;
+  TString var,xtitle;
+
+  doOverflowAddition(true);
+
+  //edge selection cuts
+  TCut dileptons="mll_loose>20";
+ 
+  TCut ee = "abs(leptonFlavor1_loose)==11";
+  TCut mm = "abs(leptonFlavor1_loose)==13";
+
+  TCut ee_gencut = "abs(genLepFlavor[0])==11";
+  TCut mm_gencut = "abs(genLepFlavor[0])==13";
+
+  TCut theselection= TCut("njets40>=4") && TCut("HT>1250") && TCut("MET>350");//not as tight as my current requirements
+  TCut isSF = "isSF_loose==1&&leptonsMatchChi2ToChi1_loose==1";
+
+  savePlots_=false;
+  stackSignal_=false;
+  setStackMode(false,false,false); //stack,norm,label override
+  nbins=14; low=20; high=160;
+
+  //SF ee reco
+  selection_ = dileptons && isSF && theselection && ee;
+  var="mll_loose"; xtitle="m_{l+l-} (GeV)";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "dummy",0,"GeV");
+  TH1D* ee_reco = (TH1D*) totalsmsusy->Clone("ee_reco");
+
+  //mm reco
+  selection_ = dileptons && isSF && theselection && mm;
+  var="mll_loose"; xtitle="m_{l+l-} (GeV)";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "dummy",0,"GeV");
+  TH1D* mm_reco = (TH1D*) totalsmsusy->Clone("mm_reco");
+
+  //ee gen
+  selection_ = TCut("genEdgeMll1>20") && theselection && ee_gencut;
+  var="genEdgeMll1"; xtitle="m_{l+l-} (GeV)";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "dummy",0,"GeV");
+  TH1D* ee_gen = (TH1D*) totalsmsusy->Clone("ee_gen");
+
+  //mm gen
+  selection_ = TCut("genEdgeMll1>20") && theselection && mm_gencut;
+  var="genEdgeMll1"; xtitle="m_{l+l-} (GeV)";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "dummy",0,"GeV");
+  TH1D* mm_gen = (TH1D*) totalsmsusy->Clone("mm_gen");
+
+  TGraphAsymmErrors * ee_eff = new TGraphAsymmErrors();
+  ee_eff->BayesDivide(ee_reco,ee_gen);
+
+  TGraphAsymmErrors * mm_eff = new TGraphAsymmErrors();
+  mm_eff->BayesDivide(mm_reco,mm_gen);
+
+  // TH1D* r_me = (TH1D*) em_gen->Clone("r_me");
+  // TH1D* R_SFOF = (TH1D*)em_gen->Clone("R_SFOF");
+  // r_me->Reset();
+  // R_SFOF->Reset();
+  // r_me->Divide(mm_reco,ee_reco);
+  // // r_mu,e = sqrt(N_mm / N_ee)
+  // for (int ibin=1;ibin<=r_me->GetNbinsX();++ibin) {
+  //   double err2
+  //     = 0.25 * (1.0 / ee_reco->GetBinContent(ibin)) * (1.0 / mm_reco->GetBinContent(ibin)) * pow(mm_reco->GetBinError(ibin),2)
+  //     + 0.25 * mm_reco->GetBinContent(ibin) * pow(ee_reco->GetBinContent(ibin),-3) * pow(ee_reco->GetBinError(ibin),2);
+  //   r_me->SetBinContent(ibin, sqrt(r_me->GetBinContent(ibin)));
+  //   r_me->SetBinError(ibin, sqrt(err2) );
+
+  //   double rme=r_me->GetBinContent(ibin);
+  //   R_SFOF->SetBinContent(ibin, 0.5* (rme+(1.0/rme)));
+  //   R_SFOF->SetBinError(ibin, 0.5*(1- pow(rme,-2))*r_me->GetBinError(ibin));
+  // }
+
+  mm_eff->SetName("mm_eff");
+  ee_eff->SetName("ee_eff");
+
+  mm_eff->SetLineColor(kRed);
+  ee_eff->SetLineColor(kBlue);
+
+  mm_eff->SetMarkerColor(kRed);
+  ee_eff->SetMarkerColor(kBlue);
+
+  TFile fout("DelphesEdge/EdgeEff.root","recreate");
+  ee_eff->Write();
+  mm_eff->Write();
+  ee_reco->Write();
+  ee_gen->Write();
+  mm_reco->Write();
+  mm_gen->Write();
+  // r_me->Write();
+  // R_SFOF->Write();
+  fout.Close();
+
+
+}
+
+void compareOFSF_eff() {
+
+  //plot the absolute eff for 2lep ttbar events as a function of mll
+  setOutputDirectory("DelphesEdge");
+
+  initSamples("tt");
+  
+  clearSamples();
+  addSample("tt-4p-0-600-v1510_14TEV",kRed,"tt");
+
+  doRatio_=false;  
+  int nbins;
+  float low,high;
+  TString var,xtitle;
+
+  doOverflowAddition(true);
+
+  //edge selection cuts
+  TCut dileptons="mll_loose>20";
+ 
+  TCut ee="ttbarDecayCode==11";
+  TCut em="ttbarDecayCode==12";
+  TCut mm="ttbarDecayCode==13";
+
+  //  TCut theselection= TCut("njets40>=4") && TCut("HT>700") && TCut("MET>250");
+  //  TCut theselection= TCut("njets40>=6") && TCut("HT>700") && TCut("MET>250");
+  TCut theselection= TCut("njets40>=4") && TCut("HT>700") && TCut("MET>450");
+
+  TCut isSF = "isSF_loose==1";
+
+  savePlots_=false;
+
+  stackSignal_=false;
+  setStackMode(false,false,false); //stack,norm,label override
+  //plot only dilepton ttbar events
+  nbins=14; low=20; high=160;
+
+  //SF ee reco
+  selection_ = dileptons && isSF && theselection && ee;
+  var="mll_loose"; xtitle="m_{l+l-} (GeV)";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "dummy",0,"GeV");
+  TH1D* ee_reco = (TH1D*) totalsm->Clone("ee_reco");
+
+  //em reco
+  selection_ = dileptons && !isSF && theselection && em;
+  var="mll_loose"; xtitle="m_{l+l-} (GeV)";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "dummy",0,"GeV");
+  TH1D* em_reco = (TH1D*) totalsm->Clone("em_reco");
+
+  //mm reco
+  selection_ = dileptons && isSF && theselection && mm;
+  var="mll_loose"; xtitle="m_{l+l-} (GeV)";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "dummy",0,"GeV");
+  TH1D* mm_reco = (TH1D*) totalsm->Clone("mm_reco");
+
+  //ee gen
+  selection_ = TCut("ttbarGenMll>20") && theselection && ee;
+  var="ttbarGenMll"; xtitle="m_{l+l-} (GeV)";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "dummy",0,"GeV");
+  TH1D* ee_gen = (TH1D*) totalsm->Clone("ee_gen");
+
+  //mm gen
+  selection_ = TCut("ttbarGenMll>20") && theselection && mm;
+  var="ttbarGenMll"; xtitle="m_{l+l-} (GeV)";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "dummy",0,"GeV");
+  TH1D* mm_gen = (TH1D*) totalsm->Clone("mm_gen");
+
+  //em gen
+  selection_ = TCut("ttbarGenMll>20") && theselection && em;
+  var="ttbarGenMll"; xtitle="m_{l+l-} (GeV)";
+  drawPlots(var,nbins,low,high,xtitle,"Events", "dummy",0,"GeV");
+  TH1D* em_gen = (TH1D*) totalsm->Clone("em_gen");
+
+  TGraphAsymmErrors * ee_eff = new TGraphAsymmErrors();
+  ee_eff->BayesDivide(ee_reco,ee_gen);
+
+  TGraphAsymmErrors * em_eff = new TGraphAsymmErrors();
+  em_eff->BayesDivide(em_reco,em_gen);
+
+  TGraphAsymmErrors * mm_eff = new TGraphAsymmErrors();
+  mm_eff->BayesDivide(mm_reco,mm_gen);
+
+  TH1D* r_me = (TH1D*) em_gen->Clone("r_me");
+  TH1D* R_SFOF = (TH1D*)em_gen->Clone("R_SFOF");
+  r_me->Reset();
+  R_SFOF->Reset();
+  r_me->Divide(mm_reco,ee_reco);
+  // r_mu,e = sqrt(N_mm / N_ee)
+  for (int ibin=1;ibin<=r_me->GetNbinsX();++ibin) {
+    double err2
+      = 0.25 * (1.0 / ee_reco->GetBinContent(ibin)) * (1.0 / mm_reco->GetBinContent(ibin)) * pow(mm_reco->GetBinError(ibin),2)
+      + 0.25 * mm_reco->GetBinContent(ibin) * pow(ee_reco->GetBinContent(ibin),-3) * pow(ee_reco->GetBinError(ibin),2);
+    r_me->SetBinContent(ibin, sqrt(r_me->GetBinContent(ibin)));
+    r_me->SetBinError(ibin, sqrt(err2) );
+
+    double rme=r_me->GetBinContent(ibin);
+    R_SFOF->SetBinContent(ibin, 0.5* (rme+(1.0/rme)));
+    R_SFOF->SetBinError(ibin, 0.5*(1- pow(rme,-2))*r_me->GetBinError(ibin));
+  }
+
+  mm_eff->SetName("mm_eff");
+  em_eff->SetName("em_eff");
+  ee_eff->SetName("ee_eff");
+
+  mm_eff->SetLineColor(kRed);
+  ee_eff->SetLineColor(kBlue);
+  em_eff->SetLineColor(kBlack);
+
+  mm_eff->SetMarkerColor(kRed);
+  ee_eff->SetMarkerColor(kBlue);
+  em_eff->SetMarkerColor(kBlack);
+
+  TFile fout("DelphesEdge/ttbar2leff.root","recreate");
+  r_me->Write();
+  R_SFOF->Write();
+  ee_eff->Write();
+  em_eff->Write();
+  mm_eff->Write();
+  ee_reco->Write();
+  ee_gen->Write();
+  em_reco->Write();
+  em_gen->Write();
+  mm_reco->Write();
+  mm_gen->Write();
+  fout.Close();
+
+}
 
 void drawSignalByProductionMode() {
  lumiScale_=3000e3;
@@ -867,7 +1114,7 @@ void drawSignalByProductionMode() {
  
 }
 
-void generateHistosForFit() {
+void generateHistosForFit(bool vetoChi4=false) {
   lumiScale_=3000e3;
 
   initSamples("tt bj nm1 skimmed");
@@ -879,6 +1126,10 @@ void generateHistosForFit() {
   doOverflowAddition(true);
   doRatio_=false;  
 
+  if (vetoChi4) {
+    removeSample("naturalModel1");
+    addSample("naturalModel1:leptonsMatchChi4ToChi1_loose!=1",kRed,"NM1 (no Chi4 Edge)");
+  }
 
   setStackMode(true,false,false); //stack,norm,label override
   stackSignal_=false; //the logic of this is a bit broken at the moment, so just don't stack it
@@ -886,12 +1137,12 @@ void generateHistosForFit() {
   //edge selection cuts
   TCut dileptons="mll_loose>20";
   TCut sf = "isSF_loose==1";
-  TCut jets = "njets40eta3p0>=4";
-  TCut met = "MET>400";
-  TCut ht = "HT>1500";  
+  TCut jets = "njets40>=6";
+  TCut met = "MET>450";
+  TCut ht = "HT>1250";  
 
-  TCut btags = "nbjets40tight>=1";
-  TCut bveto = "nbjets40tight==0";
+  TCut btags = "nbjets40medium>=1";
+  TCut bveto = "nbjets40medium==0";
 
   TCut ee = "abs(leptonFlavor1_loose)==11";
   TCut mm = "abs(leptonFlavor1_loose)==13";
@@ -905,45 +1156,53 @@ void generateHistosForFit() {
   var = "mll_loose"; xtitle="mll";
 
   selection_ = analysis_selection && sf && ee;
-  drawPlots(var,nbins,low,high,xtitle,"Events", "templates_new2HT1500_mll_ee",0,"GeV");
+  drawPlots(var,nbins,low,high,xtitle,"Events", "templates_new7_mll_ee",0,"GeV");
   TH1D* smsusy_mll_ee = (TH1D*)  totalsmsusy->Clone("smsusy_mll_ee");
   TH1D* sm_mll_ee = (TH1D*)  totalsm->Clone("sm_mll_ee");
 
   selection_ = analysis_selection && sf && mm;
-  drawPlots(var,nbins,low,high,xtitle,"Events", "templates_new2HT1500_mll_mm",0,"GeV");
+  drawPlots(var,nbins,low,high,xtitle,"Events", "templates_new7_mll_mm",0,"GeV");
   TH1D* smsusy_mll_mm = (TH1D*)  totalsmsusy->Clone("smsusy_mll_mm");
   TH1D* sm_mll_mm = (TH1D*)  totalsm->Clone("sm_mll_mm");
 
   selection_ = analysis_selection && !sf;
-  drawPlots(var,nbins,low,high,xtitle,"Events", "templates_new2HT1500_mll_OF",0,"GeV");
+  drawPlots(var,nbins,low,high,xtitle,"Events", "templates_new7_mll_OF",0,"GeV");
   TH1D* smsusy_mll_OF = (TH1D*)  totalsmsusy->Clone("smsusy_mll_OF");
   TH1D* sm_mll_OF = (TH1D*)  totalsm->Clone("sm_mll_OF");
 
   selection_ = dy_selection;
   nbins = 280*5; low = 20; high=300;
-  drawPlots(var,nbins,low,high,xtitle,"Events", "templates_new2HT1500_mll_DY",0,"GeV");
+  drawPlots(var,nbins,low,high,xtitle,"Events", "templates_new7_mll_DY",0,"GeV");
   TH1D* smsusy_mll_DY = (TH1D*)  totalsmsusy->Clone("smsusy_mll_DY");
   TH1D* sm_mll_DY = (TH1D*)  totalsm->Clone("sm_mll_DY");
 
   // new histograms: include sm and non-edge susy
   //i.e. the "background only" hypothesis when fitting for edge signal
-  removeSample("naturalModel1");
-  addSample("naturalModel1:leptonsMatchChi2ToChi1_loose!=1",kRed-9,"Misc Signal");
 
+  
+  if (vetoChi4) {
+    removeSample("naturalModel1:leptonsMatchChi4ToChi1_loose!=1");
+    addSample("naturalModel1:leptonsMatchChi4ToChi1_loose!=1&&leptonsMatchChi2ToChi1_loose!=1",kRed-9,"No Chi4 or Chi2");
+  }
+  else {
+    removeSample("naturalModel1");
+    addSample("naturalModel1:leptonsMatchChi2ToChi1_loose!=1",kRed-9,"Other SUSY");
+  }
   nbins = 280; low = 20; high=300;
   selection_ = analysis_selection && sf && ee;
-  drawPlots(var,nbins,low,high,xtitle,"Events", "templates_new2HT1500_mll_ee_noedge",0,"GeV");
+  drawPlots(var,nbins,low,high,xtitle,"Events", "templates_new7_mll_ee_noedge",0,"GeV");
   TH1D* smsusynoedge_mll_ee = (TH1D*)  totalsmsusy->Clone("smsusynoedge_mll_ee");
 
   selection_ = analysis_selection && sf && mm;
-  drawPlots(var,nbins,low,high,xtitle,"Events", "templates_new2HT1500_mll_mm_noedge",0,"GeV");
+  drawPlots(var,nbins,low,high,xtitle,"Events", "templates_new7_mll_mm_noedge",0,"GeV");
   TH1D* smsusynoedge_mll_mm = (TH1D*)  totalsmsusy->Clone("smsusynoedge_mll_mm");
 
   selection_ = analysis_selection && !sf ;
-  drawPlots(var,nbins,low,high,xtitle,"Events", "templates_new2HT1500_mll_OF_noedge",0,"GeV");
+  drawPlots(var,nbins,low,high,xtitle,"Events", "templates_new7_mll_OF_noedge",0,"GeV");
   TH1D* smsusynoedge_mll_OF = (TH1D*)  totalsmsusy->Clone("smsusynoedge_mll_OF");
  
-  TFile fout("DelphesEdge/templates.root","recreate");
+  TString outfile = vetoChi4 ? "DelphesEdge/templates_noChi4.root" : "DelphesEdge/templates.root";
+  TFile fout(outfile,"recreate");
   smsusy_mll_ee->Write();
   smsusy_mll_mm->Write();
   smsusy_mll_OF->Write();
@@ -956,5 +1215,96 @@ void generateHistosForFit() {
   sm_mll_OF->Write();
   sm_mll_DY->Write();
   fout.Close();
+
+}
+
+
+//copy/paste from MT2 code, then modified for edge
+void make_cutflowtable_fancy() {
+
+  TString samples="bj tt nm1";
+  initSamples(samples);
+  setOutputDirectory("DelphesEdge");
+  lumiScale_=3000e3; //request to use 3000
+
+  int nbins;
+  float low,high;
+  TString var,xtitle;
+
+  doOverflowAddition(true);
+  doRatio_=false;  
+
+  //  stackSignal_=false;
+  setQuiet(true);
+  stackSignal_=false;
+  setStackMode(true,false,false); //stack,norm,label override
+
+  removeSample("naturalModel1");
+  TString othersignal = "naturalModel1:leptonsMatchChi2ToChi1_loose!=1&&leptonsMatchChi4ToChi1_loose!=1";
+  TString chi4signal ="naturalModel1:leptonsMatchChi4ToChi1_loose==1";
+  TString chi2signal="naturalModel1:leptonsMatchChi2ToChi1_loose==1";
+  addSample(othersignal,kRed-9,"Other NM1");
+  addSample(chi4signal,kGreen+2,"#tilde{#chi}_{4}^{0} #rightarrow #tilde{l}l #rightarrow l^{+}l^{-} #tilde{#chi}_{1}^{0}");
+  addSample(chi2signal,kRed,"#tilde{#chi}_{2}^{0} #rightarrow #tilde{l}l #rightarrow l^{+}l^{-} #tilde{#chi}_{1}^{0}");
+
+  setPadDimensions(800,600);
+
+  //  selection_ = dileptons_loose && sf_loose && TCut("njets40>=6") && TCut("MET>450")  && TCut("nbjets40medium>=1")&&TCut("HT>1250"); //updated NOMINAL SELECTION
+
+  TCut dileptons_loose = "mll_loose>20 && mll_loose<70";
+  TCut sf_loose = "isSF_loose==1";
+
+  TCut btags="nbjets40medium>=1";
+  TCut jets="njets40>=6";
+
+  TCut htcut = "HT>1250";
+  TCut metcut="MET>450";
+
+  std::vector<TCut> cut_list;
+  cut_list.push_back(jets );
+  cut_list.push_back(jets && htcut);
+  cut_list.push_back(jets && htcut &&metcut);
+  cut_list.push_back(jets && htcut &&metcut &&btags);
+  cut_list.push_back(jets && htcut &&metcut &&btags && dileptons_loose && sf_loose);
+
+  const  double dB=0.5;
+
+  savePlots_=false;
+  cout<<"Fractional error on background assumed to be "<<dB<<endl;
+  for (int k=(int)samples_.size()-1;k>=0;k--) if (isSampleSM(samples_.at(k))) cout<<" & "; //one divider per SM sample
+  cout<<"   & \\multicolumn{c}{S/\\sqrt{S+B+\\deltaB^2}} & \\multicolumn{c}{Zbi} \\\\"<<endl;
+  for (int k=(int)samples_.size()-1;k>=0;k--) if (isSampleSM(samples_.at(k))) cout<<samples_.at(k)<<" & "; //one divider per SM sample
+  cout<<"  SM & Other & Chi4 & Chi2 & Other & Chi4 & Chi2 & Other & Chi4 & Chi2 \\\\"<<endl;
+  for (unsigned int k=0; k<cut_list.size() ; k++) {
+    selection_ = cut_list.at(k);
+    cout<<selection_<<" & ";
+
+    nbins=1; low=0; high=1e9;
+    var="MT2"; xtitle="MT2 (GeV)";
+    drawPlots(var,nbins,low,high,xtitle,"Events", "dummy",0,"");
+    for (int isample=(int)samples_.size()-1;isample>=0;isample--) {
+      if (isSampleSM(samples_.at(isample))) {
+	TString o;
+	o.Form("%.2f &",getIntegral(samples_.at(isample)));
+	cout<<o;
+      }
+    }
+    double B = getIntegral("totalsm");
+    double S1 = getIntegral(othersignal);
+    double S2 = getIntegral(chi4signal);
+    double S3 = getIntegral(chi2signal);
+
+    TString output;
+    output.Form(" %.2f & %.1f & %.1f & %.1f & %.1f & %.1f & %.1f & %.1f &%.1f & %.1f \\\\",
+		///		selection_.GetTitle(),
+		B,
+		S1,S2,S3,
+		//S1/sqrt(B),S2/sqrt(B),S3/sqrt(B),
+		S1/sqrt(S1 + B + dB*dB*B*B),S2/sqrt(S2 + B + dB*dB*B*B),S3/sqrt(S3 + B + dB*dB*B*B) ,
+		jmt::zbi(S1+B,B,dB*B),jmt::zbi(S2+B,B,dB*B),jmt::zbi(S3+B,B,dB*B)
+		);
+    cout<<output<<endl;
+  }
+
 
 }
