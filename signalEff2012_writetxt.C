@@ -520,7 +520,8 @@ void drawHHeff() {
 
   gROOT->SetStyle("CMS");
 
-  TFile f("eventcounts.Isr0.JES0_JERbias_PFMETTypeI_METunc0_PUunc0_hpt20.TChiHH.root");
+  //  TFile f("eventcounts.Isr0.JES0_JERbias_PFMETTypeI_METunc0_PUunc0_hpt20.TChiHH.root");
+  TFile f("eventcounts.Isr0.JES0_JERbias_PFMETTypeI_METunc0_PUunc0_hpt20.FullSim_TChiHH.root");
   TH2D* hgen = (TH2D*) f.Get("eventstotalisr");
 
   std::vector<TH2D*> hevents;
