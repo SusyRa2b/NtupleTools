@@ -181,6 +181,7 @@ void  drawDelphes_Edge(TString plotsToMake="all") {
 
   setPadDimensions(800,600);
 
+  isPreliminary_=true;
   selection_ = dileptons_loose && sf_loose && TCut("njets40>=6") && TCut("MET>450")  && TCut("nbjets40medium>=1")&&TCut("HT>1250"); //updated NOMINAL SELECTION
   var="mll_loose"; xtitle="m_{l+l-} (GeV)";
   resetPlotMaximum();
