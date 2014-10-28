@@ -789,7 +789,7 @@ void drawPlotHeader() {
       extraText="Unpublished"; writeExtraText=true;
     }
     else if (!dodata_ && cmEnergy_<12) {
-      //don't write simulation for 14 TeV Upgrade studies
+      //for 14 TeV studies, 'Simulation' comes in through the other script
       extraText="Simulation"; writeExtraText=true;
     }
     else if (isPreliminary_) {
