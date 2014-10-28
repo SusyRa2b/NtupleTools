@@ -88,12 +88,14 @@ void  drawDelphes_MT2(TString plotsToMake="all") {
 
   //now the full selection
   setPadDimensions(800,600);
+  isPreliminary_=true;
   selection_ = cleanup && noleptons && ht2000 && tightermt2 && tighterjets ;
  //nbjets
-  nbins=9; low=0; high=9;
+  nbins=8; low=0; high=8;
   var="nbjets40medium"; xtitle="b tag multiplicity";
   if (plotsToMake.Contains("all")||plotsToMake.Contains("003"))   drawPlots(var,nbins,low,high,xtitle,"Events", "hadronic_mt2tight1_nbjets",0,"");
 
+  relPosX+=0.005;
   TCut loosermt2 = "MT2>=200";
   TCut btags = "nbjets40medium>=3";
   selection_ = cleanup && noleptons && ht2000 && loosermt2 && tighterjets&&btags;
